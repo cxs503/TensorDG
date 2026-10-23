@@ -24,3 +24,7 @@ See [benchmark specification and method](docs/benchmarks/linear-advection-1d.md)
 ## Development principles
 
 Numerical claims should be backed by executed tests and recorded output. The current benchmark implementation is an initial baseline; it is not yet a production-ready multidimensional DG framework.
+
+## Next benchmark: Euler Sod shock tube
+
+A first-order P0 Euler baseline with Rusanov flux and SSP-RK3 is available as `benchmarks/euler_sod_1d.py`. It checks compressible-flow fluxes and physical admissibility before higher-order limiting is introduced. See [Sod benchmark notes](docs/benchmarks/euler-sod-1d.md).
