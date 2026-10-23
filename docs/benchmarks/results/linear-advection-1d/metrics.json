@@ -1,0 +1,46 @@
+{
+  "benchmark": "linear_advection_1d",
+  "degree": 2,
+  "final_time": 1.0,
+  "speed": 1.0,
+  "runs": [
+    {
+      "ncells": 10,
+      "absolute_l2": 0.0008565625902994258,
+      "relative_l2": 0.001211362432222877,
+      "relative_l2_percent": 0.12113624322228769,
+      "eoc": null,
+      "steps": 625,
+      "dt": 0.0016
+    },
+    {
+      "ncells": 20,
+      "absolute_l2": 0.00010697037886529752,
+      "relative_l2": 0.00015127896056349205,
+      "relative_l2_percent": 0.015127896056349205,
+      "eoc": 3.0013473143398666,
+      "steps": 1250,
+      "dt": 0.0008
+    },
+    {
+      "ncells": 40,
+      "absolute_l2": 1.3372089867164652e-05,
+      "relative_l2": 1.8910990847416092e-05,
+      "relative_l2_percent": 0.0018910990847416092,
+      "eoc": 2.9999144948395347,
+      "steps": 2500,
+      "dt": 0.0004
+    },
+    {
+      "ncells": 80,
+      "absolute_l2": 1.6715687519900674e-06,
+      "relative_l2": 2.363955199503422e-06,
+      "relative_l2_percent": 0.00023639551995034222,
+      "eoc": 2.9999503560839735,
+      "steps": 5000,
+      "dt": 0.0002
+    }
+  ],
+  "acceptance_threshold": 0.03,
+  "passed": true
+}

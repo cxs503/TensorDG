@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tensordg"
+version = "0.1.0"
+description = "Tensor-based discontinuous Galerkin verification benchmarks"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "TensorDG contributors"}]
+dependencies = [
+    "numpy>=1.23",
+    "torch>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "matplotlib>=3.6",
+    "pytest>=7",
+]
+
+[tool.setuptools.packages.find]
+include = ["tensordg*", "benchmarks*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

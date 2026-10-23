@@ -19,6 +19,8 @@ def test_degree_one_converges_at_expected_rate():
         errors.append(l2_error(centers, coeff, final_time=0.25))
     rate = math.log(errors[0] / errors[1], 2)
     assert rate > 1.7, (errors, rate)
+    # The exact sine wave has L2 norm 1/sqrt(2) on the unit interval.
+    assert errors[-1] * math.sqrt(2.0) < 0.03
 
 
 def test_zero_final_time_returns_initial_projection():

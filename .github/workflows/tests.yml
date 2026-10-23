@@ -15,10 +15,16 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install torch numpy pytest matplotlib
+      - run: python -m pip install -e ".[dev]"
       - run: pytest -q
-      - run: python benchmarks/linear_advection_1d.py --degree 1 --cells 20 40 80
-      - run: python benchmarks/linear_advection_1d.py --degree 2 --cells 10 20 40
-
-      - run: python benchmarks/euler_sod_1d.py --cells 120 --time 0.05 --output /tmp/sod.csv
-      - run: python benchmarks/plot_euler_sod_1d.py --input /tmp/sod.csv --output /tmp/sod_profiles.png
+      - run: python -m benchmarks.linear_advection_1d --degree 1 --cells 20 40 80
+      - run: python -m benchmarks.linear_advection_1d --degree 2 --cells 10 20 40 80 --output-dir /tmp/advection1d --max-relative-error 0.03
+      - run: python -m benchmarks.linear_advection_2d --cells 24 --degree 1 --output-dir /tmp/advection2d
+      - run: python -m benchmarks.poisson_2d --cells 16 --degree 1 --output-dir /tmp/poisson2d
+      - run: python -m benchmarks.euler_sod_1d --cells 120 --time 0.05 --output /tmp/sod.csv
+      - run: python -m benchmarks.plot_euler_sod_1d --input /tmp/sod.csv --output /tmp/sod_profiles.png
+      - run: python -m benchmarks.compare_euler_sod_1d --cells 3200 --time 0.2 --output-dir /tmp/sod-comparison
+      - run: python -m benchmarks.burgers_1d --cells 16 32 64 --degree 2 --output-dir /tmp/burgers
+      - run: python -m benchmarks.heat_1d --cells 16 --degree 2 --output-dir /tmp/heat
+      - run: python -m benchmarks.lax_1d --cells 400 --degree 3 --cfl 0.35 --output-dir /tmp/lax
+      - run: python -m benchmarks.isentropic_vortex_2d --cells 192 --output-dir /tmp/vortex
