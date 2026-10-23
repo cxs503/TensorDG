@@ -24,10 +24,14 @@ Default final time: t=0.2.
 
 ## Run
 
-    python -m pip install torch numpy pytest matplotlib
-    python benchmarks/euler_sod_1d.py --cells 400 --time 0.2 --output sod_results.csv
-    python benchmarks/plot_euler_sod_1d.py --input sod_results.csv --output sod_profiles.png
-    pytest -q
+```bash
+python -m pip install -e ".[dev]"
+python -m benchmarks.euler_sod_1d --cells 400 --time 0.2 --output sod_results.csv
+python -m benchmarks.plot_euler_sod_1d --input sod_results.csv --output sod_profiles.png
+python -m benchmarks.compare_euler_sod_1d --cells 3200 --time 0.2 \
+  --output-dir docs/benchmarks/results/euler-sod-1d
+pytest -q
+```
 
 The CSV contains x, density, velocity, and pressure. The plotting utility writes a three-panel density/velocity/pressure profile image to `sod_profiles.png`; it uses a non-interactive Matplotlib backend so it also runs in CI.
 
@@ -38,6 +42,17 @@ The CSV contains x, density, velocity, and pressure. The plotting utility writes
 3. The density profile develops the expected expansion/contact/shock structure.
 4. Early-time mean density remains close to the initial 0.5625 before boundary waves can affect the domain.
 
-## Status
+## Exact-reference verification
 
-Implementation and regression tests are added on a feature branch. Do not treat this as validated until CI has executed successfully and the output profile has been inspected against a trusted reference.
+The comparison command solves the exact Sod Riemann problem and integrates it
+over each cell with 8-point Gauss quadrature before computing relative L2
+errors. For the documented 3200-cell, t=0.2 case, density, velocity, and
+pressure errors are 1.422348%, 2.517658%, and 0.816946%, respectively; all are
+below 3%. The converged star state is p*=0.303130178051 and
+u*=0.927452620049.
+
+Reference profiles, CSV data, and JSON metrics are stored in
+`docs/benchmarks/results/euler-sod-1d/`. See the
+[Chinese tutorial](../tutorials/classic-dg-benchmarks.md) for the full record.
+This remains a first-order P0 baseline, not a high-order shock-capturing DG
+method.

@@ -1,0 +1,49 @@
+{
+  "benchmark": "burgers_1d",
+  "runs": [
+    {
+      "ncells": 16,
+      "degree": 2,
+      "final_time": 0.1,
+      "steps": 80,
+      "dt": 0.0012411504277094199,
+      "cfl": 0.1,
+      "device": "cpu",
+      "absolute_l2": 0.0005954519935666636,
+      "exact_l2": 0.6000000000000012,
+      "relative_l2": 0.0009924199892777706,
+      "eoc": null,
+      "relative_l2_percent": 0.09924199892777706
+    },
+    {
+      "ncells": 32,
+      "degree": 2,
+      "final_time": 0.1,
+      "steps": 160,
+      "dt": 0.000621345698553849,
+      "cfl": 0.1,
+      "device": "cpu",
+      "absolute_l2": 7.980867634569307e-05,
+      "exact_l2": 0.6000000000000001,
+      "relative_l2": 0.00013301446057615508,
+      "eoc": 2.899367698362429,
+      "relative_l2_percent": 0.013301446057615508
+    },
+    {
+      "ncells": 64,
+      "degree": 2,
+      "final_time": 0.1,
+      "steps": 320,
+      "dt": 0.00031159973168327915,
+      "cfl": 0.1,
+      "device": "cpu",
+      "absolute_l2": 1.0921445435197271e-05,
+      "exact_l2": 0.6000000000000001,
+      "relative_l2": 1.8202409058662116e-05,
+      "eoc": 2.8693817893879126,
+      "relative_l2_percent": 0.0018202409058662116
+    }
+  ],
+  "acceptance_threshold": 0.03,
+  "passed": true
+}
