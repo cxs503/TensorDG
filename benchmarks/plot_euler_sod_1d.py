@@ -30,7 +30,7 @@ def main():
     for ax, field, label in zip(
         axes,
         ("density", "velocity", "pressure"),
-        (r"Density $\\rho$", r"Velocity $u$", r"Pressure $p$"),
+        (r"Density $\rho$", r"Velocity $u$", r"Pressure $p$"),
     ):
         ax.plot(data["x"], data[field], linewidth=1.8)
         ax.set_ylabel(label)
