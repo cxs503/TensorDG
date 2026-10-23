@@ -1,0 +1,18 @@
+{
+  "benchmark": "poisson_2d",
+  "ncells": [
+    16,
+    16
+  ],
+  "degree": 1,
+  "dofs": 1024,
+  "penalty": 20.0,
+  "matrix_symmetry_error": 0.0,
+  "device": "cpu",
+  "absolute_l2": 0.0019001309337161232,
+  "exact_l2": 0.5,
+  "relative_l2": 0.0038002618674322463,
+  "relative_l2_percent": 0.38002618674322464,
+  "acceptance_threshold": 0.03,
+  "passed": true
+}

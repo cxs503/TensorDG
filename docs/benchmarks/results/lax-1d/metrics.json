@@ -1,0 +1,51 @@
+{
+  "benchmark": "lax_1d",
+  "ncells": 400,
+  "degree": 3,
+  "final_time": 0.13,
+  "steps": 5087,
+  "dt": 1.6406746756930657e-05,
+  "diaphragm": 0.5,
+  "domain": [
+    0.0,
+    1.0
+  ],
+  "cfl": 0.35,
+  "left_state": [
+    0.445,
+    0.698,
+    3.528
+  ],
+  "right_state": [
+    0.5,
+    0.0,
+    0.571
+  ],
+  "flux": "hllc",
+  "limiter": "local positivity fallback",
+  "device": "cpu",
+  "errors": {
+    "density": {
+      "absolute_l2": 0.016497280693564844,
+      "relative_l2": 0.027694200699042482,
+      "relative_l2_percent": 2.7694200699042484
+    },
+    "velocity": {
+      "absolute_l2": 0.01963108949034162,
+      "relative_l2": 0.016052694357682654,
+      "relative_l2_percent": 1.6052694357682653
+    },
+    "pressure": {
+      "absolute_l2": 0.023312323695990934,
+      "relative_l2": 0.009193637712234793,
+      "relative_l2_percent": 0.9193637712234793
+    }
+  },
+  "max_relative_l2": 0.027694200699042482,
+  "max_relative_l2_percent": 2.7694200699042484,
+  "acceptance_threshold": 0.03,
+  "passed": true,
+  "reference": "exact general Riemann solution with 8-point quadrature",
+  "star_pressure": 2.4660979192073564,
+  "star_velocity": 1.528723026632884
+}

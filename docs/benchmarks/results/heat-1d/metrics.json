@@ -1,0 +1,18 @@
+{
+  "benchmark": "heat_1d",
+  "ncells": 16,
+  "degree": 2,
+  "final_time": 0.1,
+  "steps": 80,
+  "dt": 0.00125,
+  "penalty": 20.0,
+  "dofs": 48,
+  "diffusion_symmetry_error": 0.0,
+  "device": "cpu",
+  "absolute_l2": 9.497862025433447e-06,
+  "exact_l2": 0.26354424025464895,
+  "relative_l2": 3.603896642270065e-05,
+  "relative_l2_percent": 0.003603896642270065,
+  "acceptance_threshold": 0.03,
+  "passed": true
+}

@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+*.egg-info/
+build/
+dist/
+
+# Default local benchmark outputs. Curated tutorial results under docs/ are
+# intentionally tracked and are not matched by these rules.
+sod_results.csv
+sod_profiles.png
+advection_2d_results/
+poisson_2d_results/
+sod_comparison_results/
+burgers_1d_results/
+heat_1d_results/
+lax_1d_results/
+isentropic_vortex_results/
