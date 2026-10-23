@@ -32,11 +32,12 @@ def rhs(u, dx):
     left = torch.cat((u[:1], u[:-1]), dim=0)
     right = torch.cat((u[1:], u[-1:]), dim=0)
     f_left, f_right = physical_flux(left), physical_flux(right)
-    alpha = torch.maximum(left[..., 1] / left[..., 0].clamp_min(1e-12).abs() + sound_speed(left),
-                          right[..., 1] / right[..., 0].clamp_min(1e-12).abs() + sound_speed(right))
+    speed_left = lambda q: (q[..., 1] / q[..., 0].clamp_min(1e-12)).abs() + sound_speed(q)
+    alpha_l = torch.maximum(speed_left(left), speed_left(u))
+    alpha_r = torch.maximum(speed_left(u), speed_left(right))
     # Rusanov flux at each cell's left and right interfaces.
-    flux_l = 0.5 * (f_left + physical_flux(u)) - 0.5 * alpha[:, None] * (u - left)
-    flux_r = 0.5 * (physical_flux(u) + f_right) - 0.5 * alpha[:, None] * (right - u)
+    flux_l = 0.5 * (f_left + physical_flux(u)) - 0.5 * alpha_l[:, None] * (u - left)
+    flux_r = 0.5 * (physical_flux(u) + f_right) - 0.5 * alpha_r[:, None] * (right - u)
     # Boundary fluxes use the same physical state on both sides.
     flux_l[0] = physical_flux(u[:1])[0]
     flux_r[-1] = physical_flux(u[-1:])[0]
