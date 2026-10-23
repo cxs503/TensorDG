@@ -17,3 +17,5 @@ jobs:
       - run: pytest -q
       - run: python benchmarks/linear_advection_1d.py --degree 1 --cells 20 40 80
       - run: python benchmarks/linear_advection_1d.py --degree 2 --cells 10 20 40
+
+      - run: python benchmarks/euler_sod_1d.py --cells 120 --time 0.05 --output /tmp/sod.csv
