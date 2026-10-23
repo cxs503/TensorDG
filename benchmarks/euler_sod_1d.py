@@ -50,13 +50,13 @@ def solve_sod(ncells=400, final_time=0.2, cfl=0.4, device="cpu", dtype=torch.flo
     dev = torch.device(device)
     dx = 1.0 / ncells
     x = (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * dx
-    rho = torch.where(x < 0.5, 1.0, 0.125)
+    rho = torch.where(x < 0.5, torch.ones_like(x), torch.full_like(x, 0.125))
     vel = torch.zeros_like(x)
-    pressure = torch.where(x < 0.5, 1.0, 0.1)
+    pressure = torch.where(x < 0.5, torch.ones_like(x), torch.full_like(x, 0.1))
     u = primitive_to_conservative(rho, vel, pressure)
     t, steps = 0.0, 0
     while t < final_time:
-        speed = (u[:, 1] / u[:, 0].clamp_min(1e-12).abs() + sound_speed(u)).max().item()
+        speed = ((u[:, 1] / u[:, 0].clamp_min(1e-12)).abs() + sound_speed(u)).max().item()
         dt = min(cfl * dx / max(speed, 1e-12), final_time - t)
         # SSP-RK3; P0 DG is the conservative first-order finite-volume limit.
         u1 = u + dt * rhs(u, dx)
