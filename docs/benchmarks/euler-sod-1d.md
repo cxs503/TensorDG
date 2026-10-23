@@ -24,11 +24,12 @@ Default final time: t=0.2.
 
 ## Run
 
-    python -m pip install torch numpy pytest
+    python -m pip install torch numpy pytest matplotlib
     python benchmarks/euler_sod_1d.py --cells 400 --time 0.2 --output sod_results.csv
+    python benchmarks/plot_euler_sod_1d.py --input sod_results.csv --output sod_profiles.png
     pytest -q
 
-The CSV contains x, density, velocity, and pressure for plotting.
+The CSV contains x, density, velocity, and pressure. The plotting utility writes a three-panel density/velocity/pressure profile image to `sod_profiles.png`; it uses a non-interactive Matplotlib backend so it also runs in CI.
 
 ## Acceptance checks
 

@@ -18,3 +18,10 @@ def test_sod_early_time_conservation_and_wave_direction():
     assert abs(mass - 0.5625) < 2e-3
     assert fields["velocity"].max().item() > 0.01
     assert fields["density"].max().item() > fields["density"].min().item()
+
+
+def test_sod_respects_requested_tensor_dtype():
+    _, fields, _ = solve_sod(ncells=40, final_time=0.005, dtype=torch.float64)
+    assert fields["conservative"].dtype == torch.float64
+    _, fields32, _ = solve_sod(ncells=40, final_time=0.005, dtype=torch.float32)
+    assert fields32["conservative"].dtype == torch.float32
