@@ -1,0 +1,49 @@
+{
+  "benchmark": "euler_sod_1d",
+  "ncells": 3200,
+  "final_time": 0.2,
+  "steps": 3499,
+  "dt": 4.250867492255894e-05,
+  "diaphragm": 0.5,
+  "domain": [
+    0.0,
+    1.0
+  ],
+  "cfl": 0.4,
+  "left_state": [
+    1.0,
+    0.0,
+    1.0
+  ],
+  "right_state": [
+    0.125,
+    0.0,
+    0.1
+  ],
+  "flux": "rusanov",
+  "device": "cpu",
+  "errors": {
+    "density": {
+      "absolute_l2": 0.009249457037397666,
+      "relative_l2": 0.014223484538851675,
+      "relative_l2_percent": 1.4223484538851676
+    },
+    "velocity": {
+      "absolute_l2": 0.01546394741437916,
+      "relative_l2": 0.0251765843200303,
+      "relative_l2_percent": 2.5176584320030297
+    },
+    "pressure": {
+      "absolute_l2": 0.0050733778435526665,
+      "relative_l2": 0.008169458496384573,
+      "relative_l2_percent": 0.8169458496384573
+    }
+  },
+  "max_relative_l2": 0.0251765843200303,
+  "max_relative_l2_percent": 2.5176584320030297,
+  "acceptance_threshold": 0.03,
+  "passed": true,
+  "reference": "exact Sod Riemann solution, 8-point cell averages",
+  "star_pressure": 0.30313017805064685,
+  "star_velocity": 0.9274526200489499
+}

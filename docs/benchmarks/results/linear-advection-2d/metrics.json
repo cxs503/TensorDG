@@ -1,0 +1,23 @@
+{
+  "benchmark": "linear_advection_2d",
+  "ncells": [
+    24,
+    24
+  ],
+  "degree": 1,
+  "final_time": 1.0,
+  "velocity": [
+    1.0,
+    0.5
+  ],
+  "dt": 0.0007407407407407407,
+  "steps": 1350,
+  "device": "cpu",
+  "cfl": 0.08,
+  "absolute_l2": 0.0031442795403202133,
+  "exact_l2": 1.118033988749895,
+  "relative_l2": 0.002812329116967115,
+  "relative_l2_percent": 0.2812329116967115,
+  "acceptance_threshold": 0.03,
+  "passed": true
+}

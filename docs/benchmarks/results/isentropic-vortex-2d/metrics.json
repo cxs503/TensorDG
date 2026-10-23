@@ -1,0 +1,56 @@
+{
+  "benchmark": "isentropic_vortex_2d",
+  "ncells": [
+    192,
+    192
+  ],
+  "degree": 0,
+  "final_time": 1.0,
+  "steps": 276,
+  "dt": 0.002161716380835621,
+  "cfl": 0.4,
+  "domain": [
+    [
+      -5.0,
+      5.0
+    ],
+    [
+      -5.0,
+      5.0
+    ]
+  ],
+  "strength": 5.0,
+  "background_velocity": [
+    1.0,
+    1.0
+  ],
+  "flux": "rusanov",
+  "device": "cpu",
+  "errors": {
+    "density": {
+      "absolute_l2": 0.008855937256941188,
+      "relative_l2": 0.008994391392826586,
+      "relative_l2_percent": 0.8994391392826586
+    },
+    "velocity_x": {
+      "absolute_l2": 0.019839241733547553,
+      "relative_l2": 0.01957624850348456,
+      "relative_l2_percent": 1.957624850348456
+    },
+    "velocity_y": {
+      "absolute_l2": 0.019994531251040722,
+      "relative_l2": 0.019729903314285677,
+      "relative_l2_percent": 1.9729903314285677
+    },
+    "pressure": {
+      "absolute_l2": 0.014018360231996244,
+      "relative_l2": 0.014297675790912649,
+      "relative_l2_percent": 1.4297675790912647
+    }
+  },
+  "max_relative_l2": 0.019729903314285677,
+  "max_relative_l2_percent": 1.9729903314285677,
+  "acceptance_threshold": 0.03,
+  "passed": true,
+  "reference": "analytical isentropic vortex with 4x4 exact cell quadrature"
+}

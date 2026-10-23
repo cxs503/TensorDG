@@ -1,5 +1,8 @@
+import numpy as np
 import torch
+
 from benchmarks.euler_sod_1d import solve_sod
+from benchmarks.sod_exact import cell_averages, star_state
 
 
 def test_sod_state_remains_physical_and_finite():
@@ -25,3 +28,19 @@ def test_sod_respects_requested_tensor_dtype():
     assert fields["conservative"].dtype == torch.float64
     _, fields32, _ = solve_sod(ncells=40, final_time=0.005, dtype=torch.float32)
     assert fields32["conservative"].dtype == torch.float32
+
+
+def test_exact_sod_star_state():
+    pressure, velocity = star_state()
+    assert abs(pressure - 0.30313017805064685) < 1e-12
+    assert abs(velocity - 0.9274526200489499) < 1e-12
+
+
+def test_documented_sod_case_matches_exact_solution_within_three_percent():
+    _, fields, _ = solve_sod(ncells=3200, final_time=0.2, cfl=0.4)
+    _, reference = cell_averages(3200, final_time=0.2)
+    for key in ("density", "velocity", "pressure"):
+        numerical = fields[key].detach().cpu().numpy()
+        error = np.sqrt(np.mean((numerical - reference[key]) ** 2))
+        norm = np.sqrt(np.mean(reference[key] ** 2))
+        assert error / norm < 0.03, (key, error / norm)
