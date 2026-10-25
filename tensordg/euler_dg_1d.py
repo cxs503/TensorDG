@@ -5,6 +5,7 @@ import numpy as np
 import torch
 
 from .euler_1d import GAMMA, hllc_flux, physical_flux, primitive_to_conservative, sound_speed
+from .limiters import apply_limiter
 
 
 def _operators(degree, device, dtype):
@@ -72,12 +73,24 @@ def solve_euler_dg_1d(
     cfl=0.12,
     device="cpu",
     dtype=torch.float64,
+    limiter=None,
+    tvb_constant=1.0,
 ):
     """Solve a Riemann problem with modal DG/HLLC/SSP-RK3.
 
     The local filter is positivity-based, not a TVD proof. It is intended for
     verification and moderate shock strengths, not as a general shock-capturing
     guarantee.
+
+    Parameters
+    ----------
+    limiter : str or None
+        Shock limiter to apply after each RK sub-step. Options:
+        - None: no limiter (only positivity filter)
+        - "tvb": TVB limiter (Cockburn & Shu, 1989)
+        - "weno": WENO limiter (Qiu & Shu, 2005)
+    tvb_constant : float
+        TVB constant M; M=0 is strict TVD, larger M allows smooth extrema.
     """
     if ncells < 20 or degree not in (1, 2, 3) or final_time < 0.0 or not 0 < cfl <= 0.5:
         raise ValueError("invalid cells, degree, final_time, or CFL")
@@ -104,11 +117,14 @@ def solve_euler_dg_1d(
         max_speed = float(torch.max(speeds).item())
         dt = min(cfl * dx / ((2 * degree + 1) * max(max_speed, 1e-12)), final_time - time)
         k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right)
-        u1 = _positivity_filter(coeff + dt * k1, check_points)
+        u1 = apply_limiter(coeff + dt * k1, dx, kind=limiter, tvb_constant=tvb_constant)
+        u1 = _positivity_filter(u1, check_points)
         k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right)
-        u2 = _positivity_filter(0.75 * coeff + 0.25 * (u1 + dt * k2), check_points)
+        u2 = apply_limiter(0.75 * coeff + 0.25 * (u1 + dt * k2), dx, kind=limiter, tvb_constant=tvb_constant)
+        u2 = _positivity_filter(u2, check_points)
         k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right)
-        coeff = _positivity_filter((1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3), check_points)
+        coeff = apply_limiter((1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3), dx, kind=limiter, tvb_constant=tvb_constant)
+        coeff = _positivity_filter(coeff, check_points)
         average = coeff[:, 0]
         rho_now = average[:, 0]
         pressure_now = (GAMMA - 1.0) * (average[:, 2] - 0.5 * average[:, 1] ** 2 / rho_now.clamp_min(1e-12))
@@ -116,10 +132,11 @@ def solve_euler_dg_1d(
             raise FloatingPointError("Nonphysical high-order Euler state; reduce CFL")
         time += dt
         steps += 1
+    limiter_name = limiter if limiter else "local positivity fallback"
     metadata = {
         "ncells": ncells, "degree": degree, "final_time": final_time, "steps": steps,
         "dt": dt, "diaphragm": diaphragm, "domain": (lower, upper), "cfl": cfl,
         "left_state": tuple(left_state), "right_state": tuple(right_state),
-        "flux": "hllc", "limiter": "local positivity fallback", "device": str(dev),
+        "flux": "hllc", "limiter": limiter_name, "device": str(dev),
     }
     return x, coeff, metadata
