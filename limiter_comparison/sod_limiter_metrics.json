@@ -1,0 +1,70 @@
+{
+  "case": "sod",
+  "ncells": 200,
+  "degree": 2,
+  "final_time": 0.2,
+  "cfl": 0.3,
+  "no_limiter": {
+    "errors": {
+      "density": {
+        "absolute_l2": 0.004620356525845429,
+        "relative_l2": 0.007105267362932648,
+        "relative_l2_percent": 0.7105267362932648
+      },
+      "velocity": {
+        "absolute_l2": 0.01972127689447353,
+        "relative_l2": 0.03211120784455756,
+        "relative_l2_percent": 3.2111207844557557
+      },
+      "pressure": {
+        "absolute_l2": 0.0034879227539388953,
+        "relative_l2": 0.005616539611307785,
+        "relative_l2_percent": 0.5616539611307785
+      }
+    },
+    "steps": 1506,
+    "limiter": "local positivity fallback"
+  },
+  "tvb": {
+    "errors": {
+      "density": {
+        "absolute_l2": 0.011910139437581268,
+        "relative_l2": 0.018315626631938028,
+        "relative_l2_percent": 1.8315626631938027
+      },
+      "velocity": {
+        "absolute_l2": 0.023127087217917057,
+        "relative_l2": 0.03765672519419135,
+        "relative_l2_percent": 3.765672519419135
+      },
+      "pressure": {
+        "absolute_l2": 0.011106224740747243,
+        "relative_l2": 0.017884155008321103,
+        "relative_l2_percent": 1.7884155008321103
+      }
+    },
+    "steps": 1535,
+    "limiter": "tvb"
+  },
+  "weno": {
+    "errors": {
+      "density": {
+        "absolute_l2": 0.010117776823723973,
+        "relative_l2": 0.015559299168561027,
+        "relative_l2_percent": 1.5559299168561027
+      },
+      "velocity": {
+        "absolute_l2": 0.028855358510156925,
+        "relative_l2": 0.0469837941785872,
+        "relative_l2_percent": 4.69837941785872
+      },
+      "pressure": {
+        "absolute_l2": 0.007095032661347153,
+        "relative_l2": 0.011425004163574691,
+        "relative_l2_percent": 1.142500416357469
+      }
+    },
+    "steps": 1464,
+    "limiter": "weno"
+  }
+}
