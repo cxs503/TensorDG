@@ -1,139 +1,112 @@
 {
-  "mission": "m240",
-  "repo": "TensorDG",
-  "upstream_sha": "c485c623",
-  "branch": "agent/m240",
-  "python": "/nfs/wangxi/hermes-agent/.venv/bin/python",
-  "test_results": {
-    "total": 21,
-    "passed": 21,
-    "failed": 0,
-    "duration_seconds": 37.7,
-    "command": "PYTHONPATH=. pytest -v"
-  },
-  "benchmark_verification": {
-    "linear_advection_1d": {
-      "command": "python -m benchmarks.linear_advection_1d --degree 2 --cells 10 20 40 80",
-      "cells": [
-        10,
-        20,
-        40,
-        80
-      ],
-      "relative_L2": [
-        0.00121136,
-        0.000151279,
-        1.8911e-05,
-        2.36396e-06
-      ],
-      "EOC": [
-        "nan",
-        3.001,
-        3.0,
-        3.0
-      ],
-      "finest_relative_L2_percent": 0.000236,
-      "readme_claim_percent": 0.000236,
-      "match": true
+  "timestamp": "2026-10-25T01:20:41Z",
+  "regression_poisson": {
+    "P1_n8": {
+      "sparse_max_diff": 3.1308289294429414e-14,
+      "matrixfree_max_diff": 2.275957200481571e-14,
+      "sparse_pass": true,
+      "matrixfree_pass": true,
+      "mf_cg_iters": 47
     },
-    "euler_sod_1d": {
-      "command": "python -m benchmarks.compare_euler_sod_1d --cells 3200 --time 0.2",
-      "cells": 3200,
-      "density_relative_L2_percent": 1.422348,
-      "velocity_relative_L2_percent": 2.517658,
-      "pressure_relative_L2_percent": 0.816946,
-      "max_error_percent": 2.517658,
-      "readme_claim_max_percent": 2.517658,
-      "match": true,
-      "below_3pct": true
+    "P1_n16": {
+      "sparse_max_diff": 9.070522111187529e-14,
+      "matrixfree_max_diff": 3.2862601528904634e-14,
+      "sparse_pass": true,
+      "matrixfree_pass": true,
+      "mf_cg_iters": 132
     },
-    "linear_advection_2d": {
-      "relative_L2_percent": 0.281233,
-      "readme_claim_percent": 0.281233,
-      "match": true
-    },
-    "poisson_2d": {
-      "relative_L2_percent": 0.380026,
-      "readme_claim_percent": 0.380026,
-      "match": true
-    },
-    "burgers_1d": {
-      "relative_L2_percent": 0.00182,
-      "readme_claim_percent": 0.00182,
-      "match": true
-    },
-    "heat_1d": {
-      "relative_L2_percent": 0.003604,
-      "readme_claim_percent": 0.003604,
-      "match": true
-    },
-    "lax_1d": {
-      "density_relative_L2_percent": 2.76942,
-      "velocity_relative_L2_percent": 1.605269,
-      "pressure_relative_L2_percent": 0.919364,
-      "max_error_percent": 2.76942,
-      "readme_claim_max_percent": 2.76942,
-      "match": true,
-      "below_3pct": true
-    },
-    "isentropic_vortex_2d": {
-      "density_relative_L2_percent": 0.899439,
-      "velocity_x_relative_L2_percent": 1.957625,
-      "velocity_y_relative_L2_percent": 1.97299,
-      "pressure_relative_L2_percent": 1.429768,
-      "max_error_percent": 1.97299,
-      "readme_claim_max_percent": 1.97299,
-      "match": true,
-      "below_3pct": true
+    "P1_n32": {
+      "sparse_max_diff": 3.1163960301228144e-13,
+      "matrixfree_max_diff": 1.2256862191861728e-13,
+      "sparse_pass": true,
+      "matrixfree_pass": true,
+      "mf_cg_iters": 253
     }
   },
-  "capability_audit": {
-    "verified_benchmarks_present": 8,
-    "verified_benchmarks_claimed": 8,
-    "positivity_fallback": true,
-    "HLLC": true,
-    "isentropic_vortex": true,
-    "gaps_declared_in_readme": [
-      "TVB/WENO shock limiting",
-      "sparse/matrix-free elliptic solvers",
-      "unstructured meshes",
-      "high-order multidimensional Euler/NS",
-      "CAD-coupled boundary handling"
-    ]
+  "regression_heat": {
+    "P2_n16": {
+      "sparse_max_diff": 4.135580766728708e-14,
+      "matrixfree_max_diff": 5.53862511409875e-13,
+      "sparse_pass": true,
+      "matrixfree_pass": true
+    },
+    "P2_n32": {
+      "sparse_max_diff": 7.4495964952348e-14,
+      "matrixfree_max_diff": 6.62386812066984e-13,
+      "sparse_pass": true,
+      "matrixfree_pass": true
+    },
+    "P2_n64": {
+      "sparse_max_diff": 2.3042678876095124e-13,
+      "matrixfree_max_diff": 9.009459844833145e-13,
+      "sparse_pass": true,
+      "matrixfree_pass": true
+    }
   },
-  "backlog": {
-    "file": "agent_work/expand_follow/backlog.md",
-    "section": "TensorDG",
-    "priority_items": [
-      {
-        "priority": "P0",
-        "item": "TVB/WENO limiter",
-        "proposal": "tensordg-tvb-weno-limiter.txt"
-      },
-      {
-        "priority": "P0",
-        "item": "Matrix-free SIPG",
-        "proposal": "tensordg-matrix-free-sipg.txt"
-      },
-      {
-        "priority": "P1",
-        "item": "2D high-order Euler DG"
-      },
-      {
-        "priority": "P2",
-        "item": "Unstructured mesh support"
-      },
-      {
-        "priority": "P2",
-        "item": "Navier-Stokes viscous fluxes"
-      },
-      {
-        "priority": "P3",
-        "item": "3D extension"
-      }
-    ]
+  "scalability_poisson_sparse": {
+    "n8": {
+      "ndofs": 256,
+      "time_s": 0.019,
+      "peak_mem_mb": 0.51,
+      "sparse_nnz": 4608
+    },
+    "n16": {
+      "ndofs": 1024,
+      "time_s": 0.055,
+      "peak_mem_mb": 2.05,
+      "sparse_nnz": 19456
+    },
+    "n32": {
+      "ndofs": 4096,
+      "time_s": 0.212,
+      "peak_mem_mb": 8.23,
+      "sparse_nnz": 79872
+    },
+    "n64": {
+      "ndofs": 16384,
+      "time_s": 0.887,
+      "peak_mem_mb": 33.02,
+      "sparse_nnz": 323584
+    }
   },
-  "verdict": "PASS",
-  "checks_passed": 8,
-  "checks_total": 8
+  "eoc_poisson_p1": {
+    "dense": {
+      "errors": [
+        0.015186307920327914,
+        0.0038002618673729136,
+        0.0009502798987991244
+      ],
+      "eocs": [
+        1.999,
+        2.0
+      ]
+    },
+    "sparse": {
+      "errors": [
+        0.01518630792031446,
+        0.003800261867355231,
+        0.0009502798989489631
+      ],
+      "eocs": [
+        1.999,
+        2.0
+      ]
+    },
+    "matrix-free": {
+      "errors": [
+        0.01518630792032058,
+        0.0038002618673729904,
+        0.0009502798987362187
+      ],
+      "eocs": [
+        1.999,
+        2.0
+      ]
+    }
+  },
+  "summary": {
+    "all_regression_pass": true,
+    "can_solve_64x64": true,
+    "eoc_p1_preserved": true
+  }
 }
