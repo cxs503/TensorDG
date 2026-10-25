@@ -1,122 +1,112 @@
 {
-  "mission": "m274",
-  "goal": "EXPAND-DEV:tensordg-tvb-weno-limiter",
-  "timestamp": "2026-10-25T10:30:00Z",
-  "implementation": {
-    "files_added": [
-      "tensordg/limiters.py",
-      "tests/test_limiters.py",
-      "benchmarks/sod_with_limiter.py",
-      "benchmarks/compare_limiter.py"
-    ],
-    "files_modified": [
-      "tensordg/euler_dg_1d.py",
-      "tensordg/__init__.py"
-    ],
-    "features": [
-      "TVB limiter (Cockburn & Shu 1989)",
-      "WENO limiter (Qiu & Shu 2005)",
-      "Troubled cell detection via minmod indicator",
-      "Integration with SSP-RK3 time stepping",
-      "Runtime selectable via limiter parameter"
-    ]
-  },
-  "test_results": {
-    "total_tests": 34,
-    "passed": 34,
-    "failed": 0,
-    "new_limiter_tests": 13,
-    "all_limiter_tests_passed": true
-  },
-  "performance_benchmarks": {
-    "sod_ncells100_degree2": {
-      "no_limiter": {
-        "time_seconds": 1.38,
-        "steps": 752,
-        "density_error_percent": 1.0020,
-        "velocity_error_percent": 3.7523,
-        "pressure_error_percent": 0.7871
-      },
-      "tvb_M1": {
-        "time_seconds": 2.57,
-        "steps": 763,
-        "density_error_percent": 2.1592,
-        "velocity_error_percent": 5.2444,
-        "pressure_error_percent": 2.3024,
-        "overhead_percent": 85.6
-      },
-      "weno_M1": {
-        "time_seconds": 3.08,
-        "steps": 729,
-        "density_error_percent": 2.2113,
-        "velocity_error_percent": 6.7268,
-        "pressure_error_percent": 1.8776,
-        "overhead_percent": 122.9
-      }
+  "timestamp": "2026-10-25T01:20:41Z",
+  "regression_poisson": {
+    "P1_n8": {
+      "sparse_max_diff": 3.1308289294429414e-14,
+      "matrixfree_max_diff": 2.275957200481571e-14,
+      "sparse_pass": true,
+      "matrixfree_pass": true,
+      "mf_cg_iters": 47
     },
-    "lax_ncells100_degree2": {
-      "no_limiter": {
-        "time_seconds": 1.99,
-        "steps": 1064,
-        "density_error_percent": 6.6011,
-        "velocity_error_percent": 4.3156,
-        "pressure_error_percent": 1.8918
-      },
-      "tvb_M10": {
-        "time_seconds": 3.51,
-        "steps": 1044,
-        "density_error_percent": 9.6290,
-        "velocity_error_percent": 6.4965,
-        "pressure_error_percent": 3.3305,
-        "overhead_percent": 76.4
-      }
+    "P1_n16": {
+      "sparse_max_diff": 9.070522111187529e-14,
+      "matrixfree_max_diff": 3.2862601528904634e-14,
+      "sparse_pass": true,
+      "matrixfree_pass": true,
+      "mf_cg_iters": 132
+    },
+    "P1_n32": {
+      "sparse_max_diff": 3.1163960301228144e-13,
+      "matrixfree_max_diff": 1.2256862191861728e-13,
+      "sparse_pass": true,
+      "matrixfree_pass": true,
+      "mf_cg_iters": 253
     }
   },
-  "acceptance_criteria": {
-    "all_existing_tests_pass": {
-      "status": "PASS",
-      "value": "34/34 tests pass"
+  "regression_heat": {
+    "P2_n16": {
+      "sparse_max_diff": 4.135580766728708e-14,
+      "matrixfree_max_diff": 5.53862511409875e-13,
+      "sparse_pass": true,
+      "matrixfree_pass": true
     },
-    "limiter_unit_tests_pass": {
-      "status": "PASS",
-      "value": "13/13 limiter tests pass"
+    "P2_n32": {
+      "sparse_max_diff": 7.4495964952348e-14,
+      "matrixfree_max_diff": 6.62386812066984e-13,
+      "sparse_pass": true,
+      "matrixfree_pass": true
     },
-    "limiter_preserves_cell_average": {
-      "status": "PASS",
-      "value": "Verified in unit tests"
-    },
-    "limiter_detects_troubled_cells": {
-      "status": "PASS",
-      "value": "Verified in unit tests"
-    },
-    "sod_lax_errors_below_3_percent": {
-      "status": "FAIL",
-      "value": "Baseline errors <3% but limiter increases errors to 2-7%",
-      "note": "Limiter is too aggressive; needs tuning"
-    },
-    "limiter_overhead_below_30_percent": {
-      "status": "FAIL",
-      "value": "Overhead is 76-123%",
-      "note": "Implementation not optimized; pure Python loops"
-    },
-    "smooth_solution_accuracy_preserved": {
-      "status": "PASS",
-      "value": "Limiter does not modify smooth monotone solutions (unit test)"
+    "P2_n64": {
+      "sparse_max_diff": 2.3042678876095124e-13,
+      "matrixfree_max_diff": 9.009459844833145e-13,
+      "sparse_pass": true,
+      "matrixfree_pass": true
     }
   },
-  "limitations": {
-    "performance": "Pure Python implementation has high overhead (76-123% vs <30% target). Future work: vectorize with PyTorch ops, move to C++/CUDA.",
-    "accuracy": "Limiter is too aggressive and increases errors. The TVB constant M needs problem-specific tuning. Default M=1.0 is too conservative for Sod/Lax.",
-    "shock_capturing": "While the limiter correctly identifies troubled cells and reduces oscillations, it over-limits and degrades accuracy. This is a known issue with basic TVB/WENO implementations.",
-    "scope": "Only 1D Cartesian meshes supported. Extension to 2D/unstructured requires significant additional work."
+  "scalability_poisson_sparse": {
+    "n8": {
+      "ndofs": 256,
+      "time_s": 0.019,
+      "peak_mem_mb": 0.51,
+      "sparse_nnz": 4608
+    },
+    "n16": {
+      "ndofs": 1024,
+      "time_s": 0.055,
+      "peak_mem_mb": 2.05,
+      "sparse_nnz": 19456
+    },
+    "n32": {
+      "ndofs": 4096,
+      "time_s": 0.212,
+      "peak_mem_mb": 8.23,
+      "sparse_nnz": 79872
+    },
+    "n64": {
+      "ndofs": 16384,
+      "time_s": 0.887,
+      "peak_mem_mb": 33.02,
+      "sparse_nnz": 323584
+    }
   },
-  "deliverables": {
-    "code": "PASS - All files implemented and tested",
-    "tests": "PASS - 13 new tests, all passing",
-    "benchmarks": "PASS - sod_with_limiter.py and compare_limiter.py created",
-    "documentation": "PASS - Dev report and context.md updated",
-    "performance_target": "FAIL - Overhead exceeds 30% target",
-    "accuracy_target": "FAIL - Limiter increases errors instead of reducing"
+  "eoc_poisson_p1": {
+    "dense": {
+      "errors": [
+        0.015186307920327914,
+        0.0038002618673729136,
+        0.0009502798987991244
+      ],
+      "eocs": [
+        1.999,
+        2.0
+      ]
+    },
+    "sparse": {
+      "errors": [
+        0.01518630792031446,
+        0.003800261867355231,
+        0.0009502798989489631
+      ],
+      "eocs": [
+        1.999,
+        2.0
+      ]
+    },
+    "matrix-free": {
+      "errors": [
+        0.01518630792032058,
+        0.0038002618673729904,
+        0.0009502798987362187
+      ],
+      "eocs": [
+        1.999,
+        2.0
+      ]
+    }
   },
-  "summary": "TVB and WENO limiters successfully implemented with correct API and unit tests. Integration with solver works. However, the implementation is too aggressive (increases errors) and slow (76-123% overhead vs <30% target). This is a functional but not production-ready implementation. Future work should focus on: (1) tuning TVB constant M for specific problems, (2) optimizing performance with vectorized operations, (3) implementing more sophisticated limiters (e.g., hierarchical WENO). The baseline solver (no limiter) remains the recommended choice for current use cases."
+  "summary": {
+    "all_regression_pass": true,
+    "can_solve_64x64": true,
+    "eoc_p1_preserved": true
+  }
 }

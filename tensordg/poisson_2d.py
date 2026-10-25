@@ -4,6 +4,11 @@ The model problem is -Delta(u) = f on the unit square with homogeneous
 Dirichlet boundary data and the manufactured exact solution
 u = sin(pi*x) sin(pi*y). A dense torch solve is intentional: it keeps this
 small verification benchmark independent of a sparse-linear-algebra package.
+
+Three backends are supported via the ``backend`` parameter:
+  * ``"dense"``        -- assemble a dense torch matrix, solve with torch.linalg.solve
+  * ``"sparse"``       -- assemble a scipy CSR matrix, solve with scipy.sparse.linalg.spsolve
+  * ``"matrix-free"``  -- no global assembly, solve with preconditioned CG
 """
 from __future__ import annotations
 
@@ -97,13 +102,31 @@ def solve_poisson_2d(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
+    backend: str = "dense",
 ):
     """Solve the manufactured Poisson problem with SIPG on a Cartesian mesh.
 
     Returns ``(x_centers, y_centers, modal_coefficients, metadata)``. The
-    penalty parameter is scaled by ``(degree+1)**2 / face_height``. The dense
-    system is best suited to verification cases, not large production meshes.
+    penalty parameter is scaled by ``(degree+1)**2 / face_height``.
+
+    Parameters
+    ----------
+    backend : str
+        - ``"dense"``: assemble dense torch matrix (default, backward compatible)
+        - ``"sparse"``: assemble scipy CSR matrix, solve with spsolve
+        - ``"matrix-free"``: no global assembly, solve with PCG
     """
+    if backend not in ("dense", "sparse", "matrix-free"):
+        raise ValueError("backend must be 'dense', 'sparse', or 'matrix-free'")
+
+    if backend == "sparse":
+        from tensordg.sipg_sparse import solve_poisson_2d_sparse
+        return solve_poisson_2d_sparse(ncells, degree, penalty, device, dtype)
+    elif backend == "matrix-free":
+        from tensordg.sipg_matrixfree import solve_poisson_2d_matrixfree
+        return solve_poisson_2d_matrixfree(ncells, degree, penalty, device, dtype)
+
+    # backend == "dense": original implementation
     nx, ny = (ncells, ncells) if isinstance(ncells, int) else ncells
     if nx < 2 or ny < 2 or degree not in (1, 2, 3):
         raise ValueError("ncells must be >= 2 and SIPG degree must be in [1, 3]")
