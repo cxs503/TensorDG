@@ -1,4 +1,10 @@
-"""One-dimensional heat equation verified with SIPG and Crank--Nicolson time stepping."""
+"""One-dimensional heat equation verified with SIPG and Crank--Nicolson time stepping.
+
+Three backends are supported via the ``backend`` parameter:
+  * ``"dense"``        -- assemble dense torch matrices, solve with torch.linalg.solve
+  * ``"sparse"``       -- assemble scipy CSR matrices, solve with scipy.sparse.linalg.splu
+  * ``"matrix-free"``  -- no global assembly, solve with preconditioned CG
+"""
 from __future__ import annotations
 
 import math
@@ -62,12 +68,35 @@ def solve_heat_1d(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
+    backend: str = "dense",
 ):
     """Solve u_t=u_xx with zero Dirichlet data and sin(pi*x) initial data.
 
     Crank--Nicolson is used for the global method-of-lines system. If
     ``time_steps`` is omitted, dt is approximately ``0.02*cell_width``.
+
+    Parameters
+    ----------
+    backend : str
+        - ``"dense"``: assemble dense torch matrices (default, backward compatible)
+        - ``"sparse"``: assemble scipy CSR matrices, solve with splu
+        - ``"matrix-free"``: no global assembly, solve with PCG per step
     """
+    if backend not in ("dense", "sparse", "matrix-free"):
+        raise ValueError("backend must be 'dense', 'sparse', or 'matrix-free'")
+
+    if backend == "sparse":
+        from tensordg.sipg_sparse import solve_heat_1d_sparse
+        return solve_heat_1d_sparse(
+            ncells, degree, final_time, time_steps, penalty, device, dtype,
+        )
+    elif backend == "matrix-free":
+        from tensordg.sipg_matrixfree import solve_heat_1d_matrixfree
+        return solve_heat_1d_matrixfree(
+            ncells, degree, final_time, time_steps, penalty, device, dtype,
+        )
+
+    # backend == "dense": original implementation
     if ncells < 2 or degree not in (1, 2, 3) or penalty <= 0.0:
         raise ValueError("ncells >= 2, degree in [1,3], and positive penalty are required")
     if final_time < 0.0 or (time_steps is not None and time_steps < 1):
