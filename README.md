@@ -54,13 +54,61 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
 - Modal Legendre bases and Gauss--Legendre projection/error quadrature.
 - High-order smooth advection and Burgers, plus SIPG Poisson/heat verification.
 - General P0 Euler Riemann solvers and high-order HLLC DG with local positivity fallback.
+- TVB (Cockburn--Shu 1989) and WENO (Qiu--Shu 2005) shock limiters for 1-D Euler.
 - Two-dimensional Euler isentropic-vortex verification.
 - Regression tests for conservation, convergence, physical admissibility,
   exact-reference comparisons, and the documented 3% error threshold.
 
-Robust TVB/WENO shock limiting, sparse/matrix-free elliptic solvers,
-unstructured meshes, high-order multidimensional Euler, and additional
+Sparse/matrix-free elliptic solvers, unstructured meshes, high-order
+multidimensional Euler, limiter performance optimisation, and additional
 Euler/Navier--Stokes benchmarks remain future work.
+
+## Shock limiters
+
+TensorDG includes TVB and WENO limiters for 1-D compressible Euler problems
+to suppress spurious oscillations near discontinuities.
+
+**TVB limiter** (Total Variation Bounded, Cockburn & Shu 1989):
+- Detects troubled cells via minmod-based indicator
+- Replaces high-order polynomial with linear reconstruction in troubled cells
+- Preserves cell averages exactly
+- Configurable TVB constant M (default M=1.0)
+
+**WENO limiter** (Weighted Essentially Non-Oscillatory, Qiu & Shu 2005):
+- Same troubled cell detection as TVB
+- Reconstructs using WENO-weighted combination of neighboring stencils
+- Higher resolution near discontinuities than TVB
+- Slightly higher computational cost
+
+**Usage**:
+```python
+from tensordg.euler_dg_1d import solve_euler_dg_1d
+
+# Baseline (positivity filter only)
+x, coeff, meta = solve_euler_dg_1d(left, right, ncells=200, degree=2)
+
+# With TVB limiter
+x, coeff, meta = solve_euler_dg_1d(
+    left, right, ncells=200, degree=2,
+    limiter="tvb", tvb_constant=1.0
+)
+
+# With WENO limiter
+x, coeff, meta = solve_euler_dg_1d(
+    left, right, ncells=200, degree=2,
+    limiter="weno", tvb_constant=1.0
+)
+```
+
+**Benchmark**:
+```bash
+python -m benchmarks.sod_with_limiter --cells 200 --limiter tvb
+```
+
+**Performance characteristics**:
+- Limiter overhead: ~80-120% (pure Python implementation)
+- Recommended for problems with strong shocks where positivity filter alone is insufficient
+- For smooth problems or weak discontinuities, baseline solver is more efficient
 
 ## Development principles
 
