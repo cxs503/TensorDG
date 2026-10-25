@@ -1,0 +1,27 @@
+{
+  "case": "sod",
+  "ncells": 100,
+  "degree": 2,
+  "final_time": 0.2,
+  "cfl": 0.3,
+  "limiter": "tvb",
+  "tvb_constant": 100.0,
+  "steps": 763,
+  "errors": {
+    "density": {
+      "absolute_l2": 0.014038444833063313,
+      "relative_l2": 0.02158896142878943,
+      "relative_l2_percent": 2.1588961428789433
+    },
+    "velocity": {
+      "absolute_l2": 0.03230495961140337,
+      "relative_l2": 0.05258530108027896,
+      "relative_l2_percent": 5.2585301080278954
+    },
+    "pressure": {
+      "absolute_l2": 0.014316233028294515,
+      "relative_l2": 0.023052586789326205,
+      "relative_l2_percent": 2.3052586789326206
+    }
+  }
+}
