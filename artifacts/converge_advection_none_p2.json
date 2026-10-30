@@ -1,0 +1,58 @@
+{
+  "problem": "advection_none_p2",
+  "degree": 2,
+  "theoretical_order": 3,
+  "richardson_extrapolated": 2.0894579975300923e-07,
+  "entries": [
+    {
+      "level": 1,
+      "ncells": 10,
+      "h": 0.1,
+      "dofs": 30,
+      "error_l2": 0.0008565625902994087,
+      "error_linf": 0.0032832661571023936,
+      "order_l2": null,
+      "order_linf": null
+    },
+    {
+      "level": 2,
+      "ncells": 20,
+      "h": 0.05,
+      "dofs": 60,
+      "error_l2": 0.00010697037886529156,
+      "error_linf": 0.00042434215637310313,
+      "order_l2": 3.001347314339918,
+      "order_linf": 2.9518317905980167
+    },
+    {
+      "level": 3,
+      "ncells": 40,
+      "h": 0.025,
+      "dofs": 120,
+      "error_l2": 1.3372089867164195e-05,
+      "error_linf": 5.340171442108632e-05,
+      "order_l2": 2.9999144948395036,
+      "order_linf": 2.9902700462458203
+    },
+    {
+      "level": 4,
+      "ncells": 80,
+      "h": 0.0125,
+      "dofs": 240,
+      "error_l2": 1.6715687519903751e-06,
+      "error_linf": 6.685220671404091e-06,
+      "order_l2": 2.9999503560836587,
+      "order_linf": 2.997838971361842
+    },
+    {
+      "level": 5,
+      "ncells": 160,
+      "h": 0.00625,
+      "dofs": 480,
+      "error_l2": 2.0894815371931036e-07,
+      "error_linf": 8.359466439483709e-07,
+      "order_l2": 2.9999857784662667,
+      "order_linf": 2.999492415485715
+    }
+  ]
+}

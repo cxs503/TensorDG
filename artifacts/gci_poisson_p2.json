@@ -1,0 +1,11 @@
+{
+  "apparent_order": 2.9968947613939525,
+  "gci_fine_21": 1.2519231218048734,
+  "gci_coarse_21": 9.993851169025604,
+  "gci_fine_32": 1.2502405844242201,
+  "gci_coarse_32": 9.98041981060135,
+  "extrapolated_value": -7.250448614230957e-10,
+  "asymptotic_ratio": 0.1251009809210635,
+  "expected_asymptotic_ratio": 0.12526933817916114,
+  "in_asymptotic_range": true
+}

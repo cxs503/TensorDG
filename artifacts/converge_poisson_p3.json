@@ -1,0 +1,48 @@
+{
+  "problem": "poisson_sipg_p3",
+  "degree": 3,
+  "theoretical_order": 4,
+  "richardson_extrapolated": 1.362702077231918e-09,
+  "entries": [
+    {
+      "level": 1,
+      "ncells": 8,
+      "h": 0.125,
+      "dofs": 1024,
+      "error_l2": 5.560825033209034e-06,
+      "error_linf": null,
+      "order_l2": null,
+      "order_linf": null
+    },
+    {
+      "level": 2,
+      "ncells": 16,
+      "h": 0.0625,
+      "dofs": 4096,
+      "error_l2": 3.4859677473754513e-07,
+      "error_linf": null,
+      "order_l2": 3.9956678180057272,
+      "order_linf": null
+    },
+    {
+      "level": 3,
+      "ncells": 32,
+      "h": 0.03125,
+      "dofs": 16384,
+      "error_l2": 2.1803501879688828e-08,
+      "error_linf": null,
+      "order_l2": 3.9989274502752106,
+      "order_linf": null
+    },
+    {
+      "level": 4,
+      "ncells": 64,
+      "h": 0.015625,
+      "dofs": 65536,
+      "error_l2": 1.3629707212100567e-09,
+      "error_linf": null,
+      "order_l2": 3.9997333899435006,
+      "order_linf": null
+    }
+  ]
+}
