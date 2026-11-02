@@ -100,15 +100,18 @@ def apply_tvb_limiter(
     d_left = avg - avg_pad[:-2]
     d_right = avg_pad[2:] - avg
 
-    # Minmod slope (in reference space the slope coefficient equals the
-    # physical slope * dx/2 for the normalised Legendre basis on [-1,1]).
+    # Minmod slope as a *cell-average increment* (physical slope * dx).
     slope = _minmod(d_left, d_right)  # [ncells, nvar]
 
     limited = coeff.clone()
-    # In troubled cells: keep mode-0, replace mode-1 with minmod slope,
-    # zero out all higher modes.
+    # In troubled cells: keep mode-0, replace mode-1 with the minmod slope and
+    # zero out all higher modes.  The modal basis is the unnormalised Legendre
+    # basis on [-1, 1], for which c_1 = (du/dx) * dx/2 (P_1(xi) = xi), so the
+    # average increment ``slope`` (== (du/dx)*dx) must be halved.  Omitting the
+    # factor doubles the reconstructed slope and breaks the minmod edge values
+    # u_i +/- slope/2; the WENO limiter below already applies the same dx/2.
     t = troubled  # [ncells]
-    limited[t, 1] = slope[t]
+    limited[t, 1] = 0.5 * slope[t]
     if coeff.shape[1] > 2:
         limited[t, 2:] = 0.0
     return limited
