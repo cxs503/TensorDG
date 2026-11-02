@@ -27,6 +27,36 @@ multidimensional shock capturing.
 
 - [Classic DG benchmarks](docs/tutorials/classic-dg-benchmarks.md)
 - [Nonlinear and time-dependent benchmarks](docs/tutorials/nonlinear-dg-benchmarks.md)
+- [Convergence order and GCI verification](docs/tutorials/convergence-verification.md)
+
+## Convergence order and GCI verification
+
+Beyond single-configuration error gates, the kernels are verified against their
+**theoretical orders of accuracy** on mesh sequences, and the mesh-converged
+limit is cross-checked with Richardson extrapolation and the grid convergence
+index (GCI, Roache 1994 / Celik et al. 2008, safety factor 1.25):
+
+- `tensordg/convergence.py`: observed order, pairwise orders, Richardson
+  extrapolation, three-grid GCI, p-refinement decay diagnostics, and scalar QoI
+  extraction from modal DG coefficients.
+- `benchmarks/convergence_study.py`: h-refinement for SIPG Poisson P1--P3,
+  advection P1--P2, heat P1--P2 (dense and matrix-free backends), a
+  Crank--Nicolson dt-refinement study, and p-refinement studies; writes JSON,
+  CSV, figures and a generated Markdown summary with machine verdicts.
+- `tests/test_verification.py`: regression tests that check the estimators
+  against synthetic series with analytically known order, then assert the
+  measured orders of the solvers against `p + 1` and assert that the GCI
+  brackets the true error against the analytic solution.
+
+```bash
+python -m benchmarks.convergence_study     # writes docs/benchmarks/results/convergence
+pytest -q tests/test_verification.py
+```
+
+Results, method details, and the honest limitations (fixed-dt error floor,
+superconvergent point functionals, CPU/float64 scope) are documented in
+[docs/benchmarks/convergence-verification.md](docs/benchmarks/convergence-verification.md)
+and the generated `docs/benchmarks/results/convergence/summary.md`.
 
 ## Quick start
 
@@ -42,6 +72,7 @@ python -m benchmarks.burgers_1d --cells 16 32 64 --degree 2
 python -m benchmarks.heat_1d --cells 16 --degree 2
 python -m benchmarks.lax_1d --cells 400 --degree 3
 python -m benchmarks.isentropic_vortex_2d --cells 192
+python -m benchmarks.convergence_study
 ```
 
 Add `--output-dir PATH` to the benchmark commands to write JSON metrics, CSV
@@ -58,6 +89,9 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
 - Two-dimensional Euler isentropic-vortex verification.
 - Regression tests for conservation, convergence, physical admissibility,
   exact-reference comparisons, and the documented 3% error threshold.
+- Systematic convergence verification: observed order against theoretical order,
+  Richardson extrapolation and GCI mesh independence, p-refinement decay, and
+  cross-backend (dense / sparse / matrix-free) accuracy equivalence.
 
 Sparse/matrix-free elliptic solvers, unstructured meshes, high-order
 multidimensional Euler, limiter performance optimisation, and additional
