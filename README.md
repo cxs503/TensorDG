@@ -1,5 +1,9 @@
 # TensorDG
 
+**Tensor ecosystem vision:** [AI-era ecosystem vision](https://github.com/cxs503/TensorPlatform/blob/main/docs/architecture/TENSOR_ECOSYSTEM_AI_ERA_VISION.md).
+
+**Project charter:** [docs/PROJECT_CHARTER.md](docs/PROJECT_CHARTER.md) — mission, ownership, non-goals, integration, quality gates, and agent rules.
+
 **TensorDG** is a PyTorch-based discontinuous Galerkin (DG) solver project in
 the Tensor scientific-computing ecosystem. The repository grows through
 verified, reproducible numerical benchmarks rather than an unvalidated broad
