@@ -1,0 +1,638 @@
+{
+  "generated_at": "2026-11-02T16:57:57Z",
+  "mode": "full",
+  "standards": {
+    "platform_acceptance": "> 15% deviation unacceptable",
+    "float64_eps": 2.2e-16,
+    "shock_speed_criterion": 0.01
+  },
+  "periodic": {
+    "rows": [
+      {
+        "case": "linear_advection_1d",
+        "degree": 1,
+        "ncells": 16,
+        "invariant": "mass",
+        "value_initial": 0.0,
+        "value_final": 9.194034422677078e-17,
+        "absolute_drift": 9.194034422677078e-17,
+        "scale": 0.6334045270025607,
+        "scaled_drift": 1.4515264780606641e-16
+      },
+      {
+        "case": "linear_advection_1d",
+        "degree": 1,
+        "ncells": 32,
+        "invariant": "mass",
+        "value_initial": -6.071532165918825e-18,
+        "value_final": 1.8474805019152996e-16,
+        "absolute_drift": 1.9081958235744878e-16,
+        "scale": 0.6362067506475452,
+        "scaled_drift": 2.9993328766667194e-16
+      },
+      {
+        "case": "linear_advection_1d",
+        "degree": 1,
+        "ncells": 64,
+        "invariant": "mass",
+        "value_initial": 1.5720931501039814e-17,
+        "value_final": -4.185020385794047e-17,
+        "absolute_drift": 5.757113535898029e-17,
+        "scale": 0.636567616600473,
+        "scaled_drift": 9.043993734150866e-17
+      },
+      {
+        "case": "linear_advection_1d",
+        "degree": 2,
+        "ncells": 16,
+        "invariant": "mass",
+        "value_initial": 1.734723475976807e-17,
+        "value_final": -7.28583859910259e-17,
+        "absolute_drift": 9.020562075079397e-17,
+        "scale": 0.6366147741897714,
+        "scaled_drift": 1.4169577020200313e-16
+      },
+      {
+        "case": "linear_advection_1d",
+        "degree": 2,
+        "ncells": 32,
+        "invariant": "mass",
+        "value_initial": 1.1709383462843448e-17,
+        "value_final": 5.204170427930421e-17,
+        "absolute_drift": 4.0332320816460765e-17,
+        "scale": 0.6366196128459465,
+        "scaled_drift": 6.335387726457095e-17
+      },
+      {
+        "case": "linear_advection_1d",
+        "degree": 2,
+        "ncells": 64,
+        "invariant": "mass",
+        "value_initial": 6.830473686658678e-18,
+        "value_final": -5.99563801384484e-17,
+        "absolute_drift": 6.678685382510707e-17,
+        "scale": 0.6366197673388299,
+        "scaled_drift": 1.0490854549535362e-16
+      },
+      {
+        "case": "linear_advection_1d",
+        "degree": 3,
+        "ncells": 16,
+        "invariant": "mass",
+        "value_initial": 1.0408340855860843e-17,
+        "value_final": 5.724587470723463e-17,
+        "absolute_drift": 4.683753385137379e-17,
+        "scale": 0.6366197684521412,
+        "scaled_drift": 7.357222658236518e-17
+      },
+      {
+        "case": "linear_advection_1d",
+        "degree": 3,
+        "ncells": 32,
+        "invariant": "mass",
+        "value_initial": 8.239936510889834e-18,
+        "value_final": 1.218643241873707e-16,
+        "absolute_drift": 1.1362438767648086e-16,
+        "scale": 0.6366197723361504,
+        "scaled_drift": 1.7848077080534734e-16
+      },
+      {
+        "case": "linear_advection_1d",
+        "degree": 3,
+        "ncells": 64,
+        "invariant": "mass",
+        "value_initial": -6.938893903907228e-18,
+        "value_final": -1.194790794079026e-16,
+        "absolute_drift": 1.1254018550399536e-16,
+        "scale": 0.6366197723673341,
+        "scaled_drift": 1.7677771000656084e-16
+      },
+      {
+        "case": "linear_advection_2d",
+        "degree": 1,
+        "ncells": 16,
+        "invariant": "mass",
+        "value_initial": 0.9999999999999998,
+        "value_final": 0.9999999999999999,
+        "absolute_drift": 1.1102230246251565e-16,
+        "scale": 0.9999999999999999,
+        "scaled_drift": 1.1102230246251568e-16
+      },
+      {
+        "case": "linear_advection_2d",
+        "degree": 1,
+        "ncells": 24,
+        "invariant": "mass",
+        "value_initial": 1.0,
+        "value_final": 1.0,
+        "absolute_drift": 0.0,
+        "scale": 1.0,
+        "scaled_drift": 0.0
+      },
+      {
+        "case": "linear_advection_2d",
+        "degree": 2,
+        "ncells": 16,
+        "invariant": "mass",
+        "value_initial": 1.0000000000000004,
+        "value_final": 1.0000000000000004,
+        "absolute_drift": 0.0,
+        "scale": 1.0000000000000004,
+        "scaled_drift": 0.0
+      },
+      {
+        "case": "linear_advection_2d",
+        "degree": 2,
+        "ncells": 24,
+        "invariant": "mass",
+        "value_initial": 1.0000000000000004,
+        "value_final": 1.0,
+        "absolute_drift": 4.440892098500626e-16,
+        "scale": 1.0,
+        "scaled_drift": 4.440892098500626e-16
+      },
+      {
+        "case": "burgers_1d",
+        "degree": 2,
+        "ncells": 32,
+        "invariant": "mass",
+        "value_initial": 0.20000000000000004,
+        "value_final": 0.19999999999999812,
+        "absolute_drift": 1.915134717478395e-15,
+        "scale": 0.5242593889084699,
+        "scaled_drift": 3.65302893566825e-15
+      },
+      {
+        "case": "burgers_1d",
+        "degree": 2,
+        "ncells": 64,
+        "invariant": "mass",
+        "value_initial": 0.2,
+        "value_final": 0.19999999999999613,
+        "absolute_drift": 3.885780586188048e-15,
+        "scale": 0.5247365049447379,
+        "scaled_drift": 7.405203467971558e-15
+      }
+    ],
+    "max_scaled_drift": 7.405203467971558e-15,
+    "drift_grid_ratio": 1.6049618351454409
+  },
+  "euler_budget": {
+    "initial": {
+      "mass": 0.5625,
+      "momentum": 0.0,
+      "energy": 1.3750000000000002
+    },
+    "analytic_increment": {
+      "mass": 0.0,
+      "momentum": 0.18000000000000002,
+      "energy": 0.0
+    },
+    "rows": [
+      {
+        "flux": "hllc",
+        "ncells": 400,
+        "steps": 434,
+        "mass": 0.5624999999999922,
+        "momentum": 0.17999999999999763,
+        "energy": 1.3749999999999827,
+        "mass_drift": 1.3816108750890837e-14,
+        "energy_drift": 1.2757471846601797e-14,
+        "momentum_increment": 0.17999999999999763,
+        "momentum_increment_analytic": 0.18000000000000002,
+        "momentum_budget_error": 1.3260997238578257e-14
+      },
+      {
+        "flux": "hllc",
+        "ncells": 800,
+        "steps": 872,
+        "mass": 0.5624999999999865,
+        "momentum": 0.179999999999995,
+        "energy": 1.3749999999999711,
+        "mass_drift": 2.4079503822981173e-14,
+        "energy_drift": 2.1154795087402978e-14,
+        "momentum_increment": 0.179999999999995,
+        "momentum_increment_analytic": 0.18000000000000002,
+        "momentum_budget_error": 2.790977325793796e-14
+      },
+      {
+        "flux": "hllc",
+        "ncells": 1600,
+        "steps": 1749,
+        "mass": 0.5624999999999764,
+        "momentum": 0.17999999999999006,
+        "energy": 1.374999999999945,
+        "mass_drift": 4.204044519913926e-14,
+        "energy_drift": 4.0210259364605664e-14,
+        "momentum_increment": 0.17999999999999006,
+        "momentum_increment_analytic": 0.18000000000000002,
+        "momentum_budget_error": 5.535695358894877e-14
+      },
+      {
+        "flux": "rusanov",
+        "ncells": 400,
+        "steps": 431,
+        "mass": 0.562499999999992,
+        "momentum": 0.1799999999999977,
+        "energy": 1.3749999999999813,
+        "mass_drift": 1.4210854715202004e-14,
+        "energy_drift": 1.3726393759001933e-14,
+        "momentum_increment": 0.1799999999999977,
+        "momentum_increment_analytic": 0.18000000000000002,
+        "momentum_budget_error": 1.2952601953960159e-14
+      },
+      {
+        "flux": "rusanov",
+        "ncells": 800,
+        "steps": 869,
+        "mass": 0.562499999999987,
+        "momentum": 0.1799999999999948,
+        "energy": 1.3749999999999676,
+        "mass_drift": 2.3092638912203256e-14,
+        "energy_drift": 2.3738586853803343e-14,
+        "momentum_increment": 0.1799999999999948,
+        "momentum_increment_analytic": 0.18000000000000002,
+        "momentum_budget_error": 2.898915675410131e-14
+      },
+      {
+        "flux": "rusanov",
+        "ncells": 1600,
+        "steps": 1746,
+        "mass": 0.5624999999999777,
+        "momentum": 0.17999999999999006,
+        "energy": 1.374999999999946,
+        "mass_drift": 3.967196941327226e-14,
+        "energy_drift": 3.940282443760555e-14,
+        "momentum_increment": 0.17999999999999006,
+        "momentum_increment_analytic": 0.18000000000000002,
+        "momentum_budget_error": 5.535695358894877e-14
+      }
+    ],
+    "history": [
+      {
+        "time": 0.05,
+        "momentum": 0.04499999999999968,
+        "momentum_analytic": 0.045000000000000005
+      },
+      {
+        "time": 0.1,
+        "momentum": 0.08999999999999882,
+        "momentum_analytic": 0.09000000000000001
+      },
+      {
+        "time": 0.15,
+        "momentum": 0.1349999999999972,
+        "momentum_analytic": 0.135
+      },
+      {
+        "time": 0.2,
+        "momentum": 0.179999999999995,
+        "momentum_analytic": 0.18000000000000002
+      }
+    ],
+    "max_mass_drift": 4.204044519913926e-14,
+    "max_energy_drift": 4.0210259364605664e-14,
+    "max_momentum_budget_error": 5.535695358894877e-14,
+    "hypothesis_errors": {
+      "transmissive_analytic": 3.2073109600282297e-14,
+      "reflecting_wall": 0.9999999999999679
+    }
+  },
+  "shock": {
+    "star": {
+      "density": 0.2655737117053071,
+      "velocity": 0.9274526200489499,
+      "pressure": 0.30313017805064685,
+      "shock_speed": 1.752155732030178,
+      "shock_speed_momentum_jump": 1.7521557320301786,
+      "jump_consistency": 3.801795711407808e-16,
+      "sensor_level": 0.19528685585265354
+    },
+    "level": 0.19528685585265354,
+    "times": [
+      0.1,
+      0.14,
+      0.18,
+      0.22
+    ],
+    "exact_positions": [
+      0.6752125,
+      0.7453125,
+      0.8153875,
+      0.8854625
+    ],
+    "exact_sensor_speed": 1.752062500000002,
+    "sensor_bias": 1.1761046639024997e-05,
+    "jump_consistency": 3.801795711407808e-16,
+    "rows": [
+      {
+        "ncells": 400,
+        "positions": [
+          0.6774996587441461,
+          0.7476442327951278,
+          0.8177554636134647,
+          0.8878553617494995
+        ],
+        "speed": 1.7529458495859942,
+        "intercept": 0.5022173432918008,
+        "speed_error": 0.00045094025683480314
+      },
+      {
+        "ncells": 800,
+        "positions": [
+          0.6764031089577685,
+          0.7464991219676049,
+          0.8165926298916591,
+          0.886686141673767
+        ],
+        "speed": 1.7523565151801255,
+        "intercept": 0.5011682081938801,
+        "speed_error": 0.00011459206865984124
+      },
+      {
+        "ncells": 1600,
+        "positions": [
+          0.6758196730485828,
+          0.7459138509594484,
+          0.816003283961774,
+          0.8860899470749535
+        ],
+        "speed": 1.7522506377035958,
+        "intercept": 0.5005965867286145,
+        "speed_error": 5.4165090284463886e-05
+      }
+    ],
+    "max_speed_error": 0.00045094025683480314,
+    "refinement_rates": [
+      1.9764291162839316,
+      1.081071962437777
+    ],
+    "speed_monotone": true
+  },
+  "shock_precursor": {
+    "window": [
+      0.9,
+      1.0
+    ],
+    "final_time": 0.2,
+    "control_length": 2.0,
+    "rows": [
+      {
+        "ncells": 100,
+        "dx": 0.01,
+        "window_max_walled": 0.004064552076475681,
+        "window_max_doubled_domain": 0.004064552076475679,
+        "relative_gap": 4.267932710265488e-16,
+        "tail_width_cells": 1.0049898538312745
+      },
+      {
+        "ncells": 200,
+        "dx": 0.005,
+        "window_max_walled": 4.832947264957221e-05,
+        "window_max_doubled_domain": 4.832947264957221e-05,
+        "relative_gap": 0.0,
+        "tail_width_cells": 1.044613116502992
+      },
+      {
+        "ncells": 400,
+        "dx": 0.0025,
+        "window_max_walled": 4.796108350158848e-09,
+        "window_max_doubled_domain": 4.796108350158848e-09,
+        "relative_gap": 0.0,
+        "tail_width_cells": 1.0655423756417188
+      },
+      {
+        "ncells": 800,
+        "dx": 0.00125,
+        "window_max_walled": 5.269036112253678e-18,
+        "window_max_doubled_domain": 5.269036112253678e-18,
+        "relative_gap": 0.0,
+        "tail_width_cells": 1.0667063796362433
+      }
+    ],
+    "decay_rate": 16.16621875659918,
+    "worst_amplitude_fine": 4.796108350158848e-09,
+    "worst_relative_gap": 4.267932710265488e-16,
+    "tail_width_cells": [
+      1.0049898538312745,
+      1.044613116502992,
+      1.0655423756417188,
+      1.0667063796362433
+    ]
+  },
+  "field_error": {
+    "final_time": 0.2,
+    "rows": [
+      {
+        "ncells": 1600,
+        "steps": 1749,
+        "relative_l2": {
+          "density": 0.01475192509098844,
+          "velocity": 0.03544011175923384,
+          "pressure": 0.01069257912256062
+        }
+      },
+      {
+        "ncells": 3200,
+        "steps": 3502,
+        "relative_l2": {
+          "density": 0.011843820997600632,
+          "velocity": 0.028868834533913652,
+          "pressure": 0.0074801256203549755
+        }
+      }
+    ],
+    "worst": 0.03544011175923384,
+    "finest": {
+      "density": 0.011843820997600632,
+      "velocity": 0.028868834533913652,
+      "pressure": 0.0074801256203549755
+    },
+    "finest_worst": 0.028868834533913652
+  },
+  "temporal": {
+    "advection_rk4": {
+      "integrator": "RK4 | linear advection P2, 40 cells",
+      "dt": [
+        0.002,
+        0.001
+      ],
+      "steps": [
+        500,
+        1000,
+        2000
+      ],
+      "self_differences": [
+        1.2240778968816146e-09,
+        7.650517867182014e-11
+      ],
+      "successive_orders": [
+        3.9999941519676514
+      ],
+      "fit_order": 3.999994151967657
+    },
+    "burgers_ssp_rk3": {
+      "integrator": "SSP-RK3 | Burgers P2, 64 cells",
+      "dt": [
+        0.0006240751251690296,
+        0.00031159973168334854
+      ],
+      "steps": [
+        160,
+        320,
+        640
+      ],
+      "self_differences": [
+        4.967864952844216e-09,
+        6.209847718285296e-10
+      ],
+      "successive_orders": [
+        2.9939313004978603
+      ],
+      "fit_order": 2.9939313004978674
+    }
+  },
+  "criteria": [
+    {
+      "name": "periodic_mass_drift_scaled",
+      "value": 7.405203467971558e-15,
+      "threshold": 1e-12,
+      "comparison": "<=",
+      "pass": true,
+      "note": "worst relative mass drift, periodic advection 1-D/2-D + Burgers"
+    },
+    {
+      "name": "periodic_drift_grid_independence",
+      "value": 1.6049618351454409,
+      "threshold": 10.0,
+      "comparison": "<=",
+      "pass": true,
+      "note": "round-off drift of the coarsest vs the finest mesh"
+    },
+    {
+      "name": "euler_mass_drift",
+      "value": 4.204044519913926e-14,
+      "threshold": 1e-12,
+      "comparison": "<=",
+      "pass": true,
+      "note": "Sod mass integral vs initial mass (waves stay inside)"
+    },
+    {
+      "name": "euler_energy_drift",
+      "value": 4.0210259364605664e-14,
+      "threshold": 1e-12,
+      "comparison": "<=",
+      "pass": true,
+      "note": "Sod total-energy integral vs initial energy"
+    },
+    {
+      "name": "euler_momentum_budget",
+      "value": 5.535695358894877e-14,
+      "threshold": 1e-06,
+      "comparison": "<=",
+      "pass": true,
+      "note": "measured momentum increment vs analytic t*(p_L-p_R)"
+    },
+    {
+      "name": "rh_jump_consistency",
+      "value": 3.801795711407808e-16,
+      "threshold": 1e-10,
+      "comparison": "<=",
+      "pass": true,
+      "note": "RH speed from the mass jump vs from the momentum jump"
+    },
+    {
+      "name": "shock_sensor_bias",
+      "value": 1.1761046639024997e-05,
+      "threshold": 0.001,
+      "comparison": "<=",
+      "pass": true,
+      "note": "level-crossing sensor on the exact profile vs analytic shock path"
+    },
+    {
+      "name": "shock_speed_error_finest",
+      "value": 5.4165090284463886e-05,
+      "threshold": 0.01,
+      "comparison": "<=",
+      "pass": true,
+      "note": "finest mesh shock speed vs Rankine-Hugoniot speed"
+    },
+    {
+      "name": "shock_speed_error_coarsest",
+      "value": 0.00045094025683480314,
+      "threshold": 0.01,
+      "comparison": "<=",
+      "pass": true,
+      "note": "coarsest mesh shock speed vs Rankine-Hugoniot speed"
+    },
+    {
+      "name": "shock_speed_error_not_worse_under_refinement",
+      "value": 1.0,
+      "threshold": 1.0,
+      "comparison": ">=",
+      "pass": true,
+      "note": "shock-speed error at the finest mesh <= coarsest mesh"
+    },
+    {
+      "name": "precursor_amplitude_fine_mesh",
+      "value": 4.796108350158848e-09,
+      "threshold": 1e-06,
+      "comparison": "<=",
+      "pass": true,
+      "note": "residual |rho*u| in an untouched window, meshes >= 400 cells"
+    },
+    {
+      "name": "precursor_domain_independence",
+      "value": 4.267932710265488e-16,
+      "threshold": 1e-06,
+      "comparison": "<=",
+      "pass": true,
+      "note": "same window on a doubled domain at the same dx (rules out the wall)"
+    },
+    {
+      "name": "precursor_decay_rate",
+      "value": 16.16621875659918,
+      "threshold": 2.0,
+      "comparison": ">=",
+      "pass": true,
+      "note": "fitted decay rate of the residual amplitude in h"
+    },
+    {
+      "name": "precursor_tail_width",
+      "value": 1.0667063796362433,
+      "threshold": 5.0,
+      "comparison": "<=",
+      "pass": true,
+      "note": "exponential tail width in cells (O(1) cells = discrete-shock artefact)"
+    },
+    {
+      "name": "sod_field_error_vs_exact",
+      "value": 0.028868834533913652,
+      "threshold": 0.03,
+      "comparison": "<=",
+      "pass": true,
+      "note": "worst relative L2 of density/velocity/pressure vs the exact Riemann solution, at the finest computed resolution"
+    },
+    {
+      "name": "rk4_temporal_order",
+      "value": 3.999994151967657,
+      "threshold": 3.5,
+      "comparison": ">=",
+      "pass": true,
+      "note": "measured RK4 order on a fixed mesh (theory 4)"
+    },
+    {
+      "name": "ssp_rk3_temporal_order",
+      "value": 2.9939313004978674,
+      "threshold": 2.6,
+      "comparison": ">=",
+      "pass": true,
+      "note": "measured SSP-RK3 order on a fixed mesh (theory 3)"
+    }
+  ],
+  "summary": {
+    "criteria_total": 17,
+    "criteria_passed": 17,
+    "all_pass": true
+  }
+}
