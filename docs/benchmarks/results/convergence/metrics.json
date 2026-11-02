@@ -1,0 +1,837 @@
+{
+  "driver": "benchmarks/convergence_study.py",
+  "order_tolerance": 0.2,
+  "safety_factor": 1.25,
+  "h_studies": {
+    "poisson2d_p1": {
+      "problem": "poisson_2d",
+      "backend": "dense",
+      "degree": 1,
+      "theory_order": 2.0,
+      "qoi": "u_h(0.5, 0.5)",
+      "qoi_exact": 1.0,
+      "qoi_values": [
+        1.052199569421183,
+        1.0129062281324082,
+        1.0032163084849037,
+        1.0008034142672517
+      ],
+      "resolutions": [
+        4.0,
+        8.0,
+        16.0,
+        32.0
+      ],
+      "step_sizes": [
+        0.25,
+        0.125,
+        0.0625,
+        0.03125
+      ],
+      "errors": [
+        0.06048830128081383,
+        0.015186307920393367,
+        0.00380026186743542,
+        0.0009502798990194954
+      ],
+      "loglog_slopes": [
+        -1.9938849794949636,
+        -1.9986004259900572,
+        -1.9996744168490308
+      ],
+      "pairwise_orders": [
+        1.9938849794949633,
+        1.9986004259900576,
+        1.999674416849031
+      ],
+      "observed_order_lsq": 1.9975079892992205,
+      "theoretical_order": 2.0,
+      "order_deviation": -0.0024920107007795345,
+      "order_tolerance": 0.2,
+      "order_within_tolerance": true,
+      "pairwise_within_tolerance": true,
+      "gci": {
+        "fine": 1.0008034142672517,
+        "medium": 1.0032163084849037,
+        "coarse": 1.0129062281324082,
+        "refinement": [
+          2.0,
+          2.0
+        ],
+        "safety_factor": 1.25,
+        "relative_change_percent": 0.24109572202235452,
+        "order_observed": 2.0057200337621217,
+        "extrapolated": 1.0000033540556033,
+        "gci_fine_percent": 0.09992724348294811,
+        "gci_medium_percent": 0.40033171337604284,
+        "asymptotic_ratio": 0.9975948415139941,
+        "in_asymptotic_range": true
+      }
+    },
+    "poisson2d_p2": {
+      "problem": "poisson_2d",
+      "backend": "dense",
+      "degree": 2,
+      "theory_order": 3.0,
+      "qoi": "u_h(0.5, 0.5)",
+      "qoi_exact": 1.0,
+      "qoi_values": [
+        1.0100938739214194,
+        1.0005422674021398,
+        1.000032485882202,
+        1.000002010351792
+      ],
+      "resolutions": [
+        2.0,
+        4.0,
+        8.0,
+        16.0
+      ],
+      "step_sizes": [
+        0.5,
+        0.25,
+        0.125,
+        0.0625
+      ],
+      "errors": [
+        0.02811856712398161,
+        0.003763554936267278,
+        0.00047861928523596864,
+        6.01541657391906e-05
+      ],
+      "loglog_slopes": [
+        -2.901355143290561,
+        -2.9751455961474207,
+        -2.992141975128315
+      ],
+      "pairwise_orders": [
+        2.901355143290561,
+        2.975145596147421,
+        2.9921419751283165
+      ],
+      "observed_order_lsq": 2.958107373984631,
+      "theoretical_order": 3.0,
+      "order_deviation": -0.04189262601536914,
+      "order_tolerance": 0.2,
+      "order_within_tolerance": true,
+      "pairwise_within_tolerance": true,
+      "gci": {
+        "fine": 1.000002010351792,
+        "medium": 1.000032485882202,
+        "coarse": 1.0005422674021398,
+        "refinement": [
+          2.0,
+          2.0
+        ],
+        "safety_factor": 1.25,
+        "relative_change_percent": 0.0030475469143720507,
+        "order_observed": 4.0641558397442585,
+        "extrapolated": 1.0000000726377343,
+        "gci_fine_percent": 0.00024221377025976701,
+        "gci_medium_percent": 0.0040515239411319775,
+        "asymptotic_ratio": 0.9999695254595822,
+        "in_asymptotic_range": true
+      }
+    },
+    "poisson2d_p3": {
+      "problem": "poisson_2d",
+      "backend": "dense",
+      "degree": 3,
+      "theory_order": 4.0,
+      "qoi": "u_h(0.5, 0.5)",
+      "qoi_exact": 1.0,
+      "qoi_values": [
+        0.9998828744985667,
+        0.9999977820742688,
+        0.9999999640314241
+      ],
+      "resolutions": [
+        2.0,
+        4.0,
+        8.0
+      ],
+      "step_sizes": [
+        0.5,
+        0.25,
+        0.125
+      ],
+      "errors": [
+        0.0026874583286378866,
+        0.00017581122687812347,
+        1.1121650064638604e-05
+      ],
+      "loglog_slopes": [
+        -3.9341432791046986,
+        -3.982584445788754
+      ],
+      "pairwise_orders": [
+        3.9341432791047,
+        3.9825844457887523
+      ],
+      "observed_order_lsq": 3.9583638624467254,
+      "theoretical_order": 4.0,
+      "order_deviation": -0.041636137553274555,
+      "order_tolerance": 0.2,
+      "order_within_tolerance": true,
+      "pairwise_within_tolerance": true,
+      "gci": {
+        "fine": 0.9999999640314241,
+        "medium": 0.9999977820742688,
+        "coarse": 0.9998828744985667,
+        "refinement": [
+          2.0,
+          2.0
+        ],
+        "safety_factor": 1.25,
+        "relative_change_percent": 0.00021819572337713545,
+        "order_observed": 5.718707332527991,
+        "extrapolated": 1.0000000062661627,
+        "gci_fine_percent": 5.2793425089814495e-06,
+        "gci_medium_percent": 0.00027802460336819534,
+        "asymptotic_ratio": 1.000002181961995,
+        "in_asymptotic_range": true
+      }
+    },
+    "advection1d_p1": {
+      "problem": "advection_1d",
+      "backend": "dense",
+      "degree": 1,
+      "theory_order": 2.0,
+      "qoi": "||u_h||_L2",
+      "qoi_exact": 0.7071067811865475,
+      "qoi_values": [
+        0.7066519099142163,
+        0.7070483368282636,
+        0.7070993870332314
+      ],
+      "resolutions": [
+        20.0,
+        40.0,
+        80.0
+      ],
+      "step_sizes": [
+        0.05,
+        0.025,
+        0.0125
+      ],
+      "errors": [
+        0.004227457258815895,
+        0.0010606411196863975,
+        0.00026538059709957953
+      ],
+      "loglog_slopes": [
+        -1.9948535824200782,
+        -1.9988017868853
+      ],
+      "pairwise_orders": [
+        1.9948535824200784,
+        1.9988017868853003
+      ],
+      "observed_order_lsq": 1.9968276846526891,
+      "theoretical_order": 2.0,
+      "order_deviation": -0.0031723153473108834,
+      "order_tolerance": 0.2,
+      "order_within_tolerance": true,
+      "pairwise_within_tolerance": true,
+      "gci": {
+        "fine": 0.7070993870332314,
+        "medium": 0.7070483368282636,
+        "coarse": 0.7066519099142163,
+        "refinement": [
+          2.0,
+          2.0
+        ],
+        "safety_factor": 1.25,
+        "relative_change_percent": 0.007219664718131444,
+        "order_observed": 2.9570662540054555,
+        "extrapolated": 0.7071069327749063,
+        "gci_fine_percent": 0.0013339252255942658,
+        "gci_medium_percent": 0.010359254026666593,
+        "asymptotic_ratio": 1.000072201859913,
+        "in_asymptotic_range": true
+      }
+    },
+    "advection1d_p2": {
+      "problem": "advection_1d",
+      "backend": "dense",
+      "degree": 2,
+      "theory_order": 3.0,
+      "qoi": "||u_h||_L2",
+      "qoi_exact": 0.7071067811865475,
+      "qoi_values": [
+        0.707092710987056,
+        0.7071063226453093,
+        0.7071067666241379
+      ],
+      "resolutions": [
+        10.0,
+        20.0,
+        40.0
+      ],
+      "step_sizes": [
+        0.1,
+        0.05,
+        0.025
+      ],
+      "errors": [
+        0.0008555471259650505,
+        0.00010695541533664239,
+        1.337196904574213e-05
+      ],
+      "loglog_slopes": [
+        -2.9998377941592462,
+        -2.9997257049385246
+      ],
+      "pairwise_orders": [
+        2.9998377941592436,
+        2.999725704938525
+      ],
+      "observed_order_lsq": 2.999781749548884,
+      "theoretical_order": 3.0,
+      "order_deviation": -0.00021825045111611985,
+      "order_tolerance": 0.2,
+      "order_within_tolerance": true,
+      "pairwise_within_tolerance": true,
+      "gci": {
+        "fine": 0.7071067666241379,
+        "medium": 0.7071063226453093,
+        "coarse": 0.707092710987056,
+        "refinement": [
+          2.0,
+          2.0
+        ],
+        "safety_factor": 1.25,
+        "relative_change_percent": 6.278808937298306e-05,
+        "order_observed": 4.938208142633813,
+        "extrapolated": 0.707106781593913,
+        "gci_fine_percent": 2.646307434865182e-06,
+        "gci_medium_percent": 8.113147009199398e-05,
+        "asymptotic_ratio": 1.0000006278812879,
+        "in_asymptotic_range": true
+      }
+    },
+    "heat1d_p1": {
+      "problem": "heat_1d",
+      "backend": "dense",
+      "degree": 1,
+      "time_steps": 1000,
+      "theory_order": 2.0,
+      "qoi": "domain mean of u_h",
+      "qoi_exact": 0.23727317953048888,
+      "qoi_values": [
+        0.2342421454430607,
+        0.23651944254251978,
+        0.23708498505465092
+      ],
+      "resolutions": [
+        8.0,
+        16.0,
+        32.0
+      ],
+      "step_sizes": [
+        0.125,
+        0.0625,
+        0.03125
+      ],
+      "errors": [
+        0.013940394732929387,
+        0.0034823735376275753,
+        0.0008704457606206922
+      ],
+      "loglog_slopes": [
+        -2.001128545367834,
+        -2.000244654010668
+      ],
+      "pairwise_orders": [
+        2.001128545367835,
+        2.000244654010668
+      ],
+      "observed_order_lsq": 2.000686599689252,
+      "theoretical_order": 2.0,
+      "order_deviation": 0.0006865996892519988,
+      "order_tolerance": 0.2,
+      "order_within_tolerance": true,
+      "pairwise_within_tolerance": true,
+      "gci": {
+        "fine": 0.23708498505465092,
+        "medium": 0.23651944254251978,
+        "coarse": 0.2342421454430607,
+        "refinement": [
+          2.0,
+          2.0
+        ],
+        "safety_factor": 1.25,
+        "relative_change_percent": 0.238539995268271,
+        "order_observed": 2.0096151382688814,
+        "extrapolated": 0.23727183329527804,
+        "gci_fine_percent": 0.09851332454902165,
+        "gci_medium_percent": 0.39763684153734846,
+        "asymptotic_ratio": 1.002391103691315,
+        "in_asymptotic_range": true
+      },
+      "gci_scope_note": "fixed dt: GCI estimates the h-discretisation part only, Crank-Nicolson time error is a separate floor (see time_studies)"
+    },
+    "heat1d_p2": {
+      "problem": "heat_1d",
+      "backend": "dense",
+      "degree": 2,
+      "time_steps": 1000,
+      "theory_order": 3.0,
+      "qoi": "domain mean of u_h",
+      "qoi_exact": 0.23727317953048888,
+      "qoi_values": [
+        0.23727326764080076,
+        0.23727316704081472,
+        0.23727316092051243
+      ],
+      "resolutions": [
+        8.0,
+        16.0,
+        32.0
+      ],
+      "step_sizes": [
+        0.125,
+        0.0625,
+        0.03125
+      ],
+      "errors": [
+        0.00033924904183745767,
+        4.256308385445032e-05,
+        5.330679781328437e-06
+      ],
+      "loglog_slopes": [
+        -2.994670152570353,
+        -2.9972112574418532
+      ],
+      "pairwise_orders": [
+        2.994670152570354,
+        2.9972112574418532
+      ],
+      "observed_order_lsq": 2.9959407050061047,
+      "theoretical_order": 3.0,
+      "order_deviation": -0.004059294993895346,
+      "order_tolerance": 0.2,
+      "order_within_tolerance": true,
+      "pairwise_within_tolerance": true,
+      "gci": {
+        "fine": 0.23727316092051243,
+        "medium": 0.23727316704081472,
+        "coarse": 0.23727326764080076,
+        "refinement": [
+          2.0,
+          2.0
+        ],
+        "safety_factor": 1.25,
+        "relative_change_percent": 2.5794330336396824e-06,
+        "order_observed": 4.038883382678908,
+        "extrapolated": 0.23727316052404518,
+        "gci_fine_percent": 2.0886646319480744e-07,
+        "gci_medium_percent": 3.4331576666884078e-06,
+        "asymptotic_ratio": 0.9999999742056703,
+        "in_asymptotic_range": true
+      },
+      "gci_scope_note": "fixed dt: GCI estimates the h-discretisation part only, Crank-Nicolson time error is a separate floor (see time_studies)"
+    },
+    "poisson2d_p1_matrixfree": {
+      "problem": "poisson_2d",
+      "backend": "matrix-free",
+      "degree": 1,
+      "theory_order": 2.0,
+      "qoi": "relative L2 error",
+      "qoi_exact": null,
+      "qoi_values": [
+        0.060488301280792155,
+        0.01518630792032077,
+        0.006754375688257433
+      ],
+      "resolutions": [
+        4.0,
+        8.0,
+        12.0
+      ],
+      "step_sizes": [
+        0.25,
+        0.125,
+        0.08333333333333333
+      ],
+      "errors": [
+        0.060488301280792155,
+        0.01518630792032077,
+        0.006754375688257433
+      ],
+      "loglog_slopes": [
+        -1.993884979501343,
+        -1.9982081466494057
+      ],
+      "pairwise_orders": [
+        1.993884979501343,
+        1.9982081466494057
+      ],
+      "observed_order_lsq": 1.9953087195387615,
+      "theoretical_order": 2.0,
+      "order_deviation": -0.004691280461238456,
+      "order_tolerance": 0.2,
+      "order_within_tolerance": true,
+      "pairwise_within_tolerance": true,
+      "gci": null,
+      "cg_iterations": 93,
+      "cg_residual_norm": 1.8953647594928846e-13
+    }
+  },
+  "p_studies": {
+    "advection_1d_cells32": {
+      "degrees": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "errors": [
+        0.1084723245479274,
+        0.001656181013396372,
+        2.6116250887251304e-05,
+        3.1536272158930677e-07
+      ],
+      "reduction_factors": [
+        65.49545229085828,
+        63.415726114227205,
+        82.81337361510406
+      ],
+      "decay_rates": [
+        4.181980709556866,
+        4.149711876650595,
+        4.416589565439362
+      ],
+      "lsq_decay_rate": 4.239455833159107,
+      "monotone_decreasing": true,
+      "superlinear": true
+    },
+    "poisson_2d_cells8": {
+      "degrees": [
+        1,
+        2,
+        3
+      ],
+      "errors": [
+        0.015186307920393367,
+        0.00047861928523596864,
+        1.1121650064638604e-05
+      ],
+      "reduction_factors": [
+        31.729410804886854,
+        43.034916802295676
+      ],
+      "decay_rates": [
+        3.4572440363992767,
+        3.762011804842817
+      ],
+      "lsq_decay_rate": 3.609627920621046,
+      "monotone_decreasing": true,
+      "superlinear": true
+    },
+    "heat_1d_cells16": {
+      "degrees": [
+        1,
+        2,
+        3
+      ],
+      "errors": [
+        0.0034823735376275753,
+        4.256308385445032e-05,
+        4.999484596214528e-07
+      ],
+      "reduction_factors": [
+        81.81675814506248,
+        85.13494348333009
+      ],
+      "decay_rates": [
+        4.404482089925314,
+        4.444237568024734
+      ],
+      "lsq_decay_rate": 4.4243598289750246,
+      "monotone_decreasing": true,
+      "superlinear": true
+    }
+  },
+  "time_studies": {
+    "heat1d_p2_dt": {
+      "problem": "heat_1d",
+      "degree": 2,
+      "cells": 32,
+      "theory_order": 2.0,
+      "qoi": "relative error of the domain mean versus dt",
+      "resolutions": [
+        250.0,
+        500.0,
+        1000.0,
+        2000.0
+      ],
+      "step_sizes": [
+        0.004,
+        0.002,
+        0.001,
+        0.0005
+      ],
+      "errors": [
+        0.00013179929656434937,
+        3.168388351347201e-05,
+        7.843270143546343e-06,
+        1.834666046791936e-06
+      ],
+      "loglog_slopes": [
+        -2.0565215870492874,
+        -2.0142219815647393,
+        -2.0959378097355312
+      ],
+      "pairwise_orders": [
+        2.056521587049289,
+        2.014221981564739,
+        2.0959378097355312
+      ],
+      "observed_order_lsq": 2.0514266116613395,
+      "theoretical_order": 2.0,
+      "order_deviation": 0.05142661166133955,
+      "order_tolerance": 0.2,
+      "order_within_tolerance": true,
+      "pairwise_within_tolerance": true
+    }
+  },
+  "checks": [
+    {
+      "study": "poisson2d_p1",
+      "criterion": "observed L2 order within 0.2 of theory 2.0",
+      "value": 1.9975079892992205,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "poisson2d_p1",
+      "criterion": "GCI(fine) bounds the true QoI error",
+      "value": [
+        0.09992724348294811,
+        0.0803414267251723
+      ],
+      "status": "PASS",
+      "passed": true,
+      "note": null
+    },
+    {
+      "study": "poisson2d_p1",
+      "criterion": "three-grid series is in the asymptotic range",
+      "value": 0.9975948415139941,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "poisson2d_p2",
+      "criterion": "observed L2 order within 0.2 of theory 3.0",
+      "value": 2.958107373984631,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "poisson2d_p2",
+      "criterion": "GCI(fine) bounds the true QoI error",
+      "value": [
+        0.00024221377025976701,
+        0.00020103517919256575
+      ],
+      "status": "PASS",
+      "passed": true,
+      "note": null
+    },
+    {
+      "study": "poisson2d_p2",
+      "criterion": "three-grid series is in the asymptotic range",
+      "value": 0.9999695254595822,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "poisson2d_p3",
+      "criterion": "observed L2 order within 0.2 of theory 4.0",
+      "value": 3.9583638624467254,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "poisson2d_p3",
+      "criterion": "GCI(fine) bounds the true QoI error",
+      "value": [
+        5.2793425089814495e-06,
+        3.596857589549529e-06
+      ],
+      "status": "PASS",
+      "passed": true,
+      "note": null
+    },
+    {
+      "study": "poisson2d_p3",
+      "criterion": "three-grid series is in the asymptotic range",
+      "value": 1.000002181961995,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "advection1d_p1",
+      "criterion": "observed L2 order within 0.2 of theory 2.0",
+      "value": 1.9968276846526891,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "advection1d_p1",
+      "criterion": "GCI(fine) bounds the true QoI error",
+      "value": [
+        0.0013339252255942658,
+        0.0010456911901860616
+      ],
+      "status": "PASS",
+      "passed": true,
+      "note": null
+    },
+    {
+      "study": "advection1d_p1",
+      "criterion": "three-grid series is in the asymptotic range",
+      "value": 1.000072201859913,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "advection1d_p2",
+      "criterion": "observed L2 order within 0.2 of theory 3.0",
+      "value": 2.999781749548884,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "advection1d_p2",
+      "criterion": "GCI(fine) bounds the true QoI error",
+      "value": [
+        2.646307434865182e-06,
+        2.059435717342569e-06
+      ],
+      "status": "PASS",
+      "passed": true,
+      "note": null
+    },
+    {
+      "study": "advection1d_p2",
+      "criterion": "three-grid series is in the asymptotic range",
+      "value": 1.0000006278812879,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "heat1d_p1",
+      "criterion": "observed L2 order within 0.2 of theory 2.0",
+      "value": 2.000686599689252,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "heat1d_p1",
+      "criterion": "GCI(fine) bounds the true QoI error",
+      "value": [
+        0.09851332454902165,
+        0.07931552829120857
+      ],
+      "status": "PASS",
+      "passed": true,
+      "note": null
+    },
+    {
+      "study": "heat1d_p1",
+      "criterion": "three-grid series is in the asymptotic range",
+      "value": 1.002391103691315,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "heat1d_p2",
+      "criterion": "observed L2 order within 0.2 of theory 3.0",
+      "value": 2.9959407050061047,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "heat1d_p2",
+      "criterion": "GCI(fine) bounds the true QoI error",
+      "value": [
+        2.0886646319480744e-07,
+        7.843270143546343e-06
+      ],
+      "status": "NOT_APPLICABLE",
+      "passed": false,
+      "note": "fixed dt: GCI estimates the h-discretisation part only, Crank-Nicolson time error is a separate floor (see time_studies)"
+    },
+    {
+      "study": "heat1d_p2",
+      "criterion": "three-grid series is in the asymptotic range",
+      "value": 0.9999999742056703,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "poisson2d_p1_matrixfree",
+      "criterion": "observed L2 order within 0.2 of theory 2.0",
+      "value": 1.9953087195387615,
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "advection_1d_cells32",
+      "criterion": "p-refinement error decreases superlinearly",
+      "value": [
+        65.49545229085828,
+        63.415726114227205,
+        82.81337361510406
+      ],
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "poisson_2d_cells8",
+      "criterion": "p-refinement error decreases superlinearly",
+      "value": [
+        31.729410804886854,
+        43.034916802295676
+      ],
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "heat_1d_cells16",
+      "criterion": "p-refinement error decreases superlinearly",
+      "value": [
+        81.81675814506248,
+        85.13494348333009
+      ],
+      "status": "PASS",
+      "passed": true
+    },
+    {
+      "study": "heat1d_p2_dt",
+      "criterion": "temporal order within 0.2 of theory 2.0",
+      "value": 2.0514266116613395,
+      "status": "PASS",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "failed_checks": [],
+  "not_applicable": [
+    {
+      "study": "heat1d_p2",
+      "criterion": "GCI(fine) bounds the true QoI error",
+      "value": [
+        2.0886646319480744e-07,
+        7.843270143546343e-06
+      ],
+      "status": "NOT_APPLICABLE",
+      "passed": false,
+      "note": "fixed dt: GCI estimates the h-discretisation part only, Crank-Nicolson time error is a separate floor (see time_studies)"
+    }
+  ],
+  "reference_policy": "analytic manufactured solutions and Richardson/GCI extrapolation only; no reference value is generated by the implementation under test"
+}
