@@ -1,0 +1,325 @@
+{
+  "tool": "benchmarks/entropy_budget_1d.py",
+  "degree": 2,
+  "cfl": 0.3,
+  "flux": "hllc",
+  "time_integrator": "SSP-RK3",
+  "torch_threads": 1,
+  "note": "Entropy integral evaluated on the full DG polynomial with max(degree+2, 8) Gauss points, never on cell averages.",
+  "criteria": {
+    "C1_second_law": "production_numeric > 0 for every shock run",
+    "C2_budget": "production_numeric -> analytic Rankine-Hugoniot P*T under refinement",
+    "C3_smooth": "|production| -> 0 for smooth periodic data, order >= degree"
+  },
+  "diagnostic_self_test": {
+    "quadrature_orders": [
+      4,
+      6,
+      8,
+      10,
+      12
+    ],
+    "entropy_integral_ladder": [
+      0.040498620890453293,
+      0.0404987639237943,
+      0.04049879113776807,
+      0.04049879261934319,
+      0.040498792644651394
+    ],
+    "quadrature_relative_spread": 4.240970983942074e-06,
+    "analytic_vs_exact_profile": {
+      "rate_from_exact_profile": 0.011801591662283926,
+      "rate_from_rankine_hugoniot": 0.011823104469858098,
+      "relative_difference": 0.0018195565833844178
+    }
+  },
+  "cfl_sensitivity": [
+    {
+      "cfl": 0.12,
+      "steps": 1197,
+      "production_numeric": 0.0026417883681870355,
+      "relative_difference_to_reference_cfl": 0.0006275458624297661
+    },
+    {
+      "cfl": 0.3,
+      "steps": 480,
+      "production_numeric": 0.0026401315645474335
+    }
+  ],
+  "shock": {
+    "sod": {
+      "analytic": {
+        "sigma": 1.752155732030178,
+        "production_rate": 0.011823104469858098,
+        "production_total": 0.00236462089397162,
+        "star_state": [
+          0.30313017805064685,
+          0.9274526200489499
+        ],
+        "downstream": [
+          0.2655737117053071,
+          0.9274526200489499,
+          0.30313017805064685
+        ],
+        "shock_position_at_T": 0.8504311464060357,
+        "final_time": 0.2
+      },
+      "rows": [
+        {
+          "limiter": "none",
+          "tvb_constant": 1.0,
+          "cells": 64,
+          "degree": 2,
+          "steps": 480,
+          "dt": 5.445152540659026e-05,
+          "entropy_initial": 0.03803956658485777,
+          "entropy_final": 0.040679698149405204,
+          "production_numeric": 0.0026401315645474335,
+          "production_analytic": 0.00236462089397162,
+          "relative_error": 0.1165136751003945,
+          "second_law": true
+        },
+        {
+          "limiter": "none",
+          "tvb_constant": 1.0,
+          "cells": 128,
+          "degree": 2,
+          "steps": 963,
+          "dt": 8.585776871183892e-05,
+          "entropy_initial": 0.03803956658485777,
+          "entropy_final": 0.040576891861139844,
+          "production_numeric": 0.0025373252762820736,
+          "production_analytic": 0.00236462089397162,
+          "relative_error": 0.0730368164938183,
+          "second_law": true
+        },
+        {
+          "limiter": "none",
+          "tvb_constant": 1.0,
+          "cells": 256,
+          "degree": 2,
+          "steps": 1929,
+          "dt": 7.916624989373622e-05,
+          "entropy_initial": 0.0380395665848577,
+          "entropy_final": 0.04047810926600529,
+          "production_numeric": 0.0024385426811475916,
+          "production_analytic": 0.00236462089397162,
+          "relative_error": 0.03126158081594748,
+          "second_law": true
+        },
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "cells": 64,
+          "degree": 2,
+          "steps": 459,
+          "dt": 0.00036552472336712216,
+          "entropy_initial": 0.03803956658485777,
+          "entropy_final": 0.04307640670259584,
+          "production_numeric": 0.00503684011773807,
+          "production_analytic": 0.00236462089397162,
+          "relative_error": 1.1300835709347843,
+          "second_law": true
+        },
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "cells": 128,
+          "degree": 2,
+          "steps": 930,
+          "dt": 4.642579400782054e-05,
+          "entropy_initial": 0.03803956658485777,
+          "entropy_final": 0.041849427695119124,
+          "production_numeric": 0.0038098611102613533,
+          "production_analytic": 0.00236462089397162,
+          "relative_error": 0.6111932022482921,
+          "second_law": true
+        },
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "cells": 256,
+          "degree": 2,
+          "steps": 1871,
+          "dt": 5.75227308730053e-07,
+          "entropy_initial": 0.0380395665848577,
+          "entropy_final": 0.04118366811315428,
+          "production_numeric": 0.0031441015282965765,
+          "production_analytic": 0.00236462089397162,
+          "relative_error": 0.32964296150481026,
+          "second_law": true
+        }
+      ]
+    },
+    "lax": {
+      "analytic": {
+        "sigma": 2.47932148098984,
+        "production_rate": 0.14986919058646153,
+        "production_total": 0.022480378587969228,
+        "star_state": [
+          2.4660979192073564,
+          1.528723026632884
+        ],
+        "downstream": [
+          1.3040845320261998,
+          1.528723026632884,
+          2.4660979192073564
+        ],
+        "shock_position_at_T": 0.871898222148476,
+        "final_time": 0.15
+      },
+      "rows": [
+        {
+          "limiter": "none",
+          "tvb_constant": 1.0,
+          "cells": 64,
+          "degree": 2,
+          "steps": 786,
+          "dt": 4.204725214093652e-05,
+          "entropy_initial": 0.635238304609761,
+          "entropy_final": 0.7717339962729328,
+          "production_numeric": 0.13649569166317177,
+          "production_analytic": 0.022480378587969228,
+          "relative_error": 5.071770149645961,
+          "second_law": true
+        },
+        {
+          "limiter": "none",
+          "tvb_constant": 1.0,
+          "cells": 128,
+          "degree": 2,
+          "steps": 1572,
+          "dt": 5.037375008692946e-05,
+          "entropy_initial": 0.6352383046097645,
+          "entropy_final": 0.770658435598529,
+          "production_numeric": 0.1354201309887645,
+          "production_analytic": 0.022480378587969228,
+          "relative_error": 5.023925729668848,
+          "second_law": true
+        },
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "cells": 64,
+          "degree": 2,
+          "steps": 753,
+          "dt": 1.1607591585055532e-05,
+          "entropy_initial": 0.635238304609761,
+          "entropy_final": 0.7820366705109307,
+          "production_numeric": 0.14679836590116968,
+          "production_analytic": 0.022480378587969228,
+          "relative_error": 5.5300664455771855,
+          "second_law": true
+        },
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "cells": 128,
+          "degree": 2,
+          "steps": 1508,
+          "dt": 4.1180871122620255e-05,
+          "entropy_initial": 0.6352383046097645,
+          "entropy_final": 0.7768740413776213,
+          "production_numeric": 0.1416357367678568,
+          "production_analytic": 0.022480378587969228,
+          "relative_error": 5.300415992266948,
+          "second_law": true
+        }
+      ]
+    }
+  },
+  "smooth_periodic": [
+    {
+      "limiter": "none",
+      "tvb_constant": 1.0,
+      "cells": 16,
+      "degree": 2,
+      "steps": 155,
+      "production_numeric": 2.0732959082198077e-08,
+      "relative_to_initial": 1.4734582965132705e-06
+    },
+    {
+      "limiter": "none",
+      "tvb_constant": 1.0,
+      "cells": 32,
+      "degree": 2,
+      "steps": 310,
+      "production_numeric": 6.911640339918312e-10,
+      "relative_to_initial": 4.911992251435728e-08
+    },
+    {
+      "limiter": "none",
+      "tvb_constant": 1.0,
+      "cells": 64,
+      "degree": 2,
+      "steps": 620,
+      "production_numeric": 2.2758477394302368e-11,
+      "relative_to_initial": 1.6174085897789916e-09
+    },
+    {
+      "limiter": "tvb",
+      "tvb_constant": 1.0,
+      "cells": 16,
+      "degree": 2,
+      "steps": 155,
+      "production_numeric": 0.00017484027924458655,
+      "relative_to_initial": 0.012425619468801871
+    },
+    {
+      "limiter": "tvb",
+      "tvb_constant": 1.0,
+      "cells": 32,
+      "degree": 2,
+      "steps": 310,
+      "production_numeric": 3.9951965033141815e-05,
+      "relative_to_initial": 0.0028393222595657097
+    },
+    {
+      "limiter": "tvb",
+      "tvb_constant": 1.0,
+      "cells": 64,
+      "degree": 2,
+      "steps": 620,
+      "production_numeric": 9.528349909903103e-06,
+      "relative_to_initial": 0.0006771645889876356
+    }
+  ],
+  "profile_comparison": {
+    "cells": 128,
+    "relative_l2_entropy_density": {
+      "none": 1630.6865603319466,
+      "tvb": 1630.6867156232024
+    }
+  },
+  "verdicts": {
+    "C1_second_law_all_runs": true,
+    "C2_relative_error_at_finest_mesh": {
+      "sod/tvb": 1.1300835709347843,
+      "sod/none": 0.1165136751003945,
+      "lax/tvb": 5.5300664455771855,
+      "lax/none": 5.071770149645961
+    },
+    "C2_below_3_percent": {
+      "sod/tvb": false,
+      "sod/none": false,
+      "lax/tvb": false,
+      "lax/none": false
+    },
+    "C3_smooth_observed_orders": {
+      "tvb": [
+        2.129699218612715,
+        2.0679681642758627
+      ],
+      "none": [
+        4.906754081391782,
+        4.924552200472037
+      ]
+    },
+    "C3_smooth_tends_to_zero": {
+      "tvb": true,
+      "none": true
+    },
+    "diagnostic_self_test_below_0_1_percent": false,
+    "cfl_insensitive_below_1_percent": true
+  }
+}

@@ -163,5 +163,7 @@ the committed figure uses the longer name).  Content is unchanged.
 * Round-off level assertions require `ncells >= 400`; below that the
   discrete-shock tail of section 4 reaches the boundary cell and the outflow is
   genuine (see the S3 dev report).
-* No entropy-production budget yet; a discrete entropy inequality is the next
-  natural addition.
+* Entropy-production budget: **delivered** in `docs/entropy_verification.md`
+  (`benchmarks/entropy_budget_1d.py`, `tests/test_entropy.py`) -- second law holds
+  for every limiter setting, the budget converges to the Rankine-Hugoniot value
+  but not yet to the 3 % gate on the meshes tested (honest FAIL recorded there).
