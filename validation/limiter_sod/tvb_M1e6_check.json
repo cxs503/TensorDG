@@ -1,0 +1,13 @@
+{
+  "density": {
+    "relative_l2_percent": 0.7107065484554396
+  },
+  "velocity": {
+    "relative_l2_percent": 3.202348349616825
+  },
+  "pressure": {
+    "relative_l2_percent": 0.5626022783995218
+  },
+  "steps": 1131,
+  "note": "tvb_constant=1e6 -> detector flags nothing, limiter must reproduce the unlimited solver"
+}

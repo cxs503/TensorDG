@@ -1,0 +1,79 @@
+{
+  "tag": "post_fix",
+  "detector_selectivity": [
+    {
+      "tvb_constant": 0.0,
+      "flagged_cells": 159,
+      "flagged_fraction": 0.795
+    },
+    {
+      "tvb_constant": 1.0,
+      "flagged_cells": 129,
+      "flagged_fraction": 0.645
+    },
+    {
+      "tvb_constant": 50.0,
+      "flagged_cells": 117,
+      "flagged_fraction": 0.585
+    },
+    {
+      "tvb_constant": 300.0,
+      "flagged_cells": 54,
+      "flagged_fraction": 0.27
+    },
+    {
+      "tvb_constant": 1000000.0,
+      "flagged_cells": 0,
+      "flagged_fraction": 0.0
+    }
+  ],
+  "note": "limiter applied once to the unlimited final state (mechanism separation)",
+  "case": {
+    "left": [
+      1.0,
+      0.0,
+      1.0
+    ],
+    "right": [
+      0.125,
+      0.0,
+      0.1
+    ],
+    "final_time": 0.2
+  },
+  "ncells": 200,
+  "degree": 2,
+  "cfl": 0.4,
+  "tvb_constant": 1.0,
+  "steps": 1131,
+  "unlimited_errors": {
+    "density": 0.7107065484554396,
+    "velocity": 3.202348349616825,
+    "pressure": 0.5626022783995218
+  },
+  "one_shot": [
+    {
+      "limiter": "tvb",
+      "errors_on_unlimited_state": {
+        "density": 0.708122338778315,
+        "velocity": 2.4518877155430747,
+        "pressure": 0.5344079973923863
+      },
+      "troubled_cells": 129,
+      "troubled_cell_fraction": 0.645,
+      "max_mode_perturbation": 0.17643601127636774
+    },
+    {
+      "limiter": "weno",
+      "errors_on_unlimited_state": {
+        "density": 0.7094309624550672,
+        "velocity": 2.4528463652510455,
+        "pressure": 0.535496713307744
+      },
+      "troubled_cells": 129,
+      "troubled_cell_fraction": 0.645,
+      "max_mode_perturbation": 0.17643601127636774
+    }
+  ],
+  "wall_s": 21.0
+}
