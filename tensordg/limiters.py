@@ -36,6 +36,7 @@ def _troubled_cell_indicator(
     coeff: torch.Tensor,
     dx: float,
     tvb_constant: float = 0.0,
+    limit_boundaries: bool = False,
 ) -> torch.Tensor:
     """Return a boolean mask [ncells] of cells that need limiting.
 
@@ -43,6 +44,13 @@ def _troubled_cell_indicator(
     (i.e. a local extremum) **and** the variation exceeds the TVB
     tolerance ``M * dx**2``.  With ``M = 0`` this reduces to the strict
     TVD test; positive ``M`` allows smooth extrema to pass.
+
+    ``limit_boundaries`` controls the two end cells.  The historical
+    (``False``) behaviour leaves them unlimited because the half stencil of an
+    outflow boundary carries no upwind information.  With ``True`` they are
+    tested as well, using the one-sided (clamped) neighbour already used by
+    the padding above; pass ``True`` when the outer cells carry a genuine
+    discontinuity that must be limited.
     """
     ncells = coeff.shape[0]
     avg = coeff[:, 0]  # [ncells, nvar]
@@ -73,9 +81,10 @@ def _troubled_cell_indicator(
     # differences, which must not be mistaken for a resolved feature.
     scale = torch.maximum(d_left.abs(), d_right.abs()).max(dim=-1).values
     troubled = deviation > threshold + 1e-12 * scale.clamp_min(1.0)
-    # Boundary cells are never troubled (no full stencil)
-    troubled[0] = False
-    troubled[-1] = False
+    if not limit_boundaries:
+        # End cells have no full stencil; leave them unlimited (default).
+        troubled[0] = False
+        troubled[-1] = False
     return troubled
 
 
@@ -87,6 +96,7 @@ def apply_tvb_limiter(
     coeff: torch.Tensor,
     dx: float,
     tvb_constant: float = 1.0,
+    limit_boundaries: bool = False,
 ) -> torch.Tensor:
     """Apply the TVB limiter to a modal DG coefficient tensor.
 
@@ -104,7 +114,9 @@ def apply_tvb_limiter(
     if coeff.shape[1] <= 1:
         return coeff  # P0 -- nothing to limit
 
-    troubled = _troubled_cell_indicator(coeff, dx, tvb_constant)
+    troubled = _troubled_cell_indicator(
+        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries
+    )
     if not troubled.any():
         return coeff
 
@@ -155,6 +167,7 @@ def apply_weno_limiter(
     dx: float,
     tvb_constant: float = 1.0,
     epsilon: float = 1e-6,
+    limit_boundaries: bool = False,
 ) -> torch.Tensor:
     """Apply a WENO reconstruction limiter to troubled cells.
 
@@ -173,7 +186,9 @@ def apply_weno_limiter(
     if coeff.shape[1] <= 1:
         return coeff
 
-    troubled = _troubled_cell_indicator(coeff, dx, tvb_constant)
+    troubled = _troubled_cell_indicator(
+        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries
+    )
     if not troubled.any():
         return coeff
 
