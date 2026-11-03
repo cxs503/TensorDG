@@ -1,0 +1,257 @@
+{
+  "degree": 2,
+  "generated_utc": "2026-11-03T11:33:37Z",
+  "loadavg": [
+    349.1650390625,
+    391.4755859375,
+    295.3525390625
+  ],
+  "numpy": "2.4.6",
+  "python": "3.11.6",
+  "smooth_wave": {
+    "cfl": 0.12,
+    "configurations": {
+      "none": {
+        "degree": 2,
+        "finest_order": 2.9999493622690663,
+        "limiter": null,
+        "limiter_stage": "every",
+        "observed_orders": [
+          2.998074880290091,
+          2.9999493622690663
+        ],
+        "rows": [
+          {
+            "cells": 20,
+            "conservation_drift": {
+              "energy": 1.1842378929334999e-14,
+              "mass": 1.1324274851176597e-14,
+              "x_momentum": 1.1324274851176597e-14
+            },
+            "relative_l2_percent": 0.002115627021836928,
+            "seconds": 1.534,
+            "steps": 194
+          },
+          {
+            "cells": 40,
+            "conservation_drift": {
+              "energy": 2.353672812205331e-14,
+              "mass": 2.3647750424515837e-14,
+              "x_momentum": 2.3980817331903384e-14
+            },
+            "relative_l2_percent": 0.00026480649756351277,
+            "seconds": 3.054,
+            "steps": 388
+          },
+          {
+            "cells": 80,
+            "conservation_drift": {
+              "energy": 4.6629367034256575e-14,
+              "mass": 4.796163466380676e-14,
+              "x_momentum": 4.807265696626928e-14
+            },
+            "relative_l2_percent": 3.3101974034490604e-05,
+            "seconds": 6.574,
+            "steps": 775
+          }
+        ],
+        "tvb_constant": 1.0
+      },
+      "tvb_M1": {
+        "degree": 2,
+        "finest_order": 1.8315914550688142,
+        "limiter": "tvb",
+        "limiter_stage": "every",
+        "observed_orders": [
+          1.8942876969755222,
+          1.8315914550688142
+        ],
+        "rows": [
+          {
+            "cells": 20,
+            "conservation_drift": {
+              "energy": 1.1990408665951687e-14,
+              "mass": 1.1879386363489175e-14,
+              "x_momentum": 1.2545520178264269e-14
+            },
+            "relative_l2_percent": 0.3361084790737895,
+            "seconds": 2.038,
+            "steps": 194
+          },
+          {
+            "cells": 40,
+            "conservation_drift": {
+              "energy": 2.3832787595286683e-14,
+              "mass": 2.3980817331903384e-14,
+              "x_momentum": 2.386979502944087e-14
+            },
+            "relative_l2_percent": 0.09041532577291155,
+            "seconds": 4.302,
+            "steps": 387
+          },
+          {
+            "cells": 80,
+            "conservation_drift": {
+              "energy": 4.63333075610232e-14,
+              "mass": 4.796163466380676e-14,
+              "x_momentum": 4.807265696626928e-14
+            },
+            "relative_l2_percent": 0.025402594967899025,
+            "seconds": 8.488,
+            "steps": 775
+          }
+        ],
+        "tvb_constant": 1.0
+      },
+      "tvb_M10": {
+        "degree": 2,
+        "finest_order": 1.7347748368355753,
+        "limiter": "tvb",
+        "limiter_stage": "every",
+        "observed_orders": [
+          1.7212748294069353,
+          1.7347748368355753
+        ],
+        "rows": [
+          {
+            "cells": 20,
+            "conservation_drift": {
+              "energy": 1.1398289719484938e-14,
+              "mass": 1.2212453270876722e-14,
+              "x_momentum": 1.1879386363489175e-14
+            },
+            "relative_l2_percent": 0.2648837196024819,
+            "seconds": 2.078,
+            "steps": 194
+          },
+          {
+            "cells": 40,
+            "conservation_drift": {
+              "energy": 2.3684757858669995e-14,
+              "mass": 2.431388423929093e-14,
+              "x_momentum": 2.3980817331903384e-14
+            },
+            "relative_l2_percent": 0.08033409617749457,
+            "seconds": 4.45,
+            "steps": 388
+          },
+          {
+            "cells": 80,
+            "conservation_drift": {
+              "energy": 4.648133729763989e-14,
+              "mass": 4.796163466380676e-14,
+              "x_momentum": 4.796163466380676e-14
+            },
+            "relative_l2_percent": 0.024136853267265983,
+            "seconds": 7.913,
+            "steps": 775
+          }
+        ],
+        "tvb_constant": 10.0
+      },
+      "tvb_M10_final": {
+        "degree": 2,
+        "finest_order": 1.7329950655620183,
+        "limiter": "tvb",
+        "limiter_stage": "final",
+        "observed_orders": [
+          1.7100397425235905,
+          1.7329950655620183
+        ],
+        "rows": [
+          {
+            "cells": 20,
+            "conservation_drift": {
+              "energy": 1.1546319456101625e-14,
+              "mass": 1.1546319456101628e-14,
+              "x_momentum": 1.199040866595169e-14
+            },
+            "relative_l2_percent": 0.27165940805113475,
+            "seconds": 1.631,
+            "steps": 194
+          },
+          {
+            "cells": 40,
+            "conservation_drift": {
+              "energy": 2.3092638912203247e-14,
+              "mass": 2.3647750424515837e-14,
+              "x_momentum": 2.3980817331903384e-14
+            },
+            "relative_l2_percent": 0.08303314614402081,
+            "seconds": 3.436,
+            "steps": 388
+          },
+          {
+            "cells": 80,
+            "conservation_drift": {
+              "energy": 4.707345624410664e-14,
+              "mass": 4.796163466380676e-14,
+              "x_momentum": 4.796163466380676e-14
+            },
+            "relative_l2_percent": 0.02497859443727478,
+            "seconds": 6.965,
+            "steps": 775
+          }
+        ],
+        "tvb_constant": 10.0
+      }
+    },
+    "description": "periodic entropy wave rho=1+0.2 sin(2 pi x), u=1, p=1 (exact solution: translated profile)",
+    "final_time": 0.1
+  },
+  "sod": {
+    "configurations": {},
+    "final_time": 0.2,
+    "left": [
+      1.0,
+      0.0,
+      1.0
+    ],
+    "right": [
+      0.125,
+      0.0,
+      0.1
+    ]
+  },
+  "tag": "prefix_baseline",
+  "torch": "2.7.1",
+  "total_seconds": 52.48,
+  "verdicts": {
+    "wave::none": {
+      "conservation_ok": true,
+      "design_order": 3,
+      "finest_order": 2.9999493622690663,
+      "max_conservation_drift": 4.807265696626928e-14,
+      "order_loss_vs_design": 5.063773093372248e-05,
+      "order_ok": true,
+      "order_ratio_vs_unlimited": 1.0
+    },
+    "wave::tvb_M1": {
+      "conservation_ok": true,
+      "design_order": 3,
+      "finest_order": 1.8315914550688142,
+      "max_conservation_drift": 4.807265696626928e-14,
+      "order_loss_vs_design": 1.1684085449311858,
+      "order_ok": false,
+      "order_ratio_vs_unlimited": 0.6105407904896957
+    },
+    "wave::tvb_M10": {
+      "conservation_ok": true,
+      "design_order": 3,
+      "finest_order": 1.7347748368355753,
+      "max_conservation_drift": 4.796163466380676e-14,
+      "order_loss_vs_design": 1.2652251631644247,
+      "order_ok": false,
+      "order_ratio_vs_unlimited": 0.5782680396723253
+    },
+    "wave::tvb_M10_final": {
+      "conservation_ok": true,
+      "design_order": 3,
+      "finest_order": 1.7329950655620183,
+      "max_conservation_drift": 4.796163466380676e-14,
+      "order_loss_vs_design": 1.2670049344379817,
+      "order_ok": false,
+      "order_ratio_vs_unlimited": 0.5776747725672396
+    }
+  }
+}
