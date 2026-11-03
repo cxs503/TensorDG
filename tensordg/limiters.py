@@ -21,16 +21,13 @@ from __future__ import annotations
 import torch
 
 from .euler_1d import GAMMA
+from .tvb import minmod as _minmod
+from .tvb import troubled_from_differences
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def _minmod(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
-    """Element-wise minmod: same-sign selection with smallest magnitude."""
-    return 0.5 * (torch.sign(a) + torch.sign(b)) * torch.minimum(a.abs(), b.abs())
-
 
 def _troubled_cell_indicator(
     coeff: torch.Tensor,
@@ -74,13 +71,9 @@ def _troubled_cell_indicator(
     # against M * dx^2, so every smooth extremum was flagged as soon as
     # dx > 1/M and M could not be tuned at all
     # (see docs/limiter_policy_verification.md).
-    mm = _minmod(d_left, d_right)
-    deviation = (d_left - mm).abs().max(dim=-1).values
-    threshold = tvb_constant * dx * dx
-    # Round-off floor: for affine data the deviation is a few ulp of the local
-    # differences, which must not be mistaken for a resolved feature.
-    scale = torch.maximum(d_left.abs(), d_right.abs()).max(dim=-1).values
-    troubled = deviation > threshold + 1e-12 * scale.clamp_min(1.0)
+    troubled, mm = troubled_from_differences(
+        d_left, d_right, dx, tvb_constant
+    )
     if not limit_boundaries:
         # End cells have no full stencil; leave them unlimited (default).
         troubled[0] = False
