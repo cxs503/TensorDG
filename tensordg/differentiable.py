@@ -322,4 +322,112 @@ def gradient_consistency(f, x: torch.Tensor, n_directions: int = 8,
         "max_relative_difference": worst,
         "mean_relative_difference": sum(r["relative_difference"] for r in rows) / len(rows),
         "pass": worst < 1e-6,
-    }
+    }# ---------------------------------------------------------------------------
+# Diffusive (SIPG + Crank--Nicolson) integration
+# ---------------------------------------------------------------------------
+
+def heat_1d_operators(ncells: int, degree: int, penalty: float = 20.0,
+                      device=None, dtype=torch.float64):
+    """Assemble the SIPG mass and unit-diffusivity matrices used by ``heat_1d``.
+
+    The assembly mirrors :func:`tensordg.heat_1d.solve_heat_1d` block by block
+    (volume terms, interior faces, Dirichlet boundary faces) so that a frozen
+    step sequence reproduces that solver bit for bit.  The diffusivity ``alpha``
+    is *not* folded in here: keeping the operator unit-scaled lets ``alpha`` be a
+    differentiable scalar inside :func:`advance_heat_1d`.
+
+    Returns ``(mass_matrix, diffusion, centers)`` with ``mass_matrix`` such that
+    ``u^T mass_matrix u == int_0^1 u_h^2 dx`` for the modal vector ``u``.
+    """
+    from .heat_1d import _operators as _heat_operators
+
+    if ncells < 2 or degree < 1 or penalty <= 0.0:
+        raise ValueError("ncells >= 2, degree >= 1, and positive penalty are required")
+    if device is None:
+        device = torch.device("cpu")
+    dev = torch.device(device)
+    h = 1.0 / ncells
+    centers = (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * h
+    (
+        _nodes, _weights, phi, mass, stiffness, phi_left, phi_right,
+        dphi_left, dphi_right,
+    ) = _heat_operators(degree, dev, dtype)
+    modes = degree + 1
+    ndofs = ncells * modes
+    diffusion = torch.zeros((ndofs, ndofs), device=dev, dtype=dtype)
+    mass_matrix = torch.zeros_like(diffusion)
+    local = torch.arange(modes, device=dev)
+
+    def dofs(cell):
+        return cell * modes + local
+
+    def add_block(matrix, indices, block):
+        matrix[indices[:, None], indices[None, :]] += block
+
+    volume_diffusion = (2.0 / h) * stiffness
+    volume_mass = 0.5 * h * mass
+    for cell in range(ncells):
+        indices = dofs(cell)
+        add_block(diffusion, indices, volume_diffusion)
+        add_block(mass_matrix, indices, volume_mass)
+
+    jump = torch.cat((phi_right, -phi_left))
+    average_derivative = 0.5 * (2.0 / h) * torch.cat((dphi_right, dphi_left))
+    consistency = -torch.outer(jump, average_derivative)
+    face = (
+        consistency
+        + consistency.T
+        + penalty * modes * modes / h * torch.outer(jump, jump)
+    )
+    for cell in range(ncells - 1):
+        indices = torch.cat((dofs(cell), dofs(cell + 1)))
+        add_block(diffusion, indices, face)
+
+    for cell, endpoint, derivative_endpoint, outward in (
+        (0, phi_left, dphi_left, -1.0),
+        (ncells - 1, phi_right, dphi_right, 1.0),
+    ):
+        derivative = outward * (2.0 / h) * derivative_endpoint
+        consistency = -torch.outer(endpoint, derivative)
+        block = (
+            consistency
+            + consistency.T
+            + penalty * modes * modes / h * torch.outer(endpoint, endpoint)
+        )
+        add_block(diffusion, dofs(cell), block)
+    return mass_matrix, diffusion, centers
+
+
+def advance_heat_1d(coeff0: torch.Tensor, ncells: int, degree: int,
+                    nsteps: int = 1, dt=0.0, alpha=1.0,
+                    penalty: float = 20.0) -> torch.Tensor:
+    """Crank--Nicolson integration of the SIPG heat operator ``u_t = alpha u_xx``.
+
+    ``coeff0`` is ``[ncells, degree+1]`` (modal Legendre coefficients, zero
+    Dirichlet data at both ends, matching :func:`tensordg.heat_1d.solve_heat_1d`).
+    ``dt`` is *frozen* (scalar or per-step sequence), so the returned derivative
+    is the tangent of the discrete scheme at that fixed step size -- exactly what
+    the finite-difference reference evaluates.  ``alpha`` may be a 0-dim tensor,
+    which makes ``d(objective)/d(alpha)`` available through the linear solves.
+
+    The diffusive half of the TensorDG operator zoo was previously outside the
+    differentiable entry points (``advance_advection_1d`` / ``advance_euler_*``
+    cover the hyperbolic solvers only).
+    """
+    if coeff0.dim() != 2 or coeff0.shape[0] != ncells or coeff0.shape[1] != degree + 1:
+        raise ValueError("coeff0 must have shape [ncells, degree+1]")
+    mass_matrix, diffusion, _centers = heat_1d_operators(
+        ncells, degree, penalty, coeff0.device, coeff0.dtype
+    )
+    if torch.is_tensor(alpha):
+        alpha_t = alpha.to(dtype=coeff0.dtype)
+    else:
+        alpha_t = torch.as_tensor(float(alpha), device=coeff0.device, dtype=coeff0.dtype)
+    state = coeff0.reshape(-1)
+    for step in _step_sizes(dt, nsteps):
+        if step < 0.0:
+            raise ValueError("dt must be non-negative")
+        system = mass_matrix + (0.5 * step * alpha_t) * diffusion
+        explicit = mass_matrix - (0.5 * step * alpha_t) * diffusion
+        state = torch.linalg.solve(system, explicit @ state)
+    return state.reshape(ncells, degree + 1)

@@ -164,6 +164,10 @@
    偏差需用转置算子伴随（仅线性方案可得）。
 5. 覆盖范围：1D 对流（P0–P3）、1D Euler（周期 + 出流）、2D Euler（周期）。非结构网格、
    BR2 粘性项、三维均不在本仓当前能力内。
+6. **后续补充（扩散半场）**：本单的五个算例全部是双曲型，扩散半场（SIPG 热传导 /
+   Crank–Nicolson）当时既无可微入口也无梯度证据。该缺口已由
+   [`docs/diffusive_differentiability_verification.md`](diffusive_differentiability_verification.md)
+   （`advance_heat_1d` + 精确离散伴随 + 解析灵敏度三方对表）补齐；BR2 粘性项的可微通路仍未提供。
 
 ## 6. 误差判定（关键量 vs 基准，逐项回答“是否 <3%”）
 
