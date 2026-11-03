@@ -51,15 +51,28 @@ def _troubled_cell_indicator(
     d_left = avg - avg_pad[:-2]   # u_i - u_{i-1}
     d_right = avg_pad[2:] - avg   # u_{i+1} - u_i
 
-    # Variation measure: max absolute jump across the two interfaces
-    variation = torch.maximum(d_left.abs(), d_right.abs()).max(dim=-1).values  # [ncells]
-
-    # Not-monotone: minmod(d_left, d_right) != d_left for at least one variable
+    # TVB test (Cockburn & Shu 1989) in a scale-consistent form: the quantity
+    # that measures "how much the limiting would move the reconstruction" is
+    # the deviation of the one-sided difference from the minmod slope,
+    #
+    #     |d_left - minmod(d_left, d_right)|,
+    #
+    # which is O(dx * u') at a discontinuity but O(dx^2 * u'') for smooth data
+    # (it equals |d_left - d_right| = |u''| dx^2 in a smooth decelerating
+    # stretch and |d_left| = O(dx^2) at a smooth extremum).  Comparing that
+    # quantity against the TVB tolerance M * dx^2 is dimensionally consistent
+    # and lets M discriminate smooth extrema from shocks.  The historic code
+    # instead compared max|d_left|, max|d_right| -- an O(dx * u') measure --
+    # against M * dx^2, so every smooth extremum was flagged as soon as
+    # dx > 1/M and M could not be tuned at all
+    # (see docs/limiter_policy_verification.md).
     mm = _minmod(d_left, d_right)
-    not_monotone = ~((mm - d_left).abs().max(dim=-1).values < 1e-14)
-
+    deviation = (d_left - mm).abs().max(dim=-1).values
     threshold = tvb_constant * dx * dx
-    troubled = not_monotone & (variation > threshold)
+    # Round-off floor: for affine data the deviation is a few ulp of the local
+    # differences, which must not be mistaken for a resolved feature.
+    scale = torch.maximum(d_left.abs(), d_right.abs()).max(dim=-1).values
+    troubled = deviation > threshold + 1e-12 * scale.clamp_min(1.0)
     # Boundary cells are never troubled (no full stencil)
     troubled[0] = False
     troubled[-1] = False

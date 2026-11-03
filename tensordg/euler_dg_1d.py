@@ -44,7 +44,7 @@ def _positivity_filter(coeff, check_points):
     return torch.where(valid_cell[:, None, None], coeff, average_only)
 
 
-def _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right):
+def _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right, periodic=False):
     at_quadrature = torch.einsum("cmv,qm->cqv", coeff, phi)
     flux_quadrature = physical_flux(at_quadrature)
     volume = torch.einsum("cqv,q,qk->ckv", flux_quadrature, weights, dphi)
@@ -52,8 +52,9 @@ def _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right):
     left_trace = torch.einsum("cmv,m->cv", coeff, phi_left)
     flux_right = hllc_flux(right_trace, torch.roll(left_trace, shifts=-1, dims=0))
     flux_left = torch.roll(flux_right, shifts=1, dims=0)
-    flux_right[-1] = physical_flux(right_trace[-1:])
-    flux_left[0] = physical_flux(left_trace[:1])
+    if not periodic:
+        flux_right[-1] = physical_flux(right_trace[-1:])
+        flux_left[0] = physical_flux(left_trace[:1])
     out = torch.empty_like(coeff)
     for k in range(coeff.shape[1]):
         out[:, k] = ((2 * k + 1) / dx) * (
@@ -75,6 +76,7 @@ def solve_euler_dg_1d(
     dtype=torch.float64,
     limiter=None,
     tvb_constant=1.0,
+    limiter_stage="every",
 ):
     """Solve a Riemann problem with modal DG/HLLC/SSP-RK3.
 
@@ -91,9 +93,18 @@ def solve_euler_dg_1d(
         - "weno": WENO limiter (Qiu & Shu, 2005)
     tvb_constant : float
         TVB constant M; M=0 is strict TVD, larger M allows smooth extrema.
+    limiter_stage : {"every", "final"}
+        When the limiter is applied inside the SSP-RK3 sweep.  ``"every"``
+        (default, historic behaviour) limits after every sub-step, which
+        re-projects smooth cells that keep being flagged and therefore
+        destroys high-order accuracy there (see
+        ``docs/limiter_verification.md``).  ``"final"`` limits only the
+        updated state at the end of the time step.
     """
     if ncells < 20 or degree not in (1, 2, 3) or final_time < 0.0 or not 0 < cfl <= 0.5:
         raise ValueError("invalid cells, degree, final_time, or CFL")
+    if limiter_stage not in ("every", "final"):
+        raise ValueError("limiter_stage must be 'every' or 'final'")
     lower, upper = domain
     if not upper > lower or not lower < diaphragm < upper:
         raise ValueError("domain must be increasing and contain the diaphragm")
@@ -110,6 +121,7 @@ def solve_euler_dg_1d(
     nodes, weights, phi, dphi, phi_left, phi_right = _operators(degree, dev, dtype)
     check_points = torch.cat((phi, phi_left[None, :], phi_right[None, :]), dim=0)
 
+    limit_each_stage = limiter_stage == "every"
     time, steps, dt = 0.0, 0, 0.0
     while time < final_time:
         values = torch.einsum("cmv,qm->cqv", coeff, phi)
@@ -117,13 +129,20 @@ def solve_euler_dg_1d(
         max_speed = float(torch.max(speeds).item())
         dt = min(cfl * dx / ((2 * degree + 1) * max(max_speed, 1e-12)), final_time - time)
         k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right)
-        u1 = apply_limiter(coeff + dt * k1, dx, kind=limiter, tvb_constant=tvb_constant)
+        u1 = coeff + dt * k1
+        if limit_each_stage:
+            u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
         u1 = _positivity_filter(u1, check_points)
         k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right)
-        u2 = apply_limiter(0.75 * coeff + 0.25 * (u1 + dt * k2), dx, kind=limiter, tvb_constant=tvb_constant)
+        u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
+        if limit_each_stage:
+            u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
         u2 = _positivity_filter(u2, check_points)
         k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right)
-        coeff = apply_limiter((1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3), dx, kind=limiter, tvb_constant=tvb_constant)
+        coeff = apply_limiter(
+            (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3),
+            dx, kind=limiter, tvb_constant=tvb_constant,
+        )
         coeff = _positivity_filter(coeff, check_points)
         average = coeff[:, 0]
         rho_now = average[:, 0]
@@ -138,5 +157,109 @@ def solve_euler_dg_1d(
         "dt": dt, "diaphragm": diaphragm, "domain": (lower, upper), "cfl": cfl,
         "left_state": tuple(left_state), "right_state": tuple(right_state),
         "flux": "hllc", "limiter": limiter_name, "device": str(dev),
+        "limiter_stage": limiter_stage,
+    }
+    return x, coeff, metadata
+
+
+def solve_periodic_euler_dg_1d(
+    initial_state,
+    ncells=64,
+    degree=2,
+    final_time=1.0,
+    domain=(0.0, 1.0),
+    cfl=0.12,
+    device="cpu",
+    dtype=torch.float64,
+    limiter=None,
+    tvb_constant=1.0,
+    limiter_stage="every",
+):
+    """Advance smooth periodic Euler data with the same modal DG/HLLC kernels.
+
+    Parameters
+    ----------
+    initial_state : callable
+        ``initial_state(x)`` takes a ``[ncells, nquad]`` coordinate tensor and
+        returns ``(rho, velocity, pressure)`` with the same shape.  The
+        conservative state is projected onto **all** modal degrees of freedom
+        with the Gauss--Legendre rule of :func:`_operators`, so smooth data
+        start at the full design order (a cell-average-only projection would
+        cap the scheme at first order).
+    limiter, tvb_constant, limiter_stage
+        As in :func:`solve_euler_dg_1d`.
+
+    Returns
+    -------
+    x : (ncells,) cell centres
+    coeff : (ncells, degree + 1, 3) modal coefficients
+    metadata : dict with step count, dt and relative conservation drift
+    """
+    if ncells < 8 or degree not in (1, 2, 3) or final_time < 0.0 or not 0 < cfl <= 0.5:
+        raise ValueError("invalid cells, degree, final_time, or CFL")
+    if limiter_stage not in ("every", "final"):
+        raise ValueError("limiter_stage must be 'every' or 'final'")
+    lower, upper = domain
+    if not upper > lower:
+        raise ValueError("domain must be increasing")
+    dev = torch.device(device)
+    dx = (upper - lower) / ncells
+    x = lower + (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * dx
+    nodes, weights, phi, dphi, phi_left, phi_right = _operators(degree, dev, dtype)
+    check_points = torch.cat((phi, phi_left[None, :], phi_right[None, :]), dim=0)
+
+    node_x = x[:, None] + 0.5 * dx * nodes[None, :]
+    rho, velocity, pressure = initial_state(node_x)
+    conservative = primitive_to_conservative(rho, velocity, pressure)
+    coeff = torch.zeros((ncells, degree + 1, 3), device=dev, dtype=dtype)
+    for k in range(degree + 1):
+        coeff[:, k] = ((2 * k + 1) / 2.0) * torch.einsum(
+            "cqv,q,q->cv", conservative, weights, phi[:, k])
+
+    def _totals(c):
+        return (c[:, 0].sum(dim=0) * dx).clone()
+
+    totals_initial = _totals(coeff)
+    limit_each_stage = limiter_stage == "every"
+    time, steps, dt = 0.0, 0, 0.0
+    while time < final_time:
+        values = torch.einsum("cmv,qm->cqv", coeff, phi)
+        speeds = torch.abs(values[..., 1] / values[..., 0].clamp_min(1e-12)) + sound_speed(values)
+        max_speed = float(torch.max(speeds).item())
+        dt = min(cfl * dx / ((2 * degree + 1) * max(max_speed, 1e-12)), final_time - time)
+        k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right, periodic=True)
+        u1 = coeff + dt * k1
+        if limit_each_stage:
+            u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
+        u1 = _positivity_filter(u1, check_points)
+        k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right, periodic=True)
+        u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
+        if limit_each_stage:
+            u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
+        u2 = _positivity_filter(u2, check_points)
+        k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right, periodic=True)
+        coeff = apply_limiter(
+            (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3),
+            dx, kind=limiter, tvb_constant=tvb_constant,
+        )
+        coeff = _positivity_filter(coeff, check_points)
+        if not torch.isfinite(coeff).all():
+            raise FloatingPointError("Nonphysical periodic Euler state; reduce CFL")
+        time += dt
+        steps += 1
+
+    totals_final = _totals(coeff)
+    names = ("mass", "x_momentum", "energy")
+    drift = {
+        name: float(abs(totals_final[i] - totals_initial[i]) / max(abs(totals_initial[i]), 1e-30))
+        for i, name in enumerate(names)
+    }
+    metadata = {
+        "ncells": ncells, "degree": degree, "final_time": final_time, "steps": steps,
+        "dt": dt, "domain": (lower, upper), "cfl": cfl,
+        "flux": "hllc", "limiter": limiter if limiter else "local positivity fallback",
+        "limiter_stage": limiter_stage, "device": str(dev),
+        "boundary": "periodic", "initial_projection": "l2-all-modes",
+        "conservation_drift": drift,
     }
     return x, coeff, metadata
