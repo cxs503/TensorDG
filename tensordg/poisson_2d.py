@@ -103,6 +103,8 @@ def solve_poisson_2d(
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     backend: str = "dense",
+    rtol: float | None = None,
+    maxiter: int | None = None,
 ):
     """Solve the manufactured Poisson problem with SIPG on a Cartesian mesh.
 
@@ -115,16 +117,36 @@ def solve_poisson_2d(
         - ``"dense"``: assemble dense torch matrix (default, backward compatible)
         - ``"sparse"``: assemble scipy CSR matrix, solve with spsolve
         - ``"matrix-free"``: no global assembly, solve with PCG
+    rtol, maxiter : optional
+        CG relative residual tolerance and iteration budget. Only meaningful
+        for ``backend="matrix-free"``; passing them with a direct backend is
+        an error rather than being silently ignored.
     """
     if backend not in ("dense", "sparse", "matrix-free"):
         raise ValueError("backend must be 'dense', 'sparse', or 'matrix-free'")
 
     if backend == "sparse":
+        if rtol is not None or maxiter is not None:
+            raise ValueError(
+                "rtol/maxiter apply to the iterative 'matrix-free' backend only"
+            )
         from tensordg.sipg_sparse import solve_poisson_2d_sparse
         return solve_poisson_2d_sparse(ncells, degree, penalty, device, dtype)
     elif backend == "matrix-free":
         from tensordg.sipg_matrixfree import solve_poisson_2d_matrixfree
-        return solve_poisson_2d_matrixfree(ncells, degree, penalty, device, dtype)
+        kwargs = {}
+        if rtol is not None:
+            kwargs["rtol"] = rtol
+        if maxiter is not None:
+            kwargs["maxiter"] = maxiter
+        return solve_poisson_2d_matrixfree(
+            ncells, degree, penalty, device, dtype, **kwargs,
+        )
+
+    if rtol is not None or maxiter is not None:
+        raise ValueError(
+            "rtol/maxiter apply to the iterative 'matrix-free' backend only"
+        )
 
     # backend == "dense": original implementation
     nx, ny = (ncells, ncells) if isinstance(ncells, int) else ncells
