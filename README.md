@@ -99,6 +99,12 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
   (`tensordg/differentiable.py`) reproduce the shipped solvers bit-for-bit and
   their gradients match central differences (<1e-7) and an exact transposed-operator
   adjoint (5e-16); see [docs/differentiability_verification.md](docs/differentiability_verification.md).
+  The diffusive half of the operator zoo (SIPG + Crank--Nicolson,
+  `advance_heat_1d`) is covered separately: sensitivities in the thermal diffusivity
+  and in every modal degree of freedom match an exactly assembled discrete adjoint
+  to 1e-13 and the analytical mode-decay sensitivity to <= 1e-5 for P2/P3 (3% gate at
+  the coarsest P1 mesh); see
+  [docs/diffusive_differentiability_verification.md](docs/diffusive_differentiability_verification.md).
 - Systematic convergence verification: observed order against theoretical order,
   Richardson extrapolation and GCI mesh independence, p-refinement decay, and
   cross-backend (dense / sparse / matrix-free) accuracy equivalence.
