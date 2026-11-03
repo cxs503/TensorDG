@@ -1,0 +1,160 @@
+{
+  "generated_by": "tools/verify_matrixfree_backend.py",
+  "backend": "matrix-free",
+  "dtype": "float64",
+  "poisson": {
+    "rows": [
+      {
+        "degree": 1,
+        "ncells": 4,
+        "dofs": 64,
+        "relative_l2": 0.060488301280792155,
+        "absolute_l2": 0.030244150640396074,
+        "cg_iterations": 12,
+        "cg_converged": true,
+        "cg_relative_residual": 1.2454527587454012e-13,
+        "cg_rtol": 1e-12,
+        "order_vs_previous": null
+      },
+      {
+        "degree": 1,
+        "ncells": 8,
+        "dofs": 256,
+        "relative_l2": 0.01518630792032077,
+        "absolute_l2": 0.007593153960160385,
+        "cg_iterations": 47,
+        "cg_converged": true,
+        "cg_relative_residual": 2.459362455389395e-13,
+        "cg_rtol": 1e-12,
+        "order_vs_previous": 1.993884979501343
+      },
+      {
+        "degree": 1,
+        "ncells": 16,
+        "dofs": 1024,
+        "relative_l2": 0.00380026186736991,
+        "absolute_l2": 0.001900130933684955,
+        "cg_iterations": 132,
+        "cg_converged": true,
+        "cg_relative_residual": 6.814648915461976e-13,
+        "cg_rtol": 1e-12,
+        "order_vs_previous": 1.9986004260080308
+      },
+      {
+        "degree": 2,
+        "ncells": 4,
+        "dofs": 144,
+        "relative_l2": 0.003763554936267671,
+        "absolute_l2": 0.0018817774681338354,
+        "cg_iterations": 48,
+        "cg_converged": true,
+        "cg_relative_residual": 7.26244024468376e-13,
+        "cg_rtol": 1e-12,
+        "order_vs_previous": null
+      },
+      {
+        "degree": 2,
+        "ncells": 8,
+        "dofs": 576,
+        "relative_l2": 0.00047861928523971944,
+        "absolute_l2": 0.00023930964261985972,
+        "cg_iterations": 142,
+        "cg_converged": true,
+        "cg_relative_residual": 7.827818858813317e-13,
+        "cg_rtol": 1e-12,
+        "order_vs_previous": 2.975145596136266
+      }
+    ]
+  },
+  "tolerance": {
+    "rows": [
+      {
+        "rtol": 1e-06,
+        "cg_iterations": 30,
+        "cg_converged": true,
+        "cg_relative_residual": 3.308349783634896e-07,
+        "relative_l2": 0.015186307920362135,
+        "coeff_deviation_from_first": 0.0
+      },
+      {
+        "rtol": 1e-10,
+        "cg_iterations": 43,
+        "cg_converged": true,
+        "cg_relative_residual": 6.206644201338416e-11,
+        "relative_l2": 0.015186307920317287,
+        "coeff_deviation_from_first": 2.5770519978338537e-08
+      },
+      {
+        "rtol": 1e-13,
+        "cg_iterations": 49,
+        "cg_converged": true,
+        "cg_relative_residual": 2.276187505339658e-14,
+        "relative_l2": 0.01518630792032077,
+        "coeff_deviation_from_first": 2.5770495181616666e-08
+      }
+    ]
+  },
+  "budget": {
+    "rows": [
+      {
+        "maxiter": 1,
+        "cg_iterations": 1,
+        "cg_converged": false,
+        "cg_relative_residual": 7.068362041862439,
+        "relative_l2": 0.9452929931863759
+      },
+      {
+        "maxiter": 2,
+        "cg_iterations": 2,
+        "cg_converged": false,
+        "cg_relative_residual": 11.544185679562823,
+        "relative_l2": 0.3575686360979567
+      },
+      {
+        "maxiter": 10,
+        "cg_iterations": 10,
+        "cg_converged": false,
+        "cg_relative_residual": 0.02261313385425198,
+        "relative_l2": 0.015193854839885758
+      },
+      {
+        "maxiter": 50,
+        "cg_iterations": 50,
+        "cg_converged": true,
+        "cg_relative_residual": 9.445053245033266e-15,
+        "relative_l2": 0.01518630792032077
+      }
+    ]
+  },
+  "heat": {
+    "final_time": 0.1,
+    "rows": [
+      {
+        "ncells": 8,
+        "degree": 2,
+        "dofs": 24,
+        "steps": 20,
+        "dt": 0.005,
+        "relative_l2_vs_analytic": 0.0004750071534969735,
+        "total_cg_iterations": 339,
+        "cg_iterations_per_step": 16.95,
+        "cg_all_converged": true,
+        "coeff_max_diff_vs_dense": 1.0336176359260207e-13,
+        "dense_relative_l2_vs_analytic": 0.00047500715351288123
+      },
+      {
+        "ncells": 16,
+        "degree": 2,
+        "dofs": 48,
+        "steps": 20,
+        "dt": 0.005,
+        "relative_l2_vs_analytic": 0.00021123053812832794,
+        "total_cg_iterations": 618,
+        "cg_iterations_per_step": 30.9,
+        "cg_all_converged": true,
+        "coeff_max_diff_vs_dense": 5.475397912846347e-12,
+        "dense_relative_l2_vs_analytic": 0.00021123053811424882
+      }
+    ]
+  }
+}
