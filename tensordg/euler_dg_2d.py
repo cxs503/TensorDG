@@ -1,19 +1,4 @@
-"""EXPERIMENTAL / NOT VERIFIED -- do not use for production results.
-
-Status (mission m2143): the tensor-product 2-D DG assembly in this module is
-NOT verified.  A 2-D/1-D cross-code test (Sod tube extruded to two dimensions)
-shows the projected face flux collapsing to zero while the Riemann solver
-itself returns the correct interface flux, so the x-direction residual is
-identically zero and the scheme does not transport the flow.  See
-``docs/verify_2d_euler_dg_attempt.md`` for the full evidence chain and
-``benchmarks/diagnose_euler_dg_2d.py`` for a one-second reproduction.
-The module is therefore NOT exported from ``tensordg/__init__.py`` and its
-regression test is pinned as ``xfail(strict=True)`` in
-``tests/test_euler_dg_2d_experimental.py``.
-
-Original intent of the module (kept for the follow-up mission):
-
-Two-dimensional tensor-product modal DG for the compressible Euler equations.
+"""High-order tensor-product modal DG for the two-dimensional Euler equations.
 
 ``euler_2d.py`` in this package is the P0 (finite-volume limit) baseline on a
 periodic Cartesian mesh.  This module adds the genuinely high-order 2-D
@@ -26,13 +11,27 @@ projection fallback and an optional directional minmod (TVB, Cockburn & Shu
 Everything is written with plain PyTorch tensor algebra, so the whole residual
 pipeline stays autograd-compatible.
 
-Verification (see ``benchmarks/euler_dg_2d_verify.py``):
+Verification status (mission m2400, supersedes the m2143 honest FAIL)
 
-* smooth isentropic vortex -> design-order convergence in 2-D,
-* Sod tube extruded to 2-D -> agreement with the exact Riemann solution and
-  cell-by-cell agreement with the independently written 1-D DG solver,
-* genuinely 2-D four-quadrant Riemann problem -> positivity plus mesh
-  self-convergence (no closed-form solution exists).
+* residual identity: a Sod tube extruded to 2-D (``ny = 1``, ``y``-invariant
+  data) reproduces the *independently written* 1-D DG residual
+  (``tensordg/euler_dg_1d.py``) to machine precision for every cell, mode and
+  component -- this is what the m2143 defect broke;
+* smooth isentropic vortex: design-order convergence ``EOC = degree + 1`` and
+  L2 error below the 3 % gate at the documented resolution;
+* Sod tube extruded to 2-D: agreement with the exact Riemann solution;
+* genuinely 2-D four-quadrant Riemann problem (Lax & Liu 1998, config 3):
+  positivity plus mesh self-convergence (no closed-form solution exists).
+
+Reproducers: ``python -m benchmarks.verify_euler_dg_2d`` (numbers + JSON) and
+``python -m benchmarks.diagnose_euler_dg_2d`` (the m2143 defect, now closed).
+
+Defect history (m2143 -> m2400): ``_axis_fluxes`` built the right-hand
+neighbour trace *without* rolling it in the non-periodic case, so HLLC received
+the cell's own left trace as its right state and silently collapsed to the
+physical flux.  The residual of the extruded Sod case was then identically
+zero.  The roll is now unconditional and only the outermost face is
+overwritten with the interior trace (outflow).
 """
 from __future__ import annotations
 
@@ -236,10 +235,12 @@ def _axis_fluxes(coeff, basis, signs, weights, periodic, axis):
     """
     trace_right, trace_left = _traces(coeff, basis, signs, axis)
     if axis == 0:
-        if periodic:
-            neighbour = torch.roll(trace_left, shifts=-1, dims=0)
-        else:
-            neighbour = trace_left.clone()
+        # ``neighbour[x]`` is the *left* trace of the cell to the right of
+        # face ``x``; the roll is required for both the periodic and the
+        # outflow case (m2400: omitting it made HLLC see the cell's own state
+        # and silently degrade to the physical flux).
+        neighbour = torch.roll(trace_left, shifts=-1, dims=0)
+        if not periodic:
             neighbour[-1] = trace_right[-1]
         interface = _hllc(trace_right, neighbour, axis)
         flux_right = torch.einsum("xybv,b,bl->xylv", interface, weights, basis)
@@ -248,10 +249,8 @@ def _axis_fluxes(coeff, basis, signs, weights, periodic, axis):
             outer = _hllc(trace_left[:1], trace_left[:1], axis)
             flux_left[0] = torch.einsum("ybv,b,bl->ylv", outer[0], weights, basis)
     else:
-        if periodic:
-            neighbour = torch.roll(trace_left, shifts=-1, dims=1)
-        else:
-            neighbour = trace_left.clone()
+        neighbour = torch.roll(trace_left, shifts=-1, dims=1)
+        if not periodic:
             neighbour[:, -1] = trace_right[:, -1]
         interface = _hllc(trace_right, neighbour, axis)
         flux_right = torch.einsum("xyav,a,ak->xykv", interface, weights, basis)
@@ -416,6 +415,27 @@ def _initial_averages(initial, x, y, dx, dy, device, dtype, quadrature=4):
     )
 
 
+def _initial_coefficients(initial, x, y, dx, dy, nodes, weights, basis, device, dtype):
+    """L2 projection of ``initial(x, y) -> (rho, u, v, p)`` onto the modal basis.
+
+    ``c_kl = (2k+1)(2l+1)/4 * int int u(xi, eta) P_k(xi) P_l(eta) dxi deta``,
+    evaluated with the same Gauss quadrature as the residual.  Projecting onto
+    *all* modes (instead of storing cell averages only) is what preserves the
+    design order of the scheme for smooth initial data.
+    """
+    xq = x[:, None, None, None] + 0.5 * dx * nodes[None, None, :, None]
+    yq = y[None, :, None, None] + 0.5 * dy * nodes[None, None, None, :]
+    state = _conservative(*initial(xq, yq))
+    projected = torch.einsum(
+        "xyabv,a,b,ak,bl->xyklv", state, weights, weights, basis, basis
+    )
+    degree = basis.shape[1] - 1
+    modes = torch.arange(degree + 1, device=device, dtype=dtype)
+    return 0.25 * torch.outer(2.0 * modes + 1.0, 2.0 * modes + 1.0).view(
+        1, 1, degree + 1, degree + 1, 1
+    ) * projected
+
+
 def solve_euler_dg_2d(
     initial,
     ncells=32,
@@ -427,6 +447,7 @@ def solve_euler_dg_2d(
     tvb_constant=1.0,
     periodic=(True, True),
     quadrature=None,
+    initial_projection="l2",
     device="cpu",
     dtype=torch.float64,
 ):
@@ -444,6 +465,9 @@ def solve_euler_dg_2d(
         ``None`` (positivity fallback only) or ``"tvb"``.
     periodic : (bool, bool)
         Periodicity in ``x`` and ``y``; non-periodic faces are outflow.
+    initial_projection : str
+        ``"l2"`` (default, full modal L2 projection -- preserves design order)
+        or ``"cell-average"`` (P0 only, the legacy m2143 behaviour).
     """
     nx, ny = (ncells, ncells) if isinstance(ncells, int) else ncells
     if degree not in (0, 1, 2, 3):
@@ -463,9 +487,16 @@ def solve_euler_dg_2d(
     x = xmin + (torch.arange(nx, device=dev, dtype=dtype) + 0.5) * dx
     y = ymin + (torch.arange(ny, device=dev, dtype=dtype) + 0.5) * dy
 
-    averages = _initial_averages(initial, x, y, dx, dy, dev, dtype)
-    coeff = torch.zeros((nx, ny, degree + 1, degree + 1, 4), device=dev, dtype=dtype)
-    coeff[..., 0, 0, :] = averages
+    if initial_projection == "l2":
+        coeff = _initial_coefficients(
+            initial, x, y, dx, dy, nodes, weights, basis, dev, dtype
+        )
+    elif initial_projection == "cell-average":
+        averages = _initial_averages(initial, x, y, dx, dy, dev, dtype)
+        coeff = torch.zeros((nx, ny, degree + 1, degree + 1, 4), device=dev, dtype=dtype)
+        coeff[..., 0, 0, :] = averages
+    else:
+        raise ValueError("initial_projection must be 'l2' or 'cell-average'")
 
     def impose(state):
         if limiter == "tvb":
@@ -512,6 +543,7 @@ def solve_euler_dg_2d(
         "flux": "hllc",
         "limiter": limiter if limiter else "local positivity fallback",
         "quadrature": order,
+        "initial_projection": initial_projection,
         "device": str(dev),
         "dtype": str(dtype).replace("torch.", ""),
         "dofs": nx * ny * (degree + 1) ** 2 * 4,
@@ -545,6 +577,7 @@ def solve_euler_dg_2d_vortex(
     background_velocity=(1.0, 1.0),
     limiter=None,
     domain=((-5.0, 5.0), (-5.0, 5.0)),
+    initial_projection="l2",
     device="cpu",
     dtype=torch.float64,
 ):
@@ -562,6 +595,7 @@ def solve_euler_dg_2d_vortex(
         cfl=cfl,
         limiter=limiter,
         periodic=(True, True),
+        initial_projection=initial_projection,
         device=device,
         dtype=dtype,
     )
@@ -578,6 +612,7 @@ def solve_euler_dg_2d_sod(
     left_state=(1.0, 0.0, 1.0),
     right_state=(0.125, 0.0, 0.1),
     domain=((0.0, 1.0), (0.0, 0.25)),
+    initial_projection="l2",
     device="cpu",
     dtype=torch.float64,
 ):
@@ -610,6 +645,7 @@ def solve_euler_dg_2d_sod(
         limiter=limiter,
         tvb_constant=tvb_constant,
         periodic=(False, True),
+        initial_projection=initial_projection,
         device=device,
         dtype=dtype,
     )
@@ -634,6 +670,7 @@ def solve_euler_dg_2d_riemann(
     limiter="tvb",
     tvb_constant=1.0,
     states=None,
+    initial_projection="l2",
     device="cpu",
     dtype=torch.float64,
 ):
@@ -671,6 +708,7 @@ def solve_euler_dg_2d_riemann(
         limiter=limiter,
         tvb_constant=tvb_constant,
         periodic=(False, False),
+        initial_projection=initial_projection,
         device=device,
         dtype=dtype,
     )

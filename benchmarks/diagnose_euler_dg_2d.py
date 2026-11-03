@@ -12,8 +12,11 @@ by cell.  The script prints, for the discontinuity face:
 * the reference 1-D density residual of the neighbouring cells.
 
 Measured on 2026-11-02 (mission m2143): interface flux 0.430260, projected
-flux 0.0, 1-D reference 43.026 (= 0.430260 / dx).  The Riemann solver is
-correct; the projection step is not.
+flux 0.0, 1-D reference 43.026 (= 0.430260 / dx).  The Riemann solver was
+correct; the *neighbour trace* was not rolled in the non-periodic branch, so
+HLLC saw the cell's own state.  Fixed in m2400: projected flux 0.860521
+(= 2 x interface flux, relative error 0) and the 2-D residual now equals the
+1-D reference 43.026 / 116.170.
 """
 from __future__ import annotations
 
@@ -63,9 +66,14 @@ def main() -> dict:
         "residual_1d_energy_max": float(residual_1d[:, 0, 2].abs().max()),
         "residual_2d_energy_max": float(residual_2d[..., 0, 0, 3].abs().max()),
     }
-    report["projection_lost_fraction"] = 1.0 - (
-        report["projected_mass_flux"] / report["interface_mass_flux"]
-    )
+    # ``projected`` is the *surface integral* of the interface flux against
+    # P_0 = 1 (i.e. 2 x the pointwise flux); comparing it with the pointwise
+    # value directly (as m2143 did) always reports a 100 % "loss".
+    expected = 2.0 * report["interface_mass_flux"]
+    report["expected_projected_mass_flux"] = expected
+    report["projection_relative_error"] = abs(
+        report["projected_mass_flux"] - expected
+    ) / abs(expected)
     for key, value in report.items():
         print(f"{key:34s} {value: .8e}")
     return report
