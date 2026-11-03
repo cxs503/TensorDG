@@ -17,6 +17,19 @@ from .euler_dg_1d import solve_euler_dg_1d, solve_periodic_euler_dg_1d
 from .heat_1d import heat_error, solve_heat_1d
 from .limiters import apply_limiter, apply_tvb_limiter, apply_weno_limiter
 from .poisson_2d import poisson_error_2d, solve_poisson_2d
+from .differentiable import (
+    advance_advection_1d,
+    advance_euler_dg_1d,
+    advance_euler_dg_2d,
+    central_difference_directional,
+    central_difference_gradient,
+    directional_derivative_ad,
+    gradient_consistency,
+    legendre_l2_sq,
+    legendre_l2_sq_2d,
+    probe_value,
+    relative_difference,
+)
 
 __all__ = [
     "solve_advection", "l2_error",
@@ -29,4 +42,11 @@ __all__ = [
     "solve_riemann", "solve_euler_dg_1d", "solve_periodic_euler_dg_1d",
     "solve_isentropic_vortex", "vortex_error",
     "apply_limiter", "apply_tvb_limiter", "apply_weno_limiter",
+    # autograd-ready integration + gradient verification (see
+    # docs/differentiability_verification.md)
+    "advance_advection_1d", "advance_euler_dg_1d", "advance_euler_dg_2d",
+    "legendre_l2_sq", "legendre_l2_sq_2d", "probe_value",
+    "directional_derivative_ad", "central_difference_directional",
+    "central_difference_gradient", "gradient_consistency",
+    "relative_difference",
 ]
