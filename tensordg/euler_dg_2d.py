@@ -40,7 +40,8 @@ import torch
 
 from .euler_1d import GAMMA
 from .euler_2d import vortex_primitive
-from .limiters import _minmod, _weno_weights
+from .limiters import _weno_weights
+from .tvb import troubled_from_differences
 
 __all__ = [
     "solve_euler_dg_2d",
@@ -327,16 +328,28 @@ def _troubled_1d(
     tvb_constant: float,
     periodic: bool = True,
 ):
-    """Cockburn-Shu troubled-cell test along one axis on cell averages."""
+    """Cockburn-Shu troubled-cell test along one axis on cell averages.
+
+    The measure compared against the tolerance ``tvb_constant * spacing**2`` is
+    the deviation ``|d_left - minmod(d_left, d_right)|``, which is O(dx**2 u'')
+    for smooth data -- the same scale-consistent criterion the 1-D limiter has
+    used since mission m2500 (``tensordg/tvb.py``).  Until mission m2549 the 2-D
+    copy of this test compared the raw one-sided differences (O(dx u')) against
+    ``M dx**2``, so every smooth extremum was flagged as soon as ``dx > 1/M``,
+    more of them the finer the mesh, and ``tvb_constant`` was inert; the resulting
+    order loss is documented in docs/limiter_2d_verification.md.
+
+    Neighbour averages wrap around on periodic axes; on non-periodic axes the
+    edge rows are never flagged (no full stencil), mirroring the 1-D limiter.
+    """
     centres = averages
     plus = _shift(averages, axis, 1, periodic)
     minus = _shift(averages, axis, -1, periodic)
     delta_left = centres - minus
     delta_right = plus - centres
-    variation = torch.maximum(delta_left.abs(), delta_right.abs()).max(dim=-1).values
-    minmod = _minmod(delta_left, delta_right)
-    not_monotone = ~((minmod - delta_left).abs().max(dim=-1).values < 1e-14)
-    troubled = not_monotone & (variation > tvb_constant * spacing * spacing)
+    troubled, minmod = troubled_from_differences(
+        delta_left, delta_right, spacing, tvb_constant
+    )
     if not periodic and averages.shape[axis] > 2:
         # No full stencil at an outflow face: leave the end cells unlimited
         # rather than deciding them from a replicated (zero-increment) ghost.
@@ -351,14 +364,23 @@ def _troubled_1d(
 def apply_tvb_limiter_2d(coeff, dx, dy, tvb_constant=1.0, periodic=(True, True)):
     """Directional minmod/TVB limiting of a tensor-product modal expansion.
 
-    Troubled cells (non-monotone cell averages with variation above
-    ``tvb_constant * spacing**2``) are reduced to a limited linear
-    reconstruction along the offending direction; the higher modes of that
-    direction are removed.  The cell average is never modified, so
+    Troubled cells (cell averages whose one-sided differences deviate from the
+    minmod slope by more than ``tvb_constant * spacing**2``) are reduced to a
+    limited linear reconstruction along the offending direction; the higher
+    modes of that direction are removed.  The cell average is never modified, so
     conservation is preserved exactly.
 
-    ``periodic`` carries the mesh periodicity per axis so that the troubled
-    cell indicator uses wrapped neighbours only where the mesh actually wraps.
+    Mission m2549 fixes two defects of this routine:
+
+    * the troubled-cell test was not scale consistent (see ``_troubled_1d``);
+    * for ``degree >= 2`` the mask that removes the higher modes was broadcast
+      against the wrong axes, which raised ``RuntimeError`` for every degree >= 2
+      case that actually had a troubled cell.  The four-quadrant verification of
+      mission m2400 only ever ran the limiter at ``degree = 1``, so the broken
+      branch was never exercised.
+
+    ``periodic`` selects wrap-around (periodic axis) or edge replication with
+    unflagged boundary rows (outflow axis) for the neighbour stencil.
     """
     if coeff.shape[2] <= 1 and coeff.shape[3] <= 1:
         return coeff
@@ -697,6 +719,7 @@ def solve_euler_dg_2d_vortex(
     strength=5.0,
     background_velocity=(1.0, 1.0),
     limiter=None,
+    tvb_constant=1.0,
     domain=((-5.0, 5.0), (-5.0, 5.0)),
     initial_projection="l2",
     device="cpu",
@@ -715,6 +738,7 @@ def solve_euler_dg_2d_vortex(
         final_time=final_time,
         cfl=cfl,
         limiter=limiter,
+        tvb_constant=tvb_constant,
         periodic=(True, True),
         initial_projection=initial_projection,
         device=device,
