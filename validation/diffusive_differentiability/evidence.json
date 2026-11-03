@@ -1,0 +1,397 @@
+{
+ "generated_utc": "2026-11-03T22:29:55Z",
+ "python": "3.11.6",
+ "torch": "2.7.1",
+ "dtype": "float64",
+ "threads": 2,
+ "quick": false,
+ "cases": [
+  {
+   "ncells": 8,
+   "degree": 1,
+   "alpha": 0.05,
+   "final_time": 0.1,
+   "steps": 40,
+   "dt": 0.0025,
+   "penalty": 20.0,
+   "scheme_identity": {
+    "max_abs_difference": 0.0,
+    "pass": true
+   },
+   "objective": {
+    "autograd": 0.452416928205151,
+    "exact_discrete_adjoint": 0.45241692820515217,
+    "analytic": 0.45300902789446146,
+    "relative_error_vs_analytic": 0.0013070372836993382,
+    "relative_l2_of_solution": 0.013945477653690044
+   },
+   "sensitivity_alpha": {
+    "autograd": -0.9045606933468714,
+    "exact_discrete_adjoint": -0.9045606933468782,
+    "autograd_vs_adjoint_relative": 7.486905522232781e-15,
+    "analytic": -0.8942039790880777,
+    "autograd_vs_analytic_relative": 0.011582048951913216
+   },
+   "gradient_initial_state": {
+    "dofs": 16,
+    "autograd_vs_adjoint_relative": 4.135880577979885e-15
+   },
+   "step_map_spectral_radius": 0.9987511581446089,
+   "finite_difference_alpha": [
+    {
+     "eps": 0.01,
+     "finite_difference": -0.904620965493752,
+     "relative_difference_vs_autograd": 6.662696220814366e-05
+    },
+    {
+     "eps": 0.001,
+     "finite_difference": -0.9045612960554006,
+     "relative_difference_vs_autograd": 6.662992677491905e-07
+    },
+    {
+     "eps": 0.0001,
+     "finite_difference": -0.904560699382384,
+     "relative_difference_vs_autograd": 6.672313587513061e-09
+    },
+    {
+     "eps": 1e-05,
+     "finite_difference": -0.9045606931906701,
+     "relative_difference_vs_autograd": 1.7268191655159245e-10
+    },
+    {
+     "eps": 1e-06,
+     "finite_difference": -0.9045606950419671,
+     "relative_difference_vs_autograd": 1.87394360570653e-09
+    }
+   ],
+   "h": 0.125
+  },
+  {
+   "ncells": 8,
+   "degree": 2,
+   "alpha": 0.05,
+   "final_time": 0.1,
+   "steps": 40,
+   "dt": 0.0025,
+   "penalty": 20.0,
+   "scheme_identity": {
+    "max_abs_difference": 0.0,
+    "pass": true
+   },
+   "objective": {
+    "autograd": 0.45300755549771876,
+    "exact_discrete_adjoint": 0.453007555497719,
+    "analytic": 0.45300902789446146,
+    "relative_error_vs_analytic": 3.250259160485519e-06,
+    "relative_l2_of_solution": 0.00027265154353879395
+   },
+   "sensitivity_alpha": {
+    "autograd": -0.894229713587716,
+    "exact_discrete_adjoint": -0.8942297135877154,
+    "autograd_vs_adjoint_relative": 6.207705960534794e-16,
+    "analytic": -0.8942039790880777,
+    "autograd_vs_analytic_relative": 2.87792273799979e-05
+   },
+   "gradient_initial_state": {
+    "dofs": 24,
+    "autograd_vs_adjoint_relative": 3.1184820681531754e-15
+   },
+   "step_map_spectral_radius": 0.9987670209919239,
+   "finite_difference_alpha": [
+    {
+     "eps": 0.01,
+     "finite_difference": -0.8942877923673959,
+     "relative_difference_vs_autograd": 6.494417141281175e-05
+    },
+    {
+     "eps": 0.001,
+     "finite_difference": -0.8942302943586722,
+     "relative_difference_vs_autograd": 6.494646400143256e-07
+    },
+    {
+     "eps": 0.0001,
+     "finite_difference": -0.8942297193315074,
+     "relative_difference_vs_autograd": 6.423172165160712e-09
+    },
+    {
+     "eps": 1e-05,
+     "finite_difference": -0.8942297135966503,
+     "relative_difference_vs_autograd": 9.991054435142502e-12
+    },
+    {
+     "eps": 1e-06,
+     "finite_difference": -0.8942297125003051,
+     "relative_difference_vs_autograd": 1.2160307500949903e-09
+    }
+   ],
+   "h": 0.125
+  },
+  {
+   "ncells": 16,
+   "degree": 2,
+   "alpha": 0.05,
+   "final_time": 0.1,
+   "steps": 80,
+   "dt": 0.00125,
+   "penalty": 20.0,
+   "scheme_identity": {
+    "max_abs_difference": 0.0,
+    "pass": true
+   },
+   "objective": {
+    "autograd": 0.4530089364258655,
+    "exact_discrete_adjoint": 0.4530089364258617,
+    "analytic": 0.45300902789446146,
+    "relative_error_vs_analytic": 2.019134064509344e-07,
+    "relative_l2_of_solution": 3.603896643012751e-05
+   },
+   "sensitivity_alpha": {
+    "autograd": -0.8942056682409136,
+    "exact_discrete_adjoint": -0.8942056682408355,
+    "autograd_vs_adjoint_relative": 8.740685024662621e-14,
+    "analytic": -0.8942039790880777,
+    "autograd_vs_analytic_relative": 1.8890016992097662e-06
+   },
+   "gradient_initial_state": {
+    "dofs": 48,
+    "autograd_vs_adjoint_relative": 1.1445214243753304e-14
+   },
+   "step_map_spectral_radius": 0.9993833386880585,
+   "finite_difference_alpha": [
+    {
+     "eps": 0.01,
+     "finite_difference": -0.8942637395879693,
+     "relative_difference_vs_autograd": 6.493760675398364e-05
+    },
+    {
+     "eps": 0.001,
+     "finite_difference": -0.8942062489545322,
+     "relative_difference_vs_autograd": 6.494179829366588e-07
+    },
+    {
+     "eps": 0.0001,
+     "finite_difference": -0.8942056741184645,
+     "relative_difference_vs_autograd": 6.572929540204628e-09
+    },
+    {
+     "eps": 1e-05,
+     "finite_difference": -0.894205669207948,
+     "relative_difference_vs_autograd": 1.0814451023879545e-09
+    },
+    {
+     "eps": 1e-06,
+     "finite_difference": -0.8942056687610833,
+     "relative_difference_vs_autograd": 5.817114599864343e-10
+    }
+   ],
+   "h": 0.0625
+  },
+  {
+   "ncells": 16,
+   "degree": 3,
+   "alpha": 0.05,
+   "final_time": 0.1,
+   "steps": 80,
+   "dt": 0.00125,
+   "penalty": 20.0,
+   "scheme_identity": {
+    "max_abs_difference": 0.0,
+    "pass": true
+   },
+   "objective": {
+    "autograd": 0.45300902645127494,
+    "exact_discrete_adjoint": 0.4530090264512795,
+    "analytic": 0.45300902789446146,
+    "relative_error_vs_analytic": 3.185778706101597e-09,
+    "relative_l2_of_solution": 1.252860080761931e-05
+   },
+   "sensitivity_alpha": {
+    "autograd": -0.8942040618090512,
+    "exact_discrete_adjoint": -0.8942040618090465,
+    "autograd_vs_adjoint_relative": 5.214622592959556e-15,
+    "analytic": -0.8942039790880777,
+    "autograd_vs_analytic_relative": 9.250794611742959e-08
+   },
+   "gradient_initial_state": {
+    "dofs": 64,
+    "autograd_vs_adjoint_relative": 1.3309372486967451e-14
+   },
+   "step_map_spectral_radius": 0.9993833399180537,
+   "finite_difference_alpha": [
+    {
+     "eps": 0.01,
+     "finite_difference": -0.8942621328200534,
+     "relative_difference_vs_autograd": 6.493734764220111e-05
+    },
+    {
+     "eps": 0.001,
+     "finite_difference": -0.8942046425019223,
+     "relative_difference_vs_autograd": 6.493959475505236e-07
+    },
+    {
+     "eps": 0.0001,
+     "finite_difference": -0.8942040676432339,
+     "relative_difference_vs_autograd": 6.524442130851305e-09
+    },
+    {
+     "eps": 1e-05,
+     "finite_difference": -0.894204060603032,
+     "relative_difference_vs_autograd": 1.3487068853200433e-09
+    },
+    {
+     "eps": 1e-06,
+     "finite_difference": -0.8942040572446075,
+     "relative_difference_vs_autograd": 5.104476629137742e-09
+    }
+   ],
+   "h": 0.0625
+  }
+ ],
+ "alpha_sweeps": [
+  {
+   "ncells": 16,
+   "degree": 2,
+   "final_time": 0.1,
+   "rows": [
+    {
+     "alpha": 0.01,
+     "value_autograd": 0.4902271467032535,
+     "value_analytic": 0.4902271669142138,
+     "value_relative_error": 4.122774431591279e-08,
+     "sensitivity_autograd": -0.9676715358735866,
+     "sensitivity_adjoint": -0.9676715358736798,
+     "sensitivity_analytic": -0.9676696408220183,
+     "sensitivity_autograd_vs_adjoint_relative": 9.637436941277064e-14,
+     "sensitivity_vs_analytic_relative": 1.958366252571341e-06,
+     "step_map_spectral_radius": 0.999876637308412
+    },
+    {
+     "alpha": 0.02,
+     "value_autograd": 0.48064531152615153,
+     "value_analytic": 0.48064535036147293,
+     "value_relative_error": 8.079828791422776e-08,
+     "sensitivity_autograd": -0.9487577243569505,
+     "sensitivity_adjoint": -0.9487577243569927,
+     "sensitivity_analytic": -0.9487558930581459,
+     "sensitivity_autograd_vs_adjoint_relative": 4.4467068728582525e-14,
+     "sensitivity_vs_analytic_relative": 1.9302107296503866e-06,
+     "step_map_spectral_radius": 0.9997532898342392
+    },
+    {
+     "alpha": 0.05,
+     "value_autograd": 0.4530089364258655,
+     "value_analytic": 0.45300902789446146,
+     "value_relative_error": 2.019134064509344e-07,
+     "sensitivity_autograd": -0.8942056682409136,
+     "sensitivity_adjoint": -0.8942056682408355,
+     "sensitivity_analytic": -0.8942039790880777,
+     "sensitivity_autograd_vs_adjoint_relative": 8.740685024662621e-14,
+     "sensitivity_vs_analytic_relative": 1.8890016992097662e-06,
+     "step_map_spectral_radius": 0.9993833386880585
+    },
+    {
+     "alpha": 0.1,
+     "value_autograd": 0.41043418599848813,
+     "value_analytic": 0.41043435870776995,
+     "value_relative_error": 4.2079635429210817e-07,
+     "sensitivity_autograd": -0.8101665348801158,
+     "sensitivity_adjoint": -0.8101665348800043,
+     "sensitivity_analytic": -0.8101649506120989,
+     "sensitivity_autograd_vs_adjoint_relative": 1.3758454203354038e-13,
+     "sensitivity_vs_analytic_relative": 1.955488219637778e-06,
+     "step_map_spectral_radius": 0.9987670575300777
+    },
+    {
+     "alpha": 0.2,
+     "value_autograd": 0.3369123920769169,
+     "value_analytic": 0.3369127256157168,
+     "value_relative_error": 9.899857574318118e-07,
+     "sensitivity_autograd": -0.6650407448684855,
+     "sensitivity_adjoint": -0.6650407448683193,
+     "sensitivity_analytic": -0.6650390639039779,
+     "sensitivity_autograd_vs_adjoint_relative": 2.499100815534156e-13,
+     "sensitivity_vs_analytic_relative": 2.5276176977049253e-06,
+     "step_map_spectral_radius": 0.9975356342707402
+    }
+   ]
+  },
+  {
+   "ncells": 16,
+   "degree": 3,
+   "final_time": 0.1,
+   "rows": [
+    {
+     "alpha": 0.01,
+     "value_autograd": 0.4902271668963174,
+     "value_analytic": 0.4902271669142138,
+     "value_relative_error": 3.650635416953677e-11,
+     "sensitivity_autograd": -0.9676696450179744,
+     "sensitivity_adjoint": -0.9676696450177709,
+     "sensitivity_analytic": -0.9676696408220183,
+     "sensitivity_autograd_vs_adjoint_relative": 2.10303052763481e-13,
+     "sensitivity_vs_analytic_relative": 4.336145157464135e-09,
+     "step_map_spectral_radius": 0.9998766375545315
+    },
+    {
+     "alpha": 0.02,
+     "value_autograd": 0.48064535025432265,
+     "value_analytic": 0.48064535036147293,
+     "value_relative_error": 2.2293004303744908e-10,
+     "sensitivity_autograd": -0.9487559078254632,
+     "sensitivity_adjoint": -0.9487559078255491,
+     "sensitivity_analytic": -0.9487558930581459,
+     "sensitivity_autograd_vs_adjoint_relative": 9.057257129806204e-14,
+     "sensitivity_vs_analytic_relative": 1.556492809790454e-08,
+     "step_map_spectral_radius": 0.9997532903264215
+    },
+    {
+     "alpha": 0.05,
+     "value_autograd": 0.45300902645127494,
+     "value_analytic": 0.45300902789446146,
+     "value_relative_error": 3.185778706101597e-09,
+     "sensitivity_autograd": -0.8942040618090512,
+     "sensitivity_adjoint": -0.8942040618090465,
+     "sensitivity_analytic": -0.8942039790880777,
+     "sensitivity_autograd_vs_adjoint_relative": 5.214622592959556e-15,
+     "sensitivity_vs_analytic_relative": 9.250794611742959e-08,
+     "step_map_spectral_radius": 0.9993833399180537
+    },
+    {
+     "alpha": 0.1,
+     "value_autograd": 0.4104343483859763,
+     "value_analytic": 0.41043435870776995,
+     "value_relative_error": 2.5148463872562702e-08,
+     "sensitivity_autograd": -0.8101652389688696,
+     "sensitivity_adjoint": -0.8101652389690192,
+     "sensitivity_analytic": -0.8101649506120989,
+     "sensitivity_autograd_vs_adjoint_relative": 1.8458832127544205e-13,
+     "sensitivity_vs_analytic_relative": 3.5592353194944587e-07,
+     "step_map_spectral_radius": 0.9987670599885501
+    },
+    {
+     "alpha": 0.2,
+     "value_autograd": 0.3369126580600022,
+     "value_analytic": 0.3369127256157168,
+     "value_relative_error": 2.0051398905900472e-07,
+     "sensitivity_autograd": -0.6650399431339848,
+     "sensitivity_adjoint": -0.66503994313378,
+     "sensitivity_analytic": -0.6650390639039779,
+     "sensitivity_autograd_vs_adjoint_relative": 3.080057824468693e-13,
+     "sensitivity_vs_analytic_relative": 1.3220727241949493e-06,
+     "step_map_spectral_radius": 0.997535639181626
+    }
+   ]
+  }
+ ],
+ "summary": {
+  "worst_scheme_identity_max_abs": 0.0,
+  "worst_autograd_vs_exact_adjoint_alpha": 8.740685024662621e-14,
+  "worst_autograd_vs_exact_adjoint_initial_state": 1.3309372486967451e-14,
+  "worst_autograd_vs_central_difference_alpha": 1.3487068853200433e-09,
+  "worst_autograd_vs_analytic_sensitivity": 0.011582048951913216,
+  "worst_objective_relative_error_vs_analytic": 0.0013070372836993382,
+  "pass_adjoint_machine_precision": true,
+  "pass_finite_difference": true,
+  "pass_analytic_three_percent": true
+ }
+}

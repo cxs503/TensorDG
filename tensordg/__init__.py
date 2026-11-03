@@ -21,6 +21,8 @@ from .differentiable import (
     advance_advection_1d,
     advance_euler_dg_1d,
     advance_euler_dg_2d,
+    advance_heat_1d,
+    heat_1d_operators,
     central_difference_directional,
     central_difference_gradient,
     directional_derivative_ad,
@@ -45,6 +47,7 @@ __all__ = [
     # autograd-ready integration + gradient verification (see
     # docs/differentiability_verification.md)
     "advance_advection_1d", "advance_euler_dg_1d", "advance_euler_dg_2d",
+    "advance_heat_1d", "heat_1d_operators",
     "legendre_l2_sq", "legendre_l2_sq_2d", "probe_value",
     "directional_derivative_ad", "central_difference_directional",
     "central_difference_gradient", "gradient_consistency",
