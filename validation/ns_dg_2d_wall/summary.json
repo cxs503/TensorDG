@@ -1,0 +1,267 @@
+{
+  "residual": [
+    {
+      "ncells": [
+        2,
+        8
+      ],
+      "degree": 1,
+      "rhs_max": 0.30453023045906513,
+      "rhs_channels": [
+        0.00019465042381095664,
+        0.06912766006398563,
+        0.024721822623739228,
+        0.30453023045906513
+      ],
+      "wall_fraction": 1.0,
+      "interior_max": 0.02467655984893106
+    },
+    {
+      "ncells": [
+        2,
+        16
+      ],
+      "degree": 1,
+      "rhs_max": 0.3045019829830822,
+      "rhs_channels": [
+        6.401961077621771e-05,
+        0.07010642384671817,
+        0.012421805865739051,
+        0.3045019829830822
+      ],
+      "wall_fraction": 1.0,
+      "interior_max": 0.012400607410128758
+    },
+    {
+      "ncells": [
+        2,
+        32
+      ],
+      "degree": 1,
+      "rhs_max": 0.30454209727715664,
+      "rhs_channels": [
+        1.8010817990796682e-05,
+        0.07056633517217215,
+        0.006229341363059883,
+        0.30454209727715664
+      ],
+      "wall_fraction": 1.0,
+      "interior_max": 0.006222753508595217
+    },
+    {
+      "ncells": [
+        2,
+        8
+      ],
+      "degree": 2,
+      "rhs_max": 0.018099264823681023,
+      "rhs_channels": [
+        4.9200169151541545e-05,
+        0.018099264823681023,
+        7.862669614688195e-05,
+        0.008256607976390162
+      ],
+      "wall_fraction": 1.0,
+      "interior_max": 0.010213656599268983
+    }
+  ],
+  "fluxconv": [
+    {
+      "ncells": [
+        2,
+        8
+      ],
+      "degree": 1,
+      "mx_top": -0.10033390285815713,
+      "mx_bottom": -0.09749818388597298,
+      "energy_top": -0.0522010296864536,
+      "energy_bottom": -0.06270412321249624,
+      "my_top": 0.9994860131020183,
+      "my_bottom": 0.9994860131020183,
+      "mx_error": 0.0003339028581571257,
+      "mx_error_bottom": 0.002501816114027028,
+      "energy_error_top": 0.0022010296864535955,
+      "energy_error_bottom": 0.01270412321249624
+    },
+    {
+      "ncells": [
+        2,
+        16
+      ],
+      "degree": 1,
+      "mx_top": -0.10018892663166333,
+      "mx_bottom": -0.0986363567908935,
+      "energy_top": -0.0511093345142379,
+      "energy_bottom": -0.05634515556172693,
+      "my_top": 0.9998707140074431,
+      "my_bottom": 0.9998707140074433,
+      "mx_error": 0.0001889266316633248,
+      "mx_error_bottom": 0.0013636432091065076,
+      "energy_error_top": 0.0011093345142378988,
+      "energy_error_bottom": 0.006345155561726927,
+      "slope_energy_bottom": 1.001569390296936,
+      "slope_mx_bottom": 0.87550950050354
+    },
+    {
+      "ncells": [
+        2,
+        32
+      ],
+      "degree": 1,
+      "mx_top": -0.10010003190563506,
+      "mx_bottom": -0.09928948326376191,
+      "energy_top": -0.050556839914901605,
+      "energy_bottom": -0.05317242430569948,
+      "my_top": 0.9999675674429148,
+      "my_bottom": 0.9999675674429147,
+      "mx_error": 0.00010003190563505349,
+      "mx_error_bottom": 0.0007105167362380926,
+      "energy_error_top": 0.0005568399149016023,
+      "energy_error_bottom": 0.0031724243056994797,
+      "slope_energy_bottom": 1.0000698566436768,
+      "slope_mx_bottom": 0.9405257105827332
+    },
+    {
+      "ncells": [
+        2,
+        64
+      ],
+      "degree": 1,
+      "mx_top": -0.10005141817001895,
+      "mx_bottom": -0.09963749893723925,
+      "energy_top": -0.05027895881540638,
+      "energy_bottom": -0.051586374060603256,
+      "my_top": 0.9999918771870694,
+      "my_bottom": 0.9999918771870697,
+      "mx_error": 5.141817001894089e-05,
+      "mx_error_bottom": 0.0003625010627607561,
+      "energy_error_top": 0.0002789588154063771,
+      "energy_error_bottom": 0.001586374060603253,
+      "slope_energy_bottom": 0.9998527765274048,
+      "slope_mx_bottom": 0.9708834290504456
+    }
+  ],
+  "channels": [
+    {
+      "penalised": "all channels",
+      "survived": false,
+      "failure": {
+        "step": 67,
+        "time": 0.032817117950761164,
+        "dt": 0.0004764549681956614,
+        "min_pressure": -0.0024419347868545153
+      }
+    },
+    {
+      "penalised": "u only",
+      "survived": true,
+      "failure": null
+    },
+    {
+      "penalised": "v only",
+      "survived": true,
+      "failure": null
+    },
+    {
+      "penalised": "T only",
+      "survived": false,
+      "failure": {
+        "step": 68,
+        "time": 0.03330352044942249,
+        "dt": 0.0004773151854773797,
+        "min_pressure": -0.029939190965201895
+      }
+    },
+    {
+      "penalised": "no penalty",
+      "survived": true,
+      "failure": null
+    }
+  ],
+  "penalty": [
+    {
+      "sigma": 0.1,
+      "penalty": 0.4,
+      "survived": true,
+      "failure": null
+    },
+    {
+      "sigma": 0.5,
+      "penalty": 2.0,
+      "survived": true,
+      "failure": null
+    },
+    {
+      "sigma": 1.0,
+      "penalty": 4.0,
+      "survived": true,
+      "failure": null
+    },
+    {
+      "sigma": 2.0,
+      "penalty": 8.0,
+      "survived": false,
+      "failure": {
+        "step": 67,
+        "time": 0.032817117950761164,
+        "dt": 0.0004764549681956614,
+        "min_pressure": -0.0024419347868545153
+      }
+    },
+    {
+      "sigma": 4.0,
+      "penalty": 16.0,
+      "survived": false,
+      "failure": {
+        "step": 34,
+        "time": 0.01690400296414548,
+        "dt": 0.00048299876097056445,
+        "min_pressure": -0.023537935402230634
+      }
+    },
+    {
+      "sigma": 8.0,
+      "penalty": 32.0,
+      "survived": false,
+      "failure": {
+        "step": 18,
+        "time": 0.009176352437294664,
+        "dt": 0.00048298050709148077,
+        "min_pressure": -0.14519082121698146
+      }
+    },
+    {
+      "sigma": 16.0,
+      "penalty": 64.0,
+      "survived": false,
+      "failure": {
+        "step": 8,
+        "time": 0.004344520583832338,
+        "dt": 0.0004823144260308435,
+        "min_pressure": -0.19209433288161892
+      }
+    }
+  ],
+  "dtindep": [
+    {
+      "cfl_viscous": 1.0,
+      "survived": false,
+      "failure": {
+        "step": 67,
+        "time": 0.032817117950761164,
+        "dt": 0.0004764549681956614,
+        "min_pressure": -0.0024419347868545153
+      }
+    },
+    {
+      "cfl_viscous": 0.25,
+      "survived": false,
+      "failure": {
+        "step": 262,
+        "time": 0.03173473605859145,
+        "dt": 0.00011914660039892609,
+        "min_pressure": -0.005629482358115674
+      }
+    }
+  ]
+}
