@@ -40,7 +40,7 @@ import torch
 
 from .euler_1d import GAMMA
 from .euler_2d import vortex_primitive
-from .limiters import _minmod
+from .limiters import _minmod, _weno_weights
 
 __all__ = [
     "solve_euler_dg_2d",
@@ -302,26 +302,53 @@ def _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic):
 # Shock limiting and positivity
 # ---------------------------------------------------------------------------
 
-def _troubled_1d(averages: torch.Tensor, axis: int, spacing: float, tvb_constant: float):
+def _shift(averages: torch.Tensor, axis: int, step: int, periodic: bool):
+    """Neighbour averages along ``axis``.
+
+    Periodic axes wrap (``torch.roll``); outflow axes clamp to the edge cell.
+    Wrapping on a non-periodic axis would feed the opposite end of the mesh
+    into the end cells, so the flag must be threaded through from the solver.
+    Clamping alone is not enough: a clamped half stencil has a zero increment
+    on one side, which makes any monotone profile look like an extremum, so
+    ``_troubled_1d`` also drops the end cells of a non-periodic axis from the
+    troubled set.
+    """
+    if periodic:
+        return torch.roll(averages, shifts=-step, dims=axis)
+    n = averages.shape[axis]
+    index = (torch.arange(n, device=averages.device) + step).clamp(0, n - 1)
+    return averages.index_select(axis, index)
+
+
+def _troubled_1d(
+    averages: torch.Tensor,
+    axis: int,
+    spacing: float,
+    tvb_constant: float,
+    periodic: bool = True,
+):
     """Cockburn-Shu troubled-cell test along one axis on cell averages."""
-    if axis == 0:
-        centres = averages
-        plus = torch.roll(averages, shifts=-1, dims=0)
-        minus = torch.roll(averages, shifts=1, dims=0)
-    else:
-        centres = averages
-        plus = torch.roll(averages, shifts=-1, dims=1)
-        minus = torch.roll(averages, shifts=1, dims=1)
+    centres = averages
+    plus = _shift(averages, axis, 1, periodic)
+    minus = _shift(averages, axis, -1, periodic)
     delta_left = centres - minus
     delta_right = plus - centres
     variation = torch.maximum(delta_left.abs(), delta_right.abs()).max(dim=-1).values
     minmod = _minmod(delta_left, delta_right)
     not_monotone = ~((minmod - delta_left).abs().max(dim=-1).values < 1e-14)
     troubled = not_monotone & (variation > tvb_constant * spacing * spacing)
+    if not periodic and averages.shape[axis] > 2:
+        # No full stencil at an outflow face: leave the end cells unlimited
+        # rather than deciding them from a replicated (zero-increment) ghost.
+        cutter = [slice(None)] * troubled.dim()
+        cutter[axis] = 0
+        troubled[tuple(cutter)] = False
+        cutter[axis] = -1
+        troubled[tuple(cutter)] = False
     return troubled, minmod
 
 
-def apply_tvb_limiter_2d(coeff, dx, dy, tvb_constant=1.0):
+def apply_tvb_limiter_2d(coeff, dx, dy, tvb_constant=1.0, periodic=(True, True)):
     """Directional minmod/TVB limiting of a tensor-product modal expansion.
 
     Troubled cells (non-monotone cell averages with variation above
@@ -329,16 +356,22 @@ def apply_tvb_limiter_2d(coeff, dx, dy, tvb_constant=1.0):
     reconstruction along the offending direction; the higher modes of that
     direction are removed.  The cell average is never modified, so
     conservation is preserved exactly.
+
+    ``periodic`` carries the mesh periodicity per axis so that the troubled
+    cell indicator uses wrapped neighbours only where the mesh actually wraps.
     """
     if coeff.shape[2] <= 1 and coeff.shape[3] <= 1:
         return coeff
     averages = coeff[..., 0, 0, :]
     limited = coeff.clone()
     for axis, spacing in ((0, dx), (1, dy)):
-        troubled, slope = _troubled_1d(averages, axis, spacing, tvb_constant)
+        troubled, slope = _troubled_1d(
+            averages, axis, spacing, tvb_constant, bool(periodic[axis])
+        )
         if not troubled.any():
             continue
         mask = troubled.unsqueeze(-1)  # broadcast over the 4 components
+        mask_modes = troubled.view(*troubled.shape, 1, 1, 1)  # (nx, ny, 1, 1, 1)
         if axis == 0:
             new_slope = 0.5 * slope
             limited[..., 1, 0, :] = torch.where(
@@ -346,7 +379,7 @@ def apply_tvb_limiter_2d(coeff, dx, dy, tvb_constant=1.0):
             )
             if coeff.shape[2] > 2:
                 limited[..., 2:, :, :] = torch.where(
-                    mask.unsqueeze(2), torch.zeros_like(limited[..., 2:, :, :]),
+                    mask_modes, torch.zeros_like(limited[..., 2:, :, :]),
                     limited[..., 2:, :, :],
                 )
         else:
@@ -356,7 +389,87 @@ def apply_tvb_limiter_2d(coeff, dx, dy, tvb_constant=1.0):
             )
             if coeff.shape[3] > 2:
                 limited[..., :, 2:, :] = torch.where(
-                    mask.unsqueeze(1), torch.zeros_like(limited[..., :, 2:, :]),
+                    mask_modes, torch.zeros_like(limited[..., :, 2:, :]),
+                    limited[..., :, 2:, :],
+                )
+    return limited
+
+
+def _weno_slope_1d(averages, axis, spacing, periodic, epsilon=1e-6):
+    """WENO3 non-linear slope (physical units) along ``axis``.
+
+    Mirrors :func:`tensordg.limiters.apply_weno_limiter` line for line so that
+    the two-dimensional limiter reduces exactly to the one-dimensional one on
+    y-invariant data (see ``tests/test_limiter_2d.py``).
+    """
+    u_i = averages
+    u_im1 = _shift(averages, axis, -1, periodic)
+    u_ip1 = _shift(averages, axis, 1, periodic)
+    slope0 = (u_i - u_im1) / spacing
+    slope1 = (u_ip1 - u_i) / spacing
+    slope2 = (u_ip1 - u_im1) / (2.0 * spacing)
+    beta0 = spacing * slope0**2
+    beta1 = spacing * slope1**2
+    beta2 = (1.0 / 3.0) * (u_im1 - 2.0 * u_i + u_ip1) ** 2 / spacing + spacing * slope2**2
+    beta_smooth = [beta.amax(dim=-1) for beta in (beta0, beta1, beta2)]
+    weights = _weno_weights(*beta_smooth, epsilon=epsilon)
+    return (
+        weights[0][..., None] * slope0
+        + weights[1][..., None] * slope1
+        + weights[2][..., None] * slope2
+    )
+
+
+def apply_weno_limiter_2d(
+    coeff, dx, dy, tvb_constant=1.0, periodic=(True, True), epsilon=1e-6
+):
+    """Dimension-by-dimension WENO limiting of a tensor-product DG expansion.
+
+    For every axis, cells flagged by the same Cockburn-Shu indicator the TVB
+    limiter uses are rebuilt from a WENO3 combination of the one-sided and
+    centred slopes of the cell averages (Qiu & Shu, 2005, applied one
+    dimension at a time).  Only modes of the offending axis are touched: mode 1
+    receives the WENO slope and modes >= 2 are zeroed, while the modal
+    content of the other axis is kept.  The cell average (mode 0 of both axes)
+    is never modified, so conservation is preserved exactly.
+    """
+    if coeff.shape[2] <= 1 and coeff.shape[3] <= 1:
+        return coeff
+    averages = coeff[..., 0, 0, :]
+    limited = coeff
+    for axis, spacing in ((0, dx), (1, dy)):
+        if coeff.shape[2 + axis] <= 1:
+            continue
+        troubled, _ = _troubled_1d(
+            averages, axis, spacing, tvb_constant, bool(periodic[axis])
+        )
+        if not troubled.any():
+            continue
+        slope = _weno_slope_1d(
+            averages, axis, spacing, bool(periodic[axis]), epsilon
+        )
+        if limited is coeff:
+            limited = coeff.clone()
+        mask = troubled.view(*troubled.shape, 1, 1)
+        mask_modes = troubled.view(*troubled.shape, 1, 1, 1)
+        if axis == 0:
+            limited[..., 1, :, :] = torch.where(
+                mask, (0.5 * spacing) * slope.unsqueeze(2), limited[..., 1, :, :]
+            )
+            if coeff.shape[2] > 2:
+                limited[..., 2:, :, :] = torch.where(
+                    mask_modes,
+                    torch.zeros_like(limited[..., 2:, :, :]),
+                    limited[..., 2:, :, :],
+                )
+        else:
+            limited[..., :, 1, :] = torch.where(
+                mask, (0.5 * spacing) * slope.unsqueeze(2), limited[..., :, 1, :]
+            )
+            if coeff.shape[3] > 2:
+                limited[..., :, 2:, :] = torch.where(
+                    mask_modes,
+                    torch.zeros_like(limited[..., :, 2:, :]),
                     limited[..., :, 2:, :],
                 )
     return limited
@@ -462,7 +575,7 @@ def solve_euler_dg_2d(
     degree : int
         Polynomial degree of the tensor-product basis (0, 1, 2, 3 supported).
     limiter : str or None
-        ``None`` (positivity fallback only) or ``"tvb"``.
+        ``None`` (positivity fallback only), ``"tvb"`` or ``"weno"``.
     periodic : (bool, bool)
         Periodicity in ``x`` and ``y``; non-periodic faces are outflow.
     initial_projection : str
@@ -498,11 +611,19 @@ def solve_euler_dg_2d(
     else:
         raise ValueError("initial_projection must be 'l2' or 'cell-average'")
 
+    periodic_flags = (bool(periodic[0]), bool(periodic[1]))
+
     def impose(state):
         if limiter == "tvb":
-            state = apply_tvb_limiter_2d(state, dx, dy, tvb_constant)
+            state = apply_tvb_limiter_2d(
+                state, dx, dy, tvb_constant, periodic_flags
+            )
+        elif limiter == "weno":
+            state = apply_weno_limiter_2d(
+                state, dx, dy, tvb_constant, periodic_flags
+            )
         elif limiter is not None:
-            raise ValueError("limiter must be None or 'tvb'")
+            raise ValueError("limiter must be None, 'tvb' or 'weno'")
         return _positivity_filter(state, basis, signs)
 
     time, steps, dt = 0.0, 0, 0.0
