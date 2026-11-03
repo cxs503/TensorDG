@@ -1,0 +1,97 @@
+{
+  "tag": "post_fix",
+  "case": "Sod shock tube, exact Riemann reference",
+  "left_state": [
+    1.0,
+    0.0,
+    1.0
+  ],
+  "right_state": [
+    0.125,
+    0.0,
+    0.1
+  ],
+  "final_time": 0.2,
+  "ncells": 200,
+  "degree": 2,
+  "cfl": 0.4,
+  "python": "3.11.6",
+  "torch": "2.7.1",
+  "timestamp": "2026-11-03T01:42:35Z",
+  "configs": [
+    {
+      "limiter": "none",
+      "tvb_constant": 1.0,
+      "steps": 1131,
+      "wall_s": 15.8,
+      "relative_l2_percent": {
+        "density": 0.7107065484554396,
+        "velocity": 3.202348349616825,
+        "pressure": 0.5626022783995218
+      },
+      "max_relative_l2_percent": 3.202348349616825,
+      "slope_amplification": 549.1150666040447,
+      "label": "none"
+    },
+    {
+      "limiter": "tvb",
+      "tvb_constant": 1.0,
+      "steps": 1094,
+      "wall_s": 20.9,
+      "relative_l2_percent": {
+        "density": 1.6815077263278788,
+        "velocity": 4.788562578386523,
+        "pressure": 1.2807613989917794
+      },
+      "max_relative_l2_percent": 4.788562578386523,
+      "slope_amplification": 1.0,
+      "label": "tvb_M1"
+    },
+    {
+      "limiter": "tvb",
+      "tvb_constant": 50.0,
+      "steps": 1094,
+      "wall_s": 21.7,
+      "relative_l2_percent": {
+        "density": 1.6830803316722982,
+        "velocity": 4.792581780009715,
+        "pressure": 1.2820932648099368
+      },
+      "max_relative_l2_percent": 4.792581780009715,
+      "slope_amplification": 1.0,
+      "label": "tvb_M50"
+    },
+    {
+      "limiter": "tvb",
+      "tvb_constant": 300.0,
+      "steps": 1094,
+      "wall_s": 17.3,
+      "relative_l2_percent": {
+        "density": 1.6848208078462625,
+        "velocity": 4.79137156273892,
+        "pressure": 1.277741138853555
+      },
+      "max_relative_l2_percent": 4.79137156273892,
+      "slope_amplification": 1.0,
+      "label": "tvb_M300"
+    },
+    {
+      "limiter": "weno",
+      "tvb_constant": 1.0,
+      "steps": 1098,
+      "wall_s": 20.3,
+      "relative_l2_percent": {
+        "density": 1.5568351572570642,
+        "velocity": 4.711479352566739,
+        "pressure": 1.1447689638178404
+      },
+      "max_relative_l2_percent": 4.711479352566739,
+      "slope_amplification": 277.40318919561594,
+      "label": "weno_M1"
+    }
+  ],
+  "summary": {
+    "best_max_percent": 3.202348349616825,
+    "all_below_three_percent": false
+  }
+}
