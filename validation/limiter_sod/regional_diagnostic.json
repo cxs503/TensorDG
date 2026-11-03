@@ -1,0 +1,50 @@
+{
+  "ncells": 200,
+  "degree": 2,
+  "cfl": 0.4,
+  "steps": {
+    "unlimited": 1131,
+    "tvb_in_loop": 1094
+  },
+  "relative_l2_percent": {
+    "unlimited": {
+      "density": 0.7107065484554396,
+      "velocity": 3.202348349616825,
+      "pressure": 0.5626022783995218
+    },
+    "tvb in RK loop": {
+      "density": 1.6815077263278788,
+      "velocity": 4.788562578386523,
+      "pressure": 1.2807613989917794
+    },
+    "tvb one-shot (final state)": {
+      "density": 0.708122338778315,
+      "velocity": 2.4518877155430747,
+      "pressure": 0.5344079973923863
+    }
+  },
+  "max_relative_l2_percent": {
+    "unlimited": 3.202348349616825,
+    "tvb in RK loop": 4.788562578386523,
+    "tvb one-shot (final state)": 2.4518877155430747
+  },
+  "regional_velocity_percent": {
+    "unlimited": {
+      "rarefaction 0.25<x<0.5": 0.41625577926719637,
+      "contact/shock 0.5<x<0.95": 3.0518497872149033
+    },
+    "tvb in RK loop": {
+      "rarefaction 0.25<x<0.5": 2.6956823634517937,
+      "contact/shock 0.5<x<0.95": 5.265288545989703
+    },
+    "tvb one-shot (final state)": {
+      "rarefaction 0.25<x<0.5": 0.3958910474724247,
+      "contact/shock 0.5<x<0.95": 4.237311509527104
+    }
+  },
+  "plateau_velocity_absolute_l2": {
+    "unlimited": 0.0039028532745866203,
+    "tvb in RK loop": 0.004280946169128506,
+    "tvb one-shot (final state)": 0.002766829243093603
+  }
+}
