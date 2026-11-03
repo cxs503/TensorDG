@@ -197,6 +197,9 @@ P1 投影误差 O(h²) 被 SIPG 罚项放大 `penalty/h` 倍，因此「插值�
 4. 生态侧：`F_v` 已是标准接口，TensorFEM/TensorFVM 的粘性通量可复用
    `_gas_gradients` 的商法则思路（有理原始量 → 精确导数）。
 
+> **2026-11-03 更新（m2589 复核）**：§5 坑 4 把壁面失稳归因于「壁面罚项 + 显式 RK3 时间刚性」已被证伪——dt 缩 4× 失稳物理时间不变（t≈0.032），失稳与 SIPG 罚项成正比，且**只有温度通道**可单独复现；根因是壁面粘性通量对弯曲数据只有 O(h) 精度（实测斜率 1.00）。
+> 详见 `docs/reports/tensordg-ns-wall-verification.md`，复现 `tools/diag_ns_wall.py`，回归 `tests/test_ns_dg_2d_wall.py`（3 条 strict-xfail 记录该未修缺陷）。
+
 ---
 生成：`benchmarks/verify_ns_dg_2d.py` 全部数字由脚本写入 `validation/ns_dg_2d/summary.json`；
 本文件中的数字由该 JSON 直读抄录，未手算。
