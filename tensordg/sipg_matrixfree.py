@@ -39,10 +39,15 @@ def _pcg(
     z = precond(r)
     p = z.clone()
     rz = torch.dot(r, z)
-    info = {"iterations": 0, "residual_norm": float("nan")}
+    info = {
+        "iterations": 0, "residual_norm": float("nan"),
+        "converged": False, "relative_residual": float("nan"),
+    }
     rhs_norm = torch.linalg.norm(rhs)
     if rhs_norm == 0.0:
         info["residual_norm"] = 0.0
+        info["converged"] = True
+        info["relative_residual"] = 0.0
         return x, info
     r_norm = rhs_norm
     for k in range(1, maxiter + 1):
@@ -55,14 +60,20 @@ def _pcg(
         if r_norm < atol or r_norm < rtol * rhs_norm:
             info["iterations"] = k
             info["residual_norm"] = float(r_norm.item())
+            info["converged"] = True
+            info["relative_residual"] = float((r_norm / rhs_norm).item())
             return x, info
         z = precond(r)
         rz_new = torch.dot(r, z)
         beta = rz_new / rz
         p = z + beta * p
         rz = rz_new
+    # Iteration budget exhausted: report the miss honestly instead of
+    # silently returning an unconverged iterate.
     info["iterations"] = maxiter
     info["residual_norm"] = float(r_norm.item())
+    info["converged"] = False
+    info["relative_residual"] = float((r_norm / rhs_norm).item())
     return x, info
 
 
@@ -414,6 +425,9 @@ def solve_poisson_2d_matrixfree(
         "penalty": penalty, "device": str(dev), "backend": "matrix-free",
         "cg_iterations": cg_info["iterations"],
         "cg_residual_norm": cg_info["residual_norm"],
+        "cg_converged": cg_info["converged"],
+        "cg_relative_residual": cg_info["relative_residual"],
+        "cg_rtol": rtol,
     }
     return x, y, coeff, metadata
 
@@ -568,6 +582,7 @@ def solve_heat_1d_matrixfree(
         return diag_inv * v
 
     total_cg_iters = 0
+    converged_steps = 0
     if steps:
         def system_mv(v):
             return (
@@ -591,6 +606,7 @@ def solve_heat_1d_matrixfree(
                 system_mv, b, precond=precond, rtol=rtol, maxiter=maxiter,
             )
             total_cg_iters += cg_info["iterations"]
+            converged_steps += int(cg_info["converged"])
 
     coeff = state.reshape(ncells, modes)
     metadata = {
@@ -598,5 +614,8 @@ def solve_heat_1d_matrixfree(
         "steps": steps, "dt": dt, "penalty": penalty, "dofs": ndofs,
         "device": str(dev), "backend": "matrix-free",
         "total_cg_iterations": total_cg_iters,
+        "cg_converged_steps": converged_steps,
+        "cg_all_converged": converged_steps == steps,
+        "cg_rtol": rtol,
     }
     return centers, coeff, metadata
