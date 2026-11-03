@@ -1,0 +1,626 @@
+{
+  "detector_scale": {
+    "constant_sweep": [
+      {
+        "cells": 32,
+        "degree": 2,
+        "dx": 0.0625,
+        "flagged_x": 512,
+        "flagged_y": 512,
+        "fraction_x": 0.5,
+        "fraction_y": 0.5,
+        "threshold": 0.0,
+        "tvb_constant": 0.0
+      },
+      {
+        "cells": 32,
+        "degree": 2,
+        "dx": 0.0625,
+        "flagged_x": 464,
+        "flagged_y": 388,
+        "fraction_x": 0.453125,
+        "fraction_y": 0.37890625,
+        "threshold": 0.001953125,
+        "tvb_constant": 0.5
+      },
+      {
+        "cells": 32,
+        "degree": 2,
+        "dx": 0.0625,
+        "flagged_x": 404,
+        "flagged_y": 284,
+        "fraction_x": 0.39453125,
+        "fraction_y": 0.27734375,
+        "threshold": 0.00390625,
+        "tvb_constant": 1.0
+      },
+      {
+        "cells": 32,
+        "degree": 2,
+        "dx": 0.0625,
+        "flagged_x": 260,
+        "flagged_y": 76,
+        "fraction_x": 0.25390625,
+        "fraction_y": 0.07421875,
+        "threshold": 0.009636592247090903,
+        "tvb_constant": 2.466967615255271
+      },
+      {
+        "cells": 32,
+        "degree": 2,
+        "dx": 0.0625,
+        "flagged_x": 0,
+        "flagged_y": 0,
+        "fraction_x": 0.0,
+        "fraction_y": 0.0,
+        "threshold": 0.03854636898836361,
+        "tvb_constant": 9.867870461021084
+      }
+    ],
+    "criterion": {
+      "M_sweep_must_change_the_flagged_set": true,
+      "fraction_at_M1_bounded_by_0_10": false,
+      "fraction_at_M1_no_upward_trend": false,
+      "fraction_at_M_above_curvature_must_be_zero": false,
+      "observed_fraction_M1": [
+        0.1875,
+        0.328125,
+        0.39453125,
+        0.4365234375,
+        0.1875,
+        0.328125,
+        0.39453125,
+        0.4365234375
+      ],
+      "passed": false,
+      "strict_test_must_flag_interior_cells": true,
+      "tvb_constant_used": 2.466967615255271
+    },
+    "curvature_estimate": 1.2334838076276355,
+    "mesh_sweep": [
+      {
+        "cells": 8,
+        "degree": 1,
+        "dx": 0.25,
+        "flagged_x": 12,
+        "flagged_y": 0,
+        "fraction_x": 0.1875,
+        "fraction_y": 0.0,
+        "label": "M=1",
+        "tvb_constant": 1.0
+      },
+      {
+        "cells": 8,
+        "degree": 1,
+        "dx": 0.25,
+        "flagged_x": 0,
+        "flagged_y": 0,
+        "fraction_x": 0.0,
+        "fraction_y": 0.0,
+        "label": "M=2|u''|",
+        "tvb_constant": 2.466967615255271
+      },
+      {
+        "cells": 16,
+        "degree": 1,
+        "dx": 0.125,
+        "flagged_x": 84,
+        "flagged_y": 36,
+        "fraction_x": 0.328125,
+        "fraction_y": 0.140625,
+        "label": "M=1",
+        "tvb_constant": 1.0
+      },
+      {
+        "cells": 16,
+        "degree": 1,
+        "dx": 0.125,
+        "flagged_x": 24,
+        "flagged_y": 0,
+        "fraction_x": 0.09375,
+        "fraction_y": 0.0,
+        "label": "M=2|u''|",
+        "tvb_constant": 2.466967615255271
+      },
+      {
+        "cells": 32,
+        "degree": 1,
+        "dx": 0.0625,
+        "flagged_x": 404,
+        "flagged_y": 284,
+        "fraction_x": 0.39453125,
+        "fraction_y": 0.27734375,
+        "label": "M=1",
+        "tvb_constant": 1.0
+      },
+      {
+        "cells": 32,
+        "degree": 1,
+        "dx": 0.0625,
+        "flagged_x": 260,
+        "flagged_y": 76,
+        "fraction_x": 0.25390625,
+        "fraction_y": 0.07421875,
+        "label": "M=2|u''|",
+        "tvb_constant": 2.466967615255271
+      },
+      {
+        "cells": 64,
+        "degree": 1,
+        "dx": 0.03125,
+        "flagged_x": 1788,
+        "flagged_y": 1504,
+        "fraction_x": 0.4365234375,
+        "fraction_y": 0.3671875,
+        "label": "M=1",
+        "tvb_constant": 1.0
+      },
+      {
+        "cells": 64,
+        "degree": 1,
+        "dx": 0.03125,
+        "flagged_x": 1436,
+        "flagged_y": 988,
+        "fraction_x": 0.3505859375,
+        "fraction_y": 0.2412109375,
+        "label": "M=2|u''|",
+        "tvb_constant": 2.466967615255271
+      },
+      {
+        "cells": 8,
+        "degree": 2,
+        "dx": 0.25,
+        "flagged_x": 12,
+        "flagged_y": 0,
+        "fraction_x": 0.1875,
+        "fraction_y": 0.0,
+        "label": "M=1",
+        "tvb_constant": 1.0
+      },
+      {
+        "cells": 8,
+        "degree": 2,
+        "dx": 0.25,
+        "flagged_x": 0,
+        "flagged_y": 0,
+        "fraction_x": 0.0,
+        "fraction_y": 0.0,
+        "label": "M=2|u''|",
+        "tvb_constant": 2.466967615255271
+      },
+      {
+        "cells": 16,
+        "degree": 2,
+        "dx": 0.125,
+        "flagged_x": 84,
+        "flagged_y": 36,
+        "fraction_x": 0.328125,
+        "fraction_y": 0.140625,
+        "label": "M=1",
+        "tvb_constant": 1.0
+      },
+      {
+        "cells": 16,
+        "degree": 2,
+        "dx": 0.125,
+        "flagged_x": 24,
+        "flagged_y": 0,
+        "fraction_x": 0.09375,
+        "fraction_y": 0.0,
+        "label": "M=2|u''|",
+        "tvb_constant": 2.466967615255271
+      },
+      {
+        "cells": 32,
+        "degree": 2,
+        "dx": 0.0625,
+        "flagged_x": 404,
+        "flagged_y": 284,
+        "fraction_x": 0.39453125,
+        "fraction_y": 0.27734375,
+        "label": "M=1",
+        "tvb_constant": 1.0
+      },
+      {
+        "cells": 32,
+        "degree": 2,
+        "dx": 0.0625,
+        "flagged_x": 260,
+        "flagged_y": 76,
+        "fraction_x": 0.25390625,
+        "fraction_y": 0.07421875,
+        "label": "M=2|u''|",
+        "tvb_constant": 2.466967615255271
+      },
+      {
+        "cells": 64,
+        "degree": 2,
+        "dx": 0.03125,
+        "flagged_x": 1788,
+        "flagged_y": 1504,
+        "fraction_x": 0.4365234375,
+        "fraction_y": 0.3671875,
+        "label": "M=1",
+        "tvb_constant": 1.0
+      },
+      {
+        "cells": 64,
+        "degree": 2,
+        "dx": 0.03125,
+        "flagged_x": 1436,
+        "flagged_y": 988,
+        "fraction_x": 0.3505859375,
+        "fraction_y": 0.2412109375,
+        "label": "M=2|u''|",
+        "tvb_constant": 2.466967615255271
+      }
+    ],
+    "tvb_constant_above_curvature": 2.466967615255271
+  },
+  "generated_at": "2026-11-03T12:33:30",
+  "riemann": [
+    {
+      "cells": 24,
+      "criterion": {
+        "initial_density_range": [
+          0.138,
+          1.5
+        ],
+        "initial_min_pressure": 0.3,
+        "limiter_active_at_shocks": true,
+        "overshoot_not_worse": true,
+        "passed": true,
+        "positivity_kept": true,
+        "undershoot_not_worse": true
+      },
+      "none": {
+        "cells": 24,
+        "degree": 1,
+        "dt": 4.137273231213934e-05,
+        "finite": true,
+        "flagged_cells_x": 478,
+        "flagged_cells_y": 478,
+        "max_density": 2.294492483948551,
+        "min_cell_pressure": 0.27508013059981923,
+        "min_density": 0.1112379915173976,
+        "min_pressure": 0.16325308700813618,
+        "overshoot": 0.794492483948551,
+        "steps": 622,
+        "undershoot": -0.026762008482602406,
+        "wall_seconds": 43.17886543273926
+      },
+      "tvb": {
+        "cells": 24,
+        "degree": 1,
+        "dt": 8.924243922855957e-05,
+        "finite": true,
+        "flagged_cells_x": 452,
+        "flagged_cells_y": 452,
+        "max_density": 1.8819129679236397,
+        "min_cell_pressure": 0.2901713923978004,
+        "min_density": 0.1308147472802099,
+        "min_pressure": 0.18863659567914443,
+        "overshoot": 0.3819129679236397,
+        "steps": 573,
+        "undershoot": -0.0071852527197901195,
+        "wall_seconds": 44.2059371471405
+      }
+    },
+    {
+      "cells": 32,
+      "criterion": {
+        "initial_density_range": [
+          0.138,
+          1.5
+        ],
+        "initial_min_pressure": 0.3,
+        "limiter_active_at_shocks": true,
+        "overshoot_not_worse": true,
+        "passed": true,
+        "positivity_kept": true,
+        "undershoot_not_worse": true
+      },
+      "none": {
+        "cells": 32,
+        "degree": 1,
+        "dt": 0.00029002519753243416,
+        "finite": true,
+        "flagged_cells_x": 824,
+        "flagged_cells_y": 824,
+        "max_density": 2.3850397986071292,
+        "min_cell_pressure": 0.26815739809707756,
+        "min_density": 0.11289817927799838,
+        "min_pressure": 0.22699227548244796,
+        "overshoot": 0.8850397986071292,
+        "steps": 825,
+        "undershoot": -0.025101820722001636,
+        "wall_seconds": 82.04116702079773
+      },
+      "tvb": {
+        "cells": 32,
+        "degree": 1,
+        "dt": 0.00015302658348401166,
+        "finite": true,
+        "flagged_cells_x": 800,
+        "flagged_cells_y": 800,
+        "max_density": 1.9945469526192108,
+        "min_cell_pressure": 0.28658883067104357,
+        "min_density": 0.1299114449428114,
+        "min_pressure": 0.27020890917524093,
+        "overshoot": 0.4945469526192108,
+        "steps": 766,
+        "undershoot": -0.008088555057188612,
+        "wall_seconds": 76.75508117675781
+      }
+    }
+  ],
+  "structural": {
+    "criterion": {
+      "passed": false,
+      "reason": "check raised"
+    },
+    "error": "RuntimeError: The expanded size of the tensor (1) must match the existing size (24) at non-singleton dimension 2.  Target sizes: [24, 24, 1, 3, 4].  Tensor sizes: [24, 24, 24, 3, 4]"
+  },
+  "tag": "before",
+  "threads": 8,
+  "torch": "2.7.1",
+  "vortex": {
+    "P1": {
+      "criterion": {
+        "constants_behaving_as_TVB": [
+          10.0,
+          50.0
+        ],
+        "error_ratio_to_unlimited_at_most": 1.1,
+        "finest_mesh_eoc_at_least_design_minus_0_3": 1.7,
+        "passed": true
+      },
+      "degree": 1,
+      "design_order": 2,
+      "final_time": 1.0,
+      "limited": [
+        {
+          "rows": [
+            {
+              "cells": 12,
+              "errors": {
+                "density": 0.01964546304044561,
+                "pressure": 0.03025688421382405,
+                "velocity_x": 0.03781735606647473,
+                "velocity_y": 0.03466427147329982
+              },
+              "h": 0.8333333333333334,
+              "ratio_to_unlimited": {
+                "density": 2.8547946434659925,
+                "pressure": 3.0923346784537764,
+                "velocity_x": 2.638381838219207,
+                "velocity_y": 2.511376601512162
+              },
+              "steps": 105,
+              "wall_seconds": 4.37308931350708
+            },
+            {
+              "cells": 16,
+              "eoc": {
+                "density": 0.5347090189073777,
+                "pressure": 0.36480244626843034
+              },
+              "errors": {
+                "density": 0.0168444331340689,
+                "pressure": 0.027242455274789645,
+                "velocity_x": 0.037710388728401885,
+                "velocity_y": 0.03475513124859672
+              },
+              "h": 0.625,
+              "ratio_to_unlimited": {
+                "density": 4.422139947415697,
+                "pressure": 4.953882223019055,
+                "velocity_x": 4.503924003631169,
+                "velocity_y": 4.240734404625102
+              },
+              "steps": 138,
+              "wall_seconds": 6.217766046524048
+            },
+            {
+              "cells": 24,
+              "eoc": {
+                "density": 1.210319723547729,
+                "pressure": 1.1722014461532326
+              },
+              "errors": {
+                "density": 0.010311685913853565,
+                "pressure": 0.01693681789648101,
+                "velocity_x": 0.026917203339933422,
+                "velocity_y": 0.024872098753789176
+              },
+              "h": 0.4166666666666667,
+              "ratio_to_unlimited": {
+                "density": 6.159823071129158,
+                "pressure": 6.908716271684978,
+                "velocity_x": 7.40088762158803,
+                "velocity_y": 6.8876673778097155
+              },
+              "steps": 210,
+              "wall_seconds": 12.898137092590332
+            }
+          ],
+          "tvb_constant": 1.0
+        },
+        {
+          "rows": [
+            {
+              "cells": 12,
+              "errors": {
+                "density": 0.00688156785126728,
+                "pressure": 0.009784479158948294,
+                "velocity_x": 0.014333541687809603,
+                "velocity_y": 0.013802896567734048
+              },
+              "h": 0.8333333333333334,
+              "ratio_to_unlimited": {
+                "density": 1.0,
+                "pressure": 1.0,
+                "velocity_x": 1.0,
+                "velocity_y": 1.0
+              },
+              "steps": 106,
+              "wall_seconds": 4.076912879943848
+            },
+            {
+              "cells": 16,
+              "eoc": {
+                "density": 2.0559154479634625,
+                "pressure": 2.002878770113562
+              },
+              "errors": {
+                "density": 0.0038091135365159135,
+                "pressure": 0.005499213353963675,
+                "velocity_x": 0.008372785308544036,
+                "velocity_y": 0.008195545377869335
+              },
+              "h": 0.625,
+              "ratio_to_unlimited": {
+                "density": 1.0,
+                "pressure": 1.0,
+                "velocity_x": 1.0,
+                "velocity_y": 1.0
+              },
+              "steps": 142,
+              "wall_seconds": 5.935012102127075
+            },
+            {
+              "cells": 24,
+              "eoc": {
+                "density": 2.027712683782125,
+                "pressure": 1.9925242775508798
+              },
+              "errors": {
+                "density": 0.0016740230676728395,
+                "pressure": 0.0024515144681647584,
+                "velocity_x": 0.003637023653948919,
+                "velocity_y": 0.0036111062554966943
+              },
+              "h": 0.4166666666666667,
+              "ratio_to_unlimited": {
+                "density": 1.0,
+                "pressure": 1.0,
+                "velocity_x": 1.0,
+                "velocity_y": 1.0
+              },
+              "steps": 212,
+              "wall_seconds": 12.54683232307434
+            }
+          ],
+          "tvb_constant": 10.0
+        },
+        {
+          "rows": [
+            {
+              "cells": 12,
+              "errors": {
+                "density": 0.00688156785126728,
+                "pressure": 0.009784479158948294,
+                "velocity_x": 0.014333541687809603,
+                "velocity_y": 0.013802896567734048
+              },
+              "h": 0.8333333333333334,
+              "ratio_to_unlimited": {
+                "density": 1.0,
+                "pressure": 1.0,
+                "velocity_x": 1.0,
+                "velocity_y": 1.0
+              },
+              "steps": 106,
+              "wall_seconds": 3.931344747543335
+            },
+            {
+              "cells": 16,
+              "eoc": {
+                "density": 2.0559154479634625,
+                "pressure": 2.002878770113562
+              },
+              "errors": {
+                "density": 0.0038091135365159135,
+                "pressure": 0.005499213353963675,
+                "velocity_x": 0.008372785308544036,
+                "velocity_y": 0.008195545377869335
+              },
+              "h": 0.625,
+              "ratio_to_unlimited": {
+                "density": 1.0,
+                "pressure": 1.0,
+                "velocity_x": 1.0,
+                "velocity_y": 1.0
+              },
+              "steps": 142,
+              "wall_seconds": 6.061182498931885
+            },
+            {
+              "cells": 24,
+              "eoc": {
+                "density": 2.027712683782125,
+                "pressure": 1.9925242775508798
+              },
+              "errors": {
+                "density": 0.0016740230676728395,
+                "pressure": 0.0024515144681647584,
+                "velocity_x": 0.003637023653948919,
+                "velocity_y": 0.0036111062554966943
+              },
+              "h": 0.4166666666666667,
+              "ratio_to_unlimited": {
+                "density": 1.0,
+                "pressure": 1.0,
+                "velocity_x": 1.0,
+                "velocity_y": 1.0
+              },
+              "steps": 212,
+              "wall_seconds": 13.002031326293945
+            }
+          ],
+          "tvb_constant": 50.0
+        }
+      ],
+      "unlimited": {
+        "12": {
+          "errors": {
+            "density": 0.00688156785126728,
+            "pressure": 0.009784479158948294,
+            "velocity_x": 0.014333541687809603,
+            "velocity_y": 0.013802896567734048
+          },
+          "steps": 106,
+          "wall_seconds": 3.7917237281799316
+        },
+        "16": {
+          "errors": {
+            "density": 0.0038091135365159135,
+            "pressure": 0.005499213353963675,
+            "velocity_x": 0.008372785308544036,
+            "velocity_y": 0.008195545377869335
+          },
+          "steps": 142,
+          "wall_seconds": 5.822674751281738
+        },
+        "24": {
+          "errors": {
+            "density": 0.0016740230676728395,
+            "pressure": 0.0024515144681647584,
+            "velocity_x": 0.003637023653948919,
+            "velocity_y": 0.0036111062554966943
+          },
+          "steps": 212,
+          "wall_seconds": 12.341401815414429
+        }
+      }
+    },
+    "P2": {
+      "criterion": {
+        "passed": false,
+        "reason": "check raised"
+      },
+      "error": "RuntimeError: The expanded size of the tensor (1) must match the existing size (8) at non-singleton dimension 2.  Target sizes: [8, 8, 1, 3, 4].  Tensor sizes: [8, 8, 8, 3, 4]"
+    }
+  },
+  "wall_seconds": 360.30958676338196
+}
