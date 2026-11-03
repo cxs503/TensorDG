@@ -89,7 +89,9 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
 - Modal Legendre bases and Gauss--Legendre projection/error quadrature.
 - High-order smooth advection and Burgers, plus SIPG Poisson/heat verification.
 - General P0 Euler Riemann solvers and high-order HLLC DG with local positivity fallback.
-- TVB (Cockburn--Shu 1989) and WENO (Qiu--Shu 2005) shock limiters for 1-D Euler.
+- TVB (Cockburn--Shu 1989) and WENO (Qiu--Shu 2005) shock limiters for 1-D Euler,
+  plus directional TVB/WENO limiters with periodicity-aware troubled-cell detection
+  for the 2-D Euler solver (see `docs/limiter_2d_verification.md`).
 - Two-dimensional Euler isentropic-vortex verification.
 - Regression tests for conservation, convergence, physical admissibility,
   exact-reference comparisons, and the documented 3% error threshold.
@@ -97,9 +99,9 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
   Richardson extrapolation and GCI mesh independence, p-refinement decay, and
   cross-backend (dense / sparse / matrix-free) accuracy equivalence.
 
-Sparse/matrix-free elliptic solvers, unstructured meshes, high-order
-multidimensional Euler, limiter performance optimisation, and additional
-Euler/Navier--Stokes benchmarks remain future work.
+Sparse/matrix-free elliptic solvers, unstructured meshes, genuinely
+multidimensional (non-directional) WENO stencils, limiter performance
+optimisation, and additional Euler/Navier--Stokes benchmarks remain future work.
 
 ## Shock limiters
 
