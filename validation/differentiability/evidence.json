@@ -1,0 +1,538 @@
+{
+ "generated_utc": "2026-11-03T12:27:38Z",
+ "python": "3.11.6",
+ "torch": "2.7.1",
+ "numpy": "2.4.6",
+ "dtype": "float64",
+ "threads": 2,
+ "quick": false,
+ "forward_mode_jvp": {
+  "available": false,
+  "reason": "torch 2.7.1 in this image raises AttributeError in torch._decomp.decompositions_for_jvp (environment defect, not TensorDG); independent verification is provided by the transposed-operator adjoint."
+ },
+ "scheme_identity": {
+  "rows": [
+   {
+    "case": "advection-1d-P0",
+    "steps": 10,
+    "max_abs_difference": 0.0,
+    "scale": 0.9292569073773322
+   },
+   {
+    "case": "advection-1d-P1",
+    "steps": 30,
+    "max_abs_difference": 0.0,
+    "scale": 0.9864720943419399
+   },
+   {
+    "case": "advection-1d-P2",
+    "steps": 50,
+    "max_abs_difference": 0.0,
+    "scale": 0.9866974706835917
+   },
+   {
+    "case": "advection-1d-P3",
+    "steps": 70,
+    "max_abs_difference": 1.249000902703301e-16,
+    "scale": 0.9866997708307722
+   },
+   {
+    "case": "euler-1d-sod-P2",
+    "steps": 31,
+    "max_abs_difference": 0.0,
+    "scale": 2.5082185758130167
+   },
+   {
+    "case": "euler-2d-vortex-P1",
+    "steps": 4,
+    "max_abs_difference": 0.0,
+    "scale": 3.9447919868428887
+   }
+  ],
+  "max_abs_difference": 1.249000902703301e-16,
+  "pass": true,
+  "note": "frozen step sizes; the adaptive-CFL sequence is reproduced from each solver"
+ },
+ "advection_gradient": {
+  "params": 48,
+  "gradient_norm": 0.3520459325513581,
+  "ad_vs_fd_relative": 6.65585127240507e-10,
+  "ad_vs_transposed_adjoint_relative": 4.9767961996773855e-16,
+  "transposed_adjoint_vs_fd_relative": 6.655851956679806e-10,
+  "directional": {
+   "directions": [
+    {
+     "autograd": 0.0620040446262368,
+     "finite_difference": 0.0620040446763781,
+     "relative_difference": 8.086779031156708e-10
+    },
+    {
+     "autograd": -0.08040344906071888,
+     "finite_difference": -0.08040344900983598,
+     "relative_difference": 6.328446815899437e-10
+    },
+    {
+     "autograd": -0.0094483676618463,
+     "finite_difference": -0.009448367616071707,
+     "relative_difference": 4.844709063836861e-09
+    },
+    {
+     "autograd": 0.019377104718520548,
+     "finite_difference": 0.01937710467081466,
+     "relative_difference": 2.461971927394983e-09
+    },
+    {
+     "autograd": 0.013719378487478968,
+     "finite_difference": 0.013719378438858953,
+     "relative_difference": 3.5438933555931448e-09
+    },
+    {
+     "autograd": 0.0010989653722243767,
+     "finite_difference": 0.001098965390911033,
+     "relative_difference": 1.7003862490557692e-08
+    },
+    {
+     "autograd": -0.0561543012935782,
+     "finite_difference": -0.05615430126448828,
+     "relative_difference": 5.180354363661736e-10
+    },
+    {
+     "autograd": -0.021477748241869866,
+     "finite_difference": -0.021477748246567785,
+     "relative_difference": 2.1873424919173958e-10
+    }
+   ],
+   "eps": 1e-06,
+   "max_relative_difference": 1.7003862490557692e-08,
+   "mean_relative_difference": 3.754091138455776e-09,
+   "pass": true
+  },
+  "gradient_ad": [
+   0.02423006586770518,
+   0.007983853102086562,
+   -4.607806796722855e-05,
+   0.06900173877500106,
+   0.006767599562854581,
+   -0.0001643331031907623,
+   0.10326852245612277,
+   0.004521040338620816,
+   -0.0002575699131367999,
+   0.12181360972478683,
+   0.0015861937061647348,
+   -0.0003115940386848203,
+   0.12181367915597413,
+   -0.0015901365391731794,
+   -0.0003181807964500885,
+   0.1032687201794156,
+   -0.004524382911045565,
+   -0.00027632741227191993,
+   0.06900203468882068,
+   -0.006769832998344514,
+   -0.00019240568448959056,
+   0.02423041492185484,
+   -0.007984637380334454,
+   -7.919193540559036e-05,
+   -0.024230065867705184,
+   -0.007983853102086566,
+   4.607806796723153e-05,
+   -0.06900173877500104,
+   -0.0067675995628545815,
+   0.0001643331031907625,
+   -0.10326852245612274,
+   -0.004521040338620821,
+   0.00025756991313679656,
+   -0.12181360972478684,
+   -0.0015861937061647383,
+   0.00031159403868482146,
+   -0.12181367915597413,
+   0.0015901365391731797,
+   0.00031818079645008686,
+   -0.10326872017941559,
+   0.0045243829110455614,
+   0.00027632741227191586,
+   -0.06900203468882071,
+   0.006769832998344518,
+   0.00019240568448959232,
+   -0.02423041492185484,
+   0.007984637380334461,
+   7.919193540559083e-05
+  ],
+  "gradient_fd": [
+   0.024230065842623105,
+   0.007983853050896883,
+   -4.607803028022772e-05,
+   0.06900173876722704,
+   0.006767599536328106,
+   -0.00016433315819242011,
+   0.1032685224555685,
+   0.0045210403754047945,
+   -0.00025756988208947007,
+   0.12181360975471733,
+   0.0015861936764061113,
+   -0.0003115940561126962,
+   0.12181367917141195,
+   -0.0015901366334780676,
+   -0.0003181807595176167,
+   0.10326872021404476,
+   -0.0045243829238650335,
+   -0.0002763274331574195,
+   0.06900203469717425,
+   -0.00676983299974232,
+   -0.0001924057024815795,
+   0.024230414896742047,
+   -0.007984637395708205,
+   -7.919190303518064e-05,
+   -0.02423006587037868,
+   -0.007983853078652459,
+   4.607805803580334e-05,
+   -0.06900173873947146,
+   -0.006767599564083682,
+   0.0001643331304368445,
+   -0.1032685224555685,
+   -0.0045210403754047945,
+   0.0002575699376006213,
+   -0.12181360978247291,
+   -0.0015861936764061113,
+   0.0003115940283571206,
+   -0.12181367919916752,
+   0.001590136605722492,
+   0.00031818084278434355,
+   -0.10326872013077804,
+   0.0045243829238650335,
+   0.00027632740540184386,
+   -0.06900203472492983,
+   0.0067698329719867445,
+   0.00019240564697042828,
+   -0.024230414868986472,
+   0.007984637395708205,
+   7.919190303518064e-05
+  ]
+ },
+ "step_size_study": {
+  "linear_quadratic_objective": {
+   "directional_derivative": -0.0569413471354452,
+   "rows": [
+    {
+     "eps": 0.01,
+     "finite_difference": -0.05694134713544741,
+     "autograd": -0.0569413471354452,
+     "relative_difference": 3.875159918843825e-14
+    },
+    {
+     "eps": 0.001,
+     "finite_difference": -0.05694134713538079,
+     "autograd": -0.0569413471354452,
+     "relative_difference": 1.1311079989530938e-12
+    },
+    {
+     "eps": 0.0001,
+     "finite_difference": -0.05694134713463139,
+     "autograd": -0.0569413471354452,
+     "relative_difference": 1.4292028478045327e-11
+    },
+    {
+     "eps": 1e-05,
+     "finite_difference": -0.05694134713185583,
+     "autograd": -0.0569413471354452,
+     "relative_difference": 6.303630026098397e-11
+    },
+    {
+     "eps": 1e-06,
+     "finite_difference": -0.05694134713740695,
+     "autograd": -0.0569413471354452,
+     "relative_difference": 3.44521214445185e-11
+    },
+    {
+     "eps": 1e-07,
+     "finite_difference": -0.05694134802558537,
+     "autograd": -0.0569413471354452,
+     "relative_difference": 1.5632580096664945e-08
+    },
+    {
+     "eps": 1e-08,
+     "finite_difference": -0.056941343307137515,
+     "autograd": -0.0569413471354452,
+     "relative_difference": 6.723247477169356e-08
+    },
+    {
+     "eps": 1e-09,
+     "finite_difference": -0.05694134053157995,
+     "autograd": -0.0569413471354452,
+     "relative_difference": 1.1597662481611777e-07
+    }
+   ],
+   "minimum": {
+    "eps": 0.01,
+    "relative_difference": 3.875159918843825e-14
+   },
+   "note": "solution map is linear, objective is exactly quadratic -> central difference is exact, the sweep measures float64 round-off only"
+  },
+  "nonlinear_euler_objective": {
+   "directional_derivative": 0.03438773443540149,
+   "rows": [
+    {
+     "eps": 0.01,
+     "finite_difference": 0.03438773793877914,
+     "autograd": 0.03438773443540149,
+     "relative_difference": 1.0187869913510777e-07
+    },
+    {
+     "eps": 0.001,
+     "finite_difference": 0.034387733482632576,
+     "autograd": 0.03438773443540149,
+     "relative_difference": 2.7706649711586286e-08
+    },
+    {
+     "eps": 0.0001,
+     "finite_difference": 0.03438773391817307,
+     "autograd": 0.03438773443540149,
+     "relative_difference": 1.5041072879863734e-08
+    },
+    {
+     "eps": 1e-05,
+     "finite_difference": 0.034387734415552984,
+     "autograd": 0.03438773443540149,
+     "relative_difference": 5.77197221919039e-10
+    },
+    {
+     "eps": 1e-06,
+     "finite_difference": 0.034387734437757445,
+     "autograd": 0.03438773443540149,
+     "relative_difference": 6.851151281063483e-11
+    },
+    {
+     "eps": 1e-07,
+     "finite_difference": 0.03438773599206968,
+     "autograd": 0.03438773443540149,
+     "relative_difference": 4.526812294388781e-08
+    },
+    {
+     "eps": 1e-08,
+     "finite_difference": 0.03438772600006246,
+     "autograd": 0.03438773443540149,
+     "relative_difference": 2.4530080768446543e-07
+    },
+    {
+     "eps": 1e-09,
+     "finite_difference": 0.03438760387552975,
+     "autograd": 0.03438773443540149,
+     "relative_difference": 3.7966988486976715e-06
+    }
+   ],
+   "minimum": {
+    "eps": 1e-06,
+    "relative_difference": 6.851151281063483e-11
+   },
+   "empirical_truncation_order": 0.5654993768608825,
+   "note": "worst-case finite-difference error attained at the largest step size, O(eps^2) truncation next to the round-off floor"
+  },
+  "chosen_eps": 1e-06
+ },
+ "speed_sensitivity": {
+  "objective": "u_h at reference point xi=0.5 in cell ncells/3",
+  "dJ_dspeed_autograd": 0.11449267098335839,
+  "dJ_dspeed_finite_difference": 0.11449267089957971,
+  "relative_difference": 7.317383530391949e-10
+ },
+ "euler_1d": {
+  "periodic_smooth": {
+   "steps": 41,
+   "directional": {
+    "directions": [
+     {
+      "autograd": -0.007762286506292714,
+      "finite_difference": -0.00776228648025068,
+      "relative_difference": 3.354943670211583e-09
+     },
+     {
+      "autograd": 0.003767522769760733,
+      "finite_difference": 0.0037675226272071427,
+      "relative_difference": 3.7837486107306295e-08
+     },
+     {
+      "autograd": -0.015422983594507236,
+      "finite_difference": -0.015422983667967571,
+      "relative_difference": 4.763043041390343e-09
+     },
+     {
+      "autograd": 0.020881957548298427,
+      "finite_difference": 0.020881957829566034,
+      "relative_difference": 1.3469407836349755e-08
+     },
+     {
+      "autograd": 0.007205498772521062,
+      "finite_difference": 0.007205498864237825,
+      "relative_difference": 1.2728717939579822e-08
+     },
+     {
+      "autograd": -0.0023722026745875546,
+      "finite_difference": -0.002372202767553233,
+      "relative_difference": 3.91896004126101e-08
+     },
+     {
+      "autograd": -0.025812067691891316,
+      "finite_difference": -0.02581206770546629,
+      "relative_difference": 5.259158093318164e-10
+     },
+     {
+      "autograd": -0.004018930622779058,
+      "finite_difference": -0.004018930521709763,
+      "relative_difference": 2.5148305552034525e-08
+     }
+    ],
+    "eps": 1e-06,
+    "max_relative_difference": 3.91896004126101e-08,
+    "mean_relative_difference": 1.7127177546101777e-08,
+    "pass": true
+   }
+  },
+  "sod_outflow": {
+   "steps": 67,
+   "directional": {
+    "directions": [
+     {
+      "autograd": -0.06842643346766329,
+      "finite_difference": -0.06842643274218574,
+      "relative_difference": 1.0602299670853311e-08
+     },
+     {
+      "autograd": -0.10167508338485959,
+      "finite_difference": -0.10167508213143606,
+      "relative_difference": 1.2327735467780238e-08
+     },
+     {
+      "autograd": 0.006232906584497336,
+      "finite_difference": 0.006232906857306375,
+      "relative_difference": 4.37691506536912e-08
+     },
+     {
+      "autograd": 0.04853811664592633,
+      "finite_difference": 0.04853811641503114,
+      "relative_difference": 4.7569870405018895e-09
+     },
+     {
+      "autograd": -0.08752662088022731,
+      "finite_difference": -0.08752661906363812,
+      "relative_difference": 2.0754704869952545e-08
+     },
+     {
+      "autograd": -0.12405981559217646,
+      "finite_difference": -0.12405981619778572,
+      "relative_difference": 4.881590798277525e-09
+     },
+     {
+      "autograd": 0.16408224128649254,
+      "finite_difference": 0.16408223935115984,
+      "relative_difference": 1.1794894343714623e-08
+     },
+     {
+      "autograd": 0.14508004899044166,
+      "finite_difference": 0.14508004864133284,
+      "relative_difference": 2.4063186331339606e-09
+     }
+    ],
+    "eps": 1e-06,
+    "max_relative_difference": 4.37691506536912e-08,
+    "mean_relative_difference": 1.3911710184738161e-08,
+    "pass": true
+   }
+  },
+  "tvb_limiter_on_smooth_flow": {
+   "objective_unlimited": 1.0196493293316107,
+   "objective_limited": 1.0196740935542445,
+   "relative_difference": 2.428699938448389e-05,
+   "note": "TVB limiter must stay inactive on smooth data; gradient checks use limiter=None"
+  }
+ },
+ "euler_2d": {
+  "ncells": 8,
+  "degree": 1,
+  "steps": 4,
+  "directional": {
+   "directions": [
+    {
+     "autograd": -0.6594667372313365,
+     "finite_difference": -0.6594667567583201,
+     "relative_difference": 2.961026220887357e-08
+    },
+    {
+     "autograd": 0.918058929566784,
+     "finite_difference": 0.9180589302104636,
+     "relative_difference": 7.011309763682464e-10
+    },
+    {
+     "autograd": -1.0849655182984828,
+     "finite_difference": -1.0849655325273488,
+     "relative_difference": 1.3114578904852384e-08
+    },
+    {
+     "autograd": -1.0192790073629148,
+     "finite_difference": -1.0192790114160744,
+     "relative_difference": 3.976496661209928e-09
+    },
+    {
+     "autograd": -0.26274186995908116,
+     "finite_difference": -0.2627418993483843,
+     "relative_difference": 1.1185617227649902e-07
+    },
+    {
+     "autograd": -0.22943123931043674,
+     "finite_difference": -0.22943122957030937,
+     "relative_difference": 4.245336162847875e-08
+    }
+   ],
+   "eps": 1e-06,
+   "max_relative_difference": 1.1185617227649902e-07,
+   "mean_relative_difference": 3.361866710938032e-08,
+   "pass": true
+  }
+ },
+ "negative_controls": {
+  "forward_model_calibration": [
+   {
+    "relative_forward_perturbation": 0.0001,
+    "detected_relative_difference": 1.6491025725171406e-08,
+    "detected": false
+   },
+   {
+    "relative_forward_perturbation": 0.001,
+    "detected_relative_difference": 1.6881708150037455e-07,
+    "detected": false
+   },
+   {
+    "relative_forward_perturbation": 0.01,
+    "detected_relative_difference": 1.6844265588253408e-06,
+    "detected": true
+   },
+   {
+    "relative_forward_perturbation": 0.05,
+    "detected_relative_difference": 8.353386480161631e-06,
+    "detected": true
+   },
+   {
+    "relative_forward_perturbation": 0.1,
+    "detected_relative_difference": 1.6442665149867625e-05,
+    "detected": true
+   }
+  ],
+  "minimum_detected_forward_perturbation": 0.01,
+  "gradient_scale_perturbation": {
+   "relative_perturbation": 0.001,
+   "detected_relative_difference": 0.001,
+   "detected": true
+  },
+  "threshold": 1e-06,
+  "note": "the same metric (relative difference vs autograd) is applied to the real checks"
+ },
+ "runtime_seconds": 65.4,
+ "summary": {
+  "scheme_identity_max_abs": 1.249000902703301e-16,
+  "advection_ad_vs_fd": 6.65585127240507e-10,
+  "advection_ad_vs_exact_adjoint": 4.9767961996773855e-16,
+  "euler1d_smooth_worst": 3.91896004126101e-08,
+  "euler1d_outflow_worst": 4.37691506536912e-08,
+  "euler2d_worst": 1.1185617227649902e-07,
+  "speed_sensitivity": 7.317383530391949e-10,
+  "all_gradients_within_1e_6": true
+ }
+}
