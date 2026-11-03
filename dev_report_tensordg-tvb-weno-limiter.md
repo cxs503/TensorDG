@@ -152,3 +152,23 @@ These limitations stem from the basic nature of the implementation (pure Python,
 - [x] Dev report (this file)
 - [ ] Performance target (<30% overhead): **NOT MET**
 - [ ] Accuracy target (errors <3% with limiter): **NOT MET**
+
+
+---
+
+## Post-merge verification (2026-11-03, m2192) — correction of two statements
+
+This report's "Accuracy Degradation" section attributed the error growth to
+`M = 1.0` being too conservative. That attribution is **falsified**: on the
+Sod problem the troubled-cell detector flags 129/200 cells at M = 1 and
+54/200 at M = 300, yet the velocity error changes only from 4.7886% to
+4.7914%. A real defect was found instead: `apply_tvb_limiter` wrote the
+mode-1 coefficient as `minmod(d_left, d_right)` instead of
+`minmod/2` (= physical slope * dx / 2), doubling the reconstructed slope; the
+scaling ratio was 2.000 before and 1.000 after the one-line fix, which is now
+covered by `tests/test_limiters.py`. With the scale fixed the limiter still
+degrades accuracy *inside* the SSP-RK loop (4.79% vs 3.20% unlimited), while a
+single application to the unlimited final state improves every field
+(2.45%), so the remaining defect is the per-substage limiting policy, not the
+TVB constant. Details, artifacts and the reproduction commands:
+`docs/limiter_verification.md`.
