@@ -93,6 +93,10 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
 - Two-dimensional Euler isentropic-vortex verification.
 - Regression tests for conservation, convergence, physical admissibility,
   exact-reference comparisons, and the documented 3% error threshold.
+- **Verified differentiability**: autograd-ready time integrators
+  (`tensordg/differentiable.py`) reproduce the shipped solvers bit-for-bit and
+  their gradients match central differences (<1e-7) and an exact transposed-operator
+  adjoint (5e-16); see [docs/differentiability_verification.md](docs/differentiability_verification.md).
 - Systematic convergence verification: observed order against theoretical order,
   Richardson extrapolation and GCI mesh independence, p-refinement decay, and
   cross-backend (dense / sparse / matrix-free) accuracy equivalence.
