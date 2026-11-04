@@ -15,6 +15,14 @@ Implements two shock-capturing strategies for modal DG:
 Both limiters preserve the cell average (mode-0 coefficient) and only
 modify higher modes.  They are designed to be called after each SSP-RK
 sub-step, together with the existing positivity filter.
+
+Neighbour access is *not* inherently periodic: ``periodic=False`` (default)
+clamps the padding and leaves the two end cells unlimited, which is what an
+open/outflow boundary needs.  On a periodic mesh pass ``periodic=True`` so the
+stencil wraps around the seam; with the clamped stencil a discontinuity that
+sits on ``x = 0 / 1`` was never limited and the scheme lost its exact
+translation invariance (see ``benchmarks/periodic_limiter_seam.py`` and
+``docs/limiter_periodic_seam.md``).
 """
 from __future__ import annotations
 
@@ -29,11 +37,19 @@ from .tvb import troubled_from_differences
 # Helpers
 # ---------------------------------------------------------------------------
 
+def _padded_averages(avg: torch.Tensor, periodic: bool) -> torch.Tensor:
+    """Pad the cell averages with one ghost layer: wrapped or clamped."""
+    if periodic:
+        return torch.cat([avg[-1:], avg, avg[:1]], dim=0)
+    return torch.cat([avg[:1], avg, avg[-1:]], dim=0)
+
+
 def _troubled_cell_indicator(
     coeff: torch.Tensor,
     dx: float,
     tvb_constant: float = 0.0,
     limit_boundaries: bool = False,
+    periodic: bool = False,
 ) -> torch.Tensor:
     """Return a boolean mask [ncells] of cells that need limiting.
 
@@ -48,11 +64,17 @@ def _troubled_cell_indicator(
     tested as well, using the one-sided (clamped) neighbour already used by
     the padding above; pass ``True`` when the outer cells carry a genuine
     discontinuity that must be limited.
+
+    ``periodic=True`` wraps the ghost layer (``avg[-1]`` / ``avg[0]``) instead
+    of clamping it and tests **every** cell, end cells included: on a periodic
+    mesh ``x = 0 / 1`` is an interior face, so a discontinuity there must be
+    limited exactly like one in the middle of the domain.  ``periodic=True``
+    takes precedence over ``limit_boundaries``.
     """
     ncells = coeff.shape[0]
     avg = coeff[:, 0]  # [ncells, nvar]
-    # Pad with copies of boundary cells for one-sided stencils
-    avg_pad = torch.cat([avg[:1], avg, avg[-1:]], dim=0)  # [ncells+2, nvar]
+    # Ghost layer: wrapped (periodic seam) or copied (one-sided stencil).
+    avg_pad = _padded_averages(avg, periodic)  # [ncells+2, nvar]
     d_left = avg - avg_pad[:-2]   # u_i - u_{i-1}
     d_right = avg_pad[2:] - avg   # u_{i+1} - u_i
 
@@ -74,7 +96,7 @@ def _troubled_cell_indicator(
     troubled, mm = troubled_from_differences(
         d_left, d_right, dx, tvb_constant
     )
-    if not limit_boundaries:
+    if not periodic and not limit_boundaries:
         # End cells have no full stencil; leave them unlimited (default).
         troubled[0] = False
         troubled[-1] = False
@@ -90,6 +112,7 @@ def apply_tvb_limiter(
     dx: float,
     tvb_constant: float = 1.0,
     limit_boundaries: bool = False,
+    periodic: bool = False,
 ) -> torch.Tensor:
     """Apply the TVB limiter to a modal DG coefficient tensor.
 
@@ -98,6 +121,7 @@ def apply_tvb_limiter(
     coeff : (ncells, nmodes, nvar)
     dx : cell width
     tvb_constant : M in the TVB criterion; M=0 is strict TVD.
+    periodic : wrap the minmod stencil around the seam (periodic mesh).
 
     Returns
     -------
@@ -108,13 +132,14 @@ def apply_tvb_limiter(
         return coeff  # P0 -- nothing to limit
 
     troubled = _troubled_cell_indicator(
-        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries
+        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries,
+        periodic=periodic,
     )
     if not troubled.any():
         return coeff
 
     avg = coeff[:, 0]  # [ncells, nvar]
-    avg_pad = torch.cat([avg[:1], avg, avg[-1:]], dim=0)
+    avg_pad = _padded_averages(avg, periodic)
     d_left = avg - avg_pad[:-2]
     d_right = avg_pad[2:] - avg
 
@@ -161,6 +186,7 @@ def apply_weno_limiter(
     tvb_constant: float = 1.0,
     epsilon: float = 1e-6,
     limit_boundaries: bool = False,
+    periodic: bool = False,
 ) -> torch.Tensor:
     """Apply a WENO reconstruction limiter to troubled cells.
 
@@ -175,12 +201,14 @@ def apply_weno_limiter(
     dx : cell width
     tvb_constant : M for the troubled-cell detector
     epsilon : WENO regularisation
+    periodic : wrap the three-point WENO stencil around the seam.
     """
     if coeff.shape[1] <= 1:
         return coeff
 
     troubled = _troubled_cell_indicator(
-        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries
+        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries,
+        periodic=periodic,
     )
     if not troubled.any():
         return coeff
@@ -188,8 +216,8 @@ def apply_weno_limiter(
     ncells, nmodes, nvar = coeff.shape
     avg = coeff[:, 0]  # [ncells, nvar]
 
-    # Pad averages for stencil access
-    avg_pad = torch.cat([avg[:1], avg, avg[-1:]], dim=0)  # [ncells+2]
+    # Pad averages for stencil access (wrapped when periodic)
+    avg_pad = _padded_averages(avg, periodic)  # [ncells+2]
     # In padded indexing, cell i maps to index i+1
     u_im1 = avg_pad[:-2]  # [ncells]
     u_i   = avg
@@ -251,7 +279,12 @@ def apply_limiter(
     tvb_constant: float = 1.0,
     **kwargs,
 ) -> torch.Tensor:
-    """Dispatch to the requested limiter by name."""
+    """Dispatch to the requested limiter by name.
+
+    Extra keyword arguments (``periodic``, ``limit_boundaries``, ``epsilon``)
+    are forwarded to the selected limiter, so callers on a periodic mesh pass
+    ``periodic=True``.
+    """
     if kind is None or kind == "none":
         return coeff
     if kind not in _LIMITERS:

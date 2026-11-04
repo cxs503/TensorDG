@@ -152,17 +152,17 @@ def advance_euler_dg_1d(coeff0: torch.Tensor, dx: float, nsteps: int, dt: float,
         k1 = _euler_dg_1d_rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right, periodic)
         u1 = coeff + step * k1
         if limit_each_stage:
-            u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
+            u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant, periodic=periodic)
         u1 = _euler_dg_1d_positivity(u1, check_points)
         k2 = _euler_dg_1d_rhs(u1, dx, weights, phi, dphi, phi_left, phi_right, periodic)
         u2 = 0.75 * coeff + 0.25 * (u1 + step * k2)
         if limit_each_stage:
-            u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
+            u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant, periodic=periodic)
         u2 = _euler_dg_1d_positivity(u2, check_points)
         k3 = _euler_dg_1d_rhs(u2, dx, weights, phi, dphi, phi_left, phi_right, periodic)
         coeff = apply_limiter(
             (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + step * k3),
-            dx, kind=limiter, tvb_constant=tvb_constant,
+            dx, kind=limiter, tvb_constant=tvb_constant, periodic=periodic,
         )
         coeff = _euler_dg_1d_positivity(coeff, check_points)
     return coeff

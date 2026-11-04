@@ -240,17 +240,18 @@ def solve_periodic_euler_dg_1d(
         k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right, periodic=is_periodic)
         u1 = coeff + dt * k1
         if limit_each_stage:
-            u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
+            u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant, periodic=is_periodic)
         u1 = _positivity_filter(u1, check_points)
         k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right, periodic=is_periodic)
         u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
         if limit_each_stage:
-            u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
+            u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant, periodic=is_periodic)
         u2 = _positivity_filter(u2, check_points)
         k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right, periodic=is_periodic)
         coeff = apply_limiter(
             (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3),
             dx, kind=limiter, tvb_constant=tvb_constant,
+            periodic=is_periodic,
         )
         coeff = _positivity_filter(coeff, check_points)
         if not torch.isfinite(coeff).all():
