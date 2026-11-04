@@ -24,6 +24,12 @@ time step.  This tool measures the four questions that decide it:
               at the same *physical time* with a 4x smaller step, the instability
               is spatial, not a stability-limit artefact.
 
+``wall_gradient`` selects the wall normal-derivative estimator and defaults to
+the **solver default**, ``"face"`` (the one-sided DG polynomial derivative);
+``"taylor"`` is the m2920 O(h^2) extrapolated stencil, kept as an opt-in
+diagnostic.  The flux and residual rows record the mode they used, so an
+artifact written with either mode is self-describing.
+
 All numbers land in ``validation/ns_dg_2d_wall/summary.json`` and the figure
 ``docs/figures/ns_dg_2d_wall.png``; nothing in the report is hand-transcribed.
 
@@ -101,7 +107,7 @@ def build_state(ncells, degree, dtype=torch.float64):
 # ---------------------------------------------------------------------------
 # Section 1: residual of the exact steady state
 # ---------------------------------------------------------------------------
-def section_residual(wall_gradient="taylor"):
+def section_residual(wall_gradient="face"):
     rows = []
     for ncells, degree in (((2, 8), 1), ((2, 16), 1), ((2, 32), 1), ((2, 8), 2)):
         d = build_state(ncells, degree)
@@ -130,7 +136,7 @@ ANALYTIC_E_FLUX = -(WALL_SPEED * MU * WALL_SPEED
 ANALYTIC_E_FLUX_BOTTOM = -(KAPPA * (MU * WALL_SPEED**2 / (2.0 * KAPPA)))
 
 
-def wall_fluxes(ncells, degree, penalty_scale=2.0, wall_gradient="taylor"):
+def wall_fluxes(ncells, degree, penalty_scale=2.0, wall_gradient="face"):
     d = build_state(ncells, degree)
     penalty = penalty_scale * (degree + 1.0) ** 2
     h = d["dy"]
@@ -151,7 +157,7 @@ def wall_fluxes(ncells, degree, penalty_scale=2.0, wall_gradient="taylor"):
     )
 
 
-def section_fluxconv(wall_gradient="taylor"):
+def section_fluxconv(wall_gradient="face"):
     rows = []
     for ny in (8, 16, 32, 64):
         f = wall_fluxes((2, ny), 1, wall_gradient=wall_gradient)
@@ -179,7 +185,7 @@ def section_fluxconv(wall_gradient="taylor"):
 # ---------------------------------------------------------------------------
 def march(penalty_scale=2.0, channel_weights=(1.0, 1.0, 1.0), ncells=(2, 8),
           degree=1, cfl_viscous=1.0, max_steps=400, stop_on_nonphysical=True,
-          record_every=0, wall_gradient="taylor"):
+          record_every=0, wall_gradient="face"):
     """SSP-RK3 march; returns history and the failure step (if any)."""
     d = build_state(ncells, degree)
     boundary, basis, derivative, weights, signs = (

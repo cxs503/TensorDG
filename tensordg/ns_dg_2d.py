@@ -23,6 +23,15 @@ face are the plain two-sided average.  Dirichlet walls reuse the same formula
 with the mirror ghost ``q|+ = q_wall``, ``grad q|+ = grad q|-``, so interior
 faces and walls share one code path.
 
+The wall normal derivative is the *one-sided* DG polynomial derivative, i.e.
+``grad q|+ = grad q|-`` is evaluated from the interior polynomial itself
+(``wall_gradient="face"``, the default).  An O(h^2) two-point extrapolation of
+centred derivatives (``wall_gradient="taylor"``) is available but must be
+requested explicitly: measured on the exact Brinkman/Couette state it *caps*
+the wall heat flux at second order at every degree, degrading P3 by up to 97x
+(``validation/ns_dg_2d_wall/bisect_wall_gradient.json``,
+``docs/reports/tensordg-ns-wall-gradient-bisect.md``).
+
 Constitutive laws (non-dimensional, unit gas constant ``R = 1``, so ``T = p/rho``
 and ``c_v = 1/(gamma-1)`` -- identical to ``euler_dg_2d._pressure``):
 
@@ -255,6 +264,18 @@ def _wall_normal_derivative(coeff, basis, signs, h, axis):
     returned values are physical (per unit length) derivatives along ``+axis``,
     which is the sign convention of ``_face_primitives``; ``None`` is returned
     when the mesh has a single cell along ``axis`` (no inland neighbour).
+
+    Scope of validity (m3139, measured -- do not use this as the default):
+    both terms of the stencil are ``O(h^2)`` approximations, so the estimate is
+    ``O(h^2)`` *at every degree*.  At ``p >= 2`` the one-sided DG face
+    derivative this replaces is already ``O(h^p)`` and wins: on the exact
+    Brinkman/Couette state this stencil turns the P3 wall heat-flux order into
+    2.03 (design order 3, error up to 97x larger) and the P3 residual order
+    into 1.0.  At ``p = 1`` it lowers the derivative part of the wall heat-flux
+    error but not the observed order (1.005 vs 1.001), because the P1 error is
+    dominated by the Dirichlet penalty acting on the ``O(h^2)`` wall
+    temperature projection error.  Kept for the m2920 spectral study, where it
+    is requested explicitly.
     """
     if coeff.shape[axis] < 2:
         return None
@@ -346,7 +367,7 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
 
 def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
                     wall_left, wall_right, mu, kappa, penalty, axis,
-                    wall_gradient="taylor"):
+                    wall_gradient="face"):
     """Integrated total (inviscid + viscous) face fluxes for one axis.
 
     Structurally identical to ``euler_dg_2d._axis_fluxes``: the returned arrays
@@ -469,7 +490,7 @@ def _viscous_volume(coeff, basis, derivative, weights, dx, dy, mu, kappa):
 
 
 def _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic, boundary,
-            mu, kappa, penalty, wall_gradient="taylor"):
+            mu, kappa, penalty, wall_gradient="face"):
     """DG residual of the 2-D compressible Navier--Stokes equations."""
     degree = coeff.shape[2] - 1
     modes = torch.arange(degree + 1, device=coeff.device, dtype=coeff.dtype)
@@ -535,7 +556,7 @@ def solve_navier_stokes_dg_2d(
     penalty=None,
     quadrature=None,
     initial_projection="l2",
-    wall_gradient="taylor",
+    wall_gradient="face",
     device="cpu",
     dtype=torch.float64,
 ):
@@ -566,6 +587,13 @@ def solve_navier_stokes_dg_2d(
         or ``{"velocity": (u, v), "temperature": T}`` (no-slip isothermal wall).
     penalty : float or None
         SIPG penalty coefficient; defaults to ``2 (degree + 1)**2``.
+    wall_gradient : {"face", "taylor"}
+        Normal-derivative estimator on Dirichlet walls.  ``"face"`` (default)
+        uses the one-sided DG polynomial derivative, which converges at the
+        element design order ``p``.  ``"taylor"`` replaces it by the
+        ``1.5 q_0 - 0.5 q_1`` extrapolation of centred derivatives: it lowers
+        the wall heat-flux error constant at P1 but caps the observed order at
+        2, so it is an opt-in diagnostic, not the default (m3139 audit).
     cfl, cfl_viscous : float
         Convective and diffusive step-size fractions.
 
