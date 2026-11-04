@@ -3,12 +3,33 @@
 Modal Legendre basis, upwind numerical flux, and classical RK4 time stepping.
 The spatial operator and solution state are evaluated with torch; NumPy is used
 only to generate fixed Gauss-Legendre quadrature nodes during setup.
+
+The operators are *degree-generic* (they are built from Legendre values and
+derivatives at Gauss nodes), so the solver accepts any degree in
+``0 <= degree <= MAX_DEGREE``.  Historically the entry point rejected
+``degree > 3`` for no mathematical reason, which silently capped every
+verification sweep at P3; that guard is now an explicit, documented bound.
+Likewise the initial condition used to be hard-wired to ``sin(2*pi*x)``; it can
+now be supplied as a callable, which is what makes discontinuous-data
+(Cockburn-Shu style) verification possible at all.
 """
 from __future__ import annotations
 
 import math
+from typing import Callable, Sequence
+
 import numpy as np
 import torch
+
+# The quadrature order is ``max(2*degree + 3, 4)`` and float64 Legendre
+# evaluation is stable far beyond this; the bound only keeps the Python-side
+# basis assembly sane.
+MAX_DEGREE = 8
+
+
+def _sine(x: torch.Tensor) -> torch.Tensor:
+    """Default initial condition / exact wave: ``sin(2*pi*x)``."""
+    return torch.sin(2.0 * math.pi * x)
 
 
 def _operators(degree: int, device: torch.device, dtype: torch.dtype):
@@ -54,24 +75,32 @@ def _rhs(u: torch.Tensor, h: float, speed: float, volume: torch.Tensor,
 
 def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
                     speed: float = 1.0, cfl: float = 0.08,
-                    device: str = "cpu", dtype: torch.dtype = torch.float64):
-    """Solve u_t + speed*u_x=0 on [0,1] with periodic BC and u0=sin(2*pi*x).
+                    device: str = "cpu", dtype: torch.dtype = torch.float64,
+                    initial: Callable[[torch.Tensor], torch.Tensor] | None = None):
+    """Solve u_t + speed*u_x = 0 on [0,1] with periodic BC.
+
+    ``initial`` defaults to ``sin(2*pi*x)`` (the historical benchmark); pass a
+    callable to project any other profile (e.g. a square wave) as ``initial(x)``
+    with ``x`` in physical coordinates in ``[0, 1]``.
 
     Returns (cell_centers, modal_coefficients, metadata). The first modal
     coefficient is the cell-average because P0=1 and higher Legendre modes
     have zero mean.
     """
-    if ncells < 2 or degree not in (0, 1, 2, 3):
-        raise ValueError("ncells must be >= 2 and degree must be in [0, 3]")
+    if ncells < 2 or not 0 <= degree <= MAX_DEGREE:
+        raise ValueError(
+            f"ncells must be >= 2 and degree must be in [0, {MAX_DEGREE}]"
+        )
     if final_time < 0 or cfl <= 0:
         raise ValueError("final_time must be >= 0 and cfl must be > 0")
+    profile = _sine if initial is None else initial
     dev = torch.device(device)
     h = 1.0 / ncells
     centers = (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * h
     xq, wq, phi, volume, phi_l, phi_r = _operators(degree, dev, dtype)
     # L2 projection of the initial condition into each element's modal space.
     x_phys = centers[:, None] + 0.5 * h * xq[None, :]
-    u0 = torch.sin(2.0 * math.pi * x_phys)
+    u0 = profile(x_phys)
     coeff = torch.empty((ncells, degree + 1), device=dev, dtype=dtype)
     for k in range(degree + 1):
         coeff[:, k] = (2 * k + 1) * 0.5 * torch.sum(
@@ -95,21 +124,122 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
     return centers, coeff, meta
 
 
+def _basis(degree: int, nodes, device, dtype):
+    basis = []
+    for k in range(degree + 1):
+        c = np.zeros(k + 1); c[-1] = 1.0
+        basis.append(torch.as_tensor(np.polynomial.legendre.legval(nodes, c),
+                                     device=device, dtype=dtype))
+    return torch.stack(basis, dim=1)
+
+
 def l2_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
-             speed: float = 1.0) -> float:
-    """Compute quadrature-based L2 error against the exact translated sine wave."""
+             speed: float = 1.0,
+             exact: Callable[[torch.Tensor], torch.Tensor] | None = None) -> float:
+    """Quadrature-based L2 error against the exact translated wave.
+
+    ``exact`` defaults to the translated sine wave ``sin(2*pi*(x - speed*t))``.
+    """
     degree = coeff.shape[1] - 1
     x_np, w_np = np.polynomial.legendre.leggauss(max(2 * degree + 4, 6))
     xq = torch.as_tensor(x_np, device=coeff.device, dtype=coeff.dtype)
     wq = torch.as_tensor(w_np, device=coeff.device, dtype=coeff.dtype)
     h = 1.0 / centers.numel()
-    basis = []
-    for k in range(degree + 1):
-        c = np.zeros(k + 1); c[-1] = 1.0
-        basis.append(torch.as_tensor(np.polynomial.legendre.legval(x_np, c), device=coeff.device, dtype=coeff.dtype))
-    phi = torch.stack(basis, dim=1)
+    phi = _basis(degree, x_np, coeff.device, coeff.dtype)
     uh = coeff @ phi.T
     x = centers[:, None] + 0.5 * h * xq[None, :]
-    exact = torch.sin(2.0 * math.pi * (x - speed * final_time))
-    err2 = 0.5 * h * torch.sum(wq[None, :] * (uh - exact) ** 2)
+    truth = (_sine(x - speed * final_time) if exact is None
+             else exact(x - speed * final_time))
+    err2 = 0.5 * h * torch.sum(wq[None, :] * (uh - truth) ** 2)
     return float(torch.sqrt(err2).item())
+
+
+def _split_segments(lo: float, hi: float, jumps: Sequence[float],
+                    nsub: int) -> list[tuple[float, float]]:
+    """Split [lo, hi] at the interior points of ``jumps`` and into sub-panels."""
+    pts = sorted({lo, hi} | {j for j in jumps if lo < j < hi})
+    segs: list[tuple[float, float]] = []
+    for a, b in zip(pts[:-1], pts[1:]):
+        for k in range(nsub):
+            segs.append((a + (b - a) * k / nsub, a + (b - a) * (k + 1) / nsub))
+    return segs
+
+
+def _vector_legendre(nodes: np.ndarray, degree: int) -> np.ndarray:
+    """Legendre values at arbitrary nodes, shape ``(len(nodes), degree + 1)``."""
+    return np.polynomial.legendre.legval(nodes, np.eye(degree + 1)).T
+
+
+def l1_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
+             speed: float = 1.0,
+             exact: Callable[[torch.Tensor], torch.Tensor] | None = None,
+             jumps: Sequence[float] = (), nsub: int = 4) -> float:
+    """Quadrature-based L1 error, robust to discontinuities.
+
+    The quadrature is composite Gauss on each cell, split at every interior
+    point of ``jumps`` (the exact jump abscissas of the reference solution,
+    modulo the domain) and further subdivided into ``nsub`` panels.  A kinked
+    integrand ``|u_h - u_exact|`` is therefore integrated panel-by-panel
+    instead of across the kink, which is what makes an observed L1 *order*
+    trustworthy: with a plain single Gauss rule per cell the quadrature error
+    of the kink swamps the O(h^{p+1/2}) discretisation error being measured.
+    """
+    degree = coeff.shape[1] - 1
+    nq = max(2 * degree + 4, 12)
+    x_np, w_np = np.polynomial.legendre.leggauss(nq)
+    ncells = centers.numel()
+    h = 1.0 / ncells
+    lo_all = centers.detach().cpu().numpy() - 0.5 * h
+    jump_mod = sorted({float(j) % 1.0 for j in jumps})
+
+    panels: list[tuple[float, float, int]] = []
+    for c in range(ncells):
+        lo, hi = float(lo_all[c]), float(lo_all[c]) + h
+        cuts = sorted({lo, hi} | {j for j in jump_mod if lo < j < hi})
+        for a, b in zip(cuts[:-1], cuts[1:]):
+            for k in range(nsub):
+                panels.append((a + (b - a) * k / nsub, a + (b - a) * (k + 1) / nsub, c))
+    a = np.array([q[0] for q in panels])
+    b = np.array([q[1] for q in panels])
+    cell = np.array([q[2] for q in panels])
+    width = b - a
+    nodes = 0.5 * (a[:, None] + b[:, None]) + 0.5 * width[:, None] * x_np[None, :]
+    centre = lo_all[cell] + 0.5 * h
+    mu = (nodes - centre[:, None]) / (0.5 * h)
+    vals = _vector_legendre(mu.ravel(), degree).reshape(len(panels), nq, degree + 1)
+    cf = coeff.detach().cpu().numpy()
+    uh = np.einsum("pqm,pm->pq", vals, cf[cell])
+    xa = torch.as_tensor(nodes, dtype=coeff.dtype, device=coeff.device)
+    truth = (_sine(xa - speed * final_time) if exact is None
+             else exact(xa - speed * final_time))
+    diff = np.abs(uh - truth.detach().cpu().numpy())
+    return float(np.sum(0.5 * width[:, None] * diff * w_np[None, :]))
+
+
+def linf_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
+               speed: float = 1.0,
+               exact: Callable[[torch.Tensor], torch.Tensor] | None = None,
+               nsub: int = 8, nq: int = 16) -> float:
+    """Discrete L-infinity error (max over a dense sub-cell quadrature net).
+
+    Used for Gibbs-overshoot studies, where the extremum sits inside the cell
+    that contains the discontinuity.
+    """
+    degree = coeff.shape[1] - 1
+    x_np, _ = np.polynomial.legendre.leggauss(nq)
+    ncells = centers.numel()
+    h = 1.0 / ncells
+    lo_all = centers.detach().cpu().numpy() - 0.5 * h
+    a = (lo_all[:, None] + h * np.arange(nsub)[None, :] / nsub).ravel()
+    width = h / nsub
+    nodes = 0.5 * (2 * a[:, None] + width) + 0.5 * width * x_np[None, :]
+    cell = np.repeat(np.arange(ncells), nsub)
+    centre = lo_all[cell] + 0.5 * h
+    mu = (nodes - centre[:, None]) / (0.5 * h)
+    vals = _vector_legendre(mu.ravel(), degree).reshape(len(a), nq, degree + 1)
+    cf = coeff.detach().cpu().numpy()
+    uh = np.einsum("pqm,pm->pq", vals, cf[cell])
+    xa = torch.as_tensor(nodes, dtype=coeff.dtype, device=coeff.device)
+    truth = (_sine(xa - speed * final_time) if exact is None
+             else exact(xa - speed * final_time))
+    return float(np.max(np.abs(uh - truth.detach().cpu().numpy())))
