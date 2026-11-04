@@ -53,7 +53,22 @@ def _wall_traces(ny):
     return d, h, left, ns._shift_along(left, 1, -1)
 
 
-def _row(ny):
+def _row(ny, outward_sign=-1.0, side_name="left"):
+    """Bottom-wall flux row.
+
+    ``outward_sign``/``side_name`` default to the *shipped* production
+    convention (m2782/m2786: the low-side wall penalty is written with the
+    outward normal, so the jump term flips sign there and the fd2 stencil runs
+    along the inward direction).  The values published before m3415 were taken
+    with ``outward_sign=+1.0, side_name="right"``, i.e. the retired operator;
+    pass ``outward_sign=+1.0, side_name="right"`` to reproduce them
+    (``_legacy_row``, negative control).
+
+    The row also passes ``neighbour=`` (the m2879 extrapolated trace derivative),
+    which is a *prototype* the production solver does not enable; the production
+    ``face`` value on the same mesh is 3.734 % (tool-bound test in
+    ``tests/test_ns_wall_diag_binding.py``).
+    """
     d, h, left, neighbour = _wall_traces(ny)
     penalty = 2.0 * 2.0**2
     gradient = float(ns._extrapolate_trace_derivative(
@@ -62,9 +77,11 @@ def _row(ny):
     one_sided = float(left["T_n"][0, 0, 0]) * (2.0 / h)
     # penalty-free reconstruction == the flux with sigma = 0
     clean = ns._boundary_flux(left, d["boundary"]["ymin"], 1, h, MU, KAPPA, 0.0,
-                              2.0 / h, 2.0 / d["dx"], neighbour=neighbour)
+                              2.0 / h, 2.0 / d["dx"], neighbour=neighbour,
+                              side_name=side_name, outward_sign=outward_sign)
     total = ns._boundary_flux(left, d["boundary"]["ymin"], 1, h, MU, KAPPA, penalty,
-                              2.0 / h, 2.0 / d["dx"], neighbour=neighbour)
+                              2.0 / h, 2.0 / d["dx"], neighbour=neighbour,
+                              side_name=side_name, outward_sign=outward_sign)
     flux_clean = float(clean[0, 0, 0, 3])
     flux_total = float(total[0, 0, 0, 3])
     jump = float(d["boundary"]["ymin"]["temperature"])
@@ -84,6 +101,10 @@ def _row(ny):
         penalty_flux=penalty_flux,
         trace_temperature_error=abs(trace_T - jump),
     )
+
+
+def _legacy_row(ny):
+    return _row(ny, outward_sign=1.0, side_name="right")
 
 
 def section_gradient():

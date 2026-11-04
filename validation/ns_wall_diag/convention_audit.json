@@ -1,0 +1,81 @@
+{
+ "analytic_bottom_energy_flux": -0.05,
+ "rows": [
+  {
+   "ny": 8,
+   "retired": -0.06270412321249624,
+   "retired_err_pct": 25.40824642499248,
+   "face": -0.04813287317169985,
+   "face_err_pct": 3.7342536566003086,
+   "taylor": -0.04274038084715121,
+   "taylor_err_pct": 14.519238305697582,
+   "fd2": -0.05123600234832329,
+   "fd2_err_pct": 2.4720046966465734,
+   "fd2_wrong_side": 0.05123600234832329,
+   "fd2_wrong_side_err_pct": 202.47200469664656
+  },
+  {
+   "ny": 16,
+   "retired": -0.05634515556172693,
+   "retired_err_pct": 12.690311123453855,
+   "face": -0.04907959211743812,
+   "face_err_pct": 1.8408157651237655,
+   "taylor": -0.046373728824263966,
+   "taylor_err_pct": 7.252542351472075,
+   "fd2": -0.050611222756684664,
+   "fd2_err_pct": 1.2224455133693217,
+   "fd2_wrong_side": 0.0506112227566851,
+   "fd2_wrong_side_err_pct": 201.22244551337022,
+   "order_retired": 1.002,
+   "order_face": 1.02,
+   "order_taylor": 1.001,
+   "order_fd2": 1.016
+  },
+  {
+   "ny": 32,
+   "retired": -0.05317242430569948,
+   "retired_err_pct": 6.34484861139896,
+   "face": -0.04954319199070024,
+   "face_err_pct": 0.9136160185995307,
+   "taylor": -0.04818701213766364,
+   "taylor_err_pct": 3.625975724672728,
+   "fd2": -0.050303916678764084,
+   "fd2_err_pct": 0.6078333575281619,
+   "fd2_wrong_side": 0.05030391667876496,
+   "fd2_wrong_side_err_pct": 200.6078333575299,
+   "order_retired": 1.0,
+   "order_face": 1.011,
+   "order_taylor": 1.0,
+   "order_fd2": 1.008
+  },
+  {
+   "ny": 64,
+   "retired": -0.051586374060603256,
+   "retired_err_pct": 3.172748121206506,
+   "face": -0.049772459354677265,
+   "face_err_pct": 0.455081290645476,
+   "taylor": -0.049093449764908974,
+   "taylor_err_pct": 1.813100470182058,
+   "fd2": -0.05015153483433402,
+   "fd2_err_pct": 0.30306966866804064,
+   "fd2_wrong_side": 0.05015153483433577,
+   "fd2_wrong_side_err_pct": 200.30306966867153,
+   "order_retired": 1.0,
+   "order_face": 1.005,
+   "order_taylor": 1.0,
+   "order_fd2": 1.004
+  }
+ ],
+ "tool_fd2_after_fix": {
+  "mx_top": -0.10033390285815713,
+  "mx_bottom": -0.09974588229795411,
+  "energy_top": -0.0522010296864536,
+  "energy_bottom": -0.05123600234832329,
+  "my_top": 0.9994860131020183,
+  "my_bottom": 0.9994860131020183
+ },
+ "tool_fd2_err_pct": 2.4720046966465734,
+ "bench_neighbour_prototype_shipped_pct": 8.477528813290572,
+ "bench_neighbour_prototype_legacy_pct": 37.62002889488339,
+ "wall_penalty_fd2": 0.0
+}
