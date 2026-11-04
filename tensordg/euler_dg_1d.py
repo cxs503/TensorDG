@@ -174,8 +174,9 @@ def solve_periodic_euler_dg_1d(
     limiter=None,
     tvb_constant=1.0,
     limiter_stage="every",
+    boundary="periodic",
 ):
-    """Advance smooth periodic Euler data with the same modal DG/HLLC kernels.
+    """Advance smooth Euler data with the same modal DG/HLLC kernels.
 
     Parameters
     ----------
@@ -188,6 +189,12 @@ def solve_periodic_euler_dg_1d(
         cap the scheme at first order).
     limiter, tvb_constant, limiter_stage
         As in :func:`solve_euler_dg_1d`.
+    boundary : {"periodic", "transmissive"}
+        Face closure at the two ends of the domain.  ``"transmissive"``
+        imposes the interior trace as the exterior state (exactly what
+        :func:`solve_euler_dg_1d` does); it is required for open-domain
+        benchmarks such as the Shu--Osher shock/entropy-wave interaction,
+        where the free stream must leave the domain without reflection.
 
     Returns
     -------
@@ -199,6 +206,9 @@ def solve_periodic_euler_dg_1d(
         raise ValueError("invalid cells, degree, final_time, or CFL")
     if limiter_stage not in ("every", "final"):
         raise ValueError("limiter_stage must be 'every' or 'final'")
+    if boundary not in ("periodic", "transmissive"):
+        raise ValueError("boundary must be 'periodic' or 'transmissive'")
+    is_periodic = boundary == "periodic"
     lower, upper = domain
     if not upper > lower:
         raise ValueError("domain must be increasing")
@@ -227,17 +237,17 @@ def solve_periodic_euler_dg_1d(
         speeds = torch.abs(values[..., 1] / values[..., 0].clamp_min(1e-12)) + sound_speed(values)
         max_speed = float(torch.max(speeds).item())
         dt = min(cfl * dx / ((2 * degree + 1) * max(max_speed, 1e-12)), final_time - time)
-        k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right, periodic=True)
+        k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right, periodic=is_periodic)
         u1 = coeff + dt * k1
         if limit_each_stage:
             u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
         u1 = _positivity_filter(u1, check_points)
-        k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right, periodic=True)
+        k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right, periodic=is_periodic)
         u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
         if limit_each_stage:
             u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
         u2 = _positivity_filter(u2, check_points)
-        k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right, periodic=True)
+        k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right, periodic=is_periodic)
         coeff = apply_limiter(
             (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3),
             dx, kind=limiter, tvb_constant=tvb_constant,
@@ -251,7 +261,10 @@ def solve_periodic_euler_dg_1d(
     totals_final = _totals(coeff)
     names = ("mass", "x_momentum", "energy")
     drift = {
-        name: float(abs(totals_final[i] - totals_initial[i]) / max(abs(totals_initial[i]), 1e-30))
+        name: (
+            float(abs(totals_final[i] - totals_initial[i]) / max(abs(totals_initial[i]), 1e-30))
+            if is_periodic else float("nan")
+        )
         for i, name in enumerate(names)
     }
     metadata = {
@@ -259,7 +272,7 @@ def solve_periodic_euler_dg_1d(
         "dt": dt, "domain": (lower, upper), "cfl": cfl,
         "flux": "hllc", "limiter": limiter if limiter else "local positivity fallback",
         "limiter_stage": limiter_stage, "device": str(dev),
-        "boundary": "periodic", "initial_projection": "l2-all-modes",
+        "boundary": boundary, "initial_projection": "l2-all-modes",
         "conservation_drift": drift,
     }
     return x, coeff, metadata
