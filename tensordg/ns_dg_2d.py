@@ -186,6 +186,66 @@ def _gas_gradients(state: torch.Tensor, d_normal, d_tangential,
     }
 
 
+def _centre_weights(degree: int, device, dtype):
+    """Mode weights for the value and the normal derivative at ``xi = 0``.
+
+    ``P_k(0) = 0`` for odd ``k``, ``(-1)**(k/2) C(k, k/2) / 2**k`` for even ``k``.
+    Used by the *recovered* wall closure: the wall-normal gradient there is the
+    quadratic extrapolation ``2 G(centre) - G(opposite face)``, which is one
+    order more accurate than the one-sided face gradient (see
+    :func:`_recover_wall_gradient`).
+    """
+    origin = np.zeros(1)
+    values = np.polynomial.legendre.legvander(origin, degree)[0]
+    derivatives = np.zeros(degree + 1)
+    for mode in range(degree + 1):
+        coefficients = np.zeros(mode + 1)
+        coefficients[mode] = 1.0
+        differentiated = np.polynomial.legendre.legder(coefficients)
+        if differentiated.size:
+            derivatives[mode] = float(
+                np.polynomial.legendre.legval(origin, differentiated)[0]
+            )
+    return (
+        torch.as_tensor(values, device=device, dtype=dtype),
+        torch.as_tensor(derivatives, device=device, dtype=dtype),
+    )
+
+def _recover_wall_gradient(centre, interface, normal_scale, axis, side):
+    """Quadratic extrapolation of the wall-normal gradient onto a Dirichlet face.
+
+    The BR1 closure averages the two one-sided gradients on an *interior* face,
+    which cancels their leading error and leaves ``O(h**(p+1))``.  A wall has no
+    second side, so the historical mirror ghost ``grad|+ = grad|-`` reproduces
+    the one-sided gradient, which is only ``O(h**p)``: divided by ``h`` in the
+    strong-form residual it leaves an ``O(h**(p-1))`` (= ``O(1)`` for ``P1``)
+    wall source, and the wall energy flux is first order
+    (``docs/reports/tensordg-ns-wall-verification.md``).
+
+    This closure rebuilds the missing side from data that *is* available inside
+    the wall cell: the element-centre gradient (available to every order) and
+    the already-averaged gradient on the opposite, interior face of the same
+    cell.  For a polynomial-consistent state the extrapolation
+
+        grad_n|_wall = 2 grad_n(centre) - grad_n(opposite face)
+
+    is exact to one order beyond the one-sided value, because the leading error
+    of the one-sided gradient is linear in the normal coordinate and the two
+    samples bracket it symmetrically.  ``centre``/``interface`` are
+    :func:`_face_primitives`-style dicts; ``interface`` holds the physical
+    normal derivative on the interior face (already scaled).
+    """
+    cell = slice(-1, None) if side == "right" else slice(0, 1)
+    # interface ``i`` sits between cell ``i`` and ``i + 1``: the wall cell's
+    # opposite (interior) face is interface ``-2`` at the top, interface ``0``
+    # at the bottom.
+    face = slice(-2, -1) if side == "right" else slice(0, 1)
+    return {
+        key: 2.0 * centre[key][..., cell, :] * normal_scale
+        - interface[key][..., face, :]
+        for key in ("u_n", "v_n", "T_n")
+    }
+
 def _centre_mode_weights(degree: int, device, dtype):
     """``P_k(0)``: the Legendre modes evaluated at the element centre."""
     values = [1.0, 0.0]
@@ -216,6 +276,9 @@ def _face_primitives(coeff, basis, derivative, signs, axis, side,
     )
     if side == "right":
         value_k, deriv_k = plus, derivative_plus
+    elif side == "centre":
+        # m2838 recovered closure: value/derivative weights at xi = 0
+        value_k, deriv_k = _centre_weights(degree, coeff.device, coeff.dtype)
     else:
         value_k, deriv_k = minus, derivative_minus
     if axis == 0:
@@ -235,7 +298,6 @@ def _face_primitives(coeff, basis, derivative, signs, axis, side,
         return _gas_gradients(state, d_normal, d_tangential,
                               conversion_state=centre)
     return _gas_gradients(state, d_normal, d_tangential)
-
 
 # ---------------------------------------------------------------------------
 # Viscous flux
@@ -365,7 +427,8 @@ def _wall_normal_derivative(coeff, basis, signs, h, axis):
 
 
 def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
-                   tangential_scale, normal_derivative=None, neighbour=None):
+                   tangential_scale, normal_derivative=None, neighbour=None,
+                   recovered=None):
     """Flux on an outermost face.
 
     ``wall is None`` gives an outflow face (physical flux, interior gradient);
@@ -375,13 +438,6 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
     ``normal_derivative`` optionally replaces the one-sided DG face derivative
     by a better estimate (see ``_wall_normal_derivative``); ``None`` keeps the
     historical one-sided face derivative.
-
-    ``neighbour`` (mission m2879) optionally holds the face primitives of the
-    adjacent inner cell; when given, the one-sided wall derivatives are
-    extrapolated to the face (``_extrapolate_trace_derivative``), which lifts
-    the *reconstructed* wall flux to second order.  The public solvers keep
-    ``neighbour=None`` (the m2920 Taylor default), so this path is exercised
-    only by the reconstructed-flux tests and benchmarks.
     """
     inner_u, inner_v = side["u"], side["v"]
     if wall is None:
@@ -410,12 +466,20 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
             base_v = normal_derivative["v_n"]
             base_T = normal_derivative["T_n"]
         elif neighbour is not None:
+            # m2879: second-order extrapolation of the one-sided trace
+            # derivative from the two innermost cells
             base_u = _extrapolate_trace_derivative(
                 side["u_n"], neighbour["u_n"]) * normal_scale
             base_v = _extrapolate_trace_derivative(
                 side["v_n"], neighbour["v_n"]) * normal_scale
             base_T = _extrapolate_trace_derivative(
                 side["T_n"], neighbour["T_n"]) * normal_scale
+        elif recovered is not None:
+            # m2838: physical (already scaled) wall-normal derivatives from
+            # the quadratic recovery ``_recover_wall_gradient``
+            base_u = recovered["u_n"]
+            base_v = recovered["v_n"]
+            base_T = recovered["T_n"]
         else:
             base_u = side["u_n"] * normal_scale
             base_v = side["v_n"] * normal_scale
@@ -434,6 +498,7 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
         tangential_v = side["v_t"] * tangential_scale
         tangential_T = side["T_t"] * tangential_scale
     else:
+        # m2879: extrapolate the tangential trace the same way
         tangential_u = _extrapolate_trace_derivative(
             side["u_t"], neighbour["u_t"]) * tangential_scale
         tangential_v = _extrapolate_trace_derivative(
@@ -450,9 +515,10 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
     # conservation form: dU/dt = -div(F_inv) + div(F_v), so the total flux
     # entering the strong-form divergence is F_inv - F_v
     return inviscid - _viscous_flux(face, axis, mu, kappa)
+
 def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
                     wall_left, wall_right, mu, kappa, penalty, axis,
-                    wall_gradient="face"):
+                    wall_gradient="face", wall_penalty=None):
     """Integrated total (inviscid + viscous) face fluxes for one axis.
 
     Structurally identical to ``euler_dg_2d._axis_fluxes``: the returned arrays
@@ -503,10 +569,25 @@ def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
     if not periodic and wall_gradient == "taylor":
         recon = _wall_normal_derivative(coeff, basis, signs, h, axis)
 
+    recovered_top = recovered_bottom = None
+    if (not periodic and wall_gradient == "recovered"
+            and (wall_left is not None or wall_right is not None)):
+        centre = _face_primitives(coeff, basis, derivative, signs, axis, "centre")
+        averaged = {"u_n": normal_u, "v_n": normal_v, "T_n": normal_T}
+        if wall_right is not None:
+            recovered_top = _recover_wall_gradient(centre, averaged, normal_scale,
+                                                   axis, "right")
+        if wall_left is not None:
+            recovered_bottom = _recover_wall_gradient(centre, averaged,
+                                                      normal_scale, axis, "left")
+
     if not periodic:
         right_derivative = None if recon is None else recon["right"]
-        boundary = _boundary_flux(right, wall_right, axis, h, mu, kappa, penalty,
-                                  normal_scale, tangential_scale, right_derivative)
+        wall_sigma = penalty if wall_penalty is None else wall_penalty
+        boundary = _boundary_flux(right, wall_right, axis, h, mu, kappa,
+                                  wall_sigma, normal_scale, tangential_scale,
+                                  normal_derivative=right_derivative,
+                                  recovered=recovered_top)
         interface = _merge(interface, boundary, roll_dim, -1)
 
     if axis == 0:
@@ -518,20 +599,16 @@ def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
 
     if not periodic:
         left_derivative = None if recon is None else recon["left"]
-        left_boundary = _boundary_flux(left, wall_left, axis, h, mu, kappa, penalty,
-                                       normal_scale, tangential_scale,
-                                       left_derivative)
+        left_boundary = _boundary_flux(left, wall_left, axis, h, mu, kappa,
+                                       wall_sigma, normal_scale, tangential_scale,
+                                       normal_derivative=left_derivative,
+                                       recovered=recovered_bottom)
         if axis == 0:
             flux_left[0] = torch.einsum("ybv,b,bl->ylv", left_boundary[0], weights, basis)
         else:
             flux_left[:, 0] = torch.einsum("xav,a,ak->xkv", left_boundary[:, 0],
                                            weights, basis)
     return flux_right, flux_left
-
-
-# ---------------------------------------------------------------------------
-# Residual
-# ---------------------------------------------------------------------------
 
 def _viscous_volume(coeff, basis, derivative, weights, dx, dy, mu, kappa):
     """Volume divergence of the viscous flux, evaluated with local gradients.
@@ -575,7 +652,7 @@ def _viscous_volume(coeff, basis, derivative, weights, dx, dy, mu, kappa):
 
 
 def _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic, boundary,
-            mu, kappa, penalty, wall_gradient="face"):
+            mu, kappa, penalty, wall_gradient="face", wall_penalty=None):
     """DG residual of the 2-D compressible Navier--Stokes equations."""
     degree = coeff.shape[2] - 1
     modes = torch.arange(degree + 1, device=coeff.device, dtype=coeff.dtype)
@@ -597,12 +674,12 @@ def _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic, boundary
     right_x, left_x = _axis_fluxes_ns(
         coeff, basis, derivative, signs, weights, dx, dy, periodic[0],
         boundary["xmin"], boundary["xmax"], mu, kappa, penalty, 0,
-        wall_gradient,
+        wall_gradient, wall_penalty,
     )
     right_y, left_y = _axis_fluxes_ns(
         coeff, basis, derivative, signs, weights, dx, dy, periodic[1],
         boundary["ymin"], boundary["ymax"], mu, kappa, penalty, 1,
-        wall_gradient,
+        wall_gradient, wall_penalty,
     )
 
     face_x = (
@@ -621,7 +698,6 @@ def _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic, boundary
     scale_y = (scale / (2.0 * dy)).view(1, 1, *scale.shape, 1)
     return -(scale_x * face_x) - (scale_y * face_y)
 
-
 # ---------------------------------------------------------------------------
 # Main solver
 # ---------------------------------------------------------------------------
@@ -639,6 +715,7 @@ def solve_navier_stokes_dg_2d(
     periodic=(True, True),
     boundary=None,
     penalty=None,
+    wall_penalty=None,
     quadrature=None,
     initial_projection="l2",
     wall_gradient="face",
@@ -672,6 +749,7 @@ def solve_navier_stokes_dg_2d(
         or ``{"velocity": (u, v), "temperature": T}`` (no-slip isothermal wall).
     penalty : float or None
         SIPG penalty coefficient; defaults to ``2 (degree + 1)**2``.
+
     wall_gradient : {"face", "taylor"}
         Normal-derivative estimator on Dirichlet walls.  ``"face"`` (default)
         uses the one-sided DG polynomial derivative, which converges at the
@@ -736,8 +814,10 @@ def solve_navier_stokes_dg_2d(
 
     if initial_projection != "l2":
         raise ValueError("only the l2 initial projection is supported")
-    if wall_gradient not in ("taylor", "face"):
-        raise ValueError("wall_gradient must be 'taylor' or 'face'")
+    if wall_gradient not in ("taylor", "face", "one_sided", "recovered"):
+        raise ValueError(
+            "wall_gradient must be 'taylor', 'face', 'one_sided' or 'recovered'"
+        )
     coeff = _initial_coefficients(initial, x, y, dx, dy, nodes, weights, basis, dev, dtype)
 
     def impose(state):
@@ -772,13 +852,16 @@ def solve_navier_stokes_dg_2d(
                     limited_by_diffusion = True
         dt = min(dt, final_time - time)
         k1 = _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic,
-                     boundary, mu, kappa, penalty, wall_gradient)
+                     boundary, mu, kappa, penalty, wall_gradient,
+                     wall_penalty)
         u1 = impose(coeff + dt * k1)
         k2 = _rhs_ns(u1, basis, derivative, weights, signs, dx, dy, periodic,
-                     boundary, mu, kappa, penalty, wall_gradient)
+                     boundary, mu, kappa, penalty, wall_gradient,
+                     wall_penalty)
         u2 = impose(0.75 * coeff + 0.25 * (u1 + dt * k2))
         k3 = _rhs_ns(u2, basis, derivative, weights, signs, dx, dy, periodic,
-                     boundary, mu, kappa, penalty, wall_gradient)
+                     boundary, mu, kappa, penalty, wall_gradient,
+                     wall_penalty)
         coeff = impose(coeff / 3.0 + (2.0 / 3.0) * (u2 + dt * k3))
         if not torch.isfinite(coeff).all():
             raise FloatingPointError("non-finite Navier-Stokes state; reduce the CFL")
@@ -820,11 +903,6 @@ def solve_navier_stokes_dg_2d(
         "dofs": nx * ny * (degree + 1) ** 2 * 4,
     }
     return x, y, coeff, metadata
-
-
-# ---------------------------------------------------------------------------
-# Analytic reference solutions
-# ---------------------------------------------------------------------------
 
 def couette_exact(y, ymin, ymax, wall_speed, wall_temperature, pressure, mu, kappa):
     """Analytic steady viscous Couette flow with isothermal no-slip walls.
@@ -905,11 +983,14 @@ def solve_couette_dg_2d(
     prandtl=0.71,
     cfl=0.3,
     cfl_viscous=1.0,
+    penalty=None,
+    wall_penalty=None,
     ymin=0.0,
     ymax=1.0,
     xmin=0.0,
     xmax=1.0,
     device="cpu",
+    wall_gradient="face",
     dtype=torch.float64,
 ):
     """Impulsively started Couette flow (bottom wall at rest, top wall moving)."""
@@ -938,10 +1019,12 @@ def solve_couette_dg_2d(
         prandtl=prandtl,
         periodic=(True, False),
         boundary=boundary,
+        penalty=penalty,
+        wall_penalty=wall_penalty,
+        wall_gradient=wall_gradient,
         device=device,
         dtype=dtype,
     )
-
 
 def solve_heat_conduction_dg_2d(
     ncells=(2, 16),
@@ -954,7 +1037,10 @@ def solve_heat_conduction_dg_2d(
     prandtl=0.71,
     cfl=0.3,
     cfl_viscous=1.0,
+    penalty=None,
+    wall_penalty=None,
     device="cpu",
+    wall_gradient="face",
     dtype=torch.float64,
 ):
     """Pure heat conduction between two isothermal walls in a fluid at rest."""
@@ -983,10 +1069,12 @@ def solve_heat_conduction_dg_2d(
         prandtl=prandtl,
         periodic=(True, False),
         boundary=boundary,
+        penalty=penalty,
+        wall_penalty=wall_penalty,
+        wall_gradient=wall_gradient,
         device=device,
         dtype=dtype,
     )
-
 
 def solve_shear_wave_dg_2d(
     ncells=(4, 16),
@@ -999,7 +1087,10 @@ def solve_shear_wave_dg_2d(
     temperature=1.0,
     cfl=0.3,
     cfl_viscous=1.0,
+    penalty=None,
+    wall_penalty=None,
     device="cpu",
+    wall_gradient="face",
     dtype=torch.float64,
 ):
     """Periodic decaying shear wave: the design-order test of the viscous term."""
@@ -1023,6 +1114,10 @@ def solve_shear_wave_dg_2d(
         cfl_viscous=cfl_viscous,
         mu=mu,
         periodic=(True, True),
+        penalty=penalty,
+        wall_penalty=wall_penalty,
+        wall_gradient=wall_gradient,
         device=device,
         dtype=dtype,
     )
+

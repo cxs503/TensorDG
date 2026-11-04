@@ -40,6 +40,7 @@ Usage::
 """
 from __future__ import annotations
 
+import inspect
 import json
 import sys
 from pathlib import Path
@@ -147,9 +148,13 @@ def wall_fluxes(ncells, degree, penalty_scale=2.0, wall_gradient="face"):
     top = ns._boundary_flux(right, d["boundary"]["ymax"], 1, h, MU, KAPPA, penalty,
                             2.0 / h, 2.0 / d["dx"],
                             None if recon is None else recon["right"])
+    low_kwargs = ({} if "outward_sign"
+                  not in inspect.signature(ns._boundary_flux).parameters
+                  else {"outward_sign": -1.0})
     bottom = ns._boundary_flux(left, d["boundary"]["ymin"], 1, h, MU, KAPPA, penalty,
                                2.0 / h, 2.0 / d["dx"],
-                               None if recon is None else recon["left"])
+                               None if recon is None else recon["left"],
+                               **low_kwargs)
     return dict(
         mx_top=float(top[0, -1, 0, 1]), mx_bottom=float(bottom[0, 0, 0, 1]),
         energy_top=float(top[0, -1, 0, 3]), energy_bottom=float(bottom[0, 0, 0, 3]),
@@ -199,7 +204,9 @@ def march(penalty_scale=2.0, channel_weights=(1.0, 1.0, 1.0), ncells=(2, 8),
     original = ns._boundary_flux
 
     def channel_masked(side, wall, axis, h_, mu, kappa, pen, normal_scale,
-                       tangential_scale, normal_derivative=None):
+                       tangential_scale, normal_derivative=None, neighbour=None,
+                       recovered=None,
+                       centre=None, side_name="right", outward_sign=1.0):
         """Same flux as ``ns._boundary_flux`` with per-channel penalty weights."""
         inner_u, inner_v = side["u"], side["v"]
         wall_velocity = wall.get("velocity", (0.0, 0.0))
@@ -211,17 +218,33 @@ def march(penalty_scale=2.0, channel_weights=(1.0, 1.0, 1.0), ncells=(2, 8),
         face_T = (side["temperature"] if wall_temperature is None else
                   torch.as_tensor(wall_temperature, device=inner_u.device,
                                   dtype=inner_u.dtype).expand_as(inner_u))
-        if normal_derivative is None:
-            base_u = side["u_n"] * normal_scale
-            base_v = side["v_n"] * normal_scale
-            base_T = side["T_n"] * normal_scale
-        else:
+        if normal_derivative is not None:
             base_u = normal_derivative["u_n"]
             base_v = normal_derivative["v_n"]
             base_T = normal_derivative["T_n"]
-        normal_u = base_u - wu * (pen / h_) * (inner_u - face_u)
-        normal_v = base_v - wv * (pen / h_) * (inner_v - face_v)
-        normal_T = base_T - wt * (pen / h_) * (side["temperature"] - face_T)
+        elif recovered is not None:
+            # forward-compat with the m2838 recovered wall closure
+            base_u = recovered["u_n"]
+            base_v = recovered["v_n"]
+            base_T = recovered["T_n"]
+        elif centre is not None:
+            # forward-compat with the m2831 fd2 wall stencil
+            w_u, i_u = ns._wall_stencil(centre["u"], axis, side_name)
+            w_v, i_v = ns._wall_stencil(centre["v"], axis, side_name)
+            w_T, i_T = ns._wall_stencil(centre["T"], axis, side_name)
+            base_u = ns._wall_derivative(face_u, w_u, i_u, h_, side_name)
+            base_v = ns._wall_derivative(face_v, w_v, i_v, h_, side_name)
+            base_T = ns._wall_derivative(face_T, w_T, i_T, h_, side_name)
+        else:
+            base_u = side["u_n"] * normal_scale
+            base_v = side["v_n"] * normal_scale
+            base_T = side["T_n"] * normal_scale
+        normal_u = (base_u - wu * outward_sign * (pen / h_)
+                    * (inner_u - face_u))
+        normal_v = (base_v - wv * outward_sign * (pen / h_)
+                    * (inner_v - face_v))
+        normal_T = (base_T - wt * outward_sign * (pen / h_)
+                    * (side["temperature"] - face_T))
         zeros = torch.zeros_like(inner_u)
         pressure = side["pressure"]
         if axis == 0:
