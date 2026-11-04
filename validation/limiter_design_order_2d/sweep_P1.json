@@ -1,0 +1,779 @@
+{
+  "timestamp": "2026-11-04T05:59:11Z",
+  "case": "isentropic vortex, analytic exact solution",
+  "domain": [
+    [
+      -5.0,
+      5.0
+    ],
+    [
+      -5.0,
+      5.0
+    ]
+  ],
+  "strength": 5.0,
+  "background_velocity": [
+    1.0,
+    1.0
+  ],
+  "final_time": 0.5,
+  "cfl": 0.2,
+  "dtype": "float64",
+  "second_derivative_scale": {
+    "density": 0.8051530845510145,
+    "velocity_x": 0.0,
+    "velocity_y": 1.8107018719960228,
+    "pressure": 0.850024175749234,
+    "momentum_x": 0.8051530845510145,
+    "momentum_y": 1.9739452007528644,
+    "energy": 4.210275760261519,
+    "spacing": 0.004999999999999893,
+    "max_over_conserved": 4.210275760261519
+  },
+  "runs": [
+    {
+      "config": "none",
+      "degree": 1,
+      "cells": 16,
+      "h": 0.625,
+      "dofs": 4096,
+      "steps": 71,
+      "dt": 0.004462322750719949,
+      "wall_seconds": 3.398890972137451,
+      "errors": {
+        "density": 0.0033194354269653822,
+        "velocity_x": 0.007505875876166297,
+        "velocity_y": 0.007495053007741007,
+        "pressure": 0.004971103140087853,
+        "pressure_max": 0.004971103140087853
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 0,
+      "mass": 98.24174362707757,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": null,
+        "velocity_x": null,
+        "velocity_y": null,
+        "pressure": null,
+        "pressure_max": null
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "none",
+      "degree": 1,
+      "cells": 24,
+      "h": 0.4166666666666667,
+      "dofs": 9216,
+      "steps": 106,
+      "dt": 0.003394026921636595,
+      "wall_seconds": 6.139384984970093,
+      "errors": {
+        "density": 0.0015177471703311087,
+        "velocity_x": 0.0033795326362971623,
+        "velocity_y": 0.0033807833257711163,
+        "pressure": 0.002294740028067876,
+        "pressure_max": 0.002294740028067876
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 0,
+      "mass": 98.241743560213,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9300491954973698,
+        "velocity_x": 1.9679837336301655,
+        "velocity_y": 1.9635124014170071,
+        "pressure": 1.9065073670490411,
+        "pressure_max": 1.9065073670490411
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    },
+    {
+      "config": "none",
+      "degree": 1,
+      "cells": 32,
+      "h": 0.3125,
+      "dofs": 16384,
+      "steps": 141,
+      "dt": 0.002990055860181473,
+      "wall_seconds": 11.405135869979858,
+      "errors": {
+        "density": 0.0008659499010301159,
+        "velocity_x": 0.0019098531154940134,
+        "velocity_y": 0.0019106482905945161,
+        "pressure": 0.0013117377312561417,
+        "pressure_max": 0.0013117377312561417
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 0,
+      "mass": 98.24174356019043,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9506093270177494,
+        "velocity_x": 1.9838257058108684,
+        "velocity_y": 1.9836649094578471,
+        "pressure": 1.9440446330818852,
+        "pressure_max": 1.9440446330818852
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    },
+    {
+      "config": "none",
+      "degree": 1,
+      "cells": 48,
+      "h": 0.20833333333333334,
+      "dofs": 36864,
+      "steps": 212,
+      "dt": 0.00024093407543313017,
+      "wall_seconds": 26.13370704650879,
+      "errors": {
+        "density": 0.0003907738822891824,
+        "velocity_x": 0.0008519256446137918,
+        "velocity_y": 0.0008519064964747834,
+        "pressure": 0.0005916834650960036,
+        "pressure_max": 0.0005916834650960036
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 0,
+      "mass": 98.24174356019017,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9624326568099342,
+        "velocity_x": 1.991003288856492,
+        "velocity_y": 1.992085364617386,
+        "pressure": 1.9635135776019936,
+        "pressure_max": 1.9635135776019936
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    },
+    {
+      "config": "tvb_M1",
+      "degree": 1,
+      "cells": 16,
+      "h": 0.625,
+      "dofs": 4096,
+      "steps": 71,
+      "dt": 0.0006268857708633946,
+      "wall_seconds": 3.477341413497925,
+      "errors": {
+        "density": 0.008294761367271468,
+        "velocity_x": 0.01857617531184213,
+        "velocity_y": 0.019377676693891847,
+        "pressure": 0.014710578138940665,
+        "pressure_max": 0.014710578138940665
+      },
+      "flagged_mean": 0.025720730633802816,
+      "flagged_peak": 0.03125,
+      "limiter_calls": 213,
+      "mass": 98.24174362707757,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": null,
+        "velocity_x": null,
+        "velocity_y": null,
+        "pressure": null,
+        "pressure_max": null
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "tvb_M1",
+      "degree": 1,
+      "cells": 24,
+      "h": 0.4166666666666667,
+      "dofs": 9216,
+      "steps": 106,
+      "dt": 0.003738021149473414,
+      "wall_seconds": 6.91487455368042,
+      "errors": {
+        "density": 0.005283740434894355,
+        "velocity_x": 0.009864336881755986,
+        "velocity_y": 0.01451749890221973,
+        "pressure": 0.008580665999064804,
+        "pressure_max": 0.008580665999064804
+      },
+      "flagged_mean": 0.027078965758211008,
+      "flagged_peak": 0.03125,
+      "limiter_calls": 318,
+      "mass": 98.241743560213,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.1122779330175003,
+        "velocity_x": 1.5610565049088516,
+        "velocity_y": 0.7121869902471062,
+        "pressure": 1.3294739615041327,
+        "pressure_max": 1.3294739615041327
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "tvb_M1",
+      "degree": 1,
+      "cells": 32,
+      "h": 0.3125,
+      "dofs": 16384,
+      "steps": 142,
+      "dt": 0.000697053252590174,
+      "wall_seconds": 11.758255958557129,
+      "errors": {
+        "density": 0.003531513521882661,
+        "velocity_x": 0.0078061889859843145,
+        "velocity_y": 0.01009813452541038,
+        "pressure": 0.00556713323998483,
+        "pressure_max": 0.00556713323998483
+      },
+      "flagged_mean": 0.029936454665492957,
+      "flagged_peak": 0.0341796875,
+      "limiter_calls": 426,
+      "mass": 98.24174356019043,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.4005312196966646,
+        "velocity_x": 0.8134293427525924,
+        "velocity_y": 1.2618236277953028,
+        "pressure": 1.5038521040276143,
+        "pressure_max": 1.5038521040276143
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "tvb_M1",
+      "degree": 1,
+      "cells": 48,
+      "h": 0.20833333333333334,
+      "dofs": 36864,
+      "steps": 212,
+      "dt": 0.001378971708838439,
+      "wall_seconds": 30.097855806350708,
+      "errors": {
+        "density": 0.0023025282028078646,
+        "velocity_x": 0.0046852400383157935,
+        "velocity_y": 0.0054266753081775995,
+        "pressure": 0.0030417886201898653,
+        "pressure_max": 0.0030417886201898653
+      },
+      "flagged_mean": 0.03124010471261353,
+      "flagged_peak": 0.034505208333333336,
+      "limiter_calls": 636,
+      "mass": 98.24174356019017,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.054884359695003,
+        "velocity_x": 1.259047249019139,
+        "velocity_y": 1.5316337450345099,
+        "pressure": 1.4907189950891628,
+        "pressure_max": 1.4907189950891628
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "tvb_M10",
+      "degree": 1,
+      "cells": 16,
+      "h": 0.625,
+      "dofs": 4096,
+      "steps": 71,
+      "dt": 0.004462322750719949,
+      "wall_seconds": 3.7138559818267822,
+      "errors": {
+        "density": 0.0033194354269653822,
+        "velocity_x": 0.007505875876166297,
+        "velocity_y": 0.007495053007741007,
+        "pressure": 0.004971103140087853,
+        "pressure_max": 0.004971103140087853
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 213,
+      "mass": 98.24174362707757,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": null,
+        "velocity_x": null,
+        "velocity_y": null,
+        "pressure": null,
+        "pressure_max": null
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "tvb_M10",
+      "degree": 1,
+      "cells": 24,
+      "h": 0.4166666666666667,
+      "dofs": 9216,
+      "steps": 106,
+      "dt": 0.003394026921636595,
+      "wall_seconds": 7.577203989028931,
+      "errors": {
+        "density": 0.0015177471703311087,
+        "velocity_x": 0.0033795326362971623,
+        "velocity_y": 0.0033807833257711163,
+        "pressure": 0.002294740028067876,
+        "pressure_max": 0.002294740028067876
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 318,
+      "mass": 98.241743560213,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9300491954973698,
+        "velocity_x": 1.9679837336301655,
+        "velocity_y": 1.9635124014170071,
+        "pressure": 1.9065073670490411,
+        "pressure_max": 1.9065073670490411
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    },
+    {
+      "config": "tvb_M10",
+      "degree": 1,
+      "cells": 32,
+      "h": 0.3125,
+      "dofs": 16384,
+      "steps": 141,
+      "dt": 0.002990055860181473,
+      "wall_seconds": 12.587876319885254,
+      "errors": {
+        "density": 0.0008659499010301159,
+        "velocity_x": 0.0019098531154940134,
+        "velocity_y": 0.0019106482905945161,
+        "pressure": 0.0013117377312561417,
+        "pressure_max": 0.0013117377312561417
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 423,
+      "mass": 98.24174356019043,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9506093270177494,
+        "velocity_x": 1.9838257058108684,
+        "velocity_y": 1.9836649094578471,
+        "pressure": 1.9440446330818852,
+        "pressure_max": 1.9440446330818852
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    },
+    {
+      "config": "tvb_M10",
+      "degree": 1,
+      "cells": 48,
+      "h": 0.20833333333333334,
+      "dofs": 36864,
+      "steps": 212,
+      "dt": 0.00024093407543313017,
+      "wall_seconds": 31.662460327148438,
+      "errors": {
+        "density": 0.0003907738822891824,
+        "velocity_x": 0.0008519256446137918,
+        "velocity_y": 0.0008519064964747834,
+        "pressure": 0.0005916834650960036,
+        "pressure_max": 0.0005916834650960036
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 636,
+      "mass": 98.24174356019017,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9624326568099342,
+        "velocity_x": 1.991003288856492,
+        "velocity_y": 1.992085364617386,
+        "pressure": 1.9635135776019936,
+        "pressure_max": 1.9635135776019936
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    },
+    {
+      "config": "tvb_M100",
+      "degree": 1,
+      "cells": 16,
+      "h": 0.625,
+      "dofs": 4096,
+      "steps": 71,
+      "dt": 0.004462322750719949,
+      "wall_seconds": 3.971280336380005,
+      "errors": {
+        "density": 0.0033194354269653822,
+        "velocity_x": 0.007505875876166297,
+        "velocity_y": 0.007495053007741007,
+        "pressure": 0.004971103140087853,
+        "pressure_max": 0.004971103140087853
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 213,
+      "mass": 98.24174362707757,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": null,
+        "velocity_x": null,
+        "velocity_y": null,
+        "pressure": null,
+        "pressure_max": null
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "tvb_M100",
+      "degree": 1,
+      "cells": 24,
+      "h": 0.4166666666666667,
+      "dofs": 9216,
+      "steps": 106,
+      "dt": 0.003394026921636595,
+      "wall_seconds": 7.2317821979522705,
+      "errors": {
+        "density": 0.0015177471703311087,
+        "velocity_x": 0.0033795326362971623,
+        "velocity_y": 0.0033807833257711163,
+        "pressure": 0.002294740028067876,
+        "pressure_max": 0.002294740028067876
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 318,
+      "mass": 98.241743560213,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9300491954973698,
+        "velocity_x": 1.9679837336301655,
+        "velocity_y": 1.9635124014170071,
+        "pressure": 1.9065073670490411,
+        "pressure_max": 1.9065073670490411
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    },
+    {
+      "config": "tvb_M100",
+      "degree": 1,
+      "cells": 32,
+      "h": 0.3125,
+      "dofs": 16384,
+      "steps": 141,
+      "dt": 0.002990055860181473,
+      "wall_seconds": 13.990915775299072,
+      "errors": {
+        "density": 0.0008659499010301159,
+        "velocity_x": 0.0019098531154940134,
+        "velocity_y": 0.0019106482905945161,
+        "pressure": 0.0013117377312561417,
+        "pressure_max": 0.0013117377312561417
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 423,
+      "mass": 98.24174356019043,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9506093270177494,
+        "velocity_x": 1.9838257058108684,
+        "velocity_y": 1.9836649094578471,
+        "pressure": 1.9440446330818852,
+        "pressure_max": 1.9440446330818852
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    },
+    {
+      "config": "tvb_M100",
+      "degree": 1,
+      "cells": 48,
+      "h": 0.20833333333333334,
+      "dofs": 36864,
+      "steps": 212,
+      "dt": 0.00024093407543313017,
+      "wall_seconds": 38.64637613296509,
+      "errors": {
+        "density": 0.0003907738822891824,
+        "velocity_x": 0.0008519256446137918,
+        "velocity_y": 0.0008519064964747834,
+        "pressure": 0.0005916834650960036,
+        "pressure_max": 0.0005916834650960036
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 636,
+      "mass": 98.24174356019017,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9624326568099342,
+        "velocity_x": 1.991003288856492,
+        "velocity_y": 1.992085364617386,
+        "pressure": 1.9635135776019936,
+        "pressure_max": 1.9635135776019936
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    },
+    {
+      "config": "weno_M1",
+      "degree": 1,
+      "cells": 16,
+      "h": 0.625,
+      "dofs": 4096,
+      "steps": 73,
+      "dt": 0.0006713561748370456,
+      "wall_seconds": 4.592411279678345,
+      "errors": {
+        "density": 0.011296649769113312,
+        "velocity_x": 0.021334295256426192,
+        "velocity_y": 0.019000814888434307,
+        "pressure": 0.01676360005930249,
+        "pressure_max": 0.01676360005930249
+      },
+      "flagged_mean": 0.02445419520547945,
+      "flagged_peak": 0.029296875,
+      "limiter_calls": 219,
+      "mass": 98.24174362707757,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": null,
+        "velocity_x": null,
+        "velocity_y": null,
+        "pressure": null,
+        "pressure_max": null
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "weno_M1",
+      "degree": 1,
+      "cells": 24,
+      "h": 0.4166666666666667,
+      "dofs": 9216,
+      "steps": 107,
+      "dt": 0.004592109949325296,
+      "wall_seconds": 10.041664123535156,
+      "errors": {
+        "density": 0.006189542428878959,
+        "velocity_x": 0.013019087081638977,
+        "velocity_y": 0.01133136475726421,
+        "pressure": 0.00883573953392988,
+        "pressure_max": 0.00883573953392988
+      },
+      "flagged_mean": 0.024237949982692963,
+      "flagged_peak": 0.026909722222222224,
+      "limiter_calls": 321,
+      "mass": 98.241743560213,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.483839240850901,
+        "velocity_x": 1.218105716716088,
+        "velocity_y": 1.274850372578632,
+        "pressure": 1.5794332300318958,
+        "pressure_max": 1.5794332300318958
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "weno_M1",
+      "degree": 1,
+      "cells": 32,
+      "h": 0.3125,
+      "dofs": 16384,
+      "steps": 143,
+      "dt": 0.0010047725966217946,
+      "wall_seconds": 18.12789487838745,
+      "errors": {
+        "density": 0.004348096599402193,
+        "velocity_x": 0.009345037319353643,
+        "velocity_y": 0.00847629079248439,
+        "pressure": 0.005974036233914771,
+        "pressure_max": 0.005974036233914771
+      },
+      "flagged_mean": 0.027198062354312356,
+      "flagged_peak": 0.02978515625,
+      "limiter_calls": 429,
+      "mass": 98.24174356019043,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.2274764775835465,
+        "velocity_x": 1.1525608129449338,
+        "velocity_y": 1.0091055481186482,
+        "pressure": 1.360467195323367,
+        "pressure_max": 1.360467195323367
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "weno_M1",
+      "degree": 1,
+      "cells": 48,
+      "h": 0.20833333333333334,
+      "dofs": 36864,
+      "steps": 213,
+      "dt": 0.0014908687579012203,
+      "wall_seconds": 36.849992990493774,
+      "errors": {
+        "density": 0.002926023806321467,
+        "velocity_x": 0.006143419554488638,
+        "velocity_y": 0.005068920311529852,
+        "pressure": 0.003878819378966137,
+        "pressure_max": 0.003878819378966137
+      },
+      "flagged_mean": 0.03568231340201703,
+      "flagged_peak": 0.040364583333333336,
+      "limiter_calls": 639,
+      "mass": 98.24174356019017,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 0.976887380365557,
+        "velocity_x": 1.0345253098048557,
+        "velocity_y": 1.2680378623625639,
+        "pressure": 1.0651766399812341,
+        "pressure_max": 1.0651766399812341
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "weno_M100",
+      "degree": 1,
+      "cells": 16,
+      "h": 0.625,
+      "dofs": 4096,
+      "steps": 71,
+      "dt": 0.004462322750719949,
+      "wall_seconds": 3.4637248516082764,
+      "errors": {
+        "density": 0.0033194354269653822,
+        "velocity_x": 0.007505875876166297,
+        "velocity_y": 0.007495053007741007,
+        "pressure": 0.004971103140087853,
+        "pressure_max": 0.004971103140087853
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 213,
+      "mass": 98.24174362707757,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": null,
+        "velocity_x": null,
+        "velocity_y": null,
+        "pressure": null,
+        "pressure_max": null
+      },
+      "design_order": 2,
+      "meets_design_order": false
+    },
+    {
+      "config": "weno_M100",
+      "degree": 1,
+      "cells": 24,
+      "h": 0.4166666666666667,
+      "dofs": 9216,
+      "steps": 106,
+      "dt": 0.003394026921636595,
+      "wall_seconds": 7.1528847217559814,
+      "errors": {
+        "density": 0.0015177471703311087,
+        "velocity_x": 0.0033795326362971623,
+        "velocity_y": 0.0033807833257711163,
+        "pressure": 0.002294740028067876,
+        "pressure_max": 0.002294740028067876
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 318,
+      "mass": 98.241743560213,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9300491954973698,
+        "velocity_x": 1.9679837336301655,
+        "velocity_y": 1.9635124014170071,
+        "pressure": 1.9065073670490411,
+        "pressure_max": 1.9065073670490411
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    },
+    {
+      "config": "weno_M100",
+      "degree": 1,
+      "cells": 32,
+      "h": 0.3125,
+      "dofs": 16384,
+      "steps": 141,
+      "dt": 0.002990055860181473,
+      "wall_seconds": 13.364110469818115,
+      "errors": {
+        "density": 0.0008659499010301159,
+        "velocity_x": 0.0019098531154940134,
+        "velocity_y": 0.0019106482905945161,
+        "pressure": 0.0013117377312561417,
+        "pressure_max": 0.0013117377312561417
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 423,
+      "mass": 98.24174356019043,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9506093270177494,
+        "velocity_x": 1.9838257058108684,
+        "velocity_y": 1.9836649094578471,
+        "pressure": 1.9440446330818852,
+        "pressure_max": 1.9440446330818852
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    },
+    {
+      "config": "weno_M100",
+      "degree": 1,
+      "cells": 48,
+      "h": 0.20833333333333334,
+      "dofs": 36864,
+      "steps": 212,
+      "dt": 0.00024093407543313017,
+      "wall_seconds": 33.148600339889526,
+      "errors": {
+        "density": 0.0003907738822891824,
+        "velocity_x": 0.0008519256446137918,
+        "velocity_y": 0.0008519064964747834,
+        "pressure": 0.0005916834650960036,
+        "pressure_max": 0.0005916834650960036
+      },
+      "flagged_mean": 0.0,
+      "flagged_peak": 0.0,
+      "limiter_calls": 636,
+      "mass": 98.24174356019017,
+      "mode2_energy": 0.0,
+      "eoc": {
+        "density": 1.9624326568099342,
+        "velocity_x": 1.991003288856492,
+        "velocity_y": 1.992085364617386,
+        "pressure": 1.9635135776019936,
+        "pressure_max": 1.9635135776019936
+      },
+      "design_order": 2,
+      "meets_design_order": true
+    }
+  ]
+}
