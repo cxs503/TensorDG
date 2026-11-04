@@ -96,6 +96,73 @@ def _add_block(matrix: torch.Tensor, indices: torch.Tensor, block: torch.Tensor)
     matrix[indices[:, None], indices[None, :]] += block
 
 
+def interior_face_operator(
+    phi: torch.Tensor,
+    weights: torch.Tensor,
+    phi_left: torch.Tensor,
+    phi_right: torch.Tensor,
+    dphi_left: torch.Tensor,
+    dphi_right: torch.Tensor,
+    direction: str,
+    h_normal: float,
+    measure: float,
+    penalty: float,
+    modes: int,
+) -> torch.Tensor:
+    """SIPG block for an interior face (jump/mean form, symmetric).
+
+    ``direction`` selects the tensor-product factor that carries the normal
+    derivative; ``h_normal`` is the element size across the face and
+    ``measure`` is half the face length (the face is shared by two elements).
+    """
+    trace_right, deriv_right = _face_basis(
+        phi, phi_right, dphi_right, direction, 2.0 / h_normal,
+    )
+    trace_left, deriv_left = _face_basis(
+        phi, phi_left, dphi_left, direction, 2.0 / h_normal,
+    )
+    jump = torch.cat((trace_right, -trace_left), dim=1)
+    average_derivative = 0.5 * torch.cat((deriv_right, deriv_left), dim=1)
+    consistency = -measure * torch.einsum(
+        "q,qk,ql->kl", weights, jump, average_derivative,
+    )
+    penalty_scale = penalty * modes * modes / h_normal
+    return consistency + consistency.T + penalty_scale * measure * torch.einsum(
+        "q,qk,ql->kl", weights, jump, jump,
+    )
+
+
+def dirichlet_face_operator(
+    phi: torch.Tensor,
+    weights: torch.Tensor,
+    endpoint: torch.Tensor,
+    derivative_endpoint: torch.Tensor,
+    direction: str,
+    outward_sign: float,
+    h_normal: float,
+    measure: float,
+    penalty: float,
+    modes: int,
+):
+    """SIPG block for a homogeneous-Dirichlet face plus its trace matrix.
+
+    The exterior trace is zero, so the average factors of 1/2 disappear and
+    the penalty acts on the interior trace only.
+    """
+    trace, derivative = _face_basis(
+        phi, endpoint, derivative_endpoint, direction, 2.0 / h_normal,
+        outward_sign,
+    )
+    consistency = -measure * torch.einsum(
+        "q,qk,ql->kl", weights, trace, derivative,
+    )
+    penalty_scale = penalty * modes * modes / h_normal
+    block = consistency + consistency.T + penalty_scale * measure * torch.einsum(
+        "q,qk,ql->kl", weights, trace, trace,
+    )
+    return block, trace
+
+
 def solve_poisson_2d(
     ncells: int | tuple[int, int] = 16,
     degree: int = 1,
@@ -186,21 +253,11 @@ def solve_poisson_2d(
 
     # Interior vertical faces. The global face normal points from left to
     # right; jump = left-right and average = 1/2(left+right).
-    trace_right, deriv_right = _face_basis(
-        phi, phi_right, dphi_right, "x", 2.0 / hx,
-    )
-    trace_left, deriv_left = _face_basis(
-        phi, phi_left, dphi_left, "x", 2.0 / hx,
-    )
-    jump_x = torch.cat((trace_right, -trace_left), dim=1)
-    average_derivative_x = 0.5 * torch.cat((deriv_right, deriv_left), dim=1)
     measure_x = 0.5 * hy
-    consistency_x = -measure_x * torch.einsum(
-        "q,qk,ql->kl", weights, jump_x, average_derivative_x,
-    )
     penalty_x = penalty * modes * modes / hx
-    face_x = consistency_x + consistency_x.T + penalty_x * measure_x * torch.einsum(
-        "q,qk,ql->kl", weights, jump_x, jump_x,
+    face_x = interior_face_operator(
+        phi, weights, phi_left, phi_right, dphi_left, dphi_right,
+        "x", hx, measure_x, penalty, modes,
     )
     for ix in range(nx - 1):
         for iy in range(ny):
@@ -208,21 +265,11 @@ def solve_poisson_2d(
             _add_block(matrix, indices, face_x)
 
     # Interior horizontal faces, with global normal pointing bottom to top.
-    trace_top, deriv_top = _face_basis(
-        phi, phi_right, dphi_right, "y", 2.0 / hy,
-    )
-    trace_bottom, deriv_bottom = _face_basis(
-        phi, phi_left, dphi_left, "y", 2.0 / hy,
-    )
-    jump_y = torch.cat((trace_top, -trace_bottom), dim=1)
-    average_derivative_y = 0.5 * torch.cat((deriv_top, deriv_bottom), dim=1)
     measure_y = 0.5 * hx
-    consistency_y = -measure_y * torch.einsum(
-        "q,qk,ql->kl", weights, jump_y, average_derivative_y,
-    )
     penalty_y = penalty * modes * modes / hy
-    face_y = consistency_y + consistency_y.T + penalty_y * measure_y * torch.einsum(
-        "q,qk,ql->kl", weights, jump_y, jump_y,
+    face_y = interior_face_operator(
+        phi, weights, phi_left, phi_right, dphi_left, dphi_right,
+        "y", hy, measure_y, penalty, modes,
     )
     for ix in range(nx):
         for iy in range(ny - 1):
@@ -235,14 +282,9 @@ def solve_poisson_2d(
         (0, phi_left, dphi_left, -1.0),
         (nx - 1, phi_right, dphi_right, 1.0),
     ):
-        trace, derivative = _face_basis(
-            phi, endpoint, deriv_endpoint, "x", 2.0 / hx, outward,
-        )
-        consistency = -measure_x * torch.einsum(
-            "q,qk,ql->kl", weights, trace, derivative,
-        )
-        block = consistency + consistency.T + penalty_x * measure_x * torch.einsum(
-            "q,qk,ql->kl", weights, trace, trace,
+        block, _ = dirichlet_face_operator(
+            phi, weights, endpoint, deriv_endpoint, "x", outward,
+            hx, measure_x, penalty, modes,
         )
         for iy in range(ny):
             _add_block(matrix, dofs(ix, iy), block)
@@ -251,14 +293,9 @@ def solve_poisson_2d(
         (0, phi_left, dphi_left, -1.0),
         (ny - 1, phi_right, dphi_right, 1.0),
     ):
-        trace, derivative = _face_basis(
-            phi, endpoint, deriv_endpoint, "y", 2.0 / hy, outward,
-        )
-        consistency = -measure_y * torch.einsum(
-            "q,qk,ql->kl", weights, trace, derivative,
-        )
-        block = consistency + consistency.T + penalty_y * measure_y * torch.einsum(
-            "q,qk,ql->kl", weights, trace, trace,
+        block, _ = dirichlet_face_operator(
+            phi, weights, endpoint, deriv_endpoint, "y", outward,
+            hy, measure_y, penalty, modes,
         )
         for ix in range(nx):
             _add_block(matrix, dofs(ix, iy), block)
