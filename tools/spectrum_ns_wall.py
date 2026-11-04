@@ -29,6 +29,7 @@ Usage::
 """
 from __future__ import annotations
 
+import inspect
 import json
 import sys
 from pathlib import Path
@@ -49,12 +50,21 @@ VARIANTS = ("default", "inviscid", "grad", "penalty")
 def _patched_flux(variant: str):
     """``ns._boundary_flux`` with one wall term switched off (A/B knob)."""
     original = ns._boundary_flux
+    # the wall-flux signature grew across the wall-closure missions (m2879
+    # neighbour, m2838 recovered, m2831 fd2 centre, m2782 outward_sign);
+    # forward only the keywords this build of the solver knows.
+    forward = frozenset(inspect.signature(original).parameters)
 
     def patched(side, wall, axis, h, mu, kappa, pen, normal_scale, tangential_scale,
-                normal_derivative=None):
+                normal_derivative=None, neighbour=None, recovered=None, centre=None,
+                side_name="right", outward_sign=1.0):
         if wall is None or variant == "default":
+            extra = {name: value for name, value in (
+                ("neighbour", neighbour), ("recovered", recovered),
+                ("centre", centre), ("side_name", side_name),
+                ("outward_sign", outward_sign)) if name in forward}
             return original(side, wall, axis, h, mu, kappa, pen, normal_scale,
-                            tangential_scale, normal_derivative)
+                            tangential_scale, normal_derivative, **extra)
         inner_u, inner_v = side["u"], side["v"]
         wall_velocity = wall.get("velocity", (0.0, 0.0))
         face_u = torch.as_tensor(wall_velocity[0], dtype=inner_u.dtype).expand_as(inner_u)
@@ -69,13 +79,34 @@ def _patched_flux(variant: str):
             base_u = normal_derivative["u_n"]
             base_v = normal_derivative["v_n"]
             base_T = normal_derivative["T_n"]
+        elif neighbour is not None and hasattr(ns, "_extrapolate_trace_derivative"):
+            base_u = (ns._extrapolate_trace_derivative(side["u_n"], neighbour["u_n"])
+                      * normal_scale)
+            base_v = (ns._extrapolate_trace_derivative(side["v_n"], neighbour["v_n"])
+                      * normal_scale)
+            base_T = (ns._extrapolate_trace_derivative(side["T_n"], neighbour["T_n"])
+                      * normal_scale)
+        elif recovered is not None:
+            base_u = recovered["u_n"]
+            base_v = recovered["v_n"]
+            base_T = recovered["T_n"]
+        elif centre is not None and hasattr(ns, "_wall_stencil"):
+            wall_u, inner_u_c = ns._wall_stencil(centre["u"], axis, side_name)
+            wall_v, inner_v_c = ns._wall_stencil(centre["v"], axis, side_name)
+            wall_T, inner_T_c = ns._wall_stencil(centre["T"], axis, side_name)
+            base_u = ns._wall_derivative(face_u, wall_u, inner_u_c, h, side_name)
+            base_v = ns._wall_derivative(face_v, wall_v, inner_v_c, h, side_name)
+            base_T = ns._wall_derivative(face_T, wall_T, inner_T_c, h, side_name)
         if variant == "grad":       # keep only the Dirichlet penalty
             base_u = torch.zeros_like(base_u)
             base_v = torch.zeros_like(base_v)
             base_T = torch.zeros_like(base_T)
-        normal_u = base_u - (pen / h) * (inner_u - face_u)
-        normal_v = base_v - (pen / h) * (inner_v - face_v)
-        normal_T = base_T - (pen / h) * (side["temperature"] - face_T)
+        # m2782: the face flux is written with the normal along +axis, so the
+        # penalty jump flips at the low-side wall (outward_sign = -1)
+        normal_u = base_u - outward_sign * (pen / h) * (inner_u - face_u)
+        normal_v = base_v - outward_sign * (pen / h) * (inner_v - face_v)
+        normal_T = (base_T - outward_sign * (pen / h)
+                    * (side["temperature"] - face_T))
         if variant == "penalty":    # keep only the one-sided gradient
             normal_u, normal_v, normal_T = base_u, base_v, base_T
         zeros = torch.zeros_like(inner_u)
