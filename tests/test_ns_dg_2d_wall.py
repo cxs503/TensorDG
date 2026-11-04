@@ -304,63 +304,168 @@ def test_wall_operator_has_no_growing_eigenmode():
     assert result["max_real"] <= 0.0, result
 
 
+# ----------------------------------------------------------------------
+# Preserved from mission m2838 (wall closure probe): the legacy one-sided
+# closure (strict xfail, retired defect) and the *recovered* wall closure
+# (``_recover_wall_gradient``) exposed via ``wall_gradient="recovered"``
+# and the optional ``wall_penalty``.  Public solver defaults unchanged.
+# ----------------------------------------------------------------------
 
-def test_reconstructed_wall_heat_flux_is_second_order():
-    """The *reconstructed* wall heat flux converges at second order.
-
-    The gradient is extrapolated from the two innermost cells and the quotient
-    rule uses the cell-centre state, so the one-sided O(h) offset of the raw
-    cell gradient cancels.  Measured slope: 2.00 (was 1.00 before the fix); the
-    reconstruction error at 8 cells is 2.6e-5 against an analytic 5.0e-2, i.e.
-    0.05%.
-
-    The penalty ``(sigma/h)[[T]]`` is deliberately excluded here: it is the
-    coercivity stencil, it is O(h) by construction, and it dominates the *total*
-    numerical flux error (see ``test_wall_penalty_term_dominates_the_flux``).
-    """
-    analytic = -KAPPA * (MU * 1.0**2 / (2.0 * KAPPA))
-    errors = []
-    for ny in (8, 16, 32, 64):
+# ---------------------------------------------------------------------------
+# Legacy closure (strict xfail): the retired first-order wall flux
+# ---------------------------------------------------------------------------
+# These three keep the historical defect reproducible: they run the default
+# ``wall_gradient="one_sided"`` closure, where the mirror ghost
+# ``grad|+ = grad|-`` reproduces the one-sided face gradient (O(h**p) for
+# curved data).  Divided by ``h`` in the strong form it leaves an O(1) wall
+# source (0.3045 at 8, 16 and 32 cells) that makes the wall-bounded transient
+# diverge.  ``strict=True`` retires the limitation instead of letting it rot:
+# they turn red the day the default is fixed as well.
+@pytest.mark.xfail(strict=True, reason=XFAIL_REASON)
+def test_legacy_closure_leaves_a_constant_wall_residual():
+    """The one-sided (mirror-ghost) wall closure is inconsistent for curved data."""
+    residuals = {}
+    for ny in (8, 32):
         op, coeff, boundary = _couette_state((2, ny), 1)
-        h = op["dy"]
-        left = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"],
-                                   1, "left", centre_denominators=True)
-        flux = ns._boundary_flux(left, boundary["ymin"], 1, h, MU, KAPPA, 0.0,
-                                 2.0 / h, 2.0 / op["dx"],
-                                 neighbour=ns._shift_along(left, 1, -1))
-        errors.append(abs(float(flux[0, 0, 0, 3]) - analytic))
-    # three dyadic refinements between 8 and 64 cells
-    slope = math.log2(errors[0] / errors[-1]) / 3.0
+        penalty = 2.0 * 2.0**2
+        rhs = ns._rhs_ns(coeff, op["basis"], op["derivative"], op["weights"],
+                         op["signs"], op["dx"], op["dy"], (True, False), boundary,
+                         MU, KAPPA, penalty, wall_gradient="one_sided")
+        residuals[ny] = float(rhs.abs().max())
+    assert max(residuals.values()) < 1e-3, residuals
+
+
+@pytest.mark.xfail(strict=True, reason=XFAIL_REASON)
+def test_legacy_closure_wall_energy_flux_is_first_order():
+    """The legacy wall heat flux converges at order 1, not at design order."""
+    errors = []
+    analytic = -KAPPA * (MU * 1.0**2 / (2.0 * KAPPA))
+    for ny in (8, 16, 32):
+        errors.append(abs(_wall_fluxes((2, ny), 1)["energy_bottom"] - analytic))
+    slope = math.log2(errors[0] / errors[-1]) / 2.0
     assert slope > 1.8, (slope, errors)
-    assert errors[0] / abs(analytic) < 0.01, errors[0] / abs(analytic)
 
-def test_wall_penalty_term_dominates_the_total_flux_error():
-    """Honest bookkeeping: the total numerical wall flux is first order.
 
-    After the gradient fix the *reconstruction* is second order, so the residual
-    (residual) total error is the SIPG penalty term, which scales as
-    ``(sigma/h) * [[T]]`` with ``[[T]] = O(h^2)``.  Its slope must be 1.00 and it
-    must account for >95% of the total flux error -- that is what keeps the
-    strong-form residual of the exact steady state at O(1) and the transient
-    case open.
+@pytest.mark.xfail(strict=True, reason=XFAIL_REASON)
+def test_legacy_closure_transient_diverges():
+    """The impulsively started wall-bounded case never reaches ``t = 0.1``."""
+    ns.solve_couette_dg_2d(ncells=(2, 8), degree=1, mu=MU, final_time=0.1,
+                           device=DEVICE, dtype=DTYPE,
+                           wall_gradient="one_sided")
+
+
+# ---------------------------------------------------------------------------
+# Recovered closure: consistent wall-normal gradient, no wall penalty
+# ---------------------------------------------------------------------------
+# ``wall_gradient="recovered"`` rebuilds the missing ghost side from the
+# element-centre gradient and the (already averaged) gradient on the opposite
+# interior face of the same cell,
+#
+#     grad_n|_wall = 2 grad_n(centre) - grad_n(opposite face),
+#
+# which is one order more accurate than the one-sided value.  With the SIPG
+# wall penalty switched off (``wall_penalty=0``) nothing re-injects an O(h)
+# bias, and both the wall heat flux and the wall-bounded transient recover.
+RECOVERED = dict(wall_gradient="recovered", wall_penalty=0.0)
+ANALYTIC_ENERGY_FLUX = -KAPPA * (MU * 1.0**2 / (2.0 * KAPPA))
+
+
+def _recovered_wall_energy_flux(ny, degree=1):
+    """Wall heat flux on the bottom wall with the recovered closure.
+
+    Mirrors :func:`_wall_fluxes` but builds the recovered gradient exactly the
+    way ``_axis_fluxes_ns`` does (centre gradient plus the BR1-averaged
+    gradient on the interior face of the wall cell).
     """
-    total, penalty_only = [], []
+    op, coeff, boundary = _couette_state((2, ny), degree)
+    penalty = 2.0 * (degree + 1.0) ** 2
+    h, normal_scale = op["dy"], 2.0 / op["dy"]
+    left = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"], 1,
+                               "left")
+    right = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"], 1,
+                                "right")
+    centre = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"], 1,
+                                 "centre")
+    outer = {key: torch.roll(value, shifts=-1, dims=1) for key, value in left.items()}
+    names = {"u_n": "u", "v_n": "v", "T_n": "temperature"}
+    averaged = {
+        key: 0.5 * (right[key] + outer[key]) * normal_scale
+        - (penalty / h) * (right[name] - outer[name])
+        for key, name in names.items()
+    }
+    recovered = ns._recover_wall_gradient(centre, averaged, normal_scale, 1, "left")
+    flux = ns._boundary_flux(left, boundary["ymin"], 1, h, MU, KAPPA, 0.0,
+                             normal_scale, 2.0 / op["dx"], recovered=recovered)
+    return float(flux[:, 0, :, 3].mean())
+
+
+def test_recovered_closure_removes_the_constant_wall_residual():
+    """The wall residual decays with h instead of being pinned at O(1)."""
+    residuals = {}
     for ny in (8, 16, 32):
         op, coeff, boundary = _couette_state((2, ny), 1)
-        h = op["dy"]
         penalty = 2.0 * 2.0**2
-        left = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"],
-                                   1, "left", centre_denominators=True)
-        neighbour = ns._shift_along(left, 1, -1)
-        analytic = -KAPPA * (MU * 1.0**2 / (2.0 * KAPPA))
-        with_penalty = ns._boundary_flux(left, boundary["ymin"], 1, h, MU, KAPPA,
-                                         penalty, 2.0 / h, 2.0 / op["dx"],
-                                         neighbour=neighbour)
-        without = ns._boundary_flux(left, boundary["ymin"], 1, h, MU, KAPPA, 0.0,
-                                    2.0 / h, 2.0 / op["dx"], neighbour=neighbour)
-        total.append(abs(float(with_penalty[0, 0, 0, 3]) - analytic))
-        penalty_only.append(abs(float(with_penalty[0, 0, 0, 3])
-                                - float(without[0, 0, 0, 3])))
-    slope = math.log2(total[0] / total[-1]) / 2.0
-    assert 0.85 < slope < 1.15, (slope, total)
-    assert penalty_only[0] / total[0] > 0.95, (penalty_only, total)
+        rhs = ns._rhs_ns(coeff, op["basis"], op["derivative"], op["weights"],
+                         op["signs"], op["dx"], op["dy"], (True, False), boundary,
+                         MU, KAPPA, penalty, **RECOVERED)
+        residuals[ny] = float(rhs.abs().max())
+    # legacy closure: 0.3045 at every mesh; recovered: 0.0247 -> 0.0062
+    assert residuals[32] < 0.05, residuals
+    assert residuals[8] / residuals[32] > 2.0, residuals
+    # the wall rows are no longer the dominant error source
+    assert residuals[32] < 0.1 * 0.3045, residuals
+
+
+def test_recovered_closure_wall_energy_flux_is_second_order():
+    """The wall heat flux must converge at (near) design order: slope > 1.8."""
+    errors = [abs(_recovered_wall_energy_flux(ny) - ANALYTIC_ENERGY_FLUX)
+              for ny in (8, 16, 32)]
+    slope = math.log2(errors[0] / errors[-1]) / 2.0
+    assert slope > 1.8, (slope, errors)
+    assert errors[-1] < 1e-5, errors
+
+
+def test_recovered_closure_impulsively_started_couette_reaches_steady_state():
+    """The wall-bounded transient now marches to t = 0.1 (legacy: t ~ 0.032)."""
+    _, _, coeff, meta = ns.solve_couette_dg_2d(
+        ncells=(2, 8), degree=1, mu=MU, final_time=0.1, device=DEVICE, dtype=DTYPE,
+        **RECOVERED
+    )
+    assert meta["steps"] > 0
+    assert torch.isfinite(coeff).all()
+
+
+def test_recovered_closure_keeps_the_wall_operator_consistent():
+    """On data the DG space resolves the recovered closure still returns the
+    exact traction and Fourier flux (no regression of the algebraic identity)."""
+    slope = 0.4
+    degree, ncells = 1, (2, 4)
+    op = _operators(degree, ncells)
+
+    def initial(x, y):
+        zeros = torch.zeros_like(x + y)
+        return torch.ones_like(x + y), zeros, zeros, 1.0 + slope * y
+
+    coeff = ns._initial_coefficients(initial, op["x"], op["y"], op["dx"], op["dy"],
+                                     op["nodes"], op["weights"], op["basis"],
+                                     DEVICE, DTYPE)
+    boundary = {
+        "xmin": None, "xmax": None,
+        "ymin": {"velocity": (0.0, 0.0), "temperature": 1.0},
+        "ymax": {"velocity": (0.0, 0.0), "temperature": 1.0 + slope},
+    }
+    h = op["dy"]
+    right = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"], 1,
+                                "right")
+    left = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"], 1,
+                               "left")
+    centre = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"], 1,
+                                 "centre")
+    outer = {key: torch.roll(value, shifts=-1, dims=1) for key, value in left.items()}
+    averaged = {key: 0.5 * (right[key] + outer[key]) * (2.0 / h)
+                for key in ("u_n", "v_n", "T_n")}
+    recovered = ns._recover_wall_gradient(centre, averaged, 2.0 / h, 1, "left")
+    flux = ns._boundary_flux(left, boundary["ymin"], 1, h, MU, KAPPA, 0.0, 2.0 / h,
+                             2.0 / op["dx"], recovered=recovered)
+    assert abs(float(flux[0, 0, 0, 3]) + KAPPA * slope) < 1e-12
+    assert flux[0, 0, 0, 1].abs() < 1e-12
