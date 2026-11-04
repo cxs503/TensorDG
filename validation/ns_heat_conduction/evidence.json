@@ -1,0 +1,351 @@
+{
+ "analytic": {
+  "laplace_of_temperature_max_abs": 0.0,
+  "density_matches_ideal_gas_max_abs": 0.0,
+  "velocity_max_abs": 0.0,
+  "wall_temperatures": [
+   1.0,
+   0.5
+  ],
+  "gas_constants": {
+   "gamma": 1.4,
+   "gas_constant": 1.0,
+   "cv": 2.5000000000000004,
+   "cp": 3.5000000000000004,
+   "prandtl": 0.71
+  },
+  "cp_minus_cv_minus_gas_constant": 0.0,
+  "gamma_minus_cp_over_cv": 0.0,
+  "conductivity": 0.4929577464788734
+ },
+ "residual_scan": [
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "energy_wall_cold": 0.814996826844272,
+   "energy_wall_hot": 0.482127047470728,
+   "energy_interior": 0.17093204676291052,
+   "density_max_abs": 9.971986966320896e-15,
+   "momentum_max_abs": 2.1950175216763684e-15
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "energy_wall_cold": 0.8965969805012701,
+   "energy_wall_hot": 0.4878051908322849,
+   "energy_interior": 0.09291243717660436,
+   "density_max_abs": 3.757064252557721e-14,
+   "momentum_max_abs": 4.390035043352737e-15
+  },
+  {
+   "ncells": [
+    2,
+    64
+   ],
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "energy_wall_cold": 0.9402171796527021,
+   "energy_wall_hot": 0.49044324318841603,
+   "energy_interior": 0.048553825727609023,
+   "density_max_abs": 7.271877787264508e-14,
+   "momentum_max_abs": 8.780070086705474e-15
+  },
+  {
+   "ncells": [
+    2,
+    128
+   ],
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "energy_wall_cold": 0.9627963846694456,
+   "energy_wall_hot": 0.49171547839524266,
+   "energy_interior": 0.024835229095430122,
+   "density_max_abs": 8.050273947461303e-14,
+   "momentum_max_abs": 1.7560140173410948e-14
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "wall_gradient": "face",
+   "energy_wall_cold": 0.1292126837061538,
+   "energy_wall_hot": 0.866862918646861,
+   "energy_interior": 0.17093204676291052,
+   "density_max_abs": 9.971986966320896e-15,
+   "momentum_max_abs": 2.1950175216763684e-15
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 1,
+   "wall_gradient": "face",
+   "energy_wall_cold": 0.18497789461052072,
+   "energy_wall_hot": 0.8648856416417203,
+   "energy_interior": 0.09291243717660436,
+   "density_max_abs": 3.757064252557721e-14,
+   "momentum_max_abs": 4.390035043352737e-15
+  },
+  {
+   "ncells": [
+    2,
+    64
+   ],
+   "degree": 1,
+   "wall_gradient": "face",
+   "energy_wall_cold": 0.21495103172382102,
+   "energy_wall_hot": 0.8638070157654134,
+   "energy_interior": 0.048553825727609023,
+   "density_max_abs": 7.271877787264508e-14,
+   "momentum_max_abs": 8.780070086705474e-15
+  },
+  {
+   "ncells": [
+    2,
+    128
+   ],
+   "degree": 1,
+   "wall_gradient": "face",
+   "energy_wall_cold": 0.23051227450655176,
+   "energy_wall_hot": 0.8632477449070208,
+   "energy_interior": 0.024835229095430122,
+   "density_max_abs": 8.050273947461303e-14,
+   "momentum_max_abs": 1.7560140173410948e-14
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "energy_wall_cold": 0.04226214269398737,
+   "energy_wall_hot": 0.02413371401539497,
+   "energy_interior": 0.05495303701217402,
+   "density_max_abs": 3.449708454970667e-14,
+   "momentum_max_abs": 2.984279490192421e-13
+  }
+ ],
+ "attempts": [
+  {
+   "initial": "uniform",
+   "final_time": 0.01,
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "cfl": 0.3,
+   "wall_gradient": "taylor",
+   "status": "ok",
+   "steps": 81,
+   "dt": 0.00011976515978393866,
+   "pressure_min": 0.6690254875659801,
+   "temperature_min": 0.6672703969956563,
+   "temperature_max": 1.0015062087658952,
+   "profile": {
+    "y": [
+     0.03125,
+     0.09375,
+     0.15625,
+     0.21875,
+     0.28125,
+     0.34375,
+     0.40625,
+     0.46875,
+     0.53125,
+     0.59375,
+     0.65625,
+     0.71875,
+     0.78125,
+     0.84375,
+     0.90625,
+     0.96875
+    ],
+    "temperature": [
+     0.9999999997727996,
+     1.00000000001725,
+     1.0000000000177238,
+     0.9999999999194804,
+     1.0000000001851959,
+     1.000000001016555,
+     0.9999999807836171,
+     1.000000178725071,
+     0.9999987831375932,
+     1.0000058660939157,
+     0.9999892872500474,
+     0.9998647823353459,
+     1.0015062087658952,
+     0.9972729339446266,
+     0.9189049020990182,
+     0.6672703969956563
+    ],
+    "pressure": [
+     0.9999999997722587,
+     1.0000000000178544,
+     1.0000000000173375,
+     0.9999999999233837,
+     1.0000000001490588,
+     1.0000000013034351,
+     0.9999999787964453,
+     1.000000190396977,
+     0.9999987311121875,
+     1.0000059590312775,
+     0.9999904611583662,
+     0.9998496183919476,
+     1.001586722099996,
+     0.9973390502287353,
+     0.9163659660039768,
+     0.6690254875659801
+    ]
+   },
+   "wall_seconds": 5.93
+  },
+  {
+   "initial": "uniform",
+   "final_time": 0.02,
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "cfl": 0.3,
+   "wall_gradient": "taylor",
+   "status": "ok",
+   "steps": 163,
+   "dt": 1.7730885828060733e-05,
+   "pressure_min": 0.6323848957253891,
+   "temperature_min": 0.626290547902343,
+   "temperature_max": 1.0003581656268272,
+   "profile": {
+    "y": [
+     0.03125,
+     0.09375,
+     0.15625,
+     0.21875,
+     0.28125,
+     0.34375,
+     0.40625,
+     0.46875,
+     0.53125,
+     0.59375,
+     0.65625,
+     0.71875,
+     0.78125,
+     0.84375,
+     0.90625,
+     0.96875
+    ],
+    "temperature": [
+     0.998969921954026,
+     1.0000961294513402,
+     0.9999910253183163,
+     1.000000837232631,
+     0.9999999249808433,
+     1.0000000044773432,
+     0.9999999155625023,
+     1.0000006880664796,
+     0.9999984954448171,
+     0.9999838068371922,
+     1.0001225665192706,
+     1.0003581656268272,
+     0.9945668304910215,
+     0.9569691075585804,
+     0.8420707809630481,
+     0.626290547902343
+    ],
+    "pressure": [
+     0.9989674926143681,
+     1.0000988030105213,
+     0.9999907617120092,
+     1.000000861398427,
+     0.9999999226696938,
+     1.0000000059900205,
+     0.9999999081803539,
+     1.000000697219847,
+     0.9999987197586753,
+     0.9999819238030523,
+     1.0001241307382913,
+     1.0004270403007298,
+     0.9943802767297457,
+     0.9542650239367677,
+     0.8363561737509444,
+     0.6323848957253891
+    ]
+   },
+   "wall_seconds": 10.86
+  },
+  {
+   "initial": "uniform",
+   "final_time": 0.05,
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "cfl": 0.3,
+   "wall_gradient": "taylor",
+   "status": "raised",
+   "error": "FloatingPointError: nonphysical cell average in Navier-Stokes DG; reduce the CFL",
+   "wall_seconds": 14.39
+  },
+  {
+   "initial": "steady",
+   "final_time": 0.05,
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "cfl": 0.3,
+   "wall_gradient": "taylor",
+   "status": "raised",
+   "error": "FloatingPointError: nonphysical cell average in Navier-Stokes DG; reduce the CFL",
+   "wall_seconds": 8.99
+  },
+  {
+   "initial": "uniform",
+   "final_time": 0.05,
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "cfl": 0.05,
+   "wall_gradient": "taylor",
+   "status": "raised",
+   "error": "FloatingPointError: nonphysical cell average in Navier-Stokes DG; reduce the CFL",
+   "wall_seconds": 13.1
+  }
+ ],
+ "default_call": {
+  "status": "raised",
+  "error": "FloatingPointError: nonphysical cell average in Navier-Stokes DG; reduce the CFL",
+  "wall_seconds": 15.08
+ },
+ "verdicts": {
+  "E1_analytic_state_is_exact": true,
+  "E2_wall_energy_residual_slope_P1": -0.07898432474424785,
+  "E2_interior_energy_residual_slope_P1": 0.9285175578702979,
+  "E2_wall_residual_does_not_decay": true,
+  "E2_defect_independent_of_wall_gradient": true,
+  "E3_default_call_fails": true,
+  "E3_collapse_time_bracket": [
+   0.02,
+   0.05
+  ],
+  "E3_collapse_independent_of_cfl_and_ic": true,
+  "honest_verdict": "FAIL (isothermal-wall energy closure is inconsistent)"
+ }
+}
