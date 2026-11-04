@@ -31,6 +31,7 @@ from tensordg.euler_dg_2d import (
     legendre_operators,
 )
 from tensordg.tvb import troubled_from_differences
+from tensordg.limiters import _troubled_cell_indicator
 
 DTYPE = torch.float64
 
@@ -252,3 +253,170 @@ def test_vortex_evolution_keeps_second_order_with_limiter():
     assert min(orders) > 1.7, orders
     for row in rows:
         assert row["tvb"] <= 1.10 * row["none"], row
+
+
+# ----------------------------------------------------------------------
+TUNED_M = 10.0
+
+
+def _averages_from_profile(profile, ncells, ny=4, axis=0):
+    values = torch.as_tensor(profile, dtype=DTYPE)
+    if axis == 0:
+        return values.view(ncells, 1, 1).expand(ncells, ny, 1).clone()
+    return values.view(1, ncells, 1).expand(ny, ncells, 1).clone()
+
+
+def test_two_dimensional_detector_matches_the_one_dimensional_indicator():
+    ncells = 64
+    x = (np.arange(ncells) + 0.5) / ncells
+    dx = 1.0 / ncells
+    for tvb_constant in (1.0, 10.0):
+        for profile in (
+            1.0 + 0.2 * np.sin(2.0 * np.pi * x),          # smooth periodic wave
+            np.where(x < 0.5, 1.0, 0.125),                # Sod jump
+        ):
+            averages = _averages_from_profile(profile, ncells)
+            mask_2d, slope_2d = dg2._troubled_1d(averages, 0, dx, tvb_constant)
+            coeff_1d = torch.zeros(ncells, 2, 1, dtype=DTYPE)
+            coeff_1d[:, 0, 0] = torch.as_tensor(profile, dtype=DTYPE)
+            mask_1d = _troubled_cell_indicator(coeff_1d, dx, tvb_constant)
+            # the 1-D indicator freezes the two outermost cells (no full
+            # stencil); the 2-D axis detector wraps periodically.
+            interior = slice(1, ncells - 1)
+            assert torch.equal(mask_2d[:, 0][interior], mask_1d[interior]), (
+                tvb_constant, profile[:4]
+            )
+
+
+def test_two_dimensional_detector_is_mesh_independent_on_a_smooth_wave():
+    """With a scale-consistent detector the flagged count does not grow with h."""
+    tvb_constant = TUNED_M
+    counts = []
+    for ncells in (20, 40, 80, 160):
+        x = (np.arange(ncells) + 0.5) / ncells
+        profile = 1.0 + 0.2 * np.sin(2.0 * np.pi * x)
+        averages = _averages_from_profile(profile, ncells, ny=2)
+        mask, _ = dg2._troubled_1d(averages, 0, 1.0 / ncells, tvb_constant)
+        counts.append(int(mask.sum()))
+    assert counts == [0, 0, 0, 0], counts
+
+
+def test_shock_still_flags_cells_in_both_directions():
+    """The repaired detector must remain aggressive at a genuine jump."""
+    ncells = 32
+    x = (np.arange(ncells) + 0.5) / ncells
+    profile = np.where(x < 0.5, 1.0, 0.125)
+    averages = _averages_from_profile(profile, ncells, ny=3, axis=1)
+    mask_x, _ = dg2._troubled_1d(averages, 1, 1.0 / ncells, 0.0)
+    mask_y, _ = dg2._troubled_1d(averages, 0, 1.0 / ncells, 0.0)
+    assert int(mask_x.sum()) > 0
+    assert int(mask_y.sum()) == 0
+
+
+def _discontinuous_coefficients(degree, nx=10, ny=6, seed=0):
+    generator = torch.Generator().manual_seed(seed)
+    coeff = 0.05 * torch.rand(
+        nx, ny, degree + 1, degree + 1, 4, generator=generator, dtype=DTYPE
+    )
+    coeff[:, :, 0, 0, 0] = torch.where(
+        torch.arange(nx, dtype=DTYPE).view(nx, 1) < nx // 2,
+        torch.tensor(1.0, dtype=DTYPE),
+        torch.tensor(0.125, dtype=DTYPE),
+    ).expand(nx, ny)
+    coeff[:, :, 0, 0, 1] = 0.3 * torch.sign(coeff[:, :, 0, 0, 2])
+    coeff[:, :, 0, 0, 3] = torch.where(
+        torch.arange(nx, dtype=DTYPE).view(nx, 1) < nx // 2,
+        torch.tensor(2.5, dtype=DTYPE),
+        torch.tensor(0.25, dtype=DTYPE),
+    ).expand(nx, ny)
+    return coeff
+
+
+def test_limiter_runs_for_every_degree_and_keeps_the_cell_average():
+    """D2 regression: a flagged P>=2 state used to raise a broadcast error."""
+    for degree in (1, 2, 3):
+        coeff = _discontinuous_coefficients(degree)
+        limited = dg2.apply_tvb_limiter_2d(coeff, 0.1, 0.1, 0.0)
+        assert torch.isfinite(limited).all(), degree
+        # conservation: mode 0 is untouched
+        assert torch.equal(limited[:, :, 0, 0, :], coeff[:, :, 0, 0, :]), degree
+        # some cell must have been limited
+        changed = (limited - coeff).abs().reshape(
+            coeff.shape[0], coeff.shape[1], -1
+        ).max(-1).values > 0
+        assert int(changed.sum()) > 0, degree
+
+
+def test_limiter_flags_along_both_axes_without_broadcast_error():
+    """Axis-1 limiting of a P3 state used to raise a RuntimeError."""
+    degree = 3
+    nx, ny = 8, 8
+    coeff = torch.zeros(nx, ny, degree + 1, degree + 1, 4, dtype=DTYPE)
+    coeff[..., 0, 0, 0] = 1.0
+    coeff[::2, :, 0, 0, 0] = 1.5      # variation along x
+    coeff[:, ::2, 0, 0, 0] = 0.5      # variation along y
+    coeff[..., 1, 1, :] = 0.2
+    limited = dg2.apply_tvb_limiter_2d(coeff, 0.1, 0.25, 0.0)
+    assert torch.isfinite(limited).all()
+    assert torch.equal(limited[..., 0, 0, :], coeff[..., 0, 0, :])
+    assert float(limited[..., 2:, :, :].abs().max()) == 0.0
+
+
+def _vortex_errors(ncells, degree, limiter=None, tvb_constant=None,
+                   final_time=1.0):
+    from benchmarks.verify_euler_dg_2d import _vortex_error
+
+    nodes, _, basis, _, _ = dg2.legendre_operators(degree, max(degree + 2, 3))
+    _, _, coeff, _ = dg2.solve_euler_dg_2d_vortex(
+        ncells=ncells, degree=degree, final_time=final_time, limiter=limiter,
+        **({} if tvb_constant is None else {"tvb_constant": tvb_constant}),
+    )
+    return _vortex_error(coeff, basis, nodes, ((-5.0, 5.0), (-5.0, 5.0)),
+                         final_time)
+
+
+def test_vortex_wrapper_forwards_the_tvb_constant():
+    """M must reach the limiter: M=1 limits, a large M is inert (defect D3)."""
+    reference = _vortex_errors(8, 2, limiter=None)["density"]
+    aggressive = _vortex_errors(8, 2, limiter="tvb", tvb_constant=0.0)["density"]
+    inert = _vortex_errors(8, 2, limiter="tvb", tvb_constant=1e6)["density"]
+    assert aggressive != reference
+    assert inert == reference, (inert, reference)
+
+
+def test_limiter_is_exactly_inert_on_a_resolved_smooth_vortex():
+    for degree in (1, 2):
+        nodes, _, basis, _, _ = dg2.legendre_operators(degree, max(degree + 2, 3))
+        _, _, smooth, _ = dg2.solve_euler_dg_2d_vortex(
+            ncells=12, degree=degree, final_time=1.0)
+        _, _, limited, _ = dg2.solve_euler_dg_2d_vortex(
+            ncells=12, degree=degree, final_time=1.0, limiter="tvb",
+            tvb_constant=TUNED_M)
+        assert torch.equal(smooth, limited), degree
+
+
+def test_two_dimensional_limiter_preserves_design_order():
+    """P1 on the smooth vortex must keep EOC ~ 2 with the limiter enabled."""
+    errors = [
+        _vortex_errors(ncells, 1, limiter="tvb", tvb_constant=TUNED_M)["density"]
+        for ncells in (8, 12, 16)
+    ]
+    orders = [
+        math.log(errors[i] / errors[i + 1]) / math.log(16.0 / 12.0)
+        if i else math.log(errors[0] / errors[1]) / math.log(12.0 / 8.0)
+        for i in range(len(errors) - 1)
+    ]
+    assert min(orders) > 1.7, (orders, errors)
+    assert errors[-1] < 5e-3, errors
+
+
+def test_limiter_keeps_a_two_dimensional_shock_positive():
+    _, _, coeff, _ = dg2.solve_euler_dg_2d_sod(
+        ncells=60, degree=2, final_time=0.2, limiter="tvb", tvb_constant=0.5)
+    rho = coeff[:, 0, 0, 0, 0]
+    momentum = coeff[:, 0, 0, 0, 1]
+    energy = coeff[:, 0, 0, 0, 3]
+    pressure = (dg2.GAMMA - 1.0) * (energy - 0.5 * momentum ** 2 / rho)
+    assert bool(torch.isfinite(coeff).all())
+    assert float(rho.min()) > 0.0
+    assert float(pressure.min()) > 0.0

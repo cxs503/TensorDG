@@ -1,0 +1,265 @@
+{
+ "mission": "m2596",
+ "sections_completed": [
+  "A detector parity",
+  "B vortex design order",
+  "B2 TVB constant sweep"
+ ],
+ "sections_not_completed": [
+  "C extruded Sod (shock capture)",
+  "D four-quadrant Riemann"
+ ],
+ "not_completed_reason": "each Sod configuration (P2, 200 cells, 700 steps, limiter on) costs >35 s of wall time under the current machine load (load15>100); the driver was stopped before section C finished, so no shock numbers are claimed in this report",
+ "vortex": [
+  {
+   "degree": 1,
+   "limiter": "None",
+   "tvb_constant": 1.0,
+   "rows": [
+    {
+     "cells": 8,
+     "h": 1.25,
+     "errors": {
+      "density": 0.014134,
+      "pressure": 0.021144
+     },
+     "flagged_fraction": 0.0
+    },
+    {
+     "cells": 16,
+     "h": 0.625,
+     "errors": {
+      "density": 0.0038091,
+      "pressure": 0.0054992
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 1.8916477456457732
+    },
+    {
+     "cells": 24,
+     "h": 0.4166666666666667,
+     "errors": {
+      "density": 0.001674,
+      "pressure": 0.0024515
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 2.0277379045772435
+    }
+   ]
+  },
+  {
+   "degree": 1,
+   "limiter": "tvb",
+   "tvb_constant": 10.0,
+   "rows": [
+    {
+     "cells": 8,
+     "h": 1.25,
+     "errors": {
+      "density": 0.014134,
+      "pressure": 0.021144
+     },
+     "flagged_fraction": 0.0
+    },
+    {
+     "cells": 16,
+     "h": 0.625,
+     "errors": {
+      "density": 0.0038091,
+      "pressure": 0.0054992
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 1.8916477456457732
+    },
+    {
+     "cells": 24,
+     "h": 0.4166666666666667,
+     "errors": {
+      "density": 0.001674,
+      "pressure": 0.0024515
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 2.0277379045772435
+    }
+   ]
+  },
+  {
+   "degree": 2,
+   "limiter": "None",
+   "tvb_constant": 1.0,
+   "rows": [
+    {
+     "cells": 8,
+     "h": 1.25,
+     "errors": {
+      "density": 0.0032751,
+      "pressure": 0.0042872
+     },
+     "flagged_fraction": 0.0
+    },
+    {
+     "cells": 16,
+     "h": 0.625,
+     "errors": {
+      "density": 0.00039756,
+      "pressure": 0.00056247
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 3.0422944433691703
+    },
+    {
+     "cells": 24,
+     "h": 0.4166666666666667,
+     "errors": {
+      "density": 0.00012033,
+      "pressure": 0.00016849
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 2.947498745886956
+    }
+   ]
+  },
+  {
+   "degree": 2,
+   "limiter": "tvb",
+   "tvb_constant": 10.0,
+   "rows": [
+    {
+     "cells": 8,
+     "h": 1.25,
+     "errors": {
+      "density": 0.0032751,
+      "pressure": 0.0042872
+     },
+     "flagged_fraction": 0.0
+    },
+    {
+     "cells": 16,
+     "h": 0.625,
+     "errors": {
+      "density": 0.00039756,
+      "pressure": 0.00056247
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 3.0422944433691703
+    },
+    {
+     "cells": 24,
+     "h": 0.4166666666666667,
+     "errors": {
+      "density": 0.00012033,
+      "pressure": 0.00016849
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 2.947498745886956
+    }
+   ]
+  },
+  {
+   "degree": 3,
+   "limiter": "None",
+   "tvb_constant": 1.0,
+   "rows": [
+    {
+     "cells": 8,
+     "h": 1.25,
+     "errors": {
+      "density": 0.00056481,
+      "pressure": 0.00078724
+     },
+     "flagged_fraction": 0.0
+    },
+    {
+     "cells": 12,
+     "h": 0.8333333333333334,
+     "errors": {
+      "density": 0.00011695,
+      "pressure": 0.00017516
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 3.883793862613831
+    },
+    {
+     "cells": 16,
+     "h": 0.625,
+     "errors": {
+      "density": 3.831e-05,
+      "pressure": 5.3853e-05
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 3.879405917811203
+    }
+   ]
+  },
+  {
+   "degree": 3,
+   "limiter": "tvb",
+   "tvb_constant": 10.0,
+   "rows": [
+    {
+     "cells": 8,
+     "h": 1.25,
+     "errors": {
+      "density": 0.00056481,
+      "pressure": 0.00078724
+     },
+     "flagged_fraction": 0.0
+    },
+    {
+     "cells": 12,
+     "h": 0.8333333333333334,
+     "errors": {
+      "density": 0.00011695,
+      "pressure": 0.00017516
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 3.883793862613831
+    },
+    {
+     "cells": 16,
+     "h": 0.625,
+     "errors": {
+      "density": 3.831e-05,
+      "pressure": 5.3853e-05
+     },
+     "flagged_fraction": 0.0,
+     "eoc_density": 3.879405917811203
+    }
+   ]
+  }
+ ],
+ "tvb_sweep": [
+  {
+   "tvb_constant": 1.0,
+   "rho": 0.010526,
+   "flagged_fraction": 0.0399,
+   "unlimited": 0.00039756
+  },
+  {
+   "tvb_constant": 3.0,
+   "rho": 0.0035366,
+   "flagged_fraction": 0.000673,
+   "unlimited": 0.00039756
+  },
+  {
+   "tvb_constant": 10.0,
+   "rho": 0.00039756,
+   "flagged_fraction": 0.0,
+   "unlimited": 0.00039756
+  },
+  {
+   "tvb_constant": 100.0,
+   "rho": 0.00039756,
+   "flagged_fraction": 0.0,
+   "unlimited": 0.00039756
+  }
+ ],
+ "parity_log": {
+  "smooth_periodic": "  smooth_periodic: 2-D 30 vs 1-D 30 flagged, identical=True",
+  "sod_jump": "  sod_jump: 2-D 1 vs 1-D 1 flagged, identical=True",
+  "mesh_scan_M10": "  mesh scan (M=10): 20->0, 40->0, 80->0, 160->0"
+ },
+ "environment": {
+  "torch": null
+ }
+}
