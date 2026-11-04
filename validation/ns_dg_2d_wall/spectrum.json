@@ -1,0 +1,291 @@
+{
+  "spectra": [
+    {
+      "case": "periodic (no wall)",
+      "wall_gradient": "taylor",
+      "variant": "default",
+      "penalty": 8.0,
+      "max_real": 8.372609277554655e-15,
+      "min_real": -1335.5492685199285,
+      "growth_rate": 8.372609277554655e-15,
+      "dominant_channel": "rho_v",
+      "channel_weights": [
+        0.07850404291421459,
+        0.2912537302843234,
+        0.43523665521381316,
+        0.19500557158764883
+      ],
+      "peak_dof": [
+        0,
+        5,
+        0,
+        0,
+        2
+      ]
+    },
+    {
+      "case": "wall, legacy one-sided face",
+      "wall_gradient": "face",
+      "variant": "default",
+      "penalty": 8.0,
+      "max_real": 348.5027693566538,
+      "min_real": -1313.8924938763632,
+      "growth_rate": 348.5027693566538,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.0072854842748328805,
+        0.001026826210077136,
+        0.04451060850446013,
+        0.9471770810106298
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ]
+    },
+    {
+      "case": "wall, Taylor one-sided",
+      "wall_gradient": "taylor",
+      "variant": "default",
+      "penalty": 8.0,
+      "max_real": 382.4468123161678,
+      "min_real": -1314.7633034769128,
+      "growth_rate": 382.4468123161678,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.006683049269020871,
+        0.000804850132413076,
+        0.04025295447526184,
+        0.9522591461233042
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ]
+    },
+    {
+      "case": "wall, inviscid only (adiabatic)",
+      "wall_gradient": "taylor",
+      "variant": "inviscid",
+      "penalty": 8.0,
+      "max_real": 4.589360225061779e-14,
+      "min_real": -1313.4105259891844,
+      "growth_rate": 4.589360225061779e-14,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.03253197733509188,
+        0.3803503184288361,
+        1.1747731008505359e-06,
+        0.5871165294629712
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        0,
+        3
+      ]
+    },
+    {
+      "case": "wall, gradient only (no penalty)",
+      "wall_gradient": "taylor",
+      "variant": "grad",
+      "penalty": 8.0,
+      "max_real": 290.4829667164425,
+      "min_real": -1315.3170330199628,
+      "growth_rate": 290.4829667164425,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.008721013383419574,
+        0.0011130825040167223,
+        0.05380429871778518,
+        0.9363616053947785
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ]
+    },
+    {
+      "case": "wall, penalty only (no gradient)",
+      "wall_gradient": "taylor",
+      "variant": "penalty",
+      "penalty": 8.0,
+      "max_real": 0.5843570708584066,
+      "min_real": -1313.3919912154536,
+      "growth_rate": 0.5843570708584066,
+      "dominant_channel": "rho",
+      "channel_weights": [
+        0.45753137893071777,
+        0.3061975314827496,
+        0.08427750603875846,
+        0.15199358354777426
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        1
+      ]
+    }
+  ],
+  "scaling": [
+    {
+      "sigma": 0.5,
+      "penalty": 2.0,
+      "max_real": 101.59876183703766,
+      "min_real": -352.1923150086164,
+      "growth_rate": 101.59876183703766,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.03407822081766396,
+        0.0035329343806647325,
+        0.11460045152397094,
+        0.8477883932777004
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "growth_per_penalty": 50.79938091851883
+    },
+    {
+      "sigma": 1.0,
+      "penalty": 4.0,
+      "max_real": 196.4479390998473,
+      "min_real": -672.4323502694149,
+      "growth_rate": 196.4479390998473,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.015956105200594137,
+        0.0018417222813435679,
+        0.07034541991112236,
+        0.9118567526069399
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "growth_per_penalty": 49.111984774961826
+    },
+    {
+      "sigma": 2.0,
+      "penalty": 8.0,
+      "max_real": 382.4468123161678,
+      "min_real": -1314.7633034769128,
+      "growth_rate": 382.4468123161678,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.006683049269020871,
+        0.000804850132413076,
+        0.04025295447526184,
+        0.9522591461233042
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "growth_per_penalty": 47.80585153952097
+    },
+    {
+      "sigma": 4.0,
+      "penalty": 16.0,
+      "max_real": 751.6922220634654,
+      "min_real": -2600.375289198232,
+      "growth_rate": 751.6922220634654,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.0028624843515829314,
+        0.000362881939206201,
+        0.021657371320705426,
+        0.9751172623885054
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "growth_per_penalty": 46.980763878966584
+    },
+    {
+      "sigma": 8.0,
+      "penalty": 32.0,
+      "max_real": 1488.4393135782698,
+      "min_real": -5172.073527337448,
+      "growth_rate": 1488.4393135782698,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.0012837661926006795,
+        0.0001678582271491039,
+        0.01124965584432803,
+        0.9872987197359222
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "growth_per_penalty": 46.51372854932093
+    },
+    {
+      "sigma": 16.0,
+      "penalty": 64.0,
+      "max_real": 2960.9323868973215,
+      "min_real": -10315.706279567097,
+      "growth_rate": 2960.9323868973215,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.0006008322305553271,
+        7.992572613444376e-05,
+        0.0057350674085772605,
+        0.9935841746347329
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "growth_per_penalty": 46.26456854527065
+    }
+  ],
+  "figure": {
+    "figure": "docs/figures/ns_dg_2d_wall_spectrum.png",
+    "penalty_exponent": 0.973288898574097
+  },
+  "meta": {
+    "ncells": [
+      2,
+      8
+    ],
+    "degree": 1,
+    "mu": 0.1,
+    "kappa": 0.4929577464788734,
+    "wall_speed": 1.0,
+    "wall_temperature": 1.0
+  }
+}
