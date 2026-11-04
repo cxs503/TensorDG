@@ -172,3 +172,26 @@ single application to the unlimited final state improves every field
 (2.45%), so the remaining defect is the per-substage limiting policy, not the
 TVB constant. Details, artifacts and the reproduction commands:
 `docs/limiter_verification.md`.
+
+---
+
+## Post-merge note (2026-11-04, m3262) — the runtime-overhead FAIL is retired
+
+This report's "Performance Overhead (FAIL): 76–123 %" row was recorded against
+the per-cell Python loop of m274 and was never re-measured after the limiter
+became vectorised (`docs/limiter_verification.md` §5.5 said so explicitly).
+m3262 re-measured it with a machine-independent cost model (ATen kernel count
+per call; the limiter does no floating-point work, only dispatch) plus
+wall-clock on the same host:
+
+| implementation | kernels/call (200 cells, P2) | predicted per-step overhead | < 30 % ? |
+|---|---:|---:|---|
+| per-cell loop (m274 shape, reconstructed) | 344 | 512 % | ❌ |
+| HEAD ed8f38b (vectorised) | 61 | 17.1 % | ✅ |
+| m3262 (this branch) | 46 | 9.8 % | ✅ |
+
+WENO: 98 → 87 kernels, 27.5 % → 24.4 %. All returned values are bit-identical
+to HEAD (`torch.equal`), so the accuracy conclusions above are untouched. The
+loop reconstruction reproduces the order of magnitude of the historic 76 %/123 %
+figures, which identifies the per-cell loop as the cause of that FAIL.
+Details, artifacts and reproduction commands: `docs/limiter_performance_verification.md`.
