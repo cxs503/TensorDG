@@ -1,8 +1,21 @@
-"""Two-dimensional Euler isentropic-vortex benchmark on a periodic Cartesian mesh.
+"""Two-dimensional Euler on Cartesian meshes with a P0 / Rusanov / SSP-RK3 baseline.
 
-The current spatial baseline is P0 DG (the conservative finite-volume limit)
-with Rusanov fluxes and SSP-RK3. The smooth analytical vortex makes it useful
-for verifying two-dimensional fluxes, conservation, and mesh convergence.
+The spatial baseline is P0 DG (the conservative finite-volume limit) with
+Rusanov fluxes and SSP-RK3.  Two public entry points are provided:
+
+* :func:`solve_euler_2d` -- a generic driver for an arbitrary initial
+  condition ``initial(x, y) -> (rho, u, v, p)`` on a Cartesian mesh, with
+  per-axis periodicity control.  Non-periodic faces use the zero-gradient
+  (outflow / transmissive) closure, i.e. the boundary face state is the
+  adjacent interior cell, so the physical flux passes through the face
+  unchanged and the scheme stays conservative.
+* :func:`solve_isentropic_vortex` -- the smooth analytical vortex benchmark on
+  a periodic mesh, which makes the module useful for verifying two-dimensional
+  fluxes, conservation, and mesh convergence.
+
+The boundary closure is what allows discontinuous, non-periodic problems
+(e.g. a shock tube extruded to 2-D) to be run through this path at all; the
+verification harness ``benchmarks/verify_euler_2d_p0.py`` pins those cases.
 """
 from __future__ import annotations
 
@@ -12,6 +25,13 @@ import numpy as np
 import torch
 
 from .euler_1d import GAMMA
+
+__all__ = [
+    "vortex_primitive",
+    "solve_euler_2d",
+    "solve_isentropic_vortex",
+    "vortex_error",
+]
 
 
 def vortex_primitive(x, y, time=0.0, strength=5.0, background_velocity=(1.0, 1.0)):
@@ -31,8 +51,13 @@ def vortex_primitive(x, y, time=0.0, strength=5.0, background_velocity=(1.0, 1.0
 
 
 def _conservative(rho, velocity_x, velocity_y, pressure):
-    energy = pressure / (GAMMA - 1.0) + 0.5 * rho * (velocity_x ** 2 + velocity_y ** 2)
-    return torch.stack((rho, rho * velocity_x, rho * velocity_y, energy), dim=-1)
+    return torch.stack((
+        rho,
+        rho * velocity_x,
+        rho * velocity_y,
+        pressure / (GAMMA - 1.0)
+        + 0.5 * rho * (velocity_x ** 2 + velocity_y ** 2),
+    ), dim=-1)
 
 
 def _primitive(u):
@@ -77,14 +102,124 @@ def _interface_flux(left, right, direction):
     return 0.5 * (flux_left + flux_right) - 0.5 * alpha[..., None] * (right - left)
 
 
-def _rhs(u, dx, dy):
-    right_x = torch.roll(u, shifts=-1, dims=0)
-    right_y = torch.roll(u, shifts=-1, dims=1)
-    flux_right_x = _interface_flux(u, right_x, "x")
-    flux_right_y = _interface_flux(u, right_y, "y")
-    flux_left_x = torch.roll(flux_right_x, shifts=1, dims=0)
-    flux_left_y = torch.roll(flux_right_y, shifts=1, dims=1)
-    return -(flux_right_x - flux_left_x) / dx - (flux_right_y - flux_left_y) / dy
+def _pad(u, axis, periodic):
+    """Add one ghost layer along ``axis``: wrap-around or zero-gradient."""
+    first = u.select(axis, 0).unsqueeze(axis)
+    last = u.select(axis, -1).unsqueeze(axis)
+    if periodic:
+        return torch.cat((last, u, first), dim=axis)
+    return torch.cat((first, u, last), dim=axis)
+
+
+def _face_fluxes(u, direction, periodic):
+    """Rusanov fluxes on every face normal to ``direction`` (``n + 1`` faces)."""
+    axis = 0 if direction == "x" else 1
+    padded = _pad(u, axis, periodic)
+    left = padded.narrow(axis, 0, padded.shape[axis] - 1)
+    right = padded.narrow(axis, 1, padded.shape[axis] - 1)
+    return _interface_flux(left, right, direction)
+
+
+def _rhs(u, dx, dy, periodic=(True, True)):
+    flux_x = _face_fluxes(u, "x", bool(periodic[0]))
+    flux_y = _face_fluxes(u, "y", bool(periodic[1]))
+    right_x = flux_x.narrow(0, 1, flux_x.shape[0] - 1)
+    left_x = flux_x.narrow(0, 0, flux_x.shape[0] - 1)
+    right_y = flux_y.narrow(1, 1, flux_y.shape[1] - 1)
+    left_y = flux_y.narrow(1, 0, flux_y.shape[1] - 1)
+    return -(right_x - left_x) / dx - (right_y - left_y) / dy
+
+
+def _cell_averages(initial, x, y, dx, dy, quadrature, dev, dtype):
+    """Gauss quadrature cell averages of ``initial(x, y)``."""
+    nodes_np, weights_np = np.polynomial.legendre.leggauss(quadrature)
+    nodes = torch.as_tensor(nodes_np, device=dev, dtype=dtype)
+    weights = torch.as_tensor(weights_np, device=dev, dtype=dtype)
+    xq = x[:, None, None, None] + 0.5 * dx * nodes[None, None, :, None]
+    yq = y[None, :, None, None] + 0.5 * dy * nodes[None, None, None, :]
+    sampled = _conservative(*initial(xq, yq))
+    return 0.25 * torch.sum(
+        sampled * weights[None, None, :, None, None] * weights[None, None, None, :, None],
+        dim=(2, 3),
+    )
+
+
+def solve_euler_2d(
+    initial,
+    ncells=256,
+    final_time=1.0,
+    cfl=0.4,
+    domain=((-5.0, 5.0), (-5.0, 5.0)),
+    periodic=(True, True),
+    quadrature=4,
+    device="cpu",
+    dtype=torch.float64,
+):
+    """Advance a 2-D Euler initial condition (P0 finite volume, Rusanov, SSP-RK3).
+
+    Parameters
+    ----------
+    initial : callable
+        ``initial(x, y) -> (rho, u, v, p)`` evaluated on tensors of any shape.
+    ncells : int or (int, int)
+        Cell counts in ``x`` and ``y``.
+    periodic : (bool, bool)
+        Periodicity in ``x`` and ``y``; non-periodic faces are transmissive
+        (zero-gradient) outflow, where the boundary face flux is the physical
+        flux of the adjacent interior cell.
+    quadrature : int
+        Gauss-Legendre points per direction for the cell-average projection of
+        ``initial`` (2 is exact for the P0 average of piecewise-smooth data).
+
+    Returns
+    -------
+    (x, y, fields, metadata)
+        Cell-centre coordinates, primitive and conservative fields, and run
+        metadata (step count, ``dt``, mesh, periodicity, flux).
+    """
+    nx, ny = (ncells, ncells) if isinstance(ncells, int) else ncells
+    if nx < 2 or ny < 2 or final_time < 0.0 or not 0 < cfl <= 0.5:
+        raise ValueError("cells >= 2, final_time >= 0, and 0 < cfl <= 0.5 are required")
+    if quadrature < 1:
+        raise ValueError("quadrature must be >= 1")
+    (xmin, xmax), (ymin, ymax) = domain
+    if not xmax > xmin or not ymax > ymin:
+        raise ValueError("each domain interval must be increasing")
+    periodic_flags = (bool(periodic[0]), bool(periodic[1]))
+    dev = torch.device(device)
+    dx, dy = (xmax - xmin) / nx, (ymax - ymin) / ny
+    x = xmin + (torch.arange(nx, device=dev, dtype=dtype) + 0.5) * dx
+    y = ymin + (torch.arange(ny, device=dev, dtype=dtype) + 0.5) * dy
+    u = _cell_averages(initial, x, y, dx, dy, quadrature, dev, dtype)
+
+    time, steps, dt = 0.0, 0, 0.0
+    while time < final_time:
+        _, velocity_x, velocity_y, _ = _primitive(u)
+        sound = _sound_speed(u)
+        rate = float(torch.max(torch.abs(velocity_x) + sound).item()) / dx
+        rate += float(torch.max(torch.abs(velocity_y) + sound).item()) / dy
+        dt = min(cfl / max(rate, 1e-12), final_time - time)
+        u1 = u + dt * _rhs(u, dx, dy, periodic_flags)
+        u2 = 0.75 * u + 0.25 * (u1 + dt * _rhs(u1, dx, dy, periodic_flags))
+        u = (1.0 / 3.0) * u + (2.0 / 3.0) * (u2 + dt * _rhs(u2, dx, dy, periodic_flags))
+        rho, _, _, pressure = _primitive(u)
+        if not torch.isfinite(u).all() or (rho <= 0).any() or (pressure <= 0).any():
+            raise FloatingPointError("Nonphysical 2D Euler state; reduce CFL")
+        time += dt
+        steps += 1
+
+    rho, velocity_x, velocity_y, pressure = _primitive(u)
+    fields = {
+        "density": rho, "velocity_x": velocity_x, "velocity_y": velocity_y,
+        "pressure": pressure, "conservative": u,
+    }
+    metadata = {
+        "ncells": (nx, ny), "degree": 0, "final_time": final_time,
+        "steps": steps, "dt": dt, "cfl": cfl, "domain": domain,
+        "periodic": periodic_flags, "quadrature": quadrature,
+        "flux": "rusanov", "device": str(dev),
+    }
+    return x, y, fields, metadata
 
 
 def solve_isentropic_vortex(
@@ -97,58 +232,26 @@ def solve_isentropic_vortex(
     device="cpu",
     dtype=torch.float64,
 ):
-    """Solve the smooth Euler vortex with a periodic P0/Rusanov baseline."""
-    nx, ny = (ncells, ncells) if isinstance(ncells, int) else ncells
-    if nx < 8 or ny < 8 or final_time < 0.0 or not 0 < cfl <= 0.5:
-        raise ValueError("cells >= 8, final_time >= 0, and 0 < cfl <= 0.5 are required")
-    (xmin, xmax), (ymin, ymax) = domain
-    if not xmax > xmin or not ymax > ymin:
-        raise ValueError("each domain interval must be increasing")
-    dev = torch.device(device)
-    dx, dy = (xmax - xmin) / nx, (ymax - ymin) / ny
-    x = xmin + (torch.arange(nx, device=dev, dtype=dtype) + 0.5) * dx
-    y = ymin + (torch.arange(ny, device=dev, dtype=dtype) + 0.5) * dy
+    """Solve the smooth Euler vortex with the periodic P0/Rusanov baseline."""
+    if isinstance(ncells, int) and ncells < 8:
+        raise ValueError("cells >= 8 are required")
+    if not isinstance(ncells, int) and min(ncells) < 8:
+        raise ValueError("cells >= 8 are required")
+    def initial(x, y):
+        return vortex_primitive(x, y, 0.0, strength, background_velocity)
 
-    # Four-point-per-direction Gauss integration gives accurate cell averages.
-    nodes_np, weights_np = np.polynomial.legendre.leggauss(4)
-    nodes = torch.as_tensor(nodes_np, device=dev, dtype=dtype)
-    weights = torch.as_tensor(weights_np, device=dev, dtype=dtype)
-    xq = x[:, None, None, None] + 0.5 * dx * nodes[None, None, :, None]
-    yq = y[None, :, None, None] + 0.5 * dy * nodes[None, None, None, :]
-    initial = _conservative(*vortex_primitive(
-        xq, yq, 0.0, strength, background_velocity,
-    ))
-    u = 0.25 * torch.sum(
-        initial * weights[None, None, :, None, None] * weights[None, None, None, :, None],
-        dim=(2, 3),
+    x, y, fields, metadata = solve_euler_2d(
+        initial,
+        ncells=ncells,
+        final_time=final_time,
+        cfl=cfl,
+        domain=domain,
+        periodic=(True, True),
+        device=device,
+        dtype=dtype,
     )
-
-    time, steps, dt = 0.0, 0, 0.0
-    while time < final_time:
-        _, velocity_x, velocity_y, _ = _primitive(u)
-        sound = _sound_speed(u)
-        rate = float(torch.max(torch.abs(velocity_x) + sound).item()) / dx
-        rate += float(torch.max(torch.abs(velocity_y) + sound).item()) / dy
-        dt = min(cfl / max(rate, 1e-12), final_time - time)
-        u1 = u + dt * _rhs(u, dx, dy)
-        u2 = 0.75 * u + 0.25 * (u1 + dt * _rhs(u1, dx, dy))
-        u = (1.0 / 3.0) * u + (2.0 / 3.0) * (u2 + dt * _rhs(u2, dx, dy))
-        rho, _, _, pressure = _primitive(u)
-        if not torch.isfinite(u).all() or (rho <= 0).any() or (pressure <= 0).any():
-            raise FloatingPointError("Nonphysical 2D Euler state; reduce CFL")
-        time += dt
-        steps += 1
-    rho, velocity_x, velocity_y, pressure = _primitive(u)
-    fields = {
-        "density": rho, "velocity_x": velocity_x, "velocity_y": velocity_y,
-        "pressure": pressure, "conservative": u,
-    }
-    metadata = {
-        "ncells": (nx, ny), "degree": 0, "final_time": final_time,
-        "steps": steps, "dt": dt, "cfl": cfl, "domain": domain,
-        "strength": strength, "background_velocity": tuple(background_velocity),
-        "flux": "rusanov", "device": str(dev),
-    }
+    metadata["strength"] = strength
+    metadata["background_velocity"] = tuple(background_velocity)
     return x, y, fields, metadata
 
 
