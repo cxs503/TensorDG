@@ -214,10 +214,77 @@ def relative_error(reference: float, candidate: float) -> float:
 
 
 def pointwise_entropy_error(numerical, exact, x) -> float:
-    """Relative ``L2`` error of the entropy density profile ``rho s``."""
+    """Relative ``L2`` error of the entropy density profile ``rho s``.
+
+    Deprecated for reporting: ``rho s = rho ln(p / rho**gamma)`` is *signed* and
+    crosses zero inside shock-tube data, so ``||e|| / ||exact||`` divides an
+    ``O(1)`` absolute error by a nearly cancelling norm.  On the Sod case it
+    returns ``163068 %`` and carries no information about the solver.  Use
+    :func:`entropy_profile_error` instead, which normalises by the intrinsic
+    entropy-jump scale of the shock.
+    """
     numerical = np.asarray(numerical, dtype=float)
     exact = np.asarray(exact, dtype=float)
     return float(np.linalg.norm(numerical - exact) / max(np.linalg.norm(exact), 1e-300))
+
+
+def entropy_jump_scale(upstream, downstream, gamma: float = GAMMA) -> float:
+    """``|[s]| = |s_downstream - s_upstream|`` of a single shock.
+
+    This is the intrinsic scale of the ``rho s`` profile: the entropy plateau
+    jump the profile has to reproduce, and the only sensible denominator for a
+    profile error.
+    """
+    rho_a, _, p_a = (float(value) for value in upstream)
+    rho_b, _, p_b = (float(value) for value in downstream)
+    return abs(float(gas_entropy(rho_b, p_b, gamma)) - float(gas_entropy(rho_a, p_a, gamma)))
+
+
+def entropy_profile_error(numerical, exact, x, entropy_scale: float | None = None) -> dict:
+    """Profile error of the signed entropy density, in interpretable units.
+
+    Parameters
+    ----------
+    numerical, exact : array_like
+        Pointwise ``rho s`` on the sample abscissae ``x``.
+    entropy_scale : float, optional
+        ``|[s]|`` of the shock (:func:`entropy_jump_scale`).  When given, the
+        RMS error is also expressed as a fraction of the entropy jump.
+
+    Returns
+    -------
+    dict with
+
+    ``rms``
+        ``||num - exact||_2 / sqrt(L)`` -- an RMS error in entropy-density units
+        (units of ``rho s``, i.e. mass per volume; ``s`` itself is dimensionless).
+    ``rms_over_entropy_jump``
+        ``rms / |[s]|`` when ``entropy_scale`` is supplied: "how large is the
+        profile error compared with the entropy step the shock has to produce".
+    ``rms_over_mean_abs``
+        ``rms / mean(|exact|)`` -- a scale-free fallback that does not rely on
+        the shock data.
+    ``legacy_relative_l2``
+        The deprecated ``||e|| / ||exact||`` for provenance only.
+    """
+    numerical = np.asarray(numerical, dtype=float)
+    exact = np.asarray(exact, dtype=float)
+    x = np.asarray(x, dtype=float)
+    length = max(float(x[-1] - x[0]), 1e-300)
+    residual = numerical - exact
+    # sqrt(mean(e^2)) == sqrt( int e^2 dx / L ) for uniformly spaced samples; the
+    # plain Euclidean norm would grow like sqrt(#samples) and is not a field error.
+    integral = getattr(np, "trapezoid", None) or np.trapz
+    rms = float(np.sqrt(max(integral(residual ** 2, x), 0.0) / length))
+    out = {
+        "rms": rms,
+        "rms_over_mean_abs": rms / max(float(np.mean(np.abs(exact))), 1e-300),
+        "legacy_relative_l2": float(
+            np.linalg.norm(residual) / max(np.linalg.norm(exact), 1e-300)),
+    }
+    if entropy_scale is not None:
+        out["rms_over_entropy_jump"] = rms / max(float(entropy_scale), 1e-300)
+    return out
 
 
 def observed_order(cells, values):
