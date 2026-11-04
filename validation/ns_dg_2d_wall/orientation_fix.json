@@ -1,0 +1,94 @@
+{
+  "fixed": {
+    "flux": [
+      {
+        "energy_bottom": -0.04813287317169985,
+        "energy_top": -0.0522010296864536,
+        "error_bottom": 0.03734253656600309,
+        "error_mx": 0.0033390285815712573,
+        "error_top": 0.04402059372907191,
+        "ny": 8
+      },
+      {
+        "energy_bottom": -0.04907959211743812,
+        "energy_top": -0.0511093345142379,
+        "error_bottom": 0.018408157651237655,
+        "error_mx": 0.001889266316633248,
+        "error_top": 0.022186690284757976,
+        "ny": 16
+      },
+      {
+        "energy_bottom": -0.04954319199070024,
+        "energy_top": -0.050556839914901605,
+        "error_bottom": 0.009136160185995307,
+        "error_mx": 0.0010003190563505349,
+        "error_top": 0.011136798298032047,
+        "ny": 32
+      },
+      {
+        "energy_bottom": -0.049772459354677265,
+        "energy_top": -0.05027895881540638,
+        "error_bottom": 0.00455081290645476,
+        "error_mx": 0.0005141817001894089,
+        "error_top": 0.0055791763081275425,
+        "ny": 64
+      }
+    ],
+    "orders": {
+      "error_bottom": 1.5183118742136086,
+      "error_top": 1.4900272778894612,
+      "residual": -0.10657438941994074
+    },
+    "residual": [
+      {
+        "max_abs_rhs": 0.04517977052016975,
+        "ny": 8
+      },
+      {
+        "max_abs_rhs": 0.0486446531725222,
+        "ny": 16
+      },
+      {
+        "max_abs_rhs": 0.0511058653619032,
+        "ny": 32
+      },
+      {
+        "max_abs_rhs": 0.05237308984748257,
+        "ny": 64
+      }
+    ],
+    "spectrum": {
+      "degree": 1,
+      "dofs": 64,
+      "max_abs": 381.671557567465,
+      "max_real": 1.2447021408138525e-14,
+      "ncells": [
+        2,
+        4
+      ],
+      "positive": 0
+    },
+    "transient": {
+      "dt": 0.00016947682247996088,
+      "status": "physical",
+      "steps": 203,
+      "time": 0.1
+    }
+  },
+  "kappa": 0.4929577464788734,
+  "mu": 0.1,
+  "note": "pre-fix = penalty with +1.0 sign on both faces; fixed = outward-normal sign (-1 on the min face, outward_sign keyword)",
+  "shipped": {
+    "spectrum": {
+      "degree": 1,
+      "dofs": 64,
+      "max_abs": 378.04217789746406,
+      "max_real": 86.33050078094395,
+      "ncells": [
+        2,
+        4
+      ],
+      "positive": 6
+    }
+  }
+}

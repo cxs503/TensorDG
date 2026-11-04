@@ -1,0 +1,74 @@
+{
+  "analytic_wall_flux": -0.05,
+  "closures": {
+    "one_sided|p1|sigma_w=None": {
+      "degree": 1,
+      "wall_penalty": null,
+      "residual": {
+        "8": 0.30453023045906513,
+        "16": 0.3045019829830822,
+        "32": 0.30454209727715664
+      },
+      "wall_flux_error": {
+        "8": 0.01270412321249878,
+        "16": 0.0063451555617290364,
+        "32": 0.003172424305699903
+      },
+      "wall_flux_order": 1.0008195815234195,
+      "transient": "FloatingPointError: nonphysical cell average in Navier-Stokes DG; reduce the CFL"
+    },
+    "recovered|p1|sigma_w=None": {
+      "degree": 1,
+      "wall_penalty": null,
+      "residual": {
+        "8": 0.20680651188267096,
+        "16": 0.21029775912675186,
+        "32": 0.21237168079112267
+      },
+      "wall_flux_error": {
+        "8": 0.007379610640568447,
+        "16": 0.0036599377014572346,
+        "32": 0.0018218967924955656
+      },
+      "wall_flux_order": 1.0090517322015278,
+      "transient": "FloatingPointError: nonphysical cell average in Navier-Stokes DG; reduce the CFL"
+    },
+    "recovered|p1|sigma_w=1.0": {
+      "degree": 1,
+      "wall_penalty": 1.0,
+      "residual": {
+        "8": 0.024721822623739228,
+        "16": 0.025116960139898392,
+        "32": 0.025900880604725618
+      },
+      "wall_flux_error": {
+        "8": 0.0010046887477179814,
+        "16": 0.0004812536945788398,
+        "32": 0.00023410765468339506
+      },
+      "wall_flux_order": 1.050752305790451,
+      "transient": "reached"
+    },
+    "recovered|p1|sigma_w=0.0": {
+      "degree": 1,
+      "wall_penalty": 0.0,
+      "residual": {
+        "8": 0.024721822623739228,
+        "16": 0.012421805865739051,
+        "32": 0.006229341363059883
+      },
+      "wall_flux_error": {
+        "8": 9.398562016791484e-05,
+        "16": 2.7155979310501677e-05,
+        "32": 7.280634995950053e-06
+      },
+      "wall_flux_order": 1.8451519260608118,
+      "transient": "reached"
+    }
+  },
+  "mu": 0.1,
+  "kappa": 0.4929577464788734,
+  "prandtl": 0.71,
+  "wall_speed": 1.0,
+  "penalty_rule": "2*(p+1)^2"
+}

@@ -53,6 +53,7 @@ index (GCI, Roache 1994 / Celik et al. 2008, safety factor 1.25):
   brackets the true error against the analytic solution.
 
 ```bash
+python -m benchmarks.verify_ns_mms_order
 python -m benchmarks.convergence_study     # writes docs/benchmarks/results/convergence
 pytest -q tests/test_verification.py
 ```
@@ -99,6 +100,13 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
   (`tensordg/differentiable.py`) reproduce the shipped solvers bit-for-bit and
   their gradients match central differences (<1e-7) and an exact transposed-operator
   adjoint (5e-16); see [docs/differentiability_verification.md](docs/differentiability_verification.md).
+- **Wall-bounded compressible Navier--Stokes**: the Dirichlet (BR1/SIPG) wall path is
+  stable for impulsive-start Couette flow; the penalty is oriented along the outward
+  normal (`outward_sign`, a sign slip on the `min` face was anti-dissipative and blew
+  up the transient at t ~ 0.03--0.08; found independently by m2782 and m2876). Wall
+  heat flux meets the 3 % gate from 32 cells on, both walls; the wall gradient options
+  (`fd2`, `recovered`) and the symmetric adjoint term (`wall_adjoint`) are opt-in --
+  see [docs/reports/tensordg-ns-wall-orientation-fix.md](docs/reports/tensordg-ns-wall-orientation-fix.md).
   The diffusive half of the operator zoo (SIPG + Crank--Nicolson,
   `advance_heat_1d`) is covered separately: sensitivities in the thermal diffusivity
   and in every modal degree of freedom match an exactly assembled discrete adjoint
@@ -108,6 +116,22 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
 - Systematic convergence verification: observed order against theoretical order,
   Richardson extrapolation and GCI mesh independence, p-refinement decay, and
   cross-backend (dense / sparse / matrix-free) accuracy equivalence.
+
+- **Verified Dirichlet (wall) path** for the compressible Navier--Stokes solver
+  (`tensordg/ns_dg_2d.py`): a shear mode between two no-slip isothermal walls
+  matches the exact Stokes series to 0.67 % / 0.17 % / 0.04 % at 8 / 16 / 32
+  cells (observed order 2.00 / 2.02), the wall heat flux is exact to machine
+  precision once the temperature field is representable, and the impulsively
+  started Couette case (which used to diverge at t ~ 0.05) now marches through
+  t = 0.1; `python -m benchmarks.verify_ns_dg_2d_wall` (~1 min).
+  See [docs/reports/tensordg-ns-wall-sign-fix.md](docs/reports/tensordg-ns-wall-sign-fix.md).
+
+- Compressible Navier--Stokes on a 2-D tensor-product modal DG mesh (BR1/SIPG
+  viscous fluxes, HLLC inviscid flux, isothermal no-slip walls) with an optional
+  volumetric source term, verified by a **manufactured solution**: the coupled
+  convective + viscous operator reproduces the design order `degree + 1` in the
+  L2 norm for every conserved variable at degrees 1--3
+  ([docs/reports/tensordg-ns-mms-verification.md](docs/reports/tensordg-ns-mms-verification.md)).
 
 Sparse/matrix-free elliptic solvers, unstructured meshes, genuinely
 multidimensional (non-directional) WENO stencils, limiter performance
@@ -167,7 +191,9 @@ profile that merely looks plausible is not sufficient: smooth cases should
 measure convergence, while discontinuous cases should compare with a trusted
 reference and state the error norm.
 
-Wall-bounded `ns_dg_2d` transient is still unverified: `wall_gradient="taylor"` (default) gives a
-second-order one-sided wall gradient, but the spectral study in
+Wall-bounded `ns_dg_2d` transient caveat (the m2782 `outward_sign` fix above addresses the low-wall penalty orientation; the spectrum tool still models the pre-fix operator): the spectral study in
 `docs/reports/tensordg-ns-wall-spectrum.md` shows the wall operator itself has a growing mode
-(missing adjoint/Nitsche boundary term).
+(missing adjoint/Nitsche boundary term). The default wall normal derivative is the one-sided DG
+polynomial derivative (`wall_gradient="face"`), which converges at the element design order; the
+`"taylor"` two-point extrapolation is an opt-in diagnostic because it caps the wall heat flux at
+second order (`docs/reports/tensordg-ns-wall-gradient-bisect.md`).

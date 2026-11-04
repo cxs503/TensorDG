@@ -18,6 +18,16 @@ genuine defect and what is a degree-1 measurement:
 Numbers behind these assertions: ``benchmarks/verify_ns_wall_scope.py`` ->
 ``validation/ns_dg_2d_wall/scope_audit.json`` and
 ``docs/reports/tensordg-ns-wall-scope-audit.md``.
+
+m3139 (ratchet red-main repair): four of these assertions went red after PR #36
+(m2920) replaced the default wall normal derivative by an ``O(h^2)`` two-point
+extrapolation.  The bisection table
+(``tools/bisect_ns_wall_gradient.py`` ->
+``validation/ns_dg_2d_wall/bisect_wall_gradient.json``) shows the *assertions
+were right*: they reproduce the pre-#36 numbers bit-for-bit on the pre-#36
+solver, and the stencil caps the wall heat flux at second order at every
+degree.  The default is therefore the one-sided DG derivative again and the
+stencil is opt-in; the two guards at the end of this file keep it that way.
 """
 import math
 
@@ -90,6 +100,21 @@ def test_exact_state_residual_decays_with_degree():
     assert p3_fine < 1e-3 * p1
 
 
+def _wall_cell_residual_energy(degree, ny):
+    """Energy residual of the *bottom* wall cell.
+
+    m2782 note: the outward_sign fix lowered the bottom-wall residual, so the
+    global energy max now sits in the top wall cell for ``ny >= 16``; the
+    identity below is a statement about the wall cell its flux error belongs
+    to, so the residual is measured there."""
+    d = build_state((2, ny), degree)
+    penalty = 2.0 * (degree + 1.0) ** 2
+    rhs = ns._rhs_ns(d["coeff"], d["basis"], d["derivative"], d["weights"],
+                     d["signs"], d["dx"], d["dy"], (True, False), d["boundary"],
+                     MU, KAPPA, penalty)
+    return float(rhs[:, 0, ..., 3].abs().max())
+
+
 def test_residual_equals_flux_error_over_h_at_p1():
     """Identity check at P1: ``residual * h / flux_error = 3`` exactly.
 
@@ -102,7 +127,7 @@ def test_residual_equals_flux_error_over_h_at_p1():
     """
     for ny in (16, 32):
         flux_error = _flux_errors(1, (ny,))[0]
-        _, residual_energy = _residual(1, ny)
+        residual_energy = _wall_cell_residual_energy(1, ny)
         ratio = residual_energy * (1.0 / ny) / flux_error
         assert 2.9 < ratio < 3.1, (ny, ratio, residual_energy, flux_error)
 
@@ -114,12 +139,32 @@ def test_steady_state_march_survives_at_p2():
     assert failure is None, failure
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "open defect (m2786): the impulsively started wall-bounded transient goes "
-    "non-physical at every degree (P1/P2/P3), so this is not a P1 "
-    "representability issue but an instability of the wall closure"
-))
+# retired by the m2782 outward_sign fix (the P2 transient now reaches final_time)
 def test_impulsively_started_couette_reaches_final_time_at_p2():
     """Impulsively started Couette at P2 must reach t = 0.05.  It currently
     raises the positivity guard well before that."""
     ns.solve_couette_dg_2d(ncells=(2, 8), degree=2, mu=MU, final_time=0.05)
+
+# ---------------------------------------------------------------------------
+# m3139 guards: the design-order path must stay the default
+# ---------------------------------------------------------------------------
+def test_default_wall_gradient_is_the_design_order_path():
+    """Fail-closed: a user of the public solver must get the design-order wall
+    operator, not the O(h^2)-capped extrapolation of PR #36."""
+    import inspect
+
+    assert inspect.signature(ns._rhs_ns).parameters["wall_gradient"].default == "face"
+    assert (inspect.signature(ns.solve_navier_stokes_dg_2d)
+            .parameters["wall_gradient"].default == "face")
+
+
+def test_taylor_wall_gradient_is_not_the_design_order_path_at_p3():
+    """Negative control for the guard above: the opt-in stencil really is the
+    wrong default.  At P3/32 cells it is >10x the one-sided derivative error,
+    and its observed order stays at 2 instead of 3."""
+    face = _flux_errors(3)
+    taylor = [abs(wall_fluxes((2, ny), 3, wall_gradient="taylor")["energy_bottom"]
+                  - ANALYTIC_E_FLUX_BOTTOM) for ny in (8, 16, 32)]
+    assert taylor[-1] > 10.0 * face[-1], (taylor, face)
+    order = math.log2(taylor[0] / taylor[-1]) / 2.0
+    assert order < 2.65, order

@@ -224,6 +224,15 @@ dt 缩 4×、步数 ×4，**失稳仍发生在同一物理时间**（差 3.3%）
 
 ## 6. 给下一次自找活的建议
 
+> **状态更新（后续单 m2876）**：item 1 已闭合 —— 根因是 Dirichlet 罚项在 **min 面**上沿用了
+> max 面的符号（反耗散），修复后半离散 Jacobian 无正实部（+86.33 → 机器零），脉冲
+> Couette 推进到 t=0.1 保持物理。链上机制名为 `_boundary_flux` 的 `outward_sign`
+> （m2782 先合入，本单独立复核并补双侧证据）。详见
+> `docs/reports/tensordg-ns-wall-orientation-fix.md` 与
+> `validation/ns_dg_2d_wall/orientation_fix.json`。item 2（二阶壁面梯度）由链上
+> m2831 `fd2`/m2838 `recovered` 两翼承接，已可选启用。
+
+
 1. **P0（可直接接手）**：按 §5 局限 4 的两条候选机理实现修法，验收判据已就位且可一键跑：
    `tests/test_ns_dg_2d_wall.py` 的 3 条 `xfail(strict=True)` 会**自动**在修好后转 XPASS 并报失败，
    逼你把局限退休；`tools/diag_ns_wall.py` 的五节给出修前/修后对照数字。

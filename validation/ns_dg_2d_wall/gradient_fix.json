@@ -1,0 +1,155 @@
+{
+ "mu": 0.1,
+ "kappa": 0.4929577464788734,
+ "wall_speed": 1.0,
+ "amplitude": 0.1014285714285714,
+ "gradient": [
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 1,
+   "h": 0.125,
+   "dT_dy_one_sided": 0.08879605313669364,
+   "dT_dy_extrapolated": 0.10148132618845482,
+   "dT_dy_analytic": 0.1014285714285714,
+   "dT_dy_error_one_sided": 0.012632518291877753,
+   "dT_dy_error_extrapolated": 5.275475988342215e-05,
+   "flux_clean": -0.05002600586754817,
+   "flux_clean_error": 2.6005867548167805e-05,
+   "flux_total": -0.057311630887946365,
+   "flux_total_error": 0.007311630887946362,
+   "penalty_flux": -0.007285625020398199,
+   "trace_temperature_error": 0.00023092829305726426
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "h": 0.0625,
+   "dT_dy_one_sided": 0.09510164544904481,
+   "dT_dy_extrapolated": 0.10144177853700145,
+   "dT_dy_analytic": 0.1014285714285714,
+   "dT_dy_error_one_sided": 0.006326925979526582,
+   "dT_dy_error_extrapolated": 1.320710843005779e-05,
+   "flux_clean": -0.050006510546409186,
+   "flux_clean_error": 6.510546409183027e-06,
+   "flux_total": -0.05363929226855359,
+   "flux_total_error": 0.0036392922685535845,
+   "penalty_flux": -0.0036327817221444053,
+   "trace_temperature_error": 5.757310318577069e-05,
+   "slope_dT_dy_one_sided": 0.9975656464067318,
+   "slope_dT_dy_extrapolated": 1.997986632291931,
+   "slope_flux_clean": 1.997986632292126,
+   "slope_flux_total": 1.006535323381225,
+   "slope_penalty_flux": 1.0039780605925999
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 1,
+   "h": 0.03125,
+   "dT_dy_one_sided": 0.0982621250638459,
+   "dT_dy_extrapolated": 0.10143187454160613,
+   "dT_dy_analytic": 0.1014285714285714,
+   "dT_dy_error_one_sided": 0.0031664463647254892,
+   "dT_dy_error_extrapolated": 3.3031130347305204e-06,
+   "flux_clean": -0.05000162829515797,
+   "flux_clean_error": 1.628295157964088e-06,
+   "flux_total": -0.05181624445265759,
+   "flux_total_error": 0.0018162444526575866,
+   "penalty_flux": -0.0018146161574996217,
+   "trace_temperature_error": 1.437921285518673e-05,
+   "slope_dT_dy_one_sided": 0.9986400751288095,
+   "slope_dT_dy_extrapolated": 1.9994163913238852,
+   "slope_flux_clean": 1.9994163913252705,
+   "slope_flux_total": 1.0026995260265792,
+   "slope_penalty_flux": 1.0014102733671382
+  },
+  {
+   "ncells": [
+    2,
+    64
+   ],
+   "degree": 1,
+   "h": 0.015625,
+   "dT_dy_one_sided": 0.0998445624933927,
+   "dT_dy_extrapolated": 0.10142939729625705,
+   "dT_dy_analytic": 0.1014285714285714,
+   "dT_dy_error_one_sided": 0.0015840089351786962,
+   "dT_dy_error_extrapolated": 8.258676856554015e-07,
+   "flux_clean": -0.050000407117873215,
+   "flux_clean_error": 4.071178732120706e-07,
+   "flux_total": -0.05090736447083621,
+   "flux_total_error": 0.0009073644708362041,
+   "penalty_flux": -0.0009069573529629941,
+   "trace_temperature_error": 3.593413619440433e-06,
+   "slope_dT_dy_one_sided": 0.9992841688438833,
+   "slope_dT_dy_extrapolated": 1.9998437729941974,
+   "slope_flux_clean": 1.9998437729868377,
+   "slope_flux_total": 1.001204316348398,
+   "slope_penalty_flux": 1.0005577908841903
+  }
+ ],
+ "residual": [
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 1,
+   "rhs_max": 0.19493924206015456,
+   "energy": 0.19493924206015456,
+   "momentum_x": 0.0469018701252335,
+   "wall_row": 0.19493924206015456,
+   "interior": 0.02523949054165331
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "rhs_max": 0.2041844983787875,
+   "energy": 0.2041844983787875,
+   "momentum_x": 0.043863864347863935,
+   "wall_row": 0.2041844983787875,
+   "interior": 0.013007101973670387,
+   "slope_interior": 0.9563832293364197
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 1,
+   "rhs_max": 0.20926723654214285,
+   "energy": 0.20926723654214285,
+   "momentum_x": 0.042254732376736825,
+   "wall_row": 0.20926723654214285,
+   "interior": 0.006887029631093,
+   "slope_interior": 0.9173457712451537
+  }
+ ],
+ "transient": {
+  "ncells": [
+   2,
+   8
+  ],
+  "degree": 1,
+  "final_time": 0.1,
+  "survived": false,
+  "failure": {
+   "step": 68,
+   "time": 0.03328700644441901,
+   "dt": 0.00047495629108245806,
+   "min_pressure": -0.02939514823263653
+  },
+  "error": "nonphysical cell average in Navier-Stokes DG; reduce the CFL"
+ }
+}
