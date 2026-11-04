@@ -137,6 +137,39 @@ Sparse/matrix-free elliptic solvers, unstructured meshes, genuinely
 multidimensional (non-directional) WENO stencils, limiter performance
 optimisation, and additional Euler/Navier--Stokes benchmarks remain future work.
 
+## Two-dimensional Euler: P0 finite-volume path and outflow boundaries
+
+`solve_euler_2d` advances a general 2-D Euler initial condition
+(`initial(x, y) -> (rho, u, v, p)`) with P0 finite volume, Rusanov fluxes and
+SSP-RK3 on a Cartesian mesh.  Periodicity is per axis; non-periodic faces use the
+zero-gradient (transmissive) outflow closure, where the boundary face flux is the
+physical flux of the adjacent interior cell.  `solve_isentropic_vortex` is a thin
+wrapper around it, so the smooth vortex benchmark and the shock verification share
+one stencil.
+
+```python
+from tensordg.euler_2d import solve_euler_2d
+
+def sod(x, y):
+    left = x < 0.5
+    rho = torch.where(left, torch.ones_like(x), 0.125 * torch.ones_like(x))
+    pressure = torch.where(left, torch.ones_like(x), 0.1 * torch.ones_like(x))
+    zero = torch.zeros_like(rho)
+    return rho, zero, zero, pressure
+
+x, y, fields, meta = solve_euler_2d(sod, ncells=(3200, 2), final_time=0.2,
+                                    domain=((0.0, 1.0), (0.0, 1.0)),
+                                    periodic=(False, False))
+```
+
+Verification (`benchmarks/verify_euler_2d_p0.py`,
+`docs/reports/tensordg-euler-2d-p0-verification.md`): 3200-cell Sod extruded to
+2-D matches the exact Riemann solution to 2.52 % (velocity, the limiting field)
+with the discontinuities within 0.2 cell; `y`-invariance, the flux telescoping
+identity and the periodic path are exact to round-off.  The measured L2 rate for a
+shock is `O(h^{1/2})`, the theoretical rate for monotone schemes, so a future
+regression that only smooths the numbers cannot pass silently.
+
 ## Shock limiters
 
 TensorDG includes TVB and WENO limiters for 1-D compressible Euler problems

@@ -1,0 +1,194 @@
+{
+  "final_time": 0.2,
+  "cfl": 0.4,
+  "gate_percent": 3.0,
+  "checks": {
+    "A_extruded_sod": {
+      "rows": [
+        {
+          "cells": 400,
+          "rows": 4,
+          "steps": 434,
+          "dt": 3.268497906416812e-05,
+          "wall_seconds": 4.437567040324211,
+          "relative_l2": {
+            "density": 0.031409629041527574,
+            "velocity_x": 0.07835451021774688,
+            "pressure": 0.029611695864403494
+          },
+          "relative_l2_percent": {
+            "density": 3.1409629041527576,
+            "velocity_x": 7.835451021774688,
+            "pressure": 2.9611695864403496
+          },
+          "max_relative_l2_percent": 7.835451021774688,
+          "pair_with_next": null
+        },
+        {
+          "cells": 800,
+          "rows": 4,
+          "steps": 872,
+          "dt": 9.340980640734631e-05,
+          "wall_seconds": 10.188761990517378,
+          "relative_l2": {
+            "density": 0.023446446815856954,
+            "velocity_x": 0.052590004753464745,
+            "pressure": 0.01938356097762965
+          },
+          "relative_l2_percent": {
+            "density": 2.3446446815856956,
+            "velocity_x": 5.2590004753464745,
+            "pressure": 1.9383560977629648
+          },
+          "max_relative_l2_percent": 5.2590004753464745,
+          "order_vs_previous": {
+            "density": 0.42183759781273616,
+            "velocity_x": 0.5752276938277496,
+            "pressure": 0.6113334817852737
+          },
+          "pair_with_next": null
+        },
+        {
+          "cells": 1600,
+          "rows": 4,
+          "steps": 1749,
+          "dt": 3.724248251679718e-06,
+          "wall_seconds": 53.252784518525004,
+          "relative_l2": {
+            "density": 0.018150176159607286,
+            "velocity_x": 0.03607980174255698,
+            "pressure": 0.012617827618989162
+          },
+          "relative_l2_percent": {
+            "density": 1.8150176159607285,
+            "velocity_x": 3.6079801742556983,
+            "pressure": 1.2617827618989161
+          },
+          "max_relative_l2_percent": 3.6079801742556983,
+          "order_vs_previous": {
+            "density": 0.3693857559454764,
+            "velocity_x": 0.543597216171306,
+            "pressure": 0.6193700879997125
+          },
+          "pair_with_next": null
+        },
+        {
+          "cells": 3200,
+          "rows": 4,
+          "steps": 3502,
+          "dt": 1.543728996775129e-05,
+          "wall_seconds": 129.83859940059483,
+          "relative_l2": {
+            "density": 0.014223484682053415,
+            "velocity_x": 0.025176597432675682,
+            "pressure": 0.00816945946713036
+          },
+          "relative_l2_percent": {
+            "density": 1.4223484682053416,
+            "velocity_x": 2.517659743267568,
+            "pressure": 0.8169459467130359
+          },
+          "max_relative_l2_percent": 2.517659743267568,
+          "order_vs_previous": {
+            "density": 0.35170858933532817,
+            "velocity_x": 0.5191080921973803,
+            "pressure": 0.6271510157463754
+          }
+        }
+      ],
+      "observed_order_least_squares": {
+        "density": 0.37981815852260925,
+        "velocity_x": 0.5457396222760603,
+        "pressure": 0.6192933844593786
+      },
+      "finest_max_relative_l2_percent": 2.517659743267568,
+      "gate_percent": 3.0,
+      "passed": true
+    },
+    "B_y_invariance": {
+      "cells": [
+        200,
+        4
+      ],
+      "steps": 214,
+      "density_max_abs_deviation": 0.0,
+      "density_max_rel_deviation": 0.0,
+      "momentum_y_max_abs_deviation": 0.0,
+      "momentum_y_max_rel_deviation": 0.0,
+      "conservative_max_abs_deviation": 0.0,
+      "conservative_max_rel_deviation": 0.0,
+      "criterion": "column spread <= 1e-12 (round-off of a column-constant update)",
+      "passed": true
+    },
+    "C_flux_telescoping": {
+      "cells": [
+        64,
+        5
+      ],
+      "dx": 0.015625,
+      "dy": 0.2,
+      "discrete_mass_rate": 0.0,
+      "boundary_flux_rate": 0.0,
+      "absolute_difference": 0.0,
+      "round_off_scale": 1e-300,
+      "criterion": "|discrete rate - boundary rate| <= 1e-12 * scale",
+      "passed": true
+    },
+    "D_discontinuity_positions": {
+      "cells": 3200,
+      "steps": 3502,
+      "dx": 0.0003125,
+      "positions": {
+        "shock": {
+          "numerical_position": 0.8506982200439982,
+          "exact_position": 0.8504325000002082,
+          "absolute_offset": 0.0002657200437899965,
+          "cells_offset": 0.8503041401279887,
+          "relative_error_percent": 0.031245283287025298
+        },
+        "contact": {
+          "numerical_position": 0.684319495093103,
+          "exact_position": 0.6854925000006203,
+          "absolute_offset": 0.001173004907517372,
+          "cells_offset": 3.7536157040555906,
+          "relative_error_percent": 0.17111856183930685
+        }
+      },
+      "numerical_shock_speed": 1.7534911002199909,
+      "exact_shock_speed": 1.752162500001041,
+      "criterion": "shock within 1 dx (the jump the exact speed fixes) and contact within 5 dx (the most diffused wave of a P0 scheme)",
+      "passed": true
+    },
+    "E_rotational_consistency": {
+      "cells": 400,
+      "checks": {
+        "velocity_x": {
+          "max_absolute_difference": 0.0,
+          "max_relative_difference": 0.0
+        },
+        "density": {
+          "max_absolute_difference": 0.0,
+          "max_relative_difference": 0.0
+        },
+        "pressure": {
+          "max_absolute_difference": 0.0,
+          "max_relative_difference": 0.0
+        }
+      },
+      "worst_relative_difference": 0.0,
+      "criterion": "transposed run reproduces the profile to <= 1e-10 relative",
+      "passed": true
+    },
+    "F_periodic_roll_equivalence": {
+      "cells": [
+        32,
+        32
+      ],
+      "steps": 50,
+      "max_absolute_rhs_difference": 0.0,
+      "criterion": "identical to machine precision (<= 1e-14 absolute)",
+      "passed": true
+    }
+  },
+  "all_checks_passed": true
+}
