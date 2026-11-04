@@ -233,13 +233,62 @@ def _merge(interface, flux, axis, index):
     return merged
 
 
+def _take_at(tensor: torch.Tensor, dim: int, index: int):
+    """Slice ``tensor`` at one index of ``dim`` (``index`` may be negative)."""
+    key = [slice(None)] * tensor.dim()
+    key[dim] = index
+    return tensor[tuple(key)]
+
+
+def _wall_normal_derivative(coeff, basis, signs, h, axis):
+    """Second-order one-sided normal derivative of the primitives at both walls.
+
+    A wall face only sees one side of the data, so the DG face derivative
+    ``q_h'(face)`` is only ``O(h)`` accurate there: the interior faces average
+    two one-sided derivatives whose leading errors cancel, a wall face cannot.
+    Extrapolating from the *cell-centred* normal derivatives,
+
+        f'(wall) = 1.5 f'(wall cell) - 0.5 f'(first inland cell) + O(h^2),
+
+    removes that leading term (each centred derivative is ``O(h^2)``, their
+    difference over one cell is ``O(h)`` and is multiplied by ``h/2``).  The
+    returned values are physical (per unit length) derivatives along ``+axis``,
+    which is the sign convention of ``_face_primitives``; ``None`` is returned
+    when the mesh has a single cell along ``axis`` (no inland neighbour).
+    """
+    if coeff.shape[axis] < 2:
+        return None
+    trace_right, trace_left = _traces(coeff, basis, signs, axis)
+    centre = 0.5 * (trace_right + trace_left)
+    d_state = (trace_right - trace_left) * (1.0 / h)
+    gradients = _gas_gradients(centre, d_state, torch.zeros_like(d_state))
+    out = {"left": {}, "right": {}}
+    keys = ("u_n", "v_n", "T_n")
+    for wall, index, inland in (("left", 0, 1), ("right", -1, -2)):
+        for key in keys:
+            value = gradients[key]
+            estimate = 1.5 * _take_at(value, axis, index) - 0.5 * _take_at(value, axis, inland)
+            # keep the full cell layout: ``_boundary_flux`` is evaluated for every
+            # cell and only the outermost slice is kept by ``_merge``.
+            filled = torch.zeros_like(value)
+            slot = [slice(None)] * value.dim()
+            slot[axis] = index
+            filled[tuple(slot)] = estimate
+            out[wall][key] = filled
+    return out
+
+
 def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
-                   tangential_scale):
+                   tangential_scale, normal_derivative=None):
     """Flux on an outermost face.
 
     ``wall is None`` gives an outflow face (physical flux, interior gradient);
     a wall dict gives the pressure-only inviscid flux plus the Dirichlet viscous
     flux (no penetration, no convective energy flux).
+
+    ``normal_derivative`` optionally replaces the one-sided DG face derivative
+    by a better estimate (see ``_wall_normal_derivative``); ``None`` keeps the
+    historical one-sided face derivative.
     """
     inner_u, inner_v = side["u"], side["v"]
     if wall is None:
@@ -263,11 +312,17 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
             face_T = torch.as_tensor(
                 wall_temperature, device=inner_u.device, dtype=inner_u.dtype
             ).expand_as(inner_u)
-        normal_u = side["u_n"] * normal_scale - (penalty / h) * (inner_u - face_u)
-        normal_v = side["v_n"] * normal_scale - (penalty / h) * (inner_v - face_v)
-        normal_T = side["T_n"] * normal_scale - (penalty / h) * (
-            side["temperature"] - face_T
-        )
+        if normal_derivative is None:
+            base_u = side["u_n"] * normal_scale
+            base_v = side["v_n"] * normal_scale
+            base_T = side["T_n"] * normal_scale
+        else:
+            base_u = normal_derivative["u_n"]
+            base_v = normal_derivative["v_n"]
+            base_T = normal_derivative["T_n"]
+        normal_u = base_u - (penalty / h) * (inner_u - face_u)
+        normal_v = base_v - (penalty / h) * (inner_v - face_v)
+        normal_T = base_T - (penalty / h) * (side["temperature"] - face_T)
         zeros = torch.zeros_like(inner_u)
         pressure = side["pressure"]
         if axis == 0:
@@ -290,7 +345,8 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
 
 
 def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
-                    wall_left, wall_right, mu, kappa, penalty, axis):
+                    wall_left, wall_right, mu, kappa, penalty, axis,
+                    wall_gradient="taylor"):
     """Integrated total (inviscid + viscous) face fluxes for one axis.
 
     Structurally identical to ``euler_dg_2d._axis_fluxes``: the returned arrays
@@ -337,9 +393,14 @@ def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
                     u_x=tangential_u, v_x=tangential_v, T_x=tangential_T)
     interface = inviscid - _viscous_flux(face, axis, mu, kappa)
 
+    recon = None
+    if not periodic and wall_gradient == "taylor":
+        recon = _wall_normal_derivative(coeff, basis, signs, h, axis)
+
     if not periodic:
+        right_derivative = None if recon is None else recon["right"]
         boundary = _boundary_flux(right, wall_right, axis, h, mu, kappa, penalty,
-                                  normal_scale, tangential_scale)
+                                  normal_scale, tangential_scale, right_derivative)
         interface = _merge(interface, boundary, roll_dim, -1)
 
     if axis == 0:
@@ -350,8 +411,10 @@ def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
         flux_left = torch.roll(flux_right, shifts=1, dims=1)
 
     if not periodic:
+        left_derivative = None if recon is None else recon["left"]
         left_boundary = _boundary_flux(left, wall_left, axis, h, mu, kappa, penalty,
-                                       normal_scale, tangential_scale)
+                                       normal_scale, tangential_scale,
+                                       left_derivative)
         if axis == 0:
             flux_left[0] = torch.einsum("ybv,b,bl->ylv", left_boundary[0], weights, basis)
         else:
@@ -406,7 +469,7 @@ def _viscous_volume(coeff, basis, derivative, weights, dx, dy, mu, kappa):
 
 
 def _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic, boundary,
-            mu, kappa, penalty):
+            mu, kappa, penalty, wall_gradient="taylor"):
     """DG residual of the 2-D compressible Navier--Stokes equations."""
     degree = coeff.shape[2] - 1
     modes = torch.arange(degree + 1, device=coeff.device, dtype=coeff.dtype)
@@ -428,10 +491,12 @@ def _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic, boundary
     right_x, left_x = _axis_fluxes_ns(
         coeff, basis, derivative, signs, weights, dx, dy, periodic[0],
         boundary["xmin"], boundary["xmax"], mu, kappa, penalty, 0,
+        wall_gradient,
     )
     right_y, left_y = _axis_fluxes_ns(
         coeff, basis, derivative, signs, weights, dx, dy, periodic[1],
         boundary["ymin"], boundary["ymax"], mu, kappa, penalty, 1,
+        wall_gradient,
     )
 
     face_x = (
@@ -470,6 +535,7 @@ def solve_navier_stokes_dg_2d(
     penalty=None,
     quadrature=None,
     initial_projection="l2",
+    wall_gradient="taylor",
     device="cpu",
     dtype=torch.float64,
 ):
@@ -557,6 +623,8 @@ def solve_navier_stokes_dg_2d(
 
     if initial_projection != "l2":
         raise ValueError("only the l2 initial projection is supported")
+    if wall_gradient not in ("taylor", "face"):
+        raise ValueError("wall_gradient must be 'taylor' or 'face'")
     coeff = _initial_coefficients(initial, x, y, dx, dy, nodes, weights, basis, dev, dtype)
 
     def impose(state):
@@ -591,13 +659,13 @@ def solve_navier_stokes_dg_2d(
                     limited_by_diffusion = True
         dt = min(dt, final_time - time)
         k1 = _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic,
-                     boundary, mu, kappa, penalty)
+                     boundary, mu, kappa, penalty, wall_gradient)
         u1 = impose(coeff + dt * k1)
         k2 = _rhs_ns(u1, basis, derivative, weights, signs, dx, dy, periodic,
-                     boundary, mu, kappa, penalty)
+                     boundary, mu, kappa, penalty, wall_gradient)
         u2 = impose(0.75 * coeff + 0.25 * (u1 + dt * k2))
         k3 = _rhs_ns(u2, basis, derivative, weights, signs, dx, dy, periodic,
-                     boundary, mu, kappa, penalty)
+                     boundary, mu, kappa, penalty, wall_gradient)
         coeff = impose(coeff / 3.0 + (2.0 / 3.0) * (u2 + dt * k3))
         if not torch.isfinite(coeff).all():
             raise FloatingPointError("non-finite Navier-Stokes state; reduce the CFL")

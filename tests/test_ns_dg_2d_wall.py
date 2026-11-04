@@ -69,16 +69,20 @@ def _couette_state(ncells=(2, 8), degree=1, wall_speed=1.0):
     return op, coeff, boundary
 
 
-def _wall_fluxes(ncells=(2, 8), degree=1, penalty_scale=2.0):
+def _wall_fluxes(ncells=(2, 8), degree=1, penalty_scale=2.0, wall_gradient="face"):
     op, coeff, boundary = _couette_state(ncells, degree)
     penalty = penalty_scale * (degree + 1.0) ** 2
     h = op["dy"]
     left = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"], 1, "left")
     right = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"], 1, "right")
+    recon = (ns._wall_normal_derivative(coeff, op["basis"], op["signs"], h, 1)
+             if wall_gradient == "taylor" else None)
     top = ns._boundary_flux(right, boundary["ymax"], 1, h, MU, KAPPA, penalty,
-                            2.0 / h, 2.0 / op["dx"])
+                            2.0 / h, 2.0 / op["dx"],
+                            None if recon is None else recon["right"])
     bottom = ns._boundary_flux(left, boundary["ymin"], 1, h, MU, KAPPA, penalty,
-                               2.0 / h, 2.0 / op["dx"])
+                               2.0 / h, 2.0 / op["dx"],
+                               None if recon is None else recon["left"])
     return {
         "mx_top": float(top[0, -1, 0, 1]), "mx_bottom": float(bottom[0, 0, 0, 1]),
         "energy_top": float(top[0, -1, 0, 3]),
@@ -170,3 +174,113 @@ def test_impulsively_started_couette_reaches_steady_state():
     independently of the time step (the instability is spatial)."""
     ns.solve_couette_dg_2d(ncells=(2, 8), degree=1, mu=MU, final_time=0.1,
                            device=DEVICE, dtype=DTYPE)
+
+# ---------------------------------------------------------------------------
+# Second-order one-sided wall gradient (``wall_gradient="taylor"``)
+# ---------------------------------------------------------------------------
+def test_taylor_wall_gradient_is_exact_for_polynomial_data():
+    """For data the DG space resolves, the reconstruction must not disturb the
+    algebraically exact wall flux (the ``1.5 q_0 - 0.5 q_1`` stencil is exact
+    for a linear field)."""
+    slope, degree, ncells = 0.4, 1, (2, 4)
+    op = _operators(degree, ncells)
+
+    def initial(x, y):
+        zeros = torch.zeros_like(x + y)
+        return torch.ones_like(x + y), zeros, zeros, 1.0 + slope * y
+
+    coeff = ns._initial_coefficients(initial, op["x"], op["y"], op["dx"], op["dy"],
+                                     op["nodes"], op["weights"], op["basis"],
+                                     DEVICE, DTYPE)
+    boundary = {
+        "xmin": None, "xmax": None,
+        "ymin": {"velocity": (0.0, 0.0), "temperature": 1.0},
+        "ymax": {"velocity": (0.0, 0.0), "temperature": 1.0 + slope},
+    }
+    penalty, h = 2.0 * (degree + 1.0) ** 2, op["dy"]
+    left = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"], 1, "left")
+    right = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"], 1, "right")
+    recon = ns._wall_normal_derivative(coeff, op["basis"], op["signs"], h, 1)
+    pairs = {
+        "bottom": (left, boundary["ymin"], recon["left"]),
+        "top": (right, boundary["ymax"], recon["right"]),
+    }
+    for name, (side, wall, derivative) in pairs.items():
+        legacy = ns._boundary_flux(side, wall, 1, h, MU, KAPPA, penalty,
+                                   2.0 / h, 2.0 / op["dx"])
+        improved = ns._boundary_flux(side, wall, 1, h, MU, KAPPA, penalty,
+                                     2.0 / h, 2.0 / op["dx"], derivative)
+        # conduction = -kappa * slope is the exact wall heat flux
+        assert abs(float(legacy[0, -1 if name == "top" else 0, 0, 3])
+                   - (-KAPPA * slope)) < 1e-12
+        assert abs(float(improved[0, -1 if name == "top" else 0, 0, 3])
+                   - (-KAPPA * slope)) < 1e-12
+        row = -1 if name == "top" else 0
+        assert torch.abs(improved[:, row, 0, :] - legacy[:, row, 0, :]).max() < 1e-12
+
+
+def test_taylor_wall_gradient_reduces_the_wall_flux_error():
+    """The one-sided Taylor gradient halve the wall heat-flux error of the
+    analytic Brinkman/Couette state (measured ratio 0.57 at 16 cells)."""
+    analytic = -KAPPA * (MU * 1.0**2 / (2.0 * KAPPA))
+    errors = {}
+    for mode in ("face", "taylor"):
+        flux = _wall_fluxes((2, 16), 1, wall_gradient=mode)
+        errors[mode] = abs(flux["energy_bottom"] - analytic)
+    assert errors["taylor"] < 0.65 * errors["face"], errors
+
+
+def test_taylor_wall_gradient_is_the_default_of_the_public_solver():
+    """The improved path must be what a user gets by default."""
+    import inspect
+
+    signature = inspect.signature(ns.solve_navier_stokes_dg_2d)
+    assert signature.parameters["wall_gradient"].default == "taylor"
+    with pytest.raises(ValueError):
+        ns.solve_navier_stokes_dg_2d(
+            lambda x, y: (torch.ones_like(x), torch.zeros_like(x), torch.zeros_like(x),
+                          torch.ones_like(x)),
+            ncells=(2, 4), degree=1, final_time=0.0, wall_gradient="bogus",
+            device=DEVICE, dtype=DTYPE,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Spectral diagnosis: what actually destabilises the wall operator
+# ---------------------------------------------------------------------------
+def _wall_spectrum(variant="default"):
+    from tools.diag_ns_wall import build_state
+    from tools.spectrum_ns_wall import _spectrum
+
+    state = build_state((2, 8), 1)
+    return _spectrum(state["coeff"], state, state["boundary"], (True, False), 8.0,
+                     "taylor", variant)
+
+
+def test_periodic_diffusion_operator_is_marginally_stable():
+    """Without walls the operator has no growing mode (max Re = 0): the
+    instability is created by the Dirichlet walls, not by the interior scheme."""
+    from tools.diag_ns_wall import build_state
+    from tools.spectrum_ns_wall import _spectrum
+
+    state = build_state((2, 8), 1)
+    free = {"xmin": None, "xmax": None, "ymin": None, "ymax": None}
+    result = _spectrum(state["coeff"], state, free, (True, True), 8.0, "taylor")
+    assert result["max_real"] <= 1e-9, result
+
+
+def test_adiabatic_wall_operator_is_stable():
+    """Dropping the diffusive wall flux (free-slip/adiabatic) removes the
+    growing mode: the *gradient* term, not the inviscid wall pressure, is what
+    makes the Dirichlet wall unstable."""
+    result = _wall_spectrum("inviscid")
+    assert result["max_real"] <= 1e-9, result
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "open defect: the Dirichlet wall lacks the adjoint (Nitsche) boundary term, so "
+    "the semi-discrete wall operator has a positive eigenvalue whose growth rate "
+    "scales with the SIPG penalty; see docs/reports/tensordg-ns-wall-spectrum.md"))
+def test_wall_operator_has_no_growing_eigenmode():
+    result = _wall_spectrum()
+    assert result["max_real"] <= 0.0, result

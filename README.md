@@ -166,3 +166,8 @@ Numerical claims should be backed by executed tests and recorded output. A
 profile that merely looks plausible is not sufficient: smooth cases should
 measure convergence, while discontinuous cases should compare with a trusted
 reference and state the error norm.
+
+Wall-bounded `ns_dg_2d` transient is still unverified: `wall_gradient="taylor"` (default) gives a
+second-order one-sided wall gradient, but the spectral study in
+`docs/reports/tensordg-ns-wall-spectrum.md` shows the wall operator itself has a growing mode
+(missing adjoint/Nitsche boundary term).
