@@ -1,0 +1,937 @@
+{
+  "timestamp": "2026-11-03",
+  "dtype": "float64",
+  "gamma": 1.4,
+  "exact_solver": "benchmarks/riemann_exact.py (Toro 2009 ch. 4)",
+  "exact_invariants": {
+    "consistency": [
+      {
+        "state": [
+          1.0,
+          0.0,
+          1.0
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          1.0,
+          3.0,
+          0.1
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          0.125,
+          0.0,
+          0.1
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          5.99924,
+          19.5975,
+          460.894
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          1.0,
+          -1.5,
+          2.5
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          4.324399606800561,
+          2.9307267540938042,
+          18.43283236152392
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          4.843606712837736,
+          3.485990800237066,
+          22.996609690571574
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          4.814821750612295,
+          1.381753389155735,
+          45.06252742501009
+        ],
+        "max_abs_error": 2.842170943040401e-14,
+        "relative_error": 1.2672448268551e-16
+      },
+      {
+        "state": [
+          4.014477799048441,
+          -2.060372393448139,
+          22.091290860333963
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          2.050292806235096,
+          -0.8578135089322094,
+          0.6488901738737246
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          2.2410314059069747,
+          1.7374717347465722,
+          38.84243605695268
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          3.38495966263368,
+          1.8676314569389385,
+          47.747659768038176
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          1.274482298080526,
+          3.835300564126391,
+          38.012741612209666
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          0.6236952179981916,
+          0.19277150083102246,
+          22.723136313712054
+        ],
+        "max_abs_error": 4.973799150320701e-14,
+        "relative_error": 2.1866396860873004e-15
+      },
+      {
+        "state": [
+          0.8742398602666526,
+          -1.2178909453177926,
+          44.08603765555042
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          1.2558375947886904,
+          3.5592761618541715,
+          16.11171921849898
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      },
+      {
+        "state": [
+          2.868179838747641,
+          -2.8258046005349398,
+          0.5751935015009871
+        ],
+        "max_abs_error": 0.0,
+        "relative_error": 0.0
+      }
+    ],
+    "mirror_symmetry": [
+      {
+        "case": "sod",
+        "flux_scale": 1.1617029392268339,
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      {
+        "case": "lax",
+        "flux_scale": 12.02424348615515,
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      {
+        "case": "123problem",
+        "flux_scale": 1.0966629547095756,
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      {
+        "case": "strong_shock",
+        "flux_scale": 41095.62512798564,
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      {
+        "case": "stationary_contact",
+        "flux_scale": 1.0,
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      {
+        "case": "moving_contact",
+        "flux_scale": 1.8125000000000002,
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      {
+        "case": "left_moving_contact",
+        "flux_scale": 1.7578125000000002,
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      {
+        "case": "sonic_rarefaction",
+        "flux_scale": 0.11258803253505767,
+        "max_abs_error": 8.881784197001252e-16,
+        "relative": 7.888746252169956e-15,
+        "scaled": 7.888746252169956e-15
+      }
+    ],
+    "isolated_contact": [
+      {
+        "case": "stationary_contact",
+        "upwind_side": "right",
+        "hllc": {
+          "max_abs_error": 0.0,
+          "relative": 0.0,
+          "scaled": 0.0
+        },
+        "rusanov": {
+          "max_abs_error": 1.4641550464346322,
+          "relative": 1.4641550464346322,
+          "scaled": 1.4641550464346322
+        }
+      },
+      {
+        "case": "moving_contact",
+        "upwind_side": "left",
+        "hllc": {
+          "max_abs_error": 0.0,
+          "relative": 0.0,
+          "scaled": 0.0
+        },
+        "rusanov": {
+          "max_abs_error": 1.4641550464346322,
+          "relative": 0.8078096807915212,
+          "scaled": 0.8078096807915212
+        }
+      },
+      {
+        "case": "left_moving_contact",
+        "upwind_side": "right",
+        "hllc": {
+          "max_abs_error": 0.0,
+          "relative": 0.0,
+          "scaled": 0.0
+        },
+        "rusanov": {
+          "max_abs_error": 1.4641550464346322,
+          "relative": 0.8329415375272573,
+          "scaled": 0.8329415375272573
+        }
+      }
+    ]
+  },
+  "exact_riemann_agreement": [
+    {
+      "case": "sod",
+      "description": "shock tube: rarefaction + contact + shock",
+      "left": [
+        1.0,
+        0.0,
+        1.0
+      ],
+      "right": [
+        0.125,
+        0.0,
+        0.1
+      ],
+      "exact_interface_primitive": {
+        "density": 0.4263194281784952,
+        "velocity": 0.9274526200489499,
+        "pressure": 0.30313017805064685
+      },
+      "exact_interface_flux": [
+        0.39539107064191553,
+        0.6698366624614509,
+        1.1540375173492898
+      ],
+      "hllc_flux": [
+        0.43026034786179024,
+        0.49090909090909085,
+        1.1617029392268339
+      ],
+      "rusanov_flux": [
+        0.5176569810212164,
+        0.55,
+        1.3311179511974138
+      ],
+      "flux_scale": 1.1540375173492898,
+      "hllc": {
+        "max_abs_error": 0.17892757155236005,
+        "relative": 0.15504484807681038,
+        "scaled": 0.15504484807681038
+      },
+      "rusanov": {
+        "max_abs_error": 0.177080433848124,
+        "relative": 0.15344426085458665,
+        "scaled": 0.15344426085458665
+      },
+      "contact_only": false,
+      "all_finite": true
+    },
+    {
+      "case": "lax",
+      "description": "Lax shock tube",
+      "left": [
+        0.445,
+        0.698,
+        3.528
+      ],
+      "right": [
+        0.5,
+        0.0,
+        0.571
+      ],
+      "exact_interface_primitive": {
+        "density": 0.34456847418960945,
+        "velocity": 1.528723026632884,
+        "pressure": 2.4660979192073564
+      },
+      "exact_interface_flux": [
+        0.5267497607454145,
+        3.271352407732234,
+        13.810437902036778
+      ],
+      "hllc_flux": [
+        0.44826070499852,
+        3.382293690896158,
+        12.02424348615515
+      ],
+      "rusanov_flux": [
+        0.04449196046334912,
+        2.7837144938268934,
+        19.459972763339987
+      ],
+      "flux_scale": 13.810437902036778,
+      "hllc": {
+        "max_abs_error": 1.7861944158816279,
+        "relative": 0.1293365517119626,
+        "scaled": 0.1293365517119626
+      },
+      "rusanov": {
+        "max_abs_error": 5.649534861303209,
+        "relative": 0.409077170570385,
+        "scaled": 0.409077170570385
+      },
+      "contact_only": false,
+      "all_finite": true
+    },
+    {
+      "case": "123problem",
+      "description": "symmetric double rarefaction (near vacuum)",
+      "left": [
+        1.0,
+        -2.0,
+        0.4
+      ],
+      "right": [
+        1.0,
+        2.0,
+        0.4
+      ],
+      "exact_interface_primitive": {
+        "density": 0.02185211820681284,
+        "velocity": 0.0,
+        "pressure": 0.0018938734200547645
+      },
+      "exact_interface_flux": [
+        0.0,
+        0.0018938734200547645,
+        0.0
+      ],
+      "hllc_flux": [
+        0.0,
+        -1.0966629547095756,
+        0.0
+      ],
+      "rusanov_flux": [
+        0.0,
+        -1.0966629547095756,
+        0.0
+      ],
+      "flux_scale": 6.8,
+      "hllc": {
+        "max_abs_error": 1.0985568281296305,
+        "relative": 580.0582111226123,
+        "scaled": 0.16155247472494566
+      },
+      "rusanov": {
+        "max_abs_error": 1.0985568281296305,
+        "relative": 580.0582111226123,
+        "scaled": 0.16155247472494566
+      },
+      "contact_only": false,
+      "all_finite": true
+    },
+    {
+      "case": "strong_shock",
+      "description": "very strong shock",
+      "left": [
+        5.99924,
+        19.5975,
+        460.894
+      ],
+      "right": [
+        5.99242,
+        -6.19633,
+        46.095
+      ],
+      "exact_interface_primitive": {
+        "density": 5.99924,
+        "velocity": 19.5975,
+        "pressure": 460.894
+      },
+      "exact_interface_flux": [
+        117.5701059,
+        2764.9741503752502,
+        54190.4009509895
+      ],
+      "hllc_flux": [
+        70.0908688023824,
+        3214.980529230402,
+        41095.62512798564
+      ],
+      "rusanov_flux": [
+        40.321739283093336,
+        3838.6450280928975,
+        57316.18298903349
+      ],
+      "flux_scale": 54190.4009509895,
+      "hllc": {
+        "max_abs_error": 13094.77582300386,
+        "relative": 0.241643826087335,
+        "scaled": 0.241643826087335
+      },
+      "rusanov": {
+        "max_abs_error": 3125.7820380439953,
+        "relative": 0.05768147094669023,
+        "scaled": 0.05768147094669023
+      },
+      "contact_only": false,
+      "all_finite": true
+    },
+    {
+      "case": "stationary_contact",
+      "description": "pure stationary contact (u = 0)",
+      "left": [
+        1.0,
+        0.0,
+        1.0
+      ],
+      "right": [
+        0.125,
+        0.0,
+        1.0
+      ],
+      "exact_interface_primitive": {
+        "density": 1.0,
+        "velocity": 0.0,
+        "pressure": 1.0
+      },
+      "exact_interface_flux": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "hllc_flux": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "rusanov_flux": [
+        1.4641550464346322,
+        1.0,
+        0.0
+      ],
+      "flux_scale": 1.0,
+      "hllc": {
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      "rusanov": {
+        "max_abs_error": 1.4641550464346322,
+        "relative": 1.4641550464346322,
+        "scaled": 1.4641550464346322
+      },
+      "contact_only": true,
+      "all_finite": true
+    },
+    {
+      "case": "moving_contact",
+      "description": "pure right-moving contact (u > 0)",
+      "left": [
+        1.0,
+        0.5,
+        1.0
+      ],
+      "right": [
+        0.125,
+        0.5,
+        1.0
+      ],
+      "exact_interface_primitive": {
+        "density": 1.0,
+        "velocity": 0.5,
+        "pressure": 1.0
+      },
+      "exact_interface_flux": [
+        0.5,
+        1.25,
+        1.8125000000000002
+      ],
+      "hllc_flux": [
+        0.5,
+        1.25,
+        1.8125000000000002
+      ],
+      "rusanov_flux": [
+        1.9641550464346322,
+        1.982077523217316,
+        1.9955193808043292
+      ],
+      "flux_scale": 1.8125000000000002,
+      "hllc": {
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      "rusanov": {
+        "max_abs_error": 1.4641550464346322,
+        "relative": 0.8078096807915212,
+        "scaled": 0.8078096807915212
+      },
+      "contact_only": true,
+      "all_finite": true
+    },
+    {
+      "case": "left_moving_contact",
+      "description": "pure left-moving contact (u < 0)",
+      "left": [
+        1.0,
+        -0.5,
+        1.0
+      ],
+      "right": [
+        0.125,
+        -0.5,
+        1.0
+      ],
+      "exact_interface_primitive": {
+        "density": 0.125,
+        "velocity": -0.5,
+        "pressure": 1.0
+      },
+      "exact_interface_flux": [
+        -0.0625,
+        1.03125,
+        -1.7578125000000002
+      ],
+      "hllc_flux": [
+        -0.0625,
+        1.03125,
+        -1.7578125000000002
+      ],
+      "rusanov_flux": [
+        1.4016550464346322,
+        0.2991724767826839,
+        -1.5747931191956712
+      ],
+      "flux_scale": 1.8125000000000002,
+      "hllc": {
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      "rusanov": {
+        "max_abs_error": 1.4641550464346322,
+        "relative": 0.8329415375272573,
+        "scaled": 0.8078096807915212
+      },
+      "contact_only": true,
+      "all_finite": true
+    },
+    {
+      "case": "sonic_rarefaction",
+      "description": "interface inside a rarefaction fan",
+      "left": [
+        1.0,
+        -0.75,
+        1.0
+      ],
+      "right": [
+        1.0,
+        0.75,
+        1.0
+      ],
+      "exact_interface_primitive": {
+        "density": 0.5077330500571122,
+        "velocity": 0.0,
+        "pressure": 0.3871592212478421
+      },
+      "exact_interface_flux": [
+        0.0,
+        0.3871592212478421,
+        0.0
+      ],
+      "hllc_flux": [
+        0.0,
+        0.11258803253505767,
+        -4.440892098500626e-16
+      ],
+      "rusanov_flux": [
+        0.0,
+        0.11258803253505767,
+        0.0
+      ],
+      "flux_scale": 2.8359375000000004,
+      "hllc": {
+        "max_abs_error": 0.2745711887127844,
+        "relative": 0.7091944958144654,
+        "scaled": 0.0968184907857752
+      },
+      "rusanov": {
+        "max_abs_error": 0.2745711887127844,
+        "relative": 0.7091944958144654,
+        "scaled": 0.0968184907857752
+      },
+      "contact_only": false,
+      "all_finite": true
+    }
+  ],
+  "rankine_hugoniot_shock": [
+    {
+      "shock_mach": 1.5,
+      "post_shock_state": [
+        1.8620689655172413,
+        0.8216777476527243,
+        2.4583333333333335
+      ],
+      "exact_flux": [
+        1.530020633560245,
+        3.7155172413793096,
+        7.58635230806955
+      ],
+      "hllc": {
+        "max_abs_error": 0.21859571937748967,
+        "relative": 0.028814337971751054,
+        "scaled": 0.028814337971751054
+      }
+    },
+    {
+      "shock_mach": 2.0,
+      "post_shock_state": [
+        2.666666666666667,
+        1.479019945774904,
+        4.5
+      ],
+      "exact_flux": [
+        3.944053188733078,
+        10.333333333333332,
+        27.608372321131544
+      ],
+      "hllc": {
+        "max_abs_error": 0.38704058574262135,
+        "relative": 0.014018957048271156,
+        "scaled": 0.014018957048271156
+      }
+    },
+    {
+      "shock_mach": 3.0,
+      "post_shock_state": [
+        3.857142857142857,
+        2.6293687924887177,
+        10.333333333333334
+      ],
+      "exact_flux": [
+        10.141851056742198,
+        36.999999999999986,
+        130.15375522819153
+      ],
+      "hllc": {
+        "max_abs_error": 0.5748897941078326,
+        "relative": 0.004417005049911234,
+        "scaled": 0.004417005049911234
+      }
+    },
+    {
+      "shock_mach": 5.0,
+      "post_shock_state": [
+        5.000000000000001,
+        4.732863826479693,
+        29.0
+      ],
+      "exact_flux": [
+        23.664319132398468,
+        141.0,
+        745.4260526705517
+      ],
+      "hllc": {
+        "max_abs_error": 1.0467448915763953,
+        "relative": 0.0014042236487795715,
+        "scaled": 0.0014042236487795715
+      }
+    }
+  ],
+  "wave_speed_attribution": [
+    {
+      "case": "sod",
+      "exact_wave_speeds": [
+        -1.1832159566199232,
+        1.7521557320301782
+      ],
+      "davis_wave_speeds": [
+        -1.1832159566199232,
+        1.1832159566199232
+      ],
+      "davis_speed_error": [
+        0.0,
+        0.568939775410255
+      ],
+      "hllc_davis": {
+        "max_abs_error": 0.17892757155236005,
+        "relative": 0.15504484807681038,
+        "scaled": 0.15504484807681038
+      },
+      "hllc_exact_speeds": {
+        "max_abs_error": 0.16218815251522967,
+        "relative": 0.1405397572236298,
+        "scaled": 0.1405397572236298
+      }
+    },
+    {
+      "case": "lax",
+      "exact_wave_speeds": [
+        -2.6335650740600323,
+        2.4793214809898405
+      ],
+      "davis_wave_speeds": [
+        -2.6335650740600323,
+        4.029565074060033
+      ],
+      "davis_speed_error": [
+        0.0,
+        1.550243593070192
+      ],
+      "hllc_davis": {
+        "max_abs_error": 1.7861944158816279,
+        "relative": 0.1293365517119626,
+        "scaled": 0.1293365517119626
+      },
+      "hllc_exact_speeds": {
+        "max_abs_error": 0.10497651898879923,
+        "relative": 0.0076012447782931765,
+        "scaled": 0.0076012447782931765
+      }
+    },
+    {
+      "case": "123problem",
+      "exact_wave_speeds": [
+        -2.748331477354788,
+        2.748331477354788
+      ],
+      "davis_wave_speeds": [
+        -2.748331477354788,
+        2.748331477354788
+      ],
+      "davis_speed_error": [
+        0.0,
+        0.0
+      ],
+      "hllc_davis": {
+        "max_abs_error": 1.0985568281296305,
+        "relative": 580.0582111226123,
+        "scaled": 0.16155247472494566
+      },
+      "hllc_exact_speeds": {
+        "max_abs_error": 1.0985568281296305,
+        "relative": 580.0582111226123,
+        "scaled": 0.16155247472494566
+      }
+    },
+    {
+      "case": "strong_shock",
+      "exact_wave_speeds": [
+        0.7895939192644335,
+        12.250778123084341
+      ],
+      "davis_wave_speeds": [
+        -9.47796144933703,
+        29.96839952883667
+      ],
+      "davis_speed_error": [
+        10.267555368601464,
+        17.71762140575233
+      ],
+      "hllc_davis": {
+        "max_abs_error": 13094.77582300386,
+        "relative": 0.241643826087335,
+        "scaled": 0.241643826087335
+      },
+      "hllc_exact_speeds": {
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      }
+    },
+    {
+      "case": "stationary_contact",
+      "exact_wave_speeds": [
+        -1.1832159566199232,
+        3.3466401061363023
+      ],
+      "davis_wave_speeds": [
+        -3.3466401061363023,
+        3.3466401061363023
+      ],
+      "davis_speed_error": [
+        2.163424149516379,
+        0.0
+      ],
+      "hllc_davis": {
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      "hllc_exact_speeds": {
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      }
+    },
+    {
+      "case": "moving_contact",
+      "exact_wave_speeds": [
+        -0.6832159566199232,
+        3.8466401061363023
+      ],
+      "davis_wave_speeds": [
+        -2.8466401061363023,
+        3.8466401061363023
+      ],
+      "davis_speed_error": [
+        2.163424149516379,
+        0.0
+      ],
+      "hllc_davis": {
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      "hllc_exact_speeds": {
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      }
+    },
+    {
+      "case": "left_moving_contact",
+      "exact_wave_speeds": [
+        -1.6832159566199232,
+        2.8466401061363023
+      ],
+      "davis_wave_speeds": [
+        -3.8466401061363023,
+        2.8466401061363023
+      ],
+      "davis_speed_error": [
+        2.163424149516379,
+        0.0
+      ],
+      "hllc_davis": {
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      },
+      "hllc_exact_speeds": {
+        "max_abs_error": 0.0,
+        "relative": 0.0,
+        "scaled": 0.0
+      }
+    },
+    {
+      "case": "sonic_rarefaction",
+      "exact_wave_speeds": [
+        -1.9332159566199232,
+        1.9332159566199232
+      ],
+      "davis_wave_speeds": [
+        -1.9332159566199232,
+        1.9332159566199232
+      ],
+      "davis_speed_error": [
+        0.0,
+        0.0
+      ],
+      "hllc_davis": {
+        "max_abs_error": 0.2745711887127844,
+        "relative": 0.7091944958144654,
+        "scaled": 0.0968184907857752
+      },
+      "hllc_exact_speeds": {
+        "max_abs_error": 0.2745711887127844,
+        "relative": 0.7091944958144654,
+        "scaled": 0.0968184907857752
+      }
+    }
+  ],
+  "summary": {
+    "consistency_max_abs_error": 4.973799150320701e-14,
+    "mirror_symmetry_max_relative_error": 7.888746252169956e-15,
+    "contact_hllc_max_abs_error": 0.0,
+    "contact_rusanov_max_scaled_error": 1.4641550464346322,
+    "riemann_hllc_max_scaled_error": 0.241643826087335,
+    "riemann_rusanov_max_scaled_error": 1.4641550464346322,
+    "riemann_hllc_median_scaled_error": 0.1130775212488689,
+    "riemann_rusanov_median_scaled_error": 0.28531482264766533,
+    "riemann_hllc_max_relative_error": 580.0582111226123,
+    "isolated_shock_max_scaled_error": 0.028814337971751054,
+    "isolated_shock_max_relative_error": 0.028814337971751054,
+    "all_finite": true,
+    "hllc_davis_max_scaled_error": 0.241643826087335,
+    "hllc_exact_speeds_max_scaled_error": 0.16155247472494566,
+    "hllc_davis_median_scaled_error": 0.1130775212488689,
+    "hllc_exact_speeds_median_scaled_error": 0.0038006223891465882
+  }
+}
