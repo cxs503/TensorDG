@@ -1,14 +1,12 @@
-"""Scope audit tests for the ``ns_dg_2d`` Dirichlet-wall path (m2786, m3127 correction).
+"""Scope audit tests for the ``ns_dg_2d`` Dirichlet-wall path (m2786).
 
 ``tests/test_ns_dg_2d_wall.py`` (m2589) recorded three open defects and
 measured all of them at **degree 1** only.  This file pins down what is a
 genuine defect and what is a degree-1 measurement:
 
-* the wall heat flux converges at **min(design order, 2)** because the Taylor
-  wall-gradient extrapolation (``_wall_normal_derivative``) is inherently
-  second-order: ``f'(wall) = 1.5 f'(wall cell) - 0.5 f'(first inland) + O(h^2)``.
-  So P1→1, P2→2, P3→2 (not 3).  This was corrected in m3127 after the original
-  test expected P3→3.
+* the wall heat flux converges at the **design order** of the element
+  (1 / 2 / 3 for P1 / P2 / P3), so "first order" was a P1 statement, not a
+  property of the wall operator;
 * the ``O(1)`` residual of the exact analytic steady state at P1 is the wall
   flux error divided by ``h`` (the residual is a divergence), and it does
   decay at P2/P3 -- it is not an independent inconsistency;
@@ -21,12 +19,15 @@ Numbers behind these assertions: ``benchmarks/verify_ns_wall_scope.py`` ->
 ``validation/ns_dg_2d_wall/scope_audit.json`` and
 ``docs/reports/tensordg-ns-wall-scope-audit.md``.
 
-m3127 correction: the original test ``test_wall_heat_flux_converges_at_design_order``
-expected P3→3, but the measured order is 2.03 (capped by the O(h^2) wall gradient).
-The test now uses ``EFFECTIVE_ORDER = {1: 1, 2: 2, 3: 2}``.  The round-off test
-tolerance was also relaxed from 2e-7 to 1e-5 to reflect the actual P3/32-cell
-error of ~4.8e-6.  The residual identity test tolerance was widened from [2.9, 3.1]
-to [3.3, 3.8] to account for the Taylor extrapolation's additional contribution.
+m3139 (ratchet red-main repair): four of these assertions went red after PR #36
+(m2920) replaced the default wall normal derivative by an ``O(h^2)`` two-point
+extrapolation.  The bisection table
+(``tools/bisect_ns_wall_gradient.py`` ->
+``validation/ns_dg_2d_wall/bisect_wall_gradient.json``) shows the *assertions
+were right*: they reproduce the pre-#36 numbers bit-for-bit on the pre-#36
+solver, and the stencil caps the wall heat flux at second order at every
+degree.  The default is therefore the one-sided DG derivative again and the
+stencil is opt-in; the two guards at the end of this file keep it that way.
 """
 import math
 
@@ -45,9 +46,7 @@ from tools.diag_ns_wall import (
 
 DTYPE = torch.float64
 DEVICE = torch.device("cpu")
-# The wall gradient extrapolation is O(h^2), capping convergence at 2.
 DESIGN_ORDER = {1: 1.0, 2: 2.0, 3: 3.0}
-EFFECTIVE_ORDER = {1: 1.0, 2: 2.0, 3: 2.0}  # capped by _wall_normal_derivative
 
 
 def _flux_errors(degree, refinements=(8, 16, 32)):
@@ -68,26 +67,23 @@ def _residual(degree, ny):
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3])
-def test_wall_heat_flux_converges_at_effective_order(degree):
-    """Observed order of the wall heat flux must match the *effective* order.
+def test_wall_heat_flux_converges_at_design_order(degree):
+    """Observed order of the wall heat flux must match the element design order.
 
-    The Taylor wall-gradient extrapolation (``_wall_normal_derivative``) is
-    second-order, so the effective order is ``min(degree, 2)``:
-    P1→1, P2→2, P3→2 (not 3).
+    P1 -> 1, P2 -> 2, P3 -> 3 (P3 is already at round-off by 32 cells, so the
+    tolerance there is loose and the floor test below covers it).
     """
     errors = _flux_errors(degree)
     order = math.log2(errors[0] / errors[-1]) / 2.0  # 8 -> 32 cells
-    target = EFFECTIVE_ORDER[degree]
+    target = DESIGN_ORDER[degree]
     assert order > target - 0.35, (degree, order, errors)
 
 
-def test_wall_heat_flux_floor_at_p3():
-    """At P3/32 cells the wall heat flux error is ~5e-6, limited by the
-    O(h^2) wall gradient extrapolation, not by round-off."""
+def test_wall_heat_flux_is_round_off_accurate_at_p3():
+    """At P3 the Brinkman temperature parabola is resolved, so the wall heat
+    flux must be exact to round-off (the m2589 green test, at higher degree)."""
     flux = wall_fluxes((2, 32), 3)
-    # The error is dominated by the O(h^2) wall gradient, not round-off.
-    # At 32 cells: h = 1/32, h^2 ≈ 9.8e-4, and the prefactor gives ~5e-6.
-    assert abs(flux["energy_bottom"] - ANALYTIC_E_FLUX_BOTTOM) < 1e-5
+    assert abs(flux["energy_bottom"] - ANALYTIC_E_FLUX_BOTTOM) < 2e-7
 
 
 def test_exact_state_residual_decays_with_degree():
@@ -101,29 +97,39 @@ def test_exact_state_residual_decays_with_degree():
     p3_fine, _ = _residual(3, 32)
     assert p2_fine < 0.6 * p2_coarse, (p2_coarse, p2_fine)
     assert p3_fine < 0.25 * p3_coarse, (p3_coarse, p3_fine)
-    # P3 residual is capped by the O(h^2) wall gradient, so it doesn't decay
-    # as fast as 1e-3 * p1.  Relax the tolerance to reflect reality.
-    assert p3_fine < 0.01 * p1, (p1, p3_fine)
+    assert p3_fine < 1e-3 * p1
+
+
+def _wall_cell_residual_energy(degree, ny):
+    """Energy residual of the *bottom* wall cell.
+
+    m2782 note: the outward_sign fix lowered the bottom-wall residual, so the
+    global energy max now sits in the top wall cell for ``ny >= 16``; the
+    identity below is a statement about the wall cell its flux error belongs
+    to, so the residual is measured there."""
+    d = build_state((2, ny), degree)
+    penalty = 2.0 * (degree + 1.0) ** 2
+    rhs = ns._rhs_ns(d["coeff"], d["basis"], d["derivative"], d["weights"],
+                     d["signs"], d["dx"], d["dy"], (True, False), d["boundary"],
+                     MU, KAPPA, penalty)
+    return float(rhs[:, 0, ..., 3].abs().max())
 
 
 def test_residual_equals_flux_error_over_h_at_p1():
-    """Identity check at P1: ``residual * h / flux_error ≈ 3``.
+    """Identity check at P1: ``residual * h / flux_error = 3`` exactly.
 
     The residual is a divergence, so a wall flux error ``eps`` enters it as
-    ``eps / h``; the factor 3 is the P1 modal weight ``2k+1 = 3``.  The Taylor
-    wall gradient adds a small extra contribution, so the ratio is ~3.55 rather
-    than exactly 3.  The tolerance is widened accordingly.
-
+    ``eps / h``; the factor 3 is the P1 modal weight ``2k+1 = 3``.  The flat
+    P1 residual of m2589 is therefore *this* identity, not a second defect.
     (At P2 the residual is dominated by the interior contribution, so the
     identity only holds at P1 -- that is why the flat-residual statement must
     not be carried over to higher degrees.)
     """
     for ny in (16, 32):
         flux_error = _flux_errors(1, (ny,))[0]
-        _, residual_energy = _residual(1, ny)
+        residual_energy = _wall_cell_residual_energy(1, ny)
         ratio = residual_energy * (1.0 / ny) / flux_error
-        # The Taylor extrapolation adds ~18% to the pure flux-error contribution.
-        assert 3.3 < ratio < 3.8, (ny, ratio, residual_energy, flux_error)
+        assert 2.9 < ratio < 3.1, (ny, ratio, residual_energy, flux_error)
 
 
 def test_steady_state_march_survives_at_p2():
@@ -133,12 +139,32 @@ def test_steady_state_march_survives_at_p2():
     assert failure is None, failure
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "open defect (m2786): the impulsively started wall-bounded transient goes "
-    "non-physical at every degree (P1/P2/P3), so this is not a P1 "
-    "representability issue but an instability of the wall closure"
-))
+# retired by the m2782 outward_sign fix (the P2 transient now reaches final_time)
 def test_impulsively_started_couette_reaches_final_time_at_p2():
     """Impulsively started Couette at P2 must reach t = 0.05.  It currently
     raises the positivity guard well before that."""
     ns.solve_couette_dg_2d(ncells=(2, 8), degree=2, mu=MU, final_time=0.05)
+
+# ---------------------------------------------------------------------------
+# m3139 guards: the design-order path must stay the default
+# ---------------------------------------------------------------------------
+def test_default_wall_gradient_is_the_design_order_path():
+    """Fail-closed: a user of the public solver must get the design-order wall
+    operator, not the O(h^2)-capped extrapolation of PR #36."""
+    import inspect
+
+    assert inspect.signature(ns._rhs_ns).parameters["wall_gradient"].default == "face"
+    assert (inspect.signature(ns.solve_navier_stokes_dg_2d)
+            .parameters["wall_gradient"].default == "face")
+
+
+def test_taylor_wall_gradient_is_not_the_design_order_path_at_p3():
+    """Negative control for the guard above: the opt-in stencil really is the
+    wrong default.  At P3/32 cells it is >10x the one-sided derivative error,
+    and its observed order stays at 2 instead of 3."""
+    face = _flux_errors(3)
+    taylor = [abs(wall_fluxes((2, ny), 3, wall_gradient="taylor")["energy_bottom"]
+                  - ANALYTIC_E_FLUX_BOTTOM) for ny in (8, 16, 32)]
+    assert taylor[-1] > 10.0 * face[-1], (taylor, face)
+    order = math.log2(taylor[0] / taylor[-1]) / 2.0
+    assert order < 2.65, order
