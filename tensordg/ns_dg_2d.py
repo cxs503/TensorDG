@@ -125,14 +125,30 @@ def _face_weights(degree: int, signs: torch.Tensor, device, dtype):
 # Primitive variables and their derivatives
 # ---------------------------------------------------------------------------
 
-def _gas_gradients(state: torch.Tensor, d_normal, d_tangential):
+def _gas_gradients(state: torch.Tensor, d_normal, d_tangential,
+                   conversion_state=None):
     """Primitive fields plus their normal/tangential derivatives.
 
     ``u``, ``v`` and ``T = p/rho`` are rational in the conservative modes, so
     their derivatives follow exactly from the quotient rule applied to the
     conservative derivatives.  Differentiating *after* forming the primitives
     keeps the viscous flux consistent with the HLLC flux (same state).
+
+    ``conversion_state`` (optional) supplies the state used in the quotient
+    rule instead of the face trace.  Evaluating the denominators at the cell
+    centre makes ``grad T`` a *cell* quantity; evaluating them at each face
+    makes the same cell gradient differ between its two faces, which destroys
+    the two-sided cancellation that the interface average relies on (see
+    ``docs/reports/tensordg-ns-wall-gradient-fix.md``).
     """
+    base = state if conversion_state is None else conversion_state
+    rho_c = base[..., 0].clamp_min(1e-12)
+    u_c = base[..., 1] / rho_c
+    v_c = base[..., 2] / rho_c
+    kinetic_c = 0.5 * (u_c * u_c + v_c * v_c)
+    pressure_c = (GAMMA - 1.0) * (base[..., 3] - rho_c * kinetic_c)
+    temperature_c = pressure_c / rho_c
+
     rho = state[..., 0].clamp_min(1e-12)
     velocity_x = state[..., 1] / rho
     velocity_y = state[..., 2] / rho
@@ -140,20 +156,21 @@ def _gas_gradients(state: torch.Tensor, d_normal, d_tangential):
     pressure = (GAMMA - 1.0) * (state[..., 3] - rho * kinetic)
     temperature = pressure / rho
 
-    def _derivative(dstate):
+    def _derivative(dstate, rho_conv, u_conv, v_conv, T_conv):
         drho = dstate[..., 0]
-        du = (dstate[..., 1] - velocity_x * drho) / rho
-        dv = (dstate[..., 2] - velocity_y * drho) / rho
+        du = (dstate[..., 1] - u_conv * drho) / rho_conv
+        dv = (dstate[..., 2] - v_conv * drho) / rho_conv
         dp = (GAMMA - 1.0) * (
             dstate[..., 3]
-            - 0.5 * drho * (velocity_x * velocity_x + velocity_y * velocity_y)
-            - rho * (velocity_x * du + velocity_y * dv)
+            - 0.5 * drho * (u_conv * u_conv + v_conv * v_conv)
+            - rho_conv * (u_conv * du + v_conv * dv)
         )
-        dT = (dp - temperature * drho) / rho
+        dT = (dp - T_conv * drho) / rho_conv
         return du, dv, dT
 
-    normal = _derivative(d_normal)
-    tangential = _derivative(d_tangential)
+    conversion = (rho_c, u_c, v_c, temperature_c)
+    normal = _derivative(d_normal, *conversion)
+    tangential = _derivative(d_tangential, *conversion)
     return {
         "state": state,
         "u": velocity_x,
@@ -169,11 +186,29 @@ def _gas_gradients(state: torch.Tensor, d_normal, d_tangential):
     }
 
 
-def _face_primitives(coeff, basis, derivative, signs, axis, side):
+def _centre_mode_weights(degree: int, device, dtype):
+    """``P_k(0)``: the Legendre modes evaluated at the element centre."""
+    values = [1.0, 0.0]
+    for k in range(2, degree + 1):
+        values.append(-(k - 1.0) / k * values[k - 2])
+    return torch.tensor(values[: degree + 1], device=device, dtype=dtype)
+
+
+def _cell_centre_state(coeff):
+    """Conserved state at the centre of every cell (quotient-rule operands)."""
+    degree = int(coeff.shape[2] - 1)
+    weights = _centre_mode_weights(degree, coeff.device, coeff.dtype)
+    return torch.einsum("xyklv,k,l->xyv", coeff, weights, weights)
+
+
+def _face_primitives(coeff, basis, derivative, signs, axis, side,
+                     centre_denominators=False):
     """Primitive fields and derivatives on one face of every cell.
 
     ``side="right"`` evaluates at ``xi = +1``, ``side="left"`` at ``xi = -1``.
     Derivatives are per unit reference coordinate; the caller rescales them.
+    The quotient rule that turns conservative derivatives into ``grad T`` uses
+    the *cell-centre* state, so the trace derivative is a cell quantity.
     """
     degree = int(coeff.shape[2] - 1)
     plus, minus, derivative_plus, derivative_minus = _face_weights(
@@ -191,6 +226,14 @@ def _face_primitives(coeff, basis, derivative, signs, axis, side):
         state = torch.einsum("xyklv,ak,l->xyav", coeff, basis, value_k)
         d_normal = torch.einsum("xyklv,ak,l->xyav", coeff, basis, deriv_k)
         d_tangential = torch.einsum("xyklv,ak,l->xyav", coeff, derivative, value_k)
+    if centre_denominators:
+        # m2879: evaluate the quotient-rule denominators at the cell centre so
+        # the cell gradient is a *cell* quantity (opt-in; the solver defaults
+        # keep the historical face-trace denominators of main).
+        centre = _cell_centre_state(coeff)
+        centre = centre.unsqueeze(2).expand(-1, -1, state.shape[2], -1)
+        return _gas_gradients(state, d_normal, d_tangential,
+                              conversion_state=centre)
     return _gas_gradients(state, d_normal, d_tangential)
 
 
@@ -215,6 +258,28 @@ def _viscous_flux(face, axis, mu, kappa):
         energy = u * tau_xy + v * tau_yy + kappa * face["T_y"]
     zeros = torch.zeros_like(momentum_first)
     return torch.stack([zeros, momentum_first, momentum_second, energy], dim=-1)
+
+
+def _extrapolate_trace_derivative(values: torch.Tensor, neighbour, factor: float = 1.5):
+    """Second-order extrapolation of a one-sided face derivative to the face.
+
+    Interior faces average the two one-sided traces, and the two O(h) offsets
+    cancel, leaving an O(h^2) face derivative.  A boundary face has only one
+    side available, so the same accuracy is recovered by linear extrapolation
+    from the two innermost cells: ``g_face = 1.5 g_cell - 0.5 g_neighbour``
+    (exact for a quadratic trace).  Without ``neighbour`` the old first-order
+    mirror value is returned.
+    """
+    if neighbour is None:
+        return values
+    return factor * values - (factor - 1.0) * neighbour
+
+def _shift_along(values, axis: int, shift: int):
+    """Shift a per-cell face array (or dict of them) by ``shift`` cells."""
+    if isinstance(values, dict):
+        return {key: torch.roll(value, shifts=shift, dims=axis)
+                for key, value in values.items()}
+    return torch.roll(values, shifts=shift, dims=axis)
 
 
 def _replace_last(tensor, dim, values):
@@ -300,7 +365,7 @@ def _wall_normal_derivative(coeff, basis, signs, h, axis):
 
 
 def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
-                   tangential_scale, normal_derivative=None):
+                   tangential_scale, normal_derivative=None, neighbour=None):
     """Flux on an outermost face.
 
     ``wall is None`` gives an outflow face (physical flux, interior gradient);
@@ -310,6 +375,13 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
     ``normal_derivative`` optionally replaces the one-sided DG face derivative
     by a better estimate (see ``_wall_normal_derivative``); ``None`` keeps the
     historical one-sided face derivative.
+
+    ``neighbour`` (mission m2879) optionally holds the face primitives of the
+    adjacent inner cell; when given, the one-sided wall derivatives are
+    extrapolated to the face (``_extrapolate_trace_derivative``), which lifts
+    the *reconstructed* wall flux to second order.  The public solvers keep
+    ``neighbour=None`` (the m2920 Taylor default), so this path is exercised
+    only by the reconstructed-flux tests and benchmarks.
     """
     inner_u, inner_v = side["u"], side["v"]
     if wall is None:
@@ -333,14 +405,21 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
             face_T = torch.as_tensor(
                 wall_temperature, device=inner_u.device, dtype=inner_u.dtype
             ).expand_as(inner_u)
-        if normal_derivative is None:
-            base_u = side["u_n"] * normal_scale
-            base_v = side["v_n"] * normal_scale
-            base_T = side["T_n"] * normal_scale
-        else:
+        if normal_derivative is not None:
             base_u = normal_derivative["u_n"]
             base_v = normal_derivative["v_n"]
             base_T = normal_derivative["T_n"]
+        elif neighbour is not None:
+            base_u = _extrapolate_trace_derivative(
+                side["u_n"], neighbour["u_n"]) * normal_scale
+            base_v = _extrapolate_trace_derivative(
+                side["v_n"], neighbour["v_n"]) * normal_scale
+            base_T = _extrapolate_trace_derivative(
+                side["T_n"], neighbour["T_n"]) * normal_scale
+        else:
+            base_u = side["u_n"] * normal_scale
+            base_v = side["v_n"] * normal_scale
+            base_T = side["T_n"] * normal_scale
         normal_u = base_u - (penalty / h) * (inner_u - face_u)
         normal_v = base_v - (penalty / h) * (inner_v - face_v)
         normal_T = base_T - (penalty / h) * (side["temperature"] - face_T)
@@ -350,9 +429,17 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
             inviscid = torch.stack([zeros, pressure, zeros, zeros], dim=-1)
         else:
             inviscid = torch.stack([zeros, zeros, pressure, zeros], dim=-1)
-    tangential_u = side["u_t"] * tangential_scale
-    tangential_v = side["v_t"] * tangential_scale
-    tangential_T = side["T_t"] * tangential_scale
+    if wall is None or neighbour is None:
+        tangential_u = side["u_t"] * tangential_scale
+        tangential_v = side["v_t"] * tangential_scale
+        tangential_T = side["T_t"] * tangential_scale
+    else:
+        tangential_u = _extrapolate_trace_derivative(
+            side["u_t"], neighbour["u_t"]) * tangential_scale
+        tangential_v = _extrapolate_trace_derivative(
+            side["v_t"], neighbour["v_t"]) * tangential_scale
+        tangential_T = _extrapolate_trace_derivative(
+            side["T_t"], neighbour["T_t"]) * tangential_scale
     face = {"u": face_u, "v": face_v}
     if axis == 0:
         face.update(u_x=normal_u, v_x=normal_v, T_x=normal_T,
@@ -363,8 +450,6 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
     # conservation form: dU/dt = -div(F_inv) + div(F_v), so the total flux
     # entering the strong-form divergence is F_inv - F_v
     return inviscid - _viscous_flux(face, axis, mu, kappa)
-
-
 def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
                     wall_left, wall_right, mu, kappa, penalty, axis,
                     wall_gradient="face"):
