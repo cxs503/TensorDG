@@ -1,0 +1,296 @@
+{
+  "timestamp": "2026-11-04T09:12:14Z",
+  "gamma": 1.4,
+  "cases": {
+    "smooth_advection": [
+      {
+        "ncells": 16,
+        "degree": 1,
+        "limiter": "none",
+        "tvb_constant": 1.0,
+        "final_time": 0.05,
+        "steps": 28,
+        "entropy_initial": -0.014070039544204334,
+        "entropy_final": -0.014059739483159415,
+        "entropy_drift": 1.0300061044918665e-05,
+        "density_linf_error": 0.0026141111117605753,
+        "density_linf_exact_amplitude": 0.19753766811902762
+      },
+      {
+        "ncells": 32,
+        "degree": 1,
+        "limiter": "none",
+        "tvb_constant": 1.0,
+        "final_time": 0.05,
+        "steps": 56,
+        "entropy_initial": -0.014070894099030201,
+        "entropy_final": -0.014069321852639557,
+        "entropy_drift": 1.5722463906440304e-06,
+        "density_linf_error": 0.0006524905787705926,
+        "density_linf_exact_amplitude": 0.1998458072481446
+      },
+      {
+        "ncells": 64,
+        "degree": 1,
+        "limiter": "none",
+        "tvb_constant": 1.0,
+        "final_time": 0.05,
+        "steps": 112,
+        "entropy_initial": -0.014070947661957064,
+        "entropy_final": -0.014070732512552706,
+        "entropy_drift": 2.151494043582669e-07,
+        "density_linf_error": 0.0001620956708783261,
+        "density_linf_exact_amplitude": 0.1998458072481446
+      },
+      {
+        "ncells": 16,
+        "degree": 1,
+        "limiter": "tvb",
+        "tvb_constant": 1.0,
+        "final_time": 0.05,
+        "steps": 28,
+        "entropy_initial": -0.014070039544204334,
+        "entropy_final": -0.01386141963717368,
+        "entropy_drift": 0.00020861990703065388,
+        "density_linf_error": 0.008214713583196254,
+        "density_linf_exact_amplitude": 0.19753766811902762
+      },
+      {
+        "ncells": 32,
+        "degree": 1,
+        "limiter": "tvb",
+        "tvb_constant": 1.0,
+        "final_time": 0.05,
+        "steps": 56,
+        "entropy_initial": -0.014070894099030201,
+        "entropy_final": -0.014026938199150223,
+        "entropy_drift": 4.395589987997786e-05,
+        "density_linf_error": 0.0036883406108438876,
+        "density_linf_exact_amplitude": 0.1998458072481446
+      },
+      {
+        "ncells": 64,
+        "degree": 1,
+        "limiter": "tvb",
+        "tvb_constant": 1.0,
+        "final_time": 0.05,
+        "steps": 112,
+        "entropy_initial": -0.014070947661957064,
+        "entropy_final": -0.01406093556462273,
+        "entropy_drift": 1.0012097334333517e-05,
+        "density_linf_error": 0.001345939477242375,
+        "density_linf_exact_amplitude": 0.1998458072481446
+      },
+      {
+        "ncells": 16,
+        "degree": 1,
+        "limiter": "weno",
+        "tvb_constant": 1.0,
+        "final_time": 0.05,
+        "steps": 28,
+        "entropy_initial": -0.014070039544204334,
+        "entropy_final": -0.013894665049602507,
+        "entropy_drift": 0.00017537449460182722,
+        "density_linf_error": 0.009013143712972793,
+        "density_linf_exact_amplitude": 0.19753766811902762
+      },
+      {
+        "ncells": 32,
+        "degree": 1,
+        "limiter": "weno",
+        "tvb_constant": 1.0,
+        "final_time": 0.05,
+        "steps": 56,
+        "entropy_initial": -0.014070894099030201,
+        "entropy_final": -0.014071743915615309,
+        "entropy_drift": -8.498165851075073e-07,
+        "density_linf_error": 0.004153385752597383,
+        "density_linf_exact_amplitude": 0.1998458072481446
+      },
+      {
+        "ncells": 64,
+        "degree": 1,
+        "limiter": "weno",
+        "tvb_constant": 1.0,
+        "final_time": 0.05,
+        "steps": 112,
+        "entropy_initial": -0.014070947661957064,
+        "entropy_final": -0.014077344692267435,
+        "entropy_drift": -6.397030310370533e-06,
+        "density_linf_error": 0.0022768059205140467,
+        "density_linf_exact_amplitude": 0.1998458072481446
+      }
+    ],
+    "limiter_activity_on_smooth_data": [
+      {
+        "ncells": 64,
+        "limiter": "tvb",
+        "tvb_constant": 1.0,
+        "max_relative_change": 0.00012987649269539814,
+        "mean_absolute_change": 7.436921183578567e-05
+      },
+      {
+        "ncells": 64,
+        "limiter": "weno",
+        "tvb_constant": 1.0,
+        "max_relative_change": 0.0026083804172027138,
+        "mean_absolute_change": 0.0007338889753835203
+      }
+    ],
+    "extruded_sod": [
+      {
+        "ncells": 16,
+        "y_cells": 16,
+        "degree": 1,
+        "limiter": "none",
+        "final_time": 0.1,
+        "steps": 53,
+        "entropy_production": 0.003516869947282515,
+        "entropy_1d_solver": 0.003517950632763847,
+        "relative_error_vs_1d": 0.000307191769909208,
+        "relative_error_vs_analytic": 1.9745740268543228
+      },
+      {
+        "ncells": 32,
+        "y_cells": 32,
+        "degree": 1,
+        "limiter": "none",
+        "final_time": 0.1,
+        "steps": 110,
+        "entropy_production": 0.0023486065215351792,
+        "entropy_1d_solver": 0.002348754954124163,
+        "relative_error_vs_1d": 6.319628564200005e-05,
+        "relative_error_vs_analytic": 0.9864550190880341
+      },
+      {
+        "ncells": 16,
+        "y_cells": 16,
+        "degree": 1,
+        "limiter": "tvb",
+        "final_time": 0.1,
+        "steps": 49,
+        "entropy_production": 0.009742015608099126,
+        "entropy_1d_solver": 0.009742384262196042,
+        "relative_error_vs_1d": 3.7840233662987475e-05,
+        "relative_error_vs_analytic": 7.239811830247703
+      },
+      {
+        "ncells": 32,
+        "y_cells": 32,
+        "degree": 1,
+        "limiter": "tvb",
+        "final_time": 0.1,
+        "steps": 103,
+        "entropy_production": 0.0058839355562295,
+        "entropy_1d_solver": 0.005882341054550523,
+        "relative_error_vs_1d": 0.00027106583317593305,
+        "relative_error_vs_analytic": 3.9766417705519257
+      },
+      {
+        "ncells": 16,
+        "y_cells": 16,
+        "degree": 1,
+        "limiter": "weno",
+        "final_time": 0.1,
+        "steps": 51,
+        "entropy_production": 0.007822043034302624,
+        "entropy_1d_solver": 0.007938058154480974,
+        "relative_error_vs_1d": 0.014615050421728242,
+        "relative_error_vs_analytic": 5.615896065406672
+      },
+      {
+        "ncells": 32,
+        "y_cells": 32,
+        "degree": 1,
+        "limiter": "weno",
+        "final_time": 0.1,
+        "steps": 106,
+        "entropy_production": 0.004823960388970719,
+        "entropy_1d_solver": 0.004838022900587123,
+        "relative_error_vs_1d": 0.002906664954954561,
+        "relative_error_vs_analytic": 3.0801131388705523
+      }
+    ]
+  },
+  "self_checks": {
+    "uniform_state_relative_error": 3.203426503814918e-15,
+    "quadrature_orders": [
+      4,
+      6,
+      8,
+      10
+    ],
+    "quadrature_values": [
+      -0.014070039544203862,
+      -0.014070039544204334,
+      -0.014070039544204355,
+      -0.014070039544204355
+    ],
+    "quadrature_relative_spread": 3.501493123950368e-14,
+    "one_dimensional_cross_check_relative_error": 2.1889504619127855e-15,
+    "pass": true
+  },
+  "analytic_budget": {
+    "production_total": 0.00118231044698581,
+    "shock_speed": 1.752155732030178,
+    "shock_position": 0.6752155732030178,
+    "final_time": 0.1
+  },
+  "verdicts": {
+    "C1_smooth_entropy_conserved": {
+      "finest_drift": 2.151494043582669e-07,
+      "observed_orders": [
+        2.7117536590349682,
+        2.8694165723443588
+      ],
+      "pass": true,
+      "finest_drift_relative_to_initial_entropy": 1.5290327952818406e-05
+    },
+    "C2_tvb_dissipative_side": {
+      "drifts": [
+        0.00020861990703065388,
+        4.395589987997786e-05,
+        1.0012097334333517e-05
+      ],
+      "pass": true,
+      "amplification_vs_unlimited": 46.53555683408431
+    },
+    "C3_weno_dissipative_side": {
+      "drifts": [
+        0.00017537449460182722,
+        -8.498165851075073e-07,
+        -6.397030310370533e-06
+      ],
+      "pass": false,
+      "violating_meshes": [
+        32,
+        64
+      ]
+    },
+    "C4_two_dimensional_path_matches_the_1d_solver": {
+      "relative_errors": [
+        0.000307191769909208,
+        6.319628564200005e-05,
+        3.7840233662987475e-05,
+        0.00027106583317593305,
+        0.014615050421728242,
+        0.002906664954954561
+      ],
+      "pass": true,
+      "tolerance": 0.02
+    },
+    "C5_three_percent_against_the_analytic_rh_budget": {
+      "relative_errors": [
+        1.9745740268543228,
+        0.9864550190880341,
+        7.239811830247703,
+        3.9766417705519257,
+        5.615896065406672,
+        3.0801131388705523
+      ],
+      "pass": false
+    }
+  },
+  "runtime_seconds": 132.85,
+  "quick_mode": false
+}
