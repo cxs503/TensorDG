@@ -67,3 +67,49 @@ def test_high_order_degrees_use_the_full_modal_basis():
         for axis in (2, 3):
             slice_ = coeff[..., 1:, :, :] if axis == 2 else coeff[..., :, 1:, :]
             assert float(slice_.abs().max()) > 1e-4, (degree, axis)
+
+# ---------------------------------------------------------------------------
+# Space/time order coupling (m3694): the observed P3 order deficit was blamed on
+# the third-order time integrator by the original report, so make the blame
+# machine-decidable instead of a narrative.
+# ---------------------------------------------------------------------------
+from benchmarks.design_order_euler_dg_2d import (  # noqa: E402
+    TIME_ORDER,
+    cfl_schedule,
+    order_matching_exponent,
+    temporal_study,
+)
+
+
+def test_order_matching_exponent_only_engages_above_second_order():
+    """gamma = (p+1)/q - 1, clipped at 0: P1/P2 keep the historical CFL."""
+    assert order_matching_exponent(1) == 0.0
+    assert order_matching_exponent(2) == 0.0
+    assert order_matching_exponent(3) == pytest.approx(1.0 / 3.0)
+
+
+def test_cfl_schedule_keeps_the_reference_rung_and_refines_inwards():
+    meshes = (8, 12, 16, 24, 32)
+    const = cfl_schedule(3, meshes, 0.2, "const")
+    assert const == [0.2] * len(meshes)
+    matched = cfl_schedule(3, meshes, 0.2, "h")
+    assert matched[0] == pytest.approx(0.2)
+    assert all(b < a for a, b in zip(matched, matched[1:])), matched
+    # the matched CFL must reproduce dt ~ h^(4/3): CFL_i * h_i constant ratio
+    assert matched[-1] / matched[0] == pytest.approx((8.0 / 32.0) ** (1.0 / 3.0), rel=1e-6)
+
+
+def test_third_order_time_integrator_is_not_the_order_bottleneck():
+    """Halving dt at a fixed mesh must barely move the error.
+
+    If SSP-RK3 were limiting the observed order, a 2x smaller dt would cut the
+    error measurably (the temporal term would drop ~8x).  Measured on the 8^2
+    P3 vortex the two solutions agree to 4 significant digits, so the P3 order
+    deficit is *spatial* -- the claim the original report left untested.
+    """
+    block = temporal_study(degree=3, ncells=8, final_time=1.0, cfl=0.2, levels=2)
+    coarse, fine = block["rows"]
+    assert fine["steps"] == pytest.approx(2 * coarse["steps"], rel=0.02)
+    for field in ("density", "pressure"):
+        change = abs(fine["errors"][field] - coarse["errors"][field]) / coarse["errors"][field]
+        assert change < 1e-3, (field, coarse["errors"][field], fine["errors"][field], change)

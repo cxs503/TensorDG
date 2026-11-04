@@ -1,0 +1,159 @@
+{
+ "benchmark": "euler_dg_2d_design_order",
+ "domain": [
+  [
+   -5.0,
+   5.0
+  ],
+  [
+   -5.0,
+   5.0
+  ]
+ ],
+ "blocks": [
+  {
+   "degree": 3,
+   "design_order": 4,
+   "final_time": 1.0,
+   "cfl": 0.2,
+   "cfl_term": "const",
+   "quadrature": 5,
+   "cfl_exponent": 0.0,
+   "rows": [
+    {
+     "degree": 3,
+     "cells": 8,
+     "h": 1.25,
+     "cfl": 0.2,
+     "quadrature": 5,
+     "dofs": 4096,
+     "steps": 164,
+     "dt": 0.0025028818378908246,
+     "dt_mean": 0.006097560975609756,
+     "errors": {
+      "density": 0.0005648103033606634,
+      "velocity_x": 0.001572587705919767,
+      "velocity_y": 0.0015632740846065237,
+      "pressure": 0.0007872385761912397
+     },
+     "wall_seconds": 6.85
+    },
+    {
+     "degree": 3,
+     "cells": 12,
+     "h": 0.8333333333333334,
+     "cfl": 0.2,
+     "quadrature": 5,
+     "dofs": 9216,
+     "steps": 246,
+     "dt": 0.0026043343523515228,
+     "dt_mean": 0.0040650406504065045,
+     "errors": {
+      "density": 0.00011695079824100424,
+      "velocity_x": 0.00034575546941306674,
+      "velocity_y": 0.0003442700852271111,
+      "pressure": 0.00017515818267716419
+     },
+     "wall_seconds": 13.4,
+     "eoc": {
+      "density": 3.8837783535992694,
+      "velocity_x": 3.7358232364670694,
+      "velocity_y": 3.7317913725018648,
+      "pressure": 3.7064641374297347
+     }
+    },
+    {
+     "degree": 3,
+     "cells": 16,
+     "h": 0.625,
+     "cfl": 0.2,
+     "quadrature": 5,
+     "dofs": 16384,
+     "steps": 328,
+     "dt": 0.002175630272662099,
+     "dt_mean": 0.003048780487804878,
+     "errors": {
+      "density": 3.8309638667221406e-05,
+      "velocity_x": 0.00011620976356875948,
+      "velocity_y": 0.00011623121898423127,
+      "pressure": 5.385262314138417e-05
+     },
+     "wall_seconds": 19.45,
+     "eoc": {
+      "density": 3.8794624292378566,
+      "velocity_x": 3.790069069629209,
+      "velocity_y": 3.774461846885713,
+      "pressure": 4.099797885186708
+     }
+    },
+    {
+     "degree": 3,
+     "cells": 24,
+     "h": 0.4166666666666667,
+     "cfl": 0.2,
+     "quadrature": 5,
+     "dofs": 36864,
+     "steps": 492,
+     "dt": 0.0015153876392416388,
+     "dt_mean": 0.0020325203252032522,
+     "errors": {
+      "density": 7.704136165873618e-06,
+      "velocity_x": 8.62928046116212e-05,
+      "velocity_y": 8.628914869970068e-05,
+      "pressure": 1.0856485427014988e-05
+     },
+     "wall_seconds": 45.34,
+     "eoc": {
+      "density": 3.9558130792081685,
+      "velocity_x": 0.734096820191454,
+      "velocity_y": 0.7346566139369513,
+      "pressure": 3.9497565777460544
+     }
+    },
+    {
+     "degree": 3,
+     "cells": 32,
+     "h": 0.3125,
+     "cfl": 0.2,
+     "quadrature": 5,
+     "dofs": 65536,
+     "steps": 656,
+     "dt": 0.0011438380599799736,
+     "dt_mean": 0.001524390243902439,
+     "errors": {
+      "density": 2.4055379850867643e-06,
+      "velocity_x": 8.449701521709179e-05,
+      "velocity_y": 8.449921624830734e-05,
+      "pressure": 3.403610268582547e-06
+     },
+     "wall_seconds": 96.0,
+     "eoc": {
+      "density": 4.046076858919067,
+      "velocity_x": 0.07310155655831133,
+      "velocity_y": 0.07286374005753044,
+      "pressure": 4.031971525968138
+     }
+    }
+   ],
+   "fit_slope": {
+    "density": 3.9341385437473595,
+    "velocity_x": 2.1019650037628757,
+    "velocity_y": 2.0973236686342838,
+    "pressure": 3.94105075413932
+   },
+   "finest_errors": {
+    "density": 2.4055379850867643e-06,
+    "velocity_x": 8.449701521709179e-05,
+    "velocity_y": 8.449921624830734e-05,
+    "pressure": 3.403610268582547e-06
+   },
+   "finest_below_three_percent": {
+    "density": true,
+    "velocity_x": true,
+    "velocity_y": true,
+    "pressure": true
+   },
+   "total_seconds": 181.0
+  }
+ ]
+}
