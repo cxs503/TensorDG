@@ -83,7 +83,8 @@ def _wall_fluxes(ncells=(2, 8), degree=1, penalty_scale=2.0, wall_gradient="face
                             None if recon is None else recon["right"])
     bottom = ns._boundary_flux(left, boundary["ymin"], 1, h, MU, KAPPA, penalty,
                                2.0 / h, 2.0 / op["dx"],
-                               None if recon is None else recon["left"])
+                               None if recon is None else recon["left"],
+                               side_name="left", outward_sign=-1.0)
     return {
         "mx_top": float(top[0, -1, 0, 1]), "mx_bottom": float(bottom[0, 0, 0, 1]),
         "energy_top": float(top[0, -1, 0, 3]),
@@ -220,22 +221,28 @@ def test_taylor_wall_gradient_is_exact_for_polynomial_data():
         assert torch.abs(improved[:, row, 0, :] - legacy[:, row, 0, :]).max() < 1e-12
 
 
-def test_taylor_wall_gradient_reduces_the_wall_flux_error():
-    """The one-sided Taylor gradient halves the *rest-wall* wall heat-flux error
-    of the analytic Brinkman/Couette state (measured ratio 0.573 at 16 cells).
+def test_taylor_wall_gradient_does_not_reduce_the_oriented_wall_flux_error():
+    """The one-sided Taylor gradient does **not** reduce the *rest-wall* wall
+    heat-flux error once the Dirichlet penalty is oriented along the outward
+    normal on both faces (``outward_sign``; m2782/m2876).
 
-    Bottom-wall statement only (m3139): the derivative part of the P1 error is
-    removed, the Dirichlet-penalty part is not, the observed order is unchanged
-    (1.005 vs 1.001) and the moving wall and every degree ``p >= 2`` get worse.
-    That is why the stencil is opt-in; see ``test_taylor_wall_gradient_*`` here
-    and the design-order guards in ``test_ns_dg_2d_wall_scope.py``.
+    History of the claim, kept for the record: measured against the pre-fix
+    bottom-wall diagnostic (penalty sign slipped on the ``min`` face) the
+    stencil *halved* the rest-wall error (ratio 0.573 at 16 cells), which is
+    how the opt-in ``wall_gradient="taylor"`` mode was justified.  With the
+    oriented helper the face-mode bottom error drops to 9.2e-4 and the Taylor
+    stencil is *worse* (3.6e-3, ratio 3.9 at 16 cells): the earlier advantage
+    was an artifact of the sign slip, not a property of the stencil.  The
+    moving-wall behaviour and every degree ``p >= 2`` were already known to
+    get worse; that is why the stencil stays opt-in.  Design-order guards
+    live in ``test_ns_dg_2d_wall_scope.py``.
     """
     analytic = -KAPPA * (MU * 1.0**2 / (2.0 * KAPPA))
     errors = {}
     for mode in ("face", "taylor"):
         flux = _wall_fluxes((2, 16), 1, wall_gradient=mode)
         errors[mode] = abs(flux["energy_bottom"] - analytic)
-    assert errors["taylor"] < 0.65 * errors["face"], errors
+    assert errors["taylor"] > errors["face"], errors
 
 
 def test_default_wall_gradient_is_the_one_sided_derivative():
@@ -938,3 +945,59 @@ def test_wall_bounded_standing_shear_wave_matches_exact_decay():
     exact = amplitude * torch.sin(k * y).unsqueeze(0).expand_as(numerical) * decay
     relative = float(((numerical - exact) ** 2).mean().sqrt() / (amplitude * decay))
     assert relative < 0.03, (relative, meta["steps"])
+
+
+# ---------------------------------------------------------------------------
+# Wall-penalty orientation (m2876, re-anchored): the SIPG penalty must point
+# along the outward normal on both faces.  In this chain the mechanism is the
+# ``outward_sign`` keyword of ``_boundary_flux`` (m2782); this mission found
+# the same root cause independently and contributes the finite-difference
+# Jacobian guard and the both-walls heat-flux gate.
+# ---------------------------------------------------------------------------
+def test_wall_penalty_has_no_unstable_mode():
+    """No eigenvalue of the semi-discrete wall-bounded operator may have a
+    positive real part.
+
+    Before the fix the (2, 4) P1 Jacobian had 13 eigenvalues with Re > 0 and
+    max Re = +86.7; it now has none.  This is the cheapest possible guard for
+    the orientation of the Dirichlet penalty: a sign slip on one face
+    reappears here immediately.  Re-anchored on the m3139 ``face`` default
+    (the wall-gradient and wall-adjoint options stay off).
+    """
+    import numpy as np
+    op, coeff, boundary = _couette_state((2, 4), 1)
+    penalty = 2.0 * 2.0**2
+    args = (op["basis"], op["derivative"], op["weights"], op["signs"], op["dx"],
+            op["dy"], (True, False), boundary, MU, KAPPA, penalty)
+    flat = coeff.reshape(-1).clone()
+    n = flat.numel()
+    jac = np.zeros((n, n))
+    eps = 1e-6
+    base = ns._rhs_ns(coeff, *args).reshape(-1).numpy().astype(float)
+    for i in range(n):
+        probe = flat.clone()
+        probe[i] += eps
+        jac[:, i] = (
+            ns._rhs_ns(probe.reshape(coeff.shape), *args).reshape(-1).numpy().astype(float)
+            - base
+        ) / eps
+    real = np.linalg.eigvals(jac).real
+    assert real.max() < 1e-8, float(real.max())
+
+
+def test_wall_heat_flux_is_below_three_percent_on_both_walls():
+    """The Dirichlet heat flux must meet the 3% documentation gate on *both*
+    walls once the mesh resolves the Brinkman parabola.
+
+    Before the orientation fix the bottom wall (the min face) carried an
+    error of 3.17% even at 64 cells while the top wall was at 0.56% -- the
+    asymmetry was the fingerprint of the flipped penalty orientation.  Both
+    walls now agree.
+    """
+    exact = -KAPPA * (MU * 1.0**2 / (2.0 * KAPPA))
+    for ny in (32, 64):
+        flux = _wall_fluxes((2, ny), 1)
+        bottom = abs(flux["energy_bottom"] - exact) / abs(exact)
+        top = abs(flux["energy_top"] - exact) / abs(exact)
+        assert bottom < 0.03, (ny, bottom)
+        assert top < 0.03, (ny, top)
