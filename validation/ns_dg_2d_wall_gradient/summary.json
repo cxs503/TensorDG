@@ -1,0 +1,530 @@
+{
+ "benchmark": "TensorDG ns_dg_2d Dirichlet wall channel",
+ "mu": 0.1,
+ "prandtl": 0.71,
+ "kappa": 0.4929577464788734,
+ "wall_speed": 1.0,
+ "wall_gradient_default": "fd2",
+ "wall_penalty_default": 0.0,
+ "dtype": "float64",
+ "torch": "2.7.1",
+ "flux": {
+  "analytic_energy_flux": -0.05,
+  "analytic_momentum_flux": -0.1,
+  "cases": [
+   {
+    "wall_gradient": "br1",
+    "degree": 1,
+    "meshes": [
+     {
+      "ncells_y": 8,
+      "energy_top": -0.0522010296864536,
+      "energy_bottom": -0.06270412321249624,
+      "energy_error_top": 0.0022010296864535955,
+      "energy_error_bottom": 0.01270412321249624,
+      "momentum_top": -0.10033390285815713,
+      "momentum_error_top": 0.0003339028581571257
+     },
+     {
+      "ncells_y": 16,
+      "energy_top": -0.0511093345142379,
+      "energy_bottom": -0.05634515556172693,
+      "energy_error_top": 0.0011093345142378988,
+      "energy_error_bottom": 0.006345155561726927,
+      "momentum_top": -0.10018892663166333,
+      "momentum_error_top": 0.0001889266316633248
+     },
+     {
+      "ncells_y": 32,
+      "energy_top": -0.050556839914901605,
+      "energy_bottom": -0.05317242430569948,
+      "energy_error_top": 0.0005568399149016023,
+      "energy_error_bottom": 0.0031724243056994797,
+      "momentum_top": -0.10010003190563506,
+      "momentum_error_top": 0.00010003190563505349
+     },
+     {
+      "ncells_y": 64,
+      "energy_top": -0.05027895881540638,
+      "energy_bottom": -0.051586374060603256,
+      "energy_error_top": 0.0002789588154063771,
+      "energy_error_bottom": 0.001586374060603253,
+      "momentum_top": -0.10005141817001895,
+      "momentum_error_top": 5.141817001894089e-05
+     }
+    ],
+    "observed_order_bottom": 1.0004973039594713
+   },
+   {
+    "wall_gradient": "br1",
+    "degree": 2,
+    "meshes": [
+     {
+      "ncells_y": 4,
+      "energy_top": -0.05015553400213955,
+      "energy_bottom": -0.04975928016365325,
+      "energy_error_top": 0.00015553400213954433,
+      "energy_error_bottom": 0.0002407198363467561,
+      "momentum_top": -0.1001945510343322,
+      "momentum_error_top": 0.000194551034332191
+     },
+     {
+      "ncells_y": 8,
+      "energy_top": -0.05004388442168799,
+      "energy_bottom": -0.04996199969550892,
+      "energy_error_top": 4.388442168798412e-05,
+      "energy_error_bottom": 3.8000304491081494e-05,
+      "momentum_top": -0.10005027612101657,
+      "momentum_error_top": 5.027612101655976e-05
+     },
+     {
+      "ncells_y": 16,
+      "energy_top": -0.05001163249949886,
+      "energy_bottom": -0.04999330682186705,
+      "energy_error_top": 1.1632499498856474e-05,
+      "energy_error_bottom": 6.693178132954891e-06,
+      "momentum_top": -0.10001281556665319,
+      "momentum_error_top": 1.2815566653182064e-05
+     },
+     {
+      "ncells_y": 32,
+      "energy_top": -0.0500029933482021,
+      "energy_bottom": -0.04999868072321852,
+      "energy_error_top": 2.9933482020988444e-06,
+      "energy_error_bottom": 1.319276781486245e-06,
+      "momentum_top": -0.10000323746458438,
+      "momentum_error_top": 3.237464584374128e-06
+     }
+    ],
+    "observed_order_bottom": 2.5038213166742187
+   },
+   {
+    "wall_gradient": "fd2",
+    "degree": 1,
+    "meshes": [
+     {
+      "ncells_y": 8,
+      "energy_top": -0.048509879949630366,
+      "energy_bottom": -0.05123600234832329,
+      "energy_error_top": 0.0014901200503696366,
+      "energy_error_bottom": 0.0012360023483232868,
+      "momentum_top": -0.09974588229795366,
+      "momentum_error_top": 0.00025411770204634976
+     },
+     {
+      "ncells_y": 16,
+      "energy_top": -0.0492548284404649,
+      "energy_bottom": -0.050611222756684664,
+      "energy_error_top": 0.0007451715595351016,
+      "energy_error_bottom": 0.0006112227566846609,
+      "momentum_top": -0.09986605119715,
+      "momentum_error_top": 0.00013394880285000355
+     },
+     {
+      "ncells_y": 32,
+      "energy_top": -0.04962737972850332,
+      "energy_bottom": -0.050303916678764084,
+      "energy_error_top": 0.00037262027149668336,
+      "energy_error_bottom": 0.00030391667876408096,
+      "momentum_top": -0.09993129640726828,
+      "momentum_error_top": 6.87035927317281e-05
+     },
+     {
+      "ncells_y": 64,
+      "energy_top": -0.04981368035470867,
+      "energy_bottom": -0.05015153483433402,
+      "energy_error_top": 0.00018631964529133155,
+      "energy_error_bottom": 0.00015153483433402032,
+      "momentum_top": -0.09996521518904444,
+      "momentum_error_top": 3.478481095556263e-05
+     }
+    ],
+    "observed_order_bottom": 1.0093200350999598
+   },
+   {
+    "wall_gradient": "fd2",
+    "degree": 2,
+    "meshes": [
+     {
+      "ncells_y": 4,
+      "energy_top": -0.05000139179593857,
+      "energy_bottom": -0.049998985015012015,
+      "energy_error_top": 1.3917959385684187e-06,
+      "energy_error_bottom": 1.0149849879875772e-06,
+      "momentum_top": -0.10000037681095059,
+      "momentum_error_top": 3.7681095058084146e-07
+     },
+     {
+      "ncells_y": 8,
+      "energy_top": -0.05000017772678655,
+      "energy_bottom": -0.04999987586983618,
+      "energy_error_top": 1.777267865446519e-07,
+      "energy_error_bottom": 1.2413016382134545e-07,
+      "momentum_top": -0.10000005359662185,
+      "momentum_error_top": 5.359662184900582e-08
+     },
+     {
+      "ncells_y": 16,
+      "energy_top": -0.05000002245731247,
+      "energy_bottom": -0.04999998466006525,
+      "energy_error_top": 2.245731246797167e-08,
+      "energy_error_bottom": 1.5339934753000328e-08,
+      "momentum_top": -0.10000000711737772,
+      "momentum_error_top": 7.11737771497134e-09
+     },
+     {
+      "ncells_y": 32,
+      "energy_top": -0.050000002822452816,
+      "energy_bottom": -0.04999999809357476,
+      "energy_error_top": 2.822452813133758e-09,
+      "energy_error_bottom": 1.9064252398948156e-09,
+      "momentum_top": -0.10000000091603721,
+      "momentum_error_top": 9.160372044236809e-10
+     }
+    ],
+    "observed_order_bottom": 3.018790905688027
+   }
+  ]
+ },
+ "residual": {
+  "cases": [
+   {
+    "wall_gradient": "br1",
+    "degree": 1,
+    "ncells_y": 8,
+    "rhs_max": 0.30453023045906513,
+    "energy_max": 0.30453023045906513,
+    "momentum_max": 0.06912766006398563,
+    "wall_rows": 0.30453023045906513
+   },
+   {
+    "wall_gradient": "br1",
+    "degree": 1,
+    "ncells_y": 16,
+    "rhs_max": 0.3045019829830822,
+    "energy_max": 0.3045019829830822,
+    "momentum_max": 0.07010642384671817,
+    "wall_rows": 0.3045019829830822
+   },
+   {
+    "wall_gradient": "br1",
+    "degree": 1,
+    "ncells_y": 32,
+    "rhs_max": 0.30454209727715664,
+    "energy_max": 0.30454209727715664,
+    "momentum_max": 0.07056633517217215,
+    "wall_rows": 0.30454209727715664
+   },
+   {
+    "wall_gradient": "br1",
+    "degree": 1,
+    "ncells_y": 64,
+    "rhs_max": 0.3045830644273142,
+    "energy_max": 0.3045830644273142,
+    "momentum_max": 0.07078675019575442,
+    "wall_rows": 0.3045830644273142
+   },
+   {
+    "wall_gradient": "br1",
+    "degree": 2,
+    "ncells_y": 4,
+    "rhs_max": 0.03517445385970499,
+    "energy_max": 0.01263994156283793,
+    "momentum_max": 0.03517445385970499,
+    "wall_rows": 0.03517445385970499
+   },
+   {
+    "wall_gradient": "br1",
+    "degree": 2,
+    "ncells_y": 8,
+    "rhs_max": 0.018099264823681023,
+    "energy_max": 0.008256607976390162,
+    "momentum_max": 0.018099264823681023,
+    "wall_rows": 0.018099264823681023
+   },
+   {
+    "wall_gradient": "br1",
+    "degree": 2,
+    "ncells_y": 16,
+    "rhs_max": 0.009222126089229602,
+    "energy_max": 0.004619950062903833,
+    "momentum_max": 0.009222126089229602,
+    "wall_rows": 0.009222126089229602
+   },
+   {
+    "wall_gradient": "br1",
+    "degree": 2,
+    "ncells_y": 32,
+    "rhs_max": 0.004660020785611268,
+    "energy_max": 0.002435320518906714,
+    "momentum_max": 0.004660020785611268,
+    "wall_rows": 0.004660020785611268
+   },
+   {
+    "wall_gradient": "fd2",
+    "degree": 1,
+    "ncells_y": 8,
+    "rhs_max": 0.04453708003914192,
+    "energy_max": 0.04453708003914192,
+    "momentum_max": 0.0173462934753692,
+    "wall_rows": 0.04453708003914192
+   },
+   {
+    "wall_gradient": "fd2",
+    "degree": 1,
+    "ncells_y": 16,
+    "rhs_max": 0.040371638368569496,
+    "energy_max": 0.040371638368569496,
+    "momentum_max": 0.011115767713586244,
+    "wall_rows": 0.040371638368569496
+   },
+   {
+    "wall_gradient": "fd2",
+    "degree": 1,
+    "ncells_y": 32,
+    "rhs_max": 0.038122312532294256,
+    "energy_max": 0.038122312532294256,
+    "momentum_max": 0.008961621493507543,
+    "wall_rows": 0.038122312532294256
+   },
+   {
+    "wall_gradient": "fd2",
+    "degree": 1,
+    "ncells_y": 64,
+    "rhs_max": 0.036960374606646695,
+    "energy_max": 0.036960374606646695,
+    "momentum_max": 0.007867653464391111,
+    "wall_rows": 0.036960374606646695
+   },
+   {
+    "wall_gradient": "fd2",
+    "degree": 2,
+    "ncells_y": 4,
+    "rhs_max": 0.019898412068311666,
+    "energy_max": 0.012751533766013463,
+    "momentum_max": 0.019898412068311666,
+    "wall_rows": 0.01575607662929832
+   },
+   {
+    "wall_gradient": "fd2",
+    "degree": 2,
+    "ncells_y": 8,
+    "rhs_max": 0.010213656599268983,
+    "energy_max": 0.008256607976390162,
+    "momentum_max": 0.010213656599268983,
+    "wall_rows": 0.008061229011427022
+   },
+   {
+    "wall_gradient": "fd2",
+    "degree": 2,
+    "ncells_y": 16,
+    "rhs_max": 0.00524976816255851,
+    "energy_max": 0.004619950062903833,
+    "momentum_max": 0.00524976816255851,
+    "wall_rows": 0.004101254535697553
+   },
+   {
+    "wall_gradient": "fd2",
+    "degree": 2,
+    "ncells_y": 32,
+    "rhs_max": 0.002670522452990376,
+    "energy_max": 0.002435320518906714,
+    "momentum_max": 0.002670522452990376,
+    "wall_rows": 0.0020715270286225094
+   }
+  ]
+ },
+ "seconds": 0.40038609504699707,
+ "transient": {
+  "cases": [
+   {
+    "degree": 1,
+    "ncells_y": 8,
+    "final_time": 0.1,
+    "wall_gradient": "fd2",
+    "stable": true,
+    "steps": 203,
+    "dt": 0.0003940009233701913,
+    "relative_l2_velocity_x": 0.033356987002205386,
+    "velocity_max": 0.6550814730064344,
+    "velocity_y_max": 0.007650564536984963,
+    "temperature_min": 0.999951566615024,
+    "temperature_max": 1.0344220229921104,
+    "profile_numerical": [
+     -1.9230587689549027e-08,
+     -1.0348224656441717e-05,
+     6.651825497292572e-05,
+     -7.647331936633034e-05,
+     -0.002573546116965618,
+     0.014830689373552449,
+     0.176128415441674,
+     0.6550814730064344
+    ],
+    "profile_exact": [
+     3.371023354332282e-11,
+     9.1789290320176e-09,
+     1.165825348970931e-06,
+     6.965075439265856e-05,
+     0.0019774911836108566,
+     0.027125386179066967,
+     0.18489759896560198,
+     0.6585313664984059
+    ],
+    "y_centres": [
+     0.0625,
+     0.1875,
+     0.3125,
+     0.4375,
+     0.5625,
+     0.6875,
+     0.8125,
+     0.9375
+    ],
+    "seconds": 11.611379623413086
+   },
+   {
+    "degree": 1,
+    "ncells_y": 16,
+    "final_time": 0.1,
+    "wall_gradient": "fd2",
+    "stable": true,
+    "steps": 812,
+    "dt": 6.033851640151189e-05,
+    "relative_l2_velocity_x": 0.008432875543144322,
+    "velocity_max": 0.8261115109550989,
+    "velocity_y_max": 0.006522321208380359,
+    "temperature_min": 0.9999999952188777,
+    "temperature_max": 1.0309829459491553,
+    "profile_numerical": [
+     1.2928786329874955e-10,
+     -5.4353324127383673e-11,
+     -4.802725307685827e-09,
+     1.0468544420353995e-08,
+     1.6596562687328892e-07,
+     -3.5037870437582005e-07,
+     -7.07464254526478e-06,
+     -7.509088302528183e-06,
+     0.0002743885143535258,
+     0.0024343232895205707,
+     0.012088462953041855,
+     0.04296687959296854,
+     0.11897808280457907,
+     0.2683878177180497,
+     0.507655652658822,
+     0.8261115109550989
+    ],
+    "profile_exact": [
+     7.074695485751849e-12,
+     1.4728052903323986e-10,
+     2.4282253882558904e-09,
+     3.308550805941226e-08,
+     3.7283296557120487e-07,
+     3.4775519144866478e-06,
+     2.6875231247346595e-05,
+     0.0001723029853150831,
+     0.0009178648185661641,
+     0.0040708177052476285,
+     0.015070536491790342,
+     0.046730148971980245,
+     0.12191242484819557,
+     0.2692227075891597,
+     0.5073865267820682,
+     0.8251151153969524
+    ],
+    "y_centres": [
+     0.03125,
+     0.09375,
+     0.15625,
+     0.21875,
+     0.28125,
+     0.34375,
+     0.40625,
+     0.46875,
+     0.53125,
+     0.59375,
+     0.65625,
+     0.71875,
+     0.78125,
+     0.84375,
+     0.90625,
+     0.96875
+    ],
+    "seconds": 47.7749228477478
+   },
+   {
+    "degree": 2,
+    "ncells_y": 4,
+    "final_time": 0.1,
+    "wall_gradient": "fd2",
+    "stable": true,
+    "steps": 259,
+    "dt": 0.00026995627706190295,
+    "relative_l2_velocity_x": 0.3052848582046879,
+    "velocity_max": 0.2956079610676772,
+    "velocity_y_max": 0.01576449276426872,
+    "temperature_min": 1.0000156455140148,
+    "temperature_max": 1.0659327239509238,
+    "profile_numerical": [
+     2.4382499237700023e-05,
+     0.00011798708891274561,
+     0.0023411119666486143,
+     0.2956079610676772
+    ],
+    "profile_exact": [
+     6.12481486533336e-10,
+     9.896734625198807e-06,
+     0.008009942329880284,
+     0.37675911781158417
+    ],
+    "y_centres": [
+     0.125,
+     0.375,
+     0.625,
+     0.875
+    ],
+    "seconds": 15.670321226119995
+   },
+   {
+    "degree": 1,
+    "ncells_y": 8,
+    "final_time": 0.1,
+    "wall_gradient": "br1",
+    "stable": false,
+    "error": "nonphysical cell average in Navier-Stokes DG; reduce the CFL",
+    "seconds": 9.943357706069946
+   }
+  ]
+ },
+ "stability": {
+  "cases": [
+   {
+    "degree": 1,
+    "ncells_y": 8,
+    "cfl_viscous": 1.0,
+    "stable": true,
+    "steps": 102
+   },
+   {
+    "degree": 1,
+    "ncells_y": 8,
+    "cfl_viscous": 4.0,
+    "stable": true,
+    "steps": 26
+   },
+   {
+    "degree": 2,
+    "ncells_y": 4,
+    "cfl_viscous": 1.0,
+    "stable": true,
+    "steps": 129
+   },
+   {
+    "degree": 2,
+    "ncells_y": 4,
+    "cfl_viscous": 4.0,
+    "stable": true,
+    "steps": 33
+   }
+  ]
+ }
+}
