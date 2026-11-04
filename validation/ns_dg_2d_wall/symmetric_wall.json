@@ -1,0 +1,105 @@
+{
+  "mission": "m2972",
+  "branch": "agent/m2972",
+  "module": "tensordg/ns_dg_2d.py",
+  "change": "symmetric (Nitsche adjoint, derivative-projected) wall term, WALL_ADJOINT_FACTOR = 2.0",
+  "case_steady_state_march": {
+    "setup": "2x8 P1, mu=0.1, kappa=0.49296, sigma=2 (penalty=8), dt=4.7e-4, exact steady Couette state",
+    "baseline_amplitude": [
+      [
+        0,
+        2.937682
+      ],
+      [
+        80,
+        2.937814
+      ],
+      [
+        100,
+        3.089014
+      ],
+      [
+        120,
+        6.647778
+      ],
+      [
+        140,
+        12.506469
+      ]
+    ],
+    "fixed_amplitude": [
+      [
+        0,
+        2.937682
+      ],
+      [
+        100,
+        2.937582
+      ],
+      [
+        199,
+        2.937521
+      ]
+    ],
+    "baseline_verdict": "exponentially growing (linear instability of the wall operator)",
+    "fixed_verdict": "monotone decay, no growth",
+    "wall_spring_rate_mu_sigma_over_h2": 51.2,
+    "measured_asymptotic_growth_rate": 67.0
+  },
+  "adjoint_factor_sweep": [
+    {
+      "factor": -1.0,
+      "sign": "wrong",
+      "amplitude_step199": 107.07488,
+      "verdict": "worse than baseline"
+    },
+    {
+      "factor": 1.0,
+      "sign": "correct",
+      "amplitude_step199": 9.89128,
+      "verdict": "growth delayed to step ~150, still unstable"
+    },
+    {
+      "factor": 2.0,
+      "sign": "correct",
+      "amplitude_step199": 2.93752,
+      "verdict": "stable, monotone decay"
+    }
+  ],
+  "impulsive_couette": {
+    "setup": "2x8 P1, mu=0.1, Pr=0.71, t=0.1, from rest, top wall U=1",
+    "before": "FloatingPointError at t=0.0328 (m2589, reproduced)",
+    "after": {
+      "steps": 203,
+      "dt": 0.000205,
+      "peak_velocity_over_wall_speed": 4.708,
+      "max_abs_mode": null
+    },
+    "verdict": "march completes and stays finite/bounded"
+  },
+  "standing_shear_wave_wall_bounded": {
+    "setup": "2x16 P1, A=0.01, mu=0.02 (nu=0.02), k=2*pi, t=0.05, no-slip isothermal walls, x periodic",
+    "decay_factor": 0.9613,
+    "steps": 81,
+    "relative_l2_velocity": 0.0049,
+    "threshold": 0.03,
+    "verdict": "PASS (<3%)"
+  },
+  "conduction_residual_ratio": {
+    "value": 5.97,
+    "previous_m2496": 4.07,
+    "judge": "<10"
+  },
+  "tests": {
+    "files": [
+      "tests/test_ns_dg_2d.py",
+      "tests/test_ns_dg_2d_wall.py"
+    ],
+    "result": "9 passed, 2 xfailed (58.8 s)",
+    "retired": "test_impulsively_started_couette_reaches_steady_state (strict xfail -> green)",
+    "still_xfail": [
+      "test_exact_steady_couette_state_has_no_wall_residual",
+      "test_wall_energy_flux_converges_at_second_order"
+    ]
+  }
+}
