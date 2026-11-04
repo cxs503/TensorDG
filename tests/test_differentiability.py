@@ -163,7 +163,13 @@ def test_gradient_checker_detects_forward_model_perturbation():
     ncells, degree, nsteps, dt = 12, 2, 10, 1.0e-3
     coeff0 = advection_initial(ncells, degree)
     objective = advection_objective(ncells, degree, nsteps, dt)
-    direction = torch.randn(coeff0.shape, dtype=DTYPE)
+    # Seeded by m3139: the teeth ratio is direction dependent (its tail crosses
+    # the 1e-6 threshold), so an unseeded direction made this assertion random --
+    # 5 failures in 40 repeats on an otherwise unchanged solver.  Seed 6 gives
+    # 8.9e-5 for the 5% perturbation and 1.6e-8 for the 1e-5 one, i.e. ~90x and
+    # ~60x away from the threshold on the two sides.
+    direction = torch.randn(coeff0.shape, dtype=DTYPE,
+                            generator=torch.Generator().manual_seed(6))
     direction = direction / direction.norm()
     ad = float(directional_derivative_ad(objective, coeff0, direction))
 
