@@ -74,6 +74,7 @@ __all__ = [
     "solve_heat_conduction_dg_2d",
     "solve_shear_wave_dg_2d",
     "couette_exact",
+    "impulsive_couette_exact",
     "heat_conduction_exact",
     "shear_wave_exact",
     "gas_constants",
@@ -1199,6 +1200,53 @@ def heat_conduction_exact(y, ymin, ymax, bottom_temperature, top_temperature,
         "pressure": torch.full_like(temperature, pressure),
         "temperature": temperature,
     }
+
+def impulsive_couette_exact(y, time, wall_speed=1.0, kinematic_viscosity=0.1,
+                             ymin=0.0, ymax=1.0, terms=None, tolerance=1e-14):
+    """Exact velocity of the *impulsively started* Couette flow (m3661).
+
+    ``solve_couette_dg_2d`` starts from rest and switches the upper wall on at
+    ``t = 0``; the parallel-flow momentum equation then reduces to the heat
+    equation for ``u(y, t)`` (the convective term vanishes identically because
+    ``u = u(y, t)`` and ``v = 0``), so the classical Stokes-series solution of
+    the first problem in a channel is exact for the incompressible system and
+    holds for the compressible solver up to the ``O(mu U^2 / kappa)`` viscous
+    heating that makes ``rho = p / T`` (and hence ``nu``) drift:
+
+        u = U s + sum_{n>=1} 2 U (-1)^n / (n pi)
+                       sin(n pi s) exp(-n^2 pi^2 nu t / H^2),      s = (y-ymin)/H
+
+    with ``u(ymin, t) = 0``, ``u(ymax, t) = U`` for ``t > 0`` and ``u(y, 0) = 0``
+    for ``y < ymax``.  The series is truncated where the exponential is below
+    ``tolerance`` (``terms`` overrides the automatic count).
+    """
+    height = float(ymax) - float(ymin)
+    if height <= 0.0:
+        raise ValueError("ymax must exceed ymin")
+    time = float(time)
+    if time < 0.0:
+        raise ValueError("time must be non-negative")
+    y_tensor = torch.as_tensor(y)
+    s = (y_tensor - float(ymin)) / height
+    steady = float(wall_speed) * s
+    if time == 0.0:
+        # step initial data: still fluid everywhere except the moving wall
+        return torch.where(s >= 1.0 - 1e-12,
+                           torch.full_like(s, float(wall_speed)),
+                           torch.zeros_like(s))
+    decay_rate = np.pi ** 2 * float(kinematic_viscosity) * time / height ** 2
+    if terms is None:
+        if decay_rate <= 0.0:
+            return steady
+        # exp(-n^2 * decay_rate) <= tolerance  =>  n >= sqrt(log(1/tol)/rate)
+        count = int(np.ceil(np.sqrt(np.log(1.0 / tolerance) / decay_rate)))
+        terms = int(min(max(count, 1), 4000))
+    n = np.arange(1, int(terms) + 1, dtype=np.float64)
+    coefficients = 2.0 * float(wall_speed) * np.power(-1.0, n) / (n * np.pi) \
+        * np.exp(-n ** 2 * decay_rate)
+    s_np = s.detach().cpu().numpy().astype(np.float64)
+    series = np.sin(np.outer(s_np, n) * np.pi) @ coefficients
+    return steady + torch.as_tensor(series, dtype=y_tensor.dtype).reshape(y_tensor.shape)
 
 
 def shear_wave_exact(x, y, time, amplitude, wavenumber, kinematic_viscosity,

@@ -149,3 +149,14 @@ P2 该比值随 h 增大（27→58），说明 P2 的残差由内部贡献主导
 ---
 
 生成：`PYTHONPATH=. python -m benchmarks.verify_ns_wall_scope`（约 90 s，含 3 次瞬态推进）。
+
+---
+
+## 附：m3661 追加（2026-11-04，append-only）
+
+§6 保留的唯一 honest FAIL（「脉冲启动瞬态精度无法给出且不达标」）已被定量闭合：
+`docs/reports/tensordg-ns-impulse-transient.md` 把脉冲启动 Couette 与沟道 Stokes 级数
+（`ns.impulsive_couette_exact`，先对独立隐式差分校验到 5.4e-4）比较，得 P1/8 格
+2.97 %、P1/16 格 0.75 %（斜率 1.98），u 有界单调、粘性加热在解析标度内。
+**该 FAIL 的「不达标」部分已退役**；P2/P3 与 ny=32 因本机负载（load15 100–350）未跑，
+判据与工具已就位（`--only 2:8` / `--only 1:32`），故「全阶已验证」仍未声明。
