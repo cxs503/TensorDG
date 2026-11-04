@@ -12,12 +12,12 @@ from pathlib import Path
 
 def _grid_table(rows, analytic):
     lines = [
-        "| limiter | cells | steps | $\\Delta\\int\\rho s\\,dx$ | analytic $P\\,T$ | relative error | second law |",
+        "| limiter (stage) | cells | steps | $\\Delta\\int\\rho s\\,dx$ | analytic $P\\,T$ | relative error | second law |",
         "|---|---:|---:|---:|---:|---:|---|",
     ]
     for row in rows:
         lines.append(
-            f"| {row['limiter']} | {row['cells']} | {row['steps']} "
+            f"| {row.get('label', row['limiter'])} | {row['cells']} | {row['steps']} "
             f"| {row['production_numeric']:.6e} | {analytic:.6e} "
             f"| {100.0 * row['relative_error']:.3f}% "
             f"| {'✅' if row['second_law'] else '❌'} |"
@@ -49,17 +49,32 @@ def render(summary, figure_relpath="figures/entropy_budget_1d.png"):
     profile = summary["profile_comparison"]
     cfl_rows = summary["cfl_sensitivity"]
     limiter_names = sorted({row["limiter"] for row in sod["rows"]})
-    limiter_cell = ", ".join(limiter_names) + ' (tvb_constant = 1.0, limiter_stage = "every")'
+    labels = sorted({row.get("label", row["limiter"]) for row in sod["rows"]})
+    stages = sorted({row.get("limiter_stage", "every") for row in sod["rows"]})
+    limiter_cell = ", ".join(labels) + " (tvb_constant = 1.0, limiter_stage = " + \
+        "/".join(f'"{stage}"' for stage in stages) + ")"
     sod_cells = [row["cells"] for row in sod["rows"] if row["limiter"] == sod["rows"][0]["limiter"]]
     lax_cells = [row["cells"] for row in lax["rows"] if row["limiter"] == lax["rows"][0]["limiter"]]
     smooth_cells = [row["cells"] for row in summary["smooth_periodic"]
                     if row["limiter"] == summary["smooth_periodic"][0]["limiter"]]
 
     c2_rows = verdicts["C2_relative_error_at_finest_mesh"]
+    c2_coarse = verdicts.get("C2_relative_error_at_coarsest_mesh", {})
+    c2_orders = verdicts.get("C2_error_observed_orders", {})
     c2_ok = verdicts["C2_below_3_percent"]
-    c2_lines = ["| run | relative error at finest mesh | < 3 %? |", "|---|---:|---|"]
+    c2_lines = [
+        "| run | rel. error @ coarsest mesh | rel. error @ **finest** mesh | observed order (last pair) | < 3 %? |",
+        "|---|---:|---:|---:|---|",
+    ]
     for key in sorted(c2_rows):
-        c2_lines.append(f"| {key} | {100.0 * c2_rows[key]:.3f}% | {'yes' if c2_ok[key] else '**no**'} |")
+        order = c2_orders.get(key)
+        order_text = "n/a" if not order or order[-1] is None else f"{order[-1]:.2f}"
+        coarse_text = f"{100.0 * c2_coarse[key]:.3f}%" if key in c2_coarse else "n/a"
+        c2_lines.append(
+            f"| {key} | {coarse_text} | {100.0 * c2_rows[key]:.3f}% | {order_text} "
+            f"| {'yes' if c2_ok[key] else '**no**'} |")
+    finest_ok = sorted(key for key, ok in c2_ok.items() if ok)
+    failing = sorted(key for key, ok in c2_ok.items() if not ok)
 
     c3_lines = ["| limiter | observed order | drift at coarsest mesh | constraint |",
                 "|---|---:|---:|---|"]
@@ -72,15 +87,56 @@ def render(summary, figure_relpath="figures/entropy_budget_1d.png"):
             f"order > 2 (P{degree} design order 3) |"
         )
 
-    profile_lines = ["| limiter | relative $L^2$ error of $\\rho s(x)$ |", "|---|---:|"]
-    for key, value in profile["relative_l2_entropy_density"].items():
-        profile_lines.append(f"| {key} | {100.0 * value:.3f}% |")
+    profile_metrics = profile.get("metrics", {})
+    jump_scale = profile.get("entropy_jump_scale")
+    profile_lines = [
+        "| limiter | RMS error of $\\rho s$ | RMS / $|[s]|$ | deprecated $\\|e\\|_2 / \\|\\rho s\\|_2$ |",
+        "|---|---:|---:|---:|",
+    ]
+    for key, value in profile_metrics.items():
+        profile_lines.append(
+            f"| {key} | {value['rms']:.4e} | {value['rms_over_entropy_jump']:.4f} "
+            f"| {100.0 * value['legacy_relative_l2']:.1f}% |")
 
     cfl_lines = ["| CFL | steps | $\\Delta\\int\\rho s\\,dx$ |", "|---|---:|---:|"]
     for row in cfl_rows:
         cfl_lines.append(f"| {row['cfl']} | {row['steps']} | {row['production_numeric']:.6e} |")
 
     ladder = selftest["entropy_integral_ladder"]
+
+    def _rows(label):
+        return [row for row in sod["rows"] if row.get("label", row["limiter"]) == label]
+
+    def _last_order(label):
+        orders = c2_orders.get(f"sod/{label}") or [None]
+        return orders[-1] if orders[-1] is not None else float("nan")
+
+    def _trend(rows):
+        rows = sorted(rows, key=lambda row: row["cells"])
+        return " → ".join(f"{100.0 * row['relative_error']:.3f}%" for row in rows)
+
+    conclusion_lines = [
+        f"1. **第二定律（C1）成立**：{len(sod['rows']) + len(lax['rows'])} 次激波运行"
+        "（含 `tvb` 与 `tvb@final`）全部 $\\Delta\\int\\rho s\\,dx > 0$，"
+        "格式没有做出\"熵减少\"这一违反物理的解。",
+        f"2. **C2 定量收支随网格收敛**：Sod/none 的相对误差 {_trend(_rows('none'))}"
+        f"，观测阶 {_last_order('none'):.2f}；"
+        f"Sod/tvb 的 {_trend(_rows('tvb'))}"
+        f"（观测阶 {_last_order('tvb'):.2f}）。"
+        f"3 % 门在最细网格上{'**通过**：' + ', '.join(finest_ok) if finest_ok else '**仍未通过**'}；"
+        f"{'未通过：' + ', '.join(failing) if failing else '无未通过项'}。",
+        f"3. **限制器阶段分支**：`tvb@final`（只在 RK 末段限幅）在 Sod 上的相对误差 "
+        f"{_trend(_rows('tvb@final'))}，"
+        f"与 `tvb`（每个子步都限幅）相比"
+        f"{'更小' if _rows('tvb@final') and min(r['relative_error'] for r in _rows('tvb@final')) < min(r['relative_error'] for r in _rows('tvb')) else '并不更小'}："
+        "限幅次数越少，人为耗散产生的熵越少，但激波稳定性由 C1 单独把关。",
+        "4. **两条诚实结论**：①熵产生 = 物理熵产生 + 数值耗散，粗网格上后者远大于前者，"
+        "所以该判据在粗网格上只能当\"上界检查\"，定量门必须看收敛后的最细网格；"
+        "②熵密度剖面的相对 $L^2$ 误差不是可解释的量（$\\rho s$ 变号且 $s=\\ln(p/\\rho^\\gamma)$ 在 $p\\to0$ 时发散），"
+        "本轮改用 RMS 误差 / 激波熵跃 $|[s]|$ 的归一化度量。",
+        "5. **建议（下一位接单者）**：Lax 强激波（$\\sigma \\approx 2.48$，误差仍在数百 %）"
+        "需要更高阶格式或更细网格才能谈定量门；`weno` 限制器的熵收支与二维 $\\rho s$ 收支仍未覆盖。",
+    ]
 
     return f"""# TensorDG 离散熵收支验证（1-D Euler DG）
 
@@ -184,9 +240,14 @@ $P$ 是以激波为支撑的熵产生项。$\\rho s$ 正是标准数学熵 $-\\r
    它只排除"违反第二定律"这一类错误。
 4. $\\int\\rho s\\,dx$ 的增长只来自激波；接触间断只搬运熵不产生熵，因此本例的预算可以把
    全部产生量归给单一激波——这是选 Sod/Lax 作基准的原因。
-5. 限制器设置固定为 `tvb_constant = 1.0`、`limiter_stage = "every"`（仓库历史默认）；
-   `"final"` 分支的熵收支未在本轮覆盖。
-6. 运行环境为多席并发的高负载机（load15 > 120），因此研究脚本默认 `torch.set_num_threads(1)`
+5. 限制器设置固定为 `tvb_constant = 1.0`；`limiter_stage` 的**两个分支**
+   （`"every"` 与 `"final"`）都已纳入熵收支（表中 `tvb@final` 行），
+   这补上了旧版明写的"未覆盖"缺口。
+6. **门判定以最细网格为准**（`finest_row`）。旧版 `C2_relative_error_at_finest_mesh`
+   用 `min(rows, key=cells)` 取了**最粗**网格，Sod/none 因此被记成 11.651 %（64 cells），
+   而 256 cells 的真实值是 3.126 %——旧版的 honest-FAIL 有一部分是**标签缺陷**而非求解器结果。
+   该缺陷已修，并由 `tests/test_entropy_budget_gate.py` 钉住。
+7. 运行环境为多席并发的高负载机（load15 > 120），因此研究脚本默认 `torch.set_num_threads(1)`
    并用 CFL = {cfl} 控制步数；矩阵规模很小，结论与线程数无关。
 
 ## ⑥ 误差判定
@@ -212,19 +273,7 @@ C3（光滑算例）：
 
 ## ⑦ 结论与建议（本轮 honest 判定）
 
-1. **第二定律成立**：{len(sod['rows']) + len(lax['rows'])} 次激波运行（含 TVB 限制器）全部
-   $\Delta\int\rho s\,dx > 0$，即格式没有做出"熵减少"这一违反物理的解。
-2. **预算收敛但慢**：Sod 无限制器误差 11.65 % → 7.30 % → 3.13 %（64/128/256 cells），
-   约一阶收敛；TVB 限制器把误差抬高到 113 % → 33 %，Lax 强激波在 64/128 cells 上误差 ~500 %，
-   **本轮没有任何一项在规定网格上满足 3 % 门**（除 Sod 无限制器 256 cells 的 3.13 % 恰好压线）。
-   原因不是基准错（自检 $10^{-3}$ 内一致），而是**数值熵产生 = 物理熵产生 + 数值耗散**，
-   质量差、激波被抹开多宽，额外熵就产生多少；粗网格上后者远大于前者。
-3. **建议（下一位接单者）**：把 Sod 无限制器推到 512/1024 cells 复核 3 % 是否在 ~512 cells 达到
-   （按一阶收敛外推，512 cells ≈ 1.5 %），并把 TVB 的 `limiter_stage="final"` 分支纳入熵收支；
-   Lax 强激波应改用更细网格或更高阶格式，否则该门在该算例上不可达。
-4. **限制器对光滑解的熵代价**：光滑周期熵波上无限制器熵产生随 $h^{4.9}$ 下降，
-   TVB 限制器降为 $h^{2.07}$——即限制器在光滑区仍是主要耗散源（与其在
-   `test_limiter_policy.py` 中不破坏 $L^2$ 设计阶并不矛盾：熵产生是比 $L^2$ 误差更敏感的耗散度量）。
+{chr(10).join(conclusion_lines)}
 
 ## 复现
 
