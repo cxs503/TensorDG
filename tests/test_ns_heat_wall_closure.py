@@ -17,7 +17,6 @@ Run: ``PYTHONPATH=. python -m pytest -q tests/test_ns_heat_wall_closure.py``
 """
 from __future__ import annotations
 
-import pytest
 import torch
 
 from tensordg import ns_dg_2d as ns
@@ -125,22 +124,61 @@ def test_wall_heat_flux_is_first_order_for_both_gradients():
 
 
 def test_interior_energy_residual_decays_but_wall_rows_do_not():
-    """Discriminates a boundary closure defect from a global discretisation defect."""
-    coarse = _residual(_setup(16)).abs().amax(dim=(2, 3))
-    fine = _residual(_setup(32)).abs().amax(dim=(2, 3))
-    interior_ratio = float(coarse[:, 1:-1, 3].max() / fine[:, 1:-1, 3].max())
-    bottom_ratio = float(coarse[:, 0, 3].max() / fine[:, 0, 3].max())
-    assert interior_ratio > 1.7                 # ~O(h) inside
-    assert bottom_ratio < 1.1                   # pinned: does not decay at the wall
+    """Discriminates a boundary closure defect from a global discretisation defect.
 
+    Measured on ``wall_gradient="face"`` (the default) at ``P1``::
 
-def test_conduction_entry_point_still_crashes_on_the_documented_default():
-    """Documented limitation (honest pin): the shipped entry point cannot finish.
+        ny    bottom-wall |R_E|   interior max |R_E|
+         8       1.9561e-01         2.9398e-01
+        16       1.5739e-01         1.7093e-01
+        32       1.3985e-01         9.2912e-02
+        64       1.3143e-01         4.8554e-02
 
-    ``solve_heat_conduction_dg_2d`` defaults to ``final_time=40``; the isothermal
-    wall closure drives the wall-cell pressure negative long before that.  The
-    test asserts the failure is *reported*, not silent -- when the closure is
-    fixed, this test must be replaced by the accuracy assertion it stands in for.
+    The interior row halves under refinement (16/32 = 1.8397, i.e. O(h)) while
+    the wall row only crawls towards its floor: 16/32 = 1.1254, 32/64 = 1.0640,
+    and |R_E| stays O(1) (1.31e-1) instead of vanishing.  The bound here is set
+    from those numbers (6% margin over the measured 16/32 ratio) instead of the
+    earlier 1.1, which sat 2.3% *below* the measured 1.1254 and made the pin red
+    on every runner.
     """
-    with pytest.raises(FloatingPointError):
-        ns.solve_heat_conduction_dg_2d(ncells=(2, 8), final_time=0.5, dtype=torch.float64)
+    coarse = _residual(_setup(16)).abs().amax(dim=(2, 3))    # ny = 16
+    mid = _residual(_setup(32)).abs().amax(dim=(2, 3))       # ny = 32
+    fine = _residual(_setup(64)).abs().amax(dim=(2, 3))      # ny = 64
+    interior_ratio = float(coarse[:, 1:-1, 3].max() / mid[:, 1:-1, 3].max())
+    wall_16_32 = float(coarse[:, 0, 3].max() / mid[:, 0, 3].max())
+    wall_32_64 = float(mid[:, 0, 3].max() / fine[:, 0, 3].max())
+    assert interior_ratio > 1.7                 # ~O(h) inside
+    assert wall_16_32 < 1.2                     # pinned: does not decay at the wall
+    assert wall_32_64 < 1.1                     # ... the ratio keeps falling to 1
+    assert wall_32_64 < wall_16_32              # monotone stagnation, not noise
+    assert float(fine[:, 0, 3].max()) > 1e-2    # O(1) floor, not machine zero
+
+
+def test_conduction_entry_point_completes_and_stays_physical():
+    """Ratchet flip (2026-11-04): the entry point no longer aborts.
+
+    This replaces ``test_conduction_entry_point_still_crashes_on_the_documented_default``,
+    whose ``pytest.raises(FloatingPointError)`` stopped firing once main's m3139
+    wall repair landed (one-sided DG wall derivative as the default, plus the
+    positivity filter).  The crash guard is still in place, so what is pinned
+    here is completion *and* physicality.  Measured at ``ncells=(2, 8)``,
+    ``final_time=0.5``: p in [7.3238e-01, 9.2602e-01], rho in
+    [9.1246e-01, 1.3363e+00], theta = p/rho monotone in y from 0.9841 (hot
+    wall) down to 0.5617 (cold wall), 1070 explicit steps.
+
+    Accuracy is deliberately *not* asserted: the wall closure is still
+    inconsistent (see ``test_interior_energy_residual_decays_but_wall_rows_do_not``),
+    so this transient carries a 1.23e-1 offset against the exact conduction
+    profile -- completion must not be read as verification.
+    """
+    x, y, coeff, metadata = ns.solve_heat_conduction_dg_2d(
+        ncells=(2, 8), final_time=0.5, dtype=torch.float64)
+    assert torch.isfinite(coeff).all()
+    fields = ns.cell_fields(coeff)
+    pressure, density = fields["pressure"], fields["density"]
+    assert float(pressure.min()) > 0.0 and float(density.min()) > 0.0
+    # R = 1 in this package, so theta = p / rho; y runs along the second axis
+    temperature = pressure / density
+    assert bool((temperature[0][1:] <= temperature[0][:-1]).all()), "profile must be monotone"
+    assert float(temperature.min()) > T_TOP - 1e-2
+    assert float(temperature.max()) < T_BOTTOM + 1e-2
