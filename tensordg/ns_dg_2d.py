@@ -964,8 +964,12 @@ def solve_navier_stokes_dg_2d(
         Periodicity in ``x`` and ``y``.  A non-periodic direction must be given
         explicit ``boundary`` entries (outflow by default).
     boundary : dict or None
-        ``{"xmin", "xmax", "ymin", "ymax"}``; each entry is ``None`` (outflow)
-        or ``{"velocity": (u, v), "temperature": T}`` (no-slip isothermal wall).
+        ``{"xmin", "xmax", "ymin", "ymax"}``; each entry is ``None`` (outflow),
+        ``{"velocity": (u, v), "temperature": T}`` (no-slip isothermal wall) or
+        a callable ``f(t) -> {"velocity": ..., "temperature": ...}`` giving the
+        wall state at the stage time ``t`` (time-dependent Dirichlet data, used
+        by the transient wall-heat-flux verification in
+        ``benchmarks/verify_ns_transient_wall_heat.py``; m3640).
     penalty : float or None
         SIPG penalty coefficient; defaults to ``2 (degree + 1)**2``.
 
@@ -1046,6 +1050,15 @@ def solve_navier_stokes_dg_2d(
     def impose(state):
         return _positivity_filter(state, basis, signs)
 
+    def stage_boundary(time_value):
+        """Wall data at a stage time; plain dicts are passed through unchanged."""
+        if not any(callable(value) for value in boundary.values()):
+            return boundary
+        return {
+            key: (value(time_value) if callable(value) else value)
+            for key, value in boundary.items()
+        }
+
     h_min = min(dx, dy)
     time, steps, diffusive_steps, dt = 0.0, 0, 0, 0.0
     # m2789: physical coordinates of the quadrature nodes (used by ``source``).
@@ -1099,17 +1112,17 @@ def solve_navier_stokes_dg_2d(
                     limited_by_diffusion = True
         dt = min(dt, final_time - time)
         k1 = _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic,
-                     boundary, mu, kappa, penalty, wall_gradient,
+                     stage_boundary(time), mu, kappa, penalty, wall_gradient,
                      wall_penalty, wall_adjoint=wall_adjoint,
                      source_quad=_source_quad(time))
         u1 = impose(coeff + dt * k1)
         k2 = _rhs_ns(u1, basis, derivative, weights, signs, dx, dy, periodic,
-                     boundary, mu, kappa, penalty, wall_gradient,
+                     stage_boundary(time + dt), mu, kappa, penalty, wall_gradient,
                      wall_penalty, wall_adjoint=wall_adjoint,
                      source_quad=_source_quad(time + dt))
         u2 = impose(0.75 * coeff + 0.25 * (u1 + dt * k2))
         k3 = _rhs_ns(u2, basis, derivative, weights, signs, dx, dy, periodic,
-                     boundary, mu, kappa, penalty, wall_gradient,
+                     stage_boundary(time + 0.5 * dt), mu, kappa, penalty, wall_gradient,
                      wall_penalty, wall_adjoint=wall_adjoint,
                      source_quad=_source_quad(time + 0.5 * dt))
         coeff = impose(coeff / 3.0 + (2.0 / 3.0) * (u2 + dt * k3))
@@ -1148,7 +1161,11 @@ def solve_navier_stokes_dg_2d(
         "penalty": penalty,
         "wall_gradient": wall_gradient,
         "wall_adjoint": wall_adjoint,
-        "boundary": {key: value for key, value in boundary.items()},
+        "boundary": {
+            key: (value if not callable(value) else
+                  {"callable": getattr(value, "__name__", "<callable>")})
+            for key, value in boundary.items()
+        },
         "flux": "hllc + br1/sipg viscous",
         "quadrature": order,
         "initial_projection": initial_projection,
