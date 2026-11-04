@@ -101,19 +101,20 @@ def build_state(ncells, degree, dtype=torch.float64):
 # ---------------------------------------------------------------------------
 # Section 1: residual of the exact steady state
 # ---------------------------------------------------------------------------
-def section_residual():
+def section_residual(wall_gradient="taylor"):
     rows = []
     for ncells, degree in (((2, 8), 1), ((2, 16), 1), ((2, 32), 1), ((2, 8), 2)):
         d = build_state(ncells, degree)
         penalty = 2.0 * (degree + 1.0) ** 2
         rhs = ns._rhs_ns(d["coeff"], d["basis"], d["derivative"], d["weights"],
                          d["signs"], d["dx"], d["dy"], (True, False), d["boundary"],
-                         MU, KAPPA, penalty)
+                         MU, KAPPA, penalty, wall_gradient)
         magnitude = float(rhs.abs().max())
         channels = rhs.abs().amax(dim=(0, 1, 2, 3)).tolist()
         wall = float(rhs[:, [0, -1]].abs().max())
         rows.append(dict(
-            ncells=list(ncells), degree=degree, rhs_max=magnitude,
+            ncells=list(ncells), degree=degree, wall_gradient=wall_gradient,
+            rhs_max=magnitude,
             rhs_channels=channels, wall_fraction=wall / magnitude,
             interior_max=float(rhs[:, 1:-1].abs().max()),
         ))
@@ -129,16 +130,20 @@ ANALYTIC_E_FLUX = -(WALL_SPEED * MU * WALL_SPEED
 ANALYTIC_E_FLUX_BOTTOM = -(KAPPA * (MU * WALL_SPEED**2 / (2.0 * KAPPA)))
 
 
-def wall_fluxes(ncells, degree, penalty_scale=2.0):
+def wall_fluxes(ncells, degree, penalty_scale=2.0, wall_gradient="taylor"):
     d = build_state(ncells, degree)
     penalty = penalty_scale * (degree + 1.0) ** 2
     h = d["dy"]
     left = ns._face_primitives(d["coeff"], d["basis"], d["derivative"], d["signs"], 1, "left")
     right = ns._face_primitives(d["coeff"], d["basis"], d["derivative"], d["signs"], 1, "right")
+    recon = (ns._wall_normal_derivative(d["coeff"], d["basis"], d["signs"], h, 1)
+             if wall_gradient == "taylor" else None)
     top = ns._boundary_flux(right, d["boundary"]["ymax"], 1, h, MU, KAPPA, penalty,
-                            2.0 / h, 2.0 / d["dx"])
+                            2.0 / h, 2.0 / d["dx"],
+                            None if recon is None else recon["right"])
     bottom = ns._boundary_flux(left, d["boundary"]["ymin"], 1, h, MU, KAPPA, penalty,
-                               2.0 / h, 2.0 / d["dx"])
+                               2.0 / h, 2.0 / d["dx"],
+                               None if recon is None else recon["left"])
     return dict(
         mx_top=float(top[0, -1, 0, 1]), mx_bottom=float(bottom[0, 0, 0, 1]),
         energy_top=float(top[0, -1, 0, 3]), energy_bottom=float(bottom[0, 0, 0, 3]),
@@ -146,12 +151,12 @@ def wall_fluxes(ncells, degree, penalty_scale=2.0):
     )
 
 
-def section_fluxconv():
+def section_fluxconv(wall_gradient="taylor"):
     rows = []
     for ny in (8, 16, 32, 64):
-        f = wall_fluxes((2, ny), 1)
+        f = wall_fluxes((2, ny), 1, wall_gradient=wall_gradient)
         rows.append(dict(
-            ncells=[2, ny], degree=1, **f,
+            ncells=[2, ny], degree=1, wall_gradient=wall_gradient, **f,
             mx_error=abs(f["mx_top"] - ANALYTIC_MX_FLUX),
             mx_error_bottom=abs(f["mx_bottom"] - ANALYTIC_MX_FLUX),
             energy_error_top=abs(f["energy_top"] - ANALYTIC_E_FLUX),
@@ -174,7 +179,7 @@ def section_fluxconv():
 # ---------------------------------------------------------------------------
 def march(penalty_scale=2.0, channel_weights=(1.0, 1.0, 1.0), ncells=(2, 8),
           degree=1, cfl_viscous=1.0, max_steps=400, stop_on_nonphysical=True,
-          record_every=0):
+          record_every=0, wall_gradient="taylor"):
     """SSP-RK3 march; returns history and the failure step (if any)."""
     d = build_state(ncells, degree)
     boundary, basis, derivative, weights, signs = (
@@ -187,7 +192,8 @@ def march(penalty_scale=2.0, channel_weights=(1.0, 1.0, 1.0), ncells=(2, 8),
 
     original = ns._boundary_flux
 
-    def channel_masked(side, wall, axis, h_, mu, kappa, pen, normal_scale, tangential_scale):
+    def channel_masked(side, wall, axis, h_, mu, kappa, pen, normal_scale,
+                       tangential_scale, normal_derivative=None):
         """Same flux as ``ns._boundary_flux`` with per-channel penalty weights."""
         inner_u, inner_v = side["u"], side["v"]
         wall_velocity = wall.get("velocity", (0.0, 0.0))
@@ -199,11 +205,17 @@ def march(penalty_scale=2.0, channel_weights=(1.0, 1.0, 1.0), ncells=(2, 8),
         face_T = (side["temperature"] if wall_temperature is None else
                   torch.as_tensor(wall_temperature, device=inner_u.device,
                                   dtype=inner_u.dtype).expand_as(inner_u))
-        normal_u = side["u_n"] * normal_scale - wu * (pen / h_) * (inner_u - face_u)
-        normal_v = side["v_n"] * normal_scale - wv * (pen / h_) * (inner_v - face_v)
-        normal_T = side["T_n"] * normal_scale - wt * (pen / h_) * (
-            side["temperature"] - face_T
-        )
+        if normal_derivative is None:
+            base_u = side["u_n"] * normal_scale
+            base_v = side["v_n"] * normal_scale
+            base_T = side["T_n"] * normal_scale
+        else:
+            base_u = normal_derivative["u_n"]
+            base_v = normal_derivative["v_n"]
+            base_T = normal_derivative["T_n"]
+        normal_u = base_u - wu * (pen / h_) * (inner_u - face_u)
+        normal_v = base_v - wv * (pen / h_) * (inner_v - face_v)
+        normal_T = base_T - wt * (pen / h_) * (side["temperature"] - face_T)
         zeros = torch.zeros_like(inner_u)
         pressure = side["pressure"]
         if axis == 0:
@@ -238,13 +250,16 @@ def march(penalty_scale=2.0, channel_weights=(1.0, 1.0, 1.0), ncells=(2, 8),
                               KAPPA / (float(rho.min()) * ns.CV))
             dt = min(dt, cfl_viscous / (diffusivity * (degree + 1.0) ** 4 / (0.1 * h * h)))
             k1 = ns._rhs_ns(coeff, basis, derivative, weights, signs, dx, dy,
-                            (True, False), boundary, MU, KAPPA, penalty)
+                            (True, False), boundary, MU, KAPPA, penalty,
+                            wall_gradient)
             u1 = _positivity_filter(coeff + dt * k1, basis, signs)
             k2 = ns._rhs_ns(u1, basis, derivative, weights, signs, dx, dy,
-                            (True, False), boundary, MU, KAPPA, penalty)
+                            (True, False), boundary, MU, KAPPA, penalty,
+                            wall_gradient)
             u2 = _positivity_filter(0.75 * coeff + 0.25 * (u1 + dt * k2), basis, signs)
             k3 = ns._rhs_ns(u2, basis, derivative, weights, signs, dx, dy,
-                            (True, False), boundary, MU, KAPPA, penalty)
+                            (True, False), boundary, MU, KAPPA, penalty,
+                            wall_gradient)
             coeff = _positivity_filter(coeff / 3.0 + (2.0 / 3.0) * (u2 + dt * k3),
                                        basis, signs)
             time += dt
