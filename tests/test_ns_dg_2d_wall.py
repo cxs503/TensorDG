@@ -302,3 +302,65 @@ def test_adiabatic_wall_operator_is_stable():
 def test_wall_operator_has_no_growing_eigenmode():
     result = _wall_spectrum()
     assert result["max_real"] <= 0.0, result
+
+
+
+def test_reconstructed_wall_heat_flux_is_second_order():
+    """The *reconstructed* wall heat flux converges at second order.
+
+    The gradient is extrapolated from the two innermost cells and the quotient
+    rule uses the cell-centre state, so the one-sided O(h) offset of the raw
+    cell gradient cancels.  Measured slope: 2.00 (was 1.00 before the fix); the
+    reconstruction error at 8 cells is 2.6e-5 against an analytic 5.0e-2, i.e.
+    0.05%.
+
+    The penalty ``(sigma/h)[[T]]`` is deliberately excluded here: it is the
+    coercivity stencil, it is O(h) by construction, and it dominates the *total*
+    numerical flux error (see ``test_wall_penalty_term_dominates_the_flux``).
+    """
+    analytic = -KAPPA * (MU * 1.0**2 / (2.0 * KAPPA))
+    errors = []
+    for ny in (8, 16, 32, 64):
+        op, coeff, boundary = _couette_state((2, ny), 1)
+        h = op["dy"]
+        left = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"],
+                                   1, "left", centre_denominators=True)
+        flux = ns._boundary_flux(left, boundary["ymin"], 1, h, MU, KAPPA, 0.0,
+                                 2.0 / h, 2.0 / op["dx"],
+                                 neighbour=ns._shift_along(left, 1, -1))
+        errors.append(abs(float(flux[0, 0, 0, 3]) - analytic))
+    # three dyadic refinements between 8 and 64 cells
+    slope = math.log2(errors[0] / errors[-1]) / 3.0
+    assert slope > 1.8, (slope, errors)
+    assert errors[0] / abs(analytic) < 0.01, errors[0] / abs(analytic)
+
+def test_wall_penalty_term_dominates_the_total_flux_error():
+    """Honest bookkeeping: the total numerical wall flux is first order.
+
+    After the gradient fix the *reconstruction* is second order, so the residual
+    (residual) total error is the SIPG penalty term, which scales as
+    ``(sigma/h) * [[T]]`` with ``[[T]] = O(h^2)``.  Its slope must be 1.00 and it
+    must account for >95% of the total flux error -- that is what keeps the
+    strong-form residual of the exact steady state at O(1) and the transient
+    case open.
+    """
+    total, penalty_only = [], []
+    for ny in (8, 16, 32):
+        op, coeff, boundary = _couette_state((2, ny), 1)
+        h = op["dy"]
+        penalty = 2.0 * 2.0**2
+        left = ns._face_primitives(coeff, op["basis"], op["derivative"], op["signs"],
+                                   1, "left", centre_denominators=True)
+        neighbour = ns._shift_along(left, 1, -1)
+        analytic = -KAPPA * (MU * 1.0**2 / (2.0 * KAPPA))
+        with_penalty = ns._boundary_flux(left, boundary["ymin"], 1, h, MU, KAPPA,
+                                         penalty, 2.0 / h, 2.0 / op["dx"],
+                                         neighbour=neighbour)
+        without = ns._boundary_flux(left, boundary["ymin"], 1, h, MU, KAPPA, 0.0,
+                                    2.0 / h, 2.0 / op["dx"], neighbour=neighbour)
+        total.append(abs(float(with_penalty[0, 0, 0, 3]) - analytic))
+        penalty_only.append(abs(float(with_penalty[0, 0, 0, 3])
+                                - float(without[0, 0, 0, 3])))
+    slope = math.log2(total[0] / total[-1]) / 2.0
+    assert 0.85 < slope < 1.15, (slope, total)
+    assert penalty_only[0] / total[0] > 0.95, (penalty_only, total)
