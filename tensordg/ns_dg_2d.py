@@ -246,6 +246,85 @@ def _recover_wall_gradient(centre, interface, normal_scale, axis, side):
         for key in ("u_n", "v_n", "T_n")
     }
 
+# ----------------------------------------------------------------------
+# m2831 second-order one-sided wall stencil (``wall_gradient='fd2'``).
+# The stencil fits a parabola through the imposed wall value and the two
+# nearest cell centres, so the Dirichlet value is already built into the
+# derivative and the redundant BR1 jump penalty is retired by default
+# (``WALL_PENALTY``).  ``wall_gradient='br1'`` is accepted as an alias of
+# the legacy mirror-ghost closure (``'one_sided'``).  The public default
+# stays ``'taylor'`` (m2920); fd2 is opt-in.
+# ----------------------------------------------------------------------
+# m3139 settled the public default at the one-sided DG derivative;
+# the m2831 fd2 stencil (and the m2838 recovered closure) stay opt-in.
+WALL_GRADIENT = "face"
+
+WALL_PENALTY = 0.0
+
+
+def _legendre_at_zero(degree, device, dtype):
+    """``P_k(0)`` for ``k = 0..degree`` (the modal basis evaluated at the centre)."""
+    values = [1.0]
+    if degree >= 1:
+        values.append(0.0)
+    for k in range(2, degree + 1):
+        values.append(-((k - 1.0) / k) * values[k - 2])
+    return torch.tensor(values, device=device, dtype=dtype)
+
+
+def _cell_centre_primitives(coeff):
+    """``u``, ``v``, ``T`` at the cell centres, from the cell averages.
+
+    The DG polynomial is evaluated at the cell centre (``xi = eta = 0``) and
+    converted to ``u = m/rho``, ``T = p/rho``.  Evaluating the polynomial -- as
+    opposed to using the cell average -- matters: for ``p >= 2`` the
+    mean/centre offset is ``(h**2/24) q''``, which does *not* vanish at the
+    wall and would cost one order of accuracy in the one-sided stencil.
+    """
+    degree = coeff.shape[2] - 1
+    at_zero = _legendre_at_zero(degree, coeff.device, coeff.dtype)
+    state = torch.einsum("xyklv,k,l->xyv", coeff, at_zero, at_zero)
+    rho = state[..., 0].clamp_min(1e-12)
+    momentum_x, momentum_y, energy = state[..., 1], state[..., 2], state[..., 3]
+    pressure = (GAMMA - 1.0) * (
+        energy - 0.5 * (momentum_x**2 + momentum_y**2) / rho
+    )
+    return momentum_x / rho, momentum_y / rho, pressure / rho
+
+
+def _wall_stencil(field, axis, side):
+    """(wall cell, next inner cell) values of ``field`` along the normal axis."""
+    count = field.shape[axis]
+    if count < 2:
+        raise ValueError("a Dirichlet wall needs at least two cells along the normal")
+    if side == "left":
+        first, second = 0, 1
+    else:
+        first, second = count - 1, count - 2
+    values = []
+    for index in (first, second):
+        key = [slice(None)] * field.dim()
+        key[axis] = slice(index, index + 1)
+        # face data is (..., normal cell index, ..., tangential quadrature): the
+        # trailing singleton broadcasts the cell value over those quadrature
+        # points
+        values.append(field[tuple(key)].unsqueeze(-1))
+    return values[0], values[1]
+
+
+def _wall_derivative(wall_value, centre, inner, h, side):
+    """Second-order one-sided normal derivative at a Dirichlet wall.
+
+    Nodes sit at distances ``0`` (wall), ``h/2`` and ``3h/2`` (the first two
+    cell centres), so the derivative of the interpolating parabola in the
+    inward direction ``s`` is ``(-8/3 q_w + 3 q_1 - q_2/3) / h``.  Code
+    convention: every face flux is built with the normal along ``+axis``, so at
+    the ``right`` wall the inward direction is ``-n``.
+    """
+    inward = (-8.0 / 3.0 * wall_value + 3.0 * centre - inner / 3.0) / h
+    return inward if side == "left" else -inward
+
+
 def _centre_mode_weights(degree: int, device, dtype):
     """``P_k(0)``: the Legendre modes evaluated at the element centre."""
     values = [1.0, 0.0]
@@ -428,7 +507,8 @@ def _wall_normal_derivative(coeff, basis, signs, h, axis):
 
 def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
                    tangential_scale, normal_derivative=None, neighbour=None,
-                   recovered=None):
+                   recovered=None,
+                   centre=None, side_name="right"):
     """Flux on an outermost face.
 
     ``wall is None`` gives an outflow face (physical flux, interior gradient);
@@ -480,6 +560,15 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
             base_u = recovered["u_n"]
             base_v = recovered["v_n"]
             base_T = recovered["T_n"]
+        elif centre is not None:
+            # m2831 fd2: second-order one-sided stencil through the imposed
+            # wall value and the two nearest cell centres
+            wall_u, inner_u_c = _wall_stencil(centre["u"], axis, side_name)
+            wall_v, inner_v_c = _wall_stencil(centre["v"], axis, side_name)
+            wall_T, inner_T_c = _wall_stencil(centre["T"], axis, side_name)
+            base_u = _wall_derivative(face_u, wall_u, inner_u_c, h, side_name)
+            base_v = _wall_derivative(face_v, wall_v, inner_v_c, h, side_name)
+            base_T = _wall_derivative(face_T, wall_T, inner_T_c, h, side_name)
         else:
             base_u = side["u_n"] * normal_scale
             base_v = side["v_n"] * normal_scale
@@ -565,6 +654,10 @@ def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
                     u_x=tangential_u, v_x=tangential_v, T_x=tangential_T)
     interface = inviscid - _viscous_flux(face, axis, mu, kappa)
 
+    if wall_gradient == "br1":
+        # m2831 alias: the pre-m2831 mirror-ghost closure
+        wall_gradient = "one_sided"
+
     recon = None
     if not periodic and wall_gradient == "taylor":
         recon = _wall_normal_derivative(coeff, basis, signs, h, axis)
@@ -581,13 +674,26 @@ def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
             recovered_bottom = _recover_wall_gradient(centre, averaged,
                                                       normal_scale, axis, "left")
 
+    centre_state = None
+    if (not periodic and wall_gradient == "fd2"
+            and (wall_left is not None or wall_right is not None)):
+        centre_u, centre_v, centre_T = _cell_centre_primitives(coeff)
+        centre_state = {"u": centre_u, "v": centre_v, "T": centre_T}
+
+    if wall_gradient == "fd2":
+        # m2831: the Dirichlet value is already inside the stencil, so the
+        # jump penalty is retired unless explicitly requested
+        wall_sigma = WALL_PENALTY if wall_penalty is None else wall_penalty
+    else:
+        wall_sigma = penalty if wall_penalty is None else wall_penalty
+
     if not periodic:
         right_derivative = None if recon is None else recon["right"]
-        wall_sigma = penalty if wall_penalty is None else wall_penalty
         boundary = _boundary_flux(right, wall_right, axis, h, mu, kappa,
                                   wall_sigma, normal_scale, tangential_scale,
                                   normal_derivative=right_derivative,
-                                  recovered=recovered_top)
+                                  recovered=recovered_top,
+                                  centre=centre_state, side_name="right")
         interface = _merge(interface, boundary, roll_dim, -1)
 
     if axis == 0:
@@ -602,7 +708,8 @@ def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
         left_boundary = _boundary_flux(left, wall_left, axis, h, mu, kappa,
                                        wall_sigma, normal_scale, tangential_scale,
                                        normal_derivative=left_derivative,
-                                       recovered=recovered_bottom)
+                                       recovered=recovered_bottom,
+                                       centre=centre_state, side_name="left")
         if axis == 0:
             flux_left[0] = torch.einsum("ybv,b,bl->ylv", left_boundary[0], weights, basis)
         else:
@@ -814,9 +921,13 @@ def solve_navier_stokes_dg_2d(
 
     if initial_projection != "l2":
         raise ValueError("only the l2 initial projection is supported")
-    if wall_gradient not in ("taylor", "face", "one_sided", "recovered"):
+    if wall_gradient == "br1":
+        # m2831 alias for the legacy mirror-ghost closure
+        wall_gradient = "one_sided"
+    if wall_gradient not in ("taylor", "face", "one_sided", "recovered", "fd2"):
         raise ValueError(
-            "wall_gradient must be 'taylor', 'face', 'one_sided' or 'recovered'"
+            "wall_gradient must be 'taylor', 'face', 'one_sided', 'recovered' "
+            "or 'fd2'"
         )
     coeff = _initial_coefficients(initial, x, y, dx, dy, nodes, weights, basis, dev, dtype)
 
@@ -894,6 +1005,7 @@ def solve_navier_stokes_dg_2d(
         "kappa": kappa,
         "prandtl": prandtl,
         "penalty": penalty,
+        "wall_gradient": wall_gradient,
         "boundary": {key: value for key, value in boundary.items()},
         "flux": "hllc + br1/sipg viscous",
         "quadrature": order,
