@@ -1,0 +1,343 @@
+{
+  "max_degree": 8,
+  "criteria": {
+    "order_tol_relative": 0.05,
+    "l1_half_order_band": 0.35,
+    "estimator_control_tol": 1e-12,
+    "relative_l1_gate": 0.03
+  },
+  "smooth": {
+    "P0": {
+      "cells": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "l2": [
+        0.35351035987319124,
+        0.2024550042926657,
+        0.1084723247236165,
+        0.056137363008942384
+      ],
+      "pairwise_orders": [
+        0.8041511907997253,
+        0.9002742989675674,
+        0.9502938035564218
+      ],
+      "fitted_order": 0.8864432178938709,
+      "design_order": 1,
+      "order_matches_design": false,
+      "rk4_capped": false,
+      "degree": 0
+    },
+    "P1": {
+      "cells": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "l2": [
+        0.025736512376988208,
+        0.00658699750533592,
+        0.001656181013418881,
+        0.00041459420805610203
+      ],
+      "pairwise_orders": [
+        1.9661236545235201,
+        1.991760641958183,
+        1.9980884947480844
+      ],
+      "fitted_order": 1.9859679015647533,
+      "design_order": 2,
+      "order_matches_design": true,
+      "rk4_capped": false,
+      "degree": 1
+    },
+    "P2": {
+      "cells": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "l2": [
+        0.0016555114556705156,
+        0.00020887127058279826,
+        2.6116250887297566e-05,
+        3.2647551422199937e-06
+      ],
+      "pairwise_orders": [
+        2.9865910196442633,
+        2.9995943579647335,
+        2.999901107668357
+      ],
+      "fitted_order": 2.9957853813796786,
+      "design_order": 3,
+      "order_matches_design": true,
+      "rk4_capped": false,
+      "degree": 2
+    },
+    "P3": {
+      "cells": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "l2": [
+        7.797352931470376e-05,
+        4.951503502247987e-06,
+        3.153627399865831e-07,
+        1.9705018815762412e-08
+      ],
+      "pairwise_orders": [
+        3.9770458718662116,
+        3.972782538392425,
+        4.000377184032013
+      ],
+      "fitted_order": 3.982339932126438,
+      "design_order": 4,
+      "order_matches_design": true,
+      "rk4_capped": false,
+      "degree": 3
+    },
+    "P4": {
+      "cells": [
+        8,
+        16,
+        32
+      ],
+      "l2": [
+        3.081089529991054e-06,
+        9.688231002402959e-08,
+        3.0315335646435255e-09
+      ],
+      "pairwise_orders": [
+        4.9910635299486685,
+        4.998113563577183
+      ],
+      "fitted_order": 4.994588546762925,
+      "design_order": 5,
+      "order_matches_design": true,
+      "rk4_capped": true,
+      "degree": 4
+    },
+    "P5": {
+      "cells": [
+        8,
+        16,
+        32
+      ],
+      "l2": [
+        1.0172163405608053e-07,
+        1.5927073990766462e-09,
+        2.4912211221167673e-11
+      ],
+      "pairwise_orders": [
+        5.997001483060438,
+        5.998484357621219
+      ],
+      "fitted_order": 5.99774292034083,
+      "design_order": 6,
+      "order_matches_design": true,
+      "rk4_capped": true,
+      "degree": 5
+    }
+  },
+  "temporal": {
+    "P1": {
+      "cfl_coarse": 0.00658699750533592,
+      "cfl_fine": 0.006586997505341617,
+      "temporal_fraction": -8.65085780787922e-13,
+      "negligible": true
+    },
+    "P2": {
+      "cfl_coarse": 0.00020887127058279826,
+      "cfl_fine": 0.0002088712705814921,
+      "temporal_fraction": 6.253442208503657e-12,
+      "negligible": true
+    },
+    "P3": {
+      "cfl_coarse": 4.951503502247987e-06,
+      "cfl_fine": 4.951503504585736e-06,
+      "temporal_fraction": -4.721292246046005e-10,
+      "negligible": true
+    },
+    "P5": {
+      "cfl_coarse": 1.5927073990766462e-09,
+      "cfl_fine": 1.5927074059614011e-09,
+      "temporal_fraction": -4.322673996526305e-09,
+      "negligible": true
+    }
+  },
+  "floor": {
+    "degree": 5,
+    "cells": [
+      16,
+      32,
+      64,
+      128
+    ],
+    "l2": [
+      1.5927073990766462e-09,
+      2.4912211221167673e-11,
+      3.89077262321508e-13,
+      1.3359648658189737e-14
+    ],
+    "pairwise_orders": [
+      5.998484357621219,
+      6.000652599755043,
+      4.864102699289612
+    ],
+    "floor_level": 1.3359648658189737e-14,
+    "floor_reached": false
+  },
+  "discontinuous": {
+    "estimator_control_t0": 8.66422909246261e-16,
+    "estimator_control_pass": true,
+    "cases": {
+      "P0": {
+        "cells": [
+          16,
+          32,
+          64
+        ],
+        "l1_abs": [
+          0.27758354396857965,
+          0.19840533804309562,
+          0.14068055085219944
+        ],
+        "l1_relative": [
+          0.5551670879371593,
+          0.39681067608619125,
+          0.2813611017043989
+        ],
+        "pairwise_orders": [
+          0.48447120134600435,
+          0.49602795243626113
+        ],
+        "fitted_order": 0.49024957689113324,
+        "predicted_order": 0.5,
+        "within_band": true,
+        "linf": [
+          0.46118809586953724,
+          0.4670210915430848,
+          0.47648872017957944
+        ],
+        "linf_decay_ratio": 1.0331765378314763,
+        "gibbs_persists": true,
+        "relative_l1_at_finest": 0.2813611017043989,
+        "passes_3pct_gate": false,
+        "degree_above_old_cap": false,
+        "degree": 0
+      },
+      "P1": {
+        "cells": [
+          16,
+          32,
+          64
+        ],
+        "l1_abs": [
+          0.08416096860548138,
+          0.05079289427501989,
+          0.030465317856003316
+        ],
+        "l1_relative": [
+          0.16832193721096275,
+          0.10158578855003977,
+          0.06093063571200663
+        ],
+        "pairwise_orders": [
+          0.7285246248653311,
+          0.7374588911761923
+        ],
+        "fitted_order": 0.7329917580207624,
+        "predicted_order": 1.5,
+        "within_band": false,
+        "linf": [
+          0.5032940088985219,
+          0.5100148555025086,
+          0.5128044743071598
+        ],
+        "linf_decay_ratio": 1.0188964407294494,
+        "gibbs_persists": true,
+        "relative_l1_at_finest": 0.06093063571200663,
+        "passes_3pct_gate": false,
+        "degree_above_old_cap": false,
+        "degree": 1
+      },
+      "P2": {
+        "cells": [
+          16,
+          32,
+          64
+        ],
+        "l1_abs": [
+          0.05049669804918981,
+          0.028858681022664368,
+          0.016368958990613445
+        ],
+        "l1_relative": [
+          0.10099339609837962,
+          0.057717362045328735,
+          0.03273791798122689
+        ],
+        "pairwise_orders": [
+          0.8071836905347113,
+          0.8180427890968294
+        ],
+        "fitted_order": 0.8126132398157708,
+        "predicted_order": 2.5,
+        "within_band": false,
+        "linf": [
+          0.5553133108451919,
+          0.5475769795316933,
+          0.5398737062664185
+        ],
+        "linf_decay_ratio": 0.9721965883452818,
+        "gibbs_persists": true,
+        "relative_l1_at_finest": 0.03273791798122689,
+        "passes_3pct_gate": false,
+        "degree_above_old_cap": false,
+        "degree": 2
+      },
+      "P3": {
+        "cells": [
+          16,
+          32,
+          64
+        ],
+        "l1_abs": [
+          0.0364671075160122,
+          0.020239183729363487,
+          0.011165095431186128
+        ],
+        "l1_relative": [
+          0.0729342150320244,
+          0.040478367458726974,
+          0.022330190862372257
+        ],
+        "pairwise_orders": [
+          0.8494446675040827,
+          0.8581555232481736
+        ],
+        "fitted_order": 0.8538000953761294,
+        "predicted_order": 3.5,
+        "within_band": false,
+        "linf": [
+          0.5701207077947502,
+          0.5544420539269068,
+          0.5423793678578681
+        ],
+        "linf_decay_ratio": 0.9513412869281898,
+        "gibbs_persists": true,
+        "relative_l1_at_finest": 0.022330190862372257,
+        "passes_3pct_gate": true,
+        "degree_above_old_cap": false,
+        "degree": 3
+      }
+    }
+  }
+}
