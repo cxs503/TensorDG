@@ -1,0 +1,109 @@
+{
+ "benchmark": "euler_dg_2d_velocity_floor",
+ "cfl": 0.2,
+ "domain": [
+  [
+   -5.0,
+   5.0
+  ],
+  [
+   -5.0,
+   5.0
+  ]
+ ],
+ "rows": [
+  {
+   "degree": 3,
+   "cells": 12,
+   "h": 0.8333333333333334,
+   "steps": 246,
+   "errors": {
+    "density": 0.00011695079824100424,
+    "pressure": 0.00017515818267716419,
+    "momentum_x": 0.0002771260523675644,
+    "momentum_y": 0.0003020971857953251,
+    "energy": 0.00021142278053693523,
+    "velocity_x": 0.00034575546941306674,
+    "velocity_y": 0.0003442700852271111
+   },
+   "velocity_error_rms_centre": 0.0005339610019774161,
+   "divergence_rms": 0.008002308323709472,
+   "curl_rms": 0.013687121857899883,
+   "rotational_fraction": 0.6310503200542956,
+   "max_abs_velocity_error": 0.004584504272619805,
+   "max_location_cell_centre": [
+    7,
+    7
+   ],
+   "wall_seconds": 9.4
+  },
+  {
+   "degree": 3,
+   "cells": 16,
+   "h": 0.625,
+   "steps": 328,
+   "errors": {
+    "density": 3.8309638667221406e-05,
+    "pressure": 5.385262314138417e-05,
+    "momentum_x": 0.00011681643084758126,
+    "momentum_y": 0.00011687487987688574,
+    "energy": 7.226057012153947e-05,
+    "velocity_x": 0.00011620976356875948,
+    "velocity_y": 0.00011623121898423127
+   },
+   "velocity_error_rms_centre": 0.00017949087658388564,
+   "divergence_rms": 0.002326376462122444,
+   "curl_rms": 0.00705547329014132,
+   "rotational_fraction": 0.7520343510552268,
+   "max_abs_velocity_error": 0.0015644065884881098,
+   "max_location_cell_centre": [
+    9,
+    0
+   ],
+   "wall_seconds": 15.4,
+   "eoc": {
+    "density": 3.8794624292378566,
+    "pressure": 4.099797885186708,
+    "momentum_x": 3.002859102233655,
+    "momentum_y": 3.3010218710013843,
+    "energy": 3.731832169011691,
+    "velocity_x": 3.790069069629209,
+    "velocity_y": 3.774461846885713
+   }
+  },
+  {
+   "degree": 3,
+   "cells": 24,
+   "h": 0.4166666666666667,
+   "steps": 492,
+   "errors": {
+    "density": 7.704136165873618e-06,
+    "pressure": 1.0856485427014988e-05,
+    "momentum_x": 8.756887106901345e-05,
+    "momentum_y": 8.741673865335298e-05,
+    "energy": 3.7333799837322814e-05,
+    "velocity_x": 8.62928046116212e-05,
+    "velocity_y": 8.628914869970068e-05
+   },
+   "velocity_error_rms_centre": 0.00013061135173436878,
+   "divergence_rms": 0.0023382952525350924,
+   "curl_rms": 0.00932300371902644,
+   "rotational_fraction": 0.7994824368848183,
+   "max_abs_velocity_error": 0.0016331010058930895,
+   "max_location_cell_centre": [
+    14,
+    0
+   ],
+   "wall_seconds": 37.4,
+   "eoc": {
+    "density": 3.9558130792081685,
+    "pressure": 3.9497565777460544,
+    "momentum_x": 0.7107347786688697,
+    "momentum_y": 0.716256890943814,
+    "energy": 1.62869633947455,
+    "velocity_x": 0.734096820191454,
+    "velocity_y": 0.7346566139369513
+   }
+  }
+ ]
+}
