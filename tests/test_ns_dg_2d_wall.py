@@ -220,8 +220,15 @@ def test_taylor_wall_gradient_is_exact_for_polynomial_data():
 
 
 def test_taylor_wall_gradient_reduces_the_wall_flux_error():
-    """The one-sided Taylor gradient halve the wall heat-flux error of the
-    analytic Brinkman/Couette state (measured ratio 0.57 at 16 cells)."""
+    """The one-sided Taylor gradient halves the *rest-wall* wall heat-flux error
+    of the analytic Brinkman/Couette state (measured ratio 0.573 at 16 cells).
+
+    Bottom-wall statement only (m3139): the derivative part of the P1 error is
+    removed, the Dirichlet-penalty part is not, the observed order is unchanged
+    (1.005 vs 1.001) and the moving wall and every degree ``p >= 2`` get worse.
+    That is why the stencil is opt-in; see ``test_taylor_wall_gradient_*`` here
+    and the design-order guards in ``test_ns_dg_2d_wall_scope.py``.
+    """
     analytic = -KAPPA * (MU * 1.0**2 / (2.0 * KAPPA))
     errors = {}
     for mode in ("face", "taylor"):
@@ -230,12 +237,23 @@ def test_taylor_wall_gradient_reduces_the_wall_flux_error():
     assert errors["taylor"] < 0.65 * errors["face"], errors
 
 
-def test_taylor_wall_gradient_is_the_default_of_the_public_solver():
-    """The improved path must be what a user gets by default."""
+def test_default_wall_gradient_is_the_one_sided_derivative():
+    """Re-anchored by m3139: the default is ``"face"``, not ``"taylor"`` (m2920).
+
+    PR #36 made the extrapolated stencil the default on the strength of one
+    measurement (P1, bottom wall).  The audit in
+    ``validation/ns_dg_2d_wall/bisect_wall_gradient.json`` shows the stencil is
+    ``O(h^2)`` at *every* degree, so as a default it caps the wall heat flux at
+    second order: P3 observed 2.026 against design order 3 and an error up to
+    97x the one-sided DG derivative, P2 1.88 against 2.42, and at P1 it degrades
+    the *moving* wall (4.4e-3 vs 1.1e-3) even after halving the rest wall.  It
+    therefore stays available as an explicit opt-in for the m2920 spectral
+    study, which is degree-1 and keeps its recorded ``"taylor"`` results.
+    """
     import inspect
 
     signature = inspect.signature(ns.solve_navier_stokes_dg_2d)
-    assert signature.parameters["wall_gradient"].default == "taylor"
+    assert signature.parameters["wall_gradient"].default == "face"
     with pytest.raises(ValueError):
         ns.solve_navier_stokes_dg_2d(
             lambda x, y: (torch.ones_like(x), torch.zeros_like(x), torch.zeros_like(x),
