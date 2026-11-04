@@ -17,3 +17,9 @@ burgers_1d_results/
 heat_1d_results/
 lax_1d_results/
 isentropic_vortex_results/
+
+# Shu--Osher benchmark memoisation cache (regenerable)
+shu_osher_results/_cache/
+
+# Python bytecode
+tensordg/__pycache__/

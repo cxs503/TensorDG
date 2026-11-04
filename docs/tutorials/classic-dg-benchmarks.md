@@ -14,7 +14,7 @@
 | 非线性标量守恒律 | Burgers 光滑解、激波、稀疏波 | 非线性通量、熵解、限制器 | 光滑解已实现，见续篇 |
 | 椭圆 | 二维 Poisson 制造解 | SIPG/LDG、Dirichlet 边界、线性系统 | 已实现，本文算例 4 |
 | 抛物 | 热方程、黏性 Burgers | 扩散项、时间步限制、精度 | 热方程已实现，见续篇 |
-| 可压缩 Euler | Sod、Lax、Shu–Osher | 激波/接触/稀疏波、保正性 | Sod/Lax 已实现，Shu–Osher 后续 |
+| 可压缩 Euler | Sod、Lax、Shu–Osher | 激波/接触/稀疏波、保正性 | Sod/Lax/Shu–Osher 均已实现（Shu–Osher 验证与限制器取舍量化见 `docs/shu_osher_verification.md`） |
 | 可压缩光滑流 | 等熵涡输运 | 高阶精度、长时间输运 | P0 基线已实现，见续篇 |
 | 二维激波 | Double Mach、前向台阶 | 复杂激波相互作用、限制器 | 后续开发 |
 | 不稳定性 | Kelvin–Helmholtz、Richtmyer–Meshkov | 涡结构、数值耗散、稳健性 | 后续开发 |
