@@ -1,0 +1,330 @@
+{
+ "benchmark": "euler_dg_2d_design_order",
+ "domain": [
+  [
+   -5.0,
+   5.0
+  ],
+  [
+   -5.0,
+   5.0
+  ]
+ ],
+ "blocks": [
+  {
+   "degree": 1,
+   "design_order": 2,
+   "final_time": 1.0,
+   "cfl": 0.2,
+   "rows": [
+    {
+     "degree": 1,
+     "cells": 12,
+     "h": 0.8333333333333334,
+     "dofs": 2304,
+     "steps": 106,
+     "dt": 0.0067063432542053825,
+     "errors": {
+      "density": 0.00688156785126728,
+      "velocity_x": 0.014333541687809603,
+      "velocity_y": 0.013802896567734048,
+      "pressure": 0.009784479158948294
+     },
+     "wall_seconds": 4.19
+    },
+    {
+     "degree": 1,
+     "cells": 16,
+     "h": 0.625,
+     "dofs": 4096,
+     "steps": 142,
+     "dt": 7.26736327394395e-05,
+     "errors": {
+      "density": 0.0038091135365159135,
+      "velocity_x": 0.008372785308544036,
+      "velocity_y": 0.008195545377869335,
+      "pressure": 0.005499213353963675
+     },
+     "wall_seconds": 6.3,
+     "eoc": {
+      "density": 2.0559154479634625,
+      "velocity_x": 1.8687843727178317,
+      "velocity_y": 1.8120270820177973,
+      "pressure": 2.002878770113562
+     }
+    },
+    {
+     "degree": 1,
+     "cells": 24,
+     "h": 0.4166666666666667,
+     "dofs": 9216,
+     "steps": 212,
+     "dt": 0.0016322937129105153,
+     "errors": {
+      "density": 0.0016740230676728395,
+      "velocity_x": 0.003637023653948919,
+      "velocity_y": 0.0036111062554966943,
+      "pressure": 0.0024515144681647584
+     },
+     "wall_seconds": 13.54,
+     "eoc": {
+      "density": 2.027712683782125,
+      "velocity_x": 2.05645545230417,
+      "velocity_y": 2.021324588234336,
+      "pressure": 1.9925242775508798
+     }
+    },
+    {
+     "degree": 1,
+     "cells": 32,
+     "h": 0.3125,
+     "dofs": 16384,
+     "steps": 282,
+     "dt": 0.0022682394277721007,
+     "errors": {
+      "density": 0.0009272514941585112,
+      "velocity_x": 0.00201151001984321,
+      "velocity_y": 0.002004125680846216,
+      "pressure": 0.001372316662457155
+     },
+     "wall_seconds": 24.05,
+     "eoc": {
+      "density": 2.0535176145535208,
+      "velocity_x": 2.05880043535293,
+      "velocity_y": 2.046725630483414,
+      "pressure": 2.0168294558437556
+     }
+    }
+   ],
+   "fit_slope": {
+    "density": 2.041241457167505,
+    "velocity_x": 2.010031794256021,
+    "velocity_y": 1.9752590490631812,
+    "pressure": 2.0012064261415037
+   },
+   "finest_errors": {
+    "density": 0.0009272514941585112,
+    "velocity_x": 0.00201151001984321,
+    "velocity_y": 0.002004125680846216,
+    "pressure": 0.001372316662457155
+   },
+   "finest_below_three_percent": {
+    "density": true,
+    "velocity_x": true,
+    "velocity_y": true,
+    "pressure": true
+   },
+   "total_seconds": 48.1
+  },
+  {
+   "degree": 2,
+   "design_order": 3,
+   "final_time": 1.0,
+   "cfl": 0.2,
+   "rows": [
+    {
+     "degree": 2,
+     "cells": 8,
+     "h": 1.25,
+     "dofs": 2304,
+     "steps": 117,
+     "dt": 0.004237641927159808,
+     "errors": {
+      "density": 0.003275074550264168,
+      "velocity_x": 0.005619999088492312,
+      "velocity_y": 0.005493569107830254,
+      "pressure": 0.004287231014401607
+     },
+     "wall_seconds": 4.14
+    },
+    {
+     "degree": 2,
+     "cells": 12,
+     "h": 0.8333333333333334,
+     "dofs": 5184,
+     "steps": 176,
+     "dt": 0.0019716108388090348,
+     "errors": {
+      "density": 0.0009138850328349801,
+      "velocity_x": 0.0019110120151271197,
+      "velocity_y": 0.0018971442511262738,
+      "pressure": 0.0012340709683423096
+     },
+     "wall_seconds": 6.96,
+     "eoc": {
+      "density": 3.147967869065211,
+      "velocity_x": 2.6603979665712965,
+      "velocity_y": 2.6222439464511247,
+      "pressure": 3.071343535642103
+     }
+    },
+    {
+     "degree": 2,
+     "cells": 16,
+     "h": 0.625,
+     "dofs": 9216,
+     "steps": 234,
+     "dt": 0.004264584341176381,
+     "errors": {
+      "density": 0.00039756161424075504,
+      "velocity_x": 0.000819485914820153,
+      "velocity_y": 0.0008185905141060892,
+      "pressure": 0.0005624651741025578
+     },
+     "wall_seconds": 10.74,
+     "eoc": {
+      "density": 2.893314989504471,
+      "velocity_x": 2.9432178857989433,
+      "velocity_y": 2.921701118002698,
+      "pressure": 2.731294610998931
+     }
+    },
+    {
+     "degree": 2,
+     "cells": 24,
+     "h": 0.4166666666666667,
+     "dofs": 20736,
+     "steps": 352,
+     "dt": 0.0005574309581006798,
+     "errors": {
+      "density": 0.00012032585988793832,
+      "velocity_x": 0.00024297581199709273,
+      "velocity_y": 0.00024326115804597086,
+      "pressure": 0.0001684945678526242
+     },
+     "wall_seconds": 26.79,
+     "eoc": {
+      "density": 2.947593617848861,
+      "velocity_x": 2.9983228813451497,
+      "velocity_y": 2.992731954171451,
+      "pressure": 2.9729455983778
+     }
+    }
+   ],
+   "fit_slope": {
+    "density": 3.0000158934356036,
+    "velocity_x": 2.864568128251783,
+    "velocity_y": 2.84280564815471,
+    "pressure": 2.932206155600826
+   },
+   "finest_errors": {
+    "density": 0.00012032585988793832,
+    "velocity_x": 0.00024297581199709273,
+    "velocity_y": 0.00024326115804597086,
+    "pressure": 0.0001684945678526242
+   },
+   "finest_below_three_percent": {
+    "density": true,
+    "velocity_x": true,
+    "velocity_y": true,
+    "pressure": true
+   },
+   "total_seconds": 48.6
+  },
+  {
+   "degree": 3,
+   "design_order": 4,
+   "final_time": 1.0,
+   "cfl": 0.2,
+   "rows": [
+    {
+     "degree": 3,
+     "cells": 6,
+     "h": 1.6666666666666667,
+     "dofs": 2304,
+     "steps": 123,
+     "dt": 0.002327231923040962,
+     "errors": {
+      "density": 0.0016570169938132959,
+      "velocity_x": 0.003524005471025961,
+      "velocity_y": 0.003402458895472119,
+      "pressure": 0.002413891529292311
+     },
+     "wall_seconds": 3.96
+    },
+    {
+     "degree": 3,
+     "cells": 8,
+     "h": 1.25,
+     "dofs": 4096,
+     "steps": 164,
+     "dt": 0.0025028818378908246,
+     "errors": {
+      "density": 0.0005648103033606634,
+      "velocity_x": 0.001572587705919767,
+      "velocity_y": 0.0015632740846065237,
+      "pressure": 0.0007872385761912397
+     },
+     "wall_seconds": 5.75,
+     "eoc": {
+      "density": 3.741228417419339,
+      "velocity_x": 2.80474820983382,
+      "velocity_y": 2.7033870204657173,
+      "pressure": 3.8947999374456708
+     }
+    },
+    {
+     "degree": 3,
+     "cells": 12,
+     "h": 0.8333333333333334,
+     "dofs": 9216,
+     "steps": 246,
+     "dt": 0.0026043343523515228,
+     "errors": {
+      "density": 0.00011695079824100424,
+      "velocity_x": 0.00034575546941306674,
+      "velocity_y": 0.0003442700852271111,
+      "pressure": 0.00017515818267716419
+     },
+     "wall_seconds": 10.5,
+     "eoc": {
+      "density": 3.8837783535992694,
+      "velocity_x": 3.7358232364670694,
+      "velocity_y": 3.7317913725018648,
+      "pressure": 3.7064641374297347
+     }
+    },
+    {
+     "degree": 3,
+     "cells": 16,
+     "h": 0.625,
+     "dofs": 16384,
+     "steps": 328,
+     "dt": 0.002175630272662099,
+     "errors": {
+      "density": 3.8309638667221406e-05,
+      "velocity_x": 0.00011620976356875948,
+      "velocity_y": 0.00011623121898423127,
+      "pressure": 5.385262314138417e-05
+     },
+     "wall_seconds": 17.58,
+     "eoc": {
+      "density": 3.8794624292378566,
+      "velocity_x": 3.790069069629209,
+      "velocity_y": 3.774461846885713,
+      "pressure": 4.099797885186708
+     }
+    }
+   ],
+   "fit_slope": {
+    "density": 3.846988874858291,
+    "velocity_x": 3.516180026984795,
+    "velocity_y": 3.4848678505718307,
+    "pressure": 3.852170698390815
+   },
+   "finest_errors": {
+    "density": 3.8309638667221406e-05,
+    "velocity_x": 0.00011620976356875948,
+    "velocity_y": 0.00011623121898423127,
+    "pressure": 5.385262314138417e-05
+   },
+   "finest_below_three_percent": {
+    "density": true,
+    "velocity_x": true,
+    "velocity_y": true,
+    "pressure": true
+   },
+   "total_seconds": 37.8
+  }
+ ]
+}
