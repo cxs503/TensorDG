@@ -33,6 +33,7 @@ def _troubled_cell_indicator(
     coeff: torch.Tensor,
     dx: float,
     tvb_constant: float = 0.0,
+    symmetric_indicator: bool = False,
     limit_boundaries: bool = False,
 ) -> torch.Tensor:
     """Return a boolean mask [ncells] of cells that need limiting.
@@ -72,7 +73,7 @@ def _troubled_cell_indicator(
     # dx > 1/M and M could not be tuned at all
     # (see docs/limiter_policy_verification.md).
     troubled, mm = troubled_from_differences(
-        d_left, d_right, dx, tvb_constant
+        d_left, d_right, dx, tvb_constant, symmetric_indicator=symmetric_indicator
     )
     if not limit_boundaries:
         # End cells have no full stencil; leave them unlimited (default).
@@ -90,6 +91,7 @@ def apply_tvb_limiter(
     dx: float,
     tvb_constant: float = 1.0,
     limit_boundaries: bool = False,
+    symmetric_indicator: bool = False,
 ) -> torch.Tensor:
     """Apply the TVB limiter to a modal DG coefficient tensor.
 
@@ -108,7 +110,8 @@ def apply_tvb_limiter(
         return coeff  # P0 -- nothing to limit
 
     troubled = _troubled_cell_indicator(
-        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries
+        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries,
+        symmetric_indicator=symmetric_indicator,
     )
     if not troubled.any():
         return coeff
@@ -161,6 +164,7 @@ def apply_weno_limiter(
     tvb_constant: float = 1.0,
     epsilon: float = 1e-6,
     limit_boundaries: bool = False,
+    symmetric_indicator: bool = False,
 ) -> torch.Tensor:
     """Apply a WENO reconstruction limiter to troubled cells.
 
@@ -180,7 +184,8 @@ def apply_weno_limiter(
         return coeff
 
     troubled = _troubled_cell_indicator(
-        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries
+        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries,
+        symmetric_indicator=symmetric_indicator,
     )
     if not troubled.any():
         return coeff

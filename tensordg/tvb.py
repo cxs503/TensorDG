@@ -21,6 +21,7 @@ def troubled_from_differences(
     d_right: torch.Tensor,
     spacing: float,
     tvb_constant: float,
+    symmetric_indicator: bool = False,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """Scale-consistent TVB troubled-cell test and minmod slope.
 
@@ -55,7 +56,22 @@ def troubled_from_differences(
     flags them, the 2-D limiter replicates edge averages for non-periodic axes.
     """
     mm = minmod(d_left, d_right)
-    deviation = (d_left - mm).abs().max(dim=-1).values
+    deviation = (d_left - mm).abs()
+    if symmetric_indicator:
+        # The historic form measures the deviation of the *left* difference
+        # from the minmod slope only.  Under the reflection x -> -x the roles
+        # of ``d_left`` and ``d_right`` are exchanged, so
+        # |d_left - mm| != |d_right - mm| in general and the flagged set is not
+        # mirror-symmetric: on smooth rarefaction-like data 25 vs 19 of 64 cells
+        # are flagged for the two orientations (44 mismatched positions), and
+        # the resulting Sod / reversed-Sod L2 errors differ by ~2% at P2
+        # (docs/riemann_coverage_verification.md).  Taking the larger of the
+        # two deviations restores exact reflection symmetry at the price of a
+        # somewhat more aggressive indicator for the same M.  It is opt-in so
+        # that the validated M policy of docs/limiter_policy_verification.md
+        # keeps its calibrated meaning.
+        deviation = torch.maximum(deviation, (d_right - mm).abs())
+    deviation = deviation.max(dim=-1).values
     threshold = tvb_constant * spacing * spacing
     # Round-off floor: for affine data the deviation is a few ulp of the local
     # differences, which must not be mistaken for a resolved feature.
