@@ -1,0 +1,731 @@
+{
+  "conservation": {
+    "davis": {
+      "finite": true,
+      "mass_rate_total": 0.10008480073193157
+    },
+    "einfeldt": {
+      "finite": true,
+      "mass_rate_total": 0.10008480073193213
+    },
+    "toro": {
+      "finite": true,
+      "mass_rate_total": 0.10008480073193264
+    },
+    "toro_iter": {
+      "finite": true,
+      "mass_rate_total": 0.10008480073193156
+    }
+  },
+  "end_to_end": [
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 14.811171382193535,
+      "model": "davis",
+      "problem": "strong_shock",
+      "relative_l2_percent": {
+        "density": 14.811171382193535,
+        "pressure": 7.501600469102354,
+        "velocity": 6.951899374643468
+      },
+      "seconds": 5.092716932296753,
+      "shock_width_cells": null,
+      "steps": 525
+    },
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 14.94434930147657,
+      "model": "einfeldt",
+      "problem": "strong_shock",
+      "relative_l2_percent": {
+        "density": 14.94434930147657,
+        "pressure": 7.421997557236609,
+        "velocity": 6.768459337212578
+      },
+      "seconds": 5.87924861907959,
+      "shock_width_cells": null,
+      "steps": 525
+    },
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 14.95613115573026,
+      "model": "toro",
+      "problem": "strong_shock",
+      "relative_l2_percent": {
+        "density": 14.95613115573026,
+        "pressure": 7.44462637384095,
+        "velocity": 6.764558531811407
+      },
+      "seconds": 7.265239715576172,
+      "shock_width_cells": null,
+      "steps": 525
+    },
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 14.95890790607123,
+      "model": "toro_iter",
+      "problem": "strong_shock",
+      "relative_l2_percent": {
+        "density": 14.95890790607123,
+        "pressure": 7.45034510124096,
+        "velocity": 6.766045395817128
+      },
+      "seconds": 18.693850994110107,
+      "shock_width_cells": null,
+      "steps": 525
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 11.392703137534996,
+      "model": "davis",
+      "problem": "strong_shock",
+      "relative_l2_percent": {
+        "density": 11.392703137534996,
+        "pressure": 5.472525017282584,
+        "velocity": 4.58567492594558
+      },
+      "seconds": 8.06955862045288,
+      "shock_width_cells": null,
+      "steps": 1049
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 11.593931087351066,
+      "model": "einfeldt",
+      "problem": "strong_shock",
+      "relative_l2_percent": {
+        "density": 11.593931087351066,
+        "pressure": 6.258192318041698,
+        "velocity": 4.932215635204367
+      },
+      "seconds": 9.229096412658691,
+      "shock_width_cells": null,
+      "steps": 1049
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 11.604485300528719,
+      "model": "toro",
+      "problem": "strong_shock",
+      "relative_l2_percent": {
+        "density": 11.604485300528719,
+        "pressure": 6.289371429000086,
+        "velocity": 4.94184274859818
+      },
+      "seconds": 12.512477397918701,
+      "shock_width_cells": null,
+      "steps": 1049
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 11.608966736544406,
+      "model": "toro_iter",
+      "problem": "strong_shock",
+      "relative_l2_percent": {
+        "density": 11.608966736544406,
+        "pressure": 6.307520294927553,
+        "velocity": 4.951652581361536
+      },
+      "seconds": 40.534252882003784,
+      "shock_width_cells": null,
+      "steps": 1049
+    },
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 16.860721737661617,
+      "model": "davis",
+      "problem": "lax",
+      "relative_l2_percent": {
+        "density": 16.860721737661617,
+        "pressure": 5.2923930754390796,
+        "velocity": 10.628516385827137
+      },
+      "seconds": 2.5917909145355225,
+      "shock_width_cells": null,
+      "steps": 306
+    },
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 16.88432254826293,
+      "model": "einfeldt",
+      "problem": "lax",
+      "relative_l2_percent": {
+        "density": 16.88432254826293,
+        "pressure": 5.311961232788487,
+        "velocity": 10.624440144674821
+      },
+      "seconds": 2.769054412841797,
+      "shock_width_cells": null,
+      "steps": 306
+    },
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 16.885899785169116,
+      "model": "toro",
+      "problem": "lax",
+      "relative_l2_percent": {
+        "density": 16.885899785169116,
+        "pressure": 5.314533860176664,
+        "velocity": 10.625660665866995
+      },
+      "seconds": 4.19731330871582,
+      "shock_width_cells": null,
+      "steps": 306
+    },
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 16.88590836035559,
+      "model": "toro_iter",
+      "problem": "lax",
+      "relative_l2_percent": {
+        "density": 16.88590836035559,
+        "pressure": 5.314564425633931,
+        "velocity": 10.625689920524051
+      },
+      "seconds": 10.971861124038696,
+      "shock_width_cells": null,
+      "steps": 306
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 13.125168830934125,
+      "model": "davis",
+      "problem": "lax",
+      "relative_l2_percent": {
+        "density": 13.125168830934125,
+        "pressure": 3.384150512764634,
+        "velocity": 6.697337612006934
+      },
+      "seconds": 4.744372844696045,
+      "shock_width_cells": null,
+      "steps": 612
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 13.1384414137366,
+      "model": "einfeldt",
+      "problem": "lax",
+      "relative_l2_percent": {
+        "density": 13.1384414137366,
+        "pressure": 3.395886262474151,
+        "velocity": 6.692536341278486
+      },
+      "seconds": 5.763612747192383,
+      "shock_width_cells": null,
+      "steps": 612
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 13.139199378837581,
+      "model": "toro",
+      "problem": "lax",
+      "relative_l2_percent": {
+        "density": 13.139199378837581,
+        "pressure": 3.3974974756284846,
+        "velocity": 6.693171818455888
+      },
+      "seconds": 7.080413818359375,
+      "shock_width_cells": null,
+      "steps": 612
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 13.139204902258953,
+      "model": "toro_iter",
+      "problem": "lax",
+      "relative_l2_percent": {
+        "density": 13.139204902258953,
+        "pressure": 3.397515656172554,
+        "velocity": 6.69318781202025
+      },
+      "seconds": 23.37528395652771,
+      "shock_width_cells": null,
+      "steps": 612
+    },
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 11.073739787214894,
+      "model": "davis",
+      "problem": "sod",
+      "relative_l2_percent": {
+        "density": 3.384850280596965,
+        "pressure": 3.5660500903943104,
+        "velocity": 11.073739787214894
+      },
+      "seconds": 1.521777629852295,
+      "shock_width_cells": null,
+      "steps": 215
+    },
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 11.048554207333714,
+      "model": "einfeldt",
+      "problem": "sod",
+      "relative_l2_percent": {
+        "density": 3.384678293741482,
+        "pressure": 3.5664820036558034,
+        "velocity": 11.048554207333714
+      },
+      "seconds": 1.8272528648376465,
+      "shock_width_cells": null,
+      "steps": 215
+    },
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 11.046322455986592,
+      "model": "toro",
+      "problem": "sod",
+      "relative_l2_percent": {
+        "density": 3.382753301942276,
+        "pressure": 3.5642086168790224,
+        "velocity": 11.046322455986592
+      },
+      "seconds": 2.4311225414276123,
+      "shock_width_cells": null,
+      "steps": 215
+    },
+    {
+      "cells": 200,
+      "max_relative_l2_percent": 11.046326152204891,
+      "model": "toro_iter",
+      "problem": "sod",
+      "relative_l2_percent": {
+        "density": 3.382762939116637,
+        "pressure": 3.5642214290345953,
+        "velocity": 11.046326152204891
+      },
+      "seconds": 7.565818786621094,
+      "shock_width_cells": null,
+      "steps": 215
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 7.944988049696712,
+      "model": "davis",
+      "problem": "sod",
+      "relative_l2_percent": {
+        "density": 2.520003751204551,
+        "pressure": 2.4360400065359515,
+        "velocity": 7.944988049696712
+      },
+      "seconds": 3.0900299549102783,
+      "shock_width_cells": null,
+      "steps": 434
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 7.927508320592384,
+      "model": "einfeldt",
+      "problem": "sod",
+      "relative_l2_percent": {
+        "density": 2.520221972826223,
+        "pressure": 2.436782396737221,
+        "velocity": 7.927508320592384
+      },
+      "seconds": 3.5532960891723633,
+      "shock_width_cells": null,
+      "steps": 434
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 7.926153599452322,
+      "model": "toro",
+      "problem": "sod",
+      "relative_l2_percent": {
+        "density": 2.5193685588517303,
+        "pressure": 2.4356687379029305,
+        "velocity": 7.926153599452322
+      },
+      "seconds": 4.70594048500061,
+      "shock_width_cells": null,
+      "steps": 434
+    },
+    {
+      "cells": 400,
+      "max_relative_l2_percent": 7.926154576984698,
+      "model": "toro_iter",
+      "problem": "sod",
+      "relative_l2_percent": {
+        "density": 2.5193727811069935,
+        "pressure": 2.4356750337675526,
+        "velocity": 7.926154576984698
+      },
+      "seconds": 15.148223400115967,
+      "shock_width_cells": null,
+      "steps": 434
+    }
+  ],
+  "fan_cases": [
+    "123problem",
+    "sod",
+    "sonic_rarefaction"
+  ],
+  "gamma": 1.4,
+  "generated_at": "2026-11-04T07:08:19Z",
+  "invariants": {
+    "davis": {
+      "consistency_max_abs": 4.973799150320701e-14,
+      "isolated_contact_max_relative": 0.0,
+      "mirror_symmetry_max_abs": 8.881784197001252e-16
+    },
+    "einfeldt": {
+      "consistency_max_abs": 4.973799150320701e-14,
+      "isolated_contact_max_relative": 0.0,
+      "mirror_symmetry_max_abs": 8.881784197001252e-16
+    },
+    "toro": {
+      "consistency_max_abs": 4.973799150320701e-14,
+      "isolated_contact_max_relative": 0.0,
+      "mirror_symmetry_max_abs": 8.881784197001252e-16
+    },
+    "toro_iter": {
+      "consistency_max_abs": 4.973799150320701e-14,
+      "isolated_contact_max_relative": 0.0,
+      "mirror_symmetry_max_abs": 8.881784197001252e-16
+    }
+  },
+  "kernel": [
+    {
+      "case": "sod",
+      "description": "shock tube: rarefaction + contact + shock",
+      "exact_interface_state": {
+        "density": 0.4263194281784952,
+        "pressure": 0.30313017805064685,
+        "velocity": 0.9274526200489499
+      },
+      "inside_rarefaction_fan": true,
+      "scaled_error": {
+        "davis": 0.15504484807681038,
+        "einfeldt": 0.15587206215525215,
+        "exact_speeds": 0.1405397572236298,
+        "toro": 0.1402949615109765,
+        "toro_iter": 0.1405397572236298
+      }
+    },
+    {
+      "case": "lax",
+      "description": "Lax shock tube",
+      "exact_interface_state": {
+        "density": 0.34456847418960945,
+        "pressure": 2.4660979192073564,
+        "velocity": 1.528723026632884
+      },
+      "inside_rarefaction_fan": false,
+      "scaled_error": {
+        "davis": 0.1293365517119626,
+        "einfeldt": 0.03445539134624159,
+        "exact_speeds": 0.0076012447782931765,
+        "toro": 0.007351378453961322,
+        "toro_iter": 0.0076012447782931765
+      }
+    },
+    {
+      "case": "123problem",
+      "description": "symmetric double rarefaction (near vacuum)",
+      "exact_interface_state": {
+        "density": 0.02185211820681284,
+        "pressure": 0.0018938734200547645,
+        "velocity": 0.0
+      },
+      "inside_rarefaction_fan": true,
+      "scaled_error": {
+        "davis": 0.16155247472494566,
+        "einfeldt": 0.16155247472494566,
+        "exact_speeds": 0.16155247472494566,
+        "toro": 0.16155247472494566,
+        "toro_iter": 0.16155247472494566
+      }
+    },
+    {
+      "case": "strong_shock",
+      "description": "very strong shock",
+      "exact_interface_state": {
+        "density": 5.99924,
+        "pressure": 460.894,
+        "velocity": 19.5975
+      },
+      "inside_rarefaction_fan": false,
+      "scaled_error": {
+        "davis": 0.241643826087335,
+        "einfeldt": 0.09034483804925021,
+        "exact_speeds": 0.0,
+        "toro": 0.0742664052421497,
+        "toro_iter": 0.0
+      }
+    },
+    {
+      "case": "stationary_contact",
+      "description": "pure stationary contact (u = 0)",
+      "exact_interface_state": {
+        "density": 1.0,
+        "pressure": 1.0,
+        "velocity": 0.0
+      },
+      "inside_rarefaction_fan": false,
+      "scaled_error": {
+        "davis": 0.0,
+        "einfeldt": 0.0,
+        "exact_speeds": 0.0,
+        "toro": 0.0,
+        "toro_iter": 0.0
+      }
+    },
+    {
+      "case": "moving_contact",
+      "description": "pure right-moving contact (u > 0)",
+      "exact_interface_state": {
+        "density": 1.0,
+        "pressure": 1.0,
+        "velocity": 0.5
+      },
+      "inside_rarefaction_fan": false,
+      "scaled_error": {
+        "davis": 0.0,
+        "einfeldt": 0.0,
+        "exact_speeds": 0.0,
+        "toro": 0.0,
+        "toro_iter": 0.0
+      }
+    },
+    {
+      "case": "left_moving_contact",
+      "description": "pure left-moving contact (u < 0)",
+      "exact_interface_state": {
+        "density": 0.125,
+        "pressure": 1.0,
+        "velocity": -0.5
+      },
+      "inside_rarefaction_fan": false,
+      "scaled_error": {
+        "davis": 0.0,
+        "einfeldt": 0.0,
+        "exact_speeds": 0.0,
+        "toro": 0.0,
+        "toro_iter": 0.0
+      }
+    },
+    {
+      "case": "sonic_rarefaction",
+      "description": "interface inside a rarefaction fan",
+      "exact_interface_state": {
+        "density": 0.5077330500571122,
+        "pressure": 0.3871592212478421,
+        "velocity": 0.0
+      },
+      "inside_rarefaction_fan": true,
+      "scaled_error": {
+        "davis": 0.0968184907857752,
+        "einfeldt": 0.0968184907857752,
+        "exact_speeds": 0.0968184907857752,
+        "toro": 0.0968184907857752,
+        "toro_iter": 0.0968184907857752
+      }
+    }
+  ],
+  "kernel_summary": {
+    "davis": {
+      "all_max": 0.241643826087335,
+      "all_median": 0.1130775212488689,
+      "recoverable_max": 0.241643826087335,
+      "recoverable_median": 0.0
+    },
+    "einfeldt": {
+      "all_max": 0.16155247472494566,
+      "all_median": 0.0624001146977459,
+      "recoverable_max": 0.09034483804925021,
+      "recoverable_median": 0.0
+    },
+    "exact_speeds": {
+      "all_max": 0.16155247472494566,
+      "all_median": 0.0038006223891465882,
+      "recoverable_max": 0.0076012447782931765,
+      "recoverable_median": 0.0
+    },
+    "toro": {
+      "all_max": 0.16155247472494566,
+      "all_median": 0.04080889184805551,
+      "recoverable_max": 0.0742664052421497,
+      "recoverable_median": 0.0
+    },
+    "toro_iter": {
+      "all_max": 0.16155247472494566,
+      "all_median": 0.0038006223891465882,
+      "recoverable_max": 0.0076012447782931765,
+      "recoverable_median": 0.0
+    }
+  },
+  "models": [
+    "davis",
+    "einfeldt",
+    "toro",
+    "toro_iter"
+  ],
+  "shock_sweep": [
+    {
+      "mach": 1.5,
+      "post_shock_state": {
+        "density": 1.8620689655172413,
+        "pressure": 2.4583333333333335,
+        "velocity": 0.8216777476527243
+      },
+      "scaled_error": {
+        "davis": 0.0788011538833641,
+        "einfeldt": 0.1536550097290305,
+        "exact_speeds": 0.16324952347952065,
+        "toro": 0.16100439442119896,
+        "toro_iter": 0.16324952347952043
+      }
+    },
+    {
+      "mach": 2.0,
+      "post_shock_state": {
+        "density": 2.666666666666667,
+        "pressure": 4.5,
+        "velocity": 1.479019945774904
+      },
+      "scaled_error": {
+        "davis": 0.46507858513475436,
+        "einfeldt": 0.45999999999999996,
+        "exact_speeds": 0.45999999999999996,
+        "toro": 0.45999999999999996,
+        "toro_iter": 0.45999999999999996
+      }
+    },
+    {
+      "mach": 3.0,
+      "post_shock_state": {
+        "density": 3.857142857142857,
+        "pressure": 10.333333333333334,
+        "velocity": 2.6293687924887177
+      },
+      "scaled_error": {
+        "davis": 0.7327272727272727,
+        "einfeldt": 0.7327272727272727,
+        "exact_speeds": 0.7327272727272727,
+        "toro": 0.7327272727272727,
+        "toro_iter": 0.7327272727272727
+      }
+    },
+    {
+      "mach": 5.0,
+      "post_shock_state": {
+        "density": 5.000000000000001,
+        "pressure": 29.0,
+        "velocity": 4.732863826479693
+      },
+      "scaled_error": {
+        "davis": 0.8333333333333334,
+        "einfeldt": 0.8333333333333334,
+        "exact_speeds": 0.8333333333333334,
+        "toro": 0.8333333333333334,
+        "toro_iter": 0.8333333333333334
+      }
+    },
+    {
+      "mach": 10.0,
+      "post_shock_state": {
+        "density": 5.714285714285715,
+        "pressure": 116.50000000000001,
+        "velocity": 9.761531642114367
+      },
+      "scaled_error": {
+        "davis": 0.8689839572192514,
+        "einfeldt": 0.8689839572192514,
+        "exact_speeds": 0.8689839572192514,
+        "toro": 0.8689839572192514,
+        "toro_iter": 0.8689839572192514
+      }
+    }
+  ],
+  "star_pressure": [
+    {
+      "case": "sod",
+      "exact_p_star": 0.30313017805064685,
+      "exact_u_star": 0.9274526200489499,
+      "newton_p_star": 0.3031301780506468,
+      "newton_relative_error": 1.8312644286436914e-16,
+      "pvrs_p_star": 0.55,
+      "pvrs_relative_error": 0.8144019956604462,
+      "trrs_p_star": 0.3067666466705968,
+      "trrs_relative_error": 0.011996392583988616
+    },
+    {
+      "case": "lax",
+      "exact_p_star": 2.4660979192073564,
+      "exact_u_star": 1.528723026632884,
+      "newton_p_star": 2.4660979192073564,
+      "newton_relative_error": 0.0,
+      "pvrs_p_star": 2.4284460857859984,
+      "pvrs_relative_error": 0.015267777134113123,
+      "trrs_p_star": 2.5096631320093388,
+      "trrs_relative_error": 0.01766564598375108
+    },
+    {
+      "case": "123problem",
+      "exact_p_star": 0.0018938734200547645,
+      "exact_u_star": 0.0,
+      "newton_p_star": 0.0018938734200547613,
+      "newton_relative_error": 1.717436066747512e-15,
+      "pvrs_p_star": 1e-12,
+      "pvrs_relative_error": 0.9999999994719816,
+      "trrs_p_star": 0.0018938734200547613,
+      "trrs_relative_error": 1.717436066747512e-15
+    },
+    {
+      "case": "strong_shock",
+      "exact_p_star": 1691.6469553991262,
+      "exact_u_star": 8.689774411632381,
+      "newton_p_star": 1691.6469553991262,
+      "newton_relative_error": 0.0,
+      "pvrs_p_star": 781.3539771978159,
+      "pvrs_relative_error": 0.5381104936204235,
+      "trrs_p_star": 2322.6554570159974,
+      "trrs_relative_error": 0.3730142980501457
+    },
+    {
+      "case": "stationary_contact",
+      "exact_p_star": 1.0,
+      "exact_u_star": 0.0,
+      "newton_p_star": 1.0,
+      "newton_relative_error": 0.0,
+      "pvrs_p_star": 1.0,
+      "pvrs_relative_error": 0.0,
+      "trrs_p_star": 1.0,
+      "trrs_relative_error": 0.0
+    },
+    {
+      "case": "moving_contact",
+      "exact_p_star": 1.0,
+      "exact_u_star": 0.5,
+      "newton_p_star": 1.0,
+      "newton_relative_error": 0.0,
+      "pvrs_p_star": 1.0,
+      "pvrs_relative_error": 0.0,
+      "trrs_p_star": 1.0,
+      "trrs_relative_error": 0.0
+    },
+    {
+      "case": "left_moving_contact",
+      "exact_p_star": 1.0,
+      "exact_u_star": -0.5,
+      "newton_p_star": 1.0,
+      "newton_relative_error": 0.0,
+      "pvrs_p_star": 1.0,
+      "pvrs_relative_error": 0.0,
+      "trrs_p_star": 1.0,
+      "trrs_relative_error": 0.0
+    },
+    {
+      "case": "sonic_rarefaction",
+      "exact_p_star": 0.3871592212478421,
+      "exact_u_star": 0.0,
+      "newton_p_star": 0.387159221247842,
+      "newton_relative_error": 1.4338067695337693e-16,
+      "pvrs_p_star": 0.11258803253505767,
+      "pvrs_relative_error": 0.7091944958144654,
+      "trrs_p_star": 0.38715922124784224,
+      "trrs_relative_error": 4.3014203086013074e-16
+    }
+  ],
+  "torch_version": "2.7.1"
+}
