@@ -191,9 +191,21 @@ profile that merely looks plausible is not sufficient: smooth cases should
 measure convergence, while discontinuous cases should compare with a trusted
 reference and state the error norm.
 
-Wall-bounded `ns_dg_2d` transient caveat (the m2782 `outward_sign` fix above addresses the low-wall penalty orientation; the spectrum tool still models the pre-fix operator): the spectral study in
-`docs/reports/tensordg-ns-wall-spectrum.md` shows the wall operator itself has a growing mode
-(missing adjoint/Nitsche boundary term). The default wall normal derivative is the one-sided DG
-polynomial derivative (`wall_gradient="face"`), which converges at the element design order; the
-`"taylor"` two-point extrapolation is an opt-in diagnostic because it caps the wall heat flux at
-second order (`docs/reports/tensordg-ns-wall-gradient-bisect.md`).
+Wall-bounded `ns_dg_2d` stability envelope (the m2782 `outward_sign` fix retired the
+`max Re(lambda) > 0` growth law that `docs/reports/tensordg-ns-wall-spectrum.md` measured on the
+*pre-fix* operator): over the shipped option space (penalty 2--128, wall-gradient closures
+`face`/`fd2`/`taylor`, adjoint off/on, P1/P2) the wall operator has **no growing eigenmode**
+(|max Re| <= 1e-12, i.e. roundoff against a spectrum of magnitude 3.5e2--2.3e4), while the sign-blind
+pre-fix control still grows 76 -> 5867 in proportion to the penalty; the m2972 symmetric (Nitsche
+adjoint) wall term adds dissipation without adding growth (min Re -1315.8 -> -1472.8 at P1,
+-5568.9 -> -10986.5 at P2). See
+[docs/reports/tensordg-ns-wall-stability-envelope.md](docs/reports/tensordg-ns-wall-stability-envelope.md),
+`validation/ns_dg_2d_wall/stability_envelope.json` and
+`tests/test_ns_dg_2d_wall_stability_envelope.py` (negative control included). Open debt measured in
+the same report and **not** fixed: the analytic steady Couette state still carries an O(1) wall
+residual (observed order ~0 under refinement, peak in the wall cell's highest energy mode) and the
+opt-in adjoint term multiplies it by 2.97x--8.74x, which is why `wall_adjoint` stays opt-in. The
+default wall normal derivative is the one-sided DG polynomial derivative
+(`wall_gradient="face"`), which converges at the element design order; the `"taylor"` two-point
+extrapolation is an opt-in diagnostic because it caps the wall heat flux at second order
+(`docs/reports/tensordg-ns-wall-gradient-bisect.md`).
