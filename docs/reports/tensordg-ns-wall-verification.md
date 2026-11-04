@@ -244,23 +244,3 @@ dt 缩 4×、步数 ×4，**失稳仍发生在同一物理时间**（差 3.3%）
 > 故「一阶通量」与「O(1) 残差」是 P1 现象（且后者恒等于 3×通量误差/h）；
 > 唯一跨阶成立的真缺陷是脉冲启动失稳。见 `docs/reports/tensordg-ns-wall-scope-audit.md`
 > 与 `tests/test_ns_dg_2d_wall_scope.py`。
-
----
-
-> **2026-11-03 更新（m2831 修账）**：本报告定位的缺陷已修复——壁面法向梯度改为二阶单侧重构
-> （`wall_gradient="fd2"`，默认），壁面热流 P1/8 格相对误差 25.4 % → 2.47 %，P2 观测阶 2.50 → 3.02；
-> 脉冲启动 Couette 不再在 t≈0.033 崩溃，t=0.1 时对 Fourier 级数解析解差 0.84 %（2×16 格）。
-> 本报告的 3 条 strict xfail 已退休为绿测试。旧路径仍可用 `wall_gradient="br1"` 复现，数字逐位一致。
-> 详见 `docs/reports/tensordg-ns-wall-gradient.md` 与 `validation/ns_dg_2d_wall_gradient/summary.json`。
-
-> （链上合并仲裁注：并入后公共求解器默认仍为 `wall_gradient="taylor"`（m2920），
-> fd2 为显式 opt-in 模式；`br1` 作为 `one_sided` 的别名保留。数字均取自 m2831 分支
-> 的原始测量。）
-
----
-
-> **2026-11-03 更新（m2782 修复）**：壁面瞬态失稳的根因是 **罚项取向**（低侧壁面罚项符号反了 → 反耗散边界项），已修复：`_boundary_flux(..., outward_sign=±1)`。修复后原崩溃配置推进到 t=0.1 且 `|u| <= U`，Dirichlet Stokes 模态对解析解 0.67%/0.17%/0.04%（8/16/32 格），观测阶 2.00/2.02；P2 壁面热流达机器精度。本单的三条 `xfail(strict=True)` 已全部退休为 green 判据。详见 `docs/reports/tensordg-ns-wall-sign-fix.md`，复现 `python -m benchmarks.verify_ns_dg_2d_wall`（≈59 s）。
-
-> （链上合并仲裁注：m2920 谱归因（壁面扩散通量项、随罚项线性增长）与 m2782 罚项取向
-> 修复相容——低侧反号罚项即该处缺失的伴随（Nitsche）贡献；谱工具 `spectrum_ns_wall.py`
-> 仍是修复前算子的模型，未随本单更新。）
