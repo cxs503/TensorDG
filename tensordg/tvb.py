@@ -54,11 +54,16 @@ def troubled_from_differences(
     Boundary cells are the caller's responsibility: the 1-D limiter never
     flags them, the 2-D limiter replicates edge averages for non-periodic axes.
     """
-    mm = minmod(d_left, d_right)
+    # |d_left| and |d_right| are needed by both the minmod slope and the
+    # round-off floor below; compute them once (bit-identical values, two fewer
+    # kernels -- see docs/limiter_performance_verification.md).
+    a_left = d_left.abs()
+    a_right = d_right.abs()
+    mm = 0.5 * (torch.sign(d_left) + torch.sign(d_right)) * torch.minimum(a_left, a_right)
     deviation = (d_left - mm).abs().max(dim=-1).values
     threshold = tvb_constant * spacing * spacing
     # Round-off floor: for affine data the deviation is a few ulp of the local
     # differences, which must not be mistaken for a resolved feature.
-    scale = torch.maximum(d_left.abs(), d_right.abs()).max(dim=-1).values
+    scale = torch.maximum(a_left, a_right).max(dim=-1).values
     troubled = deviation > threshold + 1e-12 * scale.clamp_min(1.0)
     return troubled, mm

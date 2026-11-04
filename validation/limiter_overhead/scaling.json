@@ -1,0 +1,36 @@
+{
+  "degree": 2,
+  "mission": "m3262",
+  "points": {
+    "100": {
+      "tvb_head": 61,
+      "tvb_loop": 929,
+      "tvb_shipped": 35,
+      "weno_shipped": 87
+    },
+    "200": {
+      "tvb_head": 61,
+      "tvb_loop": 1829,
+      "tvb_shipped": 35,
+      "weno_shipped": 87
+    },
+    "400": {
+      "tvb_head": 61,
+      "tvb_loop": 3620,
+      "tvb_shipped": 35,
+      "weno_shipped": 87
+    },
+    "50": {
+      "tvb_head": 61,
+      "tvb_loop": 479,
+      "tvb_shipped": 35,
+      "weno_shipped": 87
+    },
+    "800": {
+      "tvb_head": 61,
+      "tvb_loop": 7202,
+      "tvb_shipped": 35,
+      "weno_shipped": 87
+    }
+  }
+}

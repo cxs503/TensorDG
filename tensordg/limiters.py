@@ -15,6 +15,19 @@ Implements two shock-capturing strategies for modal DG:
 Both limiters preserve the cell average (mode-0 coefficient) and only
 modify higher modes.  They are designed to be called after each SSP-RK
 sub-step, together with the existing positivity filter.
+
+Implementation note (mission m3262)
+-----------------------------------
+Everything here is element-wise tensor algebra on ``(ncells, nmodes, nvar)``
+arrays, so the cost of a call is *kernel-count* bound: for 200 cells the
+arrays are a few thousand doubles and the wall time is entirely torch's
+per-op dispatch overhead.  The limiter is therefore written as one detector
+pass whose minmod slope is reused by the caller, plus **one** full-tensor
+``torch.where`` write; this is arithmetically identical (bit-for-bit) to the
+previous masked-assignment formulation while issuing far fewer kernels.
+``tests/test_limiter_kernel_budget.py`` pins both properties: exact equality
+against the reference implementation and an upper bound on the kernel count.
+See ``docs/limiter_performance_verification.md``.
 """
 from __future__ import annotations
 
@@ -28,6 +41,74 @@ from .tvb import troubled_from_differences
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+# Boolean "cell is interior" masks, cached per (ncells, device): building the
+# mask costs two scalar writes, so it is done once instead of per call.
+_INTERIOR_MASK_CACHE: dict = {}
+
+
+def _interior_mask(ncells: int, device) -> torch.Tensor:
+    """[ncells] bool mask that is False in the two end cells."""
+    key = (ncells, str(device))
+    mask = _INTERIOR_MASK_CACHE.get(key)
+    if mask is None or mask.device != torch.device(device) or mask.numel() != ncells:
+        mask = torch.ones(ncells, dtype=torch.bool, device=device)
+        if ncells > 1:
+            mask[0] = False
+            mask[-1] = False
+        else:
+            mask[0] = False
+        _INTERIOR_MASK_CACHE[key] = mask
+    return mask
+
+
+# Replicate-padding index [ncells+2] (first and last cell repeated) cached per
+# (ncells, device): one ``index_select`` kernel instead of ``torch.cat`` plus two
+# slices.  ``F.pad(..., mode="replicate")`` does not accept 2-D input.
+_PAD_INDEX_CACHE: dict = {}
+
+
+def _pad_index(ncells: int, device) -> torch.Tensor:
+    key = (ncells, str(device))
+    idx = _PAD_INDEX_CACHE.get(key)
+    if idx is None or idx.numel() != ncells + 2 or idx.device != torch.device(device):
+        idx = torch.cat(
+            [
+                torch.zeros(1, dtype=torch.long, device=device),
+                torch.arange(ncells, dtype=torch.long, device=device),
+                torch.full((1,), ncells - 1, dtype=torch.long, device=device),
+            ]
+        )
+        _PAD_INDEX_CACHE[key] = idx
+    return idx
+
+
+def _detect(
+    coeff: torch.Tensor,
+    dx: float,
+    tvb_constant: float,
+    limit_boundaries: bool = False,
+):
+    """Troubled-cell mask and minmod slope in one pass.
+
+    Returns ``(troubled, slope)`` where ``troubled`` is ``[ncells]`` bool and
+    ``slope = minmod(d_left, d_right)`` is ``[ncells, nvar]`` -- the cell-average
+    increment (physical slope * dx).  Returning the slope removes the second
+    minmod evaluation the callers used to perform.
+    """
+    ncells = coeff.shape[0]
+    avg = coeff[:, 0]  # [ncells, nvar]
+    # Pad with copies of the boundary cells for one-sided stencils
+    avg_pad = avg.index_select(0, _pad_index(ncells, coeff.device))  # [ncells+2, nvar]
+    d_left = avg - avg_pad[:-2]   # u_i - u_{i-1}
+    d_right = avg_pad[2:] - avg   # u_{i+1} - u_i
+    troubled, slope = troubled_from_differences(d_left, d_right, dx, tvb_constant)
+    if not limit_boundaries:
+        # End cells have no full stencil; leave them unlimited (default).
+        # A cached mask AND-ed in is one kernel instead of two scalar writes.
+        troubled = troubled & _interior_mask(ncells, coeff.device)
+    return troubled, slope
+
 
 def _troubled_cell_indicator(
     coeff: torch.Tensor,
@@ -48,37 +129,35 @@ def _troubled_cell_indicator(
     tested as well, using the one-sided (clamped) neighbour already used by
     the padding above; pass ``True`` when the outer cells carry a genuine
     discontinuity that must be limited.
-    """
-    ncells = coeff.shape[0]
-    avg = coeff[:, 0]  # [ncells, nvar]
-    # Pad with copies of boundary cells for one-sided stencils
-    avg_pad = torch.cat([avg[:1], avg, avg[-1:]], dim=0)  # [ncells+2, nvar]
-    d_left = avg - avg_pad[:-2]   # u_i - u_{i-1}
-    d_right = avg_pad[2:] - avg   # u_{i+1} - u_i
 
-    # TVB test (Cockburn & Shu 1989) in a scale-consistent form: the quantity
-    # that measures "how much the limiting would move the reconstruction" is
-    # the deviation of the one-sided difference from the minmod slope,
-    #
-    #     |d_left - minmod(d_left, d_right)|,
-    #
-    # which is O(dx * u') at a discontinuity but O(dx^2 * u'') for smooth data
-    # (it equals |d_left - d_right| = |u''| dx^2 in a smooth decelerating
-    # stretch and |d_left| = O(dx^2) at a smooth extremum).  Comparing that
-    # quantity against the TVB tolerance M * dx^2 is dimensionally consistent
-    # and lets M discriminate smooth extrema from shocks.  The historic code
-    # instead compared max|d_left|, max|d_right| -- an O(dx * u') measure --
-    # against M * dx^2, so every smooth extremum was flagged as soon as
-    # dx > 1/M and M could not be tuned at all
-    # (see docs/limiter_policy_verification.md).
-    troubled, mm = troubled_from_differences(
-        d_left, d_right, dx, tvb_constant
-    )
-    if not limit_boundaries:
-        # End cells have no full stencil; leave them unlimited (default).
-        troubled[0] = False
-        troubled[-1] = False
+    The TVB test itself (Cockburn & Shu 1989, in the scale-consistent form
+    introduced in mission m2500) lives in :func:`tensordg.tvb.
+    troubled_from_differences`; see ``docs/limiter_policy_verification.md``
+    for why the deviation ``|d_left - minmod(d_left, d_right)|`` -- an
+    ``O(dx**2)`` quantity for smooth data -- is the right thing to compare
+    against ``M dx**2``.
+    """
+    troubled, _ = _detect(coeff, dx, tvb_constant, limit_boundaries)
     return troubled
+
+
+def _replace_high_modes(
+    coeff: torch.Tensor,
+    troubled: torch.Tensor,
+    mode1: torch.Tensor,
+) -> torch.Tensor:
+    """Keep mode 0, set mode 1 to *mode1* and higher modes to zero in troubled cells.
+
+    The masked write touches only the flagged rows, which is both the cheapest
+    formulation measured (8 kernels for 200 cells versus 16 for the equivalent
+    full-tensor ``torch.where``, mission m3262) and bit-identical to the
+    historical implementation.
+    """
+    limited = coeff.clone()
+    limited[troubled, 1] = mode1[troubled]
+    if coeff.shape[1] > 2:
+        limited[troubled, 2:] = 0.0
+    return limited
 
 
 # ---------------------------------------------------------------------------
@@ -107,32 +186,19 @@ def apply_tvb_limiter(
     if coeff.shape[1] <= 1:
         return coeff  # P0 -- nothing to limit
 
-    troubled = _troubled_cell_indicator(
+    troubled, slope = _detect(
         coeff, dx, tvb_constant, limit_boundaries=limit_boundaries
     )
     if not troubled.any():
         return coeff
 
-    avg = coeff[:, 0]  # [ncells, nvar]
-    avg_pad = torch.cat([avg[:1], avg, avg[-1:]], dim=0)
-    d_left = avg - avg_pad[:-2]
-    d_right = avg_pad[2:] - avg
-
-    # Minmod slope as a *cell-average increment* (physical slope * dx).
-    slope = _minmod(d_left, d_right)  # [ncells, nvar]
-
-    limited = coeff.clone()
     # In troubled cells: keep mode-0, replace mode-1 with the minmod slope and
     # zero out all higher modes.  The modal basis is the unnormalised Legendre
     # basis on [-1, 1], for which c_1 = (du/dx) * dx/2 (P_1(xi) = xi), so the
     # average increment ``slope`` (== (du/dx)*dx) must be halved.  Omitting the
     # factor doubles the reconstructed slope and breaks the minmod edge values
     # u_i +/- slope/2; the WENO limiter below already applies the same dx/2.
-    t = troubled  # [ncells]
-    limited[t, 1] = 0.5 * slope[t]
-    if coeff.shape[1] > 2:
-        limited[t, 2:] = 0.0
-    return limited
+    return _replace_high_modes(coeff, troubled, 0.5 * slope)
 
 
 # ---------------------------------------------------------------------------
@@ -179,7 +245,7 @@ def apply_weno_limiter(
     if coeff.shape[1] <= 1:
         return coeff
 
-    troubled = _troubled_cell_indicator(
+    troubled, _ = _detect(
         coeff, dx, tvb_constant, limit_boundaries=limit_boundaries
     )
     if not troubled.any():
@@ -189,7 +255,7 @@ def apply_weno_limiter(
     avg = coeff[:, 0]  # [ncells, nvar]
 
     # Pad averages for stencil access
-    avg_pad = torch.cat([avg[:1], avg, avg[-1:]], dim=0)  # [ncells+2]
+    avg_pad = avg.index_select(0, _pad_index(ncells, coeff.device))  # [ncells+2]
     # In padded indexing, cell i maps to index i+1
     u_im1 = avg_pad[:-2]  # [ncells]
     u_i   = avg
@@ -226,12 +292,7 @@ def apply_weno_limiter(
     # Build limited coefficients: mode-0 = cell average, mode-1 = weno_slope * dx/2
     # (the normalised Legendre mode-1 on [-1,1] has slope 1 at the boundary,
     # so the coefficient equals the half-cell physical slope).
-    limited = coeff.clone()
-    t = troubled
-    limited[t, 1] = weno_slope[t] * (dx / 2.0)
-    if nmodes > 2:
-        limited[t, 2:] = 0.0
-    return limited
+    return _replace_high_modes(coeff, troubled, weno_slope * (dx / 2.0))
 
 
 # ---------------------------------------------------------------------------
