@@ -203,3 +203,8 @@ P1 投影误差 O(h²) 被 SIPG 罚项放大 `penalty/h` 倍，因此「插值�
 ---
 生成：`benchmarks/verify_ns_dg_2d.py` 全部数字由脚本写入 `validation/ns_dg_2d/summary.json`；
 本文件中的数字由该 JSON 直读抄录，未手算。
+
+> **2026-11-03 更新（m2782 修复）**：壁面瞬态失稳的根因是 **罚项取向**（低侧壁面罚项符号反了 → 反耗散边界项），已修复：`_boundary_flux(..., outward_sign=±1)`。修复后原崩溃配置推进到 t=0.1 且 `|u| <= U`，Dirichlet Stokes 模态对解析解 0.67%/0.17%/0.04%（8/16/32 格），观测阶 2.00/2.02；P2 壁面热流达机器精度。本单的三条 `xfail(strict=True)` 已全部退休为 green 判据。详见 `docs/reports/tensordg-ns-wall-sign-fix.md`，复现 `python -m benchmarks.verify_ns_dg_2d_wall`（≈59 s）。
+
+> （链上合并仲裁注：并入后公共求解器默认仍为 `wall_gradient="taylor"`；本单数值在
+> `"one_sided"` 闭包下测得并已在 tests/benchmark 中显式钉扎。）

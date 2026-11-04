@@ -100,6 +100,21 @@ def test_exact_state_residual_decays_with_degree():
     assert p3_fine < 1e-3 * p1
 
 
+def _wall_cell_residual_energy(degree, ny):
+    """Energy residual of the *bottom* wall cell.
+
+    m2782 note: the outward_sign fix lowered the bottom-wall residual, so the
+    global energy max now sits in the top wall cell for ``ny >= 16``; the
+    identity below is a statement about the wall cell its flux error belongs
+    to, so the residual is measured there."""
+    d = build_state((2, ny), degree)
+    penalty = 2.0 * (degree + 1.0) ** 2
+    rhs = ns._rhs_ns(d["coeff"], d["basis"], d["derivative"], d["weights"],
+                     d["signs"], d["dx"], d["dy"], (True, False), d["boundary"],
+                     MU, KAPPA, penalty)
+    return float(rhs[:, 0, ..., 3].abs().max())
+
+
 def test_residual_equals_flux_error_over_h_at_p1():
     """Identity check at P1: ``residual * h / flux_error = 3`` exactly.
 
@@ -112,7 +127,7 @@ def test_residual_equals_flux_error_over_h_at_p1():
     """
     for ny in (16, 32):
         flux_error = _flux_errors(1, (ny,))[0]
-        _, residual_energy = _residual(1, ny)
+        residual_energy = _wall_cell_residual_energy(1, ny)
         ratio = residual_energy * (1.0 / ny) / flux_error
         assert 2.9 < ratio < 3.1, (ny, ratio, residual_energy, flux_error)
 
@@ -124,11 +139,7 @@ def test_steady_state_march_survives_at_p2():
     assert failure is None, failure
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "open defect (m2786): the impulsively started wall-bounded transient goes "
-    "non-physical at every degree (P1/P2/P3), so this is not a P1 "
-    "representability issue but an instability of the wall closure"
-))
+# retired by the m2782 outward_sign fix (the P2 transient now reaches final_time)
 def test_impulsively_started_couette_reaches_final_time_at_p2():
     """Impulsively started Couette at P2 must reach t = 0.05.  It currently
     raises the positivity guard well before that."""
