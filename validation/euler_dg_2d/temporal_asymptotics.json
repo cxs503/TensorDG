@@ -1,0 +1,554 @@
+{
+ "benchmark": "euler_dg_2d_temporal_asymptotics",
+ "domain": [
+  [
+   -5.0,
+   5.0
+  ],
+  [
+   -5.0,
+   5.0
+  ]
+ ],
+ "final_time": 1.0,
+ "cfl_ladders": [
+  [
+   0.2,
+   0.1,
+   0.05
+  ]
+ ],
+ "blocks": [
+  {
+   "degree": 3,
+   "cells": 12,
+   "h": 0.8333333333333334,
+   "rows": [
+    {
+     "cfl": 0.2,
+     "steps": 246,
+     "dt": 0.0040650406504065045,
+     "errors": {
+      "density": 0.00011695079824100424,
+      "velocity_x": 0.00034575546941306674,
+      "velocity_y": 0.0003442700852271111,
+      "pressure": 0.00017515818267716419
+     },
+     "wall_seconds": 10.93
+    },
+    {
+     "cfl": 0.1,
+     "steps": 492,
+     "dt": 0.0020325203252032522,
+     "errors": {
+      "density": 0.00011695023661299804,
+      "velocity_x": 0.00034575499354845226,
+      "velocity_y": 0.00034426929665895984,
+      "pressure": 0.00017515743278454873
+     },
+     "wall_seconds": 21.47
+    },
+    {
+     "cfl": 0.05,
+     "steps": 983,
+     "dt": 0.001017293997965412,
+     "errors": {
+      "density": 0.00011695016571206757,
+      "velocity_x": 0.0003457549346820206,
+      "velocity_y": 0.0003442691994803693,
+      "pressure": 0.00017515733689490456
+     },
+     "wall_seconds": 39.24
+    }
+   ],
+   "temporal_order": {
+    "density": {
+     "adjacent": [
+      6.928211667506053e-06,
+      8.759171594924833e-07
+     ],
+     "fit": 3.905025955076088e-06,
+     "q": 3.0,
+     "relative_spread": 5.4085339069587235e-06,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "velocity_x": {
+     "adjacent": [
+      1.9855882340611714e-06,
+      2.459865488270945e-07
+     ],
+     "fit": 1.116638622148318e-06,
+     "q": 3.0,
+     "relative_spread": 1.546560851384271e-06,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "velocity_y": {
+     "adjacent": [
+      3.3045701992211697e-06,
+      4.0783494721513035e-07
+     ],
+     "fit": 1.8576200187201406e-06,
+     "q": 3.0,
+     "relative_spread": 2.572831793168362e-06,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "pressure": {
+     "adjacent": [
+      6.176523738953493e-06,
+      7.909614686584991e-07
+     ],
+     "fit": 3.486377896916246e-06,
+     "q": 3.0,
+     "relative_spread": 4.828700153947096e-06,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    }
+   },
+   "spatial_limit": {
+    "density": {
+     "richardson": 0.00011695016571206757,
+     "least_squares": 0.00011695016571206757,
+     "raw_finest": 0.00011695016571206757,
+     "temporal_share_of_finest": 0.0
+    },
+    "velocity_x": {
+     "richardson": 0.0003457549346820206,
+     "least_squares": 0.0003457549346820206,
+     "raw_finest": 0.0003457549346820206,
+     "temporal_share_of_finest": 0.0
+    },
+    "velocity_y": {
+     "richardson": 0.0003442691994803693,
+     "least_squares": 0.0003442691994803693,
+     "raw_finest": 0.0003442691994803693,
+     "temporal_share_of_finest": 0.0
+    },
+    "pressure": {
+     "richardson": 0.00017515733689490456,
+     "least_squares": 0.00017515733689490456,
+     "raw_finest": 0.00017515733689490456,
+     "temporal_share_of_finest": 0.0
+    }
+   },
+   "total_seconds": 71.6
+  },
+  {
+   "degree": 3,
+   "cells": 16,
+   "h": 0.625,
+   "rows": [
+    {
+     "cfl": 0.2,
+     "steps": 328,
+     "dt": 0.003048780487804878,
+     "errors": {
+      "density": 3.8309638667221406e-05,
+      "velocity_x": 0.00011620976356875948,
+      "velocity_y": 0.00011623121898423127,
+      "pressure": 5.385262314138417e-05
+     },
+     "wall_seconds": 16.02
+    },
+    {
+     "cfl": 0.1,
+     "steps": 656,
+     "dt": 0.001524390243902439,
+     "errors": {
+      "density": 3.8309545756029604e-05,
+      "velocity_x": 0.00011620955287476826,
+      "velocity_y": 0.00011623102692167251,
+      "pressure": 5.385250047766077e-05
+     },
+     "wall_seconds": 38.06
+    },
+    {
+     "cfl": 0.05,
+     "steps": 1311,
+     "dt": 0.0007627765064836003,
+     "errors": {
+      "density": 3.8309534261901994e-05,
+      "velocity_x": 0.00011620952641927492,
+      "velocity_y": 0.000116231003040591,
+      "pressure": 5.385248534952789e-05
+     },
+     "wall_seconds": 87.95
+    }
+   ],
+   "temporal_order": {
+    "density": {
+     "adjacent": [
+      3.4989282817258705e-06,
+      4.3333285455830727e-07
+     ],
+     "fit": 1.967255273495866e-06,
+     "q": 3.0,
+     "relative_spread": 2.725309023565714e-06,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "velocity_x": {
+     "adjacent": [
+      2.615679117644603e-06,
+      3.2879607525202034e-07
+     ],
+     "fit": 1.4730766066639338e-06,
+     "q": 3.0,
+     "relative_spread": 2.040706057915287e-06,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "velocity_y": {
+     "adjacent": [
+      2.3839372278412598e-06,
+      2.967457456830346e-07
+     ],
+     "fit": 1.34110723569058e-06,
+     "q": 3.0,
+     "relative_spread": 1.8578833065330258e-06,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "pressure": {
+     "adjacent": [
+      3.286126778176628e-06,
+      4.057252711778008e-07
+     ],
+     "fit": 1.8469827868220498e-06,
+     "q": 3.0,
+     "relative_spread": 2.558690752829662e-06,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    }
+   },
+   "spatial_limit": {
+    "density": {
+     "richardson": 3.8309534261901994e-05,
+     "least_squares": 3.8309534261901994e-05,
+     "raw_finest": 3.8309534261901994e-05,
+     "temporal_share_of_finest": 0.0
+    },
+    "velocity_x": {
+     "richardson": 0.00011620952641927492,
+     "least_squares": 0.00011620952641927492,
+     "raw_finest": 0.00011620952641927492,
+     "temporal_share_of_finest": 0.0
+    },
+    "velocity_y": {
+     "richardson": 0.000116231003040591,
+     "least_squares": 0.000116231003040591,
+     "raw_finest": 0.000116231003040591,
+     "temporal_share_of_finest": 0.0
+    },
+    "pressure": {
+     "richardson": 5.385248534952789e-05,
+     "least_squares": 5.385248534952789e-05,
+     "raw_finest": 5.385248534952789e-05,
+     "temporal_share_of_finest": 0.0
+    }
+   },
+   "total_seconds": 142.0
+  },
+  {
+   "degree": 3,
+   "cells": 24,
+   "h": 0.4166666666666667,
+   "rows": [
+    {
+     "cfl": 0.2,
+     "steps": 492,
+     "dt": 0.0020325203252032522,
+     "errors": {
+      "density": 7.704136165873618e-06,
+      "velocity_x": 8.62928046116212e-05,
+      "velocity_y": 8.628914869970068e-05,
+      "pressure": 1.0856485427014988e-05
+     },
+     "wall_seconds": 51.56
+    },
+    {
+     "cfl": 0.1,
+     "steps": 984,
+     "dt": 0.0010162601626016261,
+     "errors": {
+      "density": 7.704135358394977e-06,
+      "velocity_x": 8.629280209226588e-05,
+      "velocity_y": 8.628914651374798e-05,
+      "pressure": 1.0856481987728955e-05
+     },
+     "wall_seconds": 110.44
+    },
+    {
+     "cfl": 0.05,
+     "steps": 1967,
+     "dt": 0.0005083884087442806,
+     "errors": {
+      "density": 7.704135284955714e-06,
+      "velocity_x": 8.629280178538389e-05,
+      "velocity_y": 8.6289146261869e-05,
+      "pressure": 1.0856481580840953e-05
+     },
+     "wall_seconds": 192.0
+    }
+   ],
+   "temporal_order": {
+    "density": {
+     "adjacent": [
+      1.5121039761443243e-07,
+      1.3762505563644363e-08
+     ],
+     "fit": 8.252006137069964e-08,
+     "q": 3.0,
+     "relative_spread": 1.1434351443462276e-07,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "velocity_x": {
+     "adjacent": [
+      4.2120099326423745e-08,
+      5.134402859551807e-09
+     ],
+     "fit": 2.363629792581898e-08,
+     "q": 3.0,
+     "relative_spread": 3.275171578387415e-08,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "velocity_y": {
+     "adjacent": [
+      3.65476215092139e-08,
+      4.214332949977579e-09
+     ],
+     "fit": 2.038888524200385e-08,
+     "q": 3.0,
+     "relative_spread": 2.8251892381092603e-08,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "pressure": {
+     "adjacent": [
+      4.5703940966918863e-07,
+      5.411016809826841e-08
+     ],
+     "fit": 2.5567331079331735e-07,
+     "q": 3.0,
+     "relative_spread": 3.542744495543815e-07,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    }
+   },
+   "spatial_limit": {
+    "density": {
+     "richardson": 7.704135284955714e-06,
+     "least_squares": 7.704135284955714e-06,
+     "raw_finest": 7.704135284955714e-06,
+     "temporal_share_of_finest": 0.0
+    },
+    "velocity_x": {
+     "richardson": 8.629280178538389e-05,
+     "least_squares": 8.629280178538389e-05,
+     "raw_finest": 8.629280178538389e-05,
+     "temporal_share_of_finest": 0.0
+    },
+    "velocity_y": {
+     "richardson": 8.6289146261869e-05,
+     "least_squares": 8.6289146261869e-05,
+     "raw_finest": 8.6289146261869e-05,
+     "temporal_share_of_finest": 0.0
+    },
+    "pressure": {
+     "richardson": 1.0856481580840953e-05,
+     "least_squares": 1.0856481580840953e-05,
+     "raw_finest": 1.0856481580840953e-05,
+     "temporal_share_of_finest": 0.0
+    }
+   },
+   "total_seconds": 354.0
+  },
+  {
+   "degree": 3,
+   "cells": 32,
+   "h": 0.3125,
+   "rows": [
+    {
+     "cfl": 0.2,
+     "steps": 656,
+     "dt": 0.001524390243902439,
+     "errors": {
+      "density": 2.4055379850867643e-06,
+      "velocity_x": 8.449701521709179e-05,
+      "velocity_y": 8.449921624830734e-05,
+      "pressure": 3.403610268582547e-06
+     },
+     "wall_seconds": 71.14
+    },
+    {
+     "cfl": 0.1,
+     "steps": 1312,
+     "dt": 0.0007621951219512195,
+     "errors": {
+      "density": 2.4055392416548035e-06,
+      "velocity_x": 8.449701605672678e-05,
+      "velocity_y": 8.449921706252483e-05,
+      "pressure": 3.403611073218282e-06
+     },
+     "wall_seconds": 144.64
+    },
+    {
+     "cfl": 0.05,
+     "steps": 2624,
+     "dt": 0.00038109756097560977,
+     "errors": {
+      "density": 2.405539402034933e-06,
+      "velocity_x": 8.449701616268146e-05,
+      "velocity_y": 8.44992171642717e-05,
+      "pressure": 3.403611176758453e-06
+     },
+     "wall_seconds": 306.02
+    }
+   ],
+   "temporal_order": {
+    "density": {
+     "adjacent": [
+      -7.536127122508915e-07,
+      -9.618617133974352e-08
+     ],
+     "fit": -4.2489943694458247e-07,
+     "q": 3.0,
+     "relative_spread": 5.890358736326817e-07,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "velocity_x": {
+     "adjacent": [
+      -1.4335858236888463e-08,
+      -1.809061600525445e-09
+     ],
+     "fit": -8.072459127766998e-09,
+     "q": 3.0,
+     "relative_spread": 1.1190805615513e-08,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "velocity_y": {
+     "adjacent": [
+      -1.3901519888233561e-08,
+      -1.737172385065704e-09
+     ],
+     "fit": -7.819344806356611e-09,
+     "q": 3.0,
+     "relative_spread": 1.083991563177733e-08,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    },
+    "pressure": {
+     "adjacent": [
+      -3.4106250585905726e-07,
+      -4.388776689025242e-08
+     ],
+     "fit": -1.924751365363617e-07,
+     "q": 3.0,
+     "relative_spread": 2.668272318651077e-07,
+     "temporal_negligible": true,
+     "temporal_share_upper_bound": 0.0
+    }
+   },
+   "spatial_limit": {
+    "density": {
+     "richardson": 2.405539402034933e-06,
+     "least_squares": 2.405539402034933e-06,
+     "raw_finest": 2.405539402034933e-06,
+     "temporal_share_of_finest": 0.0
+    },
+    "velocity_x": {
+     "richardson": 8.449701616268146e-05,
+     "least_squares": 8.449701616268146e-05,
+     "raw_finest": 8.449701616268146e-05,
+     "temporal_share_of_finest": 0.0
+    },
+    "velocity_y": {
+     "richardson": 8.44992171642717e-05,
+     "least_squares": 8.44992171642717e-05,
+     "raw_finest": 8.44992171642717e-05,
+     "temporal_share_of_finest": 0.0
+    },
+    "pressure": {
+     "richardson": 3.403611176758453e-06,
+     "least_squares": 3.403611176758453e-06,
+     "raw_finest": 3.403611176758453e-06,
+     "temporal_share_of_finest": 0.0
+    }
+   },
+   "total_seconds": 521.8
+  }
+ ],
+ "spatial_orders": {
+  "3": {
+   "eoc_limit": {
+    "density": [
+     3.8794531022264516,
+     3.955806639784036,
+     4.04607441393109
+    ],
+    "velocity_x": [
+     3.7900707873042663,
+     0.7340918679718417,
+     0.07310140381149477
+    ],
+    "velocity_y": [
+     3.7744593616877427,
+     0.734652101514915,
+     0.07286360417208232
+    ],
+    "pressure": [
+     4.099789994528117,
+     3.9497511409944113,
+     4.031969366982081
+    ]
+   },
+   "eoc_raw": {
+    "density": [
+     3.8794531022264516,
+     3.955806639784036,
+     4.04607441393109
+    ],
+    "velocity_x": [
+     3.7900707873042663,
+     0.7340918679718417,
+     0.07310140381149477
+    ],
+    "velocity_y": [
+     3.7744593616877427,
+     0.734652101514915,
+     0.07286360417208232
+    ],
+    "pressure": [
+     4.099789994528117,
+     3.9497511409944113,
+     4.031969366982081
+    ]
+   },
+   "fit_limit": {
+    "density": 3.959292116322411,
+    "velocity_x": 1.3340296379319714,
+    "velocity_y": 1.330339011994433,
+    "pressure": 4.0079308762848225
+   },
+   "fit_raw": {
+    "density": 3.959292116322411,
+    "velocity_x": 1.3340296379319714,
+    "velocity_y": 1.330339011994433,
+    "pressure": 4.0079308762848225
+   },
+   "design_order": 4,
+   "cells": [
+    12,
+    16,
+    24,
+    32
+   ]
+  }
+ }
+}
