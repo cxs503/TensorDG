@@ -100,6 +100,13 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
   (`tensordg/differentiable.py`) reproduce the shipped solvers bit-for-bit and
   their gradients match central differences (<1e-7) and an exact transposed-operator
   adjoint (5e-16); see [docs/differentiability_verification.md](docs/differentiability_verification.md).
+- **Wall-bounded compressible Navier--Stokes**: the Dirichlet (BR1/SIPG) wall path is
+  stable for impulsive-start Couette flow; the penalty is oriented along the outward
+  normal (`outward_sign`, a sign slip on the `min` face was anti-dissipative and blew
+  up the transient at t ~ 0.03--0.08; found independently by m2782 and m2876). Wall
+  heat flux meets the 3 % gate from 32 cells on, both walls; the wall gradient options
+  (`fd2`, `recovered`) and the symmetric adjoint term (`wall_adjoint`) are opt-in --
+  see [docs/reports/tensordg-ns-wall-orientation-fix.md](docs/reports/tensordg-ns-wall-orientation-fix.md).
   The diffusive half of the operator zoo (SIPG + Crank--Nicolson,
   `advance_heat_1d`) is covered separately: sensitivities in the thermal diffusivity
   and in every modal degree of freedom match an exactly assembled discrete adjoint
