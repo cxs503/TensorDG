@@ -892,3 +892,49 @@ def test_dirichlet_shear_mode_matches_exact_solution_below_three_percent():
     error = float(np.sqrt(torch.mean((numerical - exact) ** 2))
                   / np.sqrt(torch.mean(exact ** 2)))
     assert error < 0.03, (error, time)
+
+
+# ---------------------------------------------------------------------------
+# m2972: wall-bounded standing shear wave (smooth Dirichlet data) -- the
+# accuracy judge for the wall path that the impulsive-start transient cannot
+# provide.  Re-anchored note: the impulsive-start stability defect this
+# mission also fixed was already retired on this chain by the m2782
+# outward_sign correction; the symmetric (Nitsche adjoint) wall term below is
+# the second, structural half of that fix and is additive to it.
+# ---------------------------------------------------------------------------
+def test_wall_bounded_standing_shear_wave_matches_exact_decay():
+    """Wall-bounded standing viscous shear wave against its exact solution.
+
+    Re-anchored: judged with the symmetric wall term explicitly on
+    (``wall_adjoint=True``); on this chain the term is opt-in, so the default
+    operator keeps the face + outward_sign semantics the earlier wall
+    missions settled.
+
+    ``u(y, 0) = A sin(k y)`` with ``k = 2 pi`` vanishes on both no-slip walls, so
+    the Dirichlet boundary data is smooth (no impulsive start).  For small ``A``
+    the compressible equations reduce to the linear diffusion problem, whose
+    exact solution is ``u = A sin(k y) exp(-nu k**2 t)`` with ``nu = mu / rho``.
+    Judge: relative L2 error of the cell-average velocity < 3%.
+    """
+    amplitude, mu, final_time = 0.01, 0.02, 0.05
+    k = 2.0 * math.pi
+    boundary = {
+        "xmin": None, "xmax": None,
+        "ymin": {"velocity": (0.0, 0.0), "temperature": 1.0},
+        "ymax": {"velocity": (0.0, 0.0), "temperature": 1.0},
+    }
+
+    def initial(x, y):
+        u = amplitude * torch.sin(k * y)
+        return torch.ones_like(u), u, torch.zeros_like(u), torch.ones_like(u)
+
+    x, y, coeff, meta = ns.solve_navier_stokes_dg_2d(
+        initial, ncells=(2, 16), degree=1, domain=((0.0, 1.0), (0.0, 1.0)),
+        final_time=final_time, mu=mu, periodic=(True, False), boundary=boundary,
+        wall_adjoint=True, device=DEVICE, dtype=DTYPE,
+    )
+    decay = math.exp(-(mu / 1.0) * k * k * final_time)
+    numerical = coeff[:, :, 0, 0, 1] / coeff[:, :, 0, 0, 0]
+    exact = amplitude * torch.sin(k * y).unsqueeze(0).expand_as(numerical) * decay
+    relative = float(((numerical - exact) ** 2).mean().sqrt() / (amplitude * decay))
+    assert relative < 0.03, (relative, meta["steps"])
