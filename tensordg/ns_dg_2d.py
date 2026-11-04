@@ -508,7 +508,7 @@ def _wall_normal_derivative(coeff, basis, signs, h, axis):
 def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
                    tangential_scale, normal_derivative=None, neighbour=None,
                    recovered=None,
-                   centre=None, side_name="right"):
+                   centre=None, side_name="right", outward_sign=1.0):
     """Flux on an outermost face.
 
     ``wall is None`` gives an outflow face (physical flux, interior gradient);
@@ -573,9 +573,13 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
             base_u = side["u_n"] * normal_scale
             base_v = side["v_n"] * normal_scale
             base_T = side["T_n"] * normal_scale
-        normal_u = base_u - (penalty / h) * (inner_u - face_u)
-        normal_v = base_v - (penalty / h) * (inner_v - face_v)
-        normal_T = base_T - (penalty / h) * (side["temperature"] - face_T)
+        # m2782: the face flux is written with the normal along +axis, so the
+        # penalty jump must flip at the low-side wall (outward_sign = -1);
+        # same-sign penalties are anti-dissipative there
+        normal_u = base_u - outward_sign * (penalty / h) * (inner_u - face_u)
+        normal_v = base_v - outward_sign * (penalty / h) * (inner_v - face_v)
+        normal_T = (base_T - outward_sign * (penalty / h)
+                    * (side["temperature"] - face_T))
         zeros = torch.zeros_like(inner_u)
         pressure = side["pressure"]
         if axis == 0:
@@ -693,7 +697,8 @@ def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
                                   wall_sigma, normal_scale, tangential_scale,
                                   normal_derivative=right_derivative,
                                   recovered=recovered_top,
-                                  centre=centre_state, side_name="right")
+                                  centre=centre_state, side_name="right",
+                                  outward_sign=1.0)
         interface = _merge(interface, boundary, roll_dim, -1)
 
     if axis == 0:
@@ -709,7 +714,8 @@ def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
                                        wall_sigma, normal_scale, tangential_scale,
                                        normal_derivative=left_derivative,
                                        recovered=recovered_bottom,
-                                       centre=centre_state, side_name="left")
+                                       centre=centre_state, side_name="left",
+                                       outward_sign=-1.0)
         if axis == 0:
             flux_left[0] = torch.einsum("ybv,b,bl->ylv", left_boundary[0], weights, basis)
         else:
@@ -994,6 +1000,7 @@ def solve_navier_stokes_dg_2d(
         "ncells": (nx, ny),
         "degree": degree,
         "final_time": final_time,
+        "final_time_reached": time,
         "steps": steps,
         "diffusive_steps": diffusive_steps,
         "dt": dt,

@@ -71,16 +71,16 @@ m2496 的验证矩阵只覆盖周期/无壁粘性算例；m2589 证明壁面通�
 | 文件 | 作用 |
 |---|---|
 | `tensordg/ns_dg_2d.py` | 二阶壁面梯度（`_legendre_at_zero` / `_cell_centre_primitives` / `_wall_stencil` / `_wall_derivative`），`WALL_GRADIENT` / `WALL_PENALTY`，`wall_gradient` 参数贯穿 |
-| `benchmarks/verify_ns_wall_gradient.py` | 一键复现四节：`flux` / `residual` / `transient` / `stability`，写 JSON + 出图 |
+| `benchmarks/verify_ns_wall_gradient_fd2.py` | 一键复现四节：`flux` / `residual` / `transient` / `stability`，写 JSON + 出图 |
 | `tests/test_ns_dg_2d_wall.py` | 9 条判据（原 3 条 strict xfail 已退休为绿测试 + 旧路径回归 + 参数校验） |
 | `validation/ns_dg_2d_wall_gradient/summary.json` | 全部原始数字（程序化生成，零手抄） |
-| `docs/figures/ns_dg_2d_wall_gradient.png` | 三面板图 |
+| `docs/figures/ns_dg_2d_wall_gradient_fd2.png` | 三面板图 |
 
 复现命令：
 
     PYTHONPATH=. python -m pytest tests/test_ns_dg_2d_wall.py -q          # 9 passed
-    PYTHONPATH=. python -m benchmarks.verify_ns_wall_gradient flux residual   # 0.4 s
-    PYTHONPATH=. python -m benchmarks.verify_ns_wall_gradient transient stability
+    PYTHONPATH=. python -m benchmarks.verify_ns_wall_gradient_fd2 flux residual   # 0.4 s
+    PYTHONPATH=. python -m benchmarks.verify_ns_wall_gradient_fd2 transient stability
 
 ---
 
@@ -129,7 +129,7 @@ fd2+P2 在 4 格为 −0.10000038（3.8e-7）。
 
 ### 3.4 图
 
-![wall channel](../figures/ns_dg_2d_wall_gradient.png)
+![wall channel](../figures/ns_dg_2d_wall_gradient_fd2.png)
 
 左：壁面热流误差 vs 网格（br1 虚线 / fd2 实线，P1 蓝、P2 橙，图例含实测斜率）；
 中：t=0.1 的速度剖面与 Fourier 级数（百分比为相对 L2 误差）；
@@ -182,3 +182,12 @@ P2 只做通量阶验证，不做瞬态精度声明。
    单核代价 ≈ 10³–10⁴ 步，建议上集群分片）。
 3. **P2 粘性激波管 / Stokes 第一问题**（有解析解）作为壁面通道的第二个独立判据。
 4. **P3 半隐式壁面处理**：把壁面罚/导热通道隐式化，解除 O(h²) 显式时间步限制（长时稳态算例）。
+
+---
+
+> **重锚仲裁注记（2026-11-04，round 2）**：m2831 的基准模块与其输出图重锚为
+> `verify_ns_wall_gradient_fd2` / `ns_dg_2d_wall_gradient_fd2.png` —— 原路径
+> `benchmarks/verify_ns_wall_gradient.py` 与 `docs/figures/ns_dg_2d_wall_gradient.png`
+> 已由链序在前的 m2879（PR #35）以同名交付占用，两套基准并存、互不覆盖。
+> 另：模块公开默认 `wall_gradient` 已由 m3139（PR #42）裁定为 `"face"`，
+> 本报告的 fd2 闭合保持显式 opt-in。
