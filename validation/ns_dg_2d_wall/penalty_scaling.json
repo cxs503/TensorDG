@@ -1,0 +1,1261 @@
+{
+ "schema": "tensordg.ns_wall_penalty_scaling/1",
+ "parameters": {
+  "mu": 0.1,
+  "kappa": 0.4929577464788734,
+  "prandtl": 0.71,
+  "wall_speed": 1.0,
+  "wall_temperature": 1.0,
+  "pressure": 1.0,
+  "gamma": 1.4,
+  "sigma_scales": [
+   0.0,
+   0.5,
+   2.0,
+   8.0,
+   32.0,
+   128.0
+  ]
+ },
+ "consistency": [
+  {
+   "degree": 1,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "inviscid",
+   "mu": 0.0,
+   "kappa": 0.0,
+   "penalty": 8.0,
+   "mass": 6.303799015227003e-15,
+   "x_momentum": 6.994405055138486e-15,
+   "y_momentum": 0.025000000000003908,
+   "energy": 2.5215196060908013e-14,
+   "maximum": 0.025000000000003908,
+   "physical_dissipation": 0.0,
+   "energy_minus_dissipation": 2.5215196060908013e-14,
+   "periodic_control": 0.025000000000003908
+  },
+  {
+   "degree": 1,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "momentum_only",
+   "mu": 0.1,
+   "kappa": 0.0,
+   "penalty": 8.0,
+   "mass": 6.303799015227003e-15,
+   "x_momentum": 9.592326932761353e-14,
+   "y_momentum": 0.025000000000003936,
+   "energy": 0.10000000000000742,
+   "maximum": 0.10000000000000742,
+   "physical_dissipation": 0.1,
+   "energy_minus_dissipation": 7.41073868937292e-15,
+   "periodic_control": 153.60000000000002
+  },
+  {
+   "degree": 1,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "conduction_only",
+   "mu": 0.0,
+   "kappa": 0.4929577464788734,
+   "penalty": 8.0,
+   "mass": 6.303799015227003e-15,
+   "x_momentum": 6.994405055138486e-15,
+   "y_momentum": 0.025000000000003908,
+   "energy": 0.6901408450703049,
+   "maximum": 0.6901408450703049,
+   "physical_dissipation": 0.0,
+   "energy_minus_dissipation": 0.6901408450703049,
+   "periodic_control": 0.025000000000003908
+  },
+  {
+   "degree": 1,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "full",
+   "mu": 0.1,
+   "kappa": 0.4929577464788734,
+   "penalty": 8.0,
+   "mass": 6.303799015227003e-15,
+   "x_momentum": 9.592326932761353e-14,
+   "y_momentum": 0.025000000000003936,
+   "energy": 0.6901408450703055,
+   "maximum": 0.6901408450703055,
+   "physical_dissipation": 0.1,
+   "energy_minus_dissipation": 0.5901408450703055,
+   "periodic_control": 153.60000000000002
+  },
+  {
+   "degree": 2,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "inviscid",
+   "mu": 0.0,
+   "kappa": 0.0,
+   "penalty": 18.0,
+   "mass": 2.0456213867378723e-14,
+   "x_momentum": 4.529709940470639e-14,
+   "y_momentum": 9.059419880941277e-14,
+   "energy": 8.182485546951489e-14,
+   "maximum": 9.059419880941277e-14,
+   "physical_dissipation": 0.0,
+   "energy_minus_dissipation": 8.182485546951489e-14,
+   "periodic_control": 9.059419880941277e-14
+  },
+  {
+   "degree": 2,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "momentum_only",
+   "mu": 0.1,
+   "kappa": 0.0,
+   "penalty": 18.0,
+   "mass": 2.0456213867378723e-14,
+   "x_momentum": 1.4281825775756607e-13,
+   "y_momentum": 9.066220878279033e-14,
+   "energy": 0.10000000000001719,
+   "maximum": 0.10000000000001719,
+   "physical_dissipation": 0.1,
+   "energy_minus_dissipation": 1.7180701306074297e-14,
+   "periodic_control": 576.0000000000001
+  },
+  {
+   "degree": 2,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "conduction_only",
+   "mu": 0.0,
+   "kappa": 0.4929577464788734,
+   "penalty": 18.0,
+   "mass": 2.0456213867378723e-14,
+   "x_momentum": 4.529709940470639e-14,
+   "y_momentum": 9.059419880941277e-14,
+   "energy": 2.942739894019731e-12,
+   "maximum": 2.942739894019731e-12,
+   "physical_dissipation": 0.0,
+   "energy_minus_dissipation": 2.942739894019731e-12,
+   "periodic_control": 3.820389337778573e-12
+  },
+  {
+   "degree": 2,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "full",
+   "mu": 0.1,
+   "kappa": 0.4929577464788734,
+   "penalty": 18.0,
+   "mass": 2.0456213867378723e-14,
+   "x_momentum": 1.4281825775756607e-13,
+   "y_momentum": 9.066220878279033e-14,
+   "energy": 0.10000000000011466,
+   "maximum": 0.10000000000011466,
+   "physical_dissipation": 0.1,
+   "energy_minus_dissipation": 1.1465828286816304e-13,
+   "periodic_control": 576.0000000000001
+  },
+  {
+   "degree": 3,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "inviscid",
+   "mu": 0.0,
+   "kappa": 0.0,
+   "penalty": 32.0,
+   "mass": 3.5556982484560477e-14,
+   "x_momentum": 6.042597823616398e-14,
+   "y_momentum": 1.4921397450962104e-13,
+   "energy": 1.2979343206244015e-13,
+   "maximum": 1.4921397450962104e-13,
+   "physical_dissipation": 0.0,
+   "energy_minus_dissipation": 1.2979343206244015e-13,
+   "periodic_control": 1.4921397450962104e-13
+  },
+  {
+   "degree": 3,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "momentum_only",
+   "mu": 0.1,
+   "kappa": 0.0,
+   "penalty": 32.0,
+   "mass": 3.5556982484560477e-14,
+   "x_momentum": 5.67323965583455e-13,
+   "y_momentum": 1.5016074172342907e-13,
+   "energy": 0.10000000000003118,
+   "maximum": 0.10000000000003118,
+   "physical_dissipation": 0.1,
+   "energy_minus_dissipation": 3.116951141635127e-14,
+   "periodic_control": 1433.6000000000004
+  },
+  {
+   "degree": 3,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "conduction_only",
+   "mu": 0.0,
+   "kappa": 0.4929577464788734,
+   "penalty": 32.0,
+   "mass": 3.5556982484560477e-14,
+   "x_momentum": 6.042597823616398e-14,
+   "y_momentum": 1.4921397450962104e-13,
+   "energy": 7.082391638369168e-12,
+   "maximum": 7.082391638369168e-12,
+   "physical_dissipation": 0.0,
+   "energy_minus_dissipation": 7.082391638369168e-12,
+   "periodic_control": 7.082391638369168e-12
+  },
+  {
+   "degree": 3,
+   "ncells": [
+    2,
+    8
+   ],
+   "viscosity": "full",
+   "mu": 0.1,
+   "kappa": 0.4929577464788734,
+   "penalty": 32.0,
+   "mass": 3.5556982484560477e-14,
+   "x_momentum": 5.67323965583455e-13,
+   "y_momentum": 1.5016074172342907e-13,
+   "energy": 0.10000000000031528,
+   "maximum": 0.10000000000031528,
+   "physical_dissipation": 0.1,
+   "energy_minus_dissipation": 3.1527558341792883e-13,
+   "periodic_control": 1433.6000000000004
+  }
+ ],
+ "scaling": [
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 1,
+   "sigma_scale": 0.0,
+   "penalty": 0.0,
+   "wall_gradient": "face",
+   "mass": 0.00019465042381095664,
+   "x_momentum": 0.022474830113034194,
+   "y_momentum": 0.024721822623739228,
+   "energy": 0.15405575079241296,
+   "maximum": 0.15405575079241296
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 1,
+   "sigma_scale": 0.5,
+   "penalty": 2.0,
+   "wall_gradient": "face",
+   "mass": 0.00019465042381095664,
+   "x_momentum": 0.03404975938430255,
+   "y_momentum": 0.024721822623739228,
+   "energy": 0.17486238723252945,
+   "maximum": 0.17486238723252945
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 1,
+   "sigma_scale": 2.0,
+   "penalty": 8.0,
+   "wall_gradient": "face",
+   "mass": 0.00019465042381095664,
+   "x_momentum": 0.06912766006398563,
+   "y_momentum": 0.024721822623739228,
+   "energy": 0.30453023045906513,
+   "maximum": 0.30453023045906513
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 1,
+   "sigma_scale": 8.0,
+   "penalty": 32.0,
+   "wall_gradient": "face",
+   "mass": 0.00019465042381095664,
+   "x_momentum": 0.20943926278272063,
+   "y_momentum": 0.024721822623739228,
+   "energy": 0.8232016033652079,
+   "maximum": 0.8232016033652079
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 1,
+   "sigma_scale": 32.0,
+   "penalty": 128.0,
+   "wall_gradient": "face",
+   "mass": 0.00019465042381095664,
+   "x_momentum": 0.7706856736576586,
+   "y_momentum": 0.024721822623739228,
+   "energy": 3.0156444802010105,
+   "maximum": 3.0156444802010105
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 1,
+   "sigma_scale": 128.0,
+   "penalty": 512.0,
+   "wall_gradient": "face",
+   "mass": 0.00019465042381095664,
+   "x_momentum": 3.0156713171574125,
+   "y_momentum": 0.024721822623739228,
+   "energy": 12.524745173181278,
+   "maximum": 12.524745173181278
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "sigma_scale": 0.0,
+   "penalty": 0.0,
+   "wall_gradient": "face",
+   "mass": 6.401961077621771e-05,
+   "x_momentum": 0.02635933387089695,
+   "y_momentum": 0.012421805865739051,
+   "energy": 0.1571554076200794,
+   "maximum": 0.1571554076200794
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "sigma_scale": 0.5,
+   "penalty": 2.0,
+   "wall_gradient": "face",
+   "mass": 6.401961077621771e-05,
+   "x_momentum": 0.037270099839365134,
+   "y_momentum": 0.012421805865739051,
+   "energy": 0.17423555432037063,
+   "maximum": 0.17423555432037063
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "sigma_scale": 2.0,
+   "penalty": 8.0,
+   "wall_gradient": "face",
+   "mass": 6.401961077621771e-05,
+   "x_momentum": 0.07010642384671817,
+   "y_momentum": 0.012421805865739051,
+   "energy": 0.3045019829830822,
+   "maximum": 0.3045019829830822
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "sigma_scale": 8.0,
+   "penalty": 32.0,
+   "wall_gradient": "face",
+   "mass": 6.401961077621771e-05,
+   "x_momentum": 0.2014517198761343,
+   "y_momentum": 0.012421805865739051,
+   "energy": 0.8255676976339297,
+   "maximum": 0.8255676976339297
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "sigma_scale": 32.0,
+   "penalty": 128.0,
+   "wall_gradient": "face",
+   "mass": 6.401961077621771e-05,
+   "x_momentum": 0.7268329039938002,
+   "y_momentum": 0.012421805865739051,
+   "energy": 3.1356455650615422,
+   "maximum": 3.1356455650615422
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 1,
+   "sigma_scale": 128.0,
+   "penalty": 512.0,
+   "wall_gradient": "face",
+   "mass": 6.401961077621771e-05,
+   "x_momentum": 2.8283576404644637,
+   "y_momentum": 0.012421805865739051,
+   "energy": 13.014048483106407,
+   "maximum": 13.014048483106407
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 1,
+   "sigma_scale": 0.0,
+   "penalty": 0.0,
+   "wall_gradient": "face",
+   "mass": 1.8010817990796682e-05,
+   "x_momentum": 0.028365777090621158,
+   "y_momentum": 0.006229341363059883,
+   "energy": 0.15896952716755441,
+   "maximum": 0.15896952716755441
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 1,
+   "sigma_scale": 0.5,
+   "penalty": 2.0,
+   "wall_gradient": "face",
+   "mass": 1.8010817990796682e-05,
+   "x_momentum": 0.03890890553819659,
+   "y_momentum": 0.006229341363059883,
+   "energy": 0.17409184241343256,
+   "maximum": 0.17409184241343256
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 1,
+   "sigma_scale": 2.0,
+   "penalty": 8.0,
+   "wall_gradient": "face",
+   "mass": 1.8010817990796682e-05,
+   "x_momentum": 0.07056633517217215,
+   "y_momentum": 0.006229341363059883,
+   "energy": 0.30454209727715664,
+   "maximum": 0.30454209727715664
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 1,
+   "sigma_scale": 8.0,
+   "penalty": 32.0,
+   "wall_gradient": "face",
+   "mass": 1.8010817990796682e-05,
+   "x_momentum": 0.19719605370807436,
+   "y_momentum": 0.006229341363059883,
+   "energy": 0.8263431167320543,
+   "maximum": 0.8263431167320543
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 1,
+   "sigma_scale": 32.0,
+   "penalty": 128.0,
+   "wall_gradient": "face",
+   "mass": 1.8010817990796682e-05,
+   "x_momentum": 0.7037149278516752,
+   "y_momentum": 0.006229341363059883,
+   "energy": 3.202236753303762,
+   "maximum": 3.202236753303762
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 1,
+   "sigma_scale": 128.0,
+   "penalty": 512.0,
+   "wall_gradient": "face",
+   "mass": 1.8010817990796682e-05,
+   "x_momentum": 2.729790424426084,
+   "y_momentum": 0.006229341363059883,
+   "energy": 13.285855594717713,
+   "maximum": 13.285855594717713
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 2,
+   "sigma_scale": 0.0,
+   "penalty": 0.0,
+   "wall_gradient": "face",
+   "mass": 4.9200169151541545e-05,
+   "x_momentum": 0.004003829198296005,
+   "y_momentum": 7.862669614688195e-05,
+   "energy": 0.0032224430818975636,
+   "maximum": 0.004003829198296005
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 2,
+   "sigma_scale": 0.5,
+   "penalty": 4.5,
+   "wall_gradient": "face",
+   "mass": 4.9200169151541545e-05,
+   "x_momentum": 0.00458806709115795,
+   "y_momentum": 7.862669614688195e-05,
+   "energy": 0.0016707778237538306,
+   "maximum": 0.00458806709115795
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 2,
+   "sigma_scale": 2.0,
+   "penalty": 18.0,
+   "wall_gradient": "face",
+   "mass": 4.9200169151541545e-05,
+   "x_momentum": 0.018099264823681023,
+   "y_momentum": 7.862669614688195e-05,
+   "energy": 0.008256607976390162,
+   "maximum": 0.018099264823681023
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 2,
+   "sigma_scale": 8.0,
+   "penalty": 72.0,
+   "wall_gradient": "face",
+   "mass": 4.9200169151541545e-05,
+   "x_momentum": 0.07214405575377719,
+   "y_momentum": 7.862669614688195e-05,
+   "energy": 0.04177630813564703,
+   "maximum": 0.07214405575377719
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 2,
+   "sigma_scale": 32.0,
+   "penalty": 288.0,
+   "wall_gradient": "face",
+   "mass": 4.9200169151541545e-05,
+   "x_momentum": 0.2883232194741597,
+   "y_momentum": 7.862669614688195e-05,
+   "energy": 0.17585510877267319,
+   "maximum": 0.2883232194741597
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 2,
+   "sigma_scale": 128.0,
+   "penalty": 1152.0,
+   "wall_gradient": "face",
+   "mass": 4.9200169151541545e-05,
+   "x_momentum": 1.1530398743556898,
+   "y_momentum": 7.862669614688195e-05,
+   "energy": 0.7121703113207785,
+   "maximum": 1.1530398743556898
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 2,
+   "sigma_scale": 0.0,
+   "penalty": 0.0,
+   "wall_gradient": "face",
+   "mass": 1.6017804238424208e-05,
+   "x_momentum": 0.0020434756654021946,
+   "y_momentum": 1.9765849956449533e-05,
+   "energy": 0.0017816348998838105,
+   "maximum": 0.0020434756654021946
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 2,
+   "sigma_scale": 0.5,
+   "penalty": 4.5,
+   "wall_gradient": "face",
+   "mass": 1.6017804238424208e-05,
+   "x_momentum": 0.0023255627655823035,
+   "y_momentum": 1.9765849956449533e-05,
+   "energy": 0.0007972673055477609,
+   "maximum": 0.0023255627655823035
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 2,
+   "sigma_scale": 2.0,
+   "penalty": 18.0,
+   "wall_gradient": "face",
+   "mass": 1.6017804238424208e-05,
+   "x_momentum": 0.009222126089229602,
+   "y_momentum": 1.9765849956449533e-05,
+   "energy": 0.004619950062903833,
+   "maximum": 0.009222126089229602
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 2,
+   "sigma_scale": 8.0,
+   "penalty": 72.0,
+   "wall_gradient": "face",
+   "mass": 1.6017804238424208e-05,
+   "x_momentum": 0.03680837938382323,
+   "y_momentum": 1.9765849956449533e-05,
+   "energy": 0.023550063525801024,
+   "maximum": 0.03680837938382323
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 2,
+   "sigma_scale": 32.0,
+   "penalty": 288.0,
+   "wall_gradient": "face",
+   "mass": 1.6017804238424208e-05,
+   "x_momentum": 0.14715339256219664,
+   "y_momentum": 1.9765849956449533e-05,
+   "energy": 0.09927051737738912,
+   "maximum": 0.14715339256219664
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 2,
+   "sigma_scale": 128.0,
+   "penalty": 1152.0,
+   "wall_gradient": "face",
+   "mass": 1.6017804238424208e-05,
+   "x_momentum": 0.5885334452756903,
+   "y_momentum": 1.9765849956449533e-05,
+   "energy": 0.40215233278374285,
+   "maximum": 0.5885334452756903
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 2,
+   "sigma_scale": 0.0,
+   "penalty": 0.0,
+   "wall_gradient": "face",
+   "mass": 4.503622232750589e-06,
+   "x_momentum": 0.001033897352773927,
+   "y_momentum": 4.9495924386540355e-06,
+   "energy": 0.0009369721221643701,
+   "maximum": 0.001033897352773927
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 2,
+   "sigma_scale": 0.5,
+   "penalty": 4.5,
+   "wall_gradient": "face",
+   "mass": 4.503622232750589e-06,
+   "x_momentum": 0.0011705837988746192,
+   "y_momentum": 4.9495924386540355e-06,
+   "energy": 0.0003854569535022268,
+   "maximum": 0.0011705837988746192
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 2,
+   "sigma_scale": 2.0,
+   "penalty": 18.0,
+   "wall_gradient": "face",
+   "mass": 4.503622232750589e-06,
+   "x_momentum": 0.004660020785611268,
+   "y_momentum": 4.9495924386540355e-06,
+   "energy": 0.0024353205178542225,
+   "maximum": 0.004660020785611268
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 2,
+   "sigma_scale": 8.0,
+   "penalty": 72.0,
+   "wall_gradient": "face",
+   "mass": 4.503622232750589e-06,
+   "x_momentum": 0.01861776873253122,
+   "y_momentum": 4.9495924386540355e-06,
+   "energy": 0.012477246616905635,
+   "maximum": 0.01861776873253122
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 2,
+   "sigma_scale": 32.0,
+   "penalty": 288.0,
+   "wall_gradient": "face",
+   "mass": 4.503622232750589e-06,
+   "x_momentum": 0.07444876052021546,
+   "y_momentum": 4.9495924386540355e-06,
+   "energy": 0.052644951013116614,
+   "maximum": 0.07444876052021546
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 2,
+   "sigma_scale": 128.0,
+   "penalty": 1152.0,
+   "wall_gradient": "face",
+   "mass": 4.503622232750589e-06,
+   "x_momentum": 0.29777272767095025,
+   "y_momentum": 4.9495924386540355e-06,
+   "energy": 0.21331576859796586,
+   "maximum": 0.29777272767095025
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 3,
+   "sigma_scale": 0.0,
+   "penalty": 0.0,
+   "wall_gradient": "face",
+   "mass": 2.3048350204447392e-07,
+   "x_momentum": 4.868438718697021e-05,
+   "y_momentum": 8.273134957007975e-06,
+   "energy": 0.0001836472931451283,
+   "maximum": 0.0001836472931451283
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 3,
+   "sigma_scale": 0.5,
+   "penalty": 8.0,
+   "wall_gradient": "face",
+   "mass": 2.3048350204447392e-07,
+   "x_momentum": 7.93084763697216e-05,
+   "y_momentum": 8.273134957007975e-06,
+   "energy": 0.00018953226071538598,
+   "maximum": 0.00018953226071538598
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 3,
+   "sigma_scale": 2.0,
+   "penalty": 32.0,
+   "wall_gradient": "face",
+   "mass": 2.3048350204447392e-07,
+   "x_momentum": 0.0001716027075107096,
+   "y_momentum": 8.273134957007975e-06,
+   "energy": 0.0003530293441978971,
+   "maximum": 0.0003530293441978971
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 3,
+   "sigma_scale": 8.0,
+   "penalty": 128.0,
+   "wall_gradient": "face",
+   "mass": 2.3048350204447392e-07,
+   "x_momentum": 0.0005407796320746616,
+   "y_momentum": 8.273134957007975e-06,
+   "energy": 0.0010070176781318274,
+   "maximum": 0.0010070176781318274
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 3,
+   "sigma_scale": 32.0,
+   "penalty": 512.0,
+   "wall_gradient": "face",
+   "mass": 2.3048350204447392e-07,
+   "x_momentum": 0.0020174873303335783,
+   "y_momentum": 8.273134957007975e-06,
+   "energy": 0.004073503350086938,
+   "maximum": 0.004073503350086938
+  },
+  {
+   "ncells": [
+    2,
+    8
+   ],
+   "degree": 3,
+   "sigma_scale": 128.0,
+   "penalty": 2048.0,
+   "wall_gradient": "face",
+   "mass": 2.3048350204447392e-07,
+   "x_momentum": 0.007924318123373908,
+   "y_momentum": 8.273134957007975e-06,
+   "energy": 0.01684495527978469,
+   "maximum": 0.01684495527978469
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 3,
+   "sigma_scale": 0.0,
+   "penalty": 0.0,
+   "wall_gradient": "face",
+   "mass": 1.9269853479902976e-08,
+   "x_momentum": 1.4428230999730118e-05,
+   "y_momentum": 1.0596476905347647e-06,
+   "energy": 4.813341017806394e-05,
+   "maximum": 4.813341017806394e-05
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 3,
+   "sigma_scale": 0.5,
+   "penalty": 8.0,
+   "wall_gradient": "face",
+   "mass": 1.9269853479902976e-08,
+   "x_momentum": 2.1693775229980616e-05,
+   "y_momentum": 1.0596476905347647e-06,
+   "energy": 4.738697445461071e-05,
+   "maximum": 4.738697445461071e-05
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 3,
+   "sigma_scale": 2.0,
+   "penalty": 32.0,
+   "wall_gradient": "face",
+   "mass": 1.9269853479902976e-08,
+   "x_momentum": 4.3521937107104947e-05,
+   "y_momentum": 1.0596476905347647e-06,
+   "energy": 8.84165953156657e-05,
+   "maximum": 8.84165953156657e-05
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 3,
+   "sigma_scale": 8.0,
+   "penalty": 128.0,
+   "wall_gradient": "face",
+   "mass": 1.9269853479902976e-08,
+   "x_momentum": 0.00013083458461560227,
+   "y_momentum": 1.0596476905347647e-06,
+   "energy": 0.0002525350787598857,
+   "maximum": 0.0002525350787598857
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 3,
+   "sigma_scale": 32.0,
+   "penalty": 512.0,
+   "wall_gradient": "face",
+   "mass": 1.9269853479902976e-08,
+   "x_momentum": 0.00048008517463715705,
+   "y_momentum": 1.0596476905347647e-06,
+   "energy": 0.0011229872526419271,
+   "maximum": 0.0011229872526419271
+  },
+  {
+   "ncells": [
+    2,
+    16
+   ],
+   "degree": 3,
+   "sigma_scale": 128.0,
+   "penalty": 2048.0,
+   "wall_gradient": "face",
+   "mass": 1.9269853479902976e-08,
+   "x_momentum": 0.001877087534732702,
+   "y_momentum": 1.0596476905347647e-06,
+   "energy": 0.004636349241106563,
+   "maximum": 0.004636349241106563
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 3,
+   "sigma_scale": 0.0,
+   "penalty": 0.0,
+   "wall_gradient": "face",
+   "mass": 1.3705302646892908e-09,
+   "x_momentum": 3.907271439729243e-06,
+   "y_momentum": 1.3431913721642506e-07,
+   "energy": 1.2356266913204905e-05,
+   "maximum": 1.2356266913204905e-05
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 3,
+   "sigma_scale": 0.5,
+   "penalty": 8.0,
+   "wall_gradient": "face",
+   "mass": 1.3705302646892908e-09,
+   "x_momentum": 5.664492384482855e-06,
+   "y_momentum": 1.3431913721642506e-07,
+   "energy": 1.18616485540457e-05,
+   "maximum": 1.18616485540457e-05
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 3,
+   "sigma_scale": 2.0,
+   "penalty": 32.0,
+   "wall_gradient": "face",
+   "mass": 1.3705302646892908e-09,
+   "x_momentum": 1.0938301810980988e-05,
+   "y_momentum": 1.3431913721642506e-07,
+   "energy": 2.2098521468283394e-05,
+   "maximum": 2.2098521468283394e-05
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 3,
+   "sigma_scale": 8.0,
+   "penalty": 128.0,
+   "wall_gradient": "face",
+   "mass": 1.3705302646892908e-09,
+   "x_momentum": 3.203353951697352e-05,
+   "y_momentum": 1.3431913721642506e-07,
+   "energy": 6.47249068550515e-05,
+   "maximum": 6.47249068550515e-05
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 3,
+   "sigma_scale": 32.0,
+   "penalty": 512.0,
+   "wall_gradient": "face",
+   "mass": 1.3705302646892908e-09,
+   "x_momentum": 0.00011641449037202989,
+   "y_momentum": 1.3431913721642506e-07,
+   "energy": 0.0002959684281598207,
+   "maximum": 0.0002959684281598207
+  },
+  {
+   "ncells": [
+    2,
+    32
+   ],
+   "degree": 3,
+   "sigma_scale": 128.0,
+   "penalty": 2048.0,
+   "wall_gradient": "face",
+   "mass": 1.3705302646892908e-09,
+   "x_momentum": 0.00045393829377982087,
+   "y_momentum": 1.3431913721642506e-07,
+   "energy": 0.0012209425133820062,
+   "maximum": 0.0012209425133820062
+  }
+ ],
+ "fits": [
+  {
+   "degree": 1,
+   "ncells": [
+    2,
+    8
+   ],
+   "slope": 0.09689895601157954,
+   "intercept": 0.07929460420953216,
+   "r2": 0.9996745929259323,
+   "intercept_over_slope": 0.8183225854368995
+  },
+  {
+   "degree": 1,
+   "ncells": [
+    2,
+    16
+   ],
+   "slope": 0.10078126978738564,
+   "intercept": 0.07132469866269275,
+   "r2": 0.9996768408274709,
+   "intercept_over_slope": 0.7077178012656888
+  },
+  {
+   "degree": 1,
+   "ncells": [
+    2,
+    32
+   ],
+   "slope": 0.10293796338876843,
+   "intercept": 0.06685269563777618,
+   "r2": 0.9996735041616394,
+   "intercept_over_slope": 0.649446457234557
+  },
+  {
+   "degree": 2,
+   "ncells": [
+    2,
+    8
+   ],
+   "slope": 0.008998647394195588,
+   "intercept": 0.0009881549977356352,
+   "r2": 0.9999884439313237,
+   "intercept_over_slope": 0.10981150326803853
+  },
+  {
+   "degree": 2,
+   "ncells": [
+    2,
+    16
+   ],
+   "slope": 0.0045931717230598135,
+   "intercept": 0.0004917671600376816,
+   "r2": 0.9999882566886045,
+   "intercept_over_slope": 0.10706483225279528
+  },
+  {
+   "degree": 2,
+   "ncells": [
+    2,
+    32
+   ],
+   "slope": 0.002323982079906099,
+   "intercept": 0.000244135706161136,
+   "r2": 0.9999881171085793,
+   "intercept_over_slope": 0.1050505975377402
+  },
+  {
+   "degree": 3,
+   "ncells": [
+    2,
+    8
+   ],
+   "slope": 0.00013076167518838108,
+   "intercept": 5.94699310738152e-05,
+   "r2": 0.9997145862181974,
+   "intercept_over_slope": 0.4547963383624458
+  },
+  {
+   "degree": 3,
+   "ncells": [
+    2,
+    16
+   ],
+   "slope": 3.606502749909579e-05,
+   "intercept": 7.786893976813878e-06,
+   "r2": 0.9996505794488422,
+   "intercept_over_slope": 0.2159126033387638
+  },
+  {
+   "degree": 3,
+   "ncells": [
+    2,
+    32
+   ],
+   "slope": 9.504916546875814e-06,
+   "intercept": 1.2273356816810401e-06,
+   "r2": 0.999634363284608,
+   "intercept_over_slope": 0.12912640270202635
+  }
+ ],
+ "onset": [
+  {
+   "degree": 1,
+   "ncells": [
+    2,
+    8
+   ],
+   "sigma_scale": 2.0,
+   "penalty": 8.0,
+   "wall_gradient": "face",
+   "survived": false,
+   "failed_time": 0.031067592906485232,
+   "steps": 62,
+   "dt": 0.0004821550126872948,
+   "peak_normal_velocity": 0.14273854046335016,
+   "seconds": 3.2115631103515625
+  },
+  {
+   "degree": 1,
+   "ncells": [
+    2,
+    8
+   ],
+   "sigma_scale": 8.0,
+   "penalty": 32.0,
+   "wall_gradient": "face",
+   "survived": false,
+   "failed_time": 0.00841123567577552,
+   "steps": 16,
+   "dt": 0.0004930079182168076,
+   "peak_normal_velocity": 0.038409305958890645,
+   "seconds": 0.8691878318786621
+  },
+  {
+   "degree": 1,
+   "ncells": [
+    2,
+    8
+   ],
+   "sigma_scale": 32.0,
+   "penalty": 128.0,
+   "wall_gradient": "face",
+   "survived": false,
+   "failed_time": 0.002969874251197237,
+   "steps": 5,
+   "dt": 0.0004945870356629325,
+   "peak_normal_velocity": 0.013381678318471884,
+   "seconds": 0.30602121353149414
+  },
+  {
+   "degree": 2,
+   "ncells": [
+    2,
+    8
+   ],
+   "sigma_scale": 2.0,
+   "penalty": 18.0,
+   "wall_gradient": "face",
+   "survived": false,
+   "failed_time": 0.016765577576852684,
+   "steps": 201,
+   "dt": 5.226910704669697e-05,
+   "peak_normal_velocity": 27.040306893448005,
+   "seconds": 10.588976383209229
+  },
+  {
+   "degree": 2,
+   "ncells": [
+    2,
+    8
+   ],
+   "sigma_scale": 8.0,
+   "penalty": 72.0,
+   "wall_gradient": "face",
+   "survived": false,
+   "failed_time": 0.006914063079837383,
+   "steps": 95,
+   "dt": 3.947256269389312e-05,
+   "peak_normal_velocity": 136.87809247372743,
+   "seconds": 5.029896259307861
+  },
+  {
+   "degree": 2,
+   "ncells": [
+    2,
+    8
+   ],
+   "sigma_scale": 32.0,
+   "penalty": 288.0,
+   "wall_gradient": "face",
+   "survived": false,
+   "failed_time": 0.0007825174363500764,
+   "steps": 7,
+   "dt": 9.779368022379162e-05,
+   "peak_normal_velocity": 0.002876861446233354,
+   "seconds": 0.4190371036529541
+  }
+ ]
+}
