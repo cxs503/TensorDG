@@ -138,7 +138,23 @@ ANALYTIC_E_FLUX_BOTTOM = -(KAPPA * (MU * WALL_SPEED**2 / (2.0 * KAPPA)))
 
 
 def wall_fluxes(ncells, degree, penalty_scale=2.0, wall_gradient="face"):
+    """Face fluxes on both walls, using the *production* calling convention.
+
+    Two drifts from ``ns._axis_fluxes_ns`` were found and fixed (see
+    ``docs/reports/tensordg-ns-wall-diag-convention.md``):
+
+    * the fd2/br1 stencil needs ``centre=`` (otherwise ``_boundary_flux``
+      silently falls back to the one-sided face derivative, so the "fd2" rows
+      were bit-identical to the "face" rows), and
+    * the low-side wall must be labelled ``side_name="left"`` -- the default
+      ``"right"`` picks the stencil in the wrong direction and flips the sign of
+      the fd2 flux (202 % error instead of 2.5 %).
+
+    The fd2 modes also use ``ns.WALL_PENALTY`` because the Dirichlet value is
+    already inside the stencil there, as in the production path.
+    """
     d = build_state(ncells, degree)
+    fd2 = wall_gradient in ("fd2", "br1")
     penalty = penalty_scale * (degree + 1.0) ** 2
     h = d["dy"]
     left = ns._face_primitives(d["coeff"], d["basis"], d["derivative"], d["signs"], 1, "left")
@@ -151,6 +167,11 @@ def wall_fluxes(ncells, degree, penalty_scale=2.0, wall_gradient="face"):
     low_kwargs = ({} if "outward_sign"
                   not in inspect.signature(ns._boundary_flux).parameters
                   else {"outward_sign": -1.0})
+    if fd2:
+        centre_u, centre_v, centre_T = ns._cell_centre_primitives(d["coeff"])
+        low_kwargs["centre"] = {"u": centre_u, "v": centre_v, "T": centre_T}
+        low_kwargs["side_name"] = "left"
+        penalty = ns.WALL_PENALTY if hasattr(ns, "WALL_PENALTY") else 0.0
     bottom = ns._boundary_flux(left, d["boundary"]["ymin"], 1, h, MU, KAPPA, penalty,
                                2.0 / h, 2.0 / d["dx"],
                                None if recon is None else recon["left"],
