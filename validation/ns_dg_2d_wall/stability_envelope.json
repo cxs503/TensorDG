@@ -1,0 +1,728 @@
+{
+  "mission": "m3595",
+  "question": "for which (penalty, gradient closure, adjoint, degree) is the shipped Dirichlet-wall operator free of a growing eigenmode?",
+  "grid": {
+    "couette_p1": [
+      2,
+      8
+    ],
+    "couette_p2": [
+      2,
+      8
+    ]
+  },
+  "shipped_penalty": {
+    "p1": 8.0,
+    "p2": 18.0
+  },
+  "sigma_sweep": [
+    {
+      "max_real": 1.1513456496955375e-13,
+      "min_real": -351.71648844292696,
+      "growth_rate": 1.1513456496955375e-13,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.2328820780697776,
+        0.1308266270603492,
+        2.442948996896266e-05,
+        0.6362668653799042
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 2.0,
+      "wall_gradient": "face",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.467087745666504
+    },
+    {
+      "max_real": 4.663402461666465e-14,
+      "min_real": -388.90779288628767,
+      "growth_rate": 4.663402461666465e-14,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.2328815823363407,
+        0.13082685587270096,
+        2.192521542185274e-05,
+        0.6362696365755365
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 2.0,
+      "wall_gradient": "face",
+      "wall_adjoint": true,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.622038125991821
+    },
+    {
+      "max_real": -2.7828367205996574e-13,
+      "min_real": -1315.8153793002703,
+      "growth_rate": -2.7828367205996574e-13,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.23288245984100697,
+        0.1308278963235499,
+        7.2285204940900815e-06,
+        0.6362824153149491
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 8.0,
+      "wall_gradient": "face",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.538586616516113
+    },
+    {
+      "max_real": -1.4759625809164388e-13,
+      "min_real": -1472.7741472089433,
+      "growth_rate": -1.4759625809164388e-13,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.23288474897169498,
+        0.1308284478957923,
+        6.394645337631358e-06,
+        0.6362804084871749
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 8.0,
+      "wall_gradient": "face",
+      "wall_adjoint": true,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.614400386810303
+    },
+    {
+      "max_real": 8.183842896553356e-14,
+      "min_real": -5180.733829957901,
+      "growth_rate": 8.183842896553356e-14,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.23288159768141453,
+        0.1308281283225397,
+        1.9024860901840155e-06,
+        0.6362883715099557
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 32.0,
+      "wall_gradient": "face",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.459383726119995
+    },
+    {
+      "max_real": -2.838900803674458e-13,
+      "min_real": -5811.871645960812,
+      "growth_rate": -2.838900803674458e-13,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.2328860669301622,
+        0.13082904765472922,
+        1.6703033794576244e-06,
+        0.6362832151117291
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 32.0,
+      "wall_gradient": "face",
+      "wall_adjoint": true,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.574548721313477
+    },
+    {
+      "max_real": -9.90090903989306e-13,
+      "min_real": -20642.550654297207,
+      "growth_rate": -9.90090903989306e-13,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.23288096886874954,
+        0.13082814307006535,
+        4.827772334955971e-07,
+        0.6362904052839515
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 128.0,
+      "wall_gradient": "face",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.622135400772095
+    },
+    {
+      "max_real": -5.315369539565804e-13,
+      "min_real": -23173.498697688654,
+      "growth_rate": -5.315369539565804e-13,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.23288650121764107,
+        0.13082921738821496,
+        4.2240235471117997e-07,
+        0.6362838589917893
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 128.0,
+      "wall_gradient": "face",
+      "wall_adjoint": true,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.664753437042236
+    }
+  ],
+  "gradient_matrix": [
+    {
+      "max_real": -2.7828367205996574e-13,
+      "min_real": -1315.8153793002703,
+      "growth_rate": -2.7828367205996574e-13,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.23288245984100697,
+        0.1308278963235499,
+        7.2285204940900815e-06,
+        0.6362824153149491
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 8.0,
+      "wall_gradient": "face",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.591057300567627
+    },
+    {
+      "max_real": -1.4759625809164388e-13,
+      "min_real": -1472.7741472089433,
+      "growth_rate": -1.4759625809164388e-13,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.23288474897169498,
+        0.1308284478957923,
+        6.394645337631358e-06,
+        0.6362804084871749
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 8.0,
+      "wall_gradient": "face",
+      "wall_adjoint": true,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.793316125869751
+    },
+    {
+      "max_real": 4.62946848812187e-14,
+      "min_real": -1313.410525989179,
+      "growth_rate": 4.62946848812187e-14,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.2328877296245482,
+        0.13082980049470924,
+        8.44647479682237e-06,
+        0.6362740234059457
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 8.0,
+      "wall_gradient": "fd2",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.850558280944824
+    },
+    {
+      "max_real": -2.716875247940878e-14,
+      "min_real": -1352.0127509705612,
+      "growth_rate": -2.716875247940878e-14,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.2328877319335461,
+        0.1308296968128055,
+        6.695575656155455e-06,
+        0.6362758756779922
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 8.0,
+      "wall_gradient": "fd2",
+      "wall_adjoint": true,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.977915287017822
+    },
+    {
+      "max_real": -1.9421529356284411e-13,
+      "min_real": -1316.9077789112941,
+      "growth_rate": -1.9421529356284411e-13,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.23288273933565268,
+        0.13082813816652175,
+        7.304558734984803e-06,
+        0.6362818179390906
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 8.0,
+      "wall_gradient": "taylor",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": false,
+      "seconds": 4.913724184036255
+    },
+    {
+      "max_real": -1.519319163872572e-13,
+      "min_real": -1457.5585263037553,
+      "growth_rate": -1.519319163872572e-13,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.23288473500024204,
+        0.13082849715344944,
+        6.389618522712586e-06,
+        0.6362803782277857
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 8.0,
+      "wall_gradient": "taylor",
+      "wall_adjoint": true,
+      "pre_fix_wall_flux": false,
+      "seconds": 5.051332950592041
+    }
+  ],
+  "degree_matrix": [
+    {
+      "max_real": 4.3601089569475447e-13,
+      "min_real": -5568.903358971275,
+      "growth_rate": 4.3601089569475447e-13,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.23284239120112982,
+        0.13082151011702708,
+        2.0676726596177075e-08,
+        0.6363360780051165
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 18.0,
+      "wall_gradient": "face",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": false,
+      "seconds": 12.934772968292236
+    },
+    {
+      "max_real": -1.849945978498709e-12,
+      "min_real": -10986.483451073465,
+      "growth_rate": -1.849945978498709e-12,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.23284241491957935,
+        0.13082153360152485,
+        1.2606253756240336e-08,
+        0.636336038872642
+      ],
+      "peak_dof": [
+        0,
+        7,
+        0,
+        0,
+        3
+      ],
+      "sigma": 18.0,
+      "wall_gradient": "face",
+      "wall_adjoint": true,
+      "pre_fix_wall_flux": false,
+      "seconds": 13.161751985549927
+    }
+  ],
+  "negative_control": [
+    {
+      "max_real": 75.95233262926979,
+      "min_real": -351.56606185850393,
+      "growth_rate": 75.95233262926979,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.04397046615119051,
+        0.01177522000878196,
+        0.14051629539132315,
+        0.8037380184487044
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        0,
+        3
+      ],
+      "sigma": 2.0,
+      "wall_gradient": "face",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": true,
+      "seconds": 4.6816253662109375
+    },
+    {
+      "max_real": 348.5027693566559,
+      "min_real": -1313.892493876361,
+      "growth_rate": 348.5027693566559,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.0072854842748328865,
+        0.0010268262100771412,
+        0.04451060850446008,
+        0.9471770810106299
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "sigma": 8.0,
+      "wall_gradient": "face",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": true,
+      "seconds": 4.6018359661102295
+    },
+    {
+      "max_real": 1451.0548378892995,
+      "min_real": -5171.1414672545,
+      "growth_rate": 1451.0548378892995,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.001302578320727352,
+        0.00017116705096792046,
+        0.011599817167343639,
+        0.9869264374609611
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "sigma": 32.0,
+      "wall_gradient": "face",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": true,
+      "seconds": 4.615389823913574
+    },
+    {
+      "max_real": 5866.970627813284,
+      "min_real": -20602.14252336609,
+      "growth_rate": 5866.970627813284,
+      "dominant_channel": "E",
+      "channel_weights": [
+        0.0002903129753412468,
+        3.902008662064978e-05,
+        0.0029191762203624383,
+        0.9967514907176757
+      ],
+      "peak_dof": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "sigma": 128.0,
+      "wall_gradient": "face",
+      "wall_adjoint": false,
+      "pre_fix_wall_flux": true,
+      "seconds": 4.615845441818237
+    }
+  ],
+  "residual": {
+    "p1": {
+      "adjoint_off": 0.04517977052016975,
+      "adjoint_on": 0.39488977149940474
+    },
+    "p2": {
+      "adjoint_off": 0.010213656599268983,
+      "adjoint_on": 0.030285283004532045
+    }
+  },
+  "meta": {
+    "shipped_wall_gradient": "face",
+    "wall_adjoint_factor": 2.0,
+    "mu": 0.1,
+    "prandtl": 0.71,
+    "wall_speed": 1.0,
+    "spectrum_scale": {
+      "p1": 23173.498697688654
+    }
+  },
+  "residual_refinement": {
+    "face|adjoint=off": {
+      "cells_y": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "residual": [
+        0.04517977052016975,
+        0.0486446531725222,
+        0.0511058653619032,
+        0.05237308984748257
+      ],
+      "observed_order": [
+        -0.10660429547437109,
+        -0.07120763873036319,
+        -0.0353368446351471
+      ],
+      "peak_dof_coarsest": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "peak_dof_finest": [
+        0,
+        63,
+        0,
+        1,
+        3
+      ],
+      "state_shape": [
+        1,
+        8,
+        2,
+        2,
+        4
+      ]
+    },
+    "face|adjoint=on": {
+      "cells_y": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "residual": [
+        0.39488977149940474,
+        0.39739169849973016,
+        0.3995121675964505,
+        0.4006447134175529
+      ],
+      "observed_order": [
+        -0.009111735692541761,
+        -0.0076777076894220895,
+        -0.0040839974499233146
+      ],
+      "peak_dof_coarsest": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "peak_dof_finest": [
+        0,
+        63,
+        0,
+        1,
+        3
+      ],
+      "state_shape": [
+        1,
+        8,
+        2,
+        2,
+        4
+      ]
+    },
+    "fd2|adjoint=off": {
+      "cells_y": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "residual": [
+        0.04453708003914192,
+        0.040371638368569496,
+        0.038122312532294256,
+        0.036960374606646695
+      ],
+      "observed_order": [
+        0.14166483888214956,
+        0.0827064986721011,
+        0.04465625796589121
+      ],
+      "peak_dof_coarsest": [
+        0,
+        7,
+        0,
+        1,
+        3
+      ],
+      "peak_dof_finest": [
+        0,
+        63,
+        0,
+        1,
+        3
+      ],
+      "state_shape": [
+        1,
+        8,
+        2,
+        2,
+        4
+      ]
+    },
+    "fd2|adjoint=on": {
+      "cells_y": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "residual": [
+        0.32041467126038603,
+        0.31947383698507825,
+        0.31924093714860896,
+        0.31917769055390977
+      ],
+      "observed_order": [
+        0.004242420058799639,
+        0.001052123632009596,
+        0.00028584864183089285
+      ],
+      "peak_dof_coarsest": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "peak_dof_finest": [
+        0,
+        0,
+        0,
+        1,
+        3
+      ],
+      "state_shape": [
+        1,
+        8,
+        2,
+        2,
+        4
+      ]
+    },
+    "taylor|adjoint=off": {
+      "cells_y": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "residual": [
+        0.1997324791730244,
+        0.20684286687076758,
+        0.2106641894516268,
+        0.21263778160408453
+      ],
+      "observed_order": [
+        -0.05046625265363732,
+        -0.0264098870028883,
+        -0.013452865506281898
+      ],
+      "peak_dof_coarsest": [
+        0,
+        7,
+        0,
+        1,
+        3
+      ],
+      "peak_dof_finest": [
+        0,
+        63,
+        0,
+        1,
+        3
+      ],
+      "state_shape": [
+        1,
+        8,
+        2,
+        2,
+        4
+      ]
+    }
+  }
+}
