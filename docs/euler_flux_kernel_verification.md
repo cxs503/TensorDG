@@ -113,3 +113,18 @@ to this pass) in 449.54 s. The 23 tests added here are
 `tests/test_euler_fluxes.py`; they take ~5 s on their own, which is why this
 verification was run under a heavily loaded machine (load15 ≈ 120–220 on
 128 cores) without adding a new heavy compute job.
+
+## 8. Follow-up closed (2026-11-04)
+
+The recommendation in §5.5 — replace Davis' wave-speed estimates — has been
+implemented and verified: `tensordg/euler_1d.py` now exposes
+`WAVE_SPEEDS = {davis, einfeldt, toro, toro_iter}` selectable through
+`hllc_flux(..., wave_speed=...)`, `hllc_rhs(..., wave_speed=...)` and
+`solve_riemann(..., hllc_wave_speed=...)`. The default stays `davis` so the
+numbers recorded above and in the README remain reproducible; the Newton-refined
+`toro_iter` reproduces the exact Riemann interface flux on every case where a
+three-wave solver can at all (recoverable-case max error 24.16% -> 0.76%, all-case
+median 11.31% -> 0.38%), and the residual on the three rarefaction-fan cases is
+identical to the exact-wave-speed ceiling. See
+`docs/hllc_wave_speed_verification.md`, `benchmarks/verify_hllc_wave_speeds.py`
+and `validation/euler_fluxes/wave_speed_estimates.json`.
