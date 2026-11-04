@@ -1,0 +1,420 @@
+{
+  "source_selfcheck": {
+    "points": 24,
+    "time": 0.07,
+    "max_abs_source": 7.926114924647761,
+    "max_abs_difference": 2.458019405793266e-06,
+    "relative_difference": 3.101165487961305e-07,
+    "tolerance": 1e-05,
+    "pass": true
+  },
+  "viscous_activity": {
+    "max_abs_viscous_source": 1.2097739082466386,
+    "max_abs_inviscid_source": 7.836052417956596,
+    "ratio": 0.15438563242308054
+  },
+  "temporal_control": {
+    "degree": 2,
+    "ncells": 16,
+    "reference_steps": 307,
+    "refined_steps": 614,
+    "relative_error_change": {
+      "density": 8.346284124520482e-09,
+      "momentum_x": 6.370525185790555e-09,
+      "momentum_y": 3.82933358061075e-09,
+      "energy": 1.5274740650962403e-09
+    },
+    "max_relative_change": 8.346284124520482e-09,
+    "time_error_negligible": true
+  },
+  "config": {
+    "mu": 0.01,
+    "prandtl": 0.71,
+    "kappa": 0.04929577464788733,
+    "final_time": 0.03,
+    "domain": [
+      [
+        0.0,
+        1.0
+      ],
+      [
+        0.0,
+        1.0
+      ]
+    ],
+    "cfl": 0.1,
+    "cfl_viscous": 0.5,
+    "meshes": [
+      8,
+      16,
+      32
+    ],
+    "degrees": [
+      1,
+      2
+    ],
+    "meshes_high_degree": [
+      8,
+      16
+    ],
+    "fields": [
+      "density",
+      "momentum_x",
+      "momentum_y",
+      "energy"
+    ]
+  },
+  "runs": [
+    {
+      "degree": 1,
+      "ncells": 8,
+      "quadrature": 5,
+      "steps": 28,
+      "diffusive_steps": 0,
+      "dt": 0.00031950246810092536,
+      "errors": {
+        "density": {
+          "l2": 0.003620073224342476,
+          "relative_l2": 0.0036021074895041536
+        },
+        "momentum_x": {
+          "l2": 0.0029501260599888303,
+          "relative_l2": 0.005842027876292733
+        },
+        "momentum_y": {
+          "l2": 0.001404824896227588,
+          "relative_l2": 0.0035550013494886823
+        },
+        "energy": {
+          "l2": 0.012201609824508618,
+          "relative_l2": 0.004475237558487994
+        }
+      },
+      "observed_order": {
+        "density": null,
+        "momentum_x": null,
+        "momentum_y": null,
+        "energy": null
+      }
+    },
+    {
+      "degree": 1,
+      "ncells": 16,
+      "quadrature": 5,
+      "steps": 61,
+      "diffusive_steps": 61,
+      "dt": 0.0004579385975116909,
+      "errors": {
+        "density": {
+          "l2": 0.0009545554125311111,
+          "relative_l2": 0.0009498181355846939
+        },
+        "momentum_x": {
+          "l2": 0.0006958310103256425,
+          "relative_l2": 0.0013779289687460784
+        },
+        "momentum_y": {
+          "l2": 0.0002804632991317806,
+          "relative_l2": 0.0007097307355336061
+        },
+        "energy": {
+          "l2": 0.0030862511371560677,
+          "relative_l2": 0.001131957766440326
+        }
+      },
+      "observed_order": {
+        "density": 1.9231180249323603,
+        "momentum_x": 2.083967722203537,
+        "momentum_y": 2.3245064174717984,
+        "energy": 1.9831441348665801
+      }
+    },
+    {
+      "degree": 1,
+      "ncells": 32,
+      "quadrature": 5,
+      "steps": 243,
+      "diffusive_steps": 243,
+      "dt": 8.176457617148011e-05,
+      "errors": {
+        "density": {
+          "l2": 0.00024339771544995895,
+          "relative_l2": 0.00024218977888485762
+        },
+        "momentum_x": {
+          "l2": 0.00016832610361221245,
+          "relative_l2": 0.00033333009153310803
+        },
+        "momentum_y": {
+          "l2": 6.660545260384343e-05,
+          "relative_l2": 0.00016854945732084177
+        },
+        "energy": {
+          "l2": 0.0007820327145057676,
+          "relative_l2": 0.00028682954349947606
+        }
+      },
+      "observed_order": {
+        "density": 1.9715133225316877,
+        "momentum_x": 2.0474780516370354,
+        "momentum_y": 2.0740998026311726,
+        "energy": 1.980554597268247
+      }
+    },
+    {
+      "degree": 2,
+      "ncells": 8,
+      "quadrature": 7,
+      "steps": 77,
+      "diffusive_steps": 77,
+      "dt": 0.00028040417159854586,
+      "errors": {
+        "density": {
+          "l2": 0.0003539951433289724,
+          "relative_l2": 0.000352238332766043
+        },
+        "momentum_x": {
+          "l2": 0.00028136502639291184,
+          "relative_l2": 0.000557176979619459
+        },
+        "momentum_y": {
+          "l2": 0.0001884144391485476,
+          "relative_l2": 0.00047679507049946734
+        },
+        "energy": {
+          "l2": 0.0010403038542967685,
+          "relative_l2": 0.00038155677389694015
+        }
+      },
+      "observed_order": {
+        "density": null,
+        "momentum_x": null,
+        "momentum_y": null,
+        "energy": null
+      }
+    },
+    {
+      "degree": 2,
+      "ncells": 16,
+      "quadrature": 7,
+      "steps": 307,
+      "diffusive_steps": 307,
+      "dt": 6.476116006196714e-05,
+      "errors": {
+        "density": {
+          "l2": 5.670842611209113e-05,
+          "relative_l2": 5.642699297980593e-05
+        },
+        "momentum_x": {
+          "l2": 3.388519405190012e-05,
+          "relative_l2": 6.710162353046658e-05
+        },
+        "momentum_y": {
+          "l2": 2.0379938764889544e-05,
+          "relative_l2": 5.1572768966604124e-05
+        },
+        "energy": {
+          "l2": 0.0001502465679539303,
+          "relative_l2": 5.510658786931221e-05
+        }
+      },
+      "observed_order": {
+        "density": 2.6420945458930745,
+        "momentum_x": 3.0537160745253784,
+        "momentum_y": 3.208687908391193,
+        "energy": 2.791601034249305
+      }
+    },
+    {
+      "degree": 3,
+      "ncells": 8,
+      "quadrature": 9,
+      "steps": 243,
+      "diffusive_steps": 243,
+      "dt": 3.5685054726560667e-05,
+      "errors": {
+        "density": {
+          "l2": 1.828904868983454e-05,
+          "relative_l2": 1.8198283619946645e-05
+        },
+        "momentum_x": {
+          "l2": 1.413661657845314e-05,
+          "relative_l2": 2.799423022896111e-05
+        },
+        "momentum_y": {
+          "l2": 1.2876642544266107e-05,
+          "relative_l2": 3.2585186769307784e-05
+        },
+        "energy": {
+          "l2": 5.8464684882880194e-05,
+          "relative_l2": 2.144334701700458e-05
+        }
+      }
+    },
+    {
+      "degree": 3,
+      "ncells": 16,
+      "quadrature": 9,
+      "steps": 970,
+      "diffusive_steps": 970,
+      "dt": 5.9246463526875515e-06,
+      "errors": {
+        "density": {
+          "l2": 1.7351743235850264e-06,
+          "relative_l2": 1.7265629834645633e-06
+        },
+        "momentum_x": {
+          "l2": 8.90968246801641e-07,
+          "relative_l2": 1.7643521764376938e-06
+        },
+        "momentum_y": {
+          "l2": 8.014340700148178e-07,
+          "relative_l2": 2.0280813701975544e-06
+        },
+        "energy": {
+          "l2": 4.002863360848271e-06,
+          "relative_l2": 1.4681476224539969e-06
+        }
+      }
+    }
+  ],
+  "summary": [
+    {
+      "degree": 1,
+      "field": "density",
+      "design_order": 2,
+      "observed_orders": [
+        1.9231180249323603,
+        1.9715133225316877
+      ],
+      "mean_observed_order": 1.947315673732024,
+      "finest_relative_l2": 0.00024218977888485762,
+      "within_quarter_order_of_design": true
+    },
+    {
+      "degree": 1,
+      "field": "momentum_x",
+      "design_order": 2,
+      "observed_orders": [
+        2.083967722203537,
+        2.0474780516370354
+      ],
+      "mean_observed_order": 2.065722886920286,
+      "finest_relative_l2": 0.00033333009153310803,
+      "within_quarter_order_of_design": true
+    },
+    {
+      "degree": 1,
+      "field": "momentum_y",
+      "design_order": 2,
+      "observed_orders": [
+        2.3245064174717984,
+        2.0740998026311726
+      ],
+      "mean_observed_order": 2.1993031100514857,
+      "finest_relative_l2": 0.00016854945732084177,
+      "within_quarter_order_of_design": true
+    },
+    {
+      "degree": 1,
+      "field": "energy",
+      "design_order": 2,
+      "observed_orders": [
+        1.9831441348665801,
+        1.980554597268247
+      ],
+      "mean_observed_order": 1.9818493660674137,
+      "finest_relative_l2": 0.00028682954349947606,
+      "within_quarter_order_of_design": true
+    },
+    {
+      "degree": 2,
+      "field": "density",
+      "design_order": 3,
+      "observed_orders": [
+        2.6420945458930745
+      ],
+      "mean_observed_order": 2.6420945458930745,
+      "finest_relative_l2": 5.642699297980593e-05,
+      "within_quarter_order_of_design": false
+    },
+    {
+      "degree": 2,
+      "field": "momentum_x",
+      "design_order": 3,
+      "observed_orders": [
+        3.0537160745253784
+      ],
+      "mean_observed_order": 3.0537160745253784,
+      "finest_relative_l2": 6.710162353046658e-05,
+      "within_quarter_order_of_design": true
+    },
+    {
+      "degree": 2,
+      "field": "momentum_y",
+      "design_order": 3,
+      "observed_orders": [
+        3.208687908391193
+      ],
+      "mean_observed_order": 3.208687908391193,
+      "finest_relative_l2": 5.1572768966604124e-05,
+      "within_quarter_order_of_design": true
+    },
+    {
+      "degree": 2,
+      "field": "energy",
+      "design_order": 3,
+      "observed_orders": [
+        2.791601034249305
+      ],
+      "mean_observed_order": 2.791601034249305,
+      "finest_relative_l2": 5.510658786931221e-05,
+      "within_quarter_order_of_design": true
+    },
+    {
+      "degree": 3,
+      "field": "density",
+      "design_order": 4,
+      "observed_orders": [
+        3.397827519867997
+      ],
+      "mean_observed_order": 3.397827519867997,
+      "finest_relative_l2": 1.7265629834645633e-06,
+      "within_quarter_order_of_design": false
+    },
+    {
+      "degree": 3,
+      "field": "momentum_x",
+      "design_order": 4,
+      "observed_orders": [
+        3.987919043820293
+      ],
+      "mean_observed_order": 3.987919043820293,
+      "finest_relative_l2": 1.7643521764376938e-06,
+      "within_quarter_order_of_design": true
+    },
+    {
+      "degree": 3,
+      "field": "momentum_y",
+      "design_order": 4,
+      "observed_orders": [
+        4.006028822026444
+      ],
+      "mean_observed_order": 4.006028822026444,
+      "finest_relative_l2": 2.0280813701975544e-06,
+      "within_quarter_order_of_design": true
+    },
+    {
+      "degree": 3,
+      "field": "energy",
+      "design_order": 4,
+      "observed_orders": [
+        3.868461164811989
+      ],
+      "mean_observed_order": 3.868461164811989,
+      "finest_relative_l2": 1.4681476224539969e-06,
+      "within_quarter_order_of_design": true
+    }
+  ],
+  "all_within_quarter_order": false
+}
