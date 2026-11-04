@@ -1,0 +1,343 @@
+{
+  "mission": "m2786",
+  "question": "is the ns_dg_2d wall defect an order defect, an inconsistency, or a transient instability?",
+  "constants": {
+    "mu": 0.1,
+    "kappa": 0.4929577464788734,
+    "analytic_energy_flux": -0.05,
+    "analytic_mx_flux": -0.1
+  },
+  "residual": [
+    {
+      "degree": 1,
+      "ny": 8,
+      "h": 0.125,
+      "rhs_max": 0.30453023045906513,
+      "rhs_energy": 0.30453023045906513,
+      "wall_row_max": 0.30453023045906513
+    },
+    {
+      "degree": 1,
+      "ny": 16,
+      "h": 0.0625,
+      "rhs_max": 0.3045019829830822,
+      "rhs_energy": 0.3045019829830822,
+      "wall_row_max": 0.3045019829830822,
+      "order": 0.0001337962894467637
+    },
+    {
+      "degree": 1,
+      "ny": 32,
+      "h": 0.03125,
+      "rhs_max": 0.30454209727715664,
+      "rhs_energy": 0.30454209727715664,
+      "wall_row_max": 0.30454209727715664,
+      "order": -0.00019005333888344467
+    },
+    {
+      "degree": 2,
+      "ny": 8,
+      "h": 0.125,
+      "rhs_max": 0.018099264823681023,
+      "rhs_energy": 0.008256607976390162,
+      "wall_row_max": 0.018099264823681023
+    },
+    {
+      "degree": 2,
+      "ny": 16,
+      "h": 0.0625,
+      "rhs_max": 0.009222126089229602,
+      "rhs_energy": 0.004619950062903833,
+      "wall_row_max": 0.009222126089229602,
+      "order": 0.9727597832679749
+    },
+    {
+      "degree": 2,
+      "ny": 32,
+      "h": 0.03125,
+      "rhs_max": 0.004660020785611268,
+      "rhs_energy": 0.0024353205178542225,
+      "wall_row_max": 0.004660020785611268,
+      "order": 0.984762966632843
+    },
+    {
+      "degree": 3,
+      "ny": 8,
+      "h": 0.125,
+      "rhs_max": 0.0003530293441978971,
+      "rhs_energy": 0.0003530293441978971,
+      "wall_row_max": 0.0003530293441978971
+    },
+    {
+      "degree": 3,
+      "ny": 16,
+      "h": 0.0625,
+      "rhs_max": 8.84165953156657e-05,
+      "rhs_energy": 8.84165953156657e-05,
+      "wall_row_max": 8.84165953156657e-05,
+      "order": 1.9973989725112915
+    },
+    {
+      "degree": 3,
+      "ny": 32,
+      "h": 0.03125,
+      "rhs_max": 2.2098521468283394e-05,
+      "rhs_energy": 2.2098521468283394e-05,
+      "wall_row_max": 2.2098521468283394e-05,
+      "order": 2.0003674030303955
+    }
+  ],
+  "flux": [
+    {
+      "degree": 1,
+      "ny": 8,
+      "h": 0.125,
+      "energy_bottom": -0.06270412321249624,
+      "energy_error": 0.01270412321249624,
+      "energy_relative_percent": 25.40824642499248,
+      "mx_error": 0.0003339028581571257
+    },
+    {
+      "degree": 1,
+      "ny": 16,
+      "h": 0.0625,
+      "energy_bottom": -0.05634515556172693,
+      "energy_error": 0.006345155561726927,
+      "energy_relative_percent": 12.690311123453855,
+      "mx_error": 0.0001889266316633248,
+      "order_energy": 1.001569390296936,
+      "order_mx": 0.8216023445129395
+    },
+    {
+      "degree": 1,
+      "ny": 32,
+      "h": 0.03125,
+      "energy_bottom": -0.05317242430569948,
+      "energy_error": 0.0031724243056994797,
+      "energy_relative_percent": 6.344848611398959,
+      "mx_error": 0.00010003190563505349,
+      "order_energy": 1.0000698566436768,
+      "order_mx": 0.9173659086227417
+    },
+    {
+      "degree": 1,
+      "ny": 64,
+      "h": 0.015625,
+      "energy_bottom": -0.051586374060603256,
+      "energy_error": 0.001586374060603253,
+      "energy_relative_percent": 3.172748121206506,
+      "mx_error": 5.141817001894089e-05,
+      "order_energy": 0.9998527765274048,
+      "order_mx": 0.960110068321228
+    },
+    {
+      "degree": 2,
+      "ny": 8,
+      "h": 0.125,
+      "energy_bottom": -0.04996199969550892,
+      "energy_error": 3.8000304491081494e-05,
+      "energy_relative_percent": 0.07600060898216299,
+      "mx_error": 5.027612101655976e-05
+    },
+    {
+      "degree": 2,
+      "ny": 16,
+      "h": 0.0625,
+      "energy_bottom": -0.04999330682186705,
+      "energy_error": 6.693178132954891e-06,
+      "energy_relative_percent": 0.013386356265909782,
+      "mx_error": 1.2815566653182064e-05,
+      "order_energy": 2.5052475929260254,
+      "order_mx": 1.9719760417938232
+    },
+    {
+      "degree": 2,
+      "ny": 32,
+      "h": 0.03125,
+      "energy_bottom": -0.04999868072321852,
+      "energy_error": 1.319276781486245e-06,
+      "energy_relative_percent": 0.00263855356297249,
+      "mx_error": 3.237464584374128e-06,
+      "order_energy": 2.3429441452026367,
+      "order_mx": 1.984960913658142
+    },
+    {
+      "degree": 2,
+      "ny": 64,
+      "h": 0.015625,
+      "energy_bottom": -0.049999714662430764,
+      "energy_error": 2.853375692390969e-07,
+      "energy_relative_percent": 0.0005706751384781938,
+      "mx_error": 8.13740248920003e-07,
+      "order_energy": 2.20900559425354,
+      "order_mx": 1.992224097251892
+    },
+    {
+      "degree": 3,
+      "ny": 8,
+      "h": 0.125,
+      "energy_bottom": -0.05000618275203415,
+      "energy_error": 6.18275203415064e-06,
+      "energy_relative_percent": 0.01236550406830128,
+      "mx_error": 5.967043740923161e-07
+    },
+    {
+      "degree": 3,
+      "ny": 16,
+      "h": 0.0625,
+      "energy_bottom": -0.05000077954110213,
+      "energy_error": 7.795411021277454e-07,
+      "energy_relative_percent": 0.0015590822042554908,
+      "mx_error": 8.234703545439981e-08,
+      "order_energy": 2.9875521659851074,
+      "order_mx": 2.8572278022766113
+    },
+    {
+      "degree": 3,
+      "ny": 32,
+      "h": 0.03125,
+      "energy_bottom": -0.0500000979652284,
+      "energy_error": 9.796522839472521e-08,
+      "energy_relative_percent": 0.00019593045678945042,
+      "mx_error": 1.0795561916632224e-08,
+      "order_energy": 2.992283344268799,
+      "order_mx": 2.9312784671783447
+    },
+    {
+      "degree": 3,
+      "ny": 64,
+      "h": 0.015625,
+      "energy_bottom": -0.05000001228107446,
+      "energy_error": 1.2281074455999796e-08,
+      "energy_relative_percent": 2.4562148911999593e-05,
+      "mx_error": 1.3813976906806857e-09,
+      "order_energy": 2.995832920074463,
+      "order_mx": 2.966237783432007
+    }
+  ],
+  "residual_versus_flux": [
+    {
+      "degree": 1,
+      "ny": 8,
+      "h": 0.125,
+      "residual_energy": 0.30453023045906513,
+      "flux_error_energy": 0.01270412321249624,
+      "residual_times_h": 0.03806627880738314,
+      "ratio_residual_h_over_flux_error": 2.996371978661208
+    },
+    {
+      "degree": 1,
+      "ny": 16,
+      "h": 0.0625,
+      "residual_energy": 0.3045019829830822,
+      "flux_error_energy": 0.006345155561726927,
+      "residual_times_h": 0.019031373936442636,
+      "ratio_residual_h_over_flux_error": 2.9993549805519613
+    },
+    {
+      "degree": 1,
+      "ny": 32,
+      "h": 0.03125,
+      "residual_energy": 0.30454209727715664,
+      "flux_error_energy": 0.0031724243056994797,
+      "residual_times_h": 0.009516940539911145,
+      "ratio_residual_h_over_flux_error": 2.9998952292772763
+    },
+    {
+      "degree": 2,
+      "ny": 8,
+      "h": 0.125,
+      "residual_energy": 0.008256607976390162,
+      "flux_error_energy": 3.8000304491081494e-05,
+      "residual_times_h": 0.0010320759970487703,
+      "ratio_residual_h_over_flux_error": 27.159677030772055
+    },
+    {
+      "degree": 2,
+      "ny": 16,
+      "h": 0.0625,
+      "residual_energy": 0.004619950062903833,
+      "flux_error_energy": 6.693178132954891e-06,
+      "residual_times_h": 0.00028874687893148954,
+      "ratio_residual_h_over_flux_error": 43.14047425539145
+    },
+    {
+      "degree": 2,
+      "ny": 32,
+      "h": 0.03125,
+      "residual_energy": 0.0024353205178542225,
+      "flux_error_energy": 1.319276781486245e-06,
+      "residual_times_h": 7.610376618294445e-05,
+      "ratio_residual_h_over_flux_error": 57.685974051031934
+    }
+  ],
+  "steady_march": [
+    {
+      "degree": 1,
+      "ncells": [
+        2,
+        8
+      ],
+      "max_steps": 120,
+      "survived": false,
+      "failure": {
+        "step": 67,
+        "time": 0.032817117950761164,
+        "dt": 0.0004764549681956614,
+        "min_pressure": -0.0024419347868545153
+      },
+      "wall_seconds": 4.09
+    },
+    {
+      "degree": 2,
+      "ncells": [
+        2,
+        8
+      ],
+      "max_steps": 120,
+      "survived": true,
+      "failure": null,
+      "wall_seconds": 6.73
+    },
+    {
+      "degree": 3,
+      "ncells": [
+        2,
+        8
+      ],
+      "max_steps": 120,
+      "survived": true,
+      "failure": null,
+      "wall_seconds": 6.75
+    }
+  ],
+  "impulsive_start": [
+    {
+      "degree": 1,
+      "final_time": 0.1,
+      "reached": false,
+      "cfl_viscous": 1.0,
+      "error": "FloatingPointError",
+      "message": "nonphysical cell average in Navier-Stokes DG; reduce the CFL",
+      "wall_seconds": 11.07
+    },
+    {
+      "degree": 2,
+      "final_time": 0.1,
+      "reached": false,
+      "cfl_viscous": 1.0,
+      "error": "FloatingPointError",
+      "message": "nonphysical cell average in Navier-Stokes DG; reduce the CFL",
+      "wall_seconds": 14.96
+    },
+    {
+      "degree": 3,
+      "final_time": 0.1,
+      "reached": false,
+      "cfl_viscous": 1.0,
+      "error": "FloatingPointError",
+      "message": "nonphysical cell average in Navier-Stokes DG; reduce the CFL",
+      "wall_seconds": 21.92
+    }
+  ]
+}

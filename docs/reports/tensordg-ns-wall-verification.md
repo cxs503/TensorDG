@@ -230,3 +230,11 @@ dt 缩 4×、步数 ×4，**失稳仍发生在同一物理时间**（差 3.3%）
 
 生成：`tools/diag_ns_wall.py` 五节数字全部写入 `validation/ns_dg_2d_wall/summary.json`，
 本文件数字由该 JSON 直读抄录；图由 `make_figure()` 从同一 JSON 生成（matplotlib，dpi=160）。
+
+---
+
+> **后续（m2786，2026-11-03）**：本报告的三条判据只在 degree=1 上测量，复核后范围已收窄——
+> 壁面热通量的观测阶等于单元阶（P1=1 / P2=2.21 / P3=3.00），P2/P3 的解析稳态残差随 h 衰减，
+> 故「一阶通量」与「O(1) 残差」是 P1 现象（且后者恒等于 3×通量误差/h）；
+> 唯一跨阶成立的真缺陷是脉冲启动失稳。见 `docs/reports/tensordg-ns-wall-scope-audit.md`
+> 与 `tests/test_ns_dg_2d_wall_scope.py`。
