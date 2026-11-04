@@ -765,7 +765,8 @@ def _viscous_volume(coeff, basis, derivative, weights, dx, dy, mu, kappa):
 
 
 def _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic, boundary,
-            mu, kappa, penalty, wall_gradient="face", wall_penalty=None):
+            mu, kappa, penalty, wall_gradient="face", wall_penalty=None,
+    source_quad=None):
     """DG residual of the 2-D compressible Navier--Stokes equations."""
     degree = coeff.shape[2] - 1
     modes = torch.arange(degree + 1, device=coeff.device, dtype=coeff.dtype)
@@ -809,7 +810,17 @@ def _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic, boundary
     )
     scale_x = (scale / (2.0 * dx)).view(1, 1, *scale.shape, 1)
     scale_y = (scale / (2.0 * dy)).view(1, 1, *scale.shape, 1)
-    return -(scale_x * face_x) - (scale_y * face_y)
+    residual = -(scale_x * face_x) - (scale_y * face_y)
+    if source_quad is not None:
+        # m2789: mass matrix of the tensor-product basis is
+        # (dx dy / 4) * 4 / ((2i+1)(2j+1)), so the modal source contribution is
+        # (2i+1)(2j+1)/4 * int int S phi_i phi_j dxi deta.
+        volume = torch.einsum(
+            "xyabv,a,b,ak,bl->xyklv", source_quad, weights, weights, basis, basis
+        )
+        factor = (scale / 4.0).view(1, 1, *scale.shape, 1)
+        residual = residual + factor * volume
+    return residual
 
 # ---------------------------------------------------------------------------
 # Main solver
@@ -829,6 +840,7 @@ def solve_navier_stokes_dg_2d(
     boundary=None,
     penalty=None,
     wall_penalty=None,
+    source=None,
     quadrature=None,
     initial_projection="l2",
     wall_gradient="face",
@@ -942,6 +954,30 @@ def solve_navier_stokes_dg_2d(
 
     h_min = min(dx, dy)
     time, steps, diffusive_steps, dt = 0.0, 0, 0, 0.0
+    # m2789: physical coordinates of the quadrature nodes (used by ``source``).
+    xi = nodes.to(dev, dtype)
+    x_quad = (
+        xmin
+        + (torch.arange(nx, device=dev, dtype=dtype).view(nx, 1).unsqueeze(-1).unsqueeze(-1)
+           + 0.5 * (xi.view(1, 1, -1, 1) + 1.0)) * dx
+    ).expand(nx, ny, xi.numel(), xi.numel())
+    y_quad = (
+        ymin
+        + (torch.arange(ny, device=dev, dtype=dtype).view(1, ny).unsqueeze(-1).unsqueeze(-1)
+           + 0.5 * (xi.view(1, 1, 1, -1) + 1.0)) * dy
+    ).expand(nx, ny, xi.numel(), xi.numel())
+
+    def _source_quad(time_value):
+        if source is None:
+            return None
+        values = source(x_quad, y_quad, torch.as_tensor(time_value, device=dev, dtype=dtype))
+        if isinstance(values, (tuple, list)):
+            values = torch.stack([torch.as_tensor(v, device=dev, dtype=dtype).expand_as(x_quad)
+                                  for v in values], dim=-1)
+        else:
+            values = torch.as_tensor(values, device=dev, dtype=dtype)
+        return values.reshape(nx, ny, xi.numel(), xi.numel(), 4)
+
     while time < final_time:
         at_quad = torch.einsum("xyklv,ak,bl->xyabv", coeff, basis, basis)
         _, velocity_x, velocity_y, pressure = _primitive(at_quad)
@@ -970,15 +1006,15 @@ def solve_navier_stokes_dg_2d(
         dt = min(dt, final_time - time)
         k1 = _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic,
                      boundary, mu, kappa, penalty, wall_gradient,
-                     wall_penalty)
+                     wall_penalty, source_quad=_source_quad(time))
         u1 = impose(coeff + dt * k1)
         k2 = _rhs_ns(u1, basis, derivative, weights, signs, dx, dy, periodic,
                      boundary, mu, kappa, penalty, wall_gradient,
-                     wall_penalty)
+                     wall_penalty, source_quad=_source_quad(time + dt))
         u2 = impose(0.75 * coeff + 0.25 * (u1 + dt * k2))
         k3 = _rhs_ns(u2, basis, derivative, weights, signs, dx, dy, periodic,
                      boundary, mu, kappa, penalty, wall_gradient,
-                     wall_penalty)
+                     wall_penalty, source_quad=_source_quad(time + 0.5 * dt))
         coeff = impose(coeff / 3.0 + (2.0 / 3.0) * (u2 + dt * k3))
         if not torch.isfinite(coeff).all():
             raise FloatingPointError("non-finite Navier-Stokes state; reduce the CFL")
@@ -1001,6 +1037,7 @@ def solve_navier_stokes_dg_2d(
         "degree": degree,
         "final_time": final_time,
         "final_time_reached": time,
+        "has_source": source is not None,
         "steps": steps,
         "diffusive_steps": diffusive_steps,
         "dt": dt,

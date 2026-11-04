@@ -53,6 +53,7 @@ index (GCI, Roache 1994 / Celik et al. 2008, safety factor 1.25):
   brackets the true error against the analytic solution.
 
 ```bash
+python -m benchmarks.verify_ns_mms_order
 python -m benchmarks.convergence_study     # writes docs/benchmarks/results/convergence
 pytest -q tests/test_verification.py
 ```
@@ -117,6 +118,13 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
   started Couette case (which used to diverge at t ~ 0.05) now marches through
   t = 0.1; `python -m benchmarks.verify_ns_dg_2d_wall` (~1 min).
   See [docs/reports/tensordg-ns-wall-sign-fix.md](docs/reports/tensordg-ns-wall-sign-fix.md).
+
+- Compressible Navier--Stokes on a 2-D tensor-product modal DG mesh (BR1/SIPG
+  viscous fluxes, HLLC inviscid flux, isothermal no-slip walls) with an optional
+  volumetric source term, verified by a **manufactured solution**: the coupled
+  convective + viscous operator reproduces the design order `degree + 1` in the
+  L2 norm for every conserved variable at degrees 1--3
+  ([docs/reports/tensordg-ns-mms-verification.md](docs/reports/tensordg-ns-mms-verification.md)).
 
 Sparse/matrix-free elliptic solvers, unstructured meshes, genuinely
 multidimensional (non-directional) WENO stencils, limiter performance
