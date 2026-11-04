@@ -1,0 +1,1738 @@
+{
+ "benchmark": "euler_dg_2d_anisotropic",
+ "started": "2026-11-04T11:28:19Z",
+ "config": {
+  "domain": [
+   [
+    -5.0,
+    5.0
+   ],
+   [
+    -5.0,
+    5.0
+   ]
+  ],
+  "final_time": 1.0,
+  "cfl": 0.2,
+  "tvb_constant": 1.0,
+  "anisotropic_meshes": [
+   [
+    8,
+    16
+   ],
+   [
+    12,
+    24
+   ],
+   [
+    16,
+    32
+   ]
+  ],
+  "isotropic_meshes": [
+   [
+    8,
+    8
+   ],
+   [
+    12,
+    12
+   ],
+   [
+    16,
+    16
+   ]
+  ],
+  "transposed_meshes": [
+   [
+    16,
+    8
+   ],
+   [
+    24,
+    12
+   ],
+   [
+    32,
+    16
+   ]
+  ],
+  "degrees": [
+   1,
+   2
+  ],
+  "threads": 2,
+  "last_blocks": [
+   "limiter_scale"
+  ]
+ },
+ "design_order": [
+  {
+   "kind": "anisotropic",
+   "degree": 1,
+   "design_order": 2,
+   "groups": {
+    "anisotropic": [
+     {
+      "degree": 1,
+      "cells": [
+       8,
+       16
+      ],
+      "aspect": 2.0,
+      "h": 0.8838834764831844,
+      "dofs": 2048,
+      "steps": 106,
+      "dt_last": 0.006406987657062269,
+      "limiter": "none",
+      "errors": {
+       "density": 0.010548553779511369,
+       "velocity_x": 0.01955389624309968,
+       "velocity_y": 0.02636225265740814,
+       "pressure": 0.015300592184320921
+      },
+      "wall_seconds": 3.9532923698425293
+     },
+     {
+      "degree": 1,
+      "cells": [
+       12,
+       24
+      ],
+      "aspect": 2.0,
+      "h": 0.5892556509887896,
+      "dofs": 4608,
+      "steps": 159,
+      "dt_last": 0.0008924959261377152,
+      "limiter": "none",
+      "errors": {
+       "density": 0.005145130365865462,
+       "velocity_x": 0.008674991223825677,
+       "velocity_y": 0.011706082182038427,
+       "pressure": 0.007181255850445342
+      },
+      "wall_seconds": 7.8633575439453125,
+      "eoc": {
+       "density": 1.7706531248491078,
+       "velocity_x": 2.004439426413632,
+       "velocity_y": 2.002205851531726,
+       "pressure": 1.865554495523064
+      },
+      "eoc_lsq": {
+       "density": 1.7706531248491075,
+       "velocity_x": 2.004439426413634,
+       "velocity_y": 2.0022058515317274,
+       "pressure": 1.8655544955230674
+      }
+     },
+     {
+      "degree": 1,
+      "cells": [
+       16,
+       32
+      ],
+      "aspect": 2.0,
+      "h": 0.4419417382415922,
+      "dofs": 8192,
+      "steps": 212,
+      "dt_last": 0.0020823856326612766,
+      "limiter": "none",
+      "errors": {
+       "density": 0.0028270960346752773,
+       "velocity_x": 0.004879914626149803,
+       "velocity_y": 0.006973409126941649,
+       "pressure": 0.004034501818696309
+      },
+      "wall_seconds": 12.734464883804321,
+      "eoc": {
+       "density": 2.0814667162346194,
+       "velocity_x": 1.9998346931941904,
+       "velocity_y": 1.800613876983816,
+       "pressure": 2.0042661792986607
+      },
+      "eoc_lsq": {
+       "density": 1.8911855803486026,
+       "velocity_x": 2.002653726504609,
+       "velocity_y": 1.9240291682247372,
+       "pressure": 1.9193464155527273
+      }
+     }
+    ],
+    "isotropic_control": [
+     {
+      "degree": 1,
+      "cells": [
+       8,
+       8
+      ],
+      "aspect": 1.0,
+      "h": 1.25,
+      "dofs": 1024,
+      "steps": 70,
+      "dt_last": 0.013632253763201763,
+      "limiter": "none",
+      "errors": {
+       "density": 0.014134235930886252,
+       "velocity_x": 0.030748929862872,
+       "velocity_y": 0.031155412702897636,
+       "pressure": 0.021143921551037677
+      },
+      "wall_seconds": 2.3627641201019287
+     },
+     {
+      "degree": 1,
+      "cells": [
+       12,
+       12
+      ],
+      "aspect": 1.0,
+      "h": 0.8333333333333334,
+      "dofs": 2304,
+      "steps": 106,
+      "dt_last": 0.0067063432542053825,
+      "limiter": "none",
+      "errors": {
+       "density": 0.00688156785126728,
+       "velocity_x": 0.014333541687809603,
+       "velocity_y": 0.013802896567734048,
+       "pressure": 0.009784479158948294
+      },
+      "wall_seconds": 4.677807569503784,
+      "eoc": {
+       "density": 1.7751303597524348,
+       "velocity_x": 1.8824130952281986,
+       "velocity_y": 2.0078411435183496,
+       "pressure": 1.900422701608072
+      },
+      "eoc_lsq": {
+       "density": 1.7751303597524424,
+       "velocity_x": 1.882413095228202,
+       "velocity_y": 2.007841143518353,
+       "pressure": 1.900422701608079
+      }
+     },
+     {
+      "degree": 1,
+      "cells": [
+       16,
+       16
+      ],
+      "aspect": 1.0,
+      "h": 0.625,
+      "dofs": 4096,
+      "steps": 142,
+      "dt_last": 7.26736327394395e-05,
+      "limiter": "none",
+      "errors": {
+       "density": 0.0038091135365159135,
+       "velocity_x": 0.008372785308544036,
+       "velocity_y": 0.008195545377869335,
+       "pressure": 0.005499213353963675
+      },
+      "wall_seconds": 6.173412561416626,
+      "eoc": {
+       "density": 2.0559154479634625,
+       "velocity_x": 1.8687843727178317,
+       "velocity_y": 1.8120270820177973,
+       "pressure": 2.002878770113562
+      },
+      "eoc_lsq": {
+       "density": 1.884017863670309,
+       "velocity_x": 1.877127922909405,
+       "velocity_y": 1.9319051152746,
+       "pressure": 1.9401548171270315
+      }
+     }
+    ],
+    "transposed_control": [
+     {
+      "degree": 1,
+      "cells": [
+       16,
+       8
+      ],
+      "aspect": 0.5,
+      "h": 0.8838834764831844,
+      "dofs": 2048,
+      "steps": 105,
+      "dt_last": 0.007056238498261647,
+      "limiter": "none",
+      "errors": {
+       "density": 0.010391692809701656,
+       "velocity_x": 0.026286830401014618,
+       "velocity_y": 0.019353890758695,
+       "pressure": 0.015325129792908062
+      },
+      "wall_seconds": 4.628109931945801
+     },
+     {
+      "degree": 1,
+      "cells": [
+       24,
+       12
+      ],
+      "aspect": 0.5,
+      "h": 0.5892556509887896,
+      "dofs": 4608,
+      "steps": 159,
+      "dt_last": 0.004116704987350062,
+      "limiter": "none",
+      "errors": {
+       "density": 0.005113664558915552,
+       "velocity_x": 0.011769390568189325,
+       "velocity_y": 0.008636252255101054,
+       "pressure": 0.007171060999490602
+      },
+      "wall_seconds": 6.918659925460815,
+      "eoc": {
+       "density": 1.7488321990468916,
+       "velocity_x": 1.9818374280877018,
+       "velocity_y": 1.990121305105361,
+       "pressure": 1.8730103150181021
+      },
+      "eoc_lsq": {
+       "density": 1.7488321990468911,
+       "velocity_x": 1.9818374280877027,
+       "velocity_y": 1.990121305105362,
+       "pressure": 1.873010315018103
+      }
+     },
+     {
+      "degree": 1,
+      "cells": [
+       32,
+       16
+      ],
+      "aspect": 0.5,
+      "h": 0.4419417382415922,
+      "dofs": 8192,
+      "steps": 212,
+      "dt_last": 0.0005828644655783144,
+      "limiter": "none",
+      "errors": {
+       "density": 0.0028147596099157655,
+       "velocity_x": 0.006990536821958627,
+       "velocity_y": 0.00485356432923607,
+       "pressure": 0.004028282635581936
+      },
+      "wall_seconds": 12.409643650054932,
+      "eoc": {
+       "density": 2.07534454651012,
+       "velocity_x": 1.810835083423568,
+       "velocity_y": 2.003097964195811,
+       "pressure": 2.00469037311398
+      },
+      "eoc_lsq": {
+       "density": 1.8754525788546503,
+       "velocity_x": 1.9155232993951261,
+       "velocity_y": 1.9951536094437239,
+       "pressure": 1.9240753944821631
+      }
+     }
+    ],
+    "transpose_invariance": [
+     {
+      "cells": [
+       8,
+       16
+      ],
+      "transposed_cells": [
+       16,
+       8
+      ],
+      "density_rel_diff": 0.014870376839182171,
+      "velocity_swap_rel_diff": 0.010228421073639407,
+      "steps": [
+       106,
+       105
+      ]
+     },
+     {
+      "cells": [
+       12,
+       24
+      ],
+      "transposed_cells": [
+       24,
+       12
+      ],
+      "density_rel_diff": 0.006115648139581648,
+      "velocity_swap_rel_diff": 0.004465591690539964,
+      "steps": [
+       159,
+       159
+      ]
+     },
+     {
+      "cells": [
+       16,
+       32
+      ],
+      "transposed_cells": [
+       32,
+       16
+      ],
+      "density_rel_diff": 0.0043636383795249345,
+      "velocity_swap_rel_diff": 0.005399745473523357,
+      "steps": [
+       212,
+       212
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "kind": "anisotropic",
+   "degree": 2,
+   "design_order": 3,
+   "groups": {
+    "anisotropic": [
+     {
+      "degree": 2,
+      "cells": [
+       8,
+       16
+      ],
+      "aspect": 2.0,
+      "h": 0.8838834764831844,
+      "dofs": 4608,
+      "steps": 176,
+      "dt_last": 0.00024185227803763532,
+      "limiter": "none",
+      "errors": {
+       "density": 0.002378206431592143,
+       "velocity_x": 0.002864177179135483,
+       "velocity_y": 0.004866160130761247,
+       "pressure": 0.0031060260851823234
+      },
+      "wall_seconds": 6.669366836547852
+     },
+     {
+      "degree": 2,
+      "cells": [
+       12,
+       24
+      ],
+      "aspect": 2.0,
+      "h": 0.5892556509887896,
+      "dofs": 10368,
+      "steps": 264,
+      "dt_last": 0.0006064581004940894,
+      "limiter": "none",
+      "errors": {
+       "density": 0.0006615555931022373,
+       "velocity_x": 0.0009997195279458151,
+       "velocity_y": 0.0016032041152018773,
+       "pressure": 0.0008865809652614584
+      },
+      "wall_seconds": 13.135522365570068,
+      "eoc": {
+       "density": 3.1556546687090683,
+       "velocity_x": 2.5959363746811226,
+       "velocity_y": 2.738339085000043,
+       "pressure": 3.0920711158777054
+      },
+      "eoc_lsq": {
+       "density": 3.155654668709067,
+       "velocity_x": 2.595936374681123,
+       "velocity_y": 2.7383390850000437,
+       "pressure": 3.092071115877704
+      }
+     },
+     {
+      "degree": 2,
+      "cells": [
+       16,
+       32
+      ],
+      "aspect": 2.0,
+      "h": 0.4419417382415922,
+      "dofs": 18432,
+      "steps": 352,
+      "dt_last": 0.0003559041784091388,
+      "limiter": "none",
+      "errors": {
+       "density": 0.00028501033671763515,
+       "velocity_x": 0.00041509770836367134,
+       "velocity_y": 0.0007188584119623049,
+       "pressure": 0.0004015779889854044
+      },
+      "wall_seconds": 24.524206399917603,
+      "eoc": {
+       "density": 2.9270804573342444,
+       "velocity_x": 3.055320151647075,
+       "velocity_y": 2.7881301610039286,
+       "pressure": 2.752937252551742
+      },
+      "eoc_lsq": {
+       "density": 3.0670143655676987,
+       "velocity_x": 2.774083843739708,
+       "velocity_y": 2.7576478952292134,
+       "pressure": 2.9605561550695403
+      }
+     }
+    ],
+    "isotropic_control": [
+     {
+      "degree": 2,
+      "cells": [
+       8,
+       8
+      ],
+      "aspect": 1.0,
+      "h": 1.25,
+      "dofs": 2304,
+      "steps": 117,
+      "dt_last": 0.004237641927159808,
+      "limiter": "none",
+      "errors": {
+       "density": 0.003275074550264168,
+       "velocity_x": 0.005619999088492312,
+       "velocity_y": 0.005493569107830254,
+       "pressure": 0.004287231014401607
+      },
+      "wall_seconds": 3.949923038482666
+     },
+     {
+      "degree": 2,
+      "cells": [
+       12,
+       12
+      ],
+      "aspect": 1.0,
+      "h": 0.8333333333333334,
+      "dofs": 5184,
+      "steps": 176,
+      "dt_last": 0.0019716108388090348,
+      "limiter": "none",
+      "errors": {
+       "density": 0.0009138850328349801,
+       "velocity_x": 0.0019110120151271197,
+       "velocity_y": 0.0018971442511262738,
+       "pressure": 0.0012340709683423096
+      },
+      "wall_seconds": 6.9225804805755615,
+      "eoc": {
+       "density": 3.147967869065211,
+       "velocity_x": 2.6603979665712965,
+       "velocity_y": 2.6222439464511247,
+       "pressure": 3.071343535642103
+      },
+      "eoc_lsq": {
+       "density": 3.147967869065215,
+       "velocity_x": 2.660397966571304,
+       "velocity_y": 2.6222439464511287,
+       "pressure": 3.0713435356421055
+      }
+     },
+     {
+      "degree": 2,
+      "cells": [
+       16,
+       16
+      ],
+      "aspect": 1.0,
+      "h": 0.625,
+      "dofs": 9216,
+      "steps": 234,
+      "dt_last": 0.004264584341176381,
+      "limiter": "none",
+      "errors": {
+       "density": 0.00039756161424075504,
+       "velocity_x": 0.000819485914820153,
+       "velocity_y": 0.0008185905141060892,
+       "pressure": 0.0005624651741025578
+      },
+      "wall_seconds": 11.402247190475464,
+      "eoc": {
+       "density": 2.893314989504471,
+       "velocity_x": 2.9432178857989433,
+       "velocity_y": 2.921701118002698,
+       "pressure": 2.731294610998931
+      },
+      "eoc_lsq": {
+       "density": 3.0492143469407433,
+       "velocity_x": 2.7700745710489856,
+       "velocity_y": 2.7383724208950806,
+       "pressure": 2.9394737171618464
+      }
+     }
+    ],
+    "transposed_control": [
+     {
+      "degree": 2,
+      "cells": [
+       16,
+       8
+      ],
+      "aspect": 0.5,
+      "h": 0.8838834764831844,
+      "dofs": 4608,
+      "steps": 175,
+      "dt_last": 0.0051798269308713785,
+      "limiter": "none",
+      "errors": {
+       "density": 0.002367388162409093,
+       "velocity_x": 0.004865330972765928,
+       "velocity_y": 0.0028552422716432973,
+       "pressure": 0.003095486021522553
+      },
+      "wall_seconds": 6.939032316207886
+     },
+     {
+      "degree": 2,
+      "cells": [
+       24,
+       12
+      ],
+      "aspect": 0.5,
+      "h": 0.5892556509887896,
+      "dofs": 10368,
+      "steps": 264,
+      "dt_last": 0.0005447160841960397,
+      "limiter": "none",
+      "errors": {
+       "density": 0.0006606765407430293,
+       "velocity_x": 0.001603124672284214,
+       "velocity_y": 0.0010009189766884983,
+       "pressure": 0.0008857018311349599
+      },
+      "wall_seconds": 13.93342900276184,
+      "eoc": {
+       "density": 3.1476893769658547,
+       "velocity_x": 2.7380410239268183,
+       "velocity_y": 2.5852733628051037,
+       "pressure": 3.086134471074425
+      },
+      "eoc_lsq": {
+       "density": 3.1476893769658583,
+       "velocity_x": 2.7380410239268196,
+       "velocity_y": 2.585273362805106,
+       "pressure": 3.086134471074424
+      }
+     },
+     {
+      "degree": 2,
+      "cells": [
+       32,
+       16
+      ],
+      "aspect": 0.5,
+      "h": 0.4419417382415922,
+      "dofs": 18432,
+      "steps": 352,
+      "dt_last": 0.0002482933438443524,
+      "limiter": "none",
+      "errors": {
+       "density": 0.0002847345307668338,
+       "velocity_x": 0.0007185349140024637,
+       "velocity_y": 0.0004150495995344202,
+       "pressure": 0.00040133551225580186
+      },
+      "wall_seconds": 25.194344758987427,
+      "eoc": {
+       "density": 2.9258239464678244,
+       "velocity_x": 2.7895225442896825,
+       "velocity_y": 3.059891066997567,
+       "pressure": 2.7515881928830885
+      },
+      "eoc_lsq": {
+       "density": 3.0616507162715947,
+       "velocity_x": 2.758005382739189,
+       "velocity_y": 2.7693284971215926,
+       "pressure": 2.9563985602062086
+      }
+     }
+    ],
+    "transpose_invariance": [
+     {
+      "cells": [
+       8,
+       16
+      ],
+      "transposed_cells": [
+       16,
+       8
+      ],
+      "density_rel_diff": 0.004548919319761306,
+      "velocity_swap_rel_diff": 0.003119537281866898,
+      "steps": [
+       176,
+       175
+      ]
+     },
+     {
+      "cells": [
+       12,
+       24
+      ],
+      "transposed_cells": [
+       24,
+       12
+      ],
+      "density_rel_diff": 0.0013287656674262716,
+      "velocity_swap_rel_diff": 0.0011997852489164526,
+      "steps": [
+       264,
+       264
+      ]
+     },
+     {
+      "cells": [
+       16,
+       32
+      ],
+      "transposed_cells": [
+       32,
+       16
+      ],
+      "density_rel_diff": 0.0009677050803761405,
+      "velocity_swap_rel_diff": 0.00011589760261700745,
+      "steps": [
+       352,
+       352
+      ]
+     }
+    ]
+   }
+  }
+ ],
+ "limiter_scale": {
+  "mutation_probe": {
+   "mesh": {
+    "nx": 8,
+    "ny": 64,
+    "dx": 1.25,
+    "dy": 0.15625,
+    "aspect": 8.0
+   },
+   "amplitude": 1.2767395113072277,
+   "deviation_max": 0.04882812499896305,
+   "tolerance_correct_axis": 0.0244140625,
+   "tolerance_wrong_axis": 1.5625,
+   "discriminating_M_window": [
+    0.031249999999336354,
+    1.9999999999575266
+   ],
+   "troubled_cells_correct_axis": 160,
+   "troubled_cells_wrong_axis": 0,
+   "verdict_flips": true
+  },
+  "refinement_ladder": [
+   {
+    "cells": [
+     8,
+     16
+    ],
+    "h": 0.8838834764831844,
+    "cells_total": 128,
+    "flagged_x": 0,
+    "flagged_y": 2,
+    "flagged_fraction_y": 0.015625,
+    "limiter_modified": 2,
+    "limiter_modified_fraction": 0.015625
+   },
+   {
+    "cells": [
+     12,
+     24
+    ],
+    "h": 0.5892556509887896,
+    "cells_total": 288,
+    "flagged_x": 2,
+    "flagged_y": 4,
+    "flagged_fraction_y": 0.013888888888888888,
+    "limiter_modified": 12,
+    "limiter_modified_fraction": 0.041666666666666664
+   },
+   {
+    "cells": [
+     16,
+     32
+    ],
+    "h": 0.4419417382415922,
+    "cells_total": 512,
+    "flagged_x": 2,
+    "flagged_y": 5,
+    "flagged_fraction_y": 0.009765625,
+    "limiter_modified": 22,
+    "limiter_modified_fraction": 0.04296875
+   }
+  ]
+ },
+ "limiter_on_smooth": [
+  {
+   "degree": 1,
+   "ladder": "anisotropic",
+   "runs": {
+    "tvb": [
+     {
+      "degree": 1,
+      "cells": [
+       8,
+       16
+      ],
+      "aspect": 2.0,
+      "h": 0.8838834764831844,
+      "dofs": 2048,
+      "steps": 105,
+      "dt_last": 0.005664900958675223,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.012849981602611906,
+       "velocity_x": 0.021534017876555858,
+       "velocity_y": 0.03021829557510989,
+       "pressure": 0.020025351716723726
+      },
+      "wall_seconds": 4.264793157577515
+     },
+     {
+      "degree": 1,
+      "cells": [
+       12,
+       24
+      ],
+      "aspect": 2.0,
+      "h": 0.5892556509887896,
+      "dofs": 4608,
+      "steps": 159,
+      "dt_last": 0.0038778479389356413,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.013310699937774374,
+       "velocity_x": 0.02271363342800402,
+       "velocity_y": 0.03437152771077343,
+       "pressure": 0.019999106363894424
+      },
+      "wall_seconds": 7.4674742221832275,
+      "eoc": {
+       "density": -0.08687760807044781,
+       "velocity_x": -0.13153147615391356,
+       "velocity_y": -0.31761298707107416,
+       "pressure": 0.0032344729665714227
+      }
+     },
+     {
+      "degree": 1,
+      "cells": [
+       16,
+       32
+      ],
+      "aspect": 2.0,
+      "h": 0.4419417382415922,
+      "dofs": 8192,
+      "steps": 211,
+      "dt_last": 9.229015761069714e-05,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.008704873236573303,
+       "velocity_x": 0.015816805296414726,
+       "velocity_y": 0.025042994832544123,
+       "pressure": 0.014027423064290707
+      },
+      "wall_seconds": 12.648451089859009,
+      "eoc": {
+       "density": 1.4762310483637884,
+       "velocity_x": 1.2579592865265414,
+       "velocity_y": 1.1006400055349292,
+       "pressure": 1.2328657942922967
+      },
+      "eoc_lsq": {
+       "density": 0.5192906220017476,
+       "velocity_x": 0.40730832416876916,
+       "velocity_y": 0.23238070836640487,
+       "pressure": 0.48008132466891834
+      }
+     }
+    ],
+    "weno": [
+     {
+      "degree": 1,
+      "cells": [
+       8,
+       16
+      ],
+      "aspect": 2.0,
+      "h": 0.8838834764831844,
+      "dofs": 2048,
+      "steps": 109,
+      "dt_last": 0.004291166017827641,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.014053020669360467,
+       "velocity_x": 0.02554493909945121,
+       "velocity_y": 0.031163336377819442,
+       "pressure": 0.020717296679299845
+      },
+      "wall_seconds": 4.516236066818237
+     },
+     {
+      "degree": 1,
+      "cells": [
+       12,
+       24
+      ],
+      "aspect": 2.0,
+      "h": 0.5892556509887896,
+      "dofs": 4608,
+      "steps": 163,
+      "dt_last": 0.002864789069594864,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.014678228627069658,
+       "velocity_x": 0.023300377747153937,
+       "velocity_y": 0.024851763404672638,
+       "pressure": 0.019929006887761978
+      },
+      "wall_seconds": 8.715705156326294,
+      "eoc": {
+       "density": -0.1073532157809761,
+       "velocity_x": 0.2268250562790139,
+       "velocity_y": 0.5581579554451266,
+       "pressure": 0.09567441437438705
+      }
+     },
+     {
+      "degree": 1,
+      "cells": [
+       16,
+       32
+      ],
+      "aspect": 2.0,
+      "h": 0.4419417382415922,
+      "dofs": 8192,
+      "steps": 215,
+      "dt_last": 0.002496852162271024,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.009914167811765762,
+       "velocity_x": 0.016725030152386626,
+       "velocity_y": 0.01927229882471958,
+       "pressure": 0.013167226068888566
+      },
+      "wall_seconds": 14.016040563583374,
+      "eoc": {
+       "density": 1.364007567898666,
+       "velocity_x": 1.1525332847220289,
+       "velocity_y": 0.8838226830855072,
+       "pressure": 1.4406369880921235
+      },
+      "eoc_lsq": {
+       "density": 0.46323550072918396,
+       "velocity_x": 0.5858115644073942,
+       "velocity_y": 0.6844496311633314,
+       "pressure": 0.617246334194491
+      }
+     }
+    ]
+   }
+  },
+  {
+   "degree": 1,
+   "ladder": "isotropic_control",
+   "runs": {
+    "tvb": [
+     {
+      "degree": 1,
+      "cells": [
+       8,
+       8
+      ],
+      "aspect": 1.0,
+      "h": 1.25,
+      "dofs": 1024,
+      "steps": 70,
+      "dt_last": 0.006608167308490898,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.015832905594108132,
+       "velocity_x": 0.029753457456780645,
+       "velocity_y": 0.0328931388588105,
+       "pressure": 0.023652976379876293
+      },
+      "wall_seconds": 2.4172580242156982
+     },
+     {
+      "degree": 1,
+      "cells": [
+       12,
+       12
+      ],
+      "aspect": 1.0,
+      "h": 0.8333333333333334,
+      "dofs": 2304,
+      "steps": 106,
+      "dt_last": 0.0068637318804289915,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.013794809303973216,
+       "velocity_x": 0.025835108876816806,
+       "velocity_y": 0.029086220373767336,
+       "pressure": 0.023144675430503373
+      },
+      "wall_seconds": 4.537138223648071,
+      "eoc": {
+       "density": 0.3398517409526401,
+       "velocity_x": 0.34826909493554264,
+       "velocity_y": 0.30335422921614585,
+       "pressure": 0.05357848719163313
+      }
+     },
+     {
+      "degree": 1,
+      "cells": [
+       16,
+       16
+      ],
+      "aspect": 1.0,
+      "h": 0.625,
+      "dofs": 4096,
+      "steps": 140,
+      "dt_last": 0.0031159944758795133,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.009514737103234888,
+       "velocity_x": 0.021555573213720945,
+       "velocity_y": 0.02653030862477882,
+       "pressure": 0.016313032089967
+      },
+      "wall_seconds": 7.372472286224365,
+      "eoc": {
+       "density": 1.2911840845632852,
+       "velocity_x": 0.6295142883996536,
+       "velocity_y": 0.31971660047907763,
+       "pressure": 1.215927169188255
+      },
+      "eoc_lsq": {
+       "density": 0.7087751939468779,
+       "velocity_x": 0.4573350261084628,
+       "velocity_y": 0.30969950124020534,
+       "pressure": 0.5043333597927038
+      }
+     }
+    ],
+    "weno": [
+     {
+      "degree": 1,
+      "cells": [
+       8,
+       8
+      ],
+      "aspect": 1.0,
+      "h": 1.25,
+      "dofs": 1024,
+      "steps": 71,
+      "dt_last": 0.005636979465744152,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.015195054368059815,
+       "velocity_x": 0.031183862557453184,
+       "velocity_y": 0.03541203612077964,
+       "pressure": 0.022630251601450956
+      },
+      "wall_seconds": 2.4946129322052
+     },
+     {
+      "degree": 1,
+      "cells": [
+       12,
+       12
+      ],
+      "aspect": 1.0,
+      "h": 0.8333333333333334,
+      "dofs": 2304,
+      "steps": 109,
+      "dt_last": 0.00675237802639117,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.018363751429376022,
+       "velocity_x": 0.03126229064725989,
+       "velocity_y": 0.030074322366914367,
+       "pressure": 0.026932716368137714
+      },
+      "wall_seconds": 5.529980182647705,
+      "eoc": {
+       "density": -0.46713929846564833,
+       "velocity_x": -0.006195019587697493,
+       "velocity_y": 0.40294474747738346,
+       "pressure": -0.42927045597670316
+      }
+     },
+     {
+      "degree": 1,
+      "cells": [
+       16,
+       16
+      ],
+      "aspect": 1.0,
+      "h": 0.625,
+      "dofs": 4096,
+      "steps": 144,
+      "dt_last": 0.006542441409141508,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.012279179939410608,
+       "velocity_x": 0.022820162456651135,
+       "velocity_y": 0.022010724837071727,
+       "pressure": 0.017352574217073563
+      },
+      "wall_seconds": 7.8738789558410645,
+      "eoc": {
+       "density": 1.3990220064754675,
+       "velocity_x": 1.0941527688330537,
+       "velocity_y": 1.0850238262647804,
+       "pressure": 1.5280788979276896
+      },
+      "eoc_lsq": {
+       "density": 0.2565517198068063,
+       "velocity_x": 0.42051611698320385,
+       "velocity_y": 0.667452698511961,
+       "pressure": 0.3297829780921707
+      }
+     }
+    ]
+   }
+  },
+  {
+   "degree": 2,
+   "ladder": "anisotropic",
+   "runs": {
+    "tvb": [
+     {
+      "degree": 2,
+      "cells": [
+       8,
+       16
+      ],
+      "aspect": 2.0,
+      "h": 0.8838834764831844,
+      "dofs": 4608,
+      "steps": 174,
+      "dt_last": 0.0038363140598451917,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.011413775203772432,
+       "velocity_x": 0.017431011632834194,
+       "velocity_y": 0.01889933603250768,
+       "pressure": 0.016255506916883697
+      },
+      "wall_seconds": 7.56734824180603
+     },
+     {
+      "degree": 2,
+      "cells": [
+       12,
+       24
+      ],
+      "aspect": 2.0,
+      "h": 0.5892556509887896,
+      "dofs": 10368,
+      "steps": 265,
+      "dt_last": 0.0010437859985679143,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.013954855933323237,
+       "velocity_x": 0.023400237081090694,
+       "velocity_y": 0.0359399098152085,
+       "pressure": 0.01998029127360302
+      },
+      "wall_seconds": 14.822794675827026,
+      "eoc": {
+       "density": -0.49574319001933836,
+       "velocity_x": -0.7263146704773912,
+       "velocity_y": -1.5851464609185653,
+       "pressure": -0.5088344439201976
+      }
+     },
+     {
+      "degree": 2,
+      "cells": [
+       16,
+       32
+      ],
+      "aspect": 2.0,
+      "h": 0.4419417382415922,
+      "dofs": 18432,
+      "steps": 350,
+      "dt_last": 0.0009817048722426946,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.008992776352160652,
+       "velocity_x": 0.016781300623498925,
+       "velocity_y": 0.027468087950498578,
+       "pressure": 0.013750287144764377
+      },
+      "wall_seconds": 25.543211221694946,
+      "eoc": {
+       "density": 1.5274011064000763,
+       "velocity_x": 1.1557235484796717,
+       "velocity_y": 0.9344464083798757,
+       "pressure": 1.2989570084700726
+      },
+      "eoc_lsq": {
+       "density": 0.2888252993771725,
+       "velocity_x": 0.0035333611469110376,
+       "velocity_y": -0.6080569004466546,
+       "pressure": 0.19222094370388246
+      }
+     }
+    ],
+    "weno": [
+     {
+      "degree": 2,
+      "cells": [
+       8,
+       16
+      ],
+      "aspect": 2.0,
+      "h": 0.8838834764831844,
+      "dofs": 4608,
+      "steps": 187,
+      "dt_last": 6.9426925088933444e-06,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.01501504499316146,
+       "velocity_x": 0.03185109522098367,
+       "velocity_y": 0.025505787553335893,
+       "pressure": 0.02064288036488468
+      },
+      "wall_seconds": 9.26097559928894
+     },
+     {
+      "degree": 2,
+      "cells": [
+       12,
+       24
+      ],
+      "aspect": 2.0,
+      "h": 0.5892556509887896,
+      "dofs": 10368,
+      "steps": 277,
+      "dt_last": 0.0008717041811578952,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.017572187256852473,
+       "velocity_x": 0.027535428495935488,
+       "velocity_y": 0.03118876607372205,
+       "pressure": 0.023067716298733672
+      },
+      "wall_seconds": 17.188971757888794,
+      "eoc": {
+       "density": -0.38786243620236405,
+       "velocity_x": 0.3590895514848013,
+       "velocity_y": -0.4961033019299528,
+       "pressure": -0.2739165258380458
+      }
+     },
+     {
+      "degree": 2,
+      "cells": [
+       16,
+       32
+      ],
+      "aspect": 2.0,
+      "h": 0.4419417382415922,
+      "dofs": 18432,
+      "steps": 365,
+      "dt_last": 0.00222183309080648,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.012341611077111393,
+       "velocity_x": 0.019339672601865806,
+       "velocity_y": 0.023824607675597402,
+       "pressure": 0.016319298950228715
+      },
+      "wall_seconds": 27.701972723007202,
+      "eoc": {
+       "density": 1.2282336967859022,
+       "velocity_x": 1.2281436938824697,
+       "velocity_y": 0.9362383392862852,
+       "pressure": 1.2030144322822702
+      },
+      "eoc_lsq": {
+       "density": 0.23885415738028615,
+       "velocity_x": 0.6961057973904604,
+       "velocity_y": 0.059353923606359583,
+       "pressure": 0.2988322854089675
+      }
+     }
+    ]
+   }
+  },
+  {
+   "degree": 2,
+   "ladder": "isotropic_control",
+   "runs": {
+    "tvb": [
+     {
+      "degree": 2,
+      "cells": [
+       8,
+       8
+      ],
+      "aspect": 1.0,
+      "h": 1.25,
+      "dofs": 2304,
+      "steps": 116,
+      "dt_last": 0.0058814456102631585,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.017749227538710784,
+       "velocity_x": 0.034392839332103325,
+       "velocity_y": 0.02590900192674596,
+       "pressure": 0.02908854109158962
+      },
+      "wall_seconds": 4.296848773956299
+     },
+     {
+      "degree": 2,
+      "cells": [
+       12,
+       12
+      ],
+      "aspect": 1.0,
+      "h": 0.8333333333333334,
+      "dofs": 5184,
+      "steps": 176,
+      "dt_last": 0.0031017802339151634,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.015069402588577061,
+       "velocity_x": 0.025465571015619616,
+       "velocity_y": 0.03697871778493282,
+       "pressure": 0.023529171795000615
+      },
+      "wall_seconds": 7.910757064819336,
+      "eoc": {
+       "density": 0.40367376460536225,
+       "velocity_x": 0.741175983134509,
+       "velocity_y": -0.8773925844226118,
+       "pressure": 0.5231111411978022
+      }
+     },
+     {
+      "degree": 2,
+      "cells": [
+       16,
+       16
+      ],
+      "aspect": 1.0,
+      "h": 0.625,
+      "dofs": 9216,
+      "steps": 233,
+      "dt_last": 0.0008383820823035792,
+      "limiter": "tvb",
+      "errors": {
+       "density": 0.010525910735391272,
+       "velocity_x": 0.02196743273238402,
+       "velocity_y": 0.028572503956313704,
+       "pressure": 0.016280847768584374
+      },
+      "wall_seconds": 13.112463474273682,
+      "eoc": {
+       "density": 1.2473021341265187,
+       "velocity_x": 0.5136446499150565,
+       "velocity_y": 0.8964677385037098,
+       "pressure": 1.2800643699932348
+      },
+      "eoc_lsq": {
+       "density": 0.7308299821122703,
+       "velocity_x": 0.6529401046011308,
+       "velocity_y": -0.1894955736054459,
+       "pressure": 0.8166550334010936
+      }
+     }
+    ],
+    "weno": [
+     {
+      "degree": 2,
+      "cells": [
+       8,
+       8
+      ],
+      "aspect": 1.0,
+      "h": 1.25,
+      "dofs": 2304,
+      "steps": 118,
+      "dt_last": 0.004412054488705075,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.018266857048243892,
+       "velocity_x": 0.03449975920493032,
+       "velocity_y": 0.04566486956395273,
+       "pressure": 0.02771919881047679
+      },
+      "wall_seconds": 5.128049612045288
+     },
+     {
+      "degree": 2,
+      "cells": [
+       12,
+       12
+      ],
+      "aspect": 1.0,
+      "h": 0.8333333333333334,
+      "dofs": 5184,
+      "steps": 187,
+      "dt_last": 0.00140533832934997,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.021413325134695797,
+       "velocity_x": 0.035454664331961774,
+       "velocity_y": 0.035906819534366,
+       "pressure": 0.029299621723438196
+      },
+      "wall_seconds": 9.638855218887329,
+      "eoc": {
+       "density": -0.3919574516678494,
+       "velocity_x": -0.06733618819665577,
+       "velocity_y": 0.5929044012304053,
+       "pressure": -0.13675488569777736
+      }
+     },
+     {
+      "degree": 2,
+      "cells": [
+       16,
+       16
+      ],
+      "aspect": 1.0,
+      "h": 0.625,
+      "dofs": 9216,
+      "steps": 247,
+      "dt_last": 0.001865782427027618,
+      "limiter": "weno",
+      "errors": {
+       "density": 0.015959551202649244,
+       "velocity_x": 0.029586183903252686,
+       "velocity_y": 0.024838393964135622,
+       "pressure": 0.021210213771016177
+      },
+      "wall_seconds": 14.608888626098633,
+      "eoc": {
+       "density": 1.021808290305322,
+       "velocity_x": 0.628983674206529,
+       "velocity_y": 1.2810552765451912,
+       "pressure": 1.123086174307295
+      },
+      "eoc_lsq": {
+       "density": 0.15629610320883539,
+       "velocity_x": 0.20269429037539607,
+       "velocity_y": 0.8597669743440147,
+       "pressure": 0.35180720009967176
+      }
+     }
+    ]
+   }
+  }
+ ],
+ "operator_transpose": [
+  {
+   "degree": 1,
+   "relative_error": 5.779218438155702e-16
+  },
+  {
+   "degree": 2,
+   "relative_error": 5.756347446887198e-16
+  },
+  {
+   "degree": 3,
+   "relative_error": 1.2398809906313038e-15
+  }
+ ],
+ "conservation": [
+  {
+   "cells": [
+    8,
+    16
+   ],
+   "steps": 176,
+   "mass_drift": 6.653986816244782e-15,
+   "energy_drift": 7.254654606674163e-15
+  },
+  {
+   "cells": [
+    12,
+    24
+   ],
+   "steps": 264,
+   "mass_drift": 9.836329075049841e-15,
+   "energy_drift": 1.0881984405052379e-14
+  }
+ ],
+ "finished": "2026-11-04T11:37:16Z",
+ "criteria": [
+  {
+   "name": "P1_anisotropic_lsq_order",
+   "measured": 1.8911855803486026,
+   "threshold": 1.7,
+   "operator": ">=",
+   "what": "worst least-squares EOC over (rho,u,v,p), anisotropic ladder",
+   "passed": true
+  },
+  {
+   "name": "P1_isotropic_control_lsq_order",
+   "measured": 1.877127922909405,
+   "threshold": 1.7,
+   "operator": ">=",
+   "what": "worst least-squares EOC over (rho,u,v,p), isotropic_control ladder",
+   "passed": true
+  },
+  {
+   "name": "P1_transposed_control_lsq_order",
+   "measured": 1.8754525788546503,
+   "threshold": 1.7,
+   "operator": ">=",
+   "what": "worst least-squares EOC over (rho,u,v,p), transposed_control ladder",
+   "passed": true
+  },
+  {
+   "name": "P1_anisotropic_finest_3pct",
+   "measured": 0.6973409126941649,
+   "threshold": 3.0,
+   "operator": "<=",
+   "what": "worst relative L2 error on the finest stretched mesh, percent",
+   "passed": true
+  },
+  {
+   "name": "P1_transpose_density_8x16",
+   "measured": 0.014870376839182171,
+   "threshold": 0.05,
+   "operator": "<=",
+   "what": "density error of the stretched ladder vs its transposed twin",
+   "passed": true
+  },
+  {
+   "name": "P1_transpose_density_12x24",
+   "measured": 0.006115648139581648,
+   "threshold": 0.05,
+   "operator": "<=",
+   "what": "density error of the stretched ladder vs its transposed twin",
+   "passed": true
+  },
+  {
+   "name": "P1_transpose_density_16x32",
+   "measured": 0.0043636383795249345,
+   "threshold": 0.05,
+   "operator": "<=",
+   "what": "density error of the stretched ladder vs its transposed twin",
+   "passed": true
+  },
+  {
+   "name": "P2_anisotropic_lsq_order",
+   "measured": 2.7576478952292134,
+   "threshold": 2.7,
+   "operator": ">=",
+   "what": "worst least-squares EOC over (rho,u,v,p), anisotropic ladder",
+   "passed": true
+  },
+  {
+   "name": "P2_isotropic_control_lsq_order",
+   "measured": 2.7383724208950806,
+   "threshold": 2.7,
+   "operator": ">=",
+   "what": "worst least-squares EOC over (rho,u,v,p), isotropic_control ladder",
+   "passed": true
+  },
+  {
+   "name": "P2_transposed_control_lsq_order",
+   "measured": 2.758005382739189,
+   "threshold": 2.7,
+   "operator": ">=",
+   "what": "worst least-squares EOC over (rho,u,v,p), transposed_control ladder",
+   "passed": true
+  },
+  {
+   "name": "P2_anisotropic_finest_3pct",
+   "measured": 0.0718858411962305,
+   "threshold": 3.0,
+   "operator": "<=",
+   "what": "worst relative L2 error on the finest stretched mesh, percent",
+   "passed": true
+  },
+  {
+   "name": "P2_transpose_density_8x16",
+   "measured": 0.004548919319761306,
+   "threshold": 0.05,
+   "operator": "<=",
+   "what": "density error of the stretched ladder vs its transposed twin",
+   "passed": true
+  },
+  {
+   "name": "P2_transpose_density_12x24",
+   "measured": 0.0013287656674262716,
+   "threshold": 0.05,
+   "operator": "<=",
+   "what": "density error of the stretched ladder vs its transposed twin",
+   "passed": true
+  },
+  {
+   "name": "P2_transpose_density_16x32",
+   "measured": 0.0009677050803761405,
+   "threshold": 0.05,
+   "operator": "<=",
+   "what": "density error of the stretched ladder vs its transposed twin",
+   "passed": true
+  },
+  {
+   "name": "limiter_wrong_axis_verdict_differs",
+   "measured": 1.0,
+   "threshold": 1.0,
+   "operator": ">=",
+   "what": "troubled-cell verdict must depend on the per-axis spacing (mutation probe)",
+   "passed": true
+  },
+  {
+   "name": "limiter_flagged_fraction_not_growing",
+   "measured": 0.009765625,
+   "threshold": 0.015625,
+   "operator": "<=",
+   "what": "flagged fraction on the fine axis must not grow under refinement at fixed M (m2549 scale consistency on stretched cells)",
+   "passed": true
+  },
+  {
+   "name": "limiter_flagged_fraction_bounded",
+   "measured": 0.009765625,
+   "threshold": 0.5,
+   "operator": "<=",
+   "what": "at M = 1 the flagged fraction on a resolved smooth flow stays a minority",
+   "passed": true
+  },
+  {
+   "name": "limiter_tvb_anisotropic_P1_order",
+   "measured": 0.23238070836640487,
+   "threshold": 1.5,
+   "operator": ">=",
+   "what": "worst EOC with the tvb limiter active on the smooth vortex (anisotropic) -- the limiter must not destroy the smooth order",
+   "passed": false
+  },
+  {
+   "name": "limiter_weno_anisotropic_P1_order",
+   "measured": 0.46323550072918396,
+   "threshold": 1.5,
+   "operator": ">=",
+   "what": "worst EOC with the weno limiter active on the smooth vortex (anisotropic) -- the limiter must not destroy the smooth order",
+   "passed": false
+  },
+  {
+   "name": "limiter_tvb_isotropic_control_P1_order",
+   "measured": 0.30969950124020534,
+   "threshold": 1.5,
+   "operator": ">=",
+   "what": "worst EOC with the tvb limiter active on the smooth vortex (isotropic_control) -- the limiter must not destroy the smooth order",
+   "passed": false
+  },
+  {
+   "name": "limiter_weno_isotropic_control_P1_order",
+   "measured": 0.2565517198068063,
+   "threshold": 1.5,
+   "operator": ">=",
+   "what": "worst EOC with the weno limiter active on the smooth vortex (isotropic_control) -- the limiter must not destroy the smooth order",
+   "passed": false
+  },
+  {
+   "name": "limiter_tvb_anisotropic_P2_order",
+   "measured": -0.6080569004466546,
+   "threshold": 2.5,
+   "operator": ">=",
+   "what": "worst EOC with the tvb limiter active on the smooth vortex (anisotropic) -- the limiter must not destroy the smooth order",
+   "passed": false
+  },
+  {
+   "name": "limiter_weno_anisotropic_P2_order",
+   "measured": 0.059353923606359583,
+   "threshold": 2.5,
+   "operator": ">=",
+   "what": "worst EOC with the weno limiter active on the smooth vortex (anisotropic) -- the limiter must not destroy the smooth order",
+   "passed": false
+  },
+  {
+   "name": "limiter_tvb_isotropic_control_P2_order",
+   "measured": -0.1894955736054459,
+   "threshold": 2.5,
+   "operator": ">=",
+   "what": "worst EOC with the tvb limiter active on the smooth vortex (isotropic_control) -- the limiter must not destroy the smooth order",
+   "passed": false
+  },
+  {
+   "name": "limiter_weno_isotropic_control_P2_order",
+   "measured": 0.15629610320883539,
+   "threshold": 2.5,
+   "operator": ">=",
+   "what": "worst EOC with the weno limiter active on the smooth vortex (isotropic_control) -- the limiter must not destroy the smooth order",
+   "passed": false
+  },
+  {
+   "name": "operator_transpose_P1",
+   "measured": 5.779218438155702e-16,
+   "threshold": 1e-14,
+   "operator": "<=",
+   "what": "residual invariance under x<->y with u<->v (exact algebraic symmetry)",
+   "passed": true
+  },
+  {
+   "name": "operator_transpose_P2",
+   "measured": 5.756347446887198e-16,
+   "threshold": 1e-14,
+   "operator": "<=",
+   "what": "residual invariance under x<->y with u<->v (exact algebraic symmetry)",
+   "passed": true
+  },
+  {
+   "name": "operator_transpose_P3",
+   "measured": 1.2398809906313038e-15,
+   "threshold": 1e-14,
+   "operator": "<=",
+   "what": "residual invariance under x<->y with u<->v (exact algebraic symmetry)",
+   "passed": true
+  },
+  {
+   "name": "conservation_mass_8x16",
+   "measured": 6.653986816244782e-15,
+   "threshold": 1e-12,
+   "operator": "<=",
+   "what": "relative mass drift on a periodic stretched mesh (round-off)",
+   "passed": true
+  },
+  {
+   "name": "conservation_energy_8x16",
+   "measured": 7.254654606674163e-15,
+   "threshold": 1e-12,
+   "operator": "<=",
+   "what": "relative energy drift on a periodic stretched mesh (round-off)",
+   "passed": true
+  },
+  {
+   "name": "conservation_mass_12x24",
+   "measured": 9.836329075049841e-15,
+   "threshold": 1e-12,
+   "operator": "<=",
+   "what": "relative mass drift on a periodic stretched mesh (round-off)",
+   "passed": true
+  },
+  {
+   "name": "conservation_energy_12x24",
+   "measured": 1.0881984405052379e-14,
+   "threshold": 1e-12,
+   "operator": "<=",
+   "what": "relative energy drift on a periodic stretched mesh (round-off)",
+   "passed": true
+  }
+ ],
+ "summary": {
+  "checks": 32,
+  "passed": 24,
+  "failed": [
+   "limiter_tvb_anisotropic_P1_order",
+   "limiter_weno_anisotropic_P1_order",
+   "limiter_tvb_isotropic_control_P1_order",
+   "limiter_weno_isotropic_control_P1_order",
+   "limiter_tvb_anisotropic_P2_order",
+   "limiter_weno_anisotropic_P2_order",
+   "limiter_tvb_isotropic_control_P2_order",
+   "limiter_weno_isotropic_control_P2_order"
+  ],
+  "overall": "FAIL"
+ }
+}
