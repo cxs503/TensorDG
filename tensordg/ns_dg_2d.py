@@ -259,6 +259,11 @@ def _recover_wall_gradient(centre, interface, normal_scale, axis, side):
 # the m2831 fd2 stencil (and the m2838 recovered closure) stay opt-in.
 WALL_GRADIENT = "face"
 
+# Coefficient of the *symmetric* (derivative-projected, Nitsche adjoint) wall
+# penalty relative to the value-projected SIPG penalty (m2972; see
+# ``_wall_adjoint_flux`` and ``docs/reports/tensordg-ns-wall-symmetric.md``).
+WALL_ADJOINT_FACTOR = 2.0
+
 WALL_PENALTY = 0.0
 
 
@@ -609,9 +614,68 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
     # entering the strong-form divergence is F_inv - F_v
     return inviscid - _viscous_flux(face, axis, mu, kappa)
 
+def _put_face(target, dim, index, values):
+    """Copy the ``index``-th face slice of ``values`` into ``target`` along ``dim``."""
+    selector = [slice(None)] * target.dim()
+    selector[dim] = index
+    source = [slice(None)] * values.dim()
+    source[dim] = index
+    target[tuple(selector)] = values[tuple(source)]
+
+
+
+
+def _wall_adjoint_flux(side, wall, axis, h, mu, kappa, penalty):
+    """Symmetric (Nitsche adjoint) wall term, as a face quantity.
+
+    The value-projected SIPG penalty ``-(penalty/h)(q^- - q_D)`` at a Dirichlet
+    wall enters the strong-form residual through the *test function value* at
+    the face.  A Nitsche boundary discretisation needs the mirrored term that
+    enters through the *normal derivative* of the test function,
+
+        -\int_{Gamma_D} (d_n phi) (q^- - q_D) ds ,
+
+    otherwise the boundary contribution to the discrete operator has the
+    rank-one, sign-indefinite structure that makes the wall cell's highest
+    mode grow (m2589/m2972 diagnostics: growth rate ``mu sigma / h**2``, see
+    ``validation/ns_dg_2d_wall/spectrum.json``).  This function returns the
+    flux-like quantity ``(factor sigma / h) (q^- - q_D)`` per channel; the
+    caller projects it with the *derivative* Legendre weights, which is exactly
+    the discrete form of the integral above (``\int P_k'(+/-1)`` on the
+    reference face).
+
+    The term is proportional to the Dirichlet defect, so it vanishes for the
+    exact solution: it is a consistent stabilisation, not a change of the
+    boundary condition.
+    """
+    inner_u, inner_v = side["u"], side["v"]
+    wall_velocity = wall.get("velocity", (0.0, 0.0))
+    face_u = torch.as_tensor(
+        wall_velocity[0], device=inner_u.device, dtype=inner_u.dtype
+    ).expand_as(inner_u)
+    face_v = torch.as_tensor(
+        wall_velocity[1], device=inner_v.device, dtype=inner_v.dtype
+    ).expand_as(inner_v)
+    wall_temperature = wall.get("temperature", None)
+    if wall_temperature is None:
+        face_T = side["temperature"]
+    else:
+        face_T = torch.as_tensor(
+            wall_temperature, device=inner_u.device, dtype=inner_u.dtype
+        ).expand_as(inner_u)
+    scale = WALL_ADJOINT_FACTOR * penalty / h
+    zeros = torch.zeros_like(inner_u)
+    return torch.stack(
+        [zeros, scale * mu * (inner_u - face_u), scale * mu * (inner_v - face_v),
+         scale * kappa * (side["temperature"] - face_T)],
+        dim=-1,
+    )
+
+
+
 def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
                     wall_left, wall_right, mu, kappa, penalty, axis,
-                    wall_gradient="face", wall_penalty=None):
+                    wall_gradient="face", wall_penalty=None, adjoint=False):
     """Integrated total (inviscid + viscous) face fluxes for one axis.
 
     Structurally identical to ``euler_dg_2d._axis_fluxes``: the returned arrays
@@ -721,7 +785,29 @@ def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
         else:
             flux_left[:, 0] = torch.einsum("xav,a,ak->xkv", left_boundary[:, 0],
                                            weights, basis)
-    return flux_right, flux_left
+
+    # Symmetric (Nitsche adjoint) wall term (m2972): the same face data as the
+    # wall flux, projected exactly like flux_right/flux_left; _rhs_ns attaches
+    # the *derivative* Legendre weights instead of the value weights, which is
+    # the discrete form of -int_{Gamma_D} (d_n phi) (q^- - q_D) ds.
+    adj_right = torch.zeros_like(flux_right)
+    adj_left = torch.zeros_like(flux_left)
+    if not periodic and adjoint:
+        if wall_right is not None:
+            adj_face = _wall_adjoint_flux(right, wall_right, axis, h, mu, kappa, penalty)
+            if axis == 0:
+                adj_right[-1] = torch.einsum("ybv,b,bl->ylv", adj_face[-1], weights, basis)
+            else:
+                adj_right[:, -1] = torch.einsum("xav,a,ak->xkv", adj_face[:, -1],
+                                                weights, basis)
+        if wall_left is not None:
+            adj_face = _wall_adjoint_flux(left, wall_left, axis, h, mu, kappa, penalty)
+            if axis == 0:
+                adj_left[0] = torch.einsum("ybv,b,bl->ylv", adj_face[0], weights, basis)
+            else:
+                adj_left[:, 0] = torch.einsum("xav,a,ak->xkv", adj_face[:, 0],
+                                              weights, basis)
+    return flux_right, flux_left, adj_right, adj_left
 
 def _viscous_volume(coeff, basis, derivative, weights, dx, dy, mu, kappa):
     """Volume divergence of the viscous flux, evaluated with local gradients.
@@ -766,7 +852,7 @@ def _viscous_volume(coeff, basis, derivative, weights, dx, dy, mu, kappa):
 
 def _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic, boundary,
             mu, kappa, penalty, wall_gradient="face", wall_penalty=None,
-    source_quad=None):
+            source_quad=None, wall_adjoint=False):
     """DG residual of the 2-D compressible Navier--Stokes equations."""
     degree = coeff.shape[2] - 1
     modes = torch.arange(degree + 1, device=coeff.device, dtype=coeff.dtype)
@@ -785,15 +871,18 @@ def _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic, boundary
     viscous_x, viscous_y = _viscous_volume(
         coeff, basis, derivative, weights, dx, dy, mu, kappa
     )
-    right_x, left_x = _axis_fluxes_ns(
+    right_x, left_x, adj_rx, adj_lx = _axis_fluxes_ns(
         coeff, basis, derivative, signs, weights, dx, dy, periodic[0],
         boundary["xmin"], boundary["xmax"], mu, kappa, penalty, 0,
-        wall_gradient, wall_penalty,
+        wall_gradient, wall_penalty, wall_adjoint,
     )
-    right_y, left_y = _axis_fluxes_ns(
+    right_y, left_y, adj_ry, adj_ly = _axis_fluxes_ns(
         coeff, basis, derivative, signs, weights, dx, dy, periodic[1],
         boundary["ymin"], boundary["ymax"], mu, kappa, penalty, 1,
-        wall_gradient, wall_penalty,
+        wall_gradient, wall_penalty, wall_adjoint,
+    )
+    _, _, derivative_plus, derivative_minus = _face_weights(
+        degree, signs, coeff.device, coeff.dtype
     )
 
     face_x = (
@@ -801,12 +890,16 @@ def _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic, boundary
         - left_x.unsqueeze(2) * signs.view(1, 1, -1, 1, 1)
         - volume_x
         + viscous_x
+        + adj_rx.unsqueeze(2) * derivative_plus.view(1, 1, -1, 1, 1)
+        - adj_lx.unsqueeze(2) * derivative_minus.view(1, 1, -1, 1, 1)
     )
     face_y = (
         right_y.unsqueeze(3)
         - left_y.unsqueeze(3) * signs.view(1, 1, 1, -1, 1)
         - volume_y
         + viscous_y
+        + adj_ry.unsqueeze(3) * derivative_plus.view(1, 1, 1, -1, 1)
+        - adj_ly.unsqueeze(3) * derivative_minus.view(1, 1, 1, -1, 1)
     )
     scale_x = (scale / (2.0 * dx)).view(1, 1, *scale.shape, 1)
     scale_y = (scale / (2.0 * dy)).view(1, 1, *scale.shape, 1)
@@ -844,6 +937,7 @@ def solve_navier_stokes_dg_2d(
     quadrature=None,
     initial_projection="l2",
     wall_gradient="face",
+    wall_adjoint=False,
     device="cpu",
     dtype=torch.float64,
 ):
@@ -1006,15 +1100,18 @@ def solve_navier_stokes_dg_2d(
         dt = min(dt, final_time - time)
         k1 = _rhs_ns(coeff, basis, derivative, weights, signs, dx, dy, periodic,
                      boundary, mu, kappa, penalty, wall_gradient,
-                     wall_penalty, source_quad=_source_quad(time))
+                     wall_penalty, wall_adjoint=wall_adjoint,
+                     source_quad=_source_quad(time))
         u1 = impose(coeff + dt * k1)
         k2 = _rhs_ns(u1, basis, derivative, weights, signs, dx, dy, periodic,
                      boundary, mu, kappa, penalty, wall_gradient,
-                     wall_penalty, source_quad=_source_quad(time + dt))
+                     wall_penalty, wall_adjoint=wall_adjoint,
+                     source_quad=_source_quad(time + dt))
         u2 = impose(0.75 * coeff + 0.25 * (u1 + dt * k2))
         k3 = _rhs_ns(u2, basis, derivative, weights, signs, dx, dy, periodic,
                      boundary, mu, kappa, penalty, wall_gradient,
-                     wall_penalty, source_quad=_source_quad(time + 0.5 * dt))
+                     wall_penalty, wall_adjoint=wall_adjoint,
+                     source_quad=_source_quad(time + 0.5 * dt))
         coeff = impose(coeff / 3.0 + (2.0 / 3.0) * (u2 + dt * k3))
         if not torch.isfinite(coeff).all():
             raise FloatingPointError("non-finite Navier-Stokes state; reduce the CFL")
@@ -1050,6 +1147,7 @@ def solve_navier_stokes_dg_2d(
         "prandtl": prandtl,
         "penalty": penalty,
         "wall_gradient": wall_gradient,
+        "wall_adjoint": wall_adjoint,
         "boundary": {key: value for key, value in boundary.items()},
         "flux": "hllc + br1/sipg viscous",
         "quadrature": order,
