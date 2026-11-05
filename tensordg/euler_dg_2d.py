@@ -580,6 +580,7 @@ def solve_euler_dg_2d(
     cfl=0.2,
     limiter=None,
     tvb_constant=1.0,
+    limiter_stage="every",
     periodic=(True, True),
     quadrature=None,
     initial_projection="l2",
@@ -598,6 +599,15 @@ def solve_euler_dg_2d(
         Polynomial degree of the tensor-product basis (0, 1, 2, 3 supported).
     limiter : str or None
         ``None`` (positivity fallback only), ``"tvb"`` or ``"weno"``.
+    tvb_constant : float
+        TVB constant M; M=0 is strict TVD, larger M allows smooth extrema.
+    limiter_stage : {"every", "final"}
+        When the limiter is applied inside the SSP-RK3 sweep.  ``"every"``
+        (default, historic behaviour) limits after every sub-step, which
+        re-projects smooth cells that keep being flagged and therefore
+        destroys high-order accuracy there (see
+        ``docs/limiter_verification.md``).  ``"final"`` limits only the
+        updated state at the end of the time step.
     periodic : (bool, bool)
         Periodicity in ``x`` and ``y``; non-periodic faces are outflow.
     initial_projection : str
@@ -607,6 +617,8 @@ def solve_euler_dg_2d(
     nx, ny = (ncells, ncells) if isinstance(ncells, int) else ncells
     if degree not in (0, 1, 2, 3):
         raise ValueError("degree must be 0, 1, 2 or 3")
+    if limiter_stage not in ("every", "final"):
+        raise ValueError("limiter_stage must be 'every' or 'final'")
     if nx < 1 or ny < 1 or final_time < 0.0 or not 0.0 < cfl <= 0.5:
         raise ValueError("invalid cells, final_time or CFL")
     (xmin, xmax), (ymin, ymax) = domain
@@ -635,7 +647,9 @@ def solve_euler_dg_2d(
 
     periodic_flags = (bool(periodic[0]), bool(periodic[1]))
 
-    def impose(state):
+    limit_each_stage = limiter_stage == "every"
+
+    def _apply_limiter(state):
         if limiter == "tvb":
             state = apply_tvb_limiter_2d(
                 state, dx, dy, tvb_constant, periodic_flags
@@ -646,6 +660,10 @@ def solve_euler_dg_2d(
             )
         elif limiter is not None:
             raise ValueError("limiter must be None, 'tvb' or 'weno'")
+        return state
+
+    def impose(state):
+        state = _apply_limiter(state)
         return _positivity_filter(state, basis, signs)
 
     time, steps, dt = 0.0, 0, 0.0
@@ -658,9 +676,17 @@ def solve_euler_dg_2d(
         rate = (speed_x / dx + speed_y / dy) * (2 * degree + 1)
         dt = min(cfl / max(rate, 1e-12), final_time - time)
         k1 = _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic)
-        u1 = impose(coeff + dt * k1)
+        u1 = coeff + dt * k1
+        if limit_each_stage:
+            u1 = impose(u1)
+        else:
+            u1 = _positivity_filter(u1, basis, signs)
         k2 = _rhs(u1, basis, derivative, weights, signs, dx, dy, periodic)
-        u2 = impose(0.75 * coeff + 0.25 * (u1 + dt * k2))
+        u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
+        if limit_each_stage:
+            u2 = impose(u2)
+        else:
+            u2 = _positivity_filter(u2, basis, signs)
         k3 = _rhs(u2, basis, derivative, weights, signs, dx, dy, periodic)
         coeff = impose(coeff / 3.0 + (2.0 / 3.0) * (u2 + dt * k3))
         if not torch.isfinite(coeff).all():
@@ -685,6 +711,7 @@ def solve_euler_dg_2d(
         "periodic": tuple(periodic),
         "flux": "hllc",
         "limiter": limiter if limiter else "local positivity fallback",
+        "limiter_stage": limiter_stage,
         "quadrature": order,
         "initial_projection": initial_projection,
         "device": str(dev),
@@ -720,12 +747,18 @@ def solve_euler_dg_2d_vortex(
     background_velocity=(1.0, 1.0),
     limiter=None,
     tvb_constant=1.0,
+    limiter_stage="every",
     domain=((-5.0, 5.0), (-5.0, 5.0)),
     initial_projection="l2",
     device="cpu",
     dtype=torch.float64,
 ):
-    """Periodic smooth isentropic vortex on a high-order 2-D DG mesh."""
+    """Periodic smooth isentropic vortex on a high-order 2-D DG mesh.
+
+    ``limiter_stage`` is forwarded to :func:`solve_euler_dg_2d` (see its
+    docstring): ``"every"`` limits at every SSP-RK3 sub-step (historic
+    behaviour), ``"final"`` limits only the end-of-step state.
+    """
 
     def initial(x, y):
         return vortex_primitive(x, y, 0.0, strength, background_velocity)
@@ -739,6 +772,7 @@ def solve_euler_dg_2d_vortex(
         cfl=cfl,
         limiter=limiter,
         tvb_constant=tvb_constant,
+        limiter_stage=limiter_stage,
         periodic=(True, True),
         initial_projection=initial_projection,
         device=device,
