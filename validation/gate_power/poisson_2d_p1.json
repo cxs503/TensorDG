@@ -1,0 +1,140 @@
+{
+  "case": "poisson_2d_p1",
+  "crossing_factor": 4.0,
+  "crossing_levels": 2.0,
+  "documented_cells": 16,
+  "documented_error": 0.00380026186743542,
+  "documented_kwargs": {},
+  "gate": 0.03,
+  "margin": 7.894192833675772,
+  "refinements": [
+    {
+      "cells": 16,
+      "coarsening_factor": 1.0,
+      "errors": {
+        "u": 0.00380026186743542
+      },
+      "kwargs": {},
+      "level": 0,
+      "max_error": 0.00380026186743542,
+      "seconds": 1.801,
+      "status": "ok"
+    },
+    {
+      "cells": 8,
+      "coarsening_factor": 2.0,
+      "errors": {
+        "u": 0.015186307920393367
+      },
+      "kwargs": {},
+      "level": 1,
+      "max_error": 0.015186307920393367,
+      "seconds": 0.378,
+      "status": "ok"
+    },
+    {
+      "cells": 4,
+      "coarsening_factor": 4.0,
+      "errors": {
+        "u": 0.06048830128081383
+      },
+      "kwargs": {},
+      "level": 2,
+      "max_error": 0.06048830128081383,
+      "seconds": 0.137,
+      "status": "ok"
+    }
+  ],
+  "sabotage": [
+    {
+      "axis": "penalty",
+      "broke_gate": false,
+      "cells": 16,
+      "errors": {
+        "u": 0.003797552771377964
+      },
+      "kwargs": {
+        "penalty": 5.0
+      },
+      "max_error": 0.003797552771377964,
+      "seconds": 1.468,
+      "status": "ok",
+      "value": 5.0
+    },
+    {
+      "axis": "penalty",
+      "broke_gate": false,
+      "cells": 16,
+      "errors": {
+        "u": 0.0037832790861331324
+      },
+      "kwargs": {
+        "penalty": 1.0
+      },
+      "max_error": 0.0037832790861331324,
+      "seconds": 1.376,
+      "status": "ok",
+      "value": 1.0
+    },
+    {
+      "axis": "penalty",
+      "broke_gate": false,
+      "cells": 16,
+      "errors": {
+        "u": 0.010407236169841154
+      },
+      "kwargs": {
+        "penalty": 0.2
+      },
+      "max_error": 0.010407236169841154,
+      "seconds": 1.829,
+      "status": "ok",
+      "value": 0.2
+    },
+    {
+      "axis": "penalty",
+      "broke_gate": false,
+      "cells": 16,
+      "errors": {
+        "u": 0.003965766369925517
+      },
+      "kwargs": {
+        "penalty": 0.05
+      },
+      "max_error": 0.003965766369925517,
+      "seconds": 1.784,
+      "status": "ok",
+      "value": 0.05
+    },
+    {
+      "axis": "penalty",
+      "broke_gate": true,
+      "cells": 16,
+      "errors": {
+        "u": 0.09769386816270297
+      },
+      "kwargs": {
+        "penalty": 0.02
+      },
+      "max_error": 0.09769386816270297,
+      "seconds": 1.947,
+      "status": "ok",
+      "value": 0.02
+    },
+    {
+      "axis": "penalty",
+      "broke_gate": false,
+      "cells": 16,
+      "errors": {
+        "u": 0.003902714283292942
+      },
+      "kwargs": {
+        "penalty": 0.005
+      },
+      "max_error": 0.003902714283292942,
+      "seconds": 1.292,
+      "status": "ok",
+      "value": 0.005
+    }
+  ]
+}

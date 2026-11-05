@@ -1,0 +1,28 @@
+{
+  "case": "vortex_p0",
+  "crossing_factor": null,
+  "crossing_levels": null,
+  "documented_cells": 192,
+  "documented_error": 0.019729903314285667,
+  "documented_kwargs": {},
+  "gate": 0.03,
+  "margin": 1.5205345673578718,
+  "refinements": [
+    {
+      "cells": 192,
+      "coarsening_factor": 1.0,
+      "errors": {
+        "density": 0.008994391392826574,
+        "pressure": 0.014297675790912637,
+        "velocity_x": 0.019576248503484557,
+        "velocity_y": 0.019729903314285667
+      },
+      "kwargs": {},
+      "level": 0,
+      "max_error": 0.019729903314285667,
+      "seconds": 683.15,
+      "status": "ok"
+    }
+  ],
+  "sabotage": []
+}
