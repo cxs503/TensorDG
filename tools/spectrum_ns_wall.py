@@ -128,7 +128,8 @@ def _patched_flux(variant: str):
     return original, patched
 
 
-def _jacobian(coeff, state, boundary, periodic, penalty, wall_gradient, variant="default"):
+def _jacobian(coeff, state, boundary, periodic, penalty, wall_gradient,
+              variant="default", wall_adjoint=False):
     original, patched = _patched_flux(variant)
     ns._boundary_flux = patched
     try:
@@ -137,7 +138,8 @@ def _jacobian(coeff, state, boundary, periodic, penalty, wall_gradient, variant=
         def residual(z):
             return ns._rhs_ns(z, state["basis"], state["derivative"], state["weights"],
                               state["signs"], state["dx"], state["dy"], periodic,
-                              boundary, MU, KAPPA, penalty, wall_gradient)
+                              boundary, MU, KAPPA, penalty, wall_gradient,
+                              wall_adjoint=wall_adjoint)
 
         flat = residual(x).reshape(-1)
         rows = []
@@ -149,9 +151,11 @@ def _jacobian(coeff, state, boundary, periodic, penalty, wall_gradient, variant=
         ns._boundary_flux = original
 
 
-def _spectrum(coeff, state, boundary, periodic, penalty, wall_gradient, variant="default"):
+def _spectrum(coeff, state, boundary, periodic, penalty, wall_gradient,
+              variant="default", wall_adjoint=False):
     """Leading eigenvalues plus the channel breakdown of the fastest mode."""
-    matrix = _jacobian(coeff, state, boundary, periodic, penalty, wall_gradient, variant)
+    matrix = _jacobian(coeff, state, boundary, periodic, penalty, wall_gradient,
+                       variant, wall_adjoint)
     values, vectors = np.linalg.eig(matrix)
     real = values.real
     index = int(np.argmax(real))
