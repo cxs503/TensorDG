@@ -1,0 +1,155 @@
+{
+  "final_time": 1.0,
+  "strength": 5.0,
+  "domain": [
+    [
+      -5.0,
+      5.0
+    ],
+    [
+      -5.0,
+      5.0
+    ]
+  ],
+  "background": [
+    1.0,
+    1.0
+  ],
+  "degrees": {
+    "2": {
+      "design_order": 3,
+      "meshes": [
+        8,
+        12,
+        24
+      ],
+      "configs": {
+        "none": {
+          "8": {
+            "relative_l2": {
+              "density": 0.003275074550264168,
+              "velocity_x": 0.005619999088492312,
+              "velocity_y": 0.005493569107830254,
+              "pressure": 0.004287231014401607
+            },
+            "steps": 117
+          },
+          "12": {
+            "relative_l2": {
+              "density": 0.0009138850328349801,
+              "velocity_x": 0.0019110120151271197,
+              "velocity_y": 0.0018971442511262738,
+              "pressure": 0.0012340709683423096
+            },
+            "steps": 176
+          },
+          "24": {
+            "relative_l2": {
+              "density": 0.00012032585988793832,
+              "velocity_x": 0.00024297581199709273,
+              "velocity_y": 0.00024326115804597086,
+              "pressure": 0.0001684945678526242
+            },
+            "steps": 352
+          },
+          "eoc": {
+            "density": 2.9250659516765203,
+            "velocity_x": 2.975452241795881,
+            "velocity_y": 2.963251493556287,
+            "pressure": 2.872651376877811
+          },
+          "limiter": null,
+          "tvb_constant": 1.0
+        },
+        "tvb_M1": {
+          "8": {
+            "relative_l2": {
+              "density": 0.017749227538710784,
+              "velocity_x": 0.034392839332103325,
+              "velocity_y": 0.02590900192674596,
+              "pressure": 0.02908854109158962
+            },
+            "steps": 116
+          },
+          "12": {
+            "relative_l2": {
+              "density": 0.015069402588577061,
+              "velocity_x": 0.025465571015619616,
+              "velocity_y": 0.03697871778493282,
+              "pressure": 0.023529171795000615
+            },
+            "steps": 176
+          },
+          "24": {
+            "relative_l2": {
+              "density": 0.0068613985905225825,
+              "velocity_x": 0.014587942312722478,
+              "velocity_y": 0.020481255167026563,
+              "pressure": 0.010406720033258893
+            },
+            "steps": 350
+          },
+          "eoc": {
+            "density": 1.135047641194363,
+            "velocity_x": 0.8037716674789127,
+            "velocity_y": 0.8523910692837745,
+            "pressure": 1.1769351050470884
+          },
+          "limiter": "tvb",
+          "tvb_constant": 1.0
+        },
+        "tvb_M4": {
+          "8": {
+            "relative_l2": {
+              "density": 0.003275074550264168,
+              "velocity_x": 0.005619999088492312,
+              "velocity_y": 0.005493569107830254,
+              "pressure": 0.004287231014401607
+            },
+            "steps": 117
+          },
+          "12": {
+            "relative_l2": {
+              "density": 0.0009138850328349801,
+              "velocity_x": 0.0019110120151271197,
+              "velocity_y": 0.0018971442511262738,
+              "pressure": 0.0012340709683423096
+            },
+            "steps": 176
+          },
+          "24": {
+            "relative_l2": {
+              "density": 0.00012032585988793832,
+              "velocity_x": 0.00024297581199709273,
+              "velocity_y": 0.00024326115804597086,
+              "pressure": 0.0001684945678526242
+            },
+            "steps": 352
+          },
+          "eoc": {
+            "density": 2.9250659516765203,
+            "velocity_x": 2.975452241795881,
+            "velocity_y": 2.963251493556287,
+            "pressure": 2.872651376877811
+          },
+          "limiter": "tvb",
+          "tvb_constant": 4.0
+        }
+      },
+      "bit_identical_to_unlimited_on_finest_mesh": {
+        "none": true,
+        "tvb_M1": false,
+        "tvb_M4": true
+      }
+    }
+  },
+  "M_threshold_estimate": {
+    "M_threshold_estimate": 3.4169563652923203,
+    "per_axis": {
+      "x": 3.4169563652923203,
+      "y": 3.0529599902798723
+    },
+    "ncells_used": 24,
+    "_unused_node": -1.0
+  }
+}
