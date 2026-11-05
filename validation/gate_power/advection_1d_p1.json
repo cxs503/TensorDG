@@ -1,0 +1,78 @@
+{
+  "case": "advection_1d_p1",
+  "crossing_factor": 8.0,
+  "crossing_levels": 3.0,
+  "documented_cells": 40,
+  "documented_error": 0.0014999730562710886,
+  "documented_kwargs": {},
+  "gate": 0.03,
+  "margin": 20.00035925617195,
+  "refinements": [
+    {
+      "cells": 40,
+      "coarsening_factor": 1.0,
+      "errors": {
+        "u": 0.0014999730562710886
+      },
+      "kwargs": {},
+      "level": 0,
+      "max_error": 0.0014999730562710886,
+      "seconds": 0.471,
+      "status": "ok"
+    },
+    {
+      "cells": 20,
+      "coarsening_factor": 2.0,
+      "errors": {
+        "u": 0.005978527389770027
+      },
+      "kwargs": {},
+      "level": 1,
+      "max_error": 0.005978527389770027,
+      "seconds": 0.227,
+      "status": "ok"
+    },
+    {
+      "cells": 10,
+      "coarsening_factor": 4.0,
+      "errors": {
+        "u": 0.023555241720019646
+      },
+      "kwargs": {},
+      "level": 2,
+      "max_error": 0.023555241720019646,
+      "seconds": 0.124,
+      "status": "ok"
+    },
+    {
+      "cells": 5,
+      "coarsening_factor": 8.0,
+      "errors": {
+        "u": 0.08929728837855419
+      },
+      "kwargs": {},
+      "level": 3,
+      "max_error": 0.08929728837855419,
+      "seconds": 0.064,
+      "status": "ok"
+    }
+  ],
+  "sabotage": [
+    {
+      "axis": "compare_time",
+      "broke_gate": true,
+      "cells": 40,
+      "errors": {
+        "u": 0.7653331303241571
+      },
+      "kwargs": {
+        "compare_time": 0.375
+      },
+      "max_error": 0.7653331303241571,
+      "rejected": false,
+      "seconds": 0.468,
+      "status": "ok",
+      "value": 0.375
+    }
+  ]
+}
