@@ -1,0 +1,269 @@
+{
+  "degree": 2,
+  "cells": [
+    32,
+    64
+  ],
+  "cfl": 0.3,
+  "limiter": "tvb(M=1.0)",
+  "cases": {
+    "sod_right_shock": {
+      "pattern": "left_rarefaction + right_shock",
+      "final_time": 0.2,
+      "domain_clean": true,
+      "analytic": {
+        "star_state": [
+          0.30313017805064685,
+          0.9274526200489499
+        ],
+        "patterns": [
+          "left_rarefaction",
+          "right_shock"
+        ],
+        "waves": [
+          {
+            "side": "left",
+            "kind": "rarefaction",
+            "speed": -1.1832159566199232,
+            "tail_speed": -0.07027281256118334,
+            "upstream": [
+              1.0,
+              0.0,
+              1.0
+            ],
+            "downstream": null,
+            "production_rate": 0.0
+          },
+          {
+            "side": "right",
+            "kind": "shock",
+            "speed": 1.752155732030178,
+            "upstream": [
+              0.125,
+              0.0,
+              0.1
+            ],
+            "downstream": [
+              0.2655737117053071,
+              0.9274526200489499,
+              0.30313017805064685
+            ],
+            "production_rate": 0.011823104469858098
+          }
+        ],
+        "production_rate": 0.011823104469858098,
+        "production_total": 0.00236462089397162,
+        "isentropic": false,
+        "wave_speed_bounds": [
+          -1.1832159566199232,
+          1.752155732030178
+        ]
+      },
+      "baseline_selfcheck": {
+        "production_exact_solution": 0.0023645985865292374,
+        "relative_difference": 9.433834590278964e-06
+      },
+      "rows": [
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "cells": 32,
+          "degree": 2,
+          "steps": 224,
+          "entropy_initial": 0.038039566584857756,
+          "entropy_final": 0.04532285038018469,
+          "production_numeric": 0.007283283795326931,
+          "production_analytic": 0.00236462089397162,
+          "production_exact_solution": 0.0023645985865292374,
+          "relative_error_vs_analytic": 2.0801063349710653,
+          "second_law": true
+        },
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "cells": 64,
+          "degree": 2,
+          "steps": 459,
+          "entropy_initial": 0.03803956658485777,
+          "entropy_final": 0.04307640670259584,
+          "production_numeric": 0.00503684011773807,
+          "production_analytic": 0.00236462089397162,
+          "production_exact_solution": 0.0023645985865292374,
+          "relative_error_vs_analytic": 1.1300835709347843,
+          "second_law": true
+        }
+      ]
+    },
+    "mirror_sod_left_shock": {
+      "pattern": "left_shock + right_rarefaction",
+      "final_time": 0.2,
+      "domain_clean": true,
+      "analytic": {
+        "star_state": [
+          0.30313017805064685,
+          -0.9274526200489499
+        ],
+        "patterns": [
+          "left_shock",
+          "right_rarefaction"
+        ],
+        "waves": [
+          {
+            "side": "left",
+            "kind": "shock",
+            "speed": -1.752155732030178,
+            "upstream": [
+              0.125,
+              0.0,
+              0.1
+            ],
+            "downstream": [
+              0.2655737117053071,
+              -0.9274526200489499,
+              0.30313017805064685
+            ],
+            "production_rate": 0.011823104469858098
+          },
+          {
+            "side": "right",
+            "kind": "rarefaction",
+            "speed": 1.1832159566199232,
+            "tail_speed": 0.07027281256118334,
+            "upstream": [
+              1.0,
+              0.0,
+              1.0
+            ],
+            "downstream": null,
+            "production_rate": 0.0
+          }
+        ],
+        "production_rate": 0.011823104469858098,
+        "production_total": 0.00236462089397162,
+        "isentropic": false,
+        "wave_speed_bounds": [
+          -1.752155732030178,
+          1.1832159566199232
+        ]
+      },
+      "baseline_selfcheck": {
+        "production_exact_solution": 0.0023645985865292513,
+        "relative_difference": 9.433834584410037e-06
+      },
+      "rows": [
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "cells": 32,
+          "degree": 2,
+          "steps": 221,
+          "entropy_initial": 0.038039566584857756,
+          "entropy_final": 0.045451290981752025,
+          "production_numeric": 0.007411724396894269,
+          "production_analytic": 0.00236462089397162,
+          "production_exact_solution": 0.0023645985865292513,
+          "relative_error_vs_analytic": 2.1344239644459573,
+          "second_law": true
+        },
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "cells": 64,
+          "degree": 2,
+          "steps": 456,
+          "entropy_initial": 0.03803956658485777,
+          "entropy_final": 0.04313574188166464,
+          "production_numeric": 0.005096175296806872,
+          "production_analytic": 0.00236462089397162,
+          "production_exact_solution": 0.0023645985865292513,
+          "relative_error_vs_analytic": 1.155176463930897,
+          "second_law": true
+        }
+      ]
+    },
+    "symmetric_two_rarefaction": {
+      "pattern": "left_rarefaction + right_rarefaction",
+      "final_time": 0.15,
+      "domain_clean": true,
+      "analytic": {
+        "star_state": [
+          0.14774403000710462,
+          0.0
+        ],
+        "patterns": [
+          "left_rarefaction",
+          "right_rarefaction"
+        ],
+        "waves": [
+          {
+            "side": "left",
+            "kind": "rarefaction",
+            "speed": -1.8366600265340756,
+            "tail_speed": -0.6366600265340756,
+            "upstream": [
+              2.0,
+              -1.0,
+              1.0
+            ],
+            "downstream": null,
+            "production_rate": 0.0
+          },
+          {
+            "side": "right",
+            "kind": "rarefaction",
+            "speed": 1.8366600265340756,
+            "tail_speed": 0.6366600265340756,
+            "upstream": [
+              2.0,
+              1.0,
+              1.0
+            ],
+            "downstream": null,
+            "production_rate": 0.0
+          }
+        ],
+        "production_rate": 0.0,
+        "production_total": 0.0,
+        "isentropic": true,
+        "wave_speed_bounds": [
+          -1.8366600265340756,
+          1.8366600265340756
+        ]
+      },
+      "baseline_selfcheck": {
+        "production_exact_solution": -7.228086736144057e-06,
+        "relative_difference": null
+      },
+      "rows": [
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "cells": 32,
+          "degree": 2,
+          "steps": 148,
+          "entropy_initial": -1.9408121055678453,
+          "entropy_final": -1.335118313424204,
+          "production_numeric": 0.6056937921436414,
+          "production_analytic": 0.0,
+          "production_exact_solution": -7.228086736144057e-06,
+          "relative_error_vs_analytic": null,
+          "second_law": true
+        },
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "cells": 64,
+          "degree": 2,
+          "steps": 295,
+          "entropy_initial": -1.9408121055678444,
+          "entropy_final": -1.345289460464626,
+          "production_numeric": 0.5955226451032185,
+          "production_analytic": 0.0,
+          "production_exact_solution": -7.228086736144057e-06,
+          "relative_error_vs_analytic": null,
+          "second_law": true
+        }
+      ]
+    }
+  }
+}
