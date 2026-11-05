@@ -135,6 +135,13 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
   t = 0.1; `python -m benchmarks.verify_ns_dg_2d_wall` (~1 min).
   See [docs/reports/tensordg-ns-wall-sign-fix.md](docs/reports/tensordg-ns-wall-sign-fix.md).
 
+- **Unsteady wall shear stress** verified against Stokes' first problem
+  (impulsively started plate, `u = U erfc(y/2 sqrt(nu t))`,
+  `tau_w = mu U / sqrt(pi nu t)`): the one-sided wall closure converges at
+  second order for the *flux* (-4.16 % / -1.08 % / -0.27 % at 8 / 16 / 32 cells,
+  P1) and the closure-free momentum budget of the marched solution sits within
+  0.25 %; `python -m benchmarks.verify_ns_stokes_first`
+  ([docs/reports/tensordg-ns-stokes-first.md](docs/reports/tensordg-ns-stokes-first.md)).
 - Compressible Navier--Stokes on a 2-D tensor-product modal DG mesh (BR1/SIPG
   viscous fluxes, HLLC inviscid flux, isothermal no-slip walls) with an optional
   volumetric source term, verified by a **manufactured solution**: the coupled
