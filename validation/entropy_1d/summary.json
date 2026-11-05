@@ -36,14 +36,14 @@
   "cfl_sensitivity": [
     {
       "cfl": 0.12,
-      "steps": 1197,
-      "production_numeric": 0.0026417883681870355,
-      "relative_difference_to_reference_cfl": 0.0006275458624297661
+      "steps": 4815,
+      "production_numeric": 0.002438837045953282,
+      "relative_difference_to_reference_cfl": 0.00012071341131990195
     },
     {
       "cfl": 0.3,
-      "steps": 480,
-      "production_numeric": 0.0026401315645474335
+      "steps": 1929,
+      "production_numeric": 0.0024385426811475916
     }
   ],
   "shock": {
@@ -68,34 +68,8 @@
         {
           "limiter": "none",
           "tvb_constant": 1.0,
-          "cells": 64,
-          "degree": 2,
-          "steps": 480,
-          "dt": 5.445152540659026e-05,
-          "entropy_initial": 0.03803956658485777,
-          "entropy_final": 0.040679698149405204,
-          "production_numeric": 0.0026401315645474335,
-          "production_analytic": 0.00236462089397162,
-          "relative_error": 0.1165136751003945,
-          "second_law": true
-        },
-        {
-          "limiter": "none",
-          "tvb_constant": 1.0,
-          "cells": 128,
-          "degree": 2,
-          "steps": 963,
-          "dt": 8.585776871183892e-05,
-          "entropy_initial": 0.03803956658485777,
-          "entropy_final": 0.040576891861139844,
-          "production_numeric": 0.0025373252762820736,
-          "production_analytic": 0.00236462089397162,
-          "relative_error": 0.0730368164938183,
-          "second_law": true
-        },
-        {
-          "limiter": "none",
-          "tvb_constant": 1.0,
+          "limiter_stage": "every",
+          "label": "none",
           "cells": 256,
           "degree": 2,
           "steps": 1929,
@@ -110,34 +84,8 @@
         {
           "limiter": "tvb",
           "tvb_constant": 1.0,
-          "cells": 64,
-          "degree": 2,
-          "steps": 459,
-          "dt": 0.00036552472336712216,
-          "entropy_initial": 0.03803956658485777,
-          "entropy_final": 0.04307640670259584,
-          "production_numeric": 0.00503684011773807,
-          "production_analytic": 0.00236462089397162,
-          "relative_error": 1.1300835709347843,
-          "second_law": true
-        },
-        {
-          "limiter": "tvb",
-          "tvb_constant": 1.0,
-          "cells": 128,
-          "degree": 2,
-          "steps": 930,
-          "dt": 4.642579400782054e-05,
-          "entropy_initial": 0.03803956658485777,
-          "entropy_final": 0.041849427695119124,
-          "production_numeric": 0.0038098611102613533,
-          "production_analytic": 0.00236462089397162,
-          "relative_error": 0.6111932022482921,
-          "second_law": true
-        },
-        {
-          "limiter": "tvb",
-          "tvb_constant": 1.0,
+          "limiter_stage": "every",
+          "label": "tvb",
           "cells": 256,
           "degree": 2,
           "steps": 1871,
@@ -147,6 +95,22 @@
           "production_numeric": 0.0031441015282965765,
           "production_analytic": 0.00236462089397162,
           "relative_error": 0.32964296150481026,
+          "second_law": true
+        },
+        {
+          "limiter": "tvb",
+          "tvb_constant": 1.0,
+          "limiter_stage": "final",
+          "label": "tvb@final",
+          "cells": 256,
+          "degree": 2,
+          "steps": 1871,
+          "dt": 9.819016259488e-06,
+          "entropy_initial": 0.0380395665848577,
+          "entropy_final": 0.0412051142101178,
+          "production_numeric": 0.0031655476252600984,
+          "production_analytic": 0.00236462089397162,
+          "relative_error": 0.33871253245303146,
           "second_law": true
         }
       ]
@@ -172,6 +136,8 @@
         {
           "limiter": "none",
           "tvb_constant": 1.0,
+          "limiter_stage": "every",
+          "label": "none",
           "cells": 64,
           "degree": 2,
           "steps": 786,
@@ -184,22 +150,10 @@
           "second_law": true
         },
         {
-          "limiter": "none",
-          "tvb_constant": 1.0,
-          "cells": 128,
-          "degree": 2,
-          "steps": 1572,
-          "dt": 5.037375008692946e-05,
-          "entropy_initial": 0.6352383046097645,
-          "entropy_final": 0.770658435598529,
-          "production_numeric": 0.1354201309887645,
-          "production_analytic": 0.022480378587969228,
-          "relative_error": 5.023925729668848,
-          "second_law": true
-        },
-        {
           "limiter": "tvb",
           "tvb_constant": 1.0,
+          "limiter_stage": "every",
+          "label": "tvb",
           "cells": 64,
           "degree": 2,
           "steps": 753,
@@ -214,15 +168,17 @@
         {
           "limiter": "tvb",
           "tvb_constant": 1.0,
-          "cells": 128,
+          "limiter_stage": "final",
+          "label": "tvb@final",
+          "cells": 64,
           "degree": 2,
-          "steps": 1508,
-          "dt": 4.1180871122620255e-05,
-          "entropy_initial": 0.6352383046097645,
-          "entropy_final": 0.7768740413776213,
-          "production_numeric": 0.1416357367678568,
+          "steps": 753,
+          "dt": 1.9994989394950258e-05,
+          "entropy_initial": 0.635238304609761,
+          "entropy_final": 0.7823746292549014,
+          "production_numeric": 0.14713632464514037,
           "production_analytic": 0.022480378587969228,
-          "relative_error": 5.300415992266948,
+          "relative_error": 5.5450999443524935,
           "second_law": true
         }
       ]
@@ -248,15 +204,6 @@
       "relative_to_initial": 4.911992251435728e-08
     },
     {
-      "limiter": "none",
-      "tvb_constant": 1.0,
-      "cells": 64,
-      "degree": 2,
-      "steps": 620,
-      "production_numeric": 2.2758477394302368e-11,
-      "relative_to_initial": 1.6174085897789916e-09
-    },
-    {
       "limiter": "tvb",
       "tvb_constant": 1.0,
       "cells": 16,
@@ -273,51 +220,75 @@
       "steps": 310,
       "production_numeric": 3.9951965033141815e-05,
       "relative_to_initial": 0.0028393222595657097
-    },
-    {
-      "limiter": "tvb",
-      "tvb_constant": 1.0,
-      "cells": 64,
-      "degree": 2,
-      "steps": 620,
-      "production_numeric": 9.528349909903103e-06,
-      "relative_to_initial": 0.0006771645889876356
     }
   ],
   "profile_comparison": {
-    "cells": 128,
-    "relative_l2_entropy_density": {
-      "none": 1630.6865603319466,
-      "tvb": 1630.6867156232024
+    "cells": 256,
+    "entropy_jump_scale": 0.05398198004310473,
+    "metrics": {
+      "none": {
+        "rms": 292.5888659193247,
+        "rms_over_mean_abs": 7242.100596517453,
+        "legacy_relative_l2": 3783.14471676938,
+        "rms_over_entropy_jump": 5420.121041979043
+      },
+      "tvb": {
+        "rms": 292.5888663908223,
+        "rms_over_mean_abs": 7242.100608187867,
+        "legacy_relative_l2": 3783.1442585350214,
+        "rms_over_entropy_jump": 5420.121050713395
+      }
+    },
+    "legacy_relative_l2_entropy_density": {
+      "none": 3783.14471676938,
+      "tvb": 3783.1442585350214
     }
   },
   "verdicts": {
     "C1_second_law_all_runs": true,
     "C2_relative_error_at_finest_mesh": {
-      "sod/tvb": 1.1300835709347843,
-      "sod/none": 0.1165136751003945,
+      "sod/none": 0.03126158081594748,
+      "sod/tvb": 0.32964296150481026,
+      "sod/tvb@final": 0.33871253245303146,
+      "lax/none": 5.071770149645961,
       "lax/tvb": 5.5300664455771855,
-      "lax/none": 5.071770149645961
+      "lax/tvb@final": 5.5450999443524935
+    },
+    "C2_relative_error_at_coarsest_mesh": {
+      "sod/none": 0.03126158081594748,
+      "sod/tvb": 0.32964296150481026,
+      "sod/tvb@final": 0.33871253245303146,
+      "lax/none": 5.071770149645961,
+      "lax/tvb": 5.5300664455771855,
+      "lax/tvb@final": 5.5450999443524935
+    },
+    "C2_error_observed_orders": {
+      "sod/none": [],
+      "sod/tvb": [],
+      "sod/tvb@final": [],
+      "lax/none": [],
+      "lax/tvb": [],
+      "lax/tvb@final": []
     },
     "C2_below_3_percent": {
-      "sod/tvb": false,
       "sod/none": false,
+      "sod/tvb": false,
+      "sod/tvb@final": false,
+      "lax/none": false,
       "lax/tvb": false,
-      "lax/none": false
+      "lax/tvb@final": false
     },
     "C3_smooth_observed_orders": {
-      "tvb": [
-        2.129699218612715,
-        2.0679681642758627
-      ],
       "none": [
-        4.906754081391782,
-        4.924552200472037
+        4.906754081391782
+      ],
+      "tvb": [
+        2.129699218612715
       ]
     },
     "C3_smooth_tends_to_zero": {
-      "tvb": true,
-      "none": true
+      "none": true,
+      "tvb": false
     },
     "diagnostic_self_test_below_0_1_percent": false,
     "cfl_insensitive_below_1_percent": true

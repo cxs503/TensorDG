@@ -33,6 +33,8 @@ import numpy as np
 from benchmarks._entropy_tools import (
     analytic_right_shock_budget,
     entropy_density,
+    entropy_jump_scale,
+    entropy_profile_error,
     legendre_modes,
     observed_order,
     primitive_from_conservative,
@@ -83,7 +85,20 @@ def _entropy_of_run(left, right, ncells, degree, final_time, limiter, tvb_consta
     }
 
 
-def shock_study(cells, limiter_settings, degree=2, cfl=0.3):
+def finest_row(rows):
+    """The finest-mesh row (largest ``cells``) of a study subset.
+
+    Historical defect, fixed here: the "relative error at the finest mesh"
+    verdict used ``min(rows, key=cells)``, i.e. it graded the **coarsest** mesh.
+    That under-reported the gate (Sod / no limiter was scored 11.651 % at 64
+    cells while the 256-cell value was 3.126 %), so the honest-FAIL verdict in
+    the first version of `docs/entropy_verification.md` was partly a labelling
+    bug, not a solver result.
+    """
+    return max(rows, key=lambda row: row["cells"])
+
+
+def shock_study(cells, limiter_settings, degree=2, cfl=0.3, limiter_stages=("every",)):
     """Run the three criteria on Sod and Lax and on the smooth periodic wave."""
     sod = _sod_shock_budget(SOD_TIME)
     lax = _lax_shock_budget(LAX_TIME)
@@ -95,24 +110,30 @@ def shock_study(cells, limiter_settings, degree=2, cfl=0.3):
     for name, left, right, final_time, budget in scenarios:
         rows = []
         for limiter, tvb_constant in limiter_settings:
-            for ncells in cells:
-                run = _entropy_of_run(left, right, ncells, degree, final_time,
-                                      limiter, tvb_constant, "every", cfl=cfl)
-                produced = run["final"] - run["initial"]
-                rows.append({
-                    "limiter": limiter or "none",
-                    "tvb_constant": tvb_constant,
-                    "cells": ncells,
-                    "degree": degree,
-                    "steps": run["steps"],
-                    "dt": run["dt"],
-                    "entropy_initial": run["initial"],
-                    "entropy_final": run["final"],
-                    "production_numeric": produced,
-                    "production_analytic": budget["production_total"],
-                    "relative_error": relative_error(budget["production_total"], produced),
-                    "second_law": bool(produced > 0.0),
-                })
+            # ``limiter_stage`` is inert without a limiter, so do not spend runs on it.
+            stages = tuple(limiter_stages) if limiter else ("every",)
+            for limiter_stage in stages:
+                for ncells in cells:
+                    run = _entropy_of_run(left, right, ncells, degree, final_time,
+                                          limiter, tvb_constant, limiter_stage, cfl=cfl)
+                    produced = run["final"] - run["initial"]
+                    rows.append({
+                        "limiter": limiter or "none",
+                        "tvb_constant": tvb_constant,
+                        "limiter_stage": limiter_stage,
+                        "label": (limiter or "none")
+                        + ("" if limiter_stage == "every" else f"@{limiter_stage}"),
+                        "cells": ncells,
+                        "degree": degree,
+                        "steps": run["steps"],
+                        "dt": run["dt"],
+                        "entropy_initial": run["initial"],
+                        "entropy_final": run["final"],
+                        "production_numeric": produced,
+                        "production_analytic": budget["production_total"],
+                        "relative_error": relative_error(budget["production_total"], produced),
+                        "second_law": bool(produced > 0.0),
+                    })
         results[name] = {
             "analytic": {
                 "sigma": budget["sigma"],
@@ -262,6 +283,9 @@ def main():
     parser.add_argument("--cfl", type=float, default=0.3)
     parser.add_argument("--limiters", nargs="+", default=["none", "tvb"],
                         choices=["none", "tvb", "weno"])
+    parser.add_argument("--limiter-stage", nargs="+", default=["every"],
+                        choices=["every", "final"],
+                        help="SSP-RK3 stage(s) at which the limiter acts (ignored without a limiter)")
     parser.add_argument("--threads", type=int, default=1)
     parser.add_argument("--output", type=Path, default=Path("validation/entropy_1d/summary.json"))
     parser.add_argument("--figure", type=Path, default=Path("docs/figures/entropy_budget_1d.png"))
@@ -275,8 +299,10 @@ def main():
             pass
 
     limiter_settings = [(None if name == "none" else name, 1.0) for name in args.limiters]
-    shock_results = shock_study(args.cells, limiter_settings, degree=args.degree, cfl=args.cfl)
-    lax_results = shock_study(args.lax_cells, limiter_settings, degree=args.degree, cfl=args.cfl)
+    shock_results = shock_study(args.cells, limiter_settings, degree=args.degree,
+                                cfl=args.cfl, limiter_stages=args.limiter_stage)
+    lax_results = shock_study(args.lax_cells, limiter_settings, degree=args.degree,
+                              cfl=args.cfl, limiter_stages=args.limiter_stage)
     # keep only the Lax scenario from the second pass
     shock_results["lax"] = lax_results["lax"]
     smooth_rows = smooth_study(args.smooth_cells, limiter_settings, degree=args.degree)
@@ -347,7 +373,17 @@ def main():
         "smooth_periodic": smooth_rows,
         "profile_comparison": {
             "cells": profile_ncells,
-            "relative_l2_entropy_density": {
+            "entropy_jump_scale": entropy_jump_scale(
+                _sod_shock_budget(SOD_TIME)["upstream"],
+                _sod_shock_budget(SOD_TIME)["downstream"]),
+            "metrics": {
+                key: entropy_profile_error(profile[key][1], profile[key][2], profile[key][0],
+                                           entropy_jump_scale(
+                                               _sod_shock_budget(SOD_TIME)["upstream"],
+                                               _sod_shock_budget(SOD_TIME)["downstream"]))
+                for key in ("none", "tvb", "weno") if key in profile
+            },
+            "legacy_relative_l2_entropy_density": {
                 key: float(np.linalg.norm(profile[key][1] - profile[key][2])
                            / np.linalg.norm(profile[key][2]))
                 for key in ("none", "tvb", "weno") if key in profile
@@ -355,12 +391,17 @@ def main():
         },
     }
 
-    finest, second_law = {}, all(
+    finest, coarsest, budget_orders, second_law = {}, {}, {}, all(
         row["second_law"] for case in shock_results.values() for row in case["rows"])
     for name, case in shock_results.items():
-        for limiter in {row["limiter"] for row in case["rows"]}:
-            subset = [row for row in case["rows"] if row["limiter"] == limiter]
-            finest[f"{name}/{limiter}"] = min(subset, key=lambda row: row["cells"])["relative_error"]
+        for label in {row["label"] for row in case["rows"]}:
+            subset = sorted([row for row in case["rows"] if row["label"] == label],
+                            key=lambda row: row["cells"])
+            finest[f"{name}/{label}"] = finest_row(subset)["relative_error"]
+            coarsest[f"{name}/{label}"] = subset[0]["relative_error"]
+            budget_orders[f"{name}/{label}"] = observed_order(
+                [row["cells"] for row in subset],
+                [row["relative_error"] for row in subset])
     smooth_orders = {
         limiter: observed_order(
             [row["cells"] for row in smooth_rows if row["limiter"] == limiter],
@@ -370,6 +411,8 @@ def main():
     summary["verdicts"] = {
         "C1_second_law_all_runs": bool(second_law),
         "C2_relative_error_at_finest_mesh": finest,
+        "C2_relative_error_at_coarsest_mesh": coarsest,
+        "C2_error_observed_orders": budget_orders,
         "C2_below_3_percent": {key: bool(value < 0.03) for key, value in finest.items()},
         "C3_smooth_observed_orders": smooth_orders,
         "C3_smooth_tends_to_zero": {
