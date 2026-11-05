@@ -23,7 +23,7 @@ from tensordg.limiters import (
     apply_weno_limiter,
 )
 
-from _limiter_reference import (
+from tests._limiter_reference import (
     ref_troubled_cell_indicator,
     ref_tvb_limiter,
     ref_weno_limiter,
