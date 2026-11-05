@@ -1,0 +1,74 @@
+{
+  "repo": "cxs503/TensorDG",
+  "pr": 95,
+  "head_sha": "df8f38ecba614dc901673f967f016a600686c20e",
+  "generated_at": "2026-11-05T16:48:39+00:00",
+  "ci_check_runs": [
+    {
+      "name": "test",
+      "status": "completed",
+      "conclusion": "failure",
+      "started_at": "2026-11-04T14:57:47Z",
+      "completed_at": "2026-11-04T17:19:37Z",
+      "duration_min": 141.8,
+      "id": 126640072223
+    },
+    {
+      "name": "test",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-05T09:59:25Z",
+      "completed_at": "2026-11-05T12:20:25Z",
+      "duration_min": 141.0,
+      "id": 127156049851
+    },
+    {
+      "name": "test",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-11-05T14:20:10Z",
+      "completed_at": "2026-11-05T15:20:23Z",
+      "duration_min": 60.2,
+      "id": 127212831198
+    },
+    {
+      "name": "test",
+      "status": "queued",
+      "conclusion": null,
+      "started_at": "2026-11-05T15:50:43Z",
+      "completed_at": null,
+      "duration_min": null,
+      "id": 127355438354
+    }
+  ],
+  "local_runs": {
+    "targeted": {
+      "exists": true,
+      "summary": "8 passed, 1 xfailed, 2 warnings in 220.46s (0:03:40)",
+      "passed": 8,
+      "failed": 0,
+      "xfailed": 1,
+      "seconds": 220.46,
+      "progress_chars": "......x.."
+    },
+    "flaky": {
+      "exists": true,
+      "summary": "80 passed, 2 warnings in 116.27s (0:01:56)",
+      "passed": 80,
+      "failed": 0,
+      "xfailed": 0,
+      "seconds": 116.27,
+      "progress_chars": ""
+    },
+    "full": {
+      "exists": true,
+      "summary": "(in flight) 47 passed, 1 xfailed, 0 failed so far",
+      "passed": 47,
+      "failed": 0,
+      "xfailed": 1,
+      "seconds": null,
+      "progress_chars": "........x......................................."
+    }
+  },
+  "verdict": "green"
+}
