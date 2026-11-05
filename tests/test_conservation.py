@@ -15,7 +15,7 @@ import math
 import numpy as np
 import pytest
 
-from _conservation_tools import (
+from tests._conservation_tools import (
     boundary_increment,
     cell_averages_1d,
     cell_averages_2d,
@@ -30,7 +30,7 @@ from _conservation_tools import (
     scaled_drift,
     shock_position,
 )
-from conservation_study import (
+from tests.conservation_study import (
     CRITERIA,
     SOD_FINAL_TIME,
     SOD_LEFT,
