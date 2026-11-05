@@ -65,5 +65,14 @@ def troubled_from_differences(
     # Round-off floor: for affine data the deviation is a few ulp of the local
     # differences, which must not be mistaken for a resolved feature.
     scale = torch.maximum(a_left, a_right).max(dim=-1).values
-    troubled = deviation > threshold + 1e-12 * scale.clamp_min(1.0)
+    # The floor coefficient must track the *dtype* round-off: for ``float64``
+    # machine epsilon is 2.2e-16, so the historic ``1e-12`` sits about four
+    # decades above it, but for ``float32`` (eps = 1.2e-7) ``1e-12`` is below
+    # one ulp and protects nothing -- affine data in single precision was then
+    # flagged as troubled because the difference of two neighbouring
+    # differences is a few ulp.  ``8 * eps`` keeps four decades of margin in
+    # both precisions and leaves the ``float64`` result bit-identical
+    # (8 * eps_float64 = 1.8e-15 < 1e-12).
+    floor_coeff = max(1e-12, 8.0 * torch.finfo(d_left.dtype).eps)
+    troubled = deviation > threshold + floor_coeff * scale.clamp_min(1.0)
     return troubled, mm
