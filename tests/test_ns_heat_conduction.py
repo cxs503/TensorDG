@@ -5,14 +5,18 @@ and ``gas_constants`` shipped without any test.  These tests pin down
 
 * what *is* correct: the analytic steady state satisfies the compressible
   equations, and on it the DG mass/momentum rows are at machine zero;
-* what is *broken*: the isothermal-wall energy closure is inconsistent, so the
-  exact steady state is not a discrete steady state (the wall residual does not
-  decay under refinement) and the shipped wrapper cannot integrate at all
-  (``FloatingPointError: nonphysical cell average``).
+* what is *still broken*: the isothermal-wall energy closure is inconsistent, so
+  the exact steady state is not a discrete steady state -- the wall-cell energy
+  residual stagnates at an O(1) floor instead of decaying under refinement.
 
-The broken behaviours are pinned with ``xfail(strict=True)``: when the wall
-closure is fixed, these tests turn red and have to be flipped, which is the
-intended ratchet.  See ``docs/reports/tensordg-ns-heat-conduction-verification.md``.
+Ratchet status (re-adjudicated 2026-11-04 against main's m3139 wall repair,
+which restored the one-sided DG wall derivative and added the positivity
+guards): the shipped wrapper now integrates its documented defaults
+(``final_time=40``) and preserves the exact steady state at ``final_time=0.05``.
+Those two pins therefore XPASSed, which is a red ``strict`` xfail -- they are
+flipped to positive assertions below.  The two residual-consistency pins still
+fail and stay ``xfail(strict=True)``.
+See ``docs/reports/tensordg-ns-heat-conduction-verification.md``.
 """
 from __future__ import annotations
 
@@ -122,17 +126,30 @@ def test_wall_energy_residual_is_small_for_both_reconstructions():
         assert value < 1e-6, f"{gradient}: wall energy residual {value:.4f}"
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "known defect: solve_heat_conduction_dg_2d raises FloatingPointError at its "
-    "documented defaults (ncells=(2,16), degree=1, final_time=40)"))
 def test_shipped_wrapper_runs_at_its_documented_defaults():
-    ns.solve_heat_conduction_dg_2d()
+    """Ratchet flip (2026-11-04): used to raise FloatingPointError at defaults.
+
+    The m3139 wall repair (one-sided DG wall derivative as the default, plus the
+    positivity filter and the pressure guard) lets the documented defaults
+    (``ncells=(2,16)``, ``degree=1``, ``final_time=40``) complete.  The pin now
+    asserts the run stays physical instead of asserting the crash.
+    """
+    x, y, coeff, metadata = ns.solve_heat_conduction_dg_2d(dtype=torch.float64)
+    assert torch.isfinite(coeff).all()
+    fields = ns.cell_fields(coeff)
+    assert float(fields["pressure"].min()) > 0.0, "cell-average pressure left the physical cone"
+    assert float(fields["density"].min()) > 0.0
+    # No accuracy claim here: the wall closure is still inconsistent (the two
+    # xfails above), so this pin only rules out the abort it used to assert.
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "known defect: even starting on the exact steady state the run collapses, "
-    "so the failure is not an initial-condition or CFL artefact"))
 def test_exact_steady_state_is_approximately_preserved():
+    """Ratchet flip (2026-11-04): the collapse at ``final_time=0.05`` is gone.
+
+    Kept as a positive pin because it separates the two original symptoms: the
+    transient no longer collapses on the exact steady state, while the wall
+    residual of that same state still does not decay (the two xfails below).
+    """
     x, y, coeff, metadata = ns.solve_navier_stokes_dg_2d(
         _steady_initial, ncells=(2, 16), degree=1, final_time=0.05, cfl=0.3,
         mu=MU, prandtl=PRANDTL, periodic=(True, False),
