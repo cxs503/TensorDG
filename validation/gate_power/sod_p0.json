@@ -1,0 +1,55 @@
+{
+  "case": "sod_p0",
+  "crossing_factor": 2.0,
+  "crossing_levels": 1.0,
+  "documented_cells": 3200,
+  "documented_error": 0.025176584320029952,
+  "documented_kwargs": {},
+  "gate": 0.03,
+  "margin": 1.1915834022064955,
+  "refinements": [
+    {
+      "cells": 3200,
+      "coarsening_factor": 1.0,
+      "errors": {
+        "density": 0.014223484538851673,
+        "pressure": 0.008169458496384575,
+        "velocity": 0.025176584320029952
+      },
+      "kwargs": {},
+      "level": 0,
+      "max_error": 0.025176584320029952,
+      "seconds": 280.385,
+      "status": "ok"
+    },
+    {
+      "cells": 1600,
+      "coarsening_factor": 2.0,
+      "errors": {
+        "density": 0.018150175557289917,
+        "pressure": 0.01261782445081115,
+        "velocity": 0.03607975990156078
+      },
+      "kwargs": {},
+      "level": 1,
+      "max_error": 0.03607975990156078,
+      "seconds": 13.914,
+      "status": "ok"
+    }
+  ],
+  "sabotage": [
+    {
+      "axis": "cfl",
+      "broke_gate": true,
+      "cells": 3200,
+      "exception": "ValueError: ncells >= 20, final_time >= 0, and 0 < cfl <= 0.5 are required",
+      "kwargs": {
+        "cfl": 1.1
+      },
+      "max_error": Infinity,
+      "seconds": 0.0,
+      "status": "raised",
+      "value": 1.1
+    }
+  ]
+}
