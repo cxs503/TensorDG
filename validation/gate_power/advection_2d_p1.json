@@ -1,0 +1,65 @@
+{
+  "case": "advection_2d_p1",
+  "crossing_factor": 4.0,
+  "crossing_levels": 2.0,
+  "documented_cells": 24,
+  "documented_error": 0.0028123291169671015,
+  "documented_kwargs": {},
+  "gate": 0.03,
+  "margin": 10.667314795770732,
+  "refinements": [
+    {
+      "cells": 24,
+      "coarsening_factor": 1.0,
+      "errors": {
+        "u": 0.0028123291169671015
+      },
+      "kwargs": {},
+      "level": 0,
+      "max_error": 0.0028123291169671015,
+      "seconds": 12.033,
+      "status": "ok"
+    },
+    {
+      "cells": 12,
+      "coarsening_factor": 2.0,
+      "errors": {
+        "u": 0.01292296208334303
+      },
+      "kwargs": {},
+      "level": 1,
+      "max_error": 0.01292296208334303,
+      "seconds": 4.903,
+      "status": "ok"
+    },
+    {
+      "cells": 6,
+      "coarsening_factor": 4.0,
+      "errors": {
+        "u": 0.06667596573504334
+      },
+      "kwargs": {},
+      "level": 2,
+      "max_error": 0.06667596573504334,
+      "seconds": 2.159,
+      "status": "ok"
+    }
+  ],
+  "sabotage": [
+    {
+      "axis": "compare_time",
+      "broke_gate": true,
+      "cells": 24,
+      "errors": {
+        "u": 0.63174407124127
+      },
+      "kwargs": {
+        "compare_time": 1.5
+      },
+      "max_error": 0.63174407124127,
+      "seconds": 14.276,
+      "status": "ok",
+      "value": 1.5
+    }
+  ]
+}
