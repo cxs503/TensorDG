@@ -1,0 +1,56 @@
+{
+  "mission": "m4361 / PR #100 (agent/m3714) CI red repair",
+  "residuals": {
+    "wall_ny16": 0.1573879358806165,
+    "wall_ny32": 0.13985058235677172,
+    "wall_ny64": 0.13143440035951315,
+    "interior_ny16": 0.17093204676291052,
+    "interior_ny32": 0.09291243717660436,
+    "interior_ny64": 0.048553825727609023
+  },
+  "ratios": {
+    "interior_ratio_16_32": 1.8397111512424273,
+    "wall_ratio_16_32": 1.1254006470928049,
+    "wall_ratio_32_64": 1.0640333274564175
+  },
+  "stale_pins_hold": {
+    "wall_ratio_16_32_lt_1.1": false,
+    "entry_point_raises_FloatingPointError": false
+  },
+  "stale_pins_all_hold": false,
+  "repaired_pins_hold": {
+    "interior_ratio_16_32_gt_1.7": true,
+    "wall_ratio_16_32_lt_1.2": true,
+    "wall_ratio_32_64_lt_1.1": true,
+    "wall_ratio_monotone": true,
+    "wall_floor_gt_1e_2": true,
+    "entry_point_completes": true,
+    "entry_point_positive": true,
+    "entry_point_monotone": true,
+    "entry_point_within_walls": true
+  },
+  "repaired_pins_all_hold": true,
+  "entry_point": {
+    "finite": true,
+    "p_min": 0.7323769808457793,
+    "p_max": 0.9260215474236826,
+    "rho_min": 0.9124621123030308,
+    "rho_max": 1.3363162325103197,
+    "theta_hot_wall": 0.9841004221902061,
+    "theta_cold_wall": 0.5616704026133188,
+    "monotone_in_y": true,
+    "steps": 1070,
+    "theta_profile": [
+      0.9841004221902061,
+      0.9552536026645345,
+      0.926023010083668,
+      0.8901324066581489,
+      0.841969739572675,
+      0.7751721124771771,
+      0.6826892655162824,
+      0.5616704026133188
+    ],
+    "y_cells": 8
+  },
+  "margin_of_stale_wall_bound": 0.02309149735709526
+}
