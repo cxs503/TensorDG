@@ -1,0 +1,122 @@
+{
+  "case": "heat_1d_p2",
+  "crossing_factor": null,
+  "crossing_levels": null,
+  "documented_cells": 16,
+  "documented_error": 3.603896643012751e-05,
+  "documented_kwargs": {},
+  "gate": 0.03,
+  "margin": 832.4323079066131,
+  "refinements": [
+    {
+      "cells": 16,
+      "coarsening_factor": 1.0,
+      "errors": {
+        "u": 3.603896643012751e-05
+      },
+      "kwargs": {},
+      "level": 0,
+      "max_error": 3.603896643012751e-05,
+      "seconds": 0.055,
+      "status": "ok"
+    },
+    {
+      "cells": 8,
+      "coarsening_factor": 2.0,
+      "errors": {
+        "u": 0.00027265154353879395
+      },
+      "kwargs": {},
+      "level": 1,
+      "max_error": 0.00027265154353879395,
+      "seconds": 0.015,
+      "status": "ok"
+    },
+    {
+      "cells": 4,
+      "coarsening_factor": 4.0,
+      "errors": {
+        "u": 0.0022043034897453917
+      },
+      "kwargs": {},
+      "level": 2,
+      "max_error": 0.0022043034897453917,
+      "seconds": 0.033,
+      "status": "ok"
+    },
+    {
+      "cells": 2,
+      "coarsening_factor": 8.0,
+      "errors": {
+        "u": 0.019477608890412113
+      },
+      "kwargs": {},
+      "level": 3,
+      "max_error": 0.019477608890412113,
+      "seconds": 0.006,
+      "status": "ok"
+    }
+  ],
+  "sabotage": [
+    {
+      "axis": "penalty",
+      "broke_gate": false,
+      "cells": 16,
+      "errors": {
+        "u": 3.461059437049305e-05
+      },
+      "kwargs": {
+        "penalty": 5.0
+      },
+      "max_error": 3.461059437049305e-05,
+      "seconds": 0.046,
+      "status": "ok",
+      "value": 5.0
+    },
+    {
+      "axis": "penalty",
+      "broke_gate": false,
+      "cells": 16,
+      "errors": {
+        "u": 3.1278699210115955e-05
+      },
+      "kwargs": {
+        "penalty": 1.0
+      },
+      "max_error": 3.1278699210115955e-05,
+      "seconds": 0.029,
+      "status": "ok",
+      "value": 1.0
+    },
+    {
+      "axis": "penalty",
+      "broke_gate": true,
+      "cells": 16,
+      "errors": {
+        "u": 4.628893739777192e+57
+      },
+      "kwargs": {
+        "penalty": 0.2
+      },
+      "max_error": 4.628893739777192e+57,
+      "seconds": 0.032,
+      "status": "ok",
+      "value": 0.2
+    },
+    {
+      "axis": "penalty",
+      "broke_gate": true,
+      "cells": 16,
+      "errors": {
+        "u": 4.039333826832046e+99
+      },
+      "kwargs": {
+        "penalty": 0.05
+      },
+      "max_error": 4.039333826832046e+99,
+      "seconds": 0.041,
+      "status": "ok",
+      "value": 0.05
+    }
+  ]
+}

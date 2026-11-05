@@ -1,0 +1,60 @@
+{
+  "case": "lax_p3",
+  "crossing_factor": 2.0,
+  "crossing_levels": 1.0,
+  "documented_cells": 400,
+  "documented_error": 0.027694203386353103,
+  "documented_kwargs": {},
+  "gate": 0.03,
+  "margin": 1.0832591781565064,
+  "refinements": [
+    {
+      "cells": 400,
+      "coarsening_factor": 1.0,
+      "errors": {
+        "density": 0.027694203386353103,
+        "pressure": 0.009193692240376066,
+        "velocity": 0.016052703865463716
+      },
+      "kwargs": {},
+      "level": 0,
+      "max_error": 0.027694203386353103,
+      "seconds": 78.418,
+      "status": "ok"
+    },
+    {
+      "cells": 200,
+      "coarsening_factor": 2.0,
+      "errors": {
+        "density": 0.04154238385558391,
+        "pressure": 0.013206301531589477,
+        "velocity": 0.02945165272001447
+      },
+      "kwargs": {},
+      "level": 1,
+      "max_error": 0.04154238385558391,
+      "seconds": 30.375,
+      "status": "ok"
+    }
+  ],
+  "sabotage": [
+    {
+      "axis": "degree",
+      "broke_gate": true,
+      "cells": 400,
+      "errors": {
+        "density": 0.04856002158252363,
+        "pressure": 0.009549746585813522,
+        "velocity": 0.016358915989067906
+      },
+      "kwargs": {
+        "degree": 1
+      },
+      "max_error": 0.04856002158252363,
+      "rejected": false,
+      "seconds": 30.056,
+      "status": "ok",
+      "value": 1
+    }
+  ]
+}
