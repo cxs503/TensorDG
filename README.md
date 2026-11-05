@@ -117,6 +117,15 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
   Richardson extrapolation and GCI mesh independence, p-refinement decay, and
   cross-backend (dense / sparse / matrix-free) accuracy equivalence.
 
+- **Per-side Neumann / Dirichlet diffusion**: `tensordg/poisson_2d_bc.py` adds the
+  natural Neumann condition (`du/dn = g`, chosen per side) that the shipped
+  Dirichlet-only SIPG benchmark could not express; the all-Dirichlet assembly is
+  bit-identical to `solve_poisson_2d`. Three manufactured solutions (pure Neumann
+  with the rank-one gauge, mixed zero-flux, mixed inhomogeneous flux) converge at
+  the theoretical order (p = 1 -> 2.00, p = 2 -> 3.00) and hit the 3 % gate from
+  the coarsest mesh; dropping the Neumann load raises the error 57x (0.95 % ->
+  55 %), so the test is sensitive; `python -m benchmarks.verify_poisson_2d_neumann`
+  (~40 s) -- see [docs/reports/tensordg-poisson-neumann-verification.md](docs/reports/tensordg-poisson-neumann-verification.md).
 - **Verified Dirichlet (wall) path** for the compressible Navier--Stokes solver
   (`tensordg/ns_dg_2d.py`): a shear mode between two no-slip isothermal walls
   matches the exact Stokes series to 0.67 % / 0.17 % / 0.04 % at 8 / 16 / 32

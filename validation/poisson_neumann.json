@@ -1,0 +1,353 @@
+{
+  "cases": {
+    "deg1/A_pure_neumann": {
+      "note": "du/dn = 0 on all four sides; operator singular, rank-one gauge",
+      "bc": {
+        "left": "neumann",
+        "right": "neumann",
+        "bottom": "neumann",
+        "top": "neumann"
+      },
+      "rows": [
+        {
+          "cells": 8,
+          "dofs": 256,
+          "relative_l2": 0.015189436621691085,
+          "absolute_l2": 0.0075947183108455414,
+          "max_abs_error": 0.023567249842882675,
+          "constant_offset": 9.01679189754985e-13,
+          "matrix_symmetry_error": 1.0658141036401503e-14,
+          "nullspace_residual": 8.88178419700125e-17,
+          "linear_residual": 2.8571184003553183e-13,
+          "seconds": 0.04643106460571289
+        },
+        {
+          "cells": 16,
+          "dofs": 1024,
+          "relative_l2": 0.003800360127037221,
+          "absolute_l2": 0.0019001800635186103,
+          "max_abs_error": 0.006048330054714709,
+          "constant_offset": -7.774747202103898e-13,
+          "matrix_symmetry_error": 1.0658141036401503e-14,
+          "nullspace_residual": 8.88178419700125e-17,
+          "linear_residual": 2.177369967063109e-12,
+          "seconds": 0.18091058731079102
+        },
+        {
+          "cells": 32,
+          "dofs": 4096,
+          "relative_l2": 0.0009502829756475254,
+          "absolute_l2": 0.00047514148782376266,
+          "max_abs_error": 0.0015219895310608176,
+          "constant_offset": 5.258858737475398e-12,
+          "matrix_symmetry_error": 1.0658141036401503e-14,
+          "nullspace_residual": 8.88178419700125e-17,
+          "linear_residual": 1.2442884068587891e-11,
+          "seconds": 3.51731276512146
+        }
+      ],
+      "orders": [
+        1.9988603192799816,
+        1.999707047836844
+      ],
+      "theory_order": 2
+    },
+    "deg1/B_mixed_zero_flux": {
+      "note": "Neumann on left/bottom, Dirichlet on right/top",
+      "bc": {
+        "left": "neumann",
+        "bottom": "neumann"
+      },
+      "rows": [
+        {
+          "cells": 8,
+          "dofs": 256,
+          "relative_l2": 0.0038002618674647763,
+          "absolute_l2": 0.001900130933732388,
+          "max_abs_error": 0.006048372044167638,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.0658141036401503e-14,
+          "nullspace_residual": 0.0,
+          "linear_residual": 9.139375068983812e-13,
+          "seconds": 0.03559756278991699
+        },
+        {
+          "cells": 16,
+          "dofs": 1024,
+          "relative_l2": 0.0009502798990347121,
+          "absolute_l2": 0.00047513994951735604,
+          "max_abs_error": 0.0015219908251502545,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.0658141036401503e-14,
+          "nullspace_residual": 0.0,
+          "linear_residual": 6.906674577831953e-12,
+          "seconds": 0.17191767692565918
+        },
+        {
+          "cells": 32,
+          "dofs": 4096,
+          "relative_l2": 0.00023758279224971146,
+          "absolute_l2": 0.00011879139612485573,
+          "max_abs_error": 0.00038111857253730896,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.0658141036401503e-14,
+          "nullspace_residual": 0.0,
+          "linear_residual": 4.0963088516807014e-11,
+          "seconds": 3.3301427364349365
+        }
+      ],
+      "orders": [
+        1.999674416837074,
+        1.9999221651138792
+      ],
+      "theory_order": 2
+    },
+    "deg1/C_mixed_inhomogeneous_flux": {
+      "note": "du/dn = -pi sin(pi y) on the left edge, Dirichlet elsewhere",
+      "bc": {
+        "left": "neumann"
+      },
+      "rows": [
+        {
+          "cells": 8,
+          "dofs": 256,
+          "relative_l2": 0.015149817394710564,
+          "absolute_l2": 0.007574908697355282,
+          "max_abs_error": 0.023545176320456385,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.0658141036401503e-14,
+          "nullspace_residual": 0.0,
+          "linear_residual": 3.265868003322962e-13,
+          "seconds": 0.03488445281982422
+        },
+        {
+          "cells": 16,
+          "dofs": 1024,
+          "relative_l2": 0.0037979545746207235,
+          "absolute_l2": 0.0018989772873103617,
+          "max_abs_error": 0.006046766670819492,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.0658141036401503e-14,
+          "nullspace_residual": 0.0,
+          "linear_residual": 4.898733715735049e-13,
+          "seconds": 0.1900181770324707
+        },
+        {
+          "cells": 32,
+          "dofs": 4096,
+          "relative_l2": 0.0009501344105060252,
+          "absolute_l2": 0.0004750672052530126,
+          "max_abs_error": 0.0015218861706146614,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.0658141036401503e-14,
+          "nullspace_residual": 0.0,
+          "linear_residual": 1.7115143882279972e-12,
+          "seconds": 3.217740297317505
+        }
+      ],
+      "orders": [
+        1.9960058491966919,
+        1.9990191268029407
+      ],
+      "theory_order": 2
+    },
+    "deg2/A_pure_neumann": {
+      "note": "du/dn = 0 on all four sides; operator singular, rank-one gauge",
+      "bc": {
+        "left": "neumann",
+        "right": "neumann",
+        "bottom": "neumann",
+        "top": "neumann"
+      },
+      "rows": [
+        {
+          "cells": 8,
+          "dofs": 576,
+          "relative_l2": 0.00048094501635384903,
+          "absolute_l2": 0.0002404725081769245,
+          "max_abs_error": 0.0004921274580671294,
+          "constant_offset": 3.5521393430284175e-12,
+          "matrix_symmetry_error": 1.1368683772161603e-13,
+          "nullspace_residual": 7.894919286223334e-17,
+          "linear_residual": 7.392497725098453e-13,
+          "seconds": 0.046961307525634766
+        },
+        {
+          "cells": 16,
+          "dofs": 2304,
+          "relative_l2": 6.030303035844358e-05,
+          "absolute_l2": 3.0151515179221786e-05,
+          "max_abs_error": 6.0619433328419456e-05,
+          "constant_offset": 3.1423265055410604e-12,
+          "matrix_symmetry_error": 1.1368683772161603e-13,
+          "nullspace_residual": 7.894919286223334e-17,
+          "linear_residual": 5.021369196837954e-12,
+          "seconds": 0.7233617305755615
+        },
+        {
+          "cells": 32,
+          "dofs": 9216,
+          "relative_l2": 7.543560540875687e-06,
+          "absolute_l2": 3.771780270437843e-06,
+          "max_abs_error": 7.488932370001565e-06,
+          "constant_offset": -5.1589941628578384e-11,
+          "matrix_symmetry_error": 1.1368683772161603e-13,
+          "nullspace_residual": 7.894919286223334e-17,
+          "linear_residual": 3.7157118367460345e-11,
+          "seconds": 29.6589412689209
+        }
+      ],
+      "orders": [
+        2.9955695608669464,
+        2.9989129648590587
+      ],
+      "theory_order": 3
+    },
+    "deg2/B_mixed_zero_flux": {
+      "note": "Neumann on left/bottom, Dirichlet on right/top",
+      "bc": {
+        "left": "neumann",
+        "bottom": "neumann"
+      },
+      "rows": [
+        {
+          "cells": 8,
+          "dofs": 576,
+          "relative_l2": 6.015416574075702e-05,
+          "absolute_l2": 3.0077082870378508e-05,
+          "max_abs_error": 6.06238260103531e-05,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.1368683772161603e-13,
+          "nullspace_residual": 0.0,
+          "linear_residual": 2.177916907522055e-12,
+          "seconds": 0.047687530517578125
+        },
+        {
+          "cells": 16,
+          "dofs": 2304,
+          "relative_l2": 7.534204096218694e-06,
+          "absolute_l2": 3.767102048109347e-06,
+          "max_abs_error": 7.489007208483223e-06,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.1368683772161603e-13,
+          "nullspace_residual": 0.0,
+          "linear_residual": 1.5730284939187287e-11,
+          "seconds": 0.6708219051361084
+        },
+        {
+          "cells": 32,
+          "dofs": 9216,
+          "relative_l2": 9.42536352008937e-07,
+          "absolute_l2": 4.712681760044685e-07,
+          "max_abs_error": 9.297388813278573e-07,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.1368683772161603e-13,
+          "nullspace_residual": 0.0,
+          "linear_residual": 6.936707768001089e-11,
+          "seconds": 27.804590702056885
+        }
+      ],
+      "orders": [
+        2.9971376285384688,
+        2.9988349485571186
+      ],
+      "theory_order": 3
+    },
+    "deg2/C_mixed_inhomogeneous_flux": {
+      "note": "du/dn = -pi sin(pi y) on the left edge, Dirichlet elsewhere",
+      "bc": {
+        "left": "neumann"
+      },
+      "rows": [
+        {
+          "cells": 8,
+          "dofs": 576,
+          "relative_l2": 0.00047943015491502117,
+          "absolute_l2": 0.00023971507745751058,
+          "max_abs_error": 0.0005060894222723711,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.1368683772161603e-13,
+          "nullspace_residual": 0.0,
+          "linear_residual": 3.972356260332771e-13,
+          "seconds": 0.05661797523498535
+        },
+        {
+          "cells": 16,
+          "dofs": 2304,
+          "relative_l2": 6.021767250511654e-05,
+          "absolute_l2": 3.010883625255827e-05,
+          "max_abs_error": 6.144619549541819e-05,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.1368683772161603e-13,
+          "nullspace_residual": 0.0,
+          "linear_residual": 2.0607061221012346e-12,
+          "seconds": 0.6158614158630371
+        },
+        {
+          "cells": 32,
+          "dofs": 9216,
+          "relative_l2": 7.538544163865768e-06,
+          "absolute_l2": 3.769272081932884e-06,
+          "max_abs_error": 7.570442597679139e-06,
+          "constant_offset": 0.0,
+          "matrix_symmetry_error": 1.1368683772161603e-13,
+          "nullspace_residual": 0.0,
+          "linear_residual": 4.465680744925639e-12,
+          "seconds": 27.861801147460938
+        }
+      ],
+      "orders": [
+        2.9930618014936115,
+        2.997829103338556
+      ],
+      "theory_order": 3
+    }
+  },
+  "degrees": [
+    1,
+    2
+  ],
+  "cells": [
+    8,
+    16,
+    32
+  ],
+  "negative_control_dropped_flux_deg1": {
+    "cells": [
+      8,
+      16
+    ],
+    "relative_l2": [
+      0.5462861004806024,
+      0.5539094543694996
+    ],
+    "note": "same problem as case C but with the Neumann load omitted"
+  },
+  "dirichlet_path_regression": [
+    {
+      "degree": 1,
+      "cells": 8,
+      "max_abs_difference": 0.0,
+      "reference_relative_l2": 0.015186307920393367
+    },
+    {
+      "degree": 1,
+      "cells": 16,
+      "max_abs_difference": 0.0,
+      "reference_relative_l2": 0.00380026186743542
+    },
+    {
+      "degree": 2,
+      "cells": 8,
+      "max_abs_difference": 0.0,
+      "reference_relative_l2": 0.00047861928523596864
+    },
+    {
+      "degree": 2,
+      "cells": 16,
+      "max_abs_difference": 0.0,
+      "reference_relative_l2": 6.01541657391906e-05
+    }
+  ],
+  "elapsed_seconds": 100.39653062820435
+}

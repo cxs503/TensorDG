@@ -17,6 +17,11 @@ from .euler_dg_1d import solve_euler_dg_1d, solve_periodic_euler_dg_1d
 from .heat_1d import heat_error, solve_heat_1d
 from .limiters import apply_limiter, apply_tvb_limiter, apply_weno_limiter
 from .poisson_2d import poisson_error_2d, solve_poisson_2d
+from .poisson_2d_bc import (
+    assemble_poisson_2d_bc,
+    l2_error_2d,
+    solve_poisson_2d_bc,
+)
 from .differentiable import (
     advance_advection_1d,
     advance_euler_dg_1d,
@@ -41,6 +46,9 @@ __all__ = [
     "solve_burgers", "burgers_error",
     "solve_heat_1d", "heat_error",
     "solve_poisson_2d", "poisson_error_2d",
+    # per-side Dirichlet/Neumann data (see
+    # docs/reports/tensordg-poisson-neumann-verification.md)
+    "solve_poisson_2d_bc", "assemble_poisson_2d_bc", "l2_error_2d",
     "solve_riemann", "solve_euler_dg_1d", "solve_periodic_euler_dg_1d",
     "solve_euler_2d", "solve_isentropic_vortex", "vortex_error",
     "apply_limiter", "apply_tvb_limiter", "apply_weno_limiter",
