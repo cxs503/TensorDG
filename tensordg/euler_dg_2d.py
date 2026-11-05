@@ -578,6 +578,7 @@ def solve_euler_dg_2d(
     domain=((0.0, 1.0), (0.0, 1.0)),
     final_time=0.2,
     cfl=0.2,
+    dt=None,
     limiter=None,
     tvb_constant=1.0,
     periodic=(True, True),
@@ -596,6 +597,13 @@ def solve_euler_dg_2d(
         Cell counts in ``x`` and ``y``.
     degree : int
         Polynomial degree of the tensor-product basis (0, 1, 2, 3 supported).
+    dt : float or None
+        Optional *fixed* time step.  ``None`` (default) keeps the adaptive
+        ``cfl`` step, which is the production path.  A float marches with a
+        constant step of at most that value (the last step is trimmed to land
+        exactly on ``final_time``); it is a verification knob for temporal
+        refinement studies -- the caller is responsible for keeping the step
+        inside the explicit stability limit.
     limiter : str or None
         ``None`` (positivity fallback only), ``"tvb"`` or ``"weno"``.
     periodic : (bool, bool)
@@ -609,6 +617,9 @@ def solve_euler_dg_2d(
         raise ValueError("degree must be 0, 1, 2 or 3")
     if nx < 1 or ny < 1 or final_time < 0.0 or not 0.0 < cfl <= 0.5:
         raise ValueError("invalid cells, final_time or CFL")
+    prescribed_dt = None if dt is None else float(dt)
+    if prescribed_dt is not None and not prescribed_dt > 0.0:
+        raise ValueError("dt must be positive when prescribed")
     (xmin, xmax), (ymin, ymax) = domain
     if not xmax > xmin or not ymax > ymin:
         raise ValueError("each domain interval must be increasing")
@@ -656,7 +667,10 @@ def solve_euler_dg_2d(
         speed_x = float(torch.max(velocity_x.abs() + sound).item())
         speed_y = float(torch.max(velocity_y.abs() + sound).item())
         rate = (speed_x / dx + speed_y / dy) * (2 * degree + 1)
-        dt = min(cfl / max(rate, 1e-12), final_time - time)
+        if prescribed_dt is None:
+            dt = min(cfl / max(rate, 1e-12), final_time - time)
+        else:
+            dt = min(prescribed_dt, final_time - time)
         k1 = _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic)
         u1 = impose(coeff + dt * k1)
         k2 = _rhs(u1, basis, derivative, weights, signs, dx, dy, periodic)
@@ -681,6 +695,8 @@ def solve_euler_dg_2d(
         "steps": steps,
         "dt": dt,
         "cfl": cfl,
+        "dt_mode": "cfl" if prescribed_dt is None else "fixed",
+        "prescribed_dt": prescribed_dt,
         "domain": domain,
         "periodic": tuple(periodic),
         "flux": "hllc",
@@ -716,6 +732,7 @@ def solve_euler_dg_2d_vortex(
     degree=2,
     final_time=1.0,
     cfl=0.2,
+    dt=None,
     strength=5.0,
     background_velocity=(1.0, 1.0),
     limiter=None,
@@ -737,6 +754,7 @@ def solve_euler_dg_2d_vortex(
         domain=domain,
         final_time=final_time,
         cfl=cfl,
+        dt=dt,
         limiter=limiter,
         tvb_constant=tvb_constant,
         periodic=(True, True),

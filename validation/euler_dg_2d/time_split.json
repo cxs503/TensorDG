@@ -1,0 +1,579 @@
+{
+  "benchmark": "euler_dg_2d_time_split",
+  "problem": "periodic smooth isentropic vortex (exact solution of 2-D Euler)",
+  "domain": [
+    [
+      -5.0,
+      5.0
+    ],
+    [
+      -5.0,
+      5.0
+    ]
+  ],
+  "vortex_strength": 5.0,
+  "background_velocity": [
+    1.0,
+    1.0
+  ],
+  "final_time": 1.0,
+  "cfl": 0.2,
+  "temporal": [
+    {
+      "kind": "temporal",
+      "degree": 2,
+      "cells": 8,
+      "qoi": "relative modal L2 self-difference of the conservative state",
+      "theory_order": 3.0,
+      "dt": [
+        0.008547008547008548,
+        0.0038022813688212928,
+        0.0019047619047619048,
+        0.0009532888465204957
+      ],
+      "exact_error": [
+        0.003275074550264168,
+        0.0032750798030293177,
+        0.0032750802551351575,
+        0.0032750802932688065
+      ],
+      "self_difference": [
+        7.960351124867034e-09,
+        1.0217284531345714e-09
+      ],
+      "refinements": [
+        1.9961977186311788,
+        1.9980952380952381
+      ],
+      "pairwise_orders": [
+        2.9699739465105153
+      ],
+      "fit_order": 2.965897319803008,
+      "exact_error_relative_change": [
+        1.6038612461720653e-06,
+        1.3804422088479152e-07,
+        1.164357696471386e-08
+      ],
+      "rows": [
+        {
+          "degree": 2,
+          "cells": 8,
+          "h": 1.25,
+          "quadrature": 4,
+          "dt_mode": "cfl",
+          "dt_last": 0.004237641927159808,
+          "dt_mean": 0.008547008547008548,
+          "prescribed_dt": null,
+          "steps": 117,
+          "wall_seconds": 3.76,
+          "density": 0.003275074550264168,
+          "velocity_x": 0.005619999088492312,
+          "velocity_y": 0.005493569107830254,
+          "pressure": 0.004287231014401607,
+          "level": 0,
+          "effective_dt": 0.008547008547008548
+        },
+        {
+          "degree": 2,
+          "cells": 8,
+          "h": 1.25,
+          "quadrature": 4,
+          "dt_mode": "fixed",
+          "dt_last": 0.0007640335757141958,
+          "dt_mean": 0.0038022813688212928,
+          "prescribed_dt": 0.0038138777344438267,
+          "steps": 263,
+          "wall_seconds": 8.35,
+          "density": 0.0032750798030293177,
+          "velocity_x": 0.005619977394517248,
+          "velocity_y": 0.005493550922867417,
+          "pressure": 0.004287241043045618,
+          "level": 1,
+          "effective_dt": 0.0038022813688212928
+        },
+        {
+          "degree": 2,
+          "cells": 8,
+          "h": 1.25,
+          "quadrature": 4,
+          "dt_mode": "fixed",
+          "dt_last": 0.0007640335757114203,
+          "dt_mean": 0.0019047619047619048,
+          "prescribed_dt": 0.0019069388672219134,
+          "steps": 525,
+          "wall_seconds": 17.13,
+          "density": 0.0032750802551351575,
+          "velocity_x": 0.0056199755977762575,
+          "velocity_y": 0.005493549529124176,
+          "pressure": 0.004287241872840043,
+          "level": 2,
+          "effective_dt": 0.0019047619047619048
+        },
+        {
+          "degree": 2,
+          "cells": 8,
+          "h": 1.25,
+          "quadrature": 4,
+          "dt_mode": "fixed",
+          "dt_last": 0.000764033575710088,
+          "dt_mean": 0.0009532888465204957,
+          "prescribed_dt": 0.0009534694336109567,
+          "steps": 1049,
+          "wall_seconds": 34.15,
+          "density": 0.0032750802932688065,
+          "velocity_x": 0.005619975439821864,
+          "velocity_y": 0.005493549320759494,
+          "pressure": 0.004287241940892726,
+          "level": 3,
+          "effective_dt": 0.0009532888465204957
+        }
+      ]
+    },
+    {
+      "kind": "temporal",
+      "degree": 3,
+      "cells": 8,
+      "qoi": "relative modal L2 self-difference of the conservative state",
+      "theory_order": 3.0,
+      "dt": [
+        0.006097560975609756,
+        0.0022522522522522522,
+        0.0011261261261261261,
+        0.0005630630630630631
+      ],
+      "exact_error": [
+        0.0005648103033606634,
+        0.0005648078286434071,
+        0.0005648076945739846,
+        0.0005648076877077099
+      ],
+      "self_difference": [
+        1.7893514351134984e-09,
+        2.2646298428748572e-10
+      ],
+      "refinements": [
+        2.0,
+        2.0
+      ],
+      "pairwise_orders": [
+        2.9820896017611567
+      ],
+      "fit_order": 2.9820896017611602,
+      "exact_error_relative_change": [
+        4.381501614946335e-06,
+        2.3737174974714278e-07,
+        1.2156836315933077e-08
+      ],
+      "rows": [
+        {
+          "degree": 3,
+          "cells": 8,
+          "h": 1.25,
+          "quadrature": 5,
+          "dt_mode": "cfl",
+          "dt_last": 0.0025028818378908246,
+          "dt_mean": 0.006097560975609756,
+          "prescribed_dt": null,
+          "steps": 164,
+          "wall_seconds": 5.41,
+          "density": 0.0005648103033606634,
+          "velocity_x": 0.001572587705919767,
+          "velocity_y": 0.0015632740846065237,
+          "pressure": 0.0007872385761912397,
+          "level": 0,
+          "effective_dt": 0.006097560975609756
+        },
+        {
+          "degree": 3,
+          "cells": 8,
+          "h": 1.25,
+          "quadrature": 5,
+          "dt_mode": "fixed",
+          "dt_last": 0.0021010112329160613,
+          "dt_mean": 0.0022522522522522522,
+          "prescribed_dt": 0.002252593654101742,
+          "steps": 444,
+          "wall_seconds": 14.27,
+          "density": 0.0005648078286434071,
+          "velocity_x": 0.0015725814928463455,
+          "velocity_y": 0.0015632696766062109,
+          "pressure": 0.0007872358673753566,
+          "level": 1,
+          "effective_dt": 0.0022522522522522522
+        },
+        {
+          "degree": 3,
+          "cells": 8,
+          "h": 1.25,
+          "quadrature": 5,
+          "dt_mode": "fixed",
+          "dt_last": 0.0009747144058589452,
+          "dt_mean": 0.0011261261261261261,
+          "prescribed_dt": 0.001126296827050871,
+          "steps": 888,
+          "wall_seconds": 29.26,
+          "density": 0.0005648076945739846,
+          "velocity_x": 0.0015725811881208234,
+          "velocity_y": 0.0015632694697876462,
+          "pressure": 0.0007872357238802118,
+          "level": 2,
+          "effective_dt": 0.0011261261261261261
+        },
+        {
+          "degree": 3,
+          "cells": 8,
+          "h": 1.25,
+          "quadrature": 5,
+          "dt_mode": "fixed",
+          "dt_last": 0.00041156599233038715,
+          "dt_mean": 0.0005630630630630631,
+          "prescribed_dt": 0.0005631484135254355,
+          "steps": 1776,
+          "wall_seconds": 57.51,
+          "density": 0.0005648076877077099,
+          "velocity_x": 0.001572581163206107,
+          "velocity_y": 0.0015632694482794094,
+          "pressure": 0.000787235714430663,
+          "level": 3,
+          "effective_dt": 0.0005630630630630631
+        }
+      ]
+    }
+  ],
+  "quadrature": [
+    {
+      "kind": "quadrature",
+      "degree": 2,
+      "theory_order": 3.0,
+      "meshes": [
+        8,
+        12,
+        16
+      ],
+      "rules": {
+        "5": {
+          "quadrature": 5,
+          "rows": [
+            {
+              "degree": 2,
+              "cells": 8,
+              "h": 1.25,
+              "quadrature": 5,
+              "dt_mode": "cfl",
+              "dt_last": 0.006058271008681837,
+              "dt_mean": 0.008547008547008548,
+              "prescribed_dt": null,
+              "steps": 117,
+              "wall_seconds": 3.64,
+              "density": 0.0032434922061008514,
+              "velocity_x": 0.005674003474662351,
+              "velocity_y": 0.005545038601006566,
+              "pressure": 0.004253335269358937
+            },
+            {
+              "degree": 2,
+              "cells": 12,
+              "h": 0.8333333333333334,
+              "quadrature": 5,
+              "dt_mode": "cfl",
+              "dt_last": 0.0027194004796637916,
+              "dt_mean": 0.005681818181818182,
+              "prescribed_dt": null,
+              "steps": 176,
+              "wall_seconds": 6.57,
+              "density": 0.0009126642632840893,
+              "velocity_x": 0.001911911381562883,
+              "velocity_y": 0.0018984121389137754,
+              "pressure": 0.0012341901908673363
+            },
+            {
+              "degree": 2,
+              "cells": 16,
+              "h": 0.625,
+              "quadrature": 5,
+              "dt_mode": "cfl",
+              "dt_last": 0.0004364638474598781,
+              "dt_mean": 0.00425531914893617,
+              "prescribed_dt": null,
+              "steps": 235,
+              "wall_seconds": 10.5,
+              "density": 0.000397040639509815,
+              "velocity_x": 0.0008192698442955559,
+              "velocity_y": 0.000818343431883677,
+              "pressure": 0.0005626733842164216
+            }
+          ],
+          "errors": [
+            0.0032434922061008514,
+            0.0009126642632840893,
+            0.000397040639509815
+          ],
+          "pairwise_orders": [
+            3.1273659818082415,
+            2.893226660767422
+          ],
+          "fit_order": 3.0365675480324437
+        },
+        "8": {
+          "quadrature": 8,
+          "rows": [
+            {
+              "degree": 2,
+              "cells": 8,
+              "h": 1.25,
+              "quadrature": 8,
+              "dt_mode": "cfl",
+              "dt_last": 0.008379763492278869,
+              "dt_mean": 0.008547008547008548,
+              "prescribed_dt": null,
+              "steps": 117,
+              "wall_seconds": 4.0,
+              "density": 0.003244228733276721,
+              "velocity_x": 0.005676165423557095,
+              "velocity_y": 0.005547764032623829,
+              "pressure": 0.004255922683070668
+            },
+            {
+              "degree": 2,
+              "cells": 12,
+              "h": 0.8333333333333334,
+              "quadrature": 8,
+              "dt_mode": "cfl",
+              "dt_last": 0.0038352264997202345,
+              "dt_mean": 0.005681818181818182,
+              "prescribed_dt": null,
+              "steps": 176,
+              "wall_seconds": 7.94,
+              "density": 0.0009126772728325878,
+              "velocity_x": 0.0019119558975308063,
+              "velocity_y": 0.001898392132176135,
+              "pressure": 0.0012341955824715994
+            },
+            {
+              "degree": 2,
+              "cells": 16,
+              "h": 0.625,
+              "quadrature": 8,
+              "dt_mode": "cfl",
+              "dt_last": 0.0009977621858865415,
+              "dt_mean": 0.00425531914893617,
+              "prescribed_dt": null,
+              "steps": 235,
+              "wall_seconds": 14.16,
+              "density": 0.0003970492155033169,
+              "velocity_x": 0.0008192712978804963,
+              "velocity_y": 0.0008183526857985723,
+              "pressure": 0.000562673596732777
+            }
+          ],
+          "errors": [
+            0.003244228733276721,
+            0.0009126772728325878,
+            0.0003970492155033169
+          ],
+          "pairwise_orders": [
+            3.1278908069864673,
+            2.8932011284759174
+          ],
+          "fit_order": 3.036878946452421
+        }
+      }
+    },
+    {
+      "kind": "quadrature",
+      "degree": 3,
+      "theory_order": 4.0,
+      "meshes": [
+        6,
+        8,
+        12
+      ],
+      "rules": {
+        "5": {
+          "quadrature": 5,
+          "rows": [
+            {
+              "degree": 3,
+              "cells": 6,
+              "h": 1.6666666666666667,
+              "quadrature": 5,
+              "dt_mode": "cfl",
+              "dt_last": 0.002327231923040962,
+              "dt_mean": 0.008130081300813009,
+              "prescribed_dt": null,
+              "steps": 123,
+              "wall_seconds": 3.61,
+              "density": 0.0016570169938132959,
+              "velocity_x": 0.003524005471025961,
+              "velocity_y": 0.003402458895472119,
+              "pressure": 0.002413891529292311
+            },
+            {
+              "degree": 3,
+              "cells": 8,
+              "h": 1.25,
+              "quadrature": 5,
+              "dt_mode": "cfl",
+              "dt_last": 0.0025028818378908246,
+              "dt_mean": 0.006097560975609756,
+              "prescribed_dt": null,
+              "steps": 164,
+              "wall_seconds": 5.18,
+              "density": 0.0005648103033606634,
+              "velocity_x": 0.001572587705919767,
+              "velocity_y": 0.0015632740846065237,
+              "pressure": 0.0007872385761912397
+            },
+            {
+              "degree": 3,
+              "cells": 12,
+              "h": 0.8333333333333334,
+              "quadrature": 5,
+              "dt_mode": "cfl",
+              "dt_last": 0.0026043343523515228,
+              "dt_mean": 0.0040650406504065045,
+              "prescribed_dt": null,
+              "steps": 246,
+              "wall_seconds": 9.52,
+              "density": 0.00011695079824100424,
+              "velocity_x": 0.00034575546941306674,
+              "velocity_y": 0.0003442700852271111,
+              "pressure": 0.00017515818267716419
+            }
+          ],
+          "errors": [
+            0.0016570169938132959,
+            0.0005648103033606634,
+            0.00011695079824100424
+          ],
+          "pairwise_orders": [
+            3.741228417419341,
+            3.8837783535992694
+          ],
+          "fit_order": 3.8284979723184107
+        },
+        "8": {
+          "quadrature": 8,
+          "rows": [
+            {
+              "degree": 3,
+              "cells": 6,
+              "h": 1.6666666666666667,
+              "quadrature": 8,
+              "dt_mode": "cfl",
+              "dt_last": 0.0050997191357728955,
+              "dt_mean": 0.008130081300813009,
+              "prescribed_dt": null,
+              "steps": 123,
+              "wall_seconds": 3.84,
+              "density": 0.001648008439502179,
+              "velocity_x": 0.0034811437215010546,
+              "velocity_y": 0.00335286183905434,
+              "pressure": 0.0023994510503107425
+            },
+            {
+              "degree": 3,
+              "cells": 8,
+              "h": 1.25,
+              "quadrature": 8,
+              "dt_mode": "cfl",
+              "dt_last": 0.004178956162464997,
+              "dt_mean": 0.006097560975609756,
+              "prescribed_dt": null,
+              "steps": 164,
+              "wall_seconds": 5.86,
+              "density": 0.0005633811591782139,
+              "velocity_x": 0.0015599055488416769,
+              "velocity_y": 0.0015506487164338952,
+              "pressure": 0.000791936648721705
+            },
+            {
+              "degree": 3,
+              "cells": 12,
+              "h": 0.8333333333333334,
+              "quadrature": 8,
+              "dt_mode": "cfl",
+              "dt_last": 0.0033039614858554334,
+              "dt_mean": 0.0040650406504065045,
+              "prescribed_dt": null,
+              "steps": 246,
+              "wall_seconds": 12.02,
+              "density": 0.00011661765768130938,
+              "velocity_x": 0.0003455647237176431,
+              "velocity_y": 0.00034414998136163706,
+              "pressure": 0.00017519153290848345
+            }
+          ],
+          "errors": [
+            0.001648008439502179,
+            0.0005633811591782139,
+            0.00011661765768130938
+          ],
+          "pairwise_orders": [
+            3.731085530532971,
+            3.8845653585407134
+          ],
+          "fit_order": 3.8250464023169863
+        }
+      }
+    }
+  ],
+  "m3024_cross_check": {
+    "available": true,
+    "degree": 3,
+    "comparison": [
+      {
+        "cells": 6,
+        "m3024_error": 0.0016570169938132959,
+        "this_study_error": 0.0016570169938132959,
+        "relative_difference": 0.0
+      },
+      {
+        "cells": 8,
+        "m3024_error": 0.0005648103033606634,
+        "this_study_error": 0.0005648103033606634,
+        "relative_difference": 0.0
+      },
+      {
+        "cells": 12,
+        "m3024_error": 0.00011695079824100424,
+        "this_study_error": 0.00011695079824100424,
+        "relative_difference": 0.0
+      }
+    ]
+  },
+  "limiter_inertness": {
+    "kind": "limiter_inertness",
+    "degree": 3,
+    "cells": 8,
+    "unlimited_error": 0.0005648103033606634,
+    "tvb_error": 0.01903442083084719,
+    "relative_change": 32.70055524410757,
+    "note": "smooth isentropic vortex: the troubled-cell detector should fire nowhere",
+    "tvb_constant_sweep": [
+      {
+        "degree": 3,
+        "cells": 8,
+        "unlimited": 0.0005648103033606634,
+        "tvb": {
+          "1.0": 0.01903442083084719,
+          "10.0": 0.0005648103033606634,
+          "100.0": 0.0005648103033606634,
+          "1000.0": 0.0005648103033606634
+        }
+      },
+      {
+        "degree": 3,
+        "cells": 12,
+        "unlimited": 0.00011695079824100424,
+        "tvb": {
+          "1.0": 0.01592244399932879,
+          "10.0": 0.00011695079824100424,
+          "100.0": 0.00011695079824100424,
+          "1000.0": 0.00011695079824100424
+        }
+      }
+    ],
+    "verdict": "TVB limiter is NOT inert on the smooth vortex at the default tvb_constant=1.0: the troubled-cell detector fires and the error grows by the factor above; the sweep shows how the constant must be raised before the detector goes quiet."
+  }
+}
