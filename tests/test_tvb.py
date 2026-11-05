@@ -266,3 +266,146 @@ def test_scale_consistency_smooth_wave():
         assert n_troubled < ncells * 0.1, (
             f"ncells={ncells}: {n_troubled} cells troubled at M=100, expected < 10%"
         )
+
+
+# ---------------------------------------------------------------------------
+# Round-off floor: dtype-aware floor (mission m4541)
+# ---------------------------------------------------------------------------
+
+def _affine_differences(ncells, scale=2.0, dtype=torch.float64):
+    """Differences of the affine profile ``u = scale * x`` on a unit interval."""
+    x = torch.linspace(0.0, 1.0, ncells, dtype=torch.float64)
+    u = (scale * x).reshape(-1, 1).to(dtype)
+    d = u[1:] - u[:-1]
+    return d[:-1], d[1:]
+
+
+def test_float32_affine_data_not_troubled():
+    """Affine data in ``float32`` must not be flagged.
+
+    Regression for the round-off floor: it used a fixed coefficient of 1e-12,
+    which is four decades above ``eps_float64`` but below one ulp of
+    ``float32`` (eps = 1.19e-7).  Differencing already-rounding cell averages
+    leaves a few ulp in ``d_left - d_right``, so 6-12 % of the cells of an
+    exactly affine profile were reported as troubled at ``M = 0``, i.e. the
+    1-D/2-D limiters would clip a solution that is already linear.
+    """
+    d_left, d_right = _affine_differences(201, dtype=torch.float32)
+    for tvb in (0.0, 1e-3, 1.0):
+        troubled, _ = troubled_from_differences(
+            d_left, d_right, spacing=1.0 / 200.0, tvb_constant=tvb
+        )
+        assert not troubled.any(), (
+            f"float32 affine data flagged at M={tvb} "
+            f"({int(troubled.sum())}/{troubled.numel()} cells)"
+        )
+
+
+def test_float32_and_float64_agree_on_affine_data():
+    """The troubled mask of affine data is dtype independent (both empty)."""
+    for dtype in (torch.float32, torch.float64):
+        d_left, d_right = _affine_differences(101, dtype=dtype)
+        troubled, slope = troubled_from_differences(
+            d_left, d_right, spacing=1.0 / 100.0, tvb_constant=0.0
+        )
+        assert not troubled.any()
+        assert slope.dtype == dtype
+
+
+def test_float32_smooth_extremum_flagged_then_released():
+    """Single precision keeps the qualitative criterion: a smooth extremum is
+    flagged at ``M = 0`` and released once ``M dx**2`` exceeds the deviation."""
+    d_left = torch.tensor([[0.2]], dtype=torch.float32)
+    d_right = torch.tensor([[-0.2]], dtype=torch.float32)
+    troubled, slope = troubled_from_differences(
+        d_left, d_right, spacing=0.1, tvb_constant=0.0
+    )
+    assert troubled.item()
+    assert slope.item() == 0.0
+    troubled, _ = troubled_from_differences(
+        d_left, d_right, spacing=0.1, tvb_constant=25.0
+    )
+    assert not troubled.item()
+
+
+def test_float32_discontinuity_always_troubled():
+    """A jump is O(dx) and stays flagged in single precision even at large M."""
+    d_left = torch.tensor([[1.0], [1.0]], dtype=torch.float32)
+    d_right = torch.tensor([[0.0], [-1.0]], dtype=torch.float32)
+    troubled, _ = troubled_from_differences(
+        d_left, d_right, spacing=0.01, tvb_constant=1000.0
+    )
+    assert troubled.all()
+
+
+def test_float32_scale_consistency_smooth_wave():
+    """M is grid independent in single precision too (the scale-consistent
+    criterion must not need a dtype-dependent tuning of M)."""
+    import numpy as np
+
+    for ncells in (40, 80, 160):
+        dx = 1.0 / ncells
+        centres = (np.arange(ncells) + 0.5) * dx
+        u = np.sin(2.0 * np.pi * centres).astype(np.float32)
+        d_left = torch.tensor(np.diff(u, prepend=u[0]), dtype=torch.float32).unsqueeze(-1)
+        d_right = torch.tensor(np.diff(u, append=u[-1]), dtype=torch.float32).unsqueeze(-1)
+        troubled, _ = troubled_from_differences(
+            d_left, d_right, spacing=dx, tvb_constant=100.0
+        )
+        n_troubled = int(troubled.sum())
+        assert n_troubled < ncells * 0.1, (
+            f"float32 ncells={ncells}: {n_troubled} cells troubled at M=100, expected < 10%"
+        )
+
+
+def test_float64_result_unchanged_by_dtype_aware_floor():
+    """The frozen ``float64`` semantics are preserved bit for bit.
+
+    ``floor_coeff = max(1e-12, 8 * eps)`` collapses to the historic ``1e-12``
+    for ``float64`` (8 * eps_float64 = 1.8e-15), so the reference oracle in
+    ``tests/_limiter_reference.py`` -- which keeps the pre-m3262 arithmetic --
+    must still agree exactly on random data.
+    """
+    torch.manual_seed(0)
+    d_left = torch.randn(64, 3, dtype=torch.float64)
+    d_right = torch.randn(64, 3, dtype=torch.float64)
+    for tvb, dx in ((0.0, 0.1), (1.0, 0.05), (50.0, 0.01)):
+        troubled, slope = troubled_from_differences(d_left, d_right, spacing=dx, tvb_constant=tvb)
+        # historic expression, reproduced verbatim
+        mm = minmod(d_left, d_right)
+        deviation = (d_left - mm).abs().max(dim=-1).values
+        scale = torch.maximum(d_left.abs(), d_right.abs()).max(dim=-1).values
+        expected = deviation > tvb * dx * dx + 1e-12 * scale.clamp_min(1.0)
+        assert torch.equal(troubled, expected), f"float64 mask changed at M={tvb}, dx={dx}"
+        assert torch.equal(slope, mm)
+
+
+def test_roundoff_floor_limitation_large_offset_small_gradient():
+    """Characterisation of a *pre-existing* limitation, unrelated to dtype.
+
+    The floor is ``coeff * max(|d_left|, |d_right|, 1)``: it cannot see the
+    magnitude of the cell averages ``u`` itself, so an O(1) offset with a tiny
+    gradient (round-off of order ``eps * |u|`` in the differences) is still
+    flagged.  The safe region documented in docs/tvb_module_tests.md is
+    ``max|u| <= 1e4 * max|d|``; this test pins that boundary so a future fix
+    of the floor cannot pass silently without updating the documentation.
+    """
+    ncells, dx = 201, 1.0 / 200.0
+    x = torch.linspace(0.0, 1.0, ncells, dtype=torch.float64)
+
+    # Safe region: offset and difference of the same order.
+    for offset in (0.0, 1.0, 1e3):
+        u = (offset + x).reshape(-1, 1)
+        d = u[1:] - u[:-1]
+        troubled, _ = troubled_from_differences(d[:-1], d[1:], spacing=dx, tvb_constant=0.0)
+        assert not troubled.any(), f"offset={offset}: affine data must not be flagged"
+
+    # Documented limitation region: offset 1e6 with gradient 1e-3.
+    u = (1e6 + 1e-3 * x).reshape(-1, 1)
+    d = u[1:] - u[:-1]
+    troubled, _ = troubled_from_differences(d[:-1], d[1:], spacing=dx, tvb_constant=0.0)
+    assert troubled.any(), (
+        "the offset/gradient round-off limitation is expected to be visible here; "
+        "if this now passes, the floor was improved -- update the limitation "
+        "section of docs/tvb_module_tests.md"
+    )
