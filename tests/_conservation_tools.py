@@ -37,6 +37,8 @@ __all__ = [
     "integral_1d",
     "scaled_drift",
     "conserved_totals",
+    "conserved_totals_2d",
+    "drift_statistics",
     "physical_flux",
     "boundary_increment",
     "rankine_hugoniot_speed",
@@ -127,6 +129,78 @@ def conserved_totals(conservative_states, cell_width: float) -> dict[str, float]
         "mass": float(sums[0]),
         "momentum": float(sums[1]),
         "energy": float(sums[2]),
+    }
+
+
+def conserved_totals_2d(
+    conservative_states, dx: float, dy: float
+) -> dict[str, float]:
+    """Integrate the four conserved variables of a 2-D ``P_0`` Euler state.
+
+    ``conservative_states`` has shape ``(nx, ny, 4)`` holding
+    ``(rho, rho*u, rho*v, E)`` per cell; ``dx``/``dy`` are the (possibly
+    different) cell widths.  The integral is ``dx*dy*sum``, which is the
+    discrete counterpart of :math:`\\int_\\Omega U \\,d\\Omega` on a
+    Cartesian mesh.  Only bilinear flux-difference schemes whose face fluxes
+    telescope in *both* directions leave these four numbers invariant, so the
+    two weighing factors make a swapped or dropped ``dx``/``dy`` visible.
+    """
+    array = _to_numpy(conservative_states)
+    if array.ndim != 3 or array.shape[2] < 4:
+        raise ValueError("2-D Euler states must have shape (nx, ny, >=4)")
+    if not (float(dx) > 0.0 and float(dy) > 0.0):
+        raise ValueError("cell widths must be positive")
+    sums = array[:, :, :4].sum(axis=(0, 1)) * (float(dx) * float(dy))
+    names = ("mass", "momentum_x", "momentum_y", "energy")
+    return {name: float(sums[i]) for i, name in enumerate(names)}
+
+
+def drift_statistics(history, scale: float | None = None) -> dict[str, float]:
+    """Summarise a *multi-step* history of one discrete invariant.
+
+    ``history`` is the invariant sampled once per time step (at ``t=0`` and
+    after every accepted step).  Beyond the plain drift, three statistics make
+    a systematic leak distinguishable from float64 round-off:
+
+    ``increment_mean`` / ``increment_rms``
+        mean and root-mean-square of the per-step increments (divided by
+        ``scale``).  Round-off increments are zero-mean noise, so
+        ``|mean|/rms`` stays small; a one-sided leak gives ``|mean|/rms ~ 1``.
+    ``bias_ratio``
+        the ratio ``|increment_mean| / increment_rms`` (0 for pure noise).
+    ``closure_residual``
+        ``|sum(increments) - (final - initial)| / scale``: the ledger's own
+        bookkeeping must close to round-off, otherwise a measurement bug is
+        masquerading as a solver result.
+
+    ``scale`` defaults to ``|history[0]|`` when that is non-zero; callers with
+    a vanishing invariant must pass an explicit magnitude.
+    """
+    values = _to_numpy(history).ravel()
+    if values.size < 3:
+        raise ValueError("need at least three samples for step statistics")
+    if scale is None:
+        scale = abs(float(values[0]))
+    scale = float(scale)
+    if scale == 0.0:
+        raise ValueError("scale must be non-zero; pass an explicit magnitude")
+    increments = np.diff(values)
+    tolerance = np.finfo(np.float64).eps
+    mean = float(np.mean(increments)) / scale
+    rms = float(np.sqrt(np.mean(increments ** 2))) / scale
+    closure = abs(float(increments.sum()) - float(values[-1] - values[0])) / scale
+    return {
+        "initial": float(values[0]),
+        "final": float(values[-1]),
+        "samples": int(values.size),
+        "absolute_drift": abs(float(values[-1] - values[0])),
+        "scaled_drift": abs(float(values[-1] - values[0])) / scale,
+        "max_step_increment": float(np.max(np.abs(increments))) / scale,
+        "increment_mean": mean,
+        "increment_rms": rms,
+        # A zero rms means the invariant never moved at all (exact arithmetic).
+        "bias_ratio": abs(mean) / rms if rms > tolerance else 0.0,
+        "closure_residual": closure,
     }
 
 

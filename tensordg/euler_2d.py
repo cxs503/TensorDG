@@ -154,6 +154,7 @@ def solve_euler_2d(
     quadrature=4,
     device="cpu",
     dtype=torch.float64,
+    observer=None,
 ):
     """Advance a 2-D Euler initial condition (P0 finite volume, Rusanov, SSP-RK3).
 
@@ -170,6 +171,15 @@ def solve_euler_2d(
     quadrature : int
         Gauss-Legendre points per direction for the cell-average projection of
         ``initial`` (2 is exact for the P0 average of piecewise-smooth data).
+    observer : callable or None
+        Verification hook called as ``observer(time, steps, u)`` with the
+        conservative state ``u`` before the first time step (``time = 0``,
+        ``steps = 0``) and after every accepted step.  It exists so a
+        conservation audit can sample the discrete invariants *once per step*
+        (per-step statistics, not just an end-state difference) without
+        re-implementing the RK stages around the solver.  ``u`` is the live
+        tensor and must not be modified; the callback's return value is
+        ignored.
 
     Returns
     -------
@@ -193,6 +203,8 @@ def solve_euler_2d(
     u = _cell_averages(initial, x, y, dx, dy, quadrature, dev, dtype)
 
     time, steps, dt = 0.0, 0, 0.0
+    if observer is not None:
+        observer(time, steps, u)
     while time < final_time:
         _, velocity_x, velocity_y, _ = _primitive(u)
         sound = _sound_speed(u)
@@ -207,6 +219,8 @@ def solve_euler_2d(
             raise FloatingPointError("Nonphysical 2D Euler state; reduce CFL")
         time += dt
         steps += 1
+        if observer is not None:
+            observer(time, steps, u)
 
     rho, velocity_x, velocity_y, pressure = _primitive(u)
     fields = {
