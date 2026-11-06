@@ -4,16 +4,16 @@ on:
   push:
   pull_request:
 
+env:
+  TORCH_DEVICE_BACKEND_AUTOLOAD: "0"
+
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ci-loong64
     env:
       PYTHONPATH: .
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
       - run: python -m pip install --upgrade pip
       - run: python -m pip install -e ".[dev]"
       - run: pytest -q
