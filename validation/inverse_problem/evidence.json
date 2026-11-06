@@ -1,0 +1,236 @@
+{
+  "study": "differentiable inverse problems",
+  "torch_version": "2.7.1",
+  "python": "3.11.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "dtype": "float64",
+  "quick_mode": true,
+  "conventions": {
+    "cfl": 0.2,
+    "advection": "P2 upwind DG + RK4, periodic, ncells=32, nsteps=40",
+    "heat": "P2 SIPG + Crank-Nicolson, zero Dirichlet, ncells=24, final_time=0.02",
+    "optimiser": "secant/Newton on dJ/dtheta from autograd (no finite differences)"
+  },
+  "gradient_check": {
+    "advection_speed": {
+      "theta": 0.8,
+      "objective": 0.03177503287348715,
+      "autograd_gradient": -0.3176460010653564,
+      "central_difference": -0.31764600109257524,
+      "relative_gap": 8.568922070717705e-11,
+      "teeth_relative_gap_at_1e-3_shift": 0.0039947823359340355,
+      "verdict": "PASS"
+    },
+    "heat_diffusivity": {
+      "theta": 1.0,
+      "objective": 0.11864957145859828,
+      "autograd_gradient": 0.2738235259026236,
+      "central_difference": 0.27382352551515166,
+      "relative_gap": 1.415042563236337e-09,
+      "teeth_relative_gap_at_1e-3_shift": 0.0009562472768235007,
+      "verdict": "PASS"
+    }
+  },
+  "fd_step_sweep": {
+    "advection_speed": [
+      {
+        "eps": 0.001,
+        "central_difference": -0.3176459958600941,
+        "relative_gap": 1.638699136556419e-08
+      },
+      {
+        "eps": 0.0001,
+        "central_difference": -0.31764600101347185,
+        "relative_gap": 1.6334080087944553e-10
+      },
+      {
+        "eps": 1e-05,
+        "central_difference": -0.3176460010665544,
+        "relative_gap": 3.771450453346922e-12
+      },
+      {
+        "eps": 1e-06,
+        "central_difference": -0.31764600109257524,
+        "relative_gap": 8.568922071451969e-11
+      },
+      {
+        "eps": 1e-07,
+        "central_difference": -0.3176460005790971,
+        "relative_gap": 1.530821445772623e-09
+      },
+      {
+        "eps": 1e-08,
+        "central_difference": -0.3176459990872349,
+        "relative_gap": 6.227440274079862e-09
+      }
+    ],
+    "advection_speed_best_gap": 3.771450453346922e-12,
+    "heat_diffusivity": [
+      {
+        "eps": 0.001,
+        "central_difference": 0.27382349648834986,
+        "relative_gap": 1.0742054993983982e-07
+      },
+      {
+        "eps": 0.0001,
+        "central_difference": 0.27382352551515166,
+        "relative_gap": 1.4150425612339917e-09
+      },
+      {
+        "eps": 1e-05,
+        "central_difference": 0.2738235281476986,
+        "relative_gap": 8.198985121469732e-09
+      },
+      {
+        "eps": 1e-06,
+        "central_difference": 0.27382355755056764,
+        "relative_gap": 1.1557788520499528e-07
+      },
+      {
+        "eps": 1e-07,
+        "central_difference": 0.27382385428542655,
+        "relative_gap": 1.1992497790955618e-06
+      },
+      {
+        "eps": 1e-08,
+        "central_difference": 0.27382550601973144,
+        "relative_gap": 7.231362248034634e-06
+      }
+    ],
+    "heat_diffusivity_best_gap": 1.4150425612339917e-09
+  },
+  "discrete_identification": {
+    "advection_speed": {
+      "truth": 1.0,
+      "initial_guess": 0.8,
+      "estimate": 1.0,
+      "relative_error": 0.0,
+      "iterations": 4,
+      "final_objective": 0.0,
+      "final_gradient": 0.0
+    },
+    "heat_diffusivity": {
+      "truth": 0.2,
+      "initial_guess": 1.0,
+      "estimate": 0.2000000000006024,
+      "relative_error": 3.0118962879299715e-12,
+      "iterations": 7,
+      "final_objective": 7.039036889676477e-26,
+      "final_gradient": 2.442322979538919e-13
+    }
+  },
+  "continuum_consistency": {
+    "advection_speed": {
+      "rows": [
+        {
+          "ncells": 12,
+          "h": 0.08333333333333333,
+          "estimate": 1.0000373884443114,
+          "relative_error": 3.7388444311448055e-05,
+          "iterations": 5,
+          "final_objective": 4.334340862895687e-06
+        },
+        {
+          "ncells": 24,
+          "h": 0.041666666666666664,
+          "estimate": 1.000002496226575,
+          "relative_error": 2.4962265749994828e-06,
+          "iterations": 4,
+          "final_objective": 1.3437939688667461e-07
+        },
+        {
+          "ncells": 48,
+          "h": 0.020833333333333332,
+          "estimate": 1.0000001585338973,
+          "relative_error": 1.5853389734310497e-07,
+          "iterations": 4,
+          "final_objective": 4.1922000608872855e-09
+        }
+      ],
+      "observed_order": 3.9408286432049855,
+      "finest_relative_error": 1.5853389734310497e-07
+    },
+    "heat_diffusivity": {
+      "rows": [
+        {
+          "ncells": 12,
+          "h": 0.08333333333333333,
+          "estimate": 0.19995225532982586,
+          "relative_error": 0.00023872335087077312,
+          "iterations": 7,
+          "final_objective": 3.2916800052285066e-08
+        },
+        {
+          "ncells": 24,
+          "h": 0.041666666666666664,
+          "estimate": 0.19999879442374716,
+          "relative_error": 6.027881264275559e-06,
+          "iterations": 7,
+          "final_objective": 1.4668618794575234e-10
+        },
+        {
+          "ncells": 48,
+          "h": 0.020833333333333332,
+          "estimate": 0.19999991898147917,
+          "relative_error": 4.0509260418319926e-07,
+          "iterations": 7,
+          "final_objective": 2.4700462255581614e-13
+        }
+      ],
+      "observed_order": 4.601436115124028,
+      "finest_relative_error": 4.0509260418319926e-07
+    }
+  },
+  "noise": {
+    "noise_level": 0.01,
+    "seed": 20261103,
+    "advection_speed": {
+      "truth": 1.0,
+      "estimate": 1.0010515185148119,
+      "relative_error": 0.0010515185148118888,
+      "iterations": 4
+    },
+    "heat_diffusivity": {
+      "truth": 0.2,
+      "estimate": 0.20137626843745546,
+      "relative_error": 0.006881342187277234,
+      "iterations": 7
+    }
+  },
+  "frozen_dt_degeneracy": {
+    "c_true": 1.6,
+    "dt_frozen": 0.00125,
+    "dt_used_for_measurements": 0.0007812499999999999,
+    "frozen_dt_model": {
+      "estimate": 0.9999999999999999,
+      "predicted_by_time_rescaling": 1.0,
+      "relative_error": 0.3750000000000001,
+      "final_objective": 2.7173603926595613e-31,
+      "iterations": 5,
+      "residual_looks_converged": true
+    },
+    "matched_dt_model": {
+      "estimate": 1.5999999999999999,
+      "relative_error": 1.3877787807814457e-16,
+      "final_objective": 1.8682377352890048e-31,
+      "iterations": 4
+    }
+  },
+  "criteria": {
+    "gradient_gap_advection <= 1e-7": "PASS",
+    "gradient_gap_heat <= 1e-7": "PASS",
+    "fd_step_sweep_best <= 1e-7": "PASS",
+    "discrete_advection_error <= 1e-9": "PASS",
+    "discrete_heat_error <= 1e-6": "PASS",
+    "finest_continuum_advection_error <= 1e-6": "PASS",
+    "finest_continuum_heat_error <= 1e-6": "PASS",
+    "continuum_advection_order > 3.2": "PASS",
+    "continuum_heat_order > 4.0": "PASS",
+    "noise_1pct_advection_error <= 3e-2": "PASS",
+    "noise_1pct_heat_error <= 3e-2": "PASS",
+    "frozen_dt_trap_is_reproduced": "PASS",
+    "matched_dt_fit_recovers_truth": "PASS"
+  },
+  "all_pass": true,
+  "wall_time_s": 11.026649951934814
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "id": "F1",
+    "fault_class": "forward physics (hyperbolic)",
+    "description": "flip the positive-speed upwind interface flux in `_advection_rhs`",
+    "exit_code": 1,
+    "detected": true,
+    "failing_tests": [
+      "tests/test_tutorial_inverse_problem.py::test_continuum_identification_error_shrinks_with_refinement"
+    ],
+    "red_tail": [
+      "FAILED tests/test_tutorial_inverse_problem.py::test_continuum_identification_error_shrinks_with_refinement",
+      "1 failed, 12 passed, 1 warning in 24.71s"
+    ]
+  },
+  {
+    "id": "F2",
+    "fault_class": "gradient graph",
+    "description": "detach the differentiable speed inside `_advection_rhs`",
+    "exit_code": 1,
+    "detected": true,
+    "failing_tests": [
+      "tests/test_tutorial_inverse_problem.py::test_advection_speed_identified_from_discrete_data",
+      "tests/test_tutorial_inverse_problem.py::test_autograd_matches_central_difference",
+      "tests/test_tutorial_inverse_problem.py::test_continuum_estimate_error_is_below_three_percent",
+      "tests/test_tutorial_inverse_problem.py::test_continuum_identification_error_shrinks_with_refinement",
+      "tests/test_tutorial_inverse_problem.py::test_discrete_identification_study_matches_tests",
+      "tests/test_tutorial_inverse_problem.py::test_fd_step_sweep_has_a_sweet_spot",
+      "tests/test_tutorial_inverse_problem.py::test_frozen_dt_degeneracy_is_reproduced",
+      "tests/test_tutorial_inverse_problem.py::test_noise_shifts_the_estimate_but_stays_bounded",
+      "tests/test_tutorial_inverse_problem.py::test_secant_history_reduces_the_gradient",
+      "tests/test_tutorial_inverse_problem.py::test_teeth_a_one_per_mille_gradient_perturbation_is_detected",
+      "tests/test_tutorial_inverse_problem.py::test_teeth_ascending_the_gradient_increases_the_misfit"
+    ],
+    "red_tail": [
+      "FAILED tests/test_tutorial_inverse_problem.py::test_frozen_dt_degeneracy_is_reproduced",
+      "11 failed, 2 passed, 1 warning in 6.39s"
+    ]
+  },
+  {
+    "id": "F3",
+    "fault_class": "step-size bookkeeping",
+    "description": "0.1 % time-step bookkeeping defect in `advance_advection_1d`",
+    "exit_code": 1,
+    "detected": true,
+    "failing_tests": [
+      "tests/test_tutorial_inverse_problem.py::test_continuum_identification_error_shrinks_with_refinement"
+    ],
+    "red_tail": [
+      "FAILED tests/test_tutorial_inverse_problem.py::test_continuum_identification_error_shrinks_with_refinement",
+      "1 failed, 12 passed, 1 warning in 25.69s"
+    ]
+  },
+  {
+    "id": "F4",
+    "fault_class": "forward physics (parabolic)",
+    "description": "0.1 % diffusivity mis-scaling in `advance_heat_1d`",
+    "exit_code": 1,
+    "detected": true,
+    "failing_tests": [
+      "tests/test_tutorial_inverse_problem.py::test_continuum_identification_error_shrinks_with_refinement"
+    ],
+    "red_tail": [
+      "FAILED tests/test_tutorial_inverse_problem.py::test_continuum_identification_error_shrinks_with_refinement",
+      "1 failed, 12 passed, 1 warning in 25.15s"
+    ]
+  },
+  {
+    "id": "RESTORED",
+    "fault_class": "sanity",
+    "description": "unpatched tree: the suite must be green again",
+    "exit_code": 0,
+    "detected": true,
+    "failing_tests": [],
+    "red_tail": [
+      "-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html",
+      "13 passed, 1 warning in 24.28s"
+    ]
+  }
+]
