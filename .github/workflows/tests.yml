@@ -1,5 +1,25 @@
 name: TensorDG tests
 
+# Runner / queue contract (m4787, 2026-11-06)
+# ------------------------------------------
+# main@26a32789 went red with the job conclusion ``cancelled``, **zero steps
+# executed** and ``runner_id = 0``: the job requested the custom label
+# ``ci-loong64`` and no runner in this repository ever matched it.  The two
+# repo-scoped listeners ``node099-ci-dg-1/2`` stayed in "Listening for Jobs"
+# from 02:07 UTC onwards without a single job assignment, while every other
+# repository sharing the same deployment batch picked its ``ci-loong64`` jobs
+# up normally -> the label set of the DG runners, not the code, was the
+# mismatch.  The pool is therefore addressed through the labels the runner
+# registration always adds (``self-hosted`` + OS), which matches both a plain
+# registration and one that *also* carries the custom pool label.
+#
+# ``concurrency`` follows the same lesson as the 2026-11-06 platform triage
+# (docs/pr188-ci-repair): GitHub keeps only one running + one pending run per
+# group, so a ref-wide group on ``main`` makes a newer merge silently cancel an
+# older commit's *pending* run - which then reports red with no step executed.
+# On ``main`` the group is therefore per commit; branches/PRs keep the ref-wide
+# group (a new push still supersedes a stale one).
+
 on:
   push:
   pull_request:
@@ -7,9 +27,16 @@ on:
 env:
   TORCH_DEVICE_BACKEND_AUTOLOAD: "0"
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}${{ github.ref == 'refs/heads/main' && format('-{0}', github.sha) || '' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   test:
-    runs-on: ci-loong64
+    runs-on: [self-hosted, linux]
+    # A hung job must fail instead of holding one of the two pool runners for
+    # hours (the hosted run of main@558f03f took 95 min end to end).
+    timeout-minutes: 120
     env:
       PYTHONPATH: .
     steps:
