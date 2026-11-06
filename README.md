@@ -32,6 +32,11 @@ multidimensional shock capturing.
 - [Classic DG benchmarks](docs/tutorials/classic-dg-benchmarks.md)
 - [Nonlinear and time-dependent benchmarks](docs/tutorials/nonlinear-dg-benchmarks.md)
 - [Convergence order and GCI verification](docs/tutorials/convergence-verification.md)
+- [Conservation laws and temporal order](docs/tutorials/conservation-verification.md)
+- [Differentiable inverse problems](docs/tutorials/differentiable-inverse-problems.md)
+  — identify a wave speed and a diffusivity from synthetic observations with
+  autograd gradients, including the fault-injection matrix that shows a
+  residual-only workflow can be 37.5 % wrong while looking converged.
 
 ## Convergence order and GCI verification
 
