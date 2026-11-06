@@ -39,6 +39,7 @@ Run from the repository root::
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import sys
 from datetime import datetime, timezone
@@ -51,6 +52,7 @@ for _candidate in (_ROOT, Path(__file__).resolve().parent):
     if str(_candidate) not in sys.path:
         sys.path.insert(0, str(_candidate))
 
+import tensordg.euler_2d as e2d  # noqa: E402
 from tensordg import (  # noqa: E402
     solve_advection, solve_advection_2d, solve_burgers, solve_riemann,
 )
@@ -60,6 +62,8 @@ from _conservation_tools import (  # noqa: E402
     cell_averages_1d,
     cell_averages_2d,
     conserved_totals,
+    conserved_totals_2d,
+    drift_statistics,
     fit_order,
     integral_1d,
     linear_slope,
@@ -74,6 +78,16 @@ SOD_LEFT = (1.0, 0.0, 1.0)
 SOD_RIGHT = (0.125, 0.0, 0.1)
 SOD_FINAL_TIME = 0.2
 RESULT_DIR = _ROOT / "docs" / "benchmarks" / "results" / "conservation"
+EULER2D_INVARIANTS = ("mass", "momentum_x", "momentum_y", "energy")
+# (name, ncells, final_time, domain) of the 2-D periodic Euler conservation runs.
+# ``anisotropic_40x20`` deliberately uses dx != dy so a swapped or dropped cell
+# width cannot cancel; ``square_32_long`` quadruples the step count at fixed
+# resolution to expose step-count-dependent drift.
+EULER2D_CASES = (
+    ("square_32", (32, 32), 1.0, ((-5.0, 5.0), (-5.0, 5.0))),
+    ("anisotropic_40x20", (40, 20), 1.0, ((-5.0, 5.0), (-5.0, 5.0))),
+    ("square_32_long", (32, 32), 4.0, ((-5.0, 5.0), (-5.0, 5.0))),
+)
 
 # Acceptance thresholds.  They follow from theory (float64 round-off for
 # invariants, integrator order for the dt studies) and from the platform
@@ -95,6 +109,11 @@ CRITERIA = {
     "sod_field_error_max": 3.0e-2,        # documented acceptance threshold
     "rk4_order_min": 3.5,                 # theory 4
     "ssp_rk3_order_min": 2.6,             # theory 3
+    # 2-D periodic Euler system: four invariants sampled once per step.
+    "euler2d_drift_max": 1.0e-13,          # relative to the initial invariant
+    "euler2d_step_bias_max": 0.5,          # |mean|/rms of per-step increments
+    "euler2d_closure_max": 1.0e-15,        # ledger bookkeeping, relative
+    "euler2d_leak_recovery_max": 0.05,     # 5 % on the injected-leak budget
 }
 
 
@@ -289,6 +308,157 @@ def study_euler_budget(
         "max_momentum_budget_error": max(row["momentum_budget_error"] for row in rows),
         "hypothesis_errors": {k: float(v) for k, v in hypotheses.items()},
     }
+
+
+# ---------------------------------------------------------------------------
+# study 2b: 2-D Euler system -- periodic invariants with per-step statistics
+# ---------------------------------------------------------------------------
+@contextlib.contextmanager
+def injected_mass_source(strength: float):
+    """Negative control: break the telescoping flux difference by a source.
+
+    The wrapper adds ``strength`` units of mass per unit time inside the single
+    cell ``(0, 0)``.  That is a textbook non-conservative edit (the stencil no
+    longer telescopes), and it is *quantitative*: over a run of length ``T`` the
+    global mass must grow by exactly ``strength*T`` (SSP-RK3 integrates a
+    constant source exactly), while momentum and energy stay put.  The
+    conservation criteria are therefore falsifiable with a known answer instead
+    of merely "assert it fails".
+
+    ``e2d._rhs`` is looked up on the module at call time inside
+    :func:`~tensordg.euler_2d.solve_euler_2d`, so the patch reaches the solver
+    without touching its code path.
+    """
+    original = e2d._rhs
+
+    def leaked(u, dx, dy, periodic=(True, True)):
+        out = original(u, dx, dy, periodic)
+        out[0, 0, 0] = out[0, 0, 0] + float(strength) / (dx * dy)
+        return out
+
+    e2d._rhs = leaked
+    try:
+        yield
+    finally:
+        e2d._rhs = original
+
+
+def study_euler_2d_conservation(
+    cases=EULER2D_CASES,
+    cfl: float = 0.4,
+    leak: float = 0.0,
+    strength: float = 5.0,
+    background_velocity=(1.0, 1.0),
+) -> dict:
+    """Audit the four global invariants of the periodic 2-D Euler system.
+
+    The flow is the smooth isentropic vortex on a doubly periodic box, run with
+    the repository's own P0/Rusanov/SSP-RK3 path.  Nothing in the analysis knows
+    the answer: the discrete invariants are integrated from the state the solver
+    returns, sampled by the ``observer`` hook once per accepted step, and
+    summarised by :func:`tests._conservation_tools.drift_statistics`.
+
+    With ``leak != 0`` the run is repeated with :func:`injected_mass_source`, so
+    the same measurement must now *fail* and must recover
+    ``leak*final_time`` to within a few percent -- the negative control that
+    makes the criterion falsifiable.
+    """
+    rows = []
+    for name, ncells, final_time, domain in cases:
+        nx, ny = ncells
+        dx = (domain[0][1] - domain[0][0]) / nx
+        dy = (domain[1][1] - domain[1][0]) / ny
+        history = {invariant: [] for invariant in EULER2D_INVARIANTS}
+        times = []
+
+        def observer(time, steps, u, dx=dx, dy=dy, history=history, times=times):
+            totals = conserved_totals_2d(u, dx, dy)
+            for invariant in EULER2D_INVARIANTS:
+                history[invariant].append(totals[invariant])
+            times.append(float(time))
+
+        def initial(x, y, strength=strength, background_velocity=background_velocity):
+            return e2d.vortex_primitive(x, y, 0.0, strength, background_velocity)
+
+        if leak:
+            with injected_mass_source(leak):
+                _, _, _, metadata = e2d.solve_euler_2d(
+                    initial, ncells=ncells, final_time=final_time, cfl=cfl,
+                    domain=domain, periodic=(True, True), observer=observer,
+                )
+        else:
+            _, _, _, metadata = e2d.solve_euler_2d(
+                initial, ncells=ncells, final_time=final_time, cfl=cfl,
+                domain=domain, periodic=(True, True), observer=observer,
+            )
+
+        statistics = {}
+        for invariant in EULER2D_INVARIANTS:
+            samples = history[invariant]
+            scale = abs(float(samples[0])) or 1.0
+            statistics[invariant] = drift_statistics(samples, scale)
+        increments = {
+            invariant: statistics[invariant]["increment_mean"]
+            for invariant in EULER2D_INVARIANTS
+        }
+        rows.append({
+            "case": name,
+            "ncells": (int(nx), int(ny)),
+            "domain": tuple(tuple(float(edge) for edge in axis) for axis in domain),
+            "cell_widths": (float(dx), float(dy)),
+            "final_time": float(final_time),
+            "steps": int(metadata["steps"]),
+            "dt": float(metadata["dt"]),
+            "samples": len(times),
+            "time_covered": float(times[-1] - times[0]),
+            "invariants": statistics,
+            "step_mean_increments": increments,
+            "max_scaled_drift": max(
+                statistics[invariant]["scaled_drift"]
+                for invariant in EULER2D_INVARIANTS
+            ),
+            "max_bias_ratio": max(
+                statistics[invariant]["bias_ratio"]
+                for invariant in EULER2D_INVARIANTS
+            ),
+            "max_closure_residual": max(
+                statistics[invariant]["closure_residual"]
+                for invariant in EULER2D_INVARIANTS
+            ),
+            "expected_mass_drift": (
+                float(leak * final_time / statistics["mass"]["initial"])
+                if leak else 0.0
+            ),
+        })
+
+    results = {
+        "leak": float(leak),
+        "rows": rows,
+        "max_scaled_drift": max(row["max_scaled_drift"] for row in rows),
+        "max_bias_ratio": max(row["max_bias_ratio"] for row in rows),
+        "max_closure_residual": max(row["max_closure_residual"] for row in rows),
+        "drift_by_invariant": {
+            invariant: max(
+                row["invariants"][invariant]["scaled_drift"] for row in rows
+            )
+            for invariant in EULER2D_INVARIANTS
+        },
+        "mean_increment_by_invariant": {
+            invariant: max(
+                abs(row["step_mean_increments"][invariant]) for row in rows
+            )
+            for invariant in EULER2D_INVARIANTS
+        },
+    }
+    if leak:
+        mass_rows = [row for row in rows]
+        results["leak_recovery_error"] = max(
+            abs(
+                row["invariants"]["mass"]["scaled_drift"] - row["expected_mass_drift"]
+            ) / row["expected_mass_drift"]
+            for row in mass_rows
+        )
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -529,6 +699,9 @@ def evaluate_metrics(quick: bool = False) -> dict:
         precursor = study_shock_precursor(cells=(200, 400))
         field_error = study_field_error(cells=(800,))
         temporal = study_temporal_order(advection_cells=20, burgers_cells=32)
+        euler_2d = study_euler_2d_conservation(
+            cases=(EULER2D_CASES[0], EULER2D_CASES[1]),
+        )
     else:
         periodic = study_periodic_drift()
         budget = study_euler_budget()
@@ -536,6 +709,7 @@ def evaluate_metrics(quick: bool = False) -> dict:
         precursor = study_shock_precursor()
         field_error = study_field_error()
         temporal = study_temporal_order()
+        euler_2d = study_euler_2d_conservation()
     return {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "mode": "quick" if quick else "full",
@@ -550,6 +724,7 @@ def evaluate_metrics(quick: bool = False) -> dict:
         "shock_precursor": precursor,
         "field_error": field_error,
         "temporal": temporal,
+        "euler_2d_system": euler_2d,
     }
 
 
@@ -571,7 +746,7 @@ def build_criteria(metrics: dict) -> list:
             "comparison": comparison, "pass": bool(passed), "note": note,
         }
 
-    return [
+    criteria = [
         criterion("periodic_mass_drift_scaled", periodic["max_scaled_drift"],
                   CRITERIA["periodic_drift_max"], "<=",
                   "worst relative mass drift, periodic advection 1-D/2-D + Burgers"),
@@ -626,6 +801,27 @@ def build_criteria(metrics: dict) -> list:
                   "measured SSP-RK3 order on a fixed mesh (theory 3)"),
     ]
 
+    # 2-D Euler system (per-step ledger of four invariants on a periodic box).
+    euler_2d = metrics["euler_2d_system"]
+    for invariant in EULER2D_INVARIANTS:
+        criteria.append(criterion(
+            f"euler2d_drift_{invariant}",
+            euler_2d["drift_by_invariant"][invariant],
+            CRITERIA["euler2d_drift_max"], "<=",
+            f"relative drift of the 2-D {invariant} integral, sampled every step",
+        ))
+    criteria.append(criterion(
+        "euler2d_step_bias", euler_2d["max_bias_ratio"],
+        CRITERIA["euler2d_step_bias_max"], "<=",
+        "|mean|/rms of the per-step increments (round-off is unbiased, a leak is not)",
+    ))
+    criteria.append(criterion(
+        "euler2d_ledger_closure", euler_2d["max_closure_residual"],
+        CRITERIA["euler2d_closure_max"], "<=",
+        "sum of per-step increments vs the end-state difference",
+    ))
+    return criteria
+
 
 # ---------------------------------------------------------------------------
 # artifacts
@@ -664,6 +860,10 @@ def write_artifacts(metrics: dict, outdir: Path = RESULT_DIR) -> dict:
             "{momentum_increment_analytic:.17g},{momentum_budget_error:.6e}".format(**row)
         )
     (outdir / "euler_budget.csv").write_text("\n".join(budget_csv) + "\n")
+
+    (outdir / "euler_2d_system.json").write_text(
+        json.dumps(metrics["euler_2d_system"], indent=2, sort_keys=True) + "\n"
+    )
 
     rh = metrics["shock"]["star"]["shock_speed"]
     shock_csv = ["ncells,shock_speed,shock_speed_rankine_hugoniot,relative_error,intercept"]
