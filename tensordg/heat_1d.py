@@ -60,47 +60,27 @@ def _add_block(matrix, indices, block):
     matrix[indices[:, None], indices[None, :]] += block
 
 
-def solve_heat_1d(
+def assemble_sipg_1d(
     ncells: int = 16,
     degree: int = 2,
-    final_time: float = 0.1,
-    time_steps: int | None = None,
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    backend: str = "dense",
 ):
-    """Solve u_t=u_xx with zero Dirichlet data and sin(pi*x) initial data.
+    """Assemble the SIPG mass/diffusion matrices for ``u_t = u_xx`` on (0,1).
 
-    Crank--Nicolson is used for the global method-of-lines system. If
-    ``time_steps`` is omitted, dt is approximately ``0.02*cell_width``.
+    The same operator is used by the Crank--Nicolson driver
+    :func:`solve_heat_1d`, the matrix-exponential driver
+    :func:`solve_heat_1d_exact_time` and any external study of the semi-discrete
+    spectrum, so the discrete operator has a single source of truth.
 
-    Parameters
-    ----------
-    backend : str
-        - ``"dense"``: assemble dense torch matrices (default, backward compatible)
-        - ``"sparse"``: assemble scipy CSR matrices, solve with splu
-        - ``"matrix-free"``: no global assembly, solve with PCG per step
+    Returns a dict with ``centers``, ``h``, ``dofs``, ``mass_matrix`` (SPD),
+    ``diffusion`` (the SPD SIPG stiffness ``K`` of ``M du/dt = -K u``, with face
+    penalty ``penalty * (p+1)**2 / h`` on every interface and boundary face), and
+    ``initial_coefficients`` (L2 projection of ``sin(pi*x)``).
     """
-    if backend not in ("dense", "sparse", "matrix-free"):
-        raise ValueError("backend must be 'dense', 'sparse', or 'matrix-free'")
-
-    if backend == "sparse":
-        from tensordg.sipg_sparse import solve_heat_1d_sparse
-        return solve_heat_1d_sparse(
-            ncells, degree, final_time, time_steps, penalty, device, dtype,
-        )
-    elif backend == "matrix-free":
-        from tensordg.sipg_matrixfree import solve_heat_1d_matrixfree
-        return solve_heat_1d_matrixfree(
-            ncells, degree, final_time, time_steps, penalty, device, dtype,
-        )
-
-    # backend == "dense": original implementation
-    if ncells < 2 or degree not in (1, 2, 3) or penalty <= 0.0:
-        raise ValueError("ncells >= 2, degree in [1,3], and positive penalty are required")
-    if final_time < 0.0 or (time_steps is not None and time_steps < 1):
-        raise ValueError("final_time must be >= 0 and time_steps must be positive")
+    if ncells < 2 or degree < 1 or penalty <= 0.0:
+        raise ValueError("ncells >= 2, degree >= 1, and positive penalty are required")
     dev = torch.device(device)
     h = 1.0 / ncells
     centers = (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * h
@@ -150,6 +130,71 @@ def solve_heat_1d(
         coeff[:, k] = (2 * k + 1) * 0.5 * torch.sum(
             weights[None, :] * initial * phi[:, k][None, :], dim=1,
         )
+    return {
+        "ncells": ncells,
+        "degree": degree,
+        "h": h,
+        "dofs": ndofs,
+        "centers": centers,
+        "mass_matrix": mass_matrix,
+        "diffusion": diffusion,
+        "initial_coefficients": coeff,
+        "penalty": penalty,
+    }
+
+
+def solve_heat_1d(
+    ncells: int = 16,
+    degree: int = 2,
+    final_time: float = 0.1,
+    time_steps: int | None = None,
+    penalty: float = 20.0,
+    device: str = "cpu",
+    dtype: torch.dtype = torch.float64,
+    backend: str = "dense",
+):
+    """Solve u_t=u_xx with zero Dirichlet data and sin(pi*x) initial data.
+
+    Crank--Nicolson is used for the global method-of-lines system. If
+    ``time_steps`` is omitted, dt is approximately ``0.02*cell_width``.
+
+    Parameters
+    ----------
+    backend : str
+        - ``"dense"``: assemble dense torch matrices (default, backward compatible)
+        - ``"sparse"``: assemble scipy CSR matrices, solve with splu
+        - ``"matrix-free"``: no global assembly, solve with PCG per step
+    """
+    if backend not in ("dense", "sparse", "matrix-free"):
+        raise ValueError("backend must be 'dense', 'sparse', or 'matrix-free'")
+
+    if backend == "sparse":
+        from tensordg.sipg_sparse import solve_heat_1d_sparse
+        return solve_heat_1d_sparse(
+            ncells, degree, final_time, time_steps, penalty, device, dtype,
+        )
+    elif backend == "matrix-free":
+        from tensordg.sipg_matrixfree import solve_heat_1d_matrixfree
+        return solve_heat_1d_matrixfree(
+            ncells, degree, final_time, time_steps, penalty, device, dtype,
+        )
+
+    # backend == "dense": original implementation
+    if ncells < 2 or degree < 1 or penalty <= 0.0:
+        raise ValueError("ncells >= 2, degree >= 1, and positive penalty are required")
+    if final_time < 0.0 or (time_steps is not None and time_steps < 1):
+        raise ValueError("final_time must be >= 0 and time_steps must be positive")
+    dev = torch.device(device)
+    assembly = assemble_sipg_1d(
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype,
+    )
+    h = assembly["h"]
+    modes = degree + 1
+    centers = assembly["centers"]
+    mass_matrix = assembly["mass_matrix"]
+    diffusion = assembly["diffusion"]
+    coeff = assembly["initial_coefficients"]
+    ndofs = assembly["dofs"]
     steps = (
         max(1, math.ceil(final_time / (0.02 * h)))
         if time_steps is None else time_steps
@@ -169,6 +214,63 @@ def solve_heat_1d(
         "device": str(dev),
     }
     return centers, coeff, metadata
+
+
+def solve_heat_1d_exact_time(
+    ncells: int = 16,
+    degree: int = 2,
+    final_time: float = 0.1,
+    penalty: float = 20.0,
+    device: str = "cpu",
+    dtype: torch.dtype = torch.float64,
+):
+    """SIPG heat solution with the semi-discrete system integrated *exactly* in time.
+
+    The semi-discrete system is linear and autonomous, ``M du/dt = -K u``, so the
+    solution is ``u(t) = exp(-t M^{-1} K) u(0)``.  Evaluating the matrix
+    exponential (SciPy's Pade implementation) removes the temporal error of
+    Crank--Nicolson, which for high polynomial degrees is otherwise *larger*
+    than the spatial error and masks the ``h**(p+1)`` rate.  This makes the
+    driver a pure measurement of the **spatial** order for any ``p``.
+
+    Returns ``(centers, coefficients, metadata)`` like :func:`solve_heat_1d`.
+    """
+    if final_time < 0.0:
+        raise ValueError("final_time must be >= 0")
+    from scipy.linalg import expm
+
+    system = assemble_sipg_1d(
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype,
+    )
+    mass = system["mass_matrix"].detach().cpu().numpy()
+    diffusion = system["diffusion"].detach().cpu().numpy()
+    initial = system["initial_coefficients"].reshape(-1).detach().cpu().numpy()
+    generator = np.linalg.solve(mass, diffusion)
+    # ``diffusion`` holds the SIPG stiffness K with M du/dt = -K u (the
+    # Crank--Nicolson sweep below solves (M + dt/2 K) u^{n+1} = (M - dt/2 K) u^n),
+    # so the semi-discrete generator is -M^{-1} K and has negative real spectrum.
+    eigenvalues = np.linalg.eigvals(generator)
+    if eigenvalues.real.min() <= 0.0:
+        raise RuntimeError("the SIPG stiffness is not positive definite")
+    state = expm(-final_time * generator) @ initial if final_time > 0.0 else initial
+    coeff = torch.as_tensor(
+        state.reshape(ncells, degree + 1),
+        device=torch.device(device), dtype=dtype,
+    )
+    metadata = {
+        "ncells": ncells,
+        "degree": degree,
+        "final_time": final_time,
+        "penalty": penalty,
+        "dofs": system["dofs"],
+        "time_integration": "matrix-exponential",
+        "mass_symmetry_error": float(np.max(np.abs(mass - mass.T))),
+        "diffusion_symmetry_error": float(np.max(np.abs(diffusion - diffusion.T))),
+        "stiffness_eigenvalue_min": float(eigenvalues.real.min()),
+        "stiffness_eigenvalue_max": float(eigenvalues.real.max()),
+        "time_step_limit": float(2.0 / eigenvalues.real.max()),
+    }
+    return system["centers"], coeff, metadata
 
 
 def heat_error(
