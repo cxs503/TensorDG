@@ -37,6 +37,19 @@ from .differentiable import (
     probe_value,
     relative_difference,
 )
+from .swe_1d import (
+    solve_swe_1d,
+    reconstruct_fields,
+    physical_flux as swe_physical_flux,
+    hll_flux as swe_hll_flux,
+    sound_speed as swe_sound_speed,
+    GRAVITY as SWE_GRAVITY,
+)
+from .swe_2d import (
+    solve_swe_2d,
+    physical_flux_2d as swe_physical_flux_2d,
+    hll_flux_2d as swe_hll_flux_2d,
+)
 
 __all__ = [
     "solve_advection", "l2_error",
@@ -46,18 +59,18 @@ __all__ = [
     "solve_burgers", "burgers_error",
     "solve_heat_1d", "heat_error",
     "solve_poisson_2d", "poisson_error_2d",
-    # per-side Dirichlet/Neumann data (see
-    # docs/reports/tensordg-poisson-neumann-verification.md)
     "solve_poisson_2d_bc", "assemble_poisson_2d_bc", "l2_error_2d",
     "solve_riemann", "solve_euler_dg_1d", "solve_periodic_euler_dg_1d",
     "solve_euler_2d", "solve_isentropic_vortex", "vortex_error",
     "apply_limiter", "apply_tvb_limiter", "apply_weno_limiter",
-    # autograd-ready integration + gradient verification (see
-    # docs/differentiability_verification.md)
     "advance_advection_1d", "advance_euler_dg_1d", "advance_euler_dg_2d",
     "advance_heat_1d", "heat_1d_operators",
     "legendre_l2_sq", "legendre_l2_sq_2d", "probe_value",
     "directional_derivative_ad", "central_difference_directional",
     "central_difference_gradient", "gradient_consistency",
     "relative_difference",
+    # Shallow water equations (mission m6144)
+    "solve_swe_1d", "reconstruct_fields",
+    "swe_physical_flux", "swe_hll_flux", "swe_sound_speed", "SWE_GRAVITY",
+    "solve_swe_2d", "swe_physical_flux_2d", "swe_hll_flux_2d",
 ]
