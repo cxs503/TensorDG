@@ -36,6 +36,9 @@ multidimensional shock capturing.
   — smooth-regime order $\ge p+0.9$, Rankine--Hugoniot shock position to
   round-off, and the Gibbs overshoot before/after TVB limiting
 - [Convergence order and GCI verification](docs/tutorials/convergence-verification.md)
+- [Zero-to-one verification ladder](docs/verification_ladder.md) — advection,
+  diffusion, Sod shock tube and hp order in one machine-gated run
+  (`gates_verified.json`, gates C1--C6)
 - [Conservation laws and temporal order](docs/tutorials/conservation-verification.md)
 - [Differentiable inverse problems](docs/tutorials/differentiable-inverse-problems.md)
   — identify a wave speed and a diffusivity from synthetic observations with
@@ -71,6 +74,40 @@ Results, method details, and the honest limitations (fixed-dt error floor,
 superconvergent point functionals, CPU/float64 scope) are documented in
 [docs/benchmarks/convergence-verification.md](docs/benchmarks/convergence-verification.md)
 and the generated `docs/benchmarks/results/convergence/summary.md`.
+
+## Zero-to-one verification ladder (gates C1--C6)
+
+`benchmarks/verification_ladder.py` walks the same kernels through four
+capability levels and emits one machine verdict per level:
+
+| gate | what is checked | reference |
+|---|---|---|
+| C1 / C1b | 1D and 2D linear advection L2 order = `p+1` | exact translated wave |
+| C2 | heat equation (SIPG + Crank--Nicolson) L2 order = `p+1` | exact decaying mode |
+| C3 | Sod shock position and Gibbs amplitude vs `p` | exact Riemann solution |
+| C4 | h-rate = `p+1` **and** p-refinement = analytic projection floor | theory + Legendre quadrature |
+| C5 | negative control: the unlimited scheme must oscillate, the limiter must remove it | physical bounds |
+| C6 | every gate serialised with its measurements *and* thresholds, re-audited by pytest | artifact contract |
+
+Every reference is independent of the code under test (closed-form solutions,
+the exact Riemann solver, and the sharp `L2`-projection error computed from
+Legendre quadrature), and every gate record stores both the measured value and
+the threshold, so `gates_verified.json` cannot be hand-edited into a pass.
+
+```bash
+python -m benchmarks.verification_ladder     # writes docs/benchmarks/results/verification_ladder
+pytest -q tests/test_verification_ladder.py
+TENSORDG_LADDER_SLOW=1 pytest -q tests/test_verification_ladder.py   # + Sod block
+```
+
+Measured h-orders (production run, `p = 1,2,3`): advection 1D `2.04 / 3.00 / 3.99`,
+advection 2D `1.97 / 3.00 / 4.02`, heat `2.00 / 2.99 / 4.00` — all within 15 % of
+`p+1`. The Sod block is where the honest limit lives: the unlimited scheme
+oscillates (Gibbs amplitude 0.77 % -> 0.36 % of the density jump for
+`p = 1 -> 3`) and TVB limiting removes it, but the 2 %-of-a-cell shock-position
+bar is only met by `P3` unlimited (1.5 %); the other configurations land at
+2.7--6.4 % of a cell. That shortfall is stored as a `FAIL` in the artifact and
+explained in [docs/verification_ladder.md](docs/verification_ladder.md).
 
 ## Quick start
 
