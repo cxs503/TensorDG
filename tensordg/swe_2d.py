@@ -102,20 +102,22 @@ def _rhs_2d(coeff, dx, dy, weights, phi, dphi, phi_left, phi_right,
     vol_y = torch.einsum("xyabv,a,b,ak,bl->xyklv",
                          physical_flux_2d(at_quad, 1), weights, weights, phi, dphi)
 
-    # X-direction fluxes: trace at x-faces (contract x-modes, keep y-modes + y-quad)
-    # right trace at xi=+1: coeff[:, :, k, l, v] * phi_right[k] → [nx, ny, l, b, v]
-    trace_right_x = torch.einsum("xyklv,k,bl->xylv", coeff, phi_right, phi)
-    trace_left_x = torch.einsum("xyklv,k,bl->xylv", coeff, phi_left, phi)
+    # X-direction fluxes: trace at x-faces (contract x-modes, evaluate at the
+    # y-quadrature points, so that the interface flux can be projected onto the
+    # y-modes afterwards).  trace[x, y, b, v] with b = y-quadrature index.
+    trace_right_x = torch.einsum("xyklv,k,bl->xybv", coeff, phi_right, phi)
+    trace_left_x = torch.einsum("xyklv,k,bl->xybv", coeff, phi_left, phi)
 
     neighbour_x = torch.roll(trace_left_x, shifts=-1, dims=0)
     if not periodic[0]:
         neighbour_x[-1] = trace_right_x[-1]
 
     iface_x = hll_flux_2d(trace_right_x, neighbour_x, 0)
-    flux_right_x = torch.einsum("xylv,b,bl->xylv", iface_x, weights, phi)
+    # project the x-interface flux onto the y-modes: [nx, ny, b, v] -> [nx, ny, l, v]
+    flux_right_x = torch.einsum("xybv,b,bl->xylv", iface_x, weights, phi)
     flux_left_x = torch.roll(flux_right_x, shifts=1, dims=0)
     if not periodic[0]:
-        flux_left_x[0] = torch.einsum("ylv,b,bl->ylv",
+        flux_left_x[0] = torch.einsum("ybv,b,bl->ylv",
                                        hll_flux_2d(trace_left_x[:1], trace_left_x[:1], 0)[0],
                                        weights, phi)
 
@@ -128,25 +130,35 @@ def _rhs_2d(coeff, dx, dy, weights, phi, dphi, phi_left, phi_right,
         neighbour_y[:, -1] = trace_right_y[:, -1]
 
     iface_y = hll_flux_2d(trace_right_y, neighbour_y, 1)
-    flux_right_y = torch.einsum("xykav,a,ak->xykav", iface_y, weights, phi)
+    # project the y-interface flux onto the x-modes: [nx, ny, k, a, v] -> [nx, ny, k, v]
+    flux_right_y = torch.einsum("xykav,a,ak->xykv", iface_y, weights, phi)
     flux_left_y = torch.roll(flux_right_y, shifts=1, dims=1)
     if not periodic[1]:
-        flux_left_y[:, 0] = torch.einsum("xkav,a,ak->xkav",
+        flux_left_y[:, 0] = torch.einsum("xkav,a,ak->xkv",
                                           hll_flux_2d(trace_left_y[:, :1], trace_left_y[:, :1], 1)[:, 0],
                                           weights, phi)
 
     out = torch.empty_like(coeff)
     for k in range(nmodes):
         for l in range(nmodes):
-            factor = ((2 * k + 1) / dx) * ((2 * l + 1) / dy)
-            out[:, :, k, l] = factor * (
+            # d c_kl/dt = (2k+1)(2l+1)/(2 dx) * [x-terms]
+            #          + (2k+1)(2l+1)/(2 dy) * [y-terms]
+            # The x-terms are already integrated over eta (y-projection) and the
+            # y-terms over xi, hence the separate 1/dx and 1/dy scalings: the
+            # weak-form factor for direction d is (2k+1)(2l+1)/(2 d_d).
+            fx = (2 * k + 1) * (2 * l + 1) / (2.0 * dx)
+            fy = (2 * k + 1) * (2 * l + 1) / (2.0 * dy)
+            out[:, :, k, l] = fx * (
                 vol_x[:, :, k, l] - flux_right_x[:, :, l] * phi_right[k]
                 + flux_left_x[:, :, l] * phi_left[k]
-                + vol_y[:, :, k, l] - flux_right_y[:, :, k] * phi_right[l]
+            ) + fy * (
+                vol_y[:, :, k, l] - flux_right_y[:, :, k] * phi_right[l]
                 + flux_left_y[:, :, k] * phi_left[l]
             )
-            src_x = -GRAVITY * (zb_jump_x / dx) * (2.0 / (2 * k + 1)) * coeff[:, :, k, l, 0]
-            src_y = -GRAVITY * (zb_jump_y / dy) * (2.0 / (2 * l + 1)) * coeff[:, :, k, l, 0]
+            # Weak-form bed-slope source: the (2k+1)/dx prefactor and the
+            # 2/(2k+1) modal moment cancel, leaving -g dbdx * c_kl^h.
+            src_x = -GRAVITY * (zb_jump_x / dx) * coeff[:, :, k, l, 0]
+            src_y = -GRAVITY * (zb_jump_y / dy) * coeff[:, :, k, l, 0]
             out[:, :, k, l, 1] += src_x
             out[:, :, k, l, 2] += src_y
 
@@ -196,10 +208,15 @@ def solve_swe_2d(
     x = xl + (torch.arange(nx, device=dev, dtype=dtype) + 0.5) * dx
     y = yl + (torch.arange(ny, device=dev, dtype=dtype) + 0.5) * dy
 
-    zb_lx = zb(xl + torch.arange(nx, device=dev, dtype=dtype) * dx, y[:, None])
-    zb_rx = zb(xl + (torch.arange(nx, device=dev, dtype=dtype) + 1) * dx, y[:, None])
-    zb_ly = zb(x[:, None], yl + torch.arange(ny, device=dev, dtype=dtype) * dy)
-    zb_ry = zb(x[:, None], yl + (torch.arange(ny, device=dev, dtype=dtype) + 1) * dy)
+    # Bed elevation on the cell faces.  Both arguments must be shaped
+    # (nx, 1) / (1, ny) so that the result is a genuine (nx, ny) array;
+    # broadcasting (nx,) against (ny, 1) silently transposes the bed.
+    x_faces = xl + torch.arange(nx + 1, device=dev, dtype=dtype) * dx
+    y_faces = yl + torch.arange(ny + 1, device=dev, dtype=dtype) * dy
+    zb_lx = zb(x_faces[:-1, None], y[None, :])
+    zb_rx = zb(x_faces[1:, None], y[None, :])
+    zb_ly = zb(x[:, None], y_faces[:-1][None, :])
+    zb_ry = zb(x[:, None], y_faces[1:][None, :])
 
     zb_jump_x = zb_rx - zb_lx
     zb_jump_y = zb_ry - zb_ly
@@ -220,12 +237,18 @@ def solve_swe_2d(
     coeff = torch.zeros((nx, ny, nmodes, nmodes, 3), device=dev, dtype=dtype)
     for k in range(nmodes):
         for l in range(nmodes):
-            coeff[:, :, k, l, 0] = ((2 * k + 1) / 2.0) * ((2 * l + 1) / 2.0) * torch.einsum(
-                "xyab,a,b->xy", h0, weights, weights)
-            coeff[:, :, k, l, 1] = ((2 * k + 1) / 2.0) * ((2 * l + 1) / 2.0) * torch.einsum(
-                "xyab,a,b->xy", hu0, weights, weights)
-            coeff[:, :, k, l, 2] = ((2 * k + 1) / 2.0) * ((2 * l + 1) / 2.0) * torch.einsum(
-                "xyab,a,b->xy", hv0, weights, weights)
+            # L2 projection onto the tensor-product Legendre basis
+            #   c_kl = ((2k+1)(2l+1)/4) * int f phi_k phi_l  (both basis
+            #   functions must be present, otherwise every mode receives the
+            #   plain cell average scaled by the (2k+1)(2l+1)/4 factor).
+            prefac = ((2 * k + 1) / 2.0) * ((2 * l + 1) / 2.0)
+            phi_k, phi_l = phi[:, k], phi[:, l]
+            coeff[:, :, k, l, 0] = prefac * torch.einsum(
+                "xyab,a,b,a,b->xy", h0, weights, weights, phi_k, phi_l)
+            coeff[:, :, k, l, 1] = prefac * torch.einsum(
+                "xyab,a,b,a,b->xy", hu0, weights, weights, phi_k, phi_l)
+            coeff[:, :, k, l, 2] = prefac * torch.einsum(
+                "xyab,a,b,a,b->xy", hv0, weights, weights, phi_k, phi_l)
 
     coeff = _positivity_filter_2d(coeff, check_points, h_min)
 
