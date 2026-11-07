@@ -109,6 +109,27 @@ bar is only met by `P3` unlimited (1.5 %); the other configurations land at
 2.7--6.4 % of a cell. That shortfall is stored as a `FAIL` in the artifact and
 explained in [docs/verification_ladder.md](docs/verification_ladder.md).
 
+### IN31 ladder: `p = 1..5`, exact time integration, shock strength
+
+The `IN31-G01` node extends the staircase to `p = 1..5` and controls the two
+things the first ladder left implicit: the **temporal** error (the RK4 step is
+halved until the error stops moving for advection, and the diffusion system is
+integrated with a matrix exponential, so the measured rate is purely spatial) and
+the **measurement** error (the sub-cell shock locator is calibrated on synthetic
+fronts, which shows its floor is `0.12` cells - the older `0.02 dx` position gate
+sat below that floor). Sod is gated on the mission criteria instead: shock
+position within 2 cells and shock *strength* (density and pressure jumps) within
+5 %, for unlimited and TVB-limited `P1..P3`. See
+[docs/benchmarks/in31-hp-ladder.md](docs/benchmarks/in31-hp-ladder.md); verdicts
+and measured numbers live in
+`docs/benchmarks/results/in31-hp-ladder/gates_verified.json`.
+
+```bash
+python -m benchmarks.in31_hp_ladder              # writes docs/benchmarks/results/in31-hp-ladder
+pytest -q tests/test_in31_hp_ladder.py
+TENSORDG_IN31_SLOW=1 pytest -q tests/test_in31_hp_ladder.py   # + fresh Sod block
+```
+
 ## Quick start
 
 ```bash
