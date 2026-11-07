@@ -133,7 +133,8 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
     The source term −g h ∂z_b/∂x is treated by modal projection.
     For piecewise-linear bed, ∂z_b/∂x = (z_b,R − z_b,L)/dx is constant per cell.
     The weak-form source for mode k in the momentum equation is:
-        S_k = −g (∂z_b/∂x) · (2/(2k+1)) · c_k^h
+        S_k = −g (∂z_b/∂x) · c_k^h     (the (2k+1)/dx weak-form prefactor
+        cancels the 2/(2k+1) modal moment, so the source is weight-free)
     where c_k^h is the k-th modal coefficient of h.
 
     For lake-at-rest (h + z_b = const, hu = 0), the flux gradient and source
@@ -166,7 +167,10 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
             + left_interface_flux * phi_left[k]
         )
         # Source term: only in momentum equation (component 1)
-        src_k = -GRAVITY * dbdx * (2.0 / (2 * k + 1)) * coeff[:, k, 0]
+        # Weak form of -g h dz_b/dx on mode k:
+        #   ((2k+1)/dx) * int_cell S phi_k dx with S = -g dbdx * sum_m c_m^h phi_m
+        #   = -g dbdx * c_k^h  ((2k+1)/2 and 2/(2k+1) cancel exactly)
+        src_k = -GRAVITY * dbdx * coeff[:, k, 0]
         rhs_k[:, 1] += src_k
         out[:, k] = rhs_k
 
