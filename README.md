@@ -18,6 +18,7 @@ feature set.
 | Euler Sod shock tube | P0 DG / finite volume, Rusanov, SSP-RK3 | Exact Riemann cell averages | max 2.517658% |
 | 2D Poisson | P1 SIPG | Manufactured sine solution | 0.380026% |
 | Smooth Burgers | P2 DG, Rusanov, SSP-RK3 | Exact characteristic solution | 0.001820% |
+| Burgers shock (Riemann) | P2 DG, Rusanov/Roe, SSP-RK3, TVB limiter | Exact entropy solution (Rankine--Hugoniot) | 1.523 % (TVB, 200 cells) |
 | 1D heat equation | P2 SIPG, Crank--Nicolson | Exact decaying sine mode | 0.003604% |
 | Euler Lax shock tube | P3 DG, HLLC, positivity fallback | Exact Riemann solution | max 2.769420% |
 | 2D isentropic vortex | P0 DG / finite volume, Rusanov | Analytical moving vortex | max 1.972990% |
@@ -31,6 +32,9 @@ multidimensional shock capturing.
 
 - [Classic DG benchmarks](docs/tutorials/classic-dg-benchmarks.md)
 - [Nonlinear and time-dependent benchmarks](docs/tutorials/nonlinear-dg-benchmarks.md)
+- [Burgers shock capturing and the Gibbs bound](docs/burgers_shock_verification.md)
+  — smooth-regime order $\ge p+0.9$, Rankine--Hugoniot shock position to
+  round-off, and the Gibbs overshoot before/after TVB limiting
 - [Convergence order and GCI verification](docs/tutorials/convergence-verification.md)
 - [Conservation laws and temporal order](docs/tutorials/conservation-verification.md)
 - [Differentiable inverse problems](docs/tutorials/differentiable-inverse-problems.md)
