@@ -22,6 +22,14 @@ feature set.
 | 1D heat equation | P2 SIPG, Crank--Nicolson | Exact decaying sine mode | 0.003604% |
 | Euler Lax shock tube | P3 DG, HLLC, positivity fallback | Exact Riemann solution | max 2.769420% |
 | 2D isentropic vortex | P0 DG / finite volume, Rusanov | Analytical moving vortex | max 1.972990% |
+| 1D shallow water, Ritter dry-bed dam break | P1 DG, HLL, SSP-RK3 | Exact self-similar solution | 0.357053% |
+
+The 1-D shallow-water dry-bed case is gated on the relative L1 error of the
+depth (0.2494% at 200 cells; the table quotes L2 for consistency); it also
+regates that the time integrator actually reaches the requested final time -
+before the dry-state guard it silently stopped at t = 0.076 s of 0.5 s and the
+result was documented as "dry front smearing". See
+[docs/swe_verification.md](docs/swe_verification.md).
 
 The documented configurations all have relative errors below 3%. For Sod,
 Lax, and the isentropic vortex, the maximum is over all reported primitive
