@@ -13,7 +13,11 @@ keep that path honest and cheap:
   (the spatial error dominates at CFL 0.2) while the successive-solution
   self-difference decays at the SSP-RK3 rate -- i.e. the temporal error is
   third order and is *not* what caps the P3 order measured by m3024;
-* the TVB limiter is inert on the smooth vortex.
+* the default TVB constant is *not* inert on the smooth vortex, and why that is
+  the documented meaning of ``M`` rather than a units defect (m6495 retired the
+  "threshold scale is off" reading of the old strict-xfail pin; the evidence is
+  ``benchmarks/tvb_constant_adjudication.py`` ->
+  ``validation/euler_dg_2d/tvb_constant_adjudication.json``).
 """
 from __future__ import annotations
 
@@ -87,22 +91,37 @@ def test_temporal_order_is_third_and_exact_error_is_dt_insensitive():
     assert modal_norm(coeff_base) > 0.0
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "open defect found by this study: with the default tvb_constant=1.0 the 2-D "
-        "troubled-cell detector fires on the smooth isentropic vortex and the density "
-        "error grows by a factor ~34 (8^2) / ~136 (12^2).  Raising the constant to 10 "
-        "restores the unlimited error exactly, so the threshold scale (or the units it "
-        "is compared against) is off, not the limiter machinery.  When the default is "
-        "fixed this pin turns XPASS and forces the limitation to be retired."
-    ),
-)
-def test_default_tvb_constant_is_inert_on_the_smooth_vortex():
-    # 4^2 is too coarse to trigger the detector; the defect shows from 8^2 on.
+def test_default_tvb_constant_fires_because_M_is_below_the_derivative_bound():
+    """Retired strict xfail (m6495): the "units bug" reading was wrong.
+
+    Adjudicated with numbers by ``benchmarks/tvb_constant_adjudication.py``
+    (artifact: ``validation/euler_dg_2d/tvb_constant_adjudication.json``):
+
+    * the shipped detector compares a scale-consistent ``O(h**2)`` deviation
+      against ``M h**2``, so ``M`` is an *absolute bound on the second
+      derivative* of the cell averages;
+    * the conserved variables of this vortex reach ``max |d2/dx2| = 1.81``
+      (``torch.autograd`` on the analytic initial condition), i.e. **above** the
+      default ``M = 1`` -- the detector must fire, by definition;
+    * with ``M = 2`` (above that bound) the detector is silent on this mesh and
+      the density error is *bit-identical* to the unlimited run;
+    * the flagged fraction saturates (4.3 % at 16x16, 5.0 % at 64x64) instead of
+      growing with refinement, which a threshold/measure dimension slip would
+      produce.
+
+    The accuracy loss at ``M = 1`` is therefore the documented, tunable cost of a
+    problem-dependent TVB constant (``docs/limiter_2d_verification.md`` section 5
+    item 3), not an open defect of the limiter machinery.
+    """
     plain, _ = run_case(3, 8)
     limited, _ = run_case(3, 8, limiter="tvb")
-    assert limited["density"] == pytest.approx(plain["density"], rel=1e-3)
+    quiet, _ = run_case(3, 8, limiter="tvb", limiter_constant=2.0)
+    assert limited["density"] > 10.0 * plain["density"], (
+        "M=1 must flag the vortex core; if this ever stops firing the detector "
+        "changed meaning and the adjudication has to be re-derived")
+    assert quiet["density"] == plain["density"], (
+        "M=2 is above the analytic |u''| bound (1.81) and must be bit-identical "
+        "to the unlimited run on this mesh")
 
 
 def test_large_tvb_constant_is_inert_on_the_smooth_vortex():
