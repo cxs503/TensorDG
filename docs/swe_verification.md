@@ -127,16 +127,23 @@ non-regression evidence for the wet branch.
   this change. The dry guard removes one blow-up mechanism in that
   configuration, but the reported gap is a different (semi-discrete
   consistency) defect and stays open.
-* Mass bookkeeping at the wetting front: because the guard zeroes the mass
-  flux of a state with ``h <= DRY_DEPTH``, the residual puddle is frozen and the
-  total mass drifts by O(DRY_DEPTH * dx) = 3e-8 m^2 at 200 cells (1e-8
-  relative, measured 9.9999e-09). The wet-bed Stoker case keeps the strict
-  1e-10 gate; the dry-bed gate is 1e-7.
-* **Open item (mass metric discrepancy).** `benchmarks/ritter_dam_break.py`
-  reports a relative mass drift of 9.9999e-09 for the dry-bed case, while the
-  in-test metric in `test_ritter_dry_bed_mass_and_positivity` reports a larger
-  value for the same configuration. The cause has not been isolated yet; the
-  test gate is therefore 1e-5 (0.001 %) and this is tracked as the next task.
+* Mass bookkeeping: **resolved, see `docs/ritter_mass_metric_resolution.md`.**
+  The 9.9999e-09 quoted in earlier revisions of this document was a *benchmark
+  metric bug*, not a solver drift: `run_ritter` seeds the dry side with
+  `dry_tol = 1e-8` and divided by the analytic mass `h0*|x_left|`, so the
+  unaccounted seed `1e-8 * 5 = 5e-8 m^2` reported itself as 1.0e-08. Against
+  the *discrete* initial mass the drift is 5.13e-14 (N = 200) / 3.16e-14
+  (N = 100). The in-test value is **boundary outflow**: on `(-3, 3)` the front
+  `2 c0 t = 3.132 m` passes the transmissive wall at t = 0.479 s < 0.5 s, so
+  measured drift is 3.25e-07 at t = 0.5 versus 7.93e-14 at t = 0.3 on the same
+  grid and 8.17e-14 on `(-5, 5)` at t = 0.5. What leaves is the O(DRY_DEPTH)
+  numerical water floor ahead of the front (h ~ 9e-07 at x ~ 3 m while the
+  exact front is at 1.88 m), carried by the ill-conditioned `u = hu / h` of
+  near-dry states. Interior mass balance telescopes exactly; the gates are now
+  1e-12 for the wall-free configuration and 1e-6 for the truncated one.
+* **Remaining limitation.** The O(DRY_DEPTH) floor itself is not removed; that
+  needs the wetting/drying closure (hydrostatic reconstruction + a
+  positivity-preserving time step) listed above.
 * Wet/dry momentum: a cell that becomes dry keeps its (tiny) momentum; it is
   not explicitly zeroed, since zeroing would break the exact mass bookkeeping
   used by the tests.

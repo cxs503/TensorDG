@@ -64,6 +64,25 @@ def ritter_exact(
     return h, u
 
 
+def _discrete_initial_mass(init_h, ncells: int, domain: tuple, degree: int) -> float:
+    """Mass of the initial state that ``solve_swe_1d`` actually projects.
+
+    Evaluated with the same Gauss-Legendre rule the solver uses, so a
+    piecewise-constant ``init_h`` that jumps on a cell face is integrated
+    exactly and any interior jump is resolved to quadrature accuracy.
+    """
+    lower, upper = domain
+    dx = (upper - lower) / ncells
+    nq = max(2 * degree + 3, 4)
+    nodes_np, weights_np = np.polynomial.legendre.leggauss(nq)
+    nodes = torch.as_tensor(nodes_np, dtype=torch.float64)
+    weights = torch.as_tensor(weights_np, dtype=torch.float64)
+    centres = lower + (torch.arange(ncells, dtype=torch.float64) + 0.5) * dx
+    xq = centres[:, None] + 0.5 * dx * nodes[None, :]
+    hq = init_h(xq)
+    return float((hq * weights[None, :]).sum() * 0.5 * dx)
+
+
 def run_ritter(
     ncells: int = 200,
     degree: int = 1,
@@ -131,11 +150,21 @@ def run_ritter(
     wet_front_num = float(x_np[h_num > dry_tol].max()) if (h_num > dry_tol).any() else float("nan")
     wet_front_exact = 2.0 * c0 * final_time
 
-    # Mass conservation: integral of h should equal initial mass
+    # Mass conservation.  The *consistent* reference is the mass of the
+    # discrete initial state that the solver actually started from, not the
+    # analytic h0 * |x_left|: ``init_h`` seeds the dry side with ``dry_tol``
+    # water, which contributes ``dry_tol * (x_right - max(x_left, 0))`` to the
+    # total mass.  Using the analytic value as denominator (the pre-2026-11
+    # behaviour) reported ``dry_tol * |x_right| / (h0 * |x_left|) = 1e-8`` as a
+    # "mass error" even though the solver conserves mass to round-off; see
+    # docs/ritter_mass_metric_resolution.md.
     dx = (domain[1] - domain[0]) / ncells
     mass_num = float(np.sum(h_num) * dx)
-    mass_init = h0 * abs(domain[0])  # only left side has water initially
+    mass_init = _discrete_initial_mass(init_h, ncells, domain, degree)
+    mass_init_analytic = h0 * abs(domain[0])  # left side only, ignores dry_tol
+    mass_seed = mass_init - mass_init_analytic
     mass_error = abs(mass_num - mass_init) / mass_init
+    mass_error_legacy = abs(mass_num - mass_init_analytic) / mass_init_analytic
 
     # Positivity check
     h_min = float(h_num.min())
@@ -170,7 +199,10 @@ def run_ritter(
         "wet_front_error_cells": abs(wet_front_num - wet_front_exact) / dx if not np.isnan(wet_front_num) else float("nan"),
         "mass_num": mass_num,
         "mass_init": mass_init,
+        "mass_init_analytic": mass_init_analytic,
+        "mass_seed": mass_seed,
         "mass_error": mass_error,
+        "mass_error_legacy": mass_error_legacy,
         "dry_guard": "DRY_DEPTH = 1e-6 (tensordg.swe_1d)",
         "h_min": h_min,
         "h_max": h_max,
@@ -264,7 +296,9 @@ def main():
         print(f"  rel L1 u: {result['rel_l1_u']:.4%}")
         print(f"  rel L2 u: {result['rel_l2_u']:.4%}")
         print(f"  Wet front error: {result['wet_front_error_cells']:.2f} cells")
-        print(f"  Mass error: {result['mass_error']:.4%}")
+        print(f"  Mass error: {result['mass_error']:.4e} "
+              f"(legacy analytic-denominator value {result['mass_error_legacy']:.4e},")
+        print(f"    initial dry_tol seed mass {result['mass_seed']:.3e} m^2)")
         print(f"  h range: [{result['h_min']:.2e}, {result['h_max']:.2f}]")
 
         if args.output_dir:
