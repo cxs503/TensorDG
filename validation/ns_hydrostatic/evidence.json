@@ -1,0 +1,333 @@
+{
+  "probe": "ns-hydrostatic-representable-conduction",
+  "parameters": {
+    "mu": 0.1,
+    "prandtl": 0.71,
+    "kappa": 0.4929577464788734,
+    "t_bottom": 1.0,
+    "t_top": 0.5,
+    "exact_wall_flux": -0.2464788732394367,
+    "domain": [
+      0.0,
+      1.0
+    ],
+    "x_periodic": true
+  },
+  "representable": [
+    {
+      "degree": 1,
+      "density_amplitude": 0.0,
+      "ny": 8,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 1.9451107391432743e-13,
+        "interior": 5.329070518200751e-13,
+        "top_row": 4.289901767151605e-13,
+        "energy_bottom_row": 1.9451107391432743e-13,
+        "energy_top_row": 4.289901767151605e-13,
+        "mass": 8.950808856385417e-15,
+        "momentum": 1.0640357329628662e-14
+      },
+      "wall_flux_bottom": 0.24647887323942838,
+      "wall_flux_top": 0.24647887323944304,
+      "wall_flux_error": 8.659739592076221e-15,
+      "wall_flux_exact": -0.2464788732394367
+    },
+    {
+      "degree": 1,
+      "density_amplitude": 0.0,
+      "ny": 16,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 4.3787672550434074e-13,
+        "interior": 1.8971491044794675e-12,
+        "top_row": 4.227729277772596e-13,
+        "energy_bottom_row": 4.3787672550434074e-13,
+        "energy_top_row": 4.227729277772596e-13,
+        "mass": 9.324921544251691e-15,
+        "momentum": 2.1334065779575848e-14
+      },
+      "wall_flux_bottom": 0.24647887323944961,
+      "wall_flux_top": 0.24647887323943807,
+      "wall_flux_error": 1.3072876114961218e-14,
+      "wall_flux_exact": -0.2464788732394367
+    },
+    {
+      "degree": 1,
+      "density_amplitude": 0.0,
+      "ny": 32,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 4.135358722123783e-12,
+        "interior": 7.151612635425408e-12,
+        "top_row": 6.394884621840902e-14,
+        "energy_bottom_row": 4.135358722123783e-12,
+        "energy_top_row": 6.394884621840902e-14,
+        "mass": 3.1487329316534277e-14,
+        "momentum": 4.261478043883317e-14
+      },
+      "wall_flux_bottom": 0.24647887323943682,
+      "wall_flux_top": 0.24647887323946108,
+      "wall_flux_error": 2.5118795932144167e-14,
+      "wall_flux_exact": -0.2464788732394367
+    },
+    {
+      "degree": 2,
+      "density_amplitude": 0.0,
+      "ny": 8,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 8.51498575392601e-13,
+        "interior": 1.111113940535784e-12,
+        "top_row": 1.7610940029352173e-12,
+        "energy_bottom_row": 8.51498575392601e-13,
+        "energy_top_row": 1.7610940029352173e-12,
+        "mass": 1.0665014334366639e-14,
+        "momentum": 8.521449367892139e-14
+      },
+      "wall_flux_bottom": 0.24647887323946255,
+      "wall_flux_top": 0.24647887323942308,
+      "wall_flux_error": 3.594347042223944e-14,
+      "wall_flux_exact": -0.2464788732394367
+    },
+    {
+      "degree": 2,
+      "density_amplitude": 0.0,
+      "ny": 16,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 6.462392679462418e-12,
+        "interior": 1.1953610353654316e-11,
+        "top_row": 8.907023190156451e-12,
+        "energy_bottom_row": 6.462392679462418e-12,
+        "energy_top_row": 8.907023190156451e-12,
+        "mass": 5.101968219916226e-14,
+        "momentum": 1.9179590404293643e-13
+      },
+      "wall_flux_bottom": 0.24647887323942022,
+      "wall_flux_top": 0.24647887323942336,
+      "wall_flux_error": 3.788636071533347e-14,
+      "wall_flux_exact": -0.2464788732394367
+    },
+    {
+      "degree": 2,
+      "density_amplitude": 0.0,
+      "ny": 32,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 1.3232904458358754e-11,
+        "interior": 2.4798379831154168e-11,
+        "top_row": 3.20764823242899e-11,
+        "energy_bottom_row": 1.3232904458358754e-11,
+        "energy_top_row": 3.20764823242899e-11,
+        "mass": 6.538128386194418e-14,
+        "momentum": 4.049587247709665e-13
+      },
+      "wall_flux_bottom": 0.24647887323933115,
+      "wall_flux_top": 0.24647887323942427,
+      "wall_flux_error": 1.6495138588368263e-13,
+      "wall_flux_exact": -0.2464788732394367
+    },
+    {
+      "degree": 3,
+      "density_amplitude": 0.0,
+      "ny": 8,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 3.177014207267348e-12,
+        "interior": 4.3800518767511676e-12,
+        "top_row": 4.750235718756581e-12,
+        "energy_bottom_row": 3.177014207267348e-12,
+        "energy_top_row": 4.750235718756581e-12,
+        "mass": 2.4043826529772163e-14,
+        "momentum": 1.3677593337095806e-13
+      },
+      "wall_flux_bottom": 0.24647887323940498,
+      "wall_flux_top": 0.2464788732394235,
+      "wall_flux_error": 5.417888360170764e-14,
+      "wall_flux_exact": -0.2464788732394367
+    },
+    {
+      "degree": 3,
+      "density_amplitude": 0.0,
+      "ny": 16,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 4.156128403740139e-12,
+        "interior": 2.3945505047420153e-11,
+        "top_row": 1.1695919892592699e-11,
+        "energy_bottom_row": 4.156128403740139e-12,
+        "energy_top_row": 1.1695919892592699e-11,
+        "mass": 4.0319722436155216e-14,
+        "momentum": 2.7355541000477735e-13
+      },
+      "wall_flux_bottom": 0.24647887323954693,
+      "wall_flux_top": 0.24647887323941467,
+      "wall_flux_error": 1.3589129821411916e-13,
+      "wall_flux_exact": -0.2464788732394367
+    },
+    {
+      "degree": 3,
+      "density_amplitude": 0.0,
+      "ny": 32,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 6.370193261773238e-11,
+        "interior": 8.505996192349376e-11,
+        "top_row": 4.876329057104764e-11,
+        "energy_bottom_row": 6.370193261773238e-11,
+        "energy_top_row": 4.876329057104764e-11,
+        "mass": 8.765883146292166e-14,
+        "momentum": 5.471143632724159e-13
+      },
+      "wall_flux_bottom": 0.24647887323931866,
+      "wall_flux_top": 0.24647887323931186,
+      "wall_flux_error": 1.557087792036782e-13,
+      "wall_flux_exact": -0.2464788732394367
+    },
+    {
+      "degree": 3,
+      "density_amplitude": 0.5,
+      "ny": 8,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 1.5791812302268227e-12,
+        "interior": 6.360245663472597e-12,
+        "top_row": 1.8588600681124617e-12,
+        "energy_bottom_row": 1.5791812302268227e-12,
+        "energy_top_row": 1.8588600681124617e-12,
+        "mass": 1.5180348840915203e-14,
+        "momentum": 1.3701975827501545e-13
+      },
+      "wall_flux_bottom": 0.2464788732394126,
+      "wall_flux_top": 0.24647887323942283,
+      "wall_flux_error": 3.419486915845482e-14,
+      "wall_flux_exact": -0.2464788732394367
+    },
+    {
+      "degree": 3,
+      "density_amplitude": 0.5,
+      "ny": 16,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 1.0376588477356563e-11,
+        "interior": 2.490008199629301e-11,
+        "top_row": 1.978950336933849e-11,
+        "energy_bottom_row": 1.0376588477356563e-11,
+        "energy_top_row": 1.978950336933849e-11,
+        "mass": 6.533979508849843e-14,
+        "momentum": 2.7356773792450165e-13
+      },
+      "wall_flux_bottom": 0.24647887323952178,
+      "wall_flux_top": 0.24647887323940054,
+      "wall_flux_error": 1.740274591099933e-13,
+      "wall_flux_exact": -0.2464788732394367
+    },
+    {
+      "degree": 3,
+      "density_amplitude": 0.5,
+      "ny": 32,
+      "state_is_representable": true,
+      "residual": {
+        "bottom_row": 2.831227821558101e-11,
+        "interior": 1.7663177033215356e-10,
+        "top_row": 6.800725672084219e-11,
+        "energy_bottom_row": 2.831227821558101e-11,
+        "energy_top_row": 6.800725672084219e-11,
+        "mass": 1.108525857398381e-13,
+        "momentum": 6.466626729796371e-13
+      },
+      "wall_flux_bottom": 0.24647887323960407,
+      "wall_flux_top": 0.24647887323944997,
+      "wall_flux_error": 3.3717473257866004e-13,
+      "wall_flux_exact": -0.2464788732394367
+    }
+  ],
+  "textbook": [
+    {
+      "degree": 1,
+      "ny": 8,
+      "state_is_representable": false,
+      "wall_flux_error_bottom": 0.038890670051933335,
+      "wall_flux_error_top": 0.008987947566914706,
+      "trace_defect_bottom": 0.0007036067689660808,
+      "trace_defect_top": 0.0011311600523331578,
+      "energy_residual_bottom_row": 0.12044487149210226,
+      "energy_residual_top_row": 0.1956125163997351,
+      "causality_ratio_bottom": 2.6747200283896393,
+      "causality_ratio_top": 2.7020451813530393,
+      "flux_ratio_bottom": 0.8636453575544731,
+      "flux_ratio_top": 0.1241527938008191,
+      "residual_scaled_bottom": 0.3871264988854142,
+      "n_dofs": 256,
+      "mass_residual": 4.989603274984165e-15,
+      "momentum_residual": 1.0975087608381842e-15
+    },
+    {
+      "degree": 1,
+      "ny": 16,
+      "state_is_representable": false,
+      "wall_flux_error_bottom": 0.01868060672835939,
+      "wall_flux_error_top": 0.0047987721943502926,
+      "trace_defect_bottom": 0.0001690890315091398,
+      "trace_defect_top": 0.000302730892666081,
+      "energy_residual_bottom_row": 0.1292126837061538,
+      "energy_residual_top_row": 0.1573879358806165,
+      "causality_ratio_bottom": 5.970074359316213,
+      "causality_ratio_top": 4.061670872894976,
+      "flux_ratio_bottom": 0.8631088531453271,
+      "flux_ratio_top": 0.12384070696648203,
+      "residual_scaled_bottom": 0.432308909933562,
+      "n_dofs": 512,
+      "mass_residual": 9.971986966320896e-15,
+      "momentum_residual": 2.1950175216763684e-15
+    },
+    {
+      "degree": 1,
+      "ny": 32,
+      "state_is_representable": false,
+      "wall_flux_error_bottom": 0.009159920081034917,
+      "wall_flux_error_top": 0.0024813691050397657,
+      "trace_defect_bottom": 4.146686192330051e-05,
+      "trace_defect_top": 7.843339135304994e-05,
+      "energy_residual_bottom_row": 0.18497789461052072,
+      "energy_residual_top_row": 0.13985058235677172,
+      "causality_ratio_bottom": 17.42523710038279,
+      "causality_ratio_top": 6.96503527269571,
+      "flux_ratio_bottom": 0.8628802893916863,
+      "flux_ratio_top": 0.12358063191391852,
+      "residual_scaled_bottom": 0.6310709215189645,
+      "n_dofs": 1024,
+      "mass_residual": 3.757064252557721e-14,
+      "momentum_residual": 4.390035043352737e-15
+    },
+    {
+      "degree": 1,
+      "ny": 64,
+      "state_is_representable": false,
+      "wall_flux_error_bottom": 0.004536126801118173,
+      "wall_flux_error_top": 0.0012619492404101762,
+      "trace_defect_bottom": 1.0268749498054675e-05,
+      "trace_defect_top": 1.9970253949619376e-05,
+      "energy_residual_bottom_row": 0.21495103172382102,
+      "energy_residual_top_row": 0.13143440035951315,
+      "causality_ratio_bottom": 40.88387139204441,
+      "causality_ratio_top": 12.854509204028767,
+      "flux_ratio_bottom": 0.8627752249786901,
+      "flux_ratio_top": 0.1234207945674673,
+      "residual_scaled_bottom": 0.7404135770315752,
+      "n_dofs": 2048,
+      "mass_residual": 7.271877787264508e-14,
+      "momentum_residual": 8.780070086705474e-15
+    }
+  ],
+  "summary": {
+    "representable_max_residual": 1.7663177033215356e-10,
+    "representable_max_wall_flux_error": 3.3717473257866004e-13,
+    "textbook_trace_defect_order": 2.0323063156962076,
+    "textbook_flux_error_order": 1.032780804756191,
+    "textbook_residual_order": -0.3024510389761042,
+    "flux_ratio_spread": 1.0010085275406517,
+    "causality_ratio_spread": 15.285290033386875
+  }
+}
