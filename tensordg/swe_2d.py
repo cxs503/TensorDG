@@ -121,20 +121,27 @@ def _rhs_2d(coeff, dx, dy, weights, phi, dphi, phi_left, phi_right,
                                        hll_flux_2d(trace_left_x[:1], trace_left_x[:1], 0)[0],
                                        weights, phi)
 
-    # Y-direction fluxes: trace at y-faces (contract y-modes, keep x-modes + x-quad)
-    trace_right_y = torch.einsum("xyklv,l,ak->xykav", coeff, phi_right, phi)
-    trace_left_y = torch.einsum("xyklv,l,ak->xykav", coeff, phi_left, phi)
+    # Y-direction fluxes: trace at y-faces.  The trace is the pointwise state
+    # at (x-quadrature node a, eta = +-1), i.e. *both* the y-mode AND the x-mode
+    # are contracted: sigma_{k,l} c_kl phi_k(x_a) phi_l(+-1) -> [x, y, a, v].
+    # Keeping the x-mode index in the output (an earlier "xykav" contraction,
+    # mission m6386) multiplied every mode by phi_k(x_a) instead of summing the
+    # x-modes, which injected a spurious y-momentum source in the cross mode
+    # (1,1) of an otherwise y-invariant state and made the solver blow up in a
+    # single time step for any unsteady flow.
+    trace_right_y = torch.einsum("xyklv,l,ak->xyav", coeff, phi_right, phi)
+    trace_left_y = torch.einsum("xyklv,l,ak->xyav", coeff, phi_left, phi)
 
     neighbour_y = torch.roll(trace_left_y, shifts=-1, dims=1)
     if not periodic[1]:
         neighbour_y[:, -1] = trace_right_y[:, -1]
 
     iface_y = hll_flux_2d(trace_right_y, neighbour_y, 1)
-    # project the y-interface flux onto the x-modes: [nx, ny, k, a, v] -> [nx, ny, k, v]
-    flux_right_y = torch.einsum("xykav,a,ak->xykv", iface_y, weights, phi)
+    # project the y-interface flux onto the x-modes: [nx, ny, a, v] -> [nx, ny, k, v]
+    flux_right_y = torch.einsum("xyav,a,ak->xykv", iface_y, weights, phi)
     flux_left_y = torch.roll(flux_right_y, shifts=1, dims=1)
     if not periodic[1]:
-        flux_left_y[:, 0] = torch.einsum("xkav,a,ak->xkv",
+        flux_left_y[:, 0] = torch.einsum("xav,a,ak->xkv",
                                           hll_flux_2d(trace_left_y[:, :1], trace_left_y[:, :1], 1)[:, 0],
                                           weights, phi)
 
@@ -199,6 +206,28 @@ def solve_swe_2d(
     """Solve the 2-D shallow water equations with tensor-product DG."""
     if nx < 4 or ny < 4 or degree not in (1, 2):
         raise ValueError("nx, ny >= 4 and degree in {1, 2}")
+    if limiter not in (None, "tvb", "weno"):
+        raise ValueError("limiter must be None, 'tvb' or 'weno'")
+
+    if limiter is None:
+        def _limit(state):
+            return state
+    else:
+        # The tensor-product limiters are axis-generic in the number of
+        # conserved variables (they only touch the modal axes), so the 2-D
+        # Euler limiters apply to [h, hu, hv] unchanged.  Before mission
+        # m6386 the ``limiter`` argument was accepted and silently dropped,
+        # so a user asking for a limiter got an unlimited run.
+        from .euler_dg_2d import apply_tvb_limiter_2d, apply_weno_limiter_2d
+
+        if limiter == "tvb":
+            def _limit(state):
+                return apply_tvb_limiter_2d(
+                    state, dx, dy, tvb_constant, periodic)
+        else:
+            def _limit(state):
+                return apply_weno_limiter_2d(
+                    state, dx, dy, tvb_constant, periodic)
 
     dev = torch.device(device)
     (xl, xr), (yl, yr) = domain
@@ -250,7 +279,7 @@ def solve_swe_2d(
             coeff[:, :, k, l, 2] = prefac * torch.einsum(
                 "xyab,a,b,a,b->xy", hv0, weights, weights, phi_k, phi_l)
 
-    coeff = _positivity_filter_2d(coeff, check_points, h_min)
+    coeff = _positivity_filter_2d(_limit(coeff), check_points, h_min)
 
     time, steps, dt = 0.0, 0, 0.0
     while time < final_time:
@@ -267,17 +296,17 @@ def solve_swe_2d(
         k1 = _rhs_2d(coeff, dx, dy, weights, phi, dphi, phi_left, phi_right,
                      zb_jump_x, zb_jump_y, periodic)
         u1 = coeff + dt * k1
-        u1 = _positivity_filter_2d(u1, check_points, h_min)
+        u1 = _positivity_filter_2d(_limit(u1), check_points, h_min)
 
         k2 = _rhs_2d(u1, dx, dy, weights, phi, dphi, phi_left, phi_right,
                      zb_jump_x, zb_jump_y, periodic)
         u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
-        u2 = _positivity_filter_2d(u2, check_points, h_min)
+        u2 = _positivity_filter_2d(_limit(u2), check_points, h_min)
 
         k3 = _rhs_2d(u2, dx, dy, weights, phi, dphi, phi_left, phi_right,
                      zb_jump_x, zb_jump_y, periodic)
         coeff = (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3)
-        coeff = _positivity_filter_2d(coeff, check_points, h_min)
+        coeff = _positivity_filter_2d(_limit(coeff), check_points, h_min)
 
         if not torch.isfinite(coeff).all():
             raise FloatingPointError("Nonphysical 2D SWE state")
