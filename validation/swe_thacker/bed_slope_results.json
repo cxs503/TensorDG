@@ -1,0 +1,221 @@
+{
+  "generated_by": "validation/swe_thacker/run_bed_slope_consistency.py",
+  "reference": "Thacker (1981) planar sloshing, exact via tensordg.swe_exact",
+  "config": {
+    "gravity": 9.81,
+    "h0": 1.0,
+    "amplitude": 0.5,
+    "half_width": 1.0,
+    "cfl": 0.3,
+    "flux": "hll",
+    "rk_order": 3,
+    "boundary": "analytic flux",
+    "dtype": "float64"
+  },
+  "thacker_runs": [
+    {
+      "degree": 1,
+      "ncells": 20,
+      "source": "legacy",
+      "t": 0.1,
+      "eta_rel_L2_pct": 0.1269576134106711,
+      "u_rel_L2_pct": 0.533081693863585,
+      "steps": 48,
+      "time_reached": 0.1
+    },
+    {
+      "degree": 1,
+      "ncells": 20,
+      "source": "legacy",
+      "t": 0.5,
+      "eta_rel_L2_pct": 11.932842265548112,
+      "u_rel_L2_pct": 133.732583072761,
+      "steps": 357,
+      "time_reached": 0.5
+    },
+    {
+      "degree": 1,
+      "ncells": 20,
+      "source": "exact",
+      "t": 0.1,
+      "eta_rel_L2_pct": 0.11581308110494941,
+      "u_rel_L2_pct": 0.02780545373483853,
+      "steps": 48,
+      "time_reached": 0.1
+    },
+    {
+      "degree": 1,
+      "ncells": 20,
+      "source": "exact",
+      "t": 0.5,
+      "eta_rel_L2_pct": 0.12585182416223578,
+      "u_rel_L2_pct": 0.013412646382354506,
+      "steps": 265,
+      "time_reached": 0.5
+    },
+    {
+      "degree": 1,
+      "ncells": 40,
+      "source": "legacy",
+      "t": 0.1,
+      "eta_rel_L2_pct": 0.03465848011201653,
+      "u_rel_L2_pct": 0.16786985117403058,
+      "steps": 95,
+      "time_reached": 0.1
+    },
+    {
+      "degree": 1,
+      "ncells": 40,
+      "source": "legacy",
+      "t": 0.5,
+      "error": "FloatingPointError: Nonphysical SWE state; reduce CFL or check IC"
+    },
+    {
+      "degree": 1,
+      "ncells": 40,
+      "source": "exact",
+      "t": 0.1,
+      "eta_rel_L2_pct": 0.028711056654461053,
+      "u_rel_L2_pct": 0.004323216853896025,
+      "steps": 95,
+      "time_reached": 0.1
+    },
+    {
+      "degree": 1,
+      "ncells": 40,
+      "source": "exact",
+      "t": 0.5,
+      "eta_rel_L2_pct": 0.03127464851523925,
+      "u_rel_L2_pct": 0.002054013413915634,
+      "steps": 530,
+      "time_reached": 0.5
+    },
+    {
+      "degree": 2,
+      "ncells": 20,
+      "source": "legacy",
+      "t": 0.1,
+      "eta_rel_L2_pct": 2.712800165739132,
+      "u_rel_L2_pct": 21.899939439788728,
+      "steps": 104,
+      "time_reached": 0.1
+    },
+    {
+      "degree": 2,
+      "ncells": 20,
+      "source": "legacy",
+      "t": 0.5,
+      "eta_rel_L2_pct": 3.132790504684477,
+      "u_rel_L2_pct": 28.678060123526354,
+      "steps": 1529,
+      "time_reached": 0.5
+    },
+    {
+      "degree": 2,
+      "ncells": 20,
+      "source": "exact",
+      "t": 0.1,
+      "eta_rel_L2_pct": 0.11568927312664676,
+      "u_rel_L2_pct": 1.0610665727381575e-05,
+      "steps": 79,
+      "time_reached": 0.1
+    },
+    {
+      "degree": 2,
+      "ncells": 20,
+      "source": "exact",
+      "t": 0.5,
+      "eta_rel_L2_pct": 0.12577322564927357,
+      "u_rel_L2_pct": 8.381879132373986e-06,
+      "steps": 442,
+      "time_reached": 0.5
+    },
+    {
+      "degree": 2,
+      "ncells": 40,
+      "source": "legacy",
+      "t": 0.1,
+      "eta_rel_L2_pct": 1.7084038831809714,
+      "u_rel_L2_pct": 16.942429346247245,
+      "steps": 263,
+      "time_reached": 0.1
+    },
+    {
+      "degree": 2,
+      "ncells": 40,
+      "source": "legacy",
+      "t": 0.5,
+      "eta_rel_L2_pct": 1.2864736199519693,
+      "u_rel_L2_pct": 18.426429274134907,
+      "steps": 3026,
+      "time_reached": 0.5
+    },
+    {
+      "degree": 2,
+      "ncells": 40,
+      "source": "exact",
+      "t": 0.1,
+      "eta_rel_L2_pct": 0.02869735005795814,
+      "u_rel_L2_pct": 1.8966618590714525e-06,
+      "steps": 158,
+      "time_reached": 0.1
+    },
+    {
+      "degree": 2,
+      "ncells": 40,
+      "source": "exact",
+      "t": 0.5,
+      "eta_rel_L2_pct": 0.03126624535641267,
+      "u_rel_L2_pct": 1.4362966731488438e-06,
+      "steps": 883,
+      "time_reached": 0.5
+    }
+  ],
+  "lake_at_rest_curved_bed": {
+    "P1": [
+      {
+        "t": 0.1,
+        "drift_max_m": 0.00025902766477692296,
+        "max_hu": 0.0009190221080561536
+      },
+      {
+        "t": 0.25,
+        "drift_max_m": 0.0001321606117978824,
+        "max_hu": 0.001390948957712718
+      },
+      {
+        "t": 0.5,
+        "drift_max_m": 0.00028817224000210473,
+        "max_hu": 0.0005446516839342714
+      },
+      {
+        "t": 1.0,
+        "drift_max_m": 0.00032424335366965096,
+        "max_hu": 0.001360514278715569
+      }
+    ],
+    "P2": [
+      {
+        "t": 0.1,
+        "drift_max_m": 0.002449982767246617,
+        "max_hu": 0.01159386101400854
+      },
+      {
+        "t": 0.25,
+        "drift_max_m": 0.017846911243696528,
+        "max_hu": 0.0784172909275498
+      },
+      {
+        "t": 0.5,
+        "drift_max_m": 0.09035299702774324,
+        "max_hu": 0.3923621762020255
+      },
+      {
+        "t": 1.0,
+        "drift_max_m": 0.6447720610088941,
+        "max_hu": 3.2889259401870903
+      }
+    ]
+  },
+  "runtime_s": 117.3
+}

@@ -148,7 +148,8 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
          zb_jump: torch.Tensor,
          flux_kind: str = "hll", periodic: bool = False,
          time: float = 0.0,
-         bc_left_flux=None, bc_right_flux=None) -> torch.Tensor:
+         bc_left_flux=None, bc_right_flux=None,
+         zb_slope_quad: Optional[torch.Tensor] = None) -> torch.Tensor:
     """Semi-discrete DG residual for SWE with bed slope source term.
 
     The source term −g h ∂z_b/∂x is treated by modal projection.
@@ -187,6 +188,19 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
 
     dbdx = zb_jump / dx  # [ncells]
 
+    # Two source-term discretisations:
+    #   * legacy (zb_slope_quad is None): cell-constant gradient
+    #     (z_b,R - z_b,L)/dx.  Exact for a piecewise-linear bed, but for a
+    #     curved bed it is only the *cell average* of dz_b/dx, so the weak
+    #     force carries an O(dx * d2z_b/dx2) error that does not shrink with p.
+    #   * exact (zb_slope_quad given): dz_b/dx sampled at the same Gauss points
+    #     as h, so the source quadrature is exact for polynomial data:
+    #         S_k = -(2k+1)/2 g sum_q w_q h(x_q) dz_b/dx(x_q) phi_k(xi_q).
+    #     For a constant slope this reduces algebraically to -g dbdx c_k, i.e.
+    #     the legacy branch is recovered exactly.
+    mom_factor = torch.arange(1, 2 * coeff.shape[1], 2,
+                              device=coeff.device, dtype=coeff.dtype)  # 2k+1
+
     out = torch.empty_like(coeff)
     for k in range(coeff.shape[1]):
         # Flux divergence term (both equations)
@@ -199,7 +213,11 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
         # Weak form of -g h dz_b/dx on mode k:
         #   ((2k+1)/dx) * int_cell S phi_k dx with S = -g dbdx * sum_m c_m^h phi_m
         #   = -g dbdx * c_k^h  ((2k+1)/2 and 2/(2k+1) cancel exactly)
-        src_k = -GRAVITY * dbdx * coeff[:, k, 0]
+        if zb_slope_quad is None:
+            src_k = -GRAVITY * dbdx * coeff[:, k, 0]
+        else:
+            src_k = -0.5 * GRAVITY * mom_factor[k] * torch.einsum(
+                "cq,q,q->c", at_quad[:, :, 0] * zb_slope_quad, weights, phi[:, k])
         rhs_k[:, 1] += src_k
         out[:, k] = rhs_k
 
@@ -240,6 +258,7 @@ def solve_swe_1d(
     periodic: bool = False,
     bc_left_flux: Optional[Callable[[float], torch.Tensor]] = None,
     bc_right_flux: Optional[Callable[[float], torch.Tensor]] = None,
+    zb_slope: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
 ) -> tuple:
     """Solve the 1-D shallow water equations with DG.
 
@@ -302,6 +321,7 @@ def solve_swe_1d(
     check_points = torch.cat((phi, phi_left[None, :], phi_right[None, :]), dim=0)
 
     node_x = x[:, None] + 0.5 * dx * nodes[None, :]
+    zb_slope_quad = None if zb_slope is None else zb_slope(node_x)
     h0 = initial_h(node_x)
     u0 = initial_u(node_x)
     hu0 = h0 * u0
@@ -332,7 +352,7 @@ def solve_swe_1d(
         if rk_order == 3:
             k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time,
-                      bc_left_flux, bc_right_flux)
+                      bc_left_flux, bc_right_flux, zb_slope_quad)
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
@@ -340,7 +360,7 @@ def solve_swe_1d(
 
             k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time + dt,
-                      bc_left_flux, bc_right_flux)
+                      bc_left_flux, bc_right_flux, zb_slope_quad)
             u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
             if limit_each_stage:
                 u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
@@ -348,19 +368,19 @@ def solve_swe_1d(
 
             k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time + 0.5 * dt,
-                      bc_left_flux, bc_right_flux)
+                      bc_left_flux, bc_right_flux, zb_slope_quad)
             coeff = (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3)
         else:
             k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time,
-                      bc_left_flux, bc_right_flux)
+                      bc_left_flux, bc_right_flux, zb_slope_quad)
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
             u1 = _positivity_filter(u1, check_points, h_min)
 
             k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right,
-                      zb_jump, flux_kind, periodic)
+                      zb_jump, flux_kind, periodic, zb_slope_quad=zb_slope_quad)
             coeff = 0.5 * coeff + 0.5 * (u1 + dt * k2)
 
         if limiter_stage == "final" and limiter is not None:
@@ -381,6 +401,7 @@ def solve_swe_1d(
         "flux": flux_kind, "limiter": limiter, "rk_order": rk_order,
         "device": str(dev), "limiter_stage": limiter_stage,
         "exact_boundary_flux": bc_left_flux is not None or bc_right_flux is not None,
+        "exact_bed_slope": zb_slope is not None,
         "time_reached": time,
         "reached_final_time": (not stalled) and time >= final_time - 1e-12,
         "dry_depth": DRY_DEPTH,
