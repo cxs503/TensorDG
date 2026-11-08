@@ -281,6 +281,20 @@ def thacker_parabolic_bed(x, h0: float = 1.0, half_width: float = 1.0):
     return -h0 * (1.0 - (x / half_width) ** 2)
 
 
+def thacker_parabolic_bed_slope(x, h0: float = 1.0, half_width: float = 1.0):
+    """Analytic bed slope ``dz_b/dx = 2 h0 x / L^2`` of :func:`thacker_parabolic_bed`.
+
+    Supplying this to ``solve_swe_1d(..., zb_slope=...)`` makes the bed-slope
+    source term consistent at quadrature points instead of using the
+    cell-constant face difference ``(z_b,R - z_b,L)/dx``.  The latter is only
+    the *cell average* of the slope, which for a curved bed leaves an
+    O(dx) error in the discrete force (see
+    ``docs/tensordg-swe-bed-slope-source-fix.md``).
+    """
+    x = np.asarray(x, dtype=float)
+    return 2.0 * h0 * x / half_width ** 2
+
+
 def thacker_planar_basin(x, t: float, h0: float = 1.0, amplitude: float = 0.5,
                          half_width: float = 1.0, gravity: float = GRAVITY,
                          period: float = 0.0):
