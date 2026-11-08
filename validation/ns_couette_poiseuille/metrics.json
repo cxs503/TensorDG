@@ -1,0 +1,327 @@
+{
+  "mission": "m6454",
+  "case": {
+    "force": 0.2,
+    "mu": 0.1,
+    "prandtl": 0.71,
+    "kappa": 0.4929577464788734,
+    "pressure": 1.0,
+    "wall_temperature": 1.0,
+    "height": 1.0,
+    "u_max": 0.25,
+    "wall_slope": 1.0,
+    "reynolds": 2.5,
+    "density_ratio": 1.0063797286368947
+  },
+  "domain_x": [
+    0.0,
+    0.5
+  ],
+  "results": [
+    {
+      "name": "rest_p1_ny8",
+      "ncells": [
+        2,
+        8
+      ],
+      "degree": 1,
+      "initial": "rest",
+      "final_time": 8.0,
+      "steps": 5400,
+      "dt": 0.0014368556545472089,
+      "diffusive_steps": 5400,
+      "wall_seconds": 327.99395298957825,
+      "errors": {
+        "velocity_x": {
+          "relative_l2": 0.007418929214413759,
+          "relative_linf": 0.008191236026478812
+        },
+        "temperature": {
+          "relative_l2": 8.686907722783332e-05,
+          "relative_linf": 0.00017501773445415987
+        },
+        "density": {
+          "relative_l2": 0.0033865064670800128,
+          "relative_linf": 0.0035053079283372947
+        }
+      },
+      "wall_shear": {
+        "bottom_numeric": 0.9583437930473881,
+        "top_numeric": 0.9583437930473873,
+        "exact": 1.0,
+        "relative_error_bottom": 0.04165620695261185,
+        "relative_error_top": 0.04165620695261274
+      },
+      "force_balance": {
+        "body_force_total": 0.2,
+        "wall_shear_total_numeric": 0.19166875860947755,
+        "relative_error": 0.041656206952612324
+      },
+      "mean_velocity": {
+        "numeric": 0.16597133999665942,
+        "exact": 0.16666666666666666
+      },
+      "temperature_drop": {
+        "numeric": 0.0064154289692484046,
+        "exact": 0.0063392857142857695
+      },
+      "finite": true,
+      "profile": null
+    },
+    {
+      "name": "exact_p1_ny8",
+      "ncells": [
+        2,
+        8
+      ],
+      "degree": 1,
+      "initial": "exact",
+      "final_time": 0.5,
+      "steps": 337,
+      "dt": 0.000793035273346343,
+      "diffusive_steps": 337,
+      "wall_seconds": 20.67290997505188,
+      "errors": {
+        "velocity_x": {
+          "relative_l2": 0.0066304716465668675,
+          "relative_linf": 0.007356777208734466
+        },
+        "temperature": {
+          "relative_l2": 8.783418102015483e-05,
+          "relative_linf": 0.00017953533704689575
+        },
+        "density": {
+          "relative_l2": 6.543894025787104e-05,
+          "relative_linf": 0.00012961055411145578
+        }
+      },
+      "wall_shear": {
+        "bottom_numeric": 0.9602715104745077,
+        "top_numeric": 0.9602715104745085,
+        "exact": 1.0,
+        "relative_error_bottom": 0.03972848952549235,
+        "relative_error_top": 0.03972848952549146
+      },
+      "force_balance": {
+        "body_force_total": 0.2,
+        "wall_shear_total_numeric": 0.19205430209490162,
+        "relative_error": 0.03972848952549193
+      },
+      "mean_velocity": {
+        "numeric": 0.16635093947564175,
+        "exact": 0.16666666666666666
+      },
+      "temperature_drop": {
+        "numeric": 0.006414100593787442,
+        "exact": 0.0063392857142857695
+      },
+      "finite": true,
+      "profile": null
+    },
+    {
+      "name": "exact_p1_ny12",
+      "ncells": [
+        2,
+        12
+      ],
+      "degree": 1,
+      "initial": "exact",
+      "final_time": 0.5,
+      "steps": 758,
+      "dt": 0.00012611529349759731,
+      "diffusive_steps": 758,
+      "wall_seconds": 47.58540201187134,
+      "errors": {
+        "velocity_x": {
+          "relative_l2": 0.0029467951068807103,
+          "relative_linf": 0.003333994181148533
+        },
+        "temperature": {
+          "relative_l2": 3.8770488555218216e-05,
+          "relative_linf": 8.19978372706277e-05
+        },
+        "density": {
+          "relative_l2": 2.778035986268486e-05,
+          "relative_linf": 6.73037491507303e-05
+        }
+      },
+      "wall_shear": {
+        "bottom_numeric": 0.973072870929477,
+        "top_numeric": 0.973072870929475,
+        "exact": 1.0,
+        "relative_error_bottom": 0.02692712907052297,
+        "relative_error_top": 0.02692712907052497
+      },
+      "force_balance": {
+        "body_force_total": 0.2,
+        "wall_shear_total_numeric": 0.19461457418589523,
+        "relative_error": 0.026927129070523914
+      },
+      "mean_velocity": {
+        "numeric": 0.16652650815609085,
+        "exact": 0.16666666666666666
+      },
+      "temperature_drop": {
+        "numeric": 0.006374560445135513,
+        "exact": 0.0063392857142857695
+      },
+      "finite": true,
+      "profile": null
+    },
+    {
+      "name": "exact_p1_ny16",
+      "ncells": [
+        2,
+        16
+      ],
+      "degree": 1,
+      "initial": "exact",
+      "final_time": 0.5,
+      "steps": 1347,
+      "dt": 4.11986994710567e-05,
+      "diffusive_steps": 1347,
+      "wall_seconds": 86.18059730529785,
+      "errors": {
+        "velocity_x": {
+          "relative_l2": 0.0016574548022533309,
+          "relative_linf": 0.001894180787938799
+        },
+        "temperature": {
+          "relative_l2": 2.174545362812293e-05,
+          "relative_linf": 4.6687856959839315e-05
+        },
+        "density": {
+          "relative_l2": 1.5159212780224597e-05,
+          "relative_linf": 4.015619274034632e-05
+        }
+      },
+      "wall_shear": {
+        "bottom_numeric": 0.9796413797543053,
+        "top_numeric": 0.979641379754304,
+        "exact": 1.0,
+        "relative_error_bottom": 0.02035862024569468,
+        "relative_error_top": 0.020358620245696013
+      },
+      "force_balance": {
+        "body_force_total": 0.2,
+        "wall_shear_total_numeric": 0.19592827595086093,
+        "relative_error": 0.020358620245695402
+      },
+      "mean_velocity": {
+        "numeric": 0.16658792154739338,
+        "exact": 0.16666666666666666
+      },
+      "temperature_drop": {
+        "numeric": 0.006359712571766041,
+        "exact": 0.0063392857142857695
+      },
+      "finite": true,
+      "profile": null
+    },
+    {
+      "name": "exact_p2_ny8",
+      "ncells": [
+        2,
+        8
+      ],
+      "degree": 2,
+      "initial": "exact",
+      "final_time": 0.5,
+      "steps": 1704,
+      "dt": 0.00019565729110110341,
+      "diffusive_steps": 1704,
+      "wall_seconds": 107.79011297225952,
+      "errors": {
+        "velocity_x": {
+          "relative_l2": 1.3090410134961876e-05,
+          "relative_linf": 2.1074923006129625e-05
+        },
+        "temperature": {
+          "relative_l2": 1.4079947635778e-05,
+          "relative_linf": 2.009223702462069e-05
+        },
+        "density": {
+          "relative_l2": 7.484707831331281e-06,
+          "relative_linf": 1.4095669736853009e-05
+        }
+      },
+      "wall_shear": {
+        "bottom_numeric": 1.00004976585964,
+        "top_numeric": 1.000049765859639,
+        "exact": 1.0,
+        "relative_error_bottom": 4.9765859639894217e-05,
+        "relative_error_top": 4.976585963900604e-05
+      },
+      "force_balance": {
+        "body_force_total": 0.2,
+        "wall_shear_total_numeric": 0.2000099531719279,
+        "relative_error": 4.976585963947788e-05
+      },
+      "mean_velocity": {
+        "numeric": 0.16796996855729393,
+        "exact": 0.16666666666666666
+      },
+      "temperature_drop": {
+        "numeric": 0.006350950270987088,
+        "exact": 0.0063392857142857695
+      },
+      "finite": true,
+      "profile": null
+    }
+  ],
+  "convergence": [
+    {
+      "coarse": "exact_p1_ny8",
+      "fine": "exact_p1_ny12",
+      "velocity_x": 2.000067942608706,
+      "temperature": 2.0169217055190543
+    },
+    {
+      "coarse": "exact_p1_ny12",
+      "fine": "exact_p1_ny16",
+      "velocity_x": 2.0002463009064977,
+      "temperature": 2.0100475533799758
+    }
+  ],
+  "fixed_point_agreement_rest_vs_exact_ny8": {
+    "velocity_x": 0.0007884575678468913,
+    "temperature": 9.651037923215003e-07,
+    "density": 0.003321067526822142
+  },
+  "checks": [
+    {
+      "case": "rest_p1_ny8",
+      "worst_relative_l2": 0.007418929214413759,
+      "below_three_percent": true,
+      "finite": true
+    },
+    {
+      "case": "exact_p1_ny8",
+      "worst_relative_l2": 0.0066304716465668675,
+      "below_three_percent": true,
+      "finite": true
+    },
+    {
+      "case": "exact_p1_ny12",
+      "worst_relative_l2": 0.0029467951068807103,
+      "below_three_percent": true,
+      "finite": true
+    },
+    {
+      "case": "exact_p1_ny16",
+      "worst_relative_l2": 0.0016574548022533309,
+      "below_three_percent": true,
+      "finite": true
+    },
+    {
+      "case": "exact_p2_ny8",
+      "worst_relative_l2": 1.4079947635778e-05,
+      "below_three_percent": true,
+      "finite": true
+    }
+  ],
+  "verdict": {
+    "finest_p1_worst_relative_l2": 0.0016574548022533309,
+    "all_below_three_percent": true
+  }
+}
