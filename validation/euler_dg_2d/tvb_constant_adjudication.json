@@ -1,0 +1,399 @@
+{
+ "benchmark": "tvb_constant_adjudication",
+ "problem": "periodic smooth isentropic vortex (exact 2-D Euler solution)",
+ "domain": [
+  [
+   -5.0,
+   5.0
+  ],
+  [
+   -5.0,
+   5.0
+  ]
+ ],
+ "vortex_strength": 5.0,
+ "background_velocity": [
+  1.0,
+  1.0
+ ],
+ "final_time": 1.0,
+ "provenance": {
+  "commit": "f2743ce026492474c0af17f5d2df6f9fa61073cb",
+  "torch": "2.7.1",
+  "numpy": "2.4.6",
+  "wall_seconds": 75.5
+ },
+ "detector": {
+  "derivative_bound": {
+   "density": {
+    "d2_dx2": 0.8026434426120835,
+    "d2_dy2": 0.8026434426120835
+   },
+   "momentum_x": {
+    "d2_dx2": 0.7935150104020194,
+    "d2_dy2": 1.8093498235957197
+   },
+   "momentum_y": {
+    "d2_dx2": 1.8093498235957197,
+    "d2_dy2": 0.7935150104020194
+   },
+   "energy": {
+    "d2_dx2": 0.8490552624551864,
+    "d2_dy2": 0.8490552624551864
+   }
+  },
+  "max_abs_second_derivative": 1.8093498235957197,
+  "masks": [
+   {
+    "cells": 8,
+    "h": 1.25,
+    "tvb_constant": 1.0,
+    "flagged_x": 0,
+    "predicted_x": 0,
+    "mismatch_x": 0,
+    "fraction_x": 0.0,
+    "flagged_y": 0,
+    "predicted_y": 0,
+    "mismatch_y": 0,
+    "fraction_y": 0.0,
+    "flagged_any": 0,
+    "fraction_any": 0.0
+   },
+   {
+    "cells": 12,
+    "h": 0.8333333333333334,
+    "tvb_constant": 1.0,
+    "flagged_x": 3,
+    "predicted_x": 4,
+    "mismatch_x": 1,
+    "fraction_x": 0.02083333395421505,
+    "flagged_y": 2,
+    "predicted_y": 2,
+    "mismatch_y": 0,
+    "fraction_y": 0.013888888992369175,
+    "flagged_any": 5,
+    "fraction_any": 0.0347222238779068
+   },
+   {
+    "cells": 16,
+    "h": 0.625,
+    "tvb_constant": 1.0,
+    "flagged_x": 8,
+    "predicted_x": 8,
+    "mismatch_x": 0,
+    "fraction_x": 0.03125,
+    "flagged_y": 5,
+    "predicted_y": 7,
+    "mismatch_y": 2,
+    "fraction_y": 0.01953125,
+    "flagged_any": 11,
+    "fraction_any": 0.04296875
+   },
+   {
+    "cells": 32,
+    "h": 0.3125,
+    "tvb_constant": 1.0,
+    "flagged_x": 28,
+    "predicted_x": 32,
+    "mismatch_x": 4,
+    "fraction_x": 0.02734375,
+    "flagged_y": 24,
+    "predicted_y": 27,
+    "mismatch_y": 3,
+    "fraction_y": 0.0234375,
+    "flagged_any": 44,
+    "fraction_any": 0.04296875
+   },
+   {
+    "cells": 64,
+    "h": 0.15625,
+    "tvb_constant": 1.0,
+    "flagged_x": 130,
+    "predicted_x": 131,
+    "mismatch_x": 1,
+    "fraction_x": 0.03173828125,
+    "flagged_y": 110,
+    "predicted_y": 113,
+    "mismatch_y": 5,
+    "fraction_y": 0.02685546875,
+    "flagged_any": 205,
+    "fraction_any": 0.050048828125
+   },
+   {
+    "cells": 8,
+    "h": 1.25,
+    "tvb_constant": 2.0,
+    "flagged_x": 0,
+    "predicted_x": 0,
+    "mismatch_x": 0,
+    "fraction_x": 0.0,
+    "flagged_y": 0,
+    "predicted_y": 0,
+    "mismatch_y": 0,
+    "fraction_y": 0.0,
+    "flagged_any": 0,
+    "fraction_any": 0.0
+   },
+   {
+    "cells": 12,
+    "h": 0.8333333333333334,
+    "tvb_constant": 2.0,
+    "flagged_x": 0,
+    "predicted_x": 2,
+    "mismatch_x": 2,
+    "fraction_x": 0.0,
+    "flagged_y": 0,
+    "predicted_y": 0,
+    "mismatch_y": 0,
+    "fraction_y": 0.0,
+    "flagged_any": 0,
+    "fraction_any": 0.0
+   },
+   {
+    "cells": 16,
+    "h": 0.625,
+    "tvb_constant": 2.0,
+    "flagged_x": 0,
+    "predicted_x": 1,
+    "mismatch_x": 1,
+    "fraction_x": 0.0,
+    "flagged_y": 2,
+    "predicted_y": 2,
+    "mismatch_y": 0,
+    "fraction_y": 0.0078125,
+    "flagged_any": 2,
+    "fraction_any": 0.0078125
+   },
+   {
+    "cells": 32,
+    "h": 0.3125,
+    "tvb_constant": 2.0,
+    "flagged_x": 12,
+    "predicted_x": 12,
+    "mismatch_x": 0,
+    "fraction_x": 0.01171875,
+    "flagged_y": 13,
+    "predicted_y": 14,
+    "mismatch_y": 1,
+    "fraction_y": 0.0126953125,
+    "flagged_any": 23,
+    "fraction_any": 0.0224609375
+   },
+   {
+    "cells": 64,
+    "h": 0.15625,
+    "tvb_constant": 2.0,
+    "flagged_x": 62,
+    "predicted_x": 62,
+    "mismatch_x": 0,
+    "fraction_x": 0.01513671875,
+    "flagged_y": 42,
+    "predicted_y": 42,
+    "mismatch_y": 0,
+    "fraction_y": 0.01025390625,
+    "flagged_any": 94,
+    "fraction_any": 0.02294921875
+   },
+   {
+    "cells": 8,
+    "h": 1.25,
+    "tvb_constant": 4.0,
+    "flagged_x": 0,
+    "predicted_x": 0,
+    "mismatch_x": 0,
+    "fraction_x": 0.0,
+    "flagged_y": 0,
+    "predicted_y": 0,
+    "mismatch_y": 0,
+    "fraction_y": 0.0,
+    "flagged_any": 0,
+    "fraction_any": 0.0
+   },
+   {
+    "cells": 12,
+    "h": 0.8333333333333334,
+    "tvb_constant": 4.0,
+    "flagged_x": 0,
+    "predicted_x": 0,
+    "mismatch_x": 0,
+    "fraction_x": 0.0,
+    "flagged_y": 0,
+    "predicted_y": 0,
+    "mismatch_y": 0,
+    "fraction_y": 0.0,
+    "flagged_any": 0,
+    "fraction_any": 0.0
+   },
+   {
+    "cells": 16,
+    "h": 0.625,
+    "tvb_constant": 4.0,
+    "flagged_x": 0,
+    "predicted_x": 0,
+    "mismatch_x": 0,
+    "fraction_x": 0.0,
+    "flagged_y": 0,
+    "predicted_y": 0,
+    "mismatch_y": 0,
+    "fraction_y": 0.0,
+    "flagged_any": 0,
+    "fraction_any": 0.0
+   },
+   {
+    "cells": 32,
+    "h": 0.3125,
+    "tvb_constant": 4.0,
+    "flagged_x": 0,
+    "predicted_x": 0,
+    "mismatch_x": 0,
+    "fraction_x": 0.0,
+    "flagged_y": 0,
+    "predicted_y": 0,
+    "mismatch_y": 0,
+    "fraction_y": 0.0,
+    "flagged_any": 0,
+    "fraction_any": 0.0
+   },
+   {
+    "cells": 64,
+    "h": 0.15625,
+    "tvb_constant": 4.0,
+    "flagged_x": 3,
+    "predicted_x": 3,
+    "mismatch_x": 0,
+    "fraction_x": 0.000732421875,
+    "flagged_y": 0,
+    "predicted_y": 0,
+    "mismatch_y": 0,
+    "fraction_y": 0.0,
+    "flagged_any": 3,
+    "fraction_any": 0.000732421875
+   }
+  ]
+ },
+ "sampled_derivative_bound": [
+  {
+   "cells": 8,
+   "max_d2_density_dx": 0.17290708786298675,
+   "max_d2_density_dy": 0.17290708786298675,
+   "max_d2_momentum_x_dx": 0.33810823243535065,
+   "max_d2_momentum_x_dy": 1.447796790171886,
+   "max_d2_momentum_y_dx": 1.447796790171886,
+   "max_d2_momentum_y_dy": 0.33810823243535065,
+   "max_d2_energy_dx": 0.27276523818197884,
+   "max_d2_energy_dy": 0.27276523818197884,
+   "max_abs_second_derivative": 1.447796790171886
+  },
+  {
+   "cells": 12,
+   "max_d2_density_dx": 0.49743547544241246,
+   "max_d2_density_dy": 0.49743547544241246,
+   "max_d2_momentum_x_dx": 0.5689054856699988,
+   "max_d2_momentum_x_dy": 1.2988521117325151,
+   "max_d2_momentum_y_dx": 1.2988521117325151,
+   "max_d2_momentum_y_dy": 0.5689054856699988,
+   "max_d2_energy_dx": 0.6305138878281608,
+   "max_d2_energy_dy": 0.6305138878281608,
+   "max_abs_second_derivative": 1.2988521117325151
+  },
+  {
+   "cells": 16,
+   "max_d2_density_dx": 0.6333974731232682,
+   "max_d2_density_dy": 0.6333974731232682,
+   "max_d2_momentum_x_dx": 0.6811187180187407,
+   "max_d2_momentum_x_dy": 1.6010712722258709,
+   "max_d2_momentum_y_dx": 1.6010712722258709,
+   "max_d2_momentum_y_dy": 0.6811187180187407,
+   "max_d2_energy_dx": 0.7472406656712762,
+   "max_d2_energy_dy": 0.7472406656712762,
+   "max_abs_second_derivative": 1.6010712722258709
+  },
+  {
+   "cells": 32,
+   "max_d2_density_dx": 0.7639914329373564,
+   "max_d2_density_dy": 0.7639914329373564,
+   "max_d2_momentum_x_dx": 0.7604114696798228,
+   "max_d2_momentum_x_dy": 1.7832975621594431,
+   "max_d2_momentum_y_dx": 1.7832975621594431,
+   "max_d2_momentum_y_dy": 0.7604114696798228,
+   "max_d2_energy_dx": 0.831662613526797,
+   "max_d2_energy_dy": 0.831662613526797,
+   "max_abs_second_derivative": 1.7832975621594431
+  },
+  {
+   "cells": 64,
+   "max_d2_density_dx": 0.7950485158323011,
+   "max_d2_density_dy": 0.7950485158323011,
+   "max_d2_momentum_x_dx": 0.7883161895902604,
+   "max_d2_momentum_x_dy": 1.7997187788728115,
+   "max_d2_momentum_y_dx": 1.7997187788728115,
+   "max_d2_momentum_y_dy": 0.7883161895902604,
+   "max_d2_energy_dx": 0.8459957335157388,
+   "max_d2_energy_dy": 0.8459957335157388,
+   "max_abs_second_derivative": 1.7997187788728115
+  }
+ ],
+ "error_sweep": {
+  "meshes": [
+   {
+    "cells": 8,
+    "h": 1.25,
+    "unlimited": 0.0005648103033606634,
+    "tvb": {
+     "1.0": {
+      "error": 0.01903442083084719,
+      "ratio": 33.70055524410756,
+      "bit_identical_to_unlimited": false
+     },
+     "2.0": {
+      "error": 0.0005648103033606634,
+      "ratio": 1.0,
+      "bit_identical_to_unlimited": true
+     },
+     "10.0": {
+      "error": 0.0005648103033606634,
+      "ratio": 1.0,
+      "bit_identical_to_unlimited": true
+     }
+    },
+    "smallest_inert_constant": 2.0,
+    "wall_seconds": 27.3
+   },
+   {
+    "cells": 12,
+    "h": 0.8333333333333334,
+    "unlimited": 0.00011695079824100424,
+    "tvb": {
+     "1.0": {
+      "error": 0.01592244399932879,
+      "ratio": 136.14651835481192,
+      "bit_identical_to_unlimited": false
+     },
+     "2.0": {
+      "error": 0.009704495665422846,
+      "ratio": 82.97930250484038,
+      "bit_identical_to_unlimited": false
+     },
+     "10.0": {
+      "error": 0.00011695079824100424,
+      "ratio": 1.0,
+      "bit_identical_to_unlimited": true
+     }
+    },
+    "smallest_inert_constant": 10.0,
+    "wall_seconds": 47.9
+   }
+  ],
+  "ratio_growth_exponent_M1": -3.4434956434864312
+ },
+ "claim_under_test": "default tvb_constant=1.0 fires on the smooth vortex because the threshold scale/units are off",
+ "verdict": {
+  "analytic_bound_exceeds_M1": true,
+  "mask_mismatch_total": 16,
+  "ratio_growth_exponent_M1": -3.4434956434864312,
+  "smallest_inert_constant": {
+   "8": 2.0,
+   "12": 10.0
+  }
+ }
+}
