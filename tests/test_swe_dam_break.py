@@ -32,16 +32,17 @@ T_FINAL = 0.5
 DOMAIN = (-3.0, 3.0)
 
 
-def _solve(h_left, h_right, ncells, degree=1, limiter=None, flux_kind="hll"):
+def _solve(h_left, h_right, ncells, degree=1, limiter=None, flux_kind="hll",
+           domain=DOMAIN, final_time=T_FINAL):
     x, coeff, zb_faces, meta = solve_swe_1d(
         lambda xx: torch.where(xx < 0.0, torch.full_like(xx, float(h_left)),
                                torch.full_like(xx, float(h_right))),
         lambda xx: torch.zeros_like(xx),
         lambda xx: torch.zeros_like(xx),
-        ncells=ncells, degree=degree, final_time=T_FINAL, domain=DOMAIN,
+        ncells=ncells, degree=degree, final_time=final_time, domain=domain,
         cfl=0.3, flux_kind=flux_kind, limiter=limiter)
     h, u, eta = reconstruct_fields(coeff, zb_faces)
-    faces = np.linspace(DOMAIN[0], DOMAIN[1], ncells + 1)
+    faces = np.linspace(domain[0], domain[1], ncells + 1)
     return x.numpy(), h.numpy(), coeff[:, 0, 1].numpy(), faces, meta
 
 
@@ -152,13 +153,25 @@ def test_solver_reaches_the_requested_final_time():
 
 
 def test_ritter_dry_bed_mass_and_positivity():
-    """Mass is conserved to the level of the dry-state guard.
+    """Dry-bed run is positive and mass is conserved up to boundary outflow.
 
-    The guard sets the velocity (hence the mass flux) of a state with
-    ``h <= DRY_DEPTH`` to zero, so the residual puddle behind the front is
-    frozen and the total mass drifts by O(DRY_DEPTH * dx) = 3e-8 m^2, i.e.
-    1e-8 relative (measured 9.9999e-09 at 200 cells).  The wet-bed Stoker case
-    keeps the strict 1e-10 gate; only the dry case is relaxed here.
+    The exact Ritter front travels at ``2 c0 = 3.132 m/s`` and therefore
+    reaches ``x = 3`` at ``t = 0.479 s``: at the default ``T_FINAL = 0.5 s`` the
+    transmissive right wall is already inside the wetted region, so part of
+    the mass legitimately leaves the domain.  Measured relative drift at
+    N = 200 is 3.25e-07 here, versus 7.93e-14 for the *same* grid at t = 0.3
+    (front still 1.1 m away from the wall) and 8.17e-14 on ``(-5, 5)`` at
+    t = 0.5 - see
+    ``test_ritter_dry_bed_mass_is_machine_conservative_when_the_front_stays_inside``
+    and ``docs/ritter_mass_metric_resolution.md``.
+    The residual outflow is carried by the O(DRY_DEPTH) water floor that the
+    scheme leaves ahead of the front (a wetting/drying artefact, not a
+    conservation error): the interior mass balance telescopes exactly.
+
+    The old docstring pinned this number as "the level of the dry-state guard"
+    and quoted 9.9999e-09 from the benchmark; that value was a benchmark
+    metric bug (the seeded ``dry_tol`` initial mass was not counted), see
+    ``docs/ritter_mass_metric_resolution.md``.
     """
     x, h, hu, faces, _ = _solve(1.0, 0.0, 200)
     dx = faces[1] - faces[0]
@@ -166,12 +179,21 @@ def test_ritter_dry_bed_mass_and_positivity():
     assert np.all(h >= -1e-9), float(h.min())          # depth is non-negative up
                                                        # to the positivity floor
     drift = abs(float(h.sum() * dx) - 3.0) / 3.0
-    # OPEN ITEM: the benchmark reports 9.9999e-09 relative drift for the same
-    # configuration, while this in-test metric currently reports a larger value
-    # (cause not yet isolated - see docs/swe_verification.md section 6).  The
-    # gate is set at 1e-5 (0.001 %) so that the physical statement (no
-    # measurable mass creation) is still tested and the discrepancy is visible.
-    assert drift < 1e-5, drift
+    assert drift < 1e-6, drift
+
+
+def test_ritter_dry_bed_mass_is_machine_conservative_when_the_front_stays_inside():
+    """Mass conservation gate with the wet front kept away from the walls.
+
+    Domain ``(-5, 5)``, N = 200, t = 0.5: the exact front is at x = 3.132 and
+    its numerical tail stays below ``DRY_DEPTH`` at both walls, so no mass can
+    leave and the total mass must be conserved to round-off.  Measured 8.17e-14.
+    """
+    x, h, hu, faces, _ = _solve(1.0, 0.0, 200, domain=(-5.0, 5.0))
+    dx = faces[1] - faces[0]
+    mass0 = 1.0 * abs(-5.0)
+    drift = abs(float(h.sum() * dx) - mass0) / mass0
+    assert drift < 1e-12, drift
 
 
 def test_ritter_dry_bed_depth_within_three_percent():
@@ -252,3 +274,25 @@ def test_wet_state_flux_matches_the_analytic_expression():
     assert float(mass_flux) == pytest.approx(hu, rel=1e-14)
     assert float(momentum_flux) == pytest.approx(hu ** 2 / h + 0.5 * 9.81 * h ** 2,
                                                  rel=1e-14)
+
+
+def test_ritter_benchmark_mass_metric_counts_the_seeded_initial_mass():
+    """The benchmark must measure drift against the mass it actually started with.
+
+    ``run_ritter`` seeds the dry side with ``dry_tol = 1e-8`` water, i.e.
+    ``dry_tol * |x_right| = 5e-8 m^2`` of extra mass.  Before this fix the
+    denominator was the analytic ``h0 * |x_left| = 5 m^2``, so that seed showed
+    up as a 1.0e-08 "mass error" although the solver conserves the discrete
+    initial mass to round-off.  Both numbers are pinned here so the artefact
+    cannot silently come back.
+    """
+    from benchmarks.ritter_dam_break import run_ritter
+
+    r = run_ritter(ncells=100)
+    assert r["mass_seed"] == pytest.approx(5e-8, rel=1e-9), r["mass_seed"]
+    assert r["mass_init"] == pytest.approx(5.0 + 5e-8, rel=1e-12), r["mass_init"]
+    assert r["mass_init_analytic"] == pytest.approx(5.0, rel=0)
+    # consistent metric: the solver conserves the discrete initial mass
+    assert r["mass_error"] < 1e-12, r["mass_error"]
+    # the legacy (analytic-denominator) metric reproduces the reported 1e-8
+    assert r["mass_error_legacy"] == pytest.approx(1e-8, rel=1e-3), r["mass_error_legacy"]
