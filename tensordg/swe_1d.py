@@ -31,6 +31,7 @@ References
 from __future__ import annotations
 
 import math
+import warnings
 from typing import Callable, Optional
 
 import numpy as np
@@ -40,12 +41,38 @@ from .limiters import apply_limiter
 
 GRAVITY = 9.81  # m/s²
 
+#: Depth (m) below which a cell or interface state is treated as *dry*.
+#: The velocity of a dry state is defined as zero, which keeps ``hu / h``
+#: finite when a higher-order reconstruction dips below the still-water level
+#: (Gibbs undershoot at a wetting front) and keeps the CFL estimate meaningful.
+DRY_DEPTH = 1e-6
+
+
+def _primitive(state: torch.Tensor):
+    """Dry-guarded primitives ``(h, u, c)`` for a conservative state ``[h, hu]``.
+
+    ``h`` is clamped at zero, ``u = hu / max(h, DRY_DEPTH)`` for wet states and
+    ``u = 0`` for dry states (``h <= DRY_DEPTH``), and ``c = sqrt(g h)``.
+    The split keeps every quantity finite when a modal reconstruction dips
+    below the still-water level, instead of evaluating ``hu / 1e-12``.
+    """
+    h = state[..., 0].clamp_min(0.0)
+    u = torch.where(h > DRY_DEPTH, state[..., 1] / h.clamp_min(DRY_DEPTH),
+                    torch.zeros_like(h))
+    return h, u, torch.sqrt(GRAVITY * h)
+
 
 def physical_flux(u: torch.Tensor) -> torch.Tensor:
-    """Physical flux F(U) for U = [h, hu]."""
-    h = u[..., 0].clamp_min(0.0)
-    hu = u[..., 1]
-    return torch.stack((hu, hu ** 2 / h.clamp_min(1e-12) + 0.5 * GRAVITY * h ** 2), dim=-1)
+    """Physical flux F(U) for U = [h, hu].
+
+    The momentum flux is evaluated as ``h u^2 + g h^2 / 2`` with the dry-guarded
+    velocity of :func:`_primitive`, so that a vanishing depth carries a
+    vanishing flux.  The algebraically equivalent form ``hu^2 / h + g h^2 / 2``
+    is *not* used: at a wetting front ``hu`` need not vanish with ``h`` and the
+    quotient then amplifies round-off into a catastrophic flux.
+    """
+    h, vel, _ = _primitive(u)
+    return torch.stack((h * vel, h * vel * vel + 0.5 * GRAVITY * h ** 2), dim=-1)
 
 
 def sound_speed(u: torch.Tensor) -> torch.Tensor:
@@ -62,21 +89,13 @@ def hll_flux(left: torch.Tensor, right: torch.Tensor, flux_kind: str = "hll") ->
     if flux_kind == "lf":
         fl = physical_flux(left)
         fr = physical_flux(right)
-        h_l = left[..., 0].clamp_min(1e-12)
-        h_r = right[..., 0].clamp_min(1e-12)
-        u_l = left[..., 1] / h_l
-        u_r = right[..., 1] / h_r
-        c_l = sound_speed(left)
-        c_r = sound_speed(right)
+        _, u_l, c_l = _primitive(left)
+        _, u_r, c_r = _primitive(right)
         alpha = torch.maximum(torch.abs(u_l) + c_l, torch.abs(u_r) + c_r)
         return 0.5 * (fl + fr) - 0.5 * alpha[..., None] * (right - left)
 
-    h_l = left[..., 0].clamp_min(1e-12)
-    h_r = right[..., 0].clamp_min(1e-12)
-    u_l = left[..., 1] / h_l
-    u_r = right[..., 1] / h_r
-    c_l = sound_speed(left)
-    c_r = sound_speed(right)
+    _, u_l, c_l = _primitive(left)
+    _, u_r, c_r = _primitive(right)
 
     s_l = torch.minimum(u_l - c_l, u_r - c_r)  # [ncells]
     s_r = torch.maximum(u_l + c_l, u_r + c_r)  # [ncells]
@@ -299,15 +318,15 @@ def solve_swe_1d(
 
     limit_each_stage = limiter_stage == "every"
     time, steps, dt = 0.0, 0, 0.0
+    stalled = False
 
     while time < final_time:
         values = torch.einsum("cmv,qm->cqv", coeff, phi)
-        h_vals = values[..., 0].clamp_min(1e-12)
-        u_vals = values[..., 1] / h_vals
-        c_vals = torch.sqrt(GRAVITY * h_vals)
+        _, u_vals, c_vals = _primitive(values)
         max_speed = float(torch.max(torch.abs(u_vals) + c_vals).item())
         dt = min(cfl * dx / ((2 * degree + 1) * max(max_speed, 1e-12)), final_time - time)
         if dt < 1e-15:
+            stalled = True
             break
 
         if rk_order == 3:
@@ -362,7 +381,16 @@ def solve_swe_1d(
         "flux": flux_kind, "limiter": limiter, "rk_order": rk_order,
         "device": str(dev), "limiter_stage": limiter_stage,
         "exact_boundary_flux": bc_left_flux is not None or bc_right_flux is not None,
+        "time_reached": time,
+        "reached_final_time": (not stalled) and time >= final_time - 1e-12,
+        "dry_depth": DRY_DEPTH,
     }
+    if not metadata["reached_final_time"]:
+        warnings.warn(
+            f"SWE time integration stopped at t={time:.6g} before the requested "
+            f"final_time={final_time:.6g} (dt underflow at dt={dt:.3e}); the "
+            "returned state is NOT the solution at final_time.",
+            RuntimeWarning, stacklevel=2)
     return x, coeff, zb_faces, metadata
 
 
@@ -371,9 +399,12 @@ def reconstruct_fields(coeff: torch.Tensor, zb_faces: torch.Tensor) -> tuple:
 
     Returns (h_center, u_center, eta_center) each of shape (ncells,).
     """
-    h_avg = coeff[:, 0, 0]
+    # Depth is non-negative by definition; the modal average of a dry cell can
+    # sit at the -h_min positivity floor (-1e-12), which is reported as 0.
+    h_avg = coeff[:, 0, 0].clamp_min(0.0)
     hu_avg = coeff[:, 0, 1]
     zb_center = 0.5 * (zb_faces[:, 0] + zb_faces[:, 1])
-    u_center = hu_avg / h_avg.clamp_min(1e-12)
+    u_center = torch.where(h_avg > DRY_DEPTH, hu_avg / h_avg.clamp_min(DRY_DEPTH),
+                           torch.zeros_like(h_avg))
     eta_center = h_avg + zb_center
     return h_avg, u_center, eta_center

@@ -140,3 +140,20 @@ The Thacker benchmark failure reveals a fundamental limitation in the current SW
 ---
 
 **2026-11-08 更正（m6377）**：本报告 §1 的 "Thacker parabolic basin - CRITICAL GAP" 结论已复核。该算例旧参考解的速度幅值公式错误（差 4.90 倍），因此 "errors O(100%) / velocity field completely wrong" 属伪缺陷；改用经核验的解析解后 t=0.1 s 误差为 0.055%(eta)/0.41%(u)。真实缺陷是 t=0.5 s 时 ~12%、且不随网格加密收敛的偏差（另有默认透射边界导致 +6.6% 质量漂移，已由新增解析边界通量接口消除）。详见 docs/thacker_validation_gap_corrected.md。
+
+
+---
+
+## Correction, 2026-11-08 (SWE 1-D dry bed)
+
+The "SWE 1D" entry above and the recommendation "Implement hydrostatic
+reconstruction for SWE" were based on two different issues that were
+conflated. The *Thacker* long-time gap is real and stays open
+(`docs/thacker_validation_gap_corrected.md`). The *Ritter dry-bed* case, which
+`tests/test_swe_dam_break.py` pinned as a 28% "known limitation", was never a
+front-smearing problem: the primitive velocity `hu / max(h, 1e-12)` blew up to
+2.0e12 m/s at a Gibbs undershoot, the time step collapsed to the 1e-15 floor
+and the integrator stopped at t = 0.076 s of the requested 0.5 s while still
+reporting `final_time`. With the dry-state guard (`DRY_DEPTH`) the run reaches
+t = 0.5 s and the relative L1 error of the depth is 0.2494% at 200 cells.
+Details, numbers and the remaining limitations: `docs/swe_verification.md`.
