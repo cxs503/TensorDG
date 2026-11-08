@@ -135,3 +135,8 @@ The Thacker benchmark failure reveals a fundamental limitation in the current SW
 - Roos, Stynes & Tobiska. "Robust Numerical Methods for Singularly Perturbed Differential Equations."
 - Cockburn & Shu (1989). TVB Runge-Kutta local projection discontinuous Galerkin method.
 - Qiu & Shu (2005). WENO limiting for DG methods.
+
+
+---
+
+**2026-11-08 更正（m6377）**：本报告 §1 的 "Thacker parabolic basin - CRITICAL GAP" 结论已复核。该算例旧参考解的速度幅值公式错误（差 4.90 倍），因此 "errors O(100%) / velocity field completely wrong" 属伪缺陷；改用经核验的解析解后 t=0.1 s 误差为 0.055%(eta)/0.41%(u)。真实缺陷是 t=0.5 s 时 ~12%、且不随网格加密收敛的偏差（另有默认透射边界导致 +6.6% 质量漂移，已由新增解析边界通量接口消除）。详见 docs/thacker_validation_gap_corrected.md。

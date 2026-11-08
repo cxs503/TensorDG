@@ -225,3 +225,110 @@ def dam_break_cell_averages(faces, t: float, h_left: float, h_right: float,
         h_bar[i] = m0 / width
         hu_bar[i] = m1 / width
     return h_bar, hu_bar
+
+# ---------------------------------------------------------------------------
+# Thacker (1981) planar-surface sloshing in a parabolic basin (non-flat bed)
+# ---------------------------------------------------------------------------
+#
+# A *nonlinear* exact solution of the shallow water equations over the parabola
+#
+#     z_b(x) = -h0 (1 - (x / L)^2),        x in [-L, L],
+#
+# whose free surface stays **planar**:  eta(x, t) = eta_c(t) + s(t) x.
+# With a spatially uniform velocity u(t) the convective term vanishes and the
+# momentum equation reduces to  u_t = -g s, while continuity splits into the
+# two scalar relations
+#
+#     s_t   = 2 h0 u / L^2,          eta_c,t = -u s.
+#
+# Solving them with s(0) = A / L (i.e. eta(x, 0) = h0 + A x / L, still water)
+# gives the closed form
+#
+#     omega = sqrt(2 g h0) / L,
+#     s(t)  = (A / L) cos(omega t),
+#     u(t)  = -(A omega L / (2 h0)) sin(omega t),
+#     eta_c(t) = h0 + A^2 / (4 h0) sin^2(omega t),
+#     h = eta - z_b.
+#
+# The three scalar identities above are what ``tests/test_thacker_benchmark.py``
+# checks symbolically (they imply both PDE residuals vanish identically).
+#
+# Note: the free surface tilt A in this family is a *slope times length* and the
+# velocity amplitude is A omega L / (2 h0) -- not A omega / g.  Because the
+# basin rim z_b(+-L) = 0 carries water of depth h0 +- A, the domain behaves as a
+# basin with open ends: the exact solution has a non-zero mass flux through
+# x = +-L, so a verification run must impose the analytic boundary flux
+# (``solve_swe_1d(..., bc_left_flux=..., bc_right_flux=...)``); the default
+# transmissive closure reflects the outgoing wave back into the domain.
+#
+# References
+# ----------
+# * Thacker, W. C. (1981). "Some exact solutions of the nonlinear shallow water
+#   equations." Comm. Pure Appl. Math. 34(4), 543-552.
+# * Bermudez, A., Vazquez, M. E. (1994). "Upwind methods for hyperbolic
+#   conservation laws with source terms." Comput. Fluids 23(8), 1049-1071.
+
+
+def _thacker_params(h0: float, half_width: float, gravity: float):
+    if h0 <= 0.0 or half_width <= 0.0:
+        raise ValueError("h0 and half_width must be positive")
+    return math.sqrt(2.0 * gravity * h0) / half_width
+
+
+def thacker_parabolic_bed(x, h0: float = 1.0, half_width: float = 1.0):
+    """Bed elevation ``z_b(x) = -h0 (1 - (x/L)^2)`` (zero at the rim ``x=+-L``)."""
+    x = np.asarray(x, dtype=float)
+    return -h0 * (1.0 - (x / half_width) ** 2)
+
+
+def thacker_planar_basin(x, t: float, h0: float = 1.0, amplitude: float = 0.5,
+                         half_width: float = 1.0, gravity: float = GRAVITY,
+                         period: float = 0.0):
+    """Exact planar-surface sloshing solution. Returns ``(h, u, eta)``.
+
+    ``amplitude`` is the initial surface tilt ``eta(x,0) = h0 + A x / L``.
+    ``period`` may be passed to enforce exact periodicity of ``cos/sin`` for
+    long runs (it only changes round-off level behaviour).
+    """
+    x = np.asarray(x, dtype=float)
+    omega = _thacker_params(h0, half_width, gravity)
+    if period:
+        t = t % period
+    s = (amplitude / half_width) * math.cos(omega * t)
+    u = -(amplitude * omega * half_width / (2.0 * h0)) * math.sin(omega * t)
+    eta_c = h0 + (amplitude ** 2 / (4.0 * h0)) * math.sin(omega * t) ** 2
+    eta = eta_c + s * x
+    h = eta - thacker_parabolic_bed(x, h0, half_width)
+    return h, np.full_like(x, u), eta
+
+
+def thacker_planar_basin_initial(x, h0: float = 1.0, amplitude: float = 0.5,
+                                 half_width: float = 1.0) -> Tuple[np.ndarray, np.ndarray]:
+    """Initial condition ``(h, u)`` of the planar Thacker solution."""
+    h, u, _ = thacker_planar_basin(x, 0.0, h0, amplitude, half_width)
+    return h, u
+
+
+def thacker_planar_basin_period(h0: float = 1.0, half_width: float = 1.0,
+                                gravity: float = GRAVITY) -> float:
+    """Exact oscillation period ``T = 2 pi L / sqrt(2 g h0)``."""
+    return 2.0 * math.pi / _thacker_params(h0, half_width, gravity)
+
+
+def thacker_planar_basin_boundary_flux(t: float, h0: float = 1.0,
+                                       amplitude: float = 0.5, half_width: float = 1.0,
+                                       gravity: float = GRAVITY) -> Tuple[np.ndarray, np.ndarray]:
+    """Exact physical flux ``(hu, hu^2 + g h^2 / 2)`` at ``x = -L`` and ``x = +L``.
+
+    The rim sits at ``z_b(+-L) = 0``, so ``h(+-L) = eta(+-L)`` and the flux is
+    known in closed form. Use it as exact boundary data for a verification run.
+    """
+    omega = _thacker_params(h0, half_width, gravity)
+    s = (amplitude / half_width) * math.cos(omega * t)
+    u = -(amplitude * omega * half_width / (2.0 * h0)) * math.sin(omega * t)
+    eta_c = h0 + (amplitude ** 2 / (4.0 * h0)) * math.sin(omega * t) ** 2
+
+    def _flux(h: float) -> np.ndarray:
+        return np.array([h * u, h * u * u + 0.5 * gravity * h * h])
+
+    return _flux(eta_c - s * half_width), _flux(eta_c + s * half_width)

@@ -1,3 +1,7 @@
+# CORRECTED by mission m6377 -- the reference solution below is NOT an exact solution
+# of the shallow water equations (velocity amplitude off by 4.90x). See
+# docs/thacker_validation_gap_corrected.md for the verified solution and the re-audit.
+
 # TensorDG SWE Thacker Benchmark Validation Report
 
 **Mission**: m6315  

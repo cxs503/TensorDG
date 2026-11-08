@@ -127,7 +127,9 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
          phi: torch.Tensor, dphi: torch.Tensor,
          phi_left: torch.Tensor, phi_right: torch.Tensor,
          zb_jump: torch.Tensor,
-         flux_kind: str = "hll", periodic: bool = False) -> torch.Tensor:
+         flux_kind: str = "hll", periodic: bool = False,
+         time: float = 0.0,
+         bc_left_flux=None, bc_right_flux=None) -> torch.Tensor:
     """Semi-discrete DG residual for SWE with bed slope source term.
 
     The source term −g h ∂z_b/∂x is treated by modal projection.
@@ -155,6 +157,14 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
     left_interface_flux = torch.roll(interface_flux, shifts=1, dims=0)
     if not periodic:
         left_interface_flux[0] = hll_flux(left_trace[:1], left_trace[:1], flux_kind)
+
+    # Optional exact boundary data (verification against analytic solutions).
+    if bc_left_flux is not None:
+        left_interface_flux[0] = torch.as_tensor(
+            bc_left_flux(time), dtype=coeff.dtype, device=coeff.device)
+    if bc_right_flux is not None:
+        interface_flux[-1] = torch.as_tensor(
+            bc_right_flux(time), dtype=coeff.dtype, device=coeff.device)
 
     dbdx = zb_jump / dx  # [ncells]
 
@@ -209,6 +219,8 @@ def solve_swe_1d(
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     periodic: bool = False,
+    bc_left_flux: Optional[Callable[[float], torch.Tensor]] = None,
+    bc_right_flux: Optional[Callable[[float], torch.Tensor]] = None,
 ) -> tuple:
     """Solve the 1-D shallow water equations with DG.
 
@@ -229,6 +241,11 @@ def solve_swe_1d(
     rk_order : SSP-RK order (2 or 3)
     h_min : minimum water depth for positivity
     periodic : periodic boundary conditions
+    bc_left_flux : callable t -> (hu, hu^2 + g h^2 / 2) at x = x_left
+        Exact boundary flux (verification mode). Overrides the default
+        transmissive closure on the left boundary.
+    bc_right_flux : callable t -> (hu, hu^2 + g h^2 / 2) at x = x_right
+        Idem on the right boundary.
 
     Returns
     -------
@@ -295,25 +312,29 @@ def solve_swe_1d(
 
         if rk_order == 3:
             k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right,
-                      zb_jump, flux_kind, periodic)
+                      zb_jump, flux_kind, periodic, time,
+                      bc_left_flux, bc_right_flux)
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
             u1 = _positivity_filter(u1, check_points, h_min)
 
             k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right,
-                      zb_jump, flux_kind, periodic)
+                      zb_jump, flux_kind, periodic, time + dt,
+                      bc_left_flux, bc_right_flux)
             u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
             if limit_each_stage:
                 u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
             u2 = _positivity_filter(u2, check_points, h_min)
 
             k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right,
-                      zb_jump, flux_kind, periodic)
+                      zb_jump, flux_kind, periodic, time + 0.5 * dt,
+                      bc_left_flux, bc_right_flux)
             coeff = (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3)
         else:
             k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right,
-                      zb_jump, flux_kind, periodic)
+                      zb_jump, flux_kind, periodic, time,
+                      bc_left_flux, bc_right_flux)
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
@@ -340,6 +361,7 @@ def solve_swe_1d(
         "steps": steps, "dt": dt, "domain": (lower, upper), "cfl": cfl,
         "flux": flux_kind, "limiter": limiter, "rk_order": rk_order,
         "device": str(dev), "limiter_stage": limiter_stage,
+        "exact_boundary_flux": bc_left_flux is not None or bc_right_flux is not None,
     }
     return x, coeff, zb_faces, metadata
 
