@@ -191,7 +191,6 @@ def test_extruded_sod_velocity_gate():
     _, _, coeff, _ = solve_euler_dg_2d_sod(
         ncells=64, degree=2, final_time=0.2,
     )
-    x, y = cell_fields(coeff)
     # Evaluate at quadrature points
     degree = coeff.shape[2] - 1
     nq = max(2 * degree + 3, 6)
@@ -212,6 +211,10 @@ def test_extruded_sod_velocity_gate():
     # Exact solution at quadrature points
     nx, ny = coeff.shape[:2]
     hx, hy = 1.0 / nx, 1.0 / ny
+    # Cell-centre coordinates (the Sod set-up is y-invariant, so only the
+    # x-centres enter the self-similar variable x/t).
+    x = (torch.arange(nx, device=coeff.device, dtype=coeff.dtype) + 0.5) * hx
+    y = (torch.arange(ny, device=coeff.device, dtype=coeff.dtype) + 0.5) * hy
     xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
     xot = xq / 0.2  # t = 0.2
@@ -256,6 +259,8 @@ def test_extruded_sod_all_three_velocity_eoc():
 
         nx, ny = coeff.shape[:2]
         hx, hy = 1.0 / nx, 1.0 / ny
+        x = (torch.arange(nx, device=coeff.device, dtype=coeff.dtype) + 0.5) * hx
+        y = (torch.arange(ny, device=coeff.device, dtype=coeff.dtype) + 0.5) * hy
         xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
         yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
         xot = xq / 0.2
