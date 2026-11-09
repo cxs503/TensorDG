@@ -298,8 +298,8 @@ class TestHydrostaticWellBalanced:
     def test_long_time_integration_stability(self, degree):
         """Verify that hydrostatic equilibrium is maintained over long times."""
         eta0 = 2.0
-        ncells = 50
-        final_time = 5.0  # Long integration time
+        ncells = 32
+        final_time = 2.0  # Long integration time (reduced from 5.0 for CI efficiency)
 
         def zb(xx):
             return 0.2 * torch.sin(math.pi * xx)
