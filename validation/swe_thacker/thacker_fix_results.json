@@ -1,0 +1,32 @@
+[
+  {
+    "ncells": 20,
+    "degree": 1,
+    "t_end": 0.3,
+    "eta_err_pct": 0.15712336163815077,
+    "u_err_pct": 0.01245513727522129,
+    "vol_err_pct": 1.002404446284159e-10,
+    "exact_slope": true,
+    "exact_bc": true
+  },
+  {
+    "ncells": 40,
+    "degree": 1,
+    "t_end": 0.3,
+    "eta_err_pct": 0.039271687238791125,
+    "u_err_pct": 0.0017902016605742177,
+    "vol_err_pct": 4.439403516919575e-12,
+    "exact_slope": true,
+    "exact_bc": true
+  },
+  {
+    "ncells": 80,
+    "degree": 1,
+    "t_end": 0.3,
+    "eta_err_pct": 0.009816943373127749,
+    "u_err_pct": 0.0002647486943821417,
+    "vol_err_pct": 3.384240941883618e-12,
+    "exact_slope": true,
+    "exact_bc": true
+  }
+]
