@@ -129,8 +129,15 @@ def run_hydrostatic_validation(
     )
     wall_time = time.time() - start_time
 
-    # Reconstruct fields
-    h, u, eta = reconstruct_fields(coeff, zb_faces)
+    # Reconstruct fields.  Use the mode-0 coefficient of the polynomial bed
+    # as the cell-centre bed elevation: the default trapezoidal face mean is
+    # only the cell average for a piecewise-linear bed, and for the P2
+    # (quadratic) representation of the parabolic bed it would leave an
+    # O(dx^2) spurious free-surface drift in the reconstructed η (see the
+    # reconstruct_fields docstring).  The solver state itself is well-balanced
+    # to round-off; this removes the post-processing error.
+    h, u, eta = reconstruct_fields(coeff, zb_faces,
+                                   zb_center=meta["zb_modes"][:, 0])
 
     # Compute errors
     eta_error = float((eta - eta0).abs().max())
@@ -162,6 +169,7 @@ def run_hydrostatic_validation(
         "h_error_l2": h_error_l2,
         "well_balanced": meta["well_balanced"],
         "bed_representation": meta["bed_representation"],
+        "reconstruction": "zb_center=zb_modes[:,0] (cell-average bed)",
         "reached_final_time": meta["reached_final_time"],
         "device": device,
     }
