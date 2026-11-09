@@ -24,7 +24,15 @@ import numpy as np
 import pytest
 import torch
 
-from tensordg.swe_1d import reconstruct_fields, solve_swe_1d
+from tensordg.swe_1d import (
+    check_hydrostatic_equilibrium,
+    compute_hydrostatic_pressure_force,
+    create_hydrostatic_initial_conditions,
+    estimate_well_balanced_error_bound,
+    reconstruct_fields,
+    solve_swe_1d,
+    validate_well_balanced_setup,
+)
 
 G = 9.81
 
@@ -340,6 +348,168 @@ class TestHydrostaticWellBalanced:
         assert u_max < u_tol, (
             f"Long-time spurious velocity {u_max:.3e} m/s exceeds {u_tol}"
         )
+
+
+class TestHydrostaticHelpers:
+    """Tests for the public hydrostatic helper functions of tensordg.swe_1d.
+
+    The five helpers (create_hydrostatic_initial_conditions,
+    validate_well_balanced_setup, check_hydrostatic_equilibrium,
+    compute_hydrostatic_pressure_force, estimate_well_balanced_error_bound)
+    ship with the well-balanced feature but were not covered by the original
+    13-test suite; this class closes that gap.
+    """
+
+    def test_create_hydrostatic_initial_conditions(self):
+        """IC factory returns h = eta0 - z_b and u = 0 exactly."""
+        eta0 = 2.5
+
+        def zb(xx):
+            return 0.4 * torch.sin(math.pi * xx)
+
+        initial_h, initial_u = create_hydrostatic_initial_conditions(zb, eta0)
+
+        x = torch.linspace(0.0, 1.0, 37, dtype=torch.float64)
+        h = initial_h(x)
+        u = initial_u(x)
+
+        # eta = h + z_b must equal eta0 to machine precision
+        eta = h + zb(x)
+        assert float((eta - eta0).abs().max()) < 1e-14
+        # u must be identically zero with the input's shape and dtype
+        assert u.shape == x.shape
+        assert u.dtype == x.dtype
+        assert float(u.abs().max()) == 0.0
+
+    def test_validate_well_balanced_setup_accepts_equilibrium(self):
+        """A consistent lake-at-rest setup is accepted."""
+        eta0 = 2.0
+
+        def zb(xx):
+            return 0.3 * torch.cos(2.0 * math.pi * xx)
+
+        initial_h, initial_u = create_hydrostatic_initial_conditions(zb, eta0)
+        result = validate_well_balanced_setup(initial_h, initial_u, zb)
+
+        assert result["is_valid"] is True
+        assert result["eta_variance"] < 1e-20
+        assert result["u_max"] == 0.0
+        assert abs(result["eta_mean"] - eta0) < 1e-12
+        assert "valid" in result["message"]
+
+    def test_validate_well_balanced_setup_rejects_perturbed_eta(self):
+        """A spatially varying eta must be rejected."""
+        eta0 = 2.0
+
+        def zb(xx):
+            return 0.3 * torch.cos(2.0 * math.pi * xx)
+
+        def initial_h(xx):
+            return eta0 - zb(xx) + 0.1 * torch.sin(2.0 * math.pi * xx)
+
+        result = validate_well_balanced_setup(
+            initial_h, lambda xx: torch.zeros_like(xx), zb)
+
+        assert result["is_valid"] is False
+        assert result["eta_variance"] > 1e-10
+
+    def test_validate_well_balanced_setup_rejects_nonzero_velocity(self):
+        """Nonzero initial velocity is rejected even with flat eta."""
+        eta0 = 2.0
+
+        result = validate_well_balanced_setup(
+            lambda xx: torch.full_like(xx, eta0),
+            lambda xx: torch.full_like(xx, 0.05),
+            lambda xx: torch.zeros_like(xx),
+        )
+        assert result["is_valid"] is False
+        assert result["u_max"] == pytest.approx(0.05)
+
+    def test_check_hydrostatic_equilibrium_detects_equilibrium(self):
+        """After a short well-balanced run the checker reports equilibrium."""
+        eta0 = 2.0
+
+        def zb(xx):
+            return 0.2 * torch.sin(math.pi * xx)
+
+        initial_h, initial_u = create_hydrostatic_initial_conditions(zb, eta0)
+        x, coeff, zb_faces, meta = solve_swe_1d(
+            initial_h, initial_u, zb,
+            ncells=32, degree=1, final_time=0.3,
+            domain=(0.0, 1.0), cfl=0.3, well_balanced=True,
+        )
+        result = check_hydrostatic_equilibrium(
+            coeff, zb_faces, zb_center=meta["zb_modes"][:, 0],
+            eta_expected=eta0)
+
+        for key in ("is_hydrostatic", "eta_error_max", "eta_error_l2",
+                    "u_max", "u_l2", "eta_expected", "message"):
+            assert key in result
+        assert result["is_hydrostatic"] is True
+        assert result["eta_error_max"] < 1e-8
+        assert result["u_max"] < 1e-8
+
+    def test_check_hydrostatic_equilibrium_detects_perturbation(self):
+        """A Gaussian perturbation must be flagged as non-equilibrium."""
+        eta0 = 2.0
+
+        def zb(xx):
+            return 0.2 * torch.sin(math.pi * xx)
+
+        def initial_h(xx):
+            return eta0 - zb(xx) + 0.05 * torch.exp(-50.0 * (xx - 0.5) ** 2)
+
+        x, coeff, zb_faces, meta = solve_swe_1d(
+            initial_h, lambda xx: torch.zeros_like(xx), zb,
+            ncells=32, degree=1, final_time=0.3,
+            domain=(0.0, 1.0), cfl=0.3, well_balanced=True,
+        )
+        result = check_hydrostatic_equilibrium(
+            coeff, zb_faces, zb_center=meta["zb_modes"][:, 0],
+            eta_expected=eta0)
+
+        assert result["is_hydrostatic"] is False
+        assert result["eta_error_max"] > 1e-8
+
+    def test_compute_hydrostatic_pressure_force(self):
+        """F_p = 0.5*rho*g*h^2 per unit width for a constant-depth lake."""
+        eta0 = 2.0
+        ncells = 16
+
+        x, coeff, zb_faces, meta = solve_swe_1d(
+            lambda xx: torch.full_like(xx, eta0),
+            lambda xx: torch.zeros_like(xx),
+            lambda xx: torch.zeros_like(xx),
+            ncells=ncells, degree=1, final_time=0.2,
+            domain=(0.0, 1.0), cfl=0.3, well_balanced=True,
+        )
+        fp = compute_hydrostatic_pressure_force(coeff, zb_faces)
+
+        assert fp.shape == (ncells,)
+        expected = 0.5 * 1000.0 * G * eta0 ** 2  # 19620 N/m
+        assert float((fp - expected).abs().max()) < 1e-8 * expected
+
+    def test_estimate_well_balanced_error_bound_scaling(self):
+        """The bound shrinks with refinement at the documented rate.
+
+        bed_curvature is chosen small enough that the internal 1e-10
+        machine-precision floor does not flatten the scaling.
+        """
+        for degree, rate, curvature in ((1, 2.0, 1e-6), (2, 3.0, 1e-5)):
+            b1 = estimate_well_balanced_error_bound(100, degree, 1.0,
+                                                    bed_curvature=curvature)
+            b2 = estimate_well_balanced_error_bound(200, degree, 1.0,
+                                                    bed_curvature=curvature)
+
+            assert b1["dx"] == pytest.approx(0.01)
+            assert b2["dx"] == pytest.approx(0.005)
+            assert b1["convergence_rate"] == pytest.approx(rate)
+            # halving dx must shrink the bound by 2**rate
+            assert b2["expected_eta_error"] == pytest.approx(
+                b1["expected_eta_error"] / 2.0 ** rate)
+            assert b1["expected_u_error"] == pytest.approx(
+                b1["expected_eta_error"] * math.sqrt(G))
+            assert isinstance(b1["notes"], str) and b1["notes"]
 
 
 if __name__ == "__main__":

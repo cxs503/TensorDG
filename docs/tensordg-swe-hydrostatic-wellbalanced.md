@@ -94,7 +94,7 @@ This approach does **not** guarantee that η_h = h_h + z_b_h is constant, even i
 
 ### Test Cases
 
-The hydrostatic well-balanced property is verified through a comprehensive test suite in `tests/test_swe_wellbalanced_hydrostatic.py`:
+The hydrostatic well-balanced property is verified through a comprehensive test suite in `tests/test_swe_wellbalanced_hydrostatic.py` (21 tests):
 
 1. **Flat bed**: η = const on z_b = 0
 2. **Sloped bed**: η = const on z_b = slope × x
@@ -102,6 +102,12 @@ The hydrostatic well-balanced property is verified through a comprehensive test 
 4. **Thacker parabolic basin**: η = const on z_b = -H₀ + (H₀/L²) × x²
 5. **Long-time stability**: Verify equilibrium is maintained over extended integration times
 6. **Convergence study**: Verify error decreases with mesh refinement
+7. **Helper-function coverage** (`TestHydrostaticHelpers`): the five public helpers
+   `create_hydrostatic_initial_conditions`, `validate_well_balanced_setup`,
+   `check_hydrostatic_equilibrium`, `compute_hydrostatic_pressure_force`, and
+   `estimate_well_balanced_error_bound` are exercised for both the accepting and
+   rejecting paths (equilibrium detected / perturbation flagged, valid setup /
+   perturbed η / nonzero velocity, F_p = ½ρgh², and the O(dx^(p+1)) bound scaling).
 
 ### Results
 
@@ -210,6 +216,20 @@ Complete validation results are available in `validation/swe_thacker/hydrostatic
 - Mesh convergence study for P1 and P2
 - Error metrics (max and L2 norms) for η, u, and h
 - Computational performance (wall time, number of steps)
+
+Note on provenance: the committed `hydrostatic_wb_results.json` is the
+pre-fix snapshot (generated before the `zb_center` change below); its P2
+entries therefore include the O(dx²) post-processing drift, while the P1
+entries are unaffected.  A regeneration with the fixed script is tracked as
+cluster job cj30.
+
+The validation script reconstructs η with `zb_center=metadata["zb_modes"][:, 0]`
+(the cell-average bed of the polynomial representation), consistent with the
+`reconstruct_fields` guidance above.  Without this, the P2 (quadratic)
+representation of the parabolic bed leaves an O(dx²) post-processing drift in
+the *reported* η error even though the solver state is well-balanced to
+round-off; the P1 numbers are unaffected because the trapezoidal face mean is
+exact for the linear bed interpolant.
 
 ## Conclusion
 
