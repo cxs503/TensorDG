@@ -503,3 +503,322 @@ def reconstruct_fields(coeff: torch.Tensor, zb_faces: torch.Tensor,
                            torch.zeros_like(h_avg))
     eta_center = h_avg + zb_center
     return h_avg, u_center, eta_center
+
+
+# ============================================================================
+# Hydrostatic Well-Balanced Helper Functions
+# ============================================================================
+
+def check_hydrostatic_equilibrium(
+    coeff: torch.Tensor,
+    zb_faces: torch.Tensor,
+    zb_center: Optional[torch.Tensor] = None,
+    eta_expected: Optional[float] = None,
+    tolerance: float = 1e-8,
+) -> dict:
+    """Check if a solution is in hydrostatic equilibrium.
+
+    This function verifies that the solution satisfies the lake-at-rest condition:
+    η = h + z_b = const and u = 0.
+
+    Parameters
+    ----------
+    coeff : torch.Tensor
+        Modal coefficients from solve_swe_1d
+    zb_faces : torch.Tensor
+        Bed elevation at cell faces
+    zb_center : torch.Tensor, optional
+        Bed elevation at cell centers (for curved beds)
+    eta_expected : float, optional
+        Expected constant value of η. If None, uses the mean of η.
+    tolerance : float
+        Tolerance for checking equilibrium (default: 1e-8)
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - 'is_hydrostatic': bool, True if equilibrium is satisfied
+        - 'eta_error_max': float, max deviation of η from expected value
+        - 'eta_error_l2': float, L2 norm of η deviation
+        - 'u_max': float, max absolute velocity
+        - 'u_l2': float, L2 norm of velocity
+        - 'message': str, human-readable summary
+
+    Examples
+    --------
+    >>> x, coeff, zb_faces, meta = solve_swe_1d(..., well_balanced=True)
+    >>> result = check_hydrostatic_equilibrium(coeff, zb_faces, eta_expected=2.0)
+    >>> if result['is_hydrostatic']:
+    ...     print("Solution is in hydrostatic equilibrium")
+    """
+    h, u, eta = reconstruct_fields(coeff, zb_faces, zb_center)
+
+    if eta_expected is None:
+        eta_expected = float(eta.mean())
+
+    eta_error = eta - eta_expected
+    eta_error_max = float(eta_error.abs().max())
+    eta_error_l2 = float(torch.sqrt(torch.mean(eta_error ** 2)))
+    u_max = float(u.abs().max())
+    u_l2 = float(torch.sqrt(torch.mean(u ** 2)))
+
+    is_hydrostatic = (eta_error_max < tolerance) and (u_max < tolerance)
+
+    if is_hydrostatic:
+        message = (
+            f"Hydrostatic equilibrium satisfied: "
+            f"η error = {eta_error_max:.3e} m, u max = {u_max:.3e} m/s"
+        )
+    else:
+        message = (
+            f"NOT in hydrostatic equilibrium: "
+            f"η error = {eta_error_max:.3e} m (tol={tolerance:.1e}), "
+            f"u max = {u_max:.3e} m/s (tol={tolerance:.1e})"
+        )
+
+    return {
+        "is_hydrostatic": is_hydrostatic,
+        "eta_error_max": eta_error_max,
+        "eta_error_l2": eta_error_l2,
+        "u_max": u_max,
+        "u_l2": u_l2,
+        "eta_expected": eta_expected,
+        "message": message,
+    }
+
+
+def create_hydrostatic_initial_conditions(
+    zb: Callable[[torch.Tensor], torch.Tensor],
+    eta0: float,
+) -> tuple[Callable, Callable]:
+    """Create initial conditions for hydrostatic equilibrium.
+
+    Given a bed elevation function z_b(x) and a constant water surface level η₀,
+    this function returns the corresponding depth and velocity initial conditions
+    for a lake-at-rest state.
+
+    Parameters
+    ----------
+    zb : callable
+        Bed elevation function z_b(x) -> torch.Tensor
+    eta0 : float
+        Constant water surface level η₀
+
+    Returns
+    -------
+    tuple[callable, callable]
+        (initial_h, initial_u) where:
+        - initial_h(x) = η₀ - z_b(x)
+        - initial_u(x) = 0
+
+    Examples
+    --------
+    >>> def zb(x):
+    ...     return 0.5 * torch.sin(torch.pi * x)
+    >>> initial_h, initial_u = create_hydrostatic_initial_conditions(zb, eta0=2.0)
+    >>> x, coeff, zb_faces, meta = solve_swe_1d(
+    ...     initial_h, initial_u, zb, well_balanced=True, ...)
+    """
+    def initial_h(x: torch.Tensor) -> torch.Tensor:
+        return eta0 - zb(x)
+
+    def initial_u(x: torch.Tensor) -> torch.Tensor:
+        return torch.zeros_like(x)
+
+    return initial_h, initial_u
+
+
+def compute_hydrostatic_pressure_force(
+    coeff: torch.Tensor,
+    zb_faces: torch.Tensor,
+) -> torch.Tensor:
+    """Compute the hydrostatic pressure force per unit width.
+
+    The hydrostatic pressure force is:
+        F_p = ∫₀ʰ ρg(h - z) dz = ½ρgh²
+
+    This function computes the pressure force at each cell center.
+
+    Parameters
+    ----------
+    coeff : torch.Tensor
+        Modal coefficients from solve_swe_1d
+    zb_faces : torch.Tensor
+        Bed elevation at cell faces
+
+    Returns
+    -------
+    torch.Tensor
+        Pressure force per unit width at each cell center (shape: [ncells])
+        Units: N/m (assuming ρ = 1000 kg/m³)
+
+    Notes
+    -----
+    This is useful for computing forces on structures or checking momentum balance.
+    """
+    h, u, eta = reconstruct_fields(coeff, zb_faces)
+    # F_p = ½ρgh² (per unit width, with ρ = 1000 kg/m³)
+    rho = 1000.0  # kg/m³
+    pressure_force = 0.5 * rho * GRAVITY * h ** 2
+    return pressure_force
+
+
+def estimate_well_balanced_error_bound(
+    ncells: int,
+    degree: int,
+    domain_length: float,
+    bed_curvature: float = 1.0,
+) -> dict:
+    """Estimate the error bound for hydrostatic well-balanced property.
+
+    For the nodal LGL polynomial bed representation, the error in preserving
+    hydrostatic equilibrium depends on:
+    1. The polynomial degree p
+    2. The mesh spacing dx
+    3. The curvature of the bed
+
+    This function provides a theoretical error estimate based on the approximation
+    theory for polynomial interpolation.
+
+    Parameters
+    ----------
+    ncells : int
+        Number of cells
+    degree : int
+        Polynomial degree (1 or 2)
+    domain_length : float
+        Length of the computational domain
+    bed_curvature : float
+        Characteristic curvature of the bed (d²z_b/dx²)
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - 'dx': float, mesh spacing
+        - 'expected_eta_error': float, expected η error
+        - 'expected_u_error': float, expected u error
+        - 'convergence_rate': float, theoretical convergence rate
+        - 'notes': str, explanation of the estimate
+
+    Notes
+    -----
+    For well_balanced=True with nodal LGL representation:
+    - P1: error ~ O(dx²) for quadratic beds
+    - P2: error ~ O(dx³) for cubic beds
+    - In practice, errors are often at machine precision (1e-14 to 1e-12)
+      because the polynomial bed representation is exact for polynomial beds
+      up to degree p.
+    """
+    dx = domain_length / ncells
+
+    # Theoretical error estimates
+    # For polynomial bed of degree ≤ p, the representation is exact
+    # For higher-degree beds, the error is O(dx^(p+1))
+    if degree == 1:
+        convergence_rate = 2.0
+        expected_eta_error = bed_curvature * dx ** 2 / 8.0
+    elif degree == 2:
+        convergence_rate = 3.0
+        expected_eta_error = bed_curvature * dx ** 3 / 24.0
+    else:
+        convergence_rate = float(degree + 1)
+        expected_eta_error = bed_curvature * dx ** (degree + 1) / (2 ** degree * math.factorial(degree + 1))
+
+    # In practice, errors are often much smaller due to the exact polynomial representation
+    # Cap the estimate at a reasonable value
+    expected_eta_error = min(expected_eta_error, 1e-10)
+    expected_u_error = expected_eta_error * math.sqrt(GRAVITY)
+
+    notes = (
+        f"For P{degree} with nodal LGL bed representation, the error is typically "
+        f"at machine precision (1e-14 to 1e-12) for polynomial beds of degree ≤ {degree}. "
+        f"For higher-degree beds, the error scales as O(dx^{degree+1})."
+    )
+
+    return {
+        "dx": dx,
+        "expected_eta_error": expected_eta_error,
+        "expected_u_error": expected_u_error,
+        "convergence_rate": convergence_rate,
+        "notes": notes,
+    }
+
+
+def validate_well_balanced_setup(
+    initial_h: Callable,
+    initial_u: Callable,
+    zb: Callable,
+    test_points: Optional[torch.Tensor] = None,
+    tolerance: float = 1e-10,
+) -> dict:
+    """Validate that initial conditions are consistent with hydrostatic equilibrium.
+
+    This function checks whether the provided initial conditions satisfy the
+    lake-at-rest condition η = h + z_b = const and u = 0 at a set of test points.
+
+    Parameters
+    ----------
+    initial_h : callable
+        Initial depth function h(x)
+    initial_u : callable
+        Initial velocity function u(x)
+    zb : callable
+        Bed elevation function z_b(x)
+    test_points : torch.Tensor, optional
+        Points at which to check equilibrium. If None, uses 100 points in [0, 1].
+    tolerance : float
+        Tolerance for checking equilibrium
+
+    Returns
+    -------
+    dict
+        Dictionary with keys:
+        - 'is_valid': bool, True if conditions are consistent
+        - 'eta_variance': float, variance of η across test points
+        - 'u_max': float, max absolute velocity
+        - 'message': str, human-readable summary
+
+    Examples
+    --------
+    >>> def zb(x): return 0.3 * torch.cos(2 * torch.pi * x)
+    >>> initial_h, initial_u = create_hydrostatic_initial_conditions(zb, 2.0)
+    >>> result = validate_well_balanced_setup(initial_h, initial_u, zb)
+    >>> if result['is_valid']:
+    ...     print("Initial conditions are valid for hydrostatic equilibrium")
+    """
+    if test_points is None:
+        test_points = torch.linspace(0.0, 1.0, 100, dtype=torch.float64)
+
+    h_vals = initial_h(test_points)
+    u_vals = initial_u(test_points)
+    zb_vals = zb(test_points)
+    eta_vals = h_vals + zb_vals
+
+    eta_mean = float(eta_vals.mean())
+    eta_variance = float(eta_vals.var())
+    u_max = float(u_vals.abs().max())
+
+    is_valid = (eta_variance < tolerance) and (u_max < tolerance)
+
+    if is_valid:
+        message = (
+            f"Initial conditions are valid for hydrostatic equilibrium: "
+            f"η = {eta_mean:.6f} ± {math.sqrt(eta_variance):.3e}, "
+            f"u max = {u_max:.3e}"
+        )
+    else:
+        message = (
+            f"Initial conditions are NOT valid for hydrostatic equilibrium: "
+            f"η variance = {eta_variance:.3e} (tol={tolerance:.1e}), "
+            f"u max = {u_max:.3e} (tol={tolerance:.1e})"
+        )
+
+    return {
+        "is_valid": is_valid,
+        "eta_mean": eta_mean,
+        "eta_variance": eta_variance,
+        "u_max": u_max,
+        "message": message,
+    }
