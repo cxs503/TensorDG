@@ -1,0 +1,98 @@
+[
+  {
+    "ncells": 20,
+    "degree": 1,
+    "t_end": 0.3,
+    "eta_err_pct": 3.0257885598181042,
+    "u_err_pct": 8.096773853823406,
+    "vol_err_pct": 0.8585996047392365,
+    "exact_slope": false,
+    "exact_bc": false,
+    "steps": 154,
+    "reached_final": true
+  },
+  {
+    "ncells": 40,
+    "degree": 1,
+    "t_end": 0.3,
+    "eta_err_pct": 2.7347907241017455,
+    "u_err_pct": 7.480205793664724,
+    "vol_err_pct": 0.8097511384663051,
+    "exact_slope": false,
+    "exact_bc": false,
+    "steps": 308,
+    "reached_final": true
+  },
+  {
+    "ncells": 80,
+    "degree": 1,
+    "t_end": 0.3,
+    "eta_err_pct": 2.606241964579702,
+    "u_err_pct": 7.170209369078438,
+    "vol_err_pct": 0.785132892065763,
+    "exact_slope": false,
+    "exact_bc": false,
+    "steps": 616,
+    "reached_final": true
+  },
+  {
+    "ncells": 20,
+    "degree": 1,
+    "t_end": 0.3,
+    "eta_err_pct": 59.41315520695809,
+    "u_err_pct": 139.2960046141503,
+    "vol_err_pct": 24.734215851910882,
+    "exact_slope": true,
+    "exact_bc": false,
+    "steps": 182,
+    "reached_final": true
+  },
+  {
+    "ncells": 40,
+    "degree": 1,
+    "t_end": 0.3,
+    "eta_err_pct": 55.51447477000008,
+    "u_err_pct": 131.15377956187058,
+    "vol_err_pct": 22.59335786383627,
+    "exact_slope": true,
+    "exact_bc": false,
+    "steps": 360,
+    "reached_final": true
+  },
+  {
+    "ncells": 80,
+    "degree": 1,
+    "t_end": 0.3,
+    "eta_err_pct": 53.59107605834842,
+    "u_err_pct": 127.06388620257843,
+    "vol_err_pct": 21.555735501126218,
+    "exact_slope": true,
+    "exact_bc": false,
+    "steps": 715,
+    "reached_final": true
+  },
+  {
+    "ncells": 20,
+    "degree": 1,
+    "t_end": 0.3,
+    "eta_err_pct": 0.15712336163815077,
+    "u_err_pct": 0.01245513727522129,
+    "vol_err_pct": 1.002404446284159e-10,
+    "exact_slope": true,
+    "exact_bc": true,
+    "steps": 154,
+    "reached_final": true
+  },
+  {
+    "ncells": 40,
+    "degree": 1,
+    "t_end": 0.3,
+    "eta_err_pct": 0.039271687238791125,
+    "u_err_pct": 0.0017902016605742177,
+    "vol_err_pct": 4.439403516919575e-12,
+    "exact_slope": true,
+    "exact_bc": true,
+    "steps": 308,
+    "reached_final": true
+  }
+]
