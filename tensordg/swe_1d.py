@@ -142,6 +142,67 @@ def _operators(degree: int, device: torch.device, dtype: torch.dtype):
     return nodes, weights, phi, dphi, phi_left, phi_right
 
 
+def _hydrostatic_interface_flux(coeff: torch.Tensor, phi_left: torch.Tensor,
+                                phi_right: torch.Tensor, bed_modal: torch.Tensor,
+                                flux_kind: str, periodic: bool):
+    """Audusse (2004) hydrostatic reconstruction interface fluxes for the 1-D SWE.
+
+    For every interior face ``i+1/2`` the two one-sided traces are reconstructed
+    onto the *higher* of the two face bed elevations,
+
+        b* = max(b_i,R, b_{i+1},L),  h*_m = max(0, h_m + b_m - b*),
+
+    the numerical flux is evaluated with the reconstructed states, and the
+    hydrostatic pressure correction ``g/2 (h_m^2 - h*_m^2)`` is added back to the
+    momentum component *of that side*.  The result is the pair of one-sided
+    fluxes ``(F_i,R, F_{i+1},L)``; the two differ only through the correction
+    term, which is exactly what makes a lake at rest a discrete fixed point on a
+    non-flat bed (both sides then see the pressure flux ``g/2 h_m^2`` of their own
+    trace, so the volume term of the weak form cancels it identically).
+
+    At the two domain ends the closure is zero-order extrapolation
+    (transmissive), i.e. the cell's own physical flux, matching the default
+    closure of :func:`_rhs`; the analytic-boundary-flux override is applied by
+    the caller.
+
+    Returns ``(flux_right_of_cell, flux_left_of_cell)``, each ``(ncells, 2)``.
+    """
+    right_trace = torch.einsum("cmv,m->cv", coeff, phi_right)
+    left_trace = torch.einsum("cmv,m->cv", coeff, phi_left)
+    bed_right = torch.einsum("cm,m->c", bed_modal, phi_right)
+    bed_left = torch.einsum("cm,m->c", bed_modal, phi_left)
+
+    h_a, hu_a, b_a = right_trace[:, 0], right_trace[:, 1], bed_right
+    h_b = torch.roll(left_trace[:, 0], shifts=-1, dims=0)
+    hu_b = torch.roll(left_trace[:, 1], shifts=-1, dims=0)
+    b_b = torch.roll(bed_left, shifts=-1, dims=0)
+    if not periodic:
+        h_b[-1], hu_b[-1], b_b[-1] = h_a[-1], hu_a[-1], b_a[-1]
+
+    b_star = torch.maximum(b_a, b_b)
+    h_a_star = (h_a + b_a - b_star).clamp_min(0.0)
+    h_b_star = (h_b + b_b - b_star).clamp_min(0.0)
+    u_a = torch.where(h_a > DRY_DEPTH, hu_a / h_a.clamp_min(DRY_DEPTH),
+                      torch.zeros_like(h_a))
+    u_b = torch.where(h_b > DRY_DEPTH, hu_b / h_b.clamp_min(DRY_DEPTH),
+                      torch.zeros_like(h_b))
+
+    state_a = torch.stack((h_a_star, h_a_star * u_a), dim=-1)
+    state_b = torch.stack((h_b_star, h_b_star * u_b), dim=-1)
+    flux = hll_flux(state_a, state_b, flux_kind)
+
+    corr_a = 0.5 * GRAVITY * (h_a ** 2 - h_a_star ** 2)
+    corr_b = 0.5 * GRAVITY * (h_b ** 2 - h_b_star ** 2)
+    flux_right = torch.stack((flux[:, 0], flux[:, 1] + corr_a), dim=-1)
+    flux_left_next = torch.stack((flux[:, 0], flux[:, 1] + corr_b), dim=-1)
+
+    flux_left = torch.roll(flux_left_next, shifts=1, dims=0)
+    if not periodic:
+        flux_left[0] = physical_flux(left_trace[:1])[0]
+        flux_right[-1] = physical_flux(right_trace[-1:])[0]
+    return flux_right, flux_left
+
+
 def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
          phi: torch.Tensor, dphi: torch.Tensor,
          phi_left: torch.Tensor, phi_right: torch.Tensor,
@@ -149,7 +210,8 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
          flux_kind: str = "hll", periodic: bool = False,
          time: float = 0.0,
          bc_left_flux=None, bc_right_flux=None,
-         zb_slope_quad: Optional[torch.Tensor] = None) -> torch.Tensor:
+         zb_slope_quad: Optional[torch.Tensor] = None,
+         bed_modal: Optional[torch.Tensor] = None) -> torch.Tensor:
     """Semi-discrete DG residual for SWE with bed slope source term.
 
     The source term −g h ∂z_b/∂x is treated by modal projection.
@@ -169,14 +231,20 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
     right_trace = torch.einsum("cmv,m->cv", coeff, phi_right)
     left_trace = torch.einsum("cmv,m->cv", coeff, phi_left)
 
-    right_neighbour = torch.roll(left_trace, shifts=-1, dims=0)
-    if not periodic:
-        right_neighbour[-1] = right_trace[-1]
+    if bed_modal is None:
+        right_neighbour = torch.roll(left_trace, shifts=-1, dims=0)
+        if not periodic:
+            right_neighbour[-1] = right_trace[-1]
 
-    interface_flux = hll_flux(right_trace, right_neighbour, flux_kind)
-    left_interface_flux = torch.roll(interface_flux, shifts=1, dims=0)
-    if not periodic:
-        left_interface_flux[0] = hll_flux(left_trace[:1], left_trace[:1], flux_kind)
+        interface_flux = hll_flux(right_trace, right_neighbour, flux_kind)
+        left_interface_flux = torch.roll(interface_flux, shifts=1, dims=0)
+        if not periodic:
+            left_interface_flux[0] = hll_flux(left_trace[:1], left_trace[:1], flux_kind)
+    else:
+        # Well-balanced branch: Audusse hydrostatic reconstruction.  The flux
+        # is one-sided per cell, so the two traces no longer share one value.
+        interface_flux, left_interface_flux = _hydrostatic_interface_flux(
+            coeff, phi_left, phi_right, bed_modal, flux_kind, periodic)
 
     # Optional exact boundary data (verification against analytic solutions).
     if bc_left_flux is not None:
@@ -187,6 +255,10 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
             bc_right_flux(time), dtype=coeff.dtype, device=coeff.device)
 
     dbdx = zb_jump / dx  # [ncells]
+    slope_quad = None
+    if bed_modal is not None:
+        # dz_b/dx of the per-cell bed *polynomial* at the same Gauss points as h.
+        slope_quad = (2.0 / dx) * torch.einsum("cm,qm->cq", bed_modal, dphi)
 
     # Two source-term discretisations:
     #   * legacy (zb_slope_quad is None): cell-constant gradient
@@ -213,7 +285,10 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
         # Weak form of -g h dz_b/dx on mode k:
         #   ((2k+1)/dx) * int_cell S phi_k dx with S = -g dbdx * sum_m c_m^h phi_m
         #   = -g dbdx * c_k^h  ((2k+1)/2 and 2/(2k+1) cancel exactly)
-        if zb_slope_quad is None:
+        if bed_modal is not None:
+            src_k = -0.5 * GRAVITY * mom_factor[k] * torch.einsum(
+                "cq,q,q->c", at_quad[:, :, 0] * slope_quad, weights, phi[:, k])
+        elif zb_slope_quad is None:
             src_k = -GRAVITY * dbdx * coeff[:, k, 0]
         else:
             src_k = -0.5 * GRAVITY * mom_factor[k] * torch.einsum(
@@ -259,6 +334,7 @@ def solve_swe_1d(
     bc_left_flux: Optional[Callable[[float], torch.Tensor]] = None,
     bc_right_flux: Optional[Callable[[float], torch.Tensor]] = None,
     zb_slope: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
+    well_balanced: bool = False,
 ) -> tuple:
     """Solve the 1-D shallow water equations with DG.
 
@@ -284,6 +360,15 @@ def solve_swe_1d(
         transmissive closure on the left boundary.
     bc_right_flux : callable t -> (hu, hu^2 + g h^2 / 2) at x = x_right
         Idem on the right boundary.
+    well_balanced : bool, default False
+        Enable Audusse (2004) hydrostatic reconstruction at the interfaces and
+        discretise the bed-slope source with the derivative of the *per-cell bed
+        polynomial* sampled at the same Gauss points as ``h``.  This makes a lake
+        at rest ``h + z_b = const, hu = 0`` an exact discrete fixed point
+        (machine-precision drift) on an *arbitrary* bed and at any polynomial
+        degree, at the price of representing the bed in the DG space: the force
+        is then exact only for beds that are polynomial per cell of degree <= p.
+        Mutually exclusive with ``zb_slope``.
 
     Returns
     -------
@@ -321,7 +406,19 @@ def solve_swe_1d(
     check_points = torch.cat((phi, phi_left[None, :], phi_right[None, :]), dim=0)
 
     node_x = x[:, None] + 0.5 * dx * nodes[None, :]
+    if zb_slope is not None and well_balanced:
+        raise ValueError("zb_slope and well_balanced are mutually exclusive")
     zb_slope_quad = None if zb_slope is None else zb_slope(node_x)
+
+    # Per-cell bed polynomial (modal coefficients at the Gauss nodes) used by the
+    # well-balanced mode for both the interface reconstruction and the source.
+    bed_modal = None
+    if well_balanced:
+        zb_node = zb(node_x)
+        bed_modal = torch.zeros((ncells, degree + 1), device=dev, dtype=dtype)
+        for k in range(degree + 1):
+            bed_modal[:, k] = ((2 * k + 1) / 2.0) * torch.einsum(
+                "cq,q,q->c", zb_node, weights, phi[:, k])
     h0 = initial_h(node_x)
     u0 = initial_u(node_x)
     hu0 = h0 * u0
@@ -352,7 +449,7 @@ def solve_swe_1d(
         if rk_order == 3:
             k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time,
-                      bc_left_flux, bc_right_flux, zb_slope_quad)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
@@ -360,7 +457,7 @@ def solve_swe_1d(
 
             k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time + dt,
-                      bc_left_flux, bc_right_flux, zb_slope_quad)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
             u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
             if limit_each_stage:
                 u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
@@ -368,19 +465,20 @@ def solve_swe_1d(
 
             k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time + 0.5 * dt,
-                      bc_left_flux, bc_right_flux, zb_slope_quad)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
             coeff = (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3)
         else:
             k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time,
-                      bc_left_flux, bc_right_flux, zb_slope_quad)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
             u1 = _positivity_filter(u1, check_points, h_min)
 
             k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right,
-                      zb_jump, flux_kind, periodic, zb_slope_quad=zb_slope_quad)
+                      zb_jump, flux_kind, periodic, time + dt,
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
             coeff = 0.5 * coeff + 0.5 * (u1 + dt * k2)
 
         if limiter_stage == "final" and limiter is not None:
@@ -402,6 +500,7 @@ def solve_swe_1d(
         "device": str(dev), "limiter_stage": limiter_stage,
         "exact_boundary_flux": bc_left_flux is not None or bc_right_flux is not None,
         "exact_bed_slope": zb_slope is not None,
+        "well_balanced": well_balanced,
         "time_reached": time,
         "reached_final_time": (not stalled) and time >= final_time - 1e-12,
         "dry_depth": DRY_DEPTH,
