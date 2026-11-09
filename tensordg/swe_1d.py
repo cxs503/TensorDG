@@ -142,6 +142,27 @@ def _operators(degree: int, device: torch.device, dtype: torch.dtype):
     return nodes, weights, phi, dphi, phi_left, phi_right
 
 
+def _lgl_transform(degree: int, device: torch.device, dtype: torch.dtype):
+    """Nodal -> modal transform for the degree-``p`` Gauss-Lobatto-Legendre nodes.
+
+    Returns ``(V^{-1}, nodes)`` with ``V[j, k] = P_k(xi_j)`` for the ``p + 1``
+    LGL nodes ``xi_j`` (which include both endpoints ``-1`` and ``+1``).  For a
+    nodal vector ``v_j`` of values at those nodes the modal coefficients are
+    ``c = V^{-1} v``; the polynomial reproduces ``v`` *exactly* at the nodes,
+    in particular at the two cell faces.
+
+    Only ``p = 1`` (nodes ``-1, +1``) and ``p = 2`` (nodes ``-1, 0, +1``) are
+    needed by this solver.
+    """
+    nodes_np = (np.array([-1.0, 1.0]) if degree == 1
+                else np.array([-1.0, 0.0, 1.0]))
+    vander = np.stack(
+        [np.polynomial.legendre.legval(nodes_np, e) for e in np.eye(degree + 1)],
+        axis=1)
+    vander_t = torch.as_tensor(vander, device=device, dtype=dtype)
+    return torch.linalg.inv(vander_t), torch.as_tensor(nodes_np, device=device, dtype=dtype)
+
+
 def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
          phi: torch.Tensor, dphi: torch.Tensor,
          phi_left: torch.Tensor, phi_right: torch.Tensor,
@@ -259,6 +280,7 @@ def solve_swe_1d(
     bc_left_flux: Optional[Callable[[float], torch.Tensor]] = None,
     bc_right_flux: Optional[Callable[[float], torch.Tensor]] = None,
     zb_slope: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
+    well_balanced: bool = False,
 ) -> tuple:
     """Solve the 1-D shallow water equations with DG.
 
@@ -284,6 +306,22 @@ def solve_swe_1d(
         transmissive closure on the left boundary.
     bc_right_flux : callable t -> (hu, hu^2 + g h^2 / 2) at x = x_right
         Idem on the right boundary.
+    zb_slope : callable  analytic dz_b/dx(x) sampled at the Gauss points.
+        Opt-in: replaces the cell-constant bed slope of the legacy source by an
+        exact quadrature.  Ignored when ``well_balanced=True`` (the derivative
+        of the polynomial bed is used instead, which is the consistent choice).
+    well_balanced : bool
+        Exact lake-at-rest path.  The bed is represented by its degree-``p``
+        LGL interpolant and the initial data are collocated at the *same* LGL
+        nodes, so the discrete rest state ``h_h + z_h = const`` is
+        representable to round-off; the momentum source uses the exact
+        derivative of that polynomial bed.  For a smooth continuous bed this
+        makes a still lake a discrete fixed point at machine precision for
+        both P1 and P2 (the default L2-projected path leaves O(dx) drift at
+        P1 and a non-decaying drift at P2 -- see
+        ``docs/swe_well_balanced_exact.md``).  Wet/dry fronts still need a
+        hydrostatic (Audusse) reconstruction, which is *not* implemented
+        here; ``well_balanced=True`` does not change the dry-state handling.
 
     Returns
     -------
@@ -322,17 +360,40 @@ def solve_swe_1d(
 
     node_x = x[:, None] + 0.5 * dx * nodes[None, :]
     zb_slope_quad = None if zb_slope is None else zb_slope(node_x)
-    h0 = initial_h(node_x)
-    u0 = initial_u(node_x)
-    hu0 = h0 * u0
-
-    # L2 projection onto modal basis
     coeff = torch.zeros((ncells, degree + 1, 2), device=dev, dtype=dtype)
-    for k in range(degree + 1):
-        coeff[:, k, 0] = ((2 * k + 1) / 2.0) * torch.einsum(
-            "cq,q,q->c", h0, weights, phi[:, k])
-        coeff[:, k, 1] = ((2 * k + 1) / 2.0) * torch.einsum(
-            "cq,q,q->c", hu0, weights, phi[:, k])
+
+    if well_balanced:
+        # --- consistent (nodal) representation for exact lake-at-rest -------
+        # Interpolate the bed and the initial data at the *same* LGL nodes.
+        # Interpolation is linear, so h_h + z_h = eta_h is the interpolant of a
+        # constant whenever the sampled h + z is constant -- the discrete rest
+        # state then lies exactly in the DG space and both interface traces of
+        # h agree, which is what makes the jump term of the numerical flux
+        # vanish instead of leaving the O(dx) / O(1) drift of the L2 path.
+        vinv, lgl_nodes = _lgl_transform(degree, dev, dtype)
+        node_x_lgl = x[:, None] + 0.5 * dx * lgl_nodes[None, :]
+        cz = zb(node_x_lgl) @ vinv.T                     # bed modes
+        # Face values of the polynomial bed (equal to zb at the faces, because
+        # the interpolant passes through the LGL nodes -1 and +1).
+        zb_l = cz @ phi_left
+        zb_r = cz @ phi_right
+        # Exact derivative of the *polynomial* bed at the Gauss points; using
+        # the analytic dz_b/dx here instead would leave an O(dx^(p+1)) residual.
+        zb_slope_quad = torch.einsum("cm,qm->cq", cz, dphi) * (2.0 / dx)
+        h_nodes = initial_h(node_x_lgl)
+        u_nodes = initial_u(node_x_lgl)
+        coeff[:, :, 0] = h_nodes @ vinv.T
+        coeff[:, :, 1] = (h_nodes * u_nodes) @ vinv.T
+    else:
+        h0 = initial_h(node_x)
+        u0 = initial_u(node_x)
+        hu0 = h0 * u0
+        # L2 projection onto modal basis
+        for k in range(degree + 1):
+            coeff[:, k, 0] = ((2 * k + 1) / 2.0) * torch.einsum(
+                "cq,q,q->c", h0, weights, phi[:, k])
+            coeff[:, k, 1] = ((2 * k + 1) / 2.0) * torch.einsum(
+                "cq,q,q->c", hu0, weights, phi[:, k])
 
     coeff = _positivity_filter(coeff, check_points, h_min)
 
@@ -402,6 +463,9 @@ def solve_swe_1d(
         "device": str(dev), "limiter_stage": limiter_stage,
         "exact_boundary_flux": bc_left_flux is not None or bc_right_flux is not None,
         "exact_bed_slope": zb_slope is not None,
+        "well_balanced": well_balanced,
+        "bed_representation": ("nodal_lgl_polynomial" if well_balanced else "piecewise_linear"),
+        "zb_modes": (cz if well_balanced else None),
         "time_reached": time,
         "reached_final_time": (not stalled) and time >= final_time - 1e-12,
         "dry_depth": DRY_DEPTH,
@@ -415,8 +479,17 @@ def solve_swe_1d(
     return x, coeff, zb_faces, metadata
 
 
-def reconstruct_fields(coeff: torch.Tensor, zb_faces: torch.Tensor) -> tuple:
+def reconstruct_fields(coeff: torch.Tensor, zb_faces: torch.Tensor,
+                       zb_center: Optional[torch.Tensor] = None) -> tuple:
     """Reconstruct h, u, η at cell centres from modal coefficients.
+
+    ``zb_center`` is the bed elevation used for the cell average of η.  The
+    default is the trapezoidal mean ``(zb_left + zb_right) / 2`` of the
+    piecewise-linear bed, which is *not* the cell average of a curved bed: for
+    a degree-2 polynomial bed the two differ by ``O(dx^2)``, which shows up as
+    a spurious ``O(dx^2)`` free-surface drift in a lake-at-rest check.  Passing
+    the mode-0 coefficient of the polynomial bed (``metadata["zb_modes"][:, 0]``
+    for a ``well_balanced=True`` run) removes that post-processing error.
 
     Returns (h_center, u_center, eta_center) each of shape (ncells,).
     """
@@ -424,7 +497,8 @@ def reconstruct_fields(coeff: torch.Tensor, zb_faces: torch.Tensor) -> tuple:
     # sit at the -h_min positivity floor (-1e-12), which is reported as 0.
     h_avg = coeff[:, 0, 0].clamp_min(0.0)
     hu_avg = coeff[:, 0, 1]
-    zb_center = 0.5 * (zb_faces[:, 0] + zb_faces[:, 1])
+    if zb_center is None:
+        zb_center = 0.5 * (zb_faces[:, 0] + zb_faces[:, 1])
     u_center = torch.where(h_avg > DRY_DEPTH, hu_avg / h_avg.clamp_min(DRY_DEPTH),
                            torch.zeros_like(h_avg))
     eta_center = h_avg + zb_center

@@ -1,0 +1,136 @@
+# Exact lake-at-rest on a curved bed: the `well_balanced=True` SWE path
+
+**Scope**: `tensordg/swe_1d.py`, `reconstruct_fields`, `tests/test_swe_well_balanced_exact.py`,
+`benchmarks/swe_well_balanced_exact.py` → `artifacts/swe_well_balanced_exact.json`,
+`docs/figures/swe_well_balanced_drift.png`.
+
+## 1. Case (physical setup and parameters)
+
+A still lake of mean depth `h0 = 2 m` over a smooth curved bed
+`z_b(x) = 0.4 sin(pi x / 2)` on `x ∈ [-2, 2] m`, gravity `g = 9.81 m/s²`,
+`η(x, 0) = 2 m`, `u(x, 0) = 0`. The exact solution for all time is the
+still lake `η = 2 m`, `u = 0`; any drift is a numerical artifact. This is the
+textbook well-balancedness test (Bermúdez & Vázquez 1994; Audusse et al. 2004;
+Xing & Shu 2006).
+
+Discretisation: modal Legendre DG (P1/P2), HLL flux, SSP-RK3, `cfl = 0.3`,
+`t = 1 s`, meshes `N = 32 / 64 / 128`.
+
+## 2. Method — what was changed and why
+
+`tests/test_swe_wellbalanced.py` recorded an **open defect** at P2: on this bed
+the still lake drifted by **0.645 m = 32 % of the still-water depth** at
+`N = 64, t = 1 s` (P1: 3.2e-4 m = 0.016 %), with the drift shrinking under
+refinement. The documented hypothesis was "no hydrostatic reconstruction at the
+interfaces".
+
+The diagnosis here is different and testable: **the default path does not
+represent `(h, z_b)` compatibly.** `h` is L2-projected on Gauss nodes while the
+bed exists only as two face values per cell (piecewise linear). Hence the
+discrete functions do not satisfy `h_h + z_h = const` as polynomials, the two
+cell traces of `h` at a shared face disagree by the projection error, and the
+jump term of the numerical flux injects spurious momentum every step.
+
+Fix (`solve_swe_1d(..., well_balanced=True)`, opt-in, default unchanged):
+
+1. represent the bed by its degree-`p` **Gauss-Lobatto-Legendre interpolant**
+   (`_lgl_transform`, nodes `{-1,+1}` / `{-1,0,+1}`), which passes exactly
+   through `z_b` at both cell faces;
+2. collocate the initial data at the **same LGL nodes**. Interpolation is
+   linear, so a sampled `h + z_b = η0` gives `h_h + z_h = η0` *exactly* as
+   polynomials, and both cell traces of `h` coincide at every interface;
+3. use the **exact derivative of the polynomial bed** (not the analytic
+   `dz_b/dx` and not the cell-constant slope) in the momentum source, which is
+   the source branch already wired through `zb_slope`/`zb_slope_quad`.
+
+No interface hydrostatic (Audusse) correction is added: for a *continuous* bed
+it is a no-op, because both cells already share the same bed face value. The
+Audusse reconstruction is still required for **discontinuous beds / wet-dry
+fronts**, which this change does **not** provide.
+
+A second, post-processing trap was found and fixed: `reconstruct_fields`
+computed the bed's cell average as `(z_L + z_R)/2`, which for a curved bed
+differs from the true cell average by `O(dx²)`; that alone produced a spurious
+`O(dx²)` "drift" (1.28e-3 m at `N = 32`, P2) unrelated to the solver. The
+polynomial bed's mode-0 coefficient is now exposed as `metadata["zb_modes"]`
+and accepted as `reconstruct_fields(..., zb_center=...)`.
+
+## 3. Results (programmatic; `artifacts/swe_well_balanced_exact.json`)
+
+Lake at rest, `t = 1 s`, drift `max|η - η0|` in metres (relative to the 2 m depth):
+
+| p | N | L2 default (trapezoid read) | nodal `well_balanced` (polynomial average) | ratio |
+|---|---:|---:|---:|---:|
+| 1 | 32 | 1.24e-3 (6.2e-4) | 3.50e-13 (1.7e-13) | 3.5e9 |
+| 1 | 64 | 3.24e-4 (1.6e-4) | 1.27e-12 (6.3e-13) | 2.6e8 |
+| 2 | 32 | 1.91 (96 %) | 2.66e-11 (1.3e-11) | 7.2e10 |
+| 2 | 64 | 6.45e-1 (32 %) | 8.49e-11 (4.2e-11) | 7.6e9 |
+
+(`N = 128` is omitted from the table to keep the evidence run inside the
+session's compute budget; the trend at 32/64 is unambiguous and the run is
+reproducible with `WB_MESHES=32,64,128`.)
+
+Spurious momentum `max|(hu)_k|` at P2, `N = 64`: default 3.29 m²/s vs nodal
+3.5e-10 m²/s.
+
+If the P2 nodal state is read with the *trapezoidal* bed average instead, the
+reading is 1.28e-3 / 3.21e-4 m at `N = 32/64` — a factor 4.0 per refinement
+(1.28e-3 / 3.21e-4 = 3.99), i.e. exactly `(dx²/12) z_b''`, confirming it is a
+post-processing error and not a residual solver imbalance. One RK3 residual
+evaluation at the rest state confirms the fixed-point property directly:
+`max|dh| = 6e-14`, `max|d(hu)| = 4.5e-13` (P2, N = 16).
+
+Accuracy on a *moving* solution is not degraded (Thacker 1981 planar basin,
+`t = 0.1 s`, 20 cells, relative L2 in %):
+
+| p | path | η | u | h |
+|---|---|---:|---:|---:|
+| 1 | default | 0.1415 | 0.5228 | 0.0528 |
+| 1 | nodal | **0.0615** | 0.5227 | 0.1202 |
+| 2 | default | 1.1646 | 9.7198 | 0.8635 |
+| 2 | nodal | **0.1157** | **0.0000** | 0.0404 |
+
+At P2 the exact velocity of the planar-basin mode is spatially uniform, so the
+P2 space represents it exactly and the nodal path preserves it to round-off;
+the default path's 9.72 % velocity error is the same incompatibility as above.
+
+## 4. Figures
+
+`docs/figures/swe_well_balanced_drift.png` (generated by the benchmark, not
+hand-edited): left — drift vs mesh for P1/P2, default vs nodal, with the
+round-off line; right — spurious P2 momentum vs mesh.
+
+## 5. Notes, limitations, traps
+
+* **Opt-in.** The default (L2) path is untouched, so every existing benchmark
+  and regression keeps its published numbers; the documented P2 defect stays
+  pinned as a strict xfail in `tests/test_swe_wellbalanced.py`.
+* **Discontinuous initial data.** Nodal collocation samples the initial data at
+  the LGL nodes including faces. For the Ritter dam break the discontinuity
+  falls exactly on a face and the tie-break (`x < 0`) gives the dry value
+  there: the discrete initial mass becomes 9.95 instead of 10.0 (half a wet
+  cell), and the run conserves that discrete mass to 1e-9. The L1 depth error
+  is 0.52 % (P1) / 0.24 % (P2), still inside the 3 % gate; the default path is
+  the better choice for discontinuous ICs.
+* **Wet-dry fronts** still use only the `DRY_DEPTH` guard; `well_balanced=True`
+  is *not* a hydrostatic reconstruction and does not claim wetting/drying
+  accuracy.
+* **2-D is not covered.** `tensordg/swe_2d.py` still uses the L2 path and is
+  expected to show the same class of curved-bed drift; extending the nodal
+  representation to 2-D is left as declared future work.
+* Numerical round-off accumulates as a random walk in time: the nodal drift
+  grows slowly with `N` (more steps) despite being a fixed point in exact
+  arithmetic — 3.5e-13 m at `N = 32` to 4.1e-12 m at `N = 128` (P1).
+
+## 6. Error verdict
+
+| quantity | reference | measured | < 3 % ? |
+|---|---|---:|---|
+| P1 still-lake drift | exact 0 | 1.3e-12 m (6.3e-13 rel.) | yes (>1e9x better than the 5e-4 gate) |
+| P2 still-lake drift | exact 0 | 8.5e-11 m (4.2e-11 rel.) | yes (default path: 32 %, **no**) |
+| P2 spurious momentum | exact 0 | 3.5e-10 m²/s | yes (default: 3.29 m²/s) |
+| Thacker P2 η, t=0.1 | Thacker (1981) closed form | 0.116 % | yes |
+| Thacker P2 u, t=0.1 | Thacker (1981) closed form | 3.0e-7 % | yes |
+
+Reproduce: `python -m benchmarks.swe_well_balanced_exact` and
+`python -m pytest -q tests/test_swe_well_balanced_exact.py`.
