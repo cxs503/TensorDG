@@ -1,0 +1,102 @@
+{
+  "params": {
+    "eta0": 2.0,
+    "h0": 1.0,
+    "amplitude": 0.5,
+    "half_width": 1.0,
+    "t_end": 0.5,
+    "seed": null
+  },
+  "lake_at_rest": [
+    {
+      "degree": 1,
+      "well_balanced": false,
+      "ncells": 64,
+      "steps": 777,
+      "max_momentum": 0.001360514278715569,
+      "max_state_change": 0.000523192501530545
+    },
+    {
+      "degree": 1,
+      "well_balanced": true,
+      "ncells": 64,
+      "steps": 777,
+      "max_momentum": 7.684132641057147e-12,
+      "max_state_change": 1.829647544582258e-12
+    },
+    {
+      "degree": 2,
+      "well_balanced": false,
+      "ncells": 64,
+      "steps": 1364,
+      "max_momentum": 3.2889259401870903,
+      "max_state_change": 0.6447878214859175
+    },
+    {
+      "degree": 2,
+      "well_balanced": true,
+      "ncells": 64,
+      "steps": 1294,
+      "max_momentum": 3.9653311287222904e-10,
+      "max_state_change": 9.62592228148651e-11
+    }
+  ],
+  "thacker": [
+    {
+      "ncells": 20,
+      "degree": 1,
+      "mode": "zb_slope",
+      "steps": 265,
+      "eta_pct": 0.15818459733044704,
+      "h_pct": 0.047967920767189406,
+      "u_pct": 0.013412646382354504,
+      "volume_pct": 7.452483685383042e-11,
+      "status": "ok"
+    },
+    {
+      "ncells": 20,
+      "degree": 2,
+      "mode": "zb_slope",
+      "steps": 442,
+      "eta_pct": 0.15808580596046515,
+      "h_pct": 0.0478484265772424,
+      "u_pct": 8.381879132373986e-06,
+      "volume_pct": 7.181862769433379e-12,
+      "status": "ok"
+    },
+    {
+      "ncells": 20,
+      "degree": 2,
+      "mode": "well_balanced",
+      "steps": 442,
+      "eta_pct": 0.15808580596031827,
+      "h_pct": 0.04784842657733133,
+      "u_pct": 8.381879165491723e-06,
+      "volume_pct": 7.077777801760432e-12,
+      "status": "ok"
+    },
+    {
+      "ncells": 20,
+      "degree": 1,
+      "mode": "well_balanced",
+      "steps": 357,
+      "eta_pct": 14.998464568430217,
+      "h_pct": 9.078905321032456,
+      "u_pct": 133.97837805439138,
+      "volume_pct": 9.977845213547931e-11,
+      "status": "ok"
+    }
+  ],
+  "rk_volume": [
+    {
+      "rk_order": 2,
+      "steps": 100,
+      "volume_rel_err": -5.629399861567373e-07
+    },
+    {
+      "rk_order": 3,
+      "steps": 100,
+      "volume_rel_err": 7.19755113579437e-13
+    }
+  ]
+}
