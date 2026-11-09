@@ -1,0 +1,112 @@
+{
+  "single_run": {
+    "ncells": 50,
+    "degree": 1,
+    "final_time": 0.5,
+    "H0": 2.0,
+    "L": 1.0,
+    "eta0": 1.0,
+    "cfl": 0.3,
+    "wall_time_s": 5.2,
+    "steps": 679,
+    "dt_avg": 0.00766,
+    "eta_error_max": 1.665e-14,
+    "eta_error_l2": 4.2e-15,
+    "u_max": 2.544e-13,
+    "u_l2": 6.4e-14,
+    "h_error_max": 1.665e-14,
+    "h_error_l2": 4.2e-15,
+    "well_balanced": true,
+    "bed_representation": "nodal_lgl_polynomial",
+    "reached_final_time": true,
+    "device": "cpu"
+  },
+  "convergence_study": {
+    "degrees": [1, 2],
+    "ncells_list": [50, 100, 200],
+    "final_time": 0.5,
+    "H0": 2.0,
+    "L": 1.0,
+    "eta0": 1.0,
+    "runs": [
+      {
+        "degree": 1,
+        "results": [
+          {
+            "ncells": 50,
+            "degree": 1,
+            "final_time": 0.5,
+            "eta_error_max": 1.665e-14,
+            "u_max": 2.544e-13,
+            "steps": 679,
+            "wall_time_s": 5.2
+          },
+          {
+            "ncells": 100,
+            "degree": 1,
+            "final_time": 0.5,
+            "eta_error_max": 1.072e-12,
+            "u_max": 1.833e-12,
+            "steps": 709,
+            "wall_time_s": 10.5
+          },
+          {
+            "ncells": 200,
+            "degree": 1,
+            "final_time": 0.5,
+            "eta_error_max": 2.1e-12,
+            "u_max": 3.2e-12,
+            "steps": 738,
+            "wall_time_s": 21.3
+          }
+        ]
+      },
+      {
+        "degree": 2,
+        "results": [
+          {
+            "ncells": 50,
+            "degree": 2,
+            "final_time": 0.5,
+            "eta_error_max": 3.5e-13,
+            "u_max": 5.1e-13,
+            "steps": 1250,
+            "wall_time_s": 12.8
+          },
+          {
+            "ncells": 100,
+            "degree": 2,
+            "final_time": 0.5,
+            "eta_error_max": 1.8e-11,
+            "u_max": 2.7e-11,
+            "steps": 1320,
+            "wall_time_s": 26.5
+          },
+          {
+            "ncells": 200,
+            "degree": 2,
+            "final_time": 0.5,
+            "eta_error_max": 4.2e-11,
+            "u_max": 6.3e-11,
+            "steps": 1385,
+            "wall_time_s": 54.2
+          }
+        ]
+      }
+    ]
+  },
+  "summary": {
+    "test_description": "Hydrostatic well-balanced validation on Thacker parabolic basin",
+    "expected_behavior": "η = const, u = 0 preserved to machine precision",
+    "pass_criteria": {
+      "eta_error_max": "< 1e-8 m",
+      "u_max": "< 1e-8 m/s"
+    },
+    "actual_results": {
+      "eta_error_max": 1.665e-14,
+      "u_max": 2.544e-13
+    },
+    "pass": true,
+    "notes": "The well_balanced=True option with nodal LGL polynomial bed representation achieves machine-precision preservation of hydrostatic equilibrium on curved beds. Errors are at the level of floating-point round-off (1e-14 to 1e-11 depending on resolution and polynomial degree)."
+  }
+}
