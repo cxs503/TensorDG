@@ -809,6 +809,8 @@ def estimate_well_balanced_error_bound(
     degree: int,
     domain_length: float,
     bed_curvature: float = 1.0,
+    floor: Optional[float] = None,
+    reference_depth: float = 1.0,
 ) -> dict:
     """Estimate the error bound for hydrostatic well-balanced property.
 
@@ -831,14 +833,31 @@ def estimate_well_balanced_error_bound(
         Length of the computational domain
     bed_curvature : float
         Characteristic curvature of the bed (d²z_b/dx²)
+    floor : float, optional
+        Optional round-off floor, in metres, below which the discrete
+        equilibrium residual cannot go.  ``None`` (default) means *no* floor is
+        imposed and the returned bound is the pure representation estimate.
+        This used to be a hard-coded ``1e-10`` applied to every call, which
+        silently reported ``1e-10`` for a bed whose estimate is ``2e-3``
+        (``ncells=8``, P1, ``bed_curvature=1``) and made the bound useless as
+        a refinement indicator.  Pass the measured round-off level of your
+        configuration explicitly if you want the floor to enter the bound.
+    reference_depth : float
+        Reference water depth, in metres, used to turn a free-surface error
+        into a velocity scale, ``u ~ η sqrt(g / reference_depth)`` (the
+        linearised shallow-water relation).  Default ``1.0`` m.
 
     Returns
     -------
     dict
         Dictionary with keys:
         - 'dx': float, mesh spacing
-        - 'expected_eta_error': float, expected η error
-        - 'expected_u_error': float, expected u error
+        - 'eta_error_estimate': float, representation estimate for η
+          (``bed_curvature * dx**(p+1) / c_p``), never clamped
+        - 'expected_eta_error': float, ``max(eta_error_estimate, floor)``
+        - 'floor_applied': bool, True if ``floor`` actually bound the estimate
+        - 'expected_u_error': float, linearised velocity scale
+          ``expected_eta_error * sqrt(g / reference_depth)``
         - 'convergence_rate': float, theoretical convergence rate
         - 'notes': str, explanation of the estimate
 
@@ -847,9 +866,12 @@ def estimate_well_balanced_error_bound(
     For well_balanced=True with nodal LGL representation:
     - P1: error ~ O(dx²) for quadratic beds
     - P2: error ~ O(dx³) for cubic beds
-    - In practice, errors are often at machine precision (1e-14 to 1e-12)
-      because the polynomial bed representation is exact for polynomial beds
-      up to degree p.
+    - For a bed that is a polynomial of degree ≤ p the representation is
+      exact and this estimate is zero; the residual actually observed in a
+      solve then drops to the round-off floor of the scheme (measured in
+      ``docs/tensordg-swe-hydrostatic-wellbalanced.md``, ~1e-10 m for P1).
+      That floor is a property of the arithmetic, not of this estimate, so it
+      is *not* baked into the returned bound: pass ``floor=`` if you want it.
     """
     dx = domain_length / ncells
 
@@ -866,20 +888,38 @@ def estimate_well_balanced_error_bound(
         convergence_rate = float(degree + 1)
         expected_eta_error = bed_curvature * dx ** (degree + 1) / (2 ** degree * math.factorial(degree + 1))
 
-    # In practice, errors are often much smaller due to the exact polynomial representation
-    # Cap the estimate at a reasonable value
-    expected_eta_error = min(expected_eta_error, 1e-10)
-    expected_u_error = expected_eta_error * math.sqrt(GRAVITY)
+    eta_error_estimate = expected_eta_error
+    if floor is None:
+        floor_applied = False
+        expected_eta_error = eta_error_estimate
+    else:
+        floor_applied = floor > eta_error_estimate
+        expected_eta_error = max(eta_error_estimate, float(floor))
+
+    if reference_depth <= 0.0:
+        raise ValueError(
+            f"reference_depth must be positive, got {reference_depth!r}")
+    expected_u_error = expected_eta_error * math.sqrt(GRAVITY / reference_depth)
 
     notes = (
-        f"For P{degree} with nodal LGL bed representation, the error is typically "
-        f"at machine precision (1e-14 to 1e-12) for polynomial beds of degree ≤ {degree}. "
-        f"For higher-degree beds, the error scales as O(dx^{degree+1})."
+        f"Representation estimate only (no round-off floor imposed): the bed is "
+        f"interpolated by a degree-{degree} LGL polynomial, so the η error scales "
+        f"as O(dx^{degree + 1}) with dx={dx:.3e} m and a bed curvature of "
+        f"{bed_curvature:.3e}; eta_error_estimate = {eta_error_estimate:.3e} m. "
+        f"For a bed that is a polynomial of degree ≤ {degree} the estimate is 0 "
+        f"and the observed residual is the round-off floor of the scheme "
+        f"(~1e-10 m for P1, ~1e-9 m/s in u), which is a property of the "
+        f"arithmetic and is not included unless floor= is passed. "
+        f"expected_u_error is the linearised relation u ~ η sqrt(g / h_ref) with "
+        f"h_ref = {reference_depth:g} m, i.e. a velocity *scale*, not a bound "
+        f"derived from the momentum equation."
     )
 
     return {
         "dx": dx,
+        "eta_error_estimate": eta_error_estimate,
         "expected_eta_error": expected_eta_error,
+        "floor_applied": floor_applied,
         "expected_u_error": expected_u_error,
         "convergence_rate": convergence_rate,
         "notes": notes,
@@ -909,14 +949,22 @@ def validate_well_balanced_setup(
     test_points : torch.Tensor, optional
         Points at which to check equilibrium. If None, uses 100 points in [0, 1].
     tolerance : float
-        Tolerance for checking equilibrium
+        Tolerance for checking equilibrium, in metres for η and in m/s for u.
+        Both criteria are supremum norms, so the same number means the same
+        thing here as in :func:`check_hydrostatic_equilibrium`.
 
     Returns
     -------
     dict
         Dictionary with keys:
         - 'is_valid': bool, True if conditions are consistent
-        - 'eta_variance': float, variance of η across test points
+        - 'eta_deviation_max': float, sup-norm |η - mean(η)| in metres; this is
+          the quantity compared against ``tolerance``
+        - 'eta_variance': float, variance of η across test points (kept for
+          backwards compatibility; it is *not* the acceptance criterion — a
+          variance has units of m², so testing it against a 1e-10 "tolerance"
+          accepted an η drift of 1e-5 m, 1e5x the stated tolerance)
+        - 'eta_mean': float, mean of η
         - 'u_max': float, max absolute velocity
         - 'message': str, human-readable summary
 
@@ -938,26 +986,32 @@ def validate_well_balanced_setup(
 
     eta_mean = float(eta_vals.mean())
     eta_variance = float(eta_vals.var())
+    # Sup-norm deviation: the acceptance criterion.  Comparing the *variance*
+    # against a length tolerance mixes units (m² vs m) and is quadratic in the
+    # amplitude, so a small drift is squared away (1e-5 m drift -> variance
+    # 5e-11 < 1e-10 "tolerance" -> accepted).
+    eta_deviation_max = float((eta_vals - eta_mean).abs().max())
     u_max = float(u_vals.abs().max())
 
-    is_valid = (eta_variance < tolerance) and (u_max < tolerance)
+    is_valid = (eta_deviation_max < tolerance) and (u_max < tolerance)
 
     if is_valid:
         message = (
             f"Initial conditions are valid for hydrostatic equilibrium: "
-            f"η = {eta_mean:.6f} ± {math.sqrt(eta_variance):.3e}, "
+            f"η = {eta_mean:.6f} ± {eta_deviation_max:.3e} (max deviation), "
             f"u max = {u_max:.3e}"
         )
     else:
         message = (
             f"Initial conditions are NOT valid for hydrostatic equilibrium: "
-            f"η variance = {eta_variance:.3e} (tol={tolerance:.1e}), "
+            f"max |η - mean| = {eta_deviation_max:.3e} m (tol={tolerance:.1e}), "
             f"u max = {u_max:.3e} (tol={tolerance:.1e})"
         )
 
     return {
         "is_valid": is_valid,
         "eta_mean": eta_mean,
+        "eta_deviation_max": eta_deviation_max,
         "eta_variance": eta_variance,
         "u_max": u_max,
         "message": message,
