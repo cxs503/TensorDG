@@ -94,7 +94,7 @@ This approach does **not** guarantee that η_h = h_h + z_b_h is constant, even i
 
 ### Test Cases
 
-The hydrostatic well-balanced property is verified through a comprehensive test suite in `tests/test_swe_wellbalanced_hydrostatic.py` (21 tests):
+The hydrostatic well-balanced property is verified through a comprehensive test suite in `tests/test_swe_wellbalanced_hydrostatic.py` (27 tests):
 
 1. **Flat bed**: η = const on z_b = 0
 2. **Sloped bed**: η = const on z_b = slope × x
@@ -108,6 +108,11 @@ The hydrostatic well-balanced property is verified through a comprehensive test 
    `estimate_well_balanced_error_bound` are exercised for both the accepting and
    rejecting paths (equilibrium detected / perturbation flagged, valid setup /
    perturbed η / nonzero velocity, F_p = ½ρgh², and the O(dx^(p+1)) bound scaling).
+   Six of the tests are regressions for the two helper-contract defects below:
+   the sup-norm acceptance criterion of `validate_well_balanced_setup` (accept /
+   reject on the same footing as `check_hydrostatic_equilibrium`) and the
+   un-clamped representation estimate of `estimate_well_balanced_error_bound`
+   (including the explicit `floor=` and `reference_depth=` paths).
 
 ### Results
 
@@ -202,6 +207,55 @@ On a curved bed (z_b = 0.3 × cos(2πx), η = 2.0 m, N = 50, P1):
 | well_balanced=False | 1.5e-2 m  | 2.1e-2 m/s |
 
 The well-balanced option reduces the error by **8 orders of magnitude**, demonstrating the critical importance of the consistent bed representation.
+
+### Helper contract fixes
+
+Two long-standing defects in the public helpers were found while re-verifying
+the feature on `main` and are fixed here.  Both are contract bugs, not changes
+to the numerical scheme: the well-balanced solver path is untouched, and the
+equilibrium results above are unchanged (27/27 tests, including the 21 that
+shipped with the feature, pass before and after).
+
+**1. `validate_well_balanced_setup` compared a variance against a length.**
+The acceptance test was `eta_variance < tolerance` with `tolerance = 1e-10`.
+A variance has units of m² and is quadratic in the drift amplitude, so the
+effective criterion was `std(η) < sqrt(1e-10) = 1e-5 m`, i.e. 1e5 times looser
+than the stated tolerance and inconsistent with `check_hydrostatic_equilibrium`
+(sup norm, 1e-8 m).  Demonstrated false positive: a lake-at-rest setup with a
+`1e-5 * sin(2πx)` free-surface drift — variance `5.0e-11` — was reported
+`is_valid=True`.
+
+| Case (η drift amplitude) | `is_valid` before | `is_valid` after | criterion after |
+|---|---|---|---|
+| 0 (exact lake at rest) | True | True | max abs dev ~4e-16 m < 1e-10 |
+| 1e-5 m, sin(2πx)       | **True (wrong)** | False | max abs dev 1.00e-5 m > 1e-10 |
+| 1e-8 m, sin(2πx)       | True (wrong)     | False | max abs dev 1.00e-8 m > 1e-10 |
+| u = 0.05 m/s, flat η   | False | False | u_max 5e-2 m/s > 1e-10 |
+
+The criterion is now the sup norm `max|η − <η>|`, returned as the new key
+`eta_deviation_max`; `eta_variance` is kept for backwards compatibility but is
+no longer the acceptance test.
+
+**2. `estimate_well_balanced_error_bound` returned a hard-coded 1e-10.**
+The theoretical representation estimate `bed_curvature * dx**(p+1) / c_p` was
+passed through `min(estimate, 1e-10)`, so for any O(1) bed curvature the
+function reported 1e-10 m regardless of the mesh — a number that looks like a
+round-off floor but was applied as if it were the *estimate*:
+
+| ncells (P1, curvature 1) | estimate from theory | returned before | returned after |
+|---|---|---|---|
+| 8    | 1.95e-3 m | 1.0e-10 m | 1.95e-3 m |
+| 2000 | 3.13e-8 m | 1.0e-10 m | 3.13e-8 m |
+
+The clamp is now an explicit, opt-in `floor=` argument (default `None`, i.e. no
+floor) and the un-clamped value is also returned as `eta_error_estimate`;
+`floor_applied` reports whether the floor actually bound.  The round-off floor
+that genuinely limits a solve on an exactly-representable bed (~1e-10 m for P1,
+~3e-10 m/s in u, see the tables above) is a property of the arithmetic, not of
+this estimate, so it is no longer silently baked in.  `expected_u_error` is
+documented for what it is — the linearised relation `u ~ η sqrt(g / h_ref)`,
+now with `reference_depth` (default 1 m, reproducing the previous numbers)
+instead of an implicit 1 m depth.
 
 ### Result figures
 
