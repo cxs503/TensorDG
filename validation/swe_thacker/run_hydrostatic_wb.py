@@ -31,13 +31,62 @@ from __future__ import annotations
 
 import json
 import math
+import platform
+import subprocess
+import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 import torch
 
 from tensordg.swe_1d import reconstruct_fields, solve_swe_1d
+
+
+def collect_provenance(repo_root: Path | None = None) -> dict:
+    """Collect reproducibility metadata for a validation run.
+
+    Records the exact code revision, interpreter/library versions, host
+    architecture and command line that produced the JSON artifact, so a
+    stale or hand-edited result file is detectable (compare the numbers with
+    a re-run, or diff the recorded revision against the tree).
+
+    Parameters
+    ----------
+    repo_root : pathlib.Path, optional
+        Repository root used for the ``git rev-parse`` call.  Defaults to the
+        parent of this script's directory.
+
+    Returns
+    -------
+    dict
+        Provenance record (JSON-serialisable).
+    """
+    root = Path(repo_root) if repo_root is not None else Path(__file__).resolve().parents[2]
+    def _git(*args: str) -> str:
+        try:
+            return subprocess.run(
+                ["git", *args], cwd=root, capture_output=True, text=True, check=True
+            ).stdout.strip()
+        except Exception:  # pragma: no cover - git absent / not a repo
+            return "unknown"
+
+    return {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "command": " ".join([Path(sys.executable).name, *sys.argv]),
+        "git_commit": _git("rev-parse", "HEAD"),
+        "git_commit_short": _git("rev-parse", "--short", "HEAD"),
+        "git_branch": _git("rev-parse", "--abbrev-ref", "HEAD"),
+        "git_dirty": bool(_git("status", "--porcelain")),
+        "python": sys.version.split()[0],
+        "torch": torch.__version__,
+        "numpy": np.__version__,
+        "platform": platform.platform(),
+        "machine": platform.machine(),
+        "cpu_count": __import__("os").cpu_count(),
+        "generator": "validation/swe_thacker/run_hydrostatic_wb.py",
+    }
 
 
 def thacker_bed(x: torch.Tensor, H0: float = 2.0, L: float = 1.0) -> torch.Tensor:
@@ -299,6 +348,7 @@ def main():
     output_file = output_dir / "hydrostatic_wb_results.json"
 
     all_results = {
+        "provenance": collect_provenance(),
         "single_run": single_results,
         "convergence_study": convergence_results,
         "summary": {
