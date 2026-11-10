@@ -45,6 +45,30 @@ from .swe_1d import (
     sound_speed as swe_sound_speed,
     GRAVITY as SWE_GRAVITY,
 )
+from .advection_diffusion import (
+    cosine_bell,
+    deformational_flow_velocity,
+    gaussian_hill,
+    rotated_field,
+    run_advection_diffusion_decay,
+    run_deformational_flow,
+    run_solid_body_rotation,
+    solid_body_rotation_velocity,
+    solve_advection_diffusion,
+)
+from .dispersive import (
+    DISPERSION_MODELS,
+    KdVSolver,
+    LinearDispersiveWave,
+    airy_omega,
+    airy_phase_speed,
+    dispersion_omega_sq,
+    kdv_soliton,
+    measure_dispersion,
+    model_dispersion_error,
+    run_soliton_benchmark,
+    validity_limit,
+)
 from .swe_2d import (
     solve_swe_2d,
     physical_flux_2d as swe_physical_flux_2d,
@@ -52,6 +76,14 @@ from .swe_2d import (
 )
 
 __all__ = [
+    "solve_advection_diffusion", "run_solid_body_rotation",
+    "run_deformational_flow", "run_advection_diffusion_decay",
+    "solid_body_rotation_velocity", "deformational_flow_velocity",
+    "cosine_bell", "gaussian_hill", "rotated_field",
+    "airy_omega", "airy_phase_speed", "dispersion_omega_sq",
+    "model_dispersion_error", "validity_limit", "measure_dispersion",
+    "LinearDispersiveWave", "DISPERSION_MODELS", "KdVSolver", "kdv_soliton",
+    "run_soliton_benchmark",
     "solve_advection", "l2_error",
     "observed_order", "pairwise_orders", "richardson_extrapolate",
     "gci_study", "convergence_table", "p_decay_diagnostics",
