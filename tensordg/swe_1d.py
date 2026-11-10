@@ -163,6 +163,97 @@ def _lgl_transform(degree: int, device: torch.device, dtype: torch.dtype):
     return torch.linalg.inv(vander_t), torch.as_tensor(nodes_np, device=device, dtype=dtype)
 
 
+def _hydrostatic_interface_flux(coeff: torch.Tensor, phi_left: torch.Tensor,
+                                phi_right: torch.Tensor,
+                                bed_modal: torch.Tensor,
+                                flux_kind: str = "hll",
+                                periodic: bool = False) -> tuple:
+    """Audusse et al. (2004) hydrostatic reconstruction at every interface.
+
+    For each face ``i+1/2`` the two one-sided traces are reconstructed onto the
+    *higher* of the two face bed elevations
+
+        z_b* = max(z_b,iR, z_b,i+1,L),   h*_m = max(0, h_m + z_b,m - z_b*),
+
+    the numerical flux is evaluated with the reconstructed states, and the
+    hydrostatic pressure correction ``g/2 (h_m^2 - h*_m^2)`` is added back to
+    the momentum component *of that side*.  The result is the pair of one-sided
+    fluxes ``(F_i,R, F_i+1,L)``; the two differ only through the correction
+    term, and at rest each side sees the pressure flux ``g/2 h_m^2`` of its own
+    trace.  That is what makes a lake at rest a discrete fixed point across a
+    bed *jump*: the flux divergence then cancels the exact bed-slope source of
+    each cell individually, exactly as on a continuous bed.
+
+    For a continuous bed ``z_b,iR = z_b,i+1,L``, hence ``h* = h`` and the
+    correction vanishes identically: the scheme reduces algebraically to the
+    shared-face HLL flux of the default path.  On a wet/dry interface the
+    reconstruction removes the spurious mass flux that a plain HLL flux would
+    produce between a wet trace and a dry neighbour whose bed is above the
+    still-water level.
+
+    Domain ends use the zero-order extrapolation (transmissive) closure of the
+    default path; the analytic-boundary-flux override is applied by the caller.
+
+    Returns ``(flux_right_of_cell, flux_left_of_cell)``, each ``(ncells, 2)``.
+    """
+    right_trace = torch.einsum("cmv,m->cv", coeff, phi_right)
+    left_trace = torch.einsum("cmv,m->cv", coeff, phi_left)
+    bed_right = torch.einsum("cm,m->c", bed_modal, phi_right)
+    bed_left = torch.einsum("cm,m->c", bed_modal, phi_left)
+
+    # Right face of cell i paired with the left face of cell i+1 (or ghost).
+    h_a, hu_a, b_a = right_trace[:, 0], right_trace[:, 1], bed_right
+    h_b = torch.roll(left_trace[:, 0], shifts=-1, dims=0)
+    hu_b = torch.roll(left_trace[:, 1], shifts=-1, dims=0)
+    b_b = torch.roll(bed_left, shifts=-1, dims=0)
+    if not periodic:
+        h_b[-1], hu_b[-1], b_b[-1] = h_a[-1], hu_a[-1], b_a[-1]
+
+    b_star = torch.maximum(b_a, b_b)
+    h_a_pos = h_a.clamp_min(0.0)
+    h_b_pos = h_b.clamp_min(0.0)
+    h_a_star = (h_a_pos + b_a - b_star).clamp_min(0.0)
+    h_b_star = (h_b_pos + b_b - b_star).clamp_min(0.0)
+    u_a = torch.where(h_a_pos > DRY_DEPTH, hu_a / h_a_pos.clamp_min(DRY_DEPTH),
+                      torch.zeros_like(h_a))
+    u_b = torch.where(h_b_pos > DRY_DEPTH, hu_b / h_b_pos.clamp_min(DRY_DEPTH),
+                      torch.zeros_like(h_b))
+
+    state_a = torch.stack((h_a_star, h_a_star * u_a), dim=-1)
+    state_b = torch.stack((h_b_star, h_b_star * u_b), dim=-1)
+    flux = hll_flux(state_a, state_b, flux_kind)
+
+    corr_a = 0.5 * GRAVITY * (h_a_pos ** 2 - h_a_star ** 2)
+    corr_b = 0.5 * GRAVITY * (h_b_pos ** 2 - h_b_star ** 2)
+    flux_right = torch.stack((flux[:, 0], flux[:, 1] + corr_a), dim=-1)
+    flux_left_next = torch.stack((flux[:, 0], flux[:, 1] + corr_b), dim=-1)
+
+    flux_left = torch.roll(flux_left_next, shifts=1, dims=0)
+    if not periodic:
+        flux_left[0] = physical_flux(left_trace[:1])[0]
+        flux_right[-1] = physical_flux(right_trace[-1:])[0]
+    return flux_right, flux_left
+
+
+def _nodal_values(fn, node_x: torch.Tensor, name: str) -> torch.Tensor:
+    """Sample ``fn`` on the cell-local nodes, or validate pre-sampled data.
+
+    ``fn`` is normally a callable of ``x``.  A tensor of shape
+    ``(ncells, n_nodes)`` is accepted as already-sampled *cell-local* nodal
+    data; that is the only way to describe a bed (or an initial depth) that is
+    discontinuous at a shared cell face, because a pointwise callable cannot
+    return two different values at the same face coordinate.
+    """
+    if callable(fn):
+        return fn(node_x)
+    value = torch.as_tensor(fn, device=node_x.device, dtype=node_x.dtype)
+    if value.shape != node_x.shape:
+        raise ValueError(
+            f"{name} must be a callable of x or a tensor of shape "
+            f"{tuple(node_x.shape)} (cells x nodes), got {tuple(value.shape)}")
+    return value
+
+
 def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
          phi: torch.Tensor, dphi: torch.Tensor,
          phi_left: torch.Tensor, phi_right: torch.Tensor,
@@ -170,7 +261,8 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
          flux_kind: str = "hll", periodic: bool = False,
          time: float = 0.0,
          bc_left_flux=None, bc_right_flux=None,
-         zb_slope_quad: Optional[torch.Tensor] = None) -> torch.Tensor:
+         zb_slope_quad: Optional[torch.Tensor] = None,
+         bed_modal: Optional[torch.Tensor] = None) -> torch.Tensor:
     """Semi-discrete DG residual for SWE with bed slope source term.
 
     The source term −g h ∂z_b/∂x is treated by modal projection.
@@ -190,14 +282,21 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
     right_trace = torch.einsum("cmv,m->cv", coeff, phi_right)
     left_trace = torch.einsum("cmv,m->cv", coeff, phi_left)
 
-    right_neighbour = torch.roll(left_trace, shifts=-1, dims=0)
-    if not periodic:
-        right_neighbour[-1] = right_trace[-1]
+    if bed_modal is None:
+        right_neighbour = torch.roll(left_trace, shifts=-1, dims=0)
+        if not periodic:
+            right_neighbour[-1] = right_trace[-1]
 
-    interface_flux = hll_flux(right_trace, right_neighbour, flux_kind)
-    left_interface_flux = torch.roll(interface_flux, shifts=1, dims=0)
-    if not periodic:
-        left_interface_flux[0] = hll_flux(left_trace[:1], left_trace[:1], flux_kind)
+        interface_flux = hll_flux(right_trace, right_neighbour, flux_kind)
+        left_interface_flux = torch.roll(interface_flux, shifts=1, dims=0)
+        if not periodic:
+            left_interface_flux[0] = hll_flux(left_trace[:1], left_trace[:1],
+                                              flux_kind)
+    else:
+        # Well-balanced branch: Audusse hydrostatic reconstruction.  The flux
+        # is one-sided per cell, so the two traces no longer share one value.
+        interface_flux, left_interface_flux = _hydrostatic_interface_flux(
+            coeff, phi_left, phi_right, bed_modal, flux_kind, periodic)
 
     # Optional exact boundary data (verification against analytic solutions).
     if bc_left_flux is not None:
@@ -208,6 +307,9 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
             bc_right_flux(time), dtype=coeff.dtype, device=coeff.device)
 
     dbdx = zb_jump / dx  # [ncells]
+    if bed_modal is not None and zb_slope_quad is None:
+        # dz_b/dx of the per-cell bed *polynomial* at the same Gauss points as h
+        zb_slope_quad = (2.0 / dx) * torch.einsum("cm,qm->cq", bed_modal, dphi)
 
     # Two source-term discretisations:
     #   * legacy (zb_slope_quad is None): cell-constant gradient
@@ -281,14 +383,20 @@ def solve_swe_1d(
     bc_right_flux: Optional[Callable[[float], torch.Tensor]] = None,
     zb_slope: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
     well_balanced: bool = False,
+    hydrostatic: bool = True,
 ) -> tuple:
     """Solve the 1-D shallow water equations with DG.
 
     Parameters
     ----------
-    initial_h : callable  h(x) at t=0
-    initial_u : callable  u(x) at t=0
-    zb : callable  bed elevation z_b(x)
+    initial_h : callable or tensor  h(x) at t=0
+        A tensor of shape ``(ncells, degree + 1)`` is interpreted as the
+        cell-local nodal values at the Gauss-Lobatto-Legendre nodes and is only
+        accepted with ``well_balanced=True`` (see ``zb``).
+    initial_u : callable or tensor  u(x) at t=0; same tensor convention
+    zb : callable or tensor  bed elevation z_b(x); same tensor convention
+        Cell-local nodal data is how a bed that jumps at a cell face is
+        expressed: the left and right cells store their own face value.
     ncells : number of cells
     degree : polynomial degree (1 or 2)
     final_time : simulation end time
@@ -319,9 +427,21 @@ def solve_swe_1d(
         makes a still lake a discrete fixed point at machine precision for
         both P1 and P2 (the default L2-projected path leaves O(dx) drift at
         P1 and a non-decaying drift at P2 -- see
-        ``docs/swe_well_balanced_exact.md``).  Wet/dry fronts still need a
-        hydrostatic (Audusse) reconstruction, which is *not* implemented
-        here; ``well_balanced=True`` does not change the dry-state handling.
+        ``docs/swe_well_balanced_exact.md``).
+
+        Interfaces use the Audusse et al. (2004) hydrostatic reconstruction
+        with ``z_b* = max(z_b,L, z_b,R)`` and ``h* = max(0, h + z_b - z_b*)``,
+        plus the ``g/2 (h^2 - h*^2)`` momentum correction of each side, so a
+        still lake is also a discrete fixed point when the bed is
+        *discontinuous* between two cells and when a wet cell faces a dry one.
+        On a continuous bed the reconstruction is the identity and the scheme
+        is unchanged.
+    hydrostatic : bool, default True
+        Use the Audusse reconstruction of the well-balanced path.  ``False``
+        reproduces the shared-face HLL flux of the pre-reconstruction scheme on
+        the same per-cell bed, i.e. it is an audit/validation switch that shows
+        the spurious momentum injected by a bed jump; production runs keep the
+        default.
 
     Returns
     -------
@@ -347,11 +467,16 @@ def solve_swe_1d(
     dx = (upper - lower) / ncells
     x = lower + (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * dx
 
-    # Bed elevation at cell faces
+    # Bed elevation at cell faces (a cell-local tensor bed is only meaningful
+    # in the well-balanced branch, where the face values come from the bed
+    # polynomials below).
     zb_left_faces = lower + torch.arange(ncells, device=dev, dtype=dtype) * dx
     zb_right_faces = zb_left_faces + dx
-    zb_l = zb(zb_left_faces)
-    zb_r = zb(zb_right_faces)
+    if callable(zb):
+        zb_l = zb(zb_left_faces)
+        zb_r = zb(zb_right_faces)
+    else:
+        zb_l = zb_r = torch.zeros(ncells, device=dev, dtype=dtype)
     zb_jump = zb_r - zb_l  # [ncells]
 
     # Initial condition at quadrature points
@@ -361,6 +486,7 @@ def solve_swe_1d(
     node_x = x[:, None] + 0.5 * dx * nodes[None, :]
     zb_slope_quad = None if zb_slope is None else zb_slope(node_x)
     coeff = torch.zeros((ncells, degree + 1, 2), device=dev, dtype=dtype)
+    bed_modal = None
 
     if well_balanced:
         # --- consistent (nodal) representation for exact lake-at-rest -------
@@ -372,7 +498,9 @@ def solve_swe_1d(
         # vanish instead of leaving the O(dx) / O(1) drift of the L2 path.
         vinv, lgl_nodes = _lgl_transform(degree, dev, dtype)
         node_x_lgl = x[:, None] + 0.5 * dx * lgl_nodes[None, :]
-        cz = zb(node_x_lgl) @ vinv.T                     # bed modes
+        # Cell-local nodal data (tensor argument) lets a bed jump exactly at a
+        # shared face: each cell then carries its own face value.
+        cz = _nodal_values(zb, node_x_lgl, "zb") @ vinv.T  # bed modes
         # Face values of the polynomial bed (equal to zb at the faces, because
         # the interpolant passes through the LGL nodes -1 and +1).
         zb_l = cz @ phi_left
@@ -380,11 +508,19 @@ def solve_swe_1d(
         # Exact derivative of the *polynomial* bed at the Gauss points; using
         # the analytic dz_b/dx here instead would leave an O(dx^(p+1)) residual.
         zb_slope_quad = torch.einsum("cm,qm->cq", cz, dphi) * (2.0 / dx)
-        h_nodes = initial_h(node_x_lgl)
-        u_nodes = initial_u(node_x_lgl)
+        h_nodes = _nodal_values(initial_h, node_x_lgl, "initial_h")
+        u_nodes = _nodal_values(initial_u, node_x_lgl, "initial_u")
         coeff[:, :, 0] = h_nodes @ vinv.T
         coeff[:, :, 1] = (h_nodes * u_nodes) @ vinv.T
+        # The face values above may now differ between neighbours; keep the
+        # jump used by the legacy source branch consistent with them.
+        zb_jump = zb_r - zb_l
+        # Activate the Audusse hydrostatic reconstruction in _rhs.
+        bed_modal = cz if hydrostatic else None
     else:
+        if not (callable(initial_h) and callable(initial_u) and callable(zb)):
+            raise ValueError(
+                "tensor (cell-local nodal) initial data requires well_balanced=True")
         h0 = initial_h(node_x)
         u0 = initial_u(node_x)
         hu0 = h0 * u0
@@ -413,7 +549,7 @@ def solve_swe_1d(
         if rk_order == 3:
             k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time,
-                      bc_left_flux, bc_right_flux, zb_slope_quad)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
@@ -421,7 +557,7 @@ def solve_swe_1d(
 
             k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time + dt,
-                      bc_left_flux, bc_right_flux, zb_slope_quad)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
             u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
             if limit_each_stage:
                 u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
@@ -429,19 +565,22 @@ def solve_swe_1d(
 
             k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time + 0.5 * dt,
-                      bc_left_flux, bc_right_flux, zb_slope_quad)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
             coeff = (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3)
         else:
             k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time,
-                      bc_left_flux, bc_right_flux, zb_slope_quad)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
             u1 = _positivity_filter(u1, check_points, h_min)
 
+            # Stage 2 must see the same time-dependent data as stage 1: the
+            # analytic boundary flux and the time argument.
             k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right,
-                      zb_jump, flux_kind, periodic, zb_slope_quad=zb_slope_quad)
+                      zb_jump, flux_kind, periodic, time + dt,
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
             coeff = 0.5 * coeff + 0.5 * (u1 + dt * k2)
 
         if limiter_stage == "final" and limiter is not None:
@@ -464,6 +603,7 @@ def solve_swe_1d(
         "exact_boundary_flux": bc_left_flux is not None or bc_right_flux is not None,
         "exact_bed_slope": zb_slope is not None,
         "well_balanced": well_balanced,
+        "hydrostatic_reconstruction": bed_modal is not None,
         "bed_representation": ("nodal_lgl_polynomial" if well_balanced else "piecewise_linear"),
         "zb_modes": (cz if well_balanced else None),
         "time_reached": time,

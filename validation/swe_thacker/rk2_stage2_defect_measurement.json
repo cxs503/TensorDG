@@ -1,0 +1,45 @@
+{
+ "case": {
+  "description": "Thacker (1981) planar basin, analytic boundary fluxes (mass exchanged through the rim, so the boundary data must be time dependent)",
+  "ncells": 40,
+  "degree": 1,
+  "final_time": 0.5,
+  "cfl": 0.3
+ },
+ "fixed_tree": {
+  "rk2": {
+   "rk_order": 2,
+   "volume_rel_error": 0.00024429342808721067,
+   "bc_call_count": 1060,
+   "bc_time_max": 0.5,
+   "bc_time_max_expected": 0.5,
+   "steps": 530
+  },
+  "rk3": {
+   "rk_order": 3,
+   "volume_rel_error": 0.00024414428208286543,
+   "bc_call_count": 1590,
+   "bc_time_max": 0.5,
+   "bc_time_max_expected": 0.5,
+   "steps": 530
+  }
+ },
+ "baseline_a644b46": {
+  "rk2": {
+   "rk_order": 2,
+   "volume_rel_error": 0.00025990833265684087,
+   "bc_call_count": 530,
+   "bc_time_max": 0.49932145937268996,
+   "bc_time_max_expected": 0.5,
+   "steps": 530
+  },
+  "rk3": {
+   "rk_order": 3,
+   "volume_rel_error": 0.0002441442820824751,
+   "bc_call_count": 1590,
+   "bc_time_max": 0.5,
+   "bc_time_max_expected": 0.5,
+   "steps": 530
+  }
+ }
+}
