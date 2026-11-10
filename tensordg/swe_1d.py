@@ -14,7 +14,9 @@ Features
 * Well-balanced treatment: source term projected consistently with flux.
 * Minmod/TVB limiter for shock capturing.
 * SSP-RK2 / SSP-RK3 time integration.
-* Positivity-preserving filter (h ≥ 0).
+* Positivity-preserving filter (h ≥ 0, Zhang-Shu scaling of the higher modes
+  towards the cell average, so admissible cells -- including a dry-bank
+  shoreline -- pass through unchanged).
 
 Analytical benchmarks
 ---------------------
@@ -348,17 +350,73 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
 
 
 def _positivity_filter(coeff: torch.Tensor, check_points: torch.Tensor,
-                       h_min: float = 1e-12) -> torch.Tensor:
-    """Ensure h ≥ h_min at all quadrature and interface points."""
+                       h_min: float = 1e-12,
+                       well_balanced: bool = False) -> torch.Tensor:
+    """Keep the water depth non-negative at every quadrature/interface point.
+
+    Two actions are available and they are *not* interchangeable:
+
+    ``well_balanced=True`` -- scaling limiter (Zhang & Shu 2010)
+        The higher modes are multiplied by
+
+            theta = 1                         if h(x_q) >= 0 at every point,
+            theta = min_q h_bar/(h_bar-h_q)    otherwise (clipped to [0, 1]),
+
+        with ``h_bar = coeff[:, 0, 0]`` preserved.  The filter is conservative
+        (*the average depth is untouched*) and **idempotent where it is not
+        needed**, which is what makes a still lake with a dry bank a discrete
+        fixed point: its shoreline cell carries ``h = 0`` *exactly* at the dry
+        node, and the old criterion ``h(x_q) > h_min`` used to rejected that
+        wholly admissible trace and replace the cell by its cell average,
+        zeroing the linear mode of ``h`` and with it ``eta = h + z_b = const``
+        (measured before the fix: eta error 3.0e-2 m and spurious |u| up to
+        0.54 m/s at P1, 0.50 m / 36 m/s at P2; see
+        ``validation/swe_thacker/shoreline_rest_state_results.json``).
+
+    ``well_balanced=False`` -- legacy replace-by-cell-average
+        The historical action, kept bit-for-bit on the default path: a cell with
+        any trace ``h(x_q) <= h_min`` is replaced by its average state.  It is
+        *not* a positivity limiter in the Zhang-Shu sense -- it flattens the
+        cell even when the trace is admissible -- and that flattening acts as
+        front diffusion which the dry-bed dam-break verification relies on.
+        Swapping it for the scaling limiter on this path sharpens the Ritter
+        wetting front (mass error 3e-7 -> exact, spurious |u| 47 -> 5.9 m/s,
+        relative L1 depth error 0.240% -> 0.224%) but moves the front measured
+        with a ``h > 1e-6`` threshold from x = 3.00 to x = 2.85 against the
+        analytic 3.13, so the existing dry-front gates have to be re-derived
+        first.  That promotion is deliberately *not* part of this change.
+
+    A cell can only be repaired when its cell-average depth is positive; in
+    either mode a cell with ``h_bar <= h_min`` and any cell with non-finite data
+    fall back to the average-only state, and ``solve_swe_1d`` raises if that
+    average stays negative.
+    """
     values = torch.einsum("cmv,qm->cqv", coeff, check_points)
     h_vals = values[..., 0]
-    valid = (h_vals > h_min) & torch.isfinite(values).all(dim=-1)
-    valid_cell = valid.all(dim=1)
+    finite_cell = torch.isfinite(values).all(dim=2).all(dim=1)
 
     average_only = torch.zeros_like(coeff)
     average_only[:, 0] = coeff[:, 0]
 
-    return torch.where(valid_cell[:, None, None], coeff, average_only)
+    h_avg = coeff[:, 0, 0]
+    feasible = finite_cell & (h_avg > h_min)
+
+    if not well_balanced:
+        # Legacy action: only cells whose worst trace is above h_min survive.
+        valid_cell = ((h_vals > h_min) & torch.isfinite(values).all(dim=-1)).all(dim=1)
+        return torch.where(valid_cell[:, None, None], coeff, average_only)
+
+    # Scaling limiter: theta = 1 whenever no trace point is negative, so a
+    # discretely resting state (h = 0 exactly at a dry node) is left alone.
+    deficit = torch.clamp(-h_vals, min=0.0)                 # (ncells, nq)
+    ratio = h_avg[:, None] / (h_avg[:, None] + deficit).clamp_min(1e-30)
+    theta = torch.where(deficit > 0.0, ratio, torch.ones_like(deficit))
+    theta = theta.min(dim=1).values.clamp(0.0, 1.0)
+    theta = torch.where(feasible, theta, torch.zeros_like(theta))
+
+    scaled = coeff * theta[:, None, None]
+    scaled[:, 0] = coeff[:, 0]           # keep the cell average (conservation)
+    return torch.where(feasible[:, None, None], scaled, average_only)
 
 
 def solve_swe_1d(
@@ -407,7 +465,11 @@ def solve_swe_1d(
     tvb_constant : TVB limiter constant M
     limiter_stage : "every" or "final"
     rk_order : SSP-RK order (2 or 3)
-    h_min : minimum water depth for positivity
+    h_min : tolerance of the positivity filter's feasibility test on the cell
+        average.  The pointwise floor enforced by the filter is 0 (a dry
+        trace is admissible, which is what a shoreline needs); a cell whose
+        cell-average depth is not above ``h_min`` cannot be repaired by
+        scaling and is replaced by its average state.
     periodic : periodic boundary conditions
     bc_left_flux : callable t -> (hu, hu^2 + g h^2 / 2) at x = x_left
         Exact boundary flux (verification mode). Overrides the default
@@ -531,7 +593,12 @@ def solve_swe_1d(
             coeff[:, k, 1] = ((2 * k + 1) / 2.0) * torch.einsum(
                 "cq,q,q->c", hu0, weights, phi[:, k])
 
-    coeff = _positivity_filter(coeff, check_points, h_min)
+    # The scaling (well-balanced) action is active exactly where the Audusse
+    # hydrostatic reconstruction is: that is the path whose contract is a
+    # discrete rest state across wet/dry traces.  The default path keeps the
+    # legacy action its dry-front verification was tuned against.
+    hydrostatic_active = bed_modal is not None
+    coeff = _positivity_filter(coeff, check_points, h_min, hydrostatic_active)
 
     limit_each_stage = limiter_stage == "every"
     time, steps, dt = 0.0, 0, 0.0
@@ -553,7 +620,7 @@ def solve_swe_1d(
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
-            u1 = _positivity_filter(u1, check_points, h_min)
+            u1 = _positivity_filter(u1, check_points, h_min, hydrostatic_active)
 
             k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time + dt,
@@ -561,7 +628,7 @@ def solve_swe_1d(
             u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
             if limit_each_stage:
                 u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
-            u2 = _positivity_filter(u2, check_points, h_min)
+            u2 = _positivity_filter(u2, check_points, h_min, hydrostatic_active)
 
             k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time + 0.5 * dt,
@@ -574,7 +641,7 @@ def solve_swe_1d(
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
-            u1 = _positivity_filter(u1, check_points, h_min)
+            u1 = _positivity_filter(u1, check_points, h_min, hydrostatic_active)
 
             # Stage 2 must see the same time-dependent data as stage 1: the
             # analytic boundary flux and the time argument.
@@ -585,7 +652,7 @@ def solve_swe_1d(
 
         if limiter_stage == "final" and limiter is not None:
             coeff = apply_limiter(coeff, dx, kind=limiter, tvb_constant=tvb_constant)
-        coeff = _positivity_filter(coeff, check_points, h_min)
+        coeff = _positivity_filter(coeff, check_points, h_min, hydrostatic_active)
 
         h_avg = coeff[:, 0, 0]
         if not torch.isfinite(coeff).all() or (h_avg < -h_min).any():

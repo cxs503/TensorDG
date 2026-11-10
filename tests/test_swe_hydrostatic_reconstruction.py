@@ -34,8 +34,11 @@ Measured on this tree (t = 1 s, ``N = 64``): step lake at rest with the
 reconstruction ``max|hu| = 0`` (P1, exactly) / ``1.0e-10`` (P2) versus
 ``5.9`` / ``2.6`` without it; the wet/dry step stays at ``4.2e-11``; Thacker
 (1981) ``t = 0.5 s`` accuracy is unchanged at 0.060 % (P1) / 8e-7 % (P2) on
-``eta``.  The one declared limitation (a shoreline that passes exactly through
-a cell face) is pinned as an ``xfail`` with its measured numbers.
+``eta``.  The former declared limitation (a still lake with a dry bank, whose
+shoreline may pass exactly through a cell face) is now a fixed point: the
+positivity filter scales the cell shape instead of flattening it, see
+``test_lake_at_rest_with_a_dry_bank`` and
+``validation/swe_thacker/shoreline_rest_state_results.json``.
 """
 from __future__ import annotations
 
@@ -45,8 +48,8 @@ import pytest
 import torch
 
 from tensordg import swe_exact
-from tensordg.swe_1d import (_lgl_transform, _operators, _rhs,
-                             reconstruct_fields, solve_swe_1d)
+from tensordg.swe_1d import (_lgl_transform, _operators, _positivity_filter,
+                             _rhs, reconstruct_fields, solve_swe_1d)
 
 ETA0 = 2.0
 STEP_BED = 0.5
@@ -230,25 +233,154 @@ def test_lake_at_rest_against_a_dry_raised_bed(degree, ncells):
     assert float(u.abs().max()) < 1e-9
 
 
-@pytest.mark.xfail(reason="a shoreline that passes exactly through a cell face "
-                          "is flattened by the h > h_min positivity filter, so a "
-                          "still lake with a dry bank is not a fixed point at P1 "
-                          "or P2.  Relaxing that filter to h >= 0 fixes the rest "
-                          "state (P1: 2e-12 m) but regresses the Ritter dry-front "
-                          "tests, so it is a declared limitation, not a fix.",
-                   strict=False)
-def test_lake_at_rest_with_a_dry_bank_is_a_declared_limitation():
+@pytest.mark.parametrize("degree", [1, 2])
+def test_lake_at_rest_with_a_dry_bank(degree):
+    """A still lake whose surface cuts the bed is a discrete fixed point.
+
+    This was the one *declared limitation* of the file: the shoreline cell
+    carries ``h = 0`` exactly at its dry node, the positivity filter tested
+    ``h > h_min`` (1e-12), rejected the cell and replaced it by its cell
+    average, which zeroes the linear mode and therefore destroys
+    ``eta = h + z_b = const`` in exactly that cell.  Measured then (N = 64,
+    t = 1 s): ``max|eta - eta0|`` over wet cells 3.0e-2 m (P1) / 5.0e-1 m (P2)
+    and spurious ``max|u|`` 0.54 m/s (P1) / 36 m/s (P2); the run was not a
+    rest state at all.
+
+    After the fix (Zhang-Shu scaling of the higher modes towards the cell
+    average, see ``swe_1d._positivity_filter``) the depth average is kept, an
+    admissible cell is left untouched, and the drift is round-off:
+    ``max|eta - eta0| <= 8.6e-12 m`` and ``max|u| <= 1.9e-11 m/s`` at P1/P2 on
+    N = 32...128 (``validation/swe_thacker/shoreline_rest_state_results.json``).
+    """
     def init_h(xx):
         return (1.0 - _hump_bed(xx)).clamp_min(0.0)
 
     x, coeff, zb_faces, meta = solve_swe_1d(
         init_h, lambda xx: torch.zeros_like(xx), _hump_bed,
-        ncells=64, degree=1, final_time=1.0, domain=(-2.0, 2.0),
+        ncells=32, degree=degree, final_time=1.0, domain=(-2.0, 2.0),
         cfl=0.3, rk_order=3, well_balanced=True)
+    assert meta["reached_final_time"]
     h, u, eta = reconstruct_fields(coeff, zb_faces,
                                    zb_center=meta["zb_modes"][:, 0])
     dry = h < 1e-6
+    assert 0 < int(dry.sum()) < h.numel()        # the bank really is dry
     assert float((eta[~dry] - 1.0).abs().max()) < 1e-9
+    assert float(u.abs().max()) < 1e-9           # a lake at rest stays at rest
+    assert float(h.min()) >= 0.0
+
+
+def test_lake_at_rest_with_a_shoreline_on_a_cell_face():
+    """Same rest state, but the shoreline lands exactly on a cell face.
+
+    ``z_b = |x| / 1.5`` on ``[-2, 2]`` with ``eta0 = 1 m`` puts the shoreline
+    at ``x = +-1.5``, which is face 8 and face 56 for N = 64 (``dx = 1/16``).
+    The wet depth then vanishes *at the face*, so both the right trace of the
+    last wet cell and the left trace of the first dry cell are exactly zero:
+    the case the old filter could not represent.  Measured drift after the
+    fix: ``max|eta - eta0| <= 1e-11 m`` (P1, N = 64, t = 1 s).
+    """
+    def bed(xx):
+        return xx.abs() / 1.5
+
+    def init_h(xx):
+        return (1.0 - bed(xx)).clamp_min(0.0)
+
+    x, coeff, zb_faces, meta = solve_swe_1d(
+        init_h, lambda xx: torch.zeros_like(xx), bed,
+        ncells=64, degree=1, final_time=1.0, domain=(-2.0, 2.0),
+        cfl=0.3, rk_order=3, well_balanced=True)
+    assert meta["reached_final_time"]
+    h, u, eta = reconstruct_fields(coeff, zb_faces,
+                                   zb_center=meta["zb_modes"][:, 0])
+    dry = h < 1e-6
+    assert int(dry.sum()) == 16                  # |x| > 1.5 -> 8 cells per side
+    assert float((eta[~dry] - 1.0).abs().max()) < 1e-9
+    assert float(u.abs().max()) < 1e-9
+
+
+# --------------------------------------------------------------------------- #
+# 2b. the positivity filter itself
+# --------------------------------------------------------------------------- #
+def _filter_inputs(degree=1, ncells=3):
+    _, _, phi, _, _, _ = _operators(degree, torch.device("cpu"), torch.float64)
+    coeff = torch.zeros(ncells, degree + 1, 2, dtype=torch.float64)
+    return coeff, phi
+
+
+def test_positivity_filter_leaves_admissible_cells_untouched():
+    """Idempotence is what preserves a rest state: theta = 1 where h >= 0.
+
+    On the well-balanced path the filter scales the cell shape, so any trace
+    point at or below ``h_min`` -- including the exact zero of a dry node --
+    no longer triggers the average-only fallback.
+    """
+    coeff, phi = _filter_inputs(degree=1)
+    coeff[0, :, 0] = torch.tensor([0.5, 0.25], dtype=torch.float64)      # h = 0.5 + 0.25 xi >= 0.25
+    coeff[1, :, 0] = torch.tensor([0.25, 0.25], dtype=torch.float64)     # h = 0.25 - 0.25 xi, dry node
+    coeff[:, :, 1] = 0.0
+    out = _positivity_filter(coeff, phi, well_balanced=True)
+    assert torch.allclose(out, coeff)              # both are admissible as is
+
+
+def test_positivity_filter_scales_the_shape_and_keeps_the_average():
+    """An inadmissible cell is *scaled*, not flattened: conservation + h >= 0."""
+    coeff, phi = _filter_inputs(degree=1)
+    coeff[0, :, 0] = torch.tensor([0.1, 0.3], dtype=torch.float64)       # h = 0.1 + 0.3 xi -> -0.2
+    coeff[0, :, 1] = torch.tensor([0.0, 0.2], dtype=torch.float64)
+    out = _positivity_filter(coeff, phi, well_balanced=True)
+    h_q = torch.einsum("cm,qm->cq", out[:, :, 0], phi)
+    assert float(h_q.min()) >= -1e-15               # positivity restored
+    assert float(out[0, 0, 0]) == pytest.approx(0.1)   # mass conserved exactly
+    theta = float(out[0, 1, 0] / coeff[0, 1, 0])
+    assert 0.0 < theta < 1.0
+    # theta is the *minimal* scaling: the worst quadrature point ends up dry,
+    # and it is a Gauss point (not the cell end), hence theta > 0.1 / 0.4.
+    assert float(h_q.min()) == pytest.approx(0.0, abs=1e-15)
+    # h_avg + theta (h_q - h_avg) = 0 at the worst Gauss point xi_min:
+    assert theta == pytest.approx(0.1 / (0.3 * float(phi[:, 1].abs().max())),
+                                  rel=1e-12)
+    assert float(out[0, 1, 1]) == pytest.approx(0.2 * theta)  # same scaling on hu
+
+
+def test_default_path_keeps_the_legacy_filter_action():
+    """The default (non-hydrostatic) path is unchanged by this fix.
+
+    Its dry-bed dam-break verification was tuned against the
+    replace-by-cell-average action (the flattening acts as front diffusion), so
+    the scaling limiter is enabled only where the Audusse reconstruction runs.
+    On an inadmissible cell the two actions are therefore distinguishable: the
+    default path still drops the shape entirely, the fixed path keeps the
+    largest shape positivity allows.
+    """
+    coeff, phi = _filter_inputs(degree=1)
+    coeff[0, :, 0] = torch.tensor([0.1, 0.3], dtype=torch.float64)   # h < 0 at xi < -1/3
+    coeff[0, :, 1] = torch.tensor([0.0, 0.2], dtype=torch.float64)
+    legacy = _positivity_filter(coeff, phi)                       # default path
+    scaling = _positivity_filter(coeff, phi, well_balanced=True)  # fixed path
+    # both keep the cell average (mass) ...
+    assert float(legacy[0, 0, 0]) == pytest.approx(0.1)
+    assert float(scaling[0, 0, 0]) == pytest.approx(0.1)
+    # ... but only the default path flattens the cell to that average
+    assert float(legacy[0, 1, 0]) == 0.0
+    assert float(legacy[0, 1, 1]) == 0.0
+    theta = float(scaling[0, 1, 0] / coeff[0, 1, 0])
+    assert 0.0 < theta < 1.0
+    # and an admissible cell is a no-op only on the fixed path
+    admissible, phi_a = _filter_inputs(degree=1)
+    admissible[0, :, 0] = torch.tensor([0.25, 0.25], dtype=torch.float64)
+    assert torch.allclose(_positivity_filter(admissible, phi_a, well_balanced=True),
+                          admissible)
+
+
+def test_positivity_filter_pins_a_cell_with_a_nonpositive_average():
+    """A cell whose average depth is <= 0 cannot be repaired by scaling."""
+    coeff, phi = _filter_inputs(degree=1)
+    coeff[0, :, 0] = torch.tensor([-0.1, 0.2], dtype=torch.float64)
+    coeff[0, :, 1] = torch.tensor([0.3, -0.4], dtype=torch.float64)
+    out = _positivity_filter(coeff, phi, well_balanced=True)
+    # average kept, higher modes dropped (the state cannot be made admissible)
+    assert torch.allclose(out[0, 0], coeff[0, 0])
+    assert torch.allclose(out[0, 1], torch.zeros(2, dtype=torch.float64))
 
 
 # --------------------------------------------------------------------------- #
