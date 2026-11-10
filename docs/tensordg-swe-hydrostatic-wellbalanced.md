@@ -196,7 +196,7 @@ Use `well_balanced=True` when:
 
 4. **Free-surface reconstruction on curved beds**: `reconstruct_fields` defaults to the trapezoidal face mean `(z_b,L + z_b,R)/2` as the cell-centre bed elevation, which equals the cell average only for a piecewise-linear bed. On a curved bed it leaves an `O(dx^2)` spurious free-surface drift in the reconstructed η (e.g. ~3e-4 m for a P2 sinusoidal bed at N=64) even though the solver state itself is well-balanced to round-off. Pass `zb_center=metadata["zb_modes"][:, 0]` (the mode-0 coefficient of the polynomial bed) to remove this post-processing error.
 
-5. **P2 round-off residual**: The DG weak form's `1/dx` prefactor amplifies the flux/source cancellation round-off, so the P2 path carries a slightly larger (still physically negligible, ~1e-9 m/s) spurious-velocity floor than P1 on exactly-representable beds. This is a floating-point artifact, not a loss of the well-balanced property.
+5. **P2 round-off residual**: The DG weak form's `1/dx` prefactor amplifies the flux/source cancellation round-off, so the P2 path carries a slightly larger (still physically negligible, ~1e-9 m/s) spurious-velocity floor than P1 on exactly-representable beds. This is a floating-point artifact, not a loss of the well-balanced property. The accumulation law of that floor (algebraic in time, `1/dx`-amplified, seeded by the nodal→modal round-off rather than by the bed representation) is measured in `docs/swe-hydrostatic-roundoff-drift-law.md`; the test budgets in `tests/test_swe_wellbalanced_hydrostatic.py` are derived from it.
 
 ## References
 

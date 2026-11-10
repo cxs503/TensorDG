@@ -1,8 +1,13 @@
 """Hydrostatic well-balancedness tests for the 1-D SWE solver.
 
 These tests verify that the DG solver preserves the hydrostatic equilibrium
-(lake-at-rest) condition η = h + z_b = const, u = 0 to machine precision,
-even on curved beds when well_balanced=True is used.
+(lake-at-rest) condition η = h + z_b = const, u = 0 to round-off level, even on
+curved beds when well_balanced=True is used.  "Round-off level" is a statement
+about a finite integration time, not about all time: the residual is the
+round-off of the flux/source cancellation, and those coherent residuals
+accumulate algebraically -- see docs/swe-hydrostatic-roundoff-drift-law.md and
+validation/swe_thacker/hydrostatic_wb_drift.json for the measured drift law and
+the resulting (dimensionless) test budgets.
 
 The hydrostatic well-balanced property is critical for:
 1. Coastal and estuarine flows where the water is nearly at rest
@@ -331,22 +336,71 @@ class TestHydrostaticWellBalanced:
         h, u, eta = reconstruct_fields(coeff, zb_faces,
                                        zb_center=meta["zb_modes"][:, 0])
 
-        # Even after long integration, η should remain close to constant
-        eta_error = float((eta - eta0).abs().max())
-        tol = 1e-7 if degree == 1 else 1e-6
+        # Even after long integration the lake must stay at rest.  The bounds
+        # are *dimensionless* (η drift / depth, and |u| / sqrt(g h)) so that
+        # they do not have to be re-tuned when the depth or the mesh changes,
+        # and they are quoted for this configuration (N = 32, T = 2 s) from the
+        # measured drift law in validation/swe_thacker/hydrostatic_wb_drift.json
+        # (case "ci_curved"): P1 ~ 3e-12 / 8e-13, P2 ~ 3e-10 / 4e-10.
+        eta_error = float(((eta - eta0).abs() / h).max())
+        u_scaled = float((u.abs() / torch.sqrt(G * h.clamp_min(1e-12))).max())
+        tol = 1e-9 if degree == 1 else 1e-7  # >= 200x headroom over the measurement
         assert eta_error < tol, (
-            f"Long-time η drift {eta_error:.3e} m exceeds tolerance {tol}"
+            f"Long-time η drift / H = {eta_error:.3e} exceeds tolerance {tol}"
+        )
+        assert u_scaled < tol, (
+            f"Long-time spurious velocity / sqrt(gh) = {u_scaled:.3e} "
+            f"exceeds tolerance {tol}"
         )
 
-        # u should remain zero.  For this curved bed the discrete (polynomial)
-        # bed differs from the true bed by O(dx^3), which seeds a small
-        # imbalance that accumulates over the long integration; the P2
-        # tolerance is relaxed accordingly (still many orders of magnitude
-        # below any physical velocity, i.e. no spurious current of concern).
-        u_max = float(u.abs().max())
-        u_tol = 1e-7 if degree == 1 else 1e-6
-        assert u_max < u_tol, (
-            f"Long-time spurious velocity {u_max:.3e} m/s exceeds {u_tol}"
+    def test_drift_growth_is_algebraic_not_exponential(self):
+        """The spurious current must grow algebraically, never exponentially.
+
+        The lake at rest is a fixed point of the semi-discrete residual only to
+        round-off, and those coherent round-off residuals accumulate in time --
+        the drift is therefore *not* zero for all time, and its magnitude has to
+        be bounded as a function of the integration time (see
+        validation/swe_thacker/hydrostatic_wb_drift.json, fitted exponents ~1-4).
+        Algebraic accumulation is acceptable; an exponential one would be a
+        genuine instability of the still-water state, which is what this test
+        rejects: over a 4x longer integration the dimensionless spurious current
+        may grow by at most (T2/T1)**6 = 4096, versus the measured ~50.
+        """
+        eta0, slope, ncells = 3.0, 0.5, 32
+
+        def zb(xx):
+            return slope * xx
+
+        def spurious(t_end):
+            _, coeff, zb_faces, meta = solve_swe_1d(
+                lambda xx: eta0 - zb(xx),
+                lambda xx: torch.zeros_like(xx),
+                zb,
+                ncells=ncells,
+                degree=2,
+                final_time=t_end,
+                domain=(0.0, 2.0),
+                cfl=0.3,
+                well_balanced=True,
+            )
+            h, u, _ = reconstruct_fields(coeff, zb_faces,
+                                         zb_center=meta["zb_modes"][:, 0])
+            return float((u.abs() / torch.sqrt(G * h.clamp_min(1e-12))).max())
+
+        t_short, t_long = 0.25, 1.0
+        u_short = max(spurious(t_short), 1e-300)
+        u_long = spurious(t_long)
+
+        # this configuration measures 5.4e-11 at T = 1 s -> 185x headroom
+        assert u_long < 1e-8, (
+            f"spurious current {u_long:.3e} sqrt(gh) exceeds the round-off budget"
+        )
+        growth = u_long / u_short
+        limit = (t_long / t_short) ** 6
+        assert growth < limit, (
+            f"spurious current grew by {growth:.1f} over "
+            f"{t_long / t_short:.0f}x time (limit {limit:.0f}); "
+            "exponential drift -> unstable rest state"
         )
 
 
