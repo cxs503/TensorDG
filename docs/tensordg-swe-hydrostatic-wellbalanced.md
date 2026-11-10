@@ -137,14 +137,60 @@ The well-balanced property is maintained to high accuracy on curved beds.
 
 For the Thacker (1981) parabolic basin (z_b = -2.0 + 2.0x², η = 1.0 m):
 
-| Degree | Cells | η error (max) | u max |
-|--------|-------|---------------|-------|
-| P1     | 50    | 1.7e-14 m     | 2.5e-13 m/s |
-| P1     | 100   | 1.1e-12 m     | 1.8e-12 m/s |
-| P2     | 50    | 3.5e-13 m     | 5.1e-13 m/s |
-| P2     | 100   | 1.8e-11 m     | 2.7e-11 m/s |
+| Degree | Cells | η error (max) | u max | h error (max) |
+|--------|-------|---------------|-------|---------------|
+| P1     | 50    | 4.2e-14 m     | 6.5e-13 m/s | 8.0e-4 m |
+| P1     | 100   | 5.8e-13 m     | 2.4e-12 m/s | 2.0e-4 m |
+| P1     | 200   | 4.3e-12 m     | 9.9e-12 m/s | 5.0e-5 m |
+| P2     | 50    | 1.2e-11 m     | 2.3e-11 m/s | 2.7e-4 m |
+| P2     | 100   | 4.2e-11 m     | 8.8e-11 m/s | 6.7e-5 m |
+| P2     | 200   | 1.7e-10 m     | 3.6e-10 m/s | 1.7e-5 m |
 
-The hydrostatic equilibrium is preserved to machine precision across all resolutions and polynomial degrees.
+Settings: `final_time=1.0 s`, `cfl=0.3`, `H0=2.0 m`, `L=1.0 m`, `eta0=1.0 m`
+(so `h>=1 m` everywhere: no wetting/drying), HLL flux, `well_balanced=True`,
+η reconstructed with `zb_center=zb_modes[:, 0]`.  All six entries satisfy the
+1e-8 m / 1e-8 m/s acceptance band by 3–5 orders of magnitude.
+
+Two remarks on reading the table:
+
+* The η / u residuals are the *round-off floor*, not a discretisation error:
+  they **grow** with N (≈2–4× per mesh doubling, i.e. ≈ `1/dx` × number of
+  steps) instead of decaying.  Refining further therefore cannot reduce them,
+  and the appropriate tolerance for a lake-at-rest test is a multiple of the
+  machine epsilon, not an h^p rate.
+* The `h` column is *not* a solver error.  `reconstruct_fields` returns the
+  cell-averaged bed (mode 0), so `h_h` differs from the pointwise exact
+  `h(x_c) = η0 − z_b(x_c)` by `mean_cell(z_b) − z_b(x_c)`; for the quadratic
+  Thacker bed this is exactly `(H0/L²)·dx²/12`, i.e. 2.667e-4 m at N=50 and
+  1.667e-5 m at N=200 — which is what the P2 column shows to three digits
+  (P1 carries the additional O(dx²) interpolation error of the linear bed
+  representation, 8.0e-4 m at N=50).  η and u are the well-balancedness
+  metrics.
+
+#### Cross-host reproducibility
+
+The same script was run twice on different hosts (both `loongarch64`, no
+production-code difference) to check that the round-off floor is a property of
+the scheme and not of one machine's arithmetic packing:
+
+| Degree | Cells | η error (host A) | η error (host B) | u max (host A) | u max (host B) |
+|--------|-------|------------------|------------------|----------------|----------------|
+| P1     | 50    | 4.2e-14 | 4.4e-13 | 6.5e-13 | 6.6e-13 |
+| P1     | 100   | 5.8e-13 | 1.6e-12 | 2.4e-12 | 2.9e-12 |
+| P1     | 200   | 4.3e-12 | 6.5e-12 | 9.9e-12 | 1.1e-11 |
+| P2     | 50    | 1.2e-11 | 6.5e-11 | 2.3e-11 | 1.2e-10 |
+| P2     | 100   | 4.2e-11 | 2.3e-10 | 8.8e-11 | 4.6e-10 |
+| P2     | 200   | 1.7e-10 | 8.8e-10 | 3.6e-10 | 1.8e-09 |
+
+Host A = the control-plane machine that produced the committed artifact
+(provenance block in the JSON); host B = cluster node `n315`, job `cj30`, whose
+raw output is archived as
+`artifacts/m8649/hydrostatic_wb_results_loong64_cj30.json`.  The residuals
+differ by up to ~5× between hosts but stay in the same 1e-14…1e-9 band, i.e.
+the lake-at-rest fixed point is preserved on both; the difference is
+libm/BLAS rounding, not a scheme difference.  The archived host-B run predates
+the provenance block, which is exactly the gap this document now closes for the
+committed file.
 
 ### Comparison: well_balanced=True vs False
 
@@ -156,6 +202,24 @@ On a curved bed (z_b = 0.3 × cos(2πx), η = 2.0 m, N = 50, P1):
 | well_balanced=False | 1.5e-2 m  | 2.1e-2 m/s |
 
 The well-balanced option reduces the error by **8 orders of magnitude**, demonstrating the critical importance of the consistent bed representation.
+
+### Result figures
+
+![Round-off floor vs mesh and host](figures/swe_hydrostatic_wb_roundoff.png)
+
+*Left:* max |η − η0| and *right:* max |u| after 1 s on the Thacker parabolic
+basin, P1/P2, N = 50/100/200, on both hosts of the table above (dotted line =
+the 1e-8 acceptance band).  The curves are flat over 3–5 orders of magnitude
+below the band and rise gently with N, confirming a round-off floor rather than
+a discretisation error.
+
+![Lake-at-rest state and spurious current](figures/swe_hydrostatic_wb_state.png)
+
+*Left:* free surface η_h, bed z_b and depth h_h after 1 s (N = 100, P1) — η_h
+is indistinguishable from the exact 1.0 m line.  *Right:* spurious current
+max |u| at t = 0.1…1.0 s, staying at 6e-14…2e-12 m/s (it random-walks upward
+with the step count), versus the 2.1e-2 m/s obtained with
+`well_balanced=False`.
 
 ## Usage
 
@@ -196,7 +260,12 @@ Use `well_balanced=True` when:
 
 4. **Free-surface reconstruction on curved beds**: `reconstruct_fields` defaults to the trapezoidal face mean `(z_b,L + z_b,R)/2` as the cell-centre bed elevation, which equals the cell average only for a piecewise-linear bed. On a curved bed it leaves an `O(dx^2)` spurious free-surface drift in the reconstructed η (e.g. ~3e-4 m for a P2 sinusoidal bed at N=64) even though the solver state itself is well-balanced to round-off. Pass `zb_center=metadata["zb_modes"][:, 0]` (the mode-0 coefficient of the polynomial bed) to remove this post-processing error.
 
-5. **P2 round-off residual**: The DG weak form's `1/dx` prefactor amplifies the flux/source cancellation round-off, so the P2 path carries a slightly larger (still physically negligible, ~1e-9 m/s) spurious-velocity floor than P1 on exactly-representable beds. This is a floating-point artifact, not a loss of the well-balanced property.
+5. **`h` errors are a post-processing metric**: the reported `h` error is the
+   difference between the reconstructed *cell average* and the pointwise exact
+   depth, i.e. `(H0/L²)dx²/12` on the Thacker bed; it is not a well-balancedness
+   error.  Use η and u for that judgement.
+
+6. **P2 round-off residual**: The DG weak form's `1/dx` prefactor amplifies the flux/source cancellation round-off, so the P2 path carries a slightly larger (still physically negligible, ~1e-9 m/s) spurious-velocity floor than P1 on exactly-representable beds. This is a floating-point artifact, not a loss of the well-balanced property.
 
 ## References
 
@@ -217,11 +286,27 @@ Complete validation results are available in `validation/swe_thacker/hydrostatic
 - Error metrics (max and L2 norms) for η, u, and h
 - Computational performance (wall time, number of steps)
 
-Note on provenance: the committed `hydrostatic_wb_results.json` is the
-pre-fix snapshot (generated before the `zb_center` change below); its P2
-entries therefore include the O(dx²) post-processing drift, while the P1
-entries are unaffected.  A regeneration with the fixed script is tracked as
-cluster job cj30.
+### Provenance and regeneration
+
+The committed `hydrostatic_wb_results.json` now carries a `provenance` block
+written by the script itself: UTC timestamp, command line, `git` commit and
+dirty flag, Python/torch/NumPy versions, and host platform/architecture.  The
+committed file was produced by
+
+```bash
+PYTHONPATH=. python validation/swe_thacker/run_hydrostatic_wb.py
+```
+
+from a clean tree at commit `8589f0d` (`git_dirty: false`, `machine:
+loongarch64`); its numbers are reproduced bit-for-bit by a re-run on the same
+host.  This replaces the earlier artifact, which was a hand-carried
+pre-`zb_center` snapshot: it carried an O(dx²) post-processing drift in its P2
+entries and no record of the code revision that produced it, so its numbers
+could not be traced back to a run.  `tests/test_swe_hydrostatic_results_artifact.py`
+guards the artifact without a 5-minute solve: provenance keys must be present
+and parseable, the `zb_center` reconstruction recipe must be recorded,
+`summary` must agree with `single_run` exactly, and every one of the six
+mesh/degree entries must meet the declared pass criteria.
 
 The validation script reconstructs η with `zb_center=metadata["zb_modes"][:, 0]`
 (the cell-average bed of the polynomial representation), consistent with the
