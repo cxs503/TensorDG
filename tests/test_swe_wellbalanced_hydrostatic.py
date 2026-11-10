@@ -489,11 +489,118 @@ class TestHydrostaticHelpers:
         expected = 0.5 * 1000.0 * G * eta0 ** 2  # 19620 N/m
         assert float((fp - expected).abs().max()) < 1e-8 * expected
 
+    def test_validate_well_balanced_setup_rejects_sub_tolerance_drift(self):
+        """A 1e-5 m η drift must not pass a 1e-10 tolerance check.
+
+        Regression for the variance-vs-sup-norm bug: the acceptance test used
+        to compare ``eta_variance`` (units m², quadratic in the amplitude) with
+        ``tolerance`` (units m).  For a sin(2πx)-shaped drift of amplitude
+        ``a = 1e-5`` the variance is ``a²/2 = 5e-11 < 1e-10``, so a drift 1e5
+        times larger than the stated tolerance was accepted.  The criterion is
+        now the sup norm ``max|η - <η>|``, consistent with
+        :func:`check_hydrostatic_equilibrium`.
+        """
+        eta0 = 2.0
+        drift_amplitude = 1e-5
+
+        def zb(xx):
+            return 0.3 * torch.cos(2.0 * math.pi * xx)
+
+        def initial_h(xx):
+            return (eta0 - zb(xx)
+                    + drift_amplitude * torch.sin(2.0 * math.pi * xx))
+
+        result = validate_well_balanced_setup(
+            initial_h, lambda xx: torch.zeros_like(xx), zb)
+
+        assert result["is_valid"] is False
+        # the variance would have been (wrongly) accepted ...
+        assert result["eta_variance"] < 1e-10
+        # ... while the sup norm correctly reports the full drift (the mean of
+        # the sampled sine is not exactly zero, hence the 1e-3 slack)
+        assert result["eta_deviation_max"] == pytest.approx(
+            drift_amplitude, rel=1e-3)
+        assert "NOT valid" in result["message"]
+
+    def test_validate_well_balanced_setup_sup_norm_matches_checker(self):
+        """Both helpers accept/reject on the same sup-norm criterion."""
+        eta0 = 2.0
+
+        def zb(xx):
+            return 0.2 * torch.sin(math.pi * xx)
+
+        # 1e-12 drift: below the 1e-10 default tolerance of both helpers
+        initial_h, initial_u = create_hydrostatic_initial_conditions(zb, eta0)
+        ok = validate_well_balanced_setup(initial_h, initial_u, zb)
+        assert ok["is_valid"] is True
+        assert ok["eta_deviation_max"] < 1e-10
+
+        # 1e-8 drift: above the tolerance of both helpers
+        def drifted(xx):
+            return initial_h(xx) + 1e-8 * torch.sin(2.0 * math.pi * xx)
+
+        bad = validate_well_balanced_setup(drifted, initial_u, zb)
+        assert bad["is_valid"] is False
+        assert bad["eta_deviation_max"] == pytest.approx(1e-8, rel=1e-3)
+
+    def test_estimate_well_balanced_error_bound_not_clamped(self):
+        """The bound is the representation estimate, not a 1e-10 constant.
+
+        Regression for the hard-coded ``min(estimate, 1e-10)``: for an O(1)
+        bed curvature the theoretical estimate is ~2e-3 m, but the function
+        used to return 1e-10 m, i.e. it reported a floor instead of the
+        estimate and was flat under refinement.
+        """
+        ncells, degree, length = 8, 1, 1.0
+        bound = estimate_well_balanced_error_bound(
+            ncells, degree, length, bed_curvature=1.0)
+
+        dx = length / ncells
+        assert bound["dx"] == pytest.approx(dx)
+        assert bound["eta_error_estimate"] == pytest.approx(dx ** 2 / 8.0)
+        assert bound["expected_eta_error"] == pytest.approx(dx ** 2 / 8.0)
+        assert bound["expected_eta_error"] > 1e-5
+        assert bound["floor_applied"] is False
+        assert "1e-10" not in f"{bound['expected_eta_error']:.3e}"
+
+    def test_estimate_well_balanced_error_bound_explicit_floor(self):
+        """An explicit floor is honoured and reported."""
+        estimate = estimate_well_balanced_error_bound(
+            8, 1, 1.0, bed_curvature=1.0)["eta_error_estimate"]
+
+        floored = estimate_well_balanced_error_bound(
+            8, 1, 1.0, bed_curvature=1.0, floor=1e-2)
+        assert floored["eta_error_estimate"] == pytest.approx(estimate)
+        assert floored["expected_eta_error"] == pytest.approx(1e-2)
+        assert floored["floor_applied"] is True
+
+        # a floor below the estimate must not bind
+        low_floor = estimate_well_balanced_error_bound(
+            8, 1, 1.0, bed_curvature=1.0, floor=1e-12)
+        assert low_floor["expected_eta_error"] == pytest.approx(estimate)
+        assert low_floor["floor_applied"] is False
+
+    def test_estimate_well_balanced_error_bound_velocity_scale(self):
+        """u scale is the linearised relation η sqrt(g / h_ref) for h_ref."""
+        shallow = estimate_well_balanced_error_bound(
+            8, 1, 1.0, bed_curvature=1.0, reference_depth=1.0)
+        deep = estimate_well_balanced_error_bound(
+            8, 1, 1.0, bed_curvature=1.0, reference_depth=4.0)
+
+        assert shallow["expected_u_error"] == pytest.approx(
+            shallow["expected_eta_error"] * math.sqrt(G))
+        assert deep["expected_u_error"] == pytest.approx(
+            shallow["expected_u_error"] / 2.0)
+        with pytest.raises(ValueError):
+            estimate_well_balanced_error_bound(
+                8, 1, 1.0, bed_curvature=1.0, reference_depth=0.0)
+
     def test_estimate_well_balanced_error_bound_scaling(self):
         """The bound shrinks with refinement at the documented rate.
 
-        bed_curvature is chosen small enough that the internal 1e-10
-        machine-precision floor does not flatten the scaling.
+        No round-off floor is imposed by default (``floor=None``), so the
+        returned bound is exactly the O(dx**(p+1)) representation estimate and
+        the ratio between two meshes is 2**rate to round-off.
         """
         for degree, rate, curvature in ((1, 2.0, 1e-6), (2, 3.0, 1e-5)):
             b1 = estimate_well_balanced_error_bound(100, degree, 1.0,
