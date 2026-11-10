@@ -90,6 +90,70 @@ for k in range(degree + 1):
 
 This approach does **not** guarantee that η_h = h_h + z_b_h is constant, even if η = h + z_b is constant analytically. The reason is that the L2 projection of h and the L2 projection of z_b do not necessarily sum to the L2 projection of η.
 
+### Dry-Bank Shorelines and the Positivity Filter
+
+A lake at rest whose surface cuts the bed (a shoreline, hence dry cells) is the
+one configuration in which the well-balanced cancellation has to survive a
+*wet/dry trace*: the water depth of the shoreline cell vanishes exactly at its
+dry node.  Until this change the positivity filter, not the wetting front, was
+the obstacle.  It tested ``h(x_q) > h_min`` (``1e-12``) at every quadrature and
+interface point and, on failure, replaced the whole cell by its cell average.  A
+shoreline cell fails that test by construction (``h = 0`` is a legitimate
+trace), and the average-only fallback then zeroes the linear mode of ``h`` —
+together with ``eta = h + z_b = const`` inside that cell.  The initially flat
+surface therefore acquires a step of half a cell's bed drop, and that imbalance
+drives a spurious current for the whole run: the rest state was not a fixed
+point at P1 **or** P2.
+
+The filter now uses a Zhang & Shu (2010) style *scaling* of the cell shape.
+With the cell average ``h_bar = coeff[:, 0, 0]`` held fixed, the higher modes
+are multiplied by
+
+    theta = min_q  h_bar / (h_bar - h_q)    over the points with h_q < 0,
+    theta = 1                               if h_q >= 0 at every point,
+    theta clipped to [0, 1],
+
+so that ``h_bar + theta (h_q - h_bar) >= 0`` at every quadrature and interface
+point.  Three properties follow, and each is pinned by a unit test in
+``tests/test_swe_hydrostatic_reconstruction.py``:
+
+* **conservation** — the cell average, hence the mass, is untouched;
+* **idempotence on admissible cells** — ``theta = 1`` whenever no trace point is
+  negative, so a discretely resting state passes through the filter unchanged.
+  This is exactly the property the old ``h > h_min`` test destroyed;
+* **minimal dissipation** — an inadmissible cell keeps as much of its shape as
+  positivity allows instead of being flattened to its average, which is why the
+  change does not regress the Ritter dry-front tests
+  (``tests/test_swe_dam_break.py``).
+
+``h_min`` survives only as the tolerance of the feasibility test on the cell
+*average*: a cell whose average depth is not strictly positive cannot be
+repaired by scaling and still falls back to the average-only state (and
+``solve_swe_1d`` raises if that average stays negative).
+
+**Scope.** The scaling action is enabled exactly where the Audusse hydrostatic
+reconstruction runs (``well_balanced=True`` and ``hydrostatic=True``), i.e. on
+the path whose contract is a discrete rest state across a wet/dry trace.  The
+default path deliberately keeps the legacy replace-by-cell-average action: that
+flattening is what the dry-bed dam-break (Ritter) verification was tuned
+against, and promoting the scaling limiter to it is a separate change with its
+own gate re-derivation.  The measured trade-off, on the Ritter dry bed
+(``N = 200``, ``t = 0.5 s``) with the scaling limiter switched on globally, is
+* better on three counts — mass drift `3e-7 ->` exact, spurious `max|u|`
+  `47 -> 5.9 m/s`, relative L1 depth error `0.240% -> 0.224%`;
+* worse on two legacy gates — the front measured with an `h > 1e-6` threshold
+  moves from `x = 3.00` to `x = 2.85` against the analytic `3.13`, and the
+  velocity L1 error over the analytically wet cells jumps to `429%` because the
+  tail (where the analytic depth is `~1e-3 m` but the numerical solution is
+  dry) contributes nothing to the numerator.
+
+  In other words the legacy flattening acts as front diffusion that *mimics*
+  the analytic cusp; without it the numerical front is a clean cutoff (mass
+  conservative, no spurious jet) that the current gates do not accept.  Both
+  behaviours are wrong in the tail by orders of magnitude; which one to keep is
+  a modelling choice, so it is not smuggled in with this fix.
+
+
 ## Verification
 
 ### Test Cases
@@ -171,6 +235,59 @@ Two remarks on reading the table:
   (P1 carries the additional O(dx²) interpolation error of the linear bed
   representation, 8.0e-4 m at N=50).  η and u are the well-balancedness
   metrics.
+
+#### Still Lake with a Dry Bank (Shoreline Rest State)
+
+Exact solution: ``eta = 1 m``, ``u = 0`` everywhere.  Two geometries cover the
+two ways a shoreline can meet the mesh — inside a cell (``z_b = 1.5 - 0.5 x^2``,
+shoreline at ``x = ±√2``) and exactly on a cell face (``z_b = |x| / 1.5``,
+shoreline at ``x = ±1.5``, i.e. face 8 / face 56 for ``N = 64``).  Errors are
+measured over wet cells only (``h > DRY_DEPTH``), because a dry cell has no
+water surface.
+
+| geometry | degree | N | max\|η−η₀\| [m] | max\|u\| [m/s] | pre-fix max\|η−η₀\| [m] | pre-fix max\|u\| [m/s] |
+|---|---|---|---|---|---|---|
+| `parabolic_hump` | P1 | 32 | 4.01e-13 | 9.02e-13 | — | — |
+| `parabolic_hump` | P1 | 64 | 2.34e-12 | 5.08e-12 | 3.04e-02 | 5.43e-01 |
+| `parabolic_hump` | P1 | 128 | 8.53e-12 | 1.85e-11 | — | — |
+| `parabolic_hump` | P2 | 32 | 1.31e-10 | 2.73e-10 | — | — |
+| `parabolic_hump` | P2 | 64 | 4.04e-10 | 1.37e-09 | 4.99e-01 | 3.61e+01 |
+| `parabolic_hump` | P2 | 128 | 4.25e-10 | 3.58e-09 | — | — |
+| `tent_on_face` | P1 | 32 | 8.88e-16 | 3.21e-15 | — | — |
+| `tent_on_face` | P1 | 64 | 2.89e-15 | 1.14e-13 | 2.09e-02 | 5.47e-01 |
+| `tent_on_face` | P1 | 128 | 4.88e-15 | 2.23e-14 | — | — |
+| `tent_on_face` | P2 | 32 | 1.11e-15 | 2.06e-14 | — | — |
+| `tent_on_face` | P2 | 64 | 2.55e-15 | 3.09e-14 | — (diverged) | — (diverged) |
+| `tent_on_face` | P2 | 128 | 5.11e-15 | 2.97e-13 | — | — |
+
+With the pre-fix filter, `tent_on_face P2 N=64` does not merely
+lose accuracy: the surface error feeds the source term every step and the
+run blows up (`dt` underflow before the requested final time), so its
+pre-fix column is marked —.  The quoted improvement factor therefore
+uses the worst pre-fix run that still converged (`4.99e-01 m`, `3.61e+01 m/s`).
+Worst case after the fix: ``max|eta - eta0| = 4.25e-10 m`` and ``max|u| = 3.58e-09 m/s``,
+i.e. round-off (pass criteria: ``< 1e-8`` for both).  The same scenarios with
+the pre-change filter give ``4.99e-01 m`` and ``3.61e+01 m/s`` for the worst run that still
+converged: an improvement factor of 1.2e+09 on the surface error and 1.0e+10 on
+the spurious velocity.  Both columns come
+from one run of ``validation/swe_thacker/run_shoreline_rest.py``, which
+reproduces the pre-fix filter verbatim for the contrast, so the "before"
+numbers are measured in the same artifact rather than remembered.
+
+Regenerate and plot:
+
+```bash
+PYTHONPATH=. python validation/swe_thacker/run_shoreline_rest.py
+python validation/swe_thacker/plot_shoreline_rest.py
+```
+
+Artifact: `validation/swe_thacker/shoreline_rest_state_results.json`
+(provenance: commit `c197c9b`, `machine: loongarch64`, generated `2026-11-10T20:45:21+00:00`), guarded by
+`tests/test_swe_shoreline_rest_artifact.py`.  Figure:
+`docs/figures/swe_shoreline_rest.png` — free-surface profiles at ``N = 64`` for
+the fixed and the pre-fix filter, plus the spurious-current bars against the
+1e-8 m/s pass criterion.
+
 
 #### Cross-host reproducibility
 
@@ -306,7 +423,15 @@ Use `well_balanced=True` when:
 
 ### Limitations
 
-1. **Wetting-drying fronts**: The well-balanced property does not extend to wetting-drying fronts. Cells that become dry still require special treatment (positivity preservation, DRY_DEPTH threshold).
+1. **Wetting-drying fronts (partially lifted)**: a *still* lake with a dry bank
+   is a discrete fixed point now, including a shoreline that passes exactly
+   through a cell face — see "Dry-Bank Shorelines and the Positivity Filter" and
+   "Still Lake with a Dry Bank" above: the positivity filter scales the cell
+   shape instead of flattening it.  What remains open is the *moving* front: a
+   wetting front is advanced by the mass flux through the dry interface with the
+   `DRY_DEPTH` (1e-6 m) velocity guard, so thinner films carry no momentum, and
+   a cell whose average depth is not yet positive is still handled by the
+   average-only fallback.
 
 2. **Non-polynomial beds**: The bed is represented as a polynomial within each cell. For highly irregular bathymetry, higher polynomial degrees or finer meshes may be needed.
 
