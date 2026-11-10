@@ -1,0 +1,194 @@
+{
+  "campaign_node": "P127W2-N01",
+  "title": "TensorDG Curved Isoparametric Geometry Verification",
+  "generated": "2026-11-10T09:36:00",
+  "gates": {
+    "J1_free_stream": {
+      "pass": true,
+      "threshold": "\u22641e-12",
+      "details": {
+        "p1": {
+          "u_t_exact": 0.0,
+          "drift": 2.7490780124885424e-16
+        },
+        "p2": {
+          "u_t_exact": 4.640638957673135e-16,
+          "drift": 6.114688804550501e-16
+        },
+        "p3": {
+          "u_t_exact": 5.155736095390695e-16,
+          "drift": 8.716066177751849e-16
+        }
+      }
+    },
+    "J2_metric_identity": {
+      "pass": true,
+      "threshold": "\u22641e-10 for p\u22652",
+      "details": {
+        "p2": {
+          "degree": 2,
+          "inverse_metric": 2.220446049250313e-16,
+          "piola_nodal": 3.469446951953614e-17,
+          "piola_coeff": 0.0,
+          "jacobian_min": 0.010275966799187807,
+          "nodes": [
+            -1.0,
+            0.0,
+            1.0
+          ],
+          "weights": [
+            0.3333333333333333,
+            1.3333333333333333,
+            0.3333333333333333
+          ]
+        },
+        "p3": {
+          "degree": 3,
+          "inverse_metric": 2.220446049250313e-16,
+          "piola_nodal": 1.6653345369377348e-16,
+          "piola_coeff": 3.469446951953614e-18,
+          "jacobian_min": 0.011530945148575255,
+          "nodes": [
+            -1.0,
+            -0.4472135954999579,
+            0.4472135954999579,
+            1.0
+          ],
+          "weights": [
+            0.16666666666666666,
+            0.8333333333333334,
+            0.8333333333333334,
+            0.16666666666666666
+          ]
+        },
+        "p4": {
+          "degree": 4,
+          "inverse_metric": 2.220446049250313e-16,
+          "piola_nodal": 3.5388358909926865e-16,
+          "piola_coeff": 1.734723475976807e-18,
+          "jacobian_min": 0.01169922651022183,
+          "nodes": [
+            -1.0,
+            -0.6546536707079771,
+            0.0,
+            0.6546536707079771,
+            1.0
+          ],
+          "weights": [
+            0.1,
+            0.5444444444444444,
+            0.7111111111111111,
+            0.5444444444444444,
+            0.1
+          ]
+        }
+      }
+    },
+    "J3_curved_wall_order": {
+      "pass": true,
+      "threshold": "|\u00d4-(p+1)|/(p+1) \u2264 10%",
+      "details": {
+        "p1": {
+          "observed_order": 1.8720459729725887,
+          "theory_order": 2,
+          "rel_deviation": 0.06397701351370566,
+          "errors": [
+            0.0591358352657087,
+            0.023305069506975386,
+            0.009422682198554315
+          ],
+          "hs": [
+            0.36177252991580294,
+            0.21707818015025135,
+            0.13567502540772247
+          ]
+        },
+        "p2": {
+          "observed_order": 2.801220952363539,
+          "theory_order": 3,
+          "rel_deviation": 0.06625968254548702,
+          "errors": [
+            0.017413627836612683,
+            0.0026670695407228417,
+            0.0007923883245356747
+          ],
+          "hs": [
+            0.5427001105028896,
+            0.27135046390129214,
+            0.18090031325497094
+          ]
+        },
+        "p3": {
+          "observed_order": 3.7963521966389493,
+          "theory_order": 4,
+          "rel_deviation": 0.050911950840262676,
+          "errors": [
+            0.001793649613864347,
+            0.00038479832757232034
+          ],
+          "hs": [
+            0.5427009390085025,
+            0.36180062722911216
+          ]
+        },
+        "p4": {
+          "observed_order": 4.999090743033733,
+          "theory_order": 5,
+          "rel_deviation": 0.00018185139325339607,
+          "errors": [
+            0.0001573433817720971,
+            2.0727756453088445e-05
+          ],
+          "hs": [
+            0.5427009409158393,
+            0.3618006272791004
+          ]
+        }
+      }
+    },
+    "J4_straight_edge": {
+      "pass": true,
+      "threshold": "\u00d4 \u2264 2.2",
+      "observed_order": 1.4561313151280555
+    },
+    "J5_curvature_law": {
+      "pass": true,
+      "threshold": "exponent error \u2264 15% (superconvergence OK)",
+      "details": {
+        "g1": {
+          "observed_exponent": 1.99129741255776,
+          "theory_exponent": 2,
+          "rel_error": 0.004351293721119975
+        },
+        "g2": {
+          "observed_exponent": 5.319192338270929,
+          "theory_exponent": 3,
+          "rel_error": 0.7730641127569763
+        },
+        "g3": {
+          "observed_exponent": 3.9958274095552713,
+          "theory_exponent": 4,
+          "rel_error": 0.0010431476111821825
+        }
+      }
+    },
+    "J6_negative_controls": {
+      "pass": true,
+      "threshold": "All three negative controls must fail (gate is RED)",
+      "N1_unit_J": true,
+      "N2_perturbed_metrics": true,
+      "N3_wrong_geometry": true
+    },
+    "J7_grid_convergence": {
+      "pass": true,
+      "threshold": "observed order within 15% of theory",
+      "observed_order": 3.286769173266896,
+      "theory_order": 3,
+      "rel_deviation": 0.09558972442229867
+    }
+  },
+  "summary": {
+    "all_gates_pass": true,
+    "total_time": 69.12409281730652
+  }
+}
