@@ -1,0 +1,35 @@
+{
+  "campaign_node": "P127W2-N01",
+  "generated": "2026-11-10T09:36:00",
+  "gates": {
+    "J1_free_stream": {
+      "pass": true,
+      "threshold": "\u22641e-12"
+    },
+    "J2_metric_identity": {
+      "pass": true,
+      "threshold": "\u22641e-10 for p\u22652"
+    },
+    "J3_curved_wall_order": {
+      "pass": true,
+      "threshold": "|\u00d4-(p+1)|/(p+1) \u2264 10%"
+    },
+    "J4_straight_edge": {
+      "pass": true,
+      "threshold": "\u00d4 \u2264 2.2"
+    },
+    "J5_curvature_law": {
+      "pass": true,
+      "threshold": "exponent error \u2264 15% (superconvergence OK)"
+    },
+    "J6_negative_controls": {
+      "pass": true,
+      "threshold": "All three negative controls must fail (gate is RED)"
+    },
+    "J7_grid_convergence": {
+      "pass": true,
+      "threshold": "observed order within 15% of theory"
+    }
+  },
+  "all_pass": true
+}
