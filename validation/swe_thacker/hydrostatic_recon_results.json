@@ -1,0 +1,191 @@
+{
+ "description": "Audusse hydrostatic reconstruction: lake at rest across a submerged bed step (z_b = 0.5 m left of x=0, 0 m right, eta = 2 m), a wet/dry bed wall (z_b = 2.5 m right of x=0), and a dam break across the step.  Domain (-2, 2) m, cfl = 0.3, SSP-RK3.",
+ "gravity": 9.81,
+ "rest_state_across_step": [
+  {
+   "ncells": 32,
+   "degree": 1,
+   "final_time": 1.0,
+   "hydrostatic_reconstruction": true,
+   "eta_error_max_wet": 1.6475709685437323e-13,
+   "u_max": 4.596749863112974e-13,
+   "hu_modal_max": 6.895124794670218e-13,
+   "wall_time_s": 5.616,
+   "steps": 355,
+   "reached_final_time": true
+  },
+  {
+   "ncells": 64,
+   "degree": 1,
+   "final_time": 1.0,
+   "hydrostatic_reconstruction": true,
+   "eta_error_max_wet": 8.482103908136196e-13,
+   "u_max": 1.9033997652481113e-12,
+   "hu_modal_max": 3.76204445943364e-12,
+   "wall_time_s": 12.596,
+   "steps": 709,
+   "reached_final_time": true
+  },
+  {
+   "ncells": 32,
+   "degree": 2,
+   "final_time": 1.0,
+   "hydrostatic_reconstruction": true,
+   "eta_error_max_wet": 3.9404035589996056e-12,
+   "u_max": 1.0247292759588249e-11,
+   "hu_modal_max": 1.5370939139422753e-11,
+   "wall_time_s": 9.726,
+   "steps": 591,
+   "reached_final_time": true
+  },
+  {
+   "ncells": 64,
+   "degree": 2,
+   "final_time": 1.0,
+   "hydrostatic_reconstruction": true,
+   "eta_error_max_wet": 2.510613938966344e-11,
+   "u_max": 6.454310736591819e-11,
+   "hu_modal_max": 9.681466105049772e-11,
+   "wall_time_s": 21.594,
+   "steps": 1182,
+   "reached_final_time": true
+  }
+ ],
+ "rest_state_without_reconstruction": [
+  {
+   "ncells": 32,
+   "degree": 1,
+   "final_time": 1.0,
+   "hydrostatic_reconstruction": false,
+   "eta_error_max_wet": 0.6563423276362697,
+   "u_max": 0.8376590010660614,
+   "hu_modal_max": 1.5455004535147276,
+   "wall_time_s": 5.349,
+   "steps": 389,
+   "reached_final_time": true
+  },
+  {
+   "ncells": 64,
+   "degree": 1,
+   "final_time": 1.0,
+   "hydrostatic_reconstruction": false,
+   "eta_error_max_wet": 1.488138441181341,
+   "u_max": 1.9695803788430413,
+   "hu_modal_max": 5.8853788430174,
+   "wall_time_s": 11.943,
+   "steps": 832,
+   "reached_final_time": true
+  },
+  {
+   "ncells": 32,
+   "degree": 2,
+   "final_time": 1.0,
+   "hydrostatic_reconstruction": false,
+   "eta_error_max_wet": 0.4446056542226171,
+   "u_max": 2.4230865131374517,
+   "hu_modal_max": 2.5573118052947006,
+   "wall_time_s": 10.478,
+   "steps": 684,
+   "reached_final_time": true
+  },
+  {
+   "ncells": 64,
+   "degree": 2,
+   "final_time": 1.0,
+   "hydrostatic_reconstruction": false,
+   "eta_error_max_wet": 0.5281450806477359,
+   "u_max": 2.683361285682523,
+   "hu_modal_max": 2.6078378658899757,
+   "wall_time_s": 23.173,
+   "steps": 1393,
+   "reached_final_time": true
+  }
+ ],
+ "wet_dry_wall": [
+  {
+   "ncells": 32,
+   "degree": 1,
+   "final_time": 1.0,
+   "n_dry_cells": 16,
+   "n_expected_dry": 16,
+   "max_depth_on_dry_side": 0.0,
+   "min_depth_on_wet_side": 1.500000000000063,
+   "eta_error_max_wet": 1.5765166949677223e-13,
+   "u_max": 4.376298728829672e-13,
+   "mass_initial": 3.0,
+   "reached_final_time": true
+  },
+  {
+   "ncells": 64,
+   "degree": 1,
+   "final_time": 1.0,
+   "n_dry_cells": 32,
+   "n_expected_dry": 32,
+   "max_depth_on_dry_side": 0.0,
+   "min_depth_on_wet_side": 1.5000000000002598,
+   "eta_error_max_wet": 6.448175327022909e-13,
+   "u_max": 1.7059349230226607e-12,
+   "mass_initial": 3.0,
+   "reached_final_time": true
+  },
+  {
+   "ncells": 32,
+   "degree": 2,
+   "final_time": 1.0,
+   "n_dry_cells": 16,
+   "n_expected_dry": 16,
+   "max_depth_on_dry_side": 0.0,
+   "min_depth_on_wet_side": 1.5000000000015041,
+   "eta_error_max_wet": 4.940936548791797e-12,
+   "u_max": 1.2707750623744536e-11,
+   "mass_initial": 3.0,
+   "reached_final_time": true
+  },
+  {
+   "ncells": 64,
+   "degree": 2,
+   "final_time": 1.0,
+   "n_dry_cells": 32,
+   "n_expected_dry": 32,
+   "max_depth_on_dry_side": 0.0,
+   "min_depth_on_wet_side": 1.5000000000071654,
+   "eta_error_max_wet": 1.3640200080544673e-11,
+   "u_max": 3.503348206050628e-11,
+   "mass_initial": 3.0,
+   "reached_final_time": true
+  }
+ ],
+ "dam_break_over_step": [
+  {
+   "ncells": 100,
+   "degree": 1,
+   "final_time": 0.3,
+   "min_depth": 0.9036302076665338,
+   "max_speed": 2.904003818265787,
+   "mass_final": 5.9999999986295665,
+   "mass_initial_exact": 6.0,
+   "mass_rel_error": 2.28405590737187e-10,
+   "reached_final_time": true
+  }
+ ],
+ "thacker_moving_solution_accuracy": [
+  {
+   "degree": 1,
+   "ncells": 20,
+   "final_time": 0.5,
+   "eta_rel_L2_pct": 0.06044398077446974,
+   "h_rel_L2_pct": 0.12728122505049544,
+   "u_rel_L2_pct": 0.13311339016723037,
+   "steps": 265
+  },
+  {
+   "degree": 2,
+   "ncells": 20,
+   "final_time": 0.5,
+   "eta_rel_L2_pct": 8.180004569972064e-07,
+   "h_rel_L2_pct": 0.04040404054369707,
+   "u_rel_L2_pct": 8.38187936492837e-06,
+   "steps": 442
+  }
+ ]
+}
