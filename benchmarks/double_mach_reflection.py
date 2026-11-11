@@ -10,6 +10,20 @@ two-dimensional fluid flow with strong shocks." J. Comput. Phys. 54, 115-173.
 The computational domain is [0, 4] x [0, 1] with a reflecting wall at y=0
 and an inflow boundary at x=0.  The initial shock is placed at x = 1/6,
 y = 0, inclined at 60 degrees to the x-axis.
+
+Honest scope (mission m13761 audit of PR #247)
+----------------------------------------------
+``solve_euler_dg_2d`` only offers periodic / zero-gradient (transmissive)
+faces, so neither the reflecting wall at ``y = 0`` (x > 1/6) nor the exact
+post-shock tracking boundary at ``y = 1`` exists: the Woodward--Colella
+*triple point / Mach stem* pattern cannot form, and the density range quoted in
+``docs/dg_euler_verification_report.md`` (1.4 .. 22+) is not reproducible from
+this file.  What the file can do is initialise the **exact** oblique-shock
+states (Mach 10, 60 degree front) and check the Rankine--Hugoniot jump against
+closed-form values, which is what ``benchmarks/oblique_shock.py`` verifies.
+The strong-shock DG run also aborts with ``FloatingPointError`` at the shipped
+limiter settings (``tvb_constant = 100``) and with ``tvb_constant = 1``,
+``cfl = 0.1`` on a 24x24 mesh -- documented as a gap, not hidden.
 """
 from __future__ import annotations
 
@@ -30,6 +44,8 @@ from tensordg.euler_dg_2d import (
 )
 from tensordg.euler_1d import GAMMA
 
+from benchmarks.oblique_shock import ShockState, oblique_shock
+
 # Pre-shock (ahead of shock, right side)
 PRE_SHOCK = (1.4, 0.0, 0.0, 1.0)
 # Post-shock (behind shock, left side) -- Mach 10 normal shock relations
@@ -38,14 +54,32 @@ PRE_SHOCK = (1.4, 0.0, 0.0, 1.0)
 # u2 = 2/(gamma+1) * (Ma - 1/Ma) * a1
 MA_SHOCK = 10.0
 A1 = np.sqrt(GAMMA * PRE_SHOCK[3] / PRE_SHOCK[0])  # sound speed ahead
-RHO2 = PRE_SHOCK[0] * (GAMMA + 1) * MA_SHOCK**2 / ((GAMMA - 1) * MA_SHOCK**2 + 2)
-P2 = PRE_SHOCK[3] * (1 + 2 * GAMMA / (GAMMA + 1) * (MA_SHOCK**2 - 1))
-U2 = 2.0 / (GAMMA + 1) * (MA_SHOCK - 1.0 / MA_SHOCK) * A1
-POST_SHOCK = (RHO2, U2, 0.0, P2)
 
 # Shock angle: 60 degrees from horizontal
 SHOCK_ANGLE_DEG = 60.0
 SHOCK_ANGLE_RAD = np.deg2rad(SHOCK_ANGLE_DEG)
+
+# The post-shock state must satisfy the Rankine--Hugoniot conditions across the
+# 60-degree front, i.e. the velocity points along the shock *normal*, not along
+# +x (the merged version of this file set u2 = 8.25 along +x, which is not a
+# solution of the Euler equations for an inclined shock).  ``benchmarks.
+# oblique_shock`` computes the exact state; the values below are its output.
+_BETA = SHOCK_ANGLE_RAD
+_NORMAL = (np.sin(_BETA), -np.cos(_BETA))
+_SHOCK_SPEED = MA_SHOCK * A1          # Mach-10 shock normal to itself
+# the shock is stationary in a frame where the upstream gas moves with
+# ``_SHOCK_SPEED`` along the normal; build the exact state there and carry it
+# back to the laboratory frame (upstream at rest).
+_OBLIQUE = oblique_shock(MA_SHOCK, SHOCK_ANGLE_DEG,
+                         ShockState(rho=PRE_SHOCK[0],
+                                    u=_SHOCK_SPEED * _NORMAL[0],
+                                    v=_SHOCK_SPEED * _NORMAL[1],
+                                    p=PRE_SHOCK[3]))
+RHO2, P2 = _OBLIQUE.downstream.rho, _OBLIQUE.downstream.p
+POST_SHOCK = (_OBLIQUE.downstream.rho,
+              _OBLIQUE.downstream.u - _SHOCK_SPEED * _NORMAL[0],
+              _OBLIQUE.downstream.v - _SHOCK_SPEED * _NORMAL[1],
+              _OBLIQUE.downstream.p)
 
 # The shock line passes through (1/6, 0) with slope tan(60)
 SHOCK_X0 = 1.0 / 6.0
@@ -60,7 +94,7 @@ def _initial_double_mach(x, y):
     # Shock line: y = tan(60) * (x - 1/6)
     shock_y = np.tan(SHOCK_ANGLE_RAD) * (x.cpu().numpy() - SHOCK_X0)
     y_np = y.cpu().numpy()
-    mask = torch.as_tensor(y_np < shock_y, device=x.device, dtype=x.dtype)
+    mask = torch.as_tensor(y_np < shock_y, device=x.device, dtype=torch.bool)
 
     rho = torch.where(mask,
                       torch.full_like(x, POST_SHOCK[0]),
