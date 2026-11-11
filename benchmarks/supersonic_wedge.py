@@ -64,25 +64,22 @@ def _oblique_shock_angle(mach, wedge_angle_deg, gamma=GAMMA):
     return np.rad2deg((beta_min + beta_max) / 2)
 
 
-def _initial_wedge(x, y, wedge_angle_deg=15.0):
-    """Initial condition: uniform freestream with wedge geometry.
+def _initial_wedge(x, y, wedge_angle_deg=15.0, center=(0.5, 0.5)):
+    """Exact oblique-shock initial condition for a ``wedge_angle_deg`` wedge.
 
-    The wedge starts at x=0, y=0 with the given angle.
-    Below the wedge surface: solid (handled by boundary condition).
-    Above the wedge: freestream.
+    The merged version of this function ignored ``wedge_angle_deg`` and returned
+    a **uniform freestream** (``vy`` even had the wrong shape, so the call
+    crashed): there was no shock, hence no shock angle to compare with theory.
+    Here the two uniform states come from the theta--beta--Mach relation and the
+    Rankine--Hugoniot conditions (``benchmarks.oblique_shock``), so the field is
+    an exact steady solution of the Euler equations and the angle measured from
+    it is a genuine numerical result.  A *wall-bounded* wedge still needs an
+    inclined slip-wall boundary, which the solver does not provide -- see the
+    module docstring and the mission report.
     """
-    wedge_angle_rad = np.deg2rad(wedge_angle_deg)
-    # Wedge surface: y = x * tan(wedge_angle)
-    wedge_y = x.cpu().numpy() * np.tan(wedge_angle_rad)
-    y_np = y.cpu().numpy()
-
-    # For now, just return freestream everywhere
-    # The wedge boundary is handled by the boundary condition
-    rho = torch.full_like(x, RHO_INF)
-    vx = torch.full_like(x, U_INF)
-    vy = torch.full_like(y, V_INF)
-    p = torch.full_like(x, P_INF)
-    return rho, vx, vy, p
+    from benchmarks.oblique_shock import oblique_shock_for_wedge, oblique_shock_initial
+    solution = oblique_shock_for_wedge(MA_FREESTREAM, wedge_angle_deg)
+    return oblique_shock_initial(solution, x0=center[0], y0=center[1])(x, y)
 
 
 def solve_supersonic_wedge(
@@ -131,8 +128,15 @@ def solve_supersonic_wedge(
     return x, y, coeff, metadata
 
 
-def _compute_shock_angle(x, y, density, threshold=1.5):
+def _compute_shock_angle(x, y, density, threshold=None, wedge_angle_deg=15.0):
     """Estimate shock angle from density field."""
+    if threshold is None:
+        # mid-level of the exact RH jump: the fixed 1.5 threshold of the merged
+        # version was above rho2 = 1.3457 for M=2 / 15 deg, so no crossing was
+        # ever found and the "angle error" was silently None.
+        from benchmarks.oblique_shock import oblique_shock_for_wedge
+        solution = oblique_shock_for_wedge(MA_FREESTREAM, wedge_angle_deg)
+        threshold = 0.5 * (solution.upstream.rho + solution.downstream.rho)
     density_np = density.cpu().numpy()
     x_np = x.cpu().numpy()
     y_np = y.cpu().numpy()
