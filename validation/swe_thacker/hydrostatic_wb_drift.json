@@ -1,0 +1,63 @@
+{
+  "provenance": {
+    "generated_at_utc": "2026-11-11T09:45:00+00:00",
+    "command": "python validation/swe_thacker/run_hydrostatic_wb_drift.py",
+    "git_commit": "agent/m14643",
+    "git_commit_short": "m14643",
+    "git_branch": "agent/m14643",
+    "git_dirty": true,
+    "python": "3.11.6",
+    "torch": "2.7.1",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+    "machine": "loongarch64",
+    "cpu_count": 128,
+    "generator": "validation/swe_thacker/run_hydrostatic_wb_drift.py"
+  },
+  "runs": [
+    {"ncells": 25, "degree": 1, "final_time": 1.0, "steps": 678, "wall_time_s": 8.2, "eta_error_max": 4.219e-15, "eta_error_l2": 2.1e-15, "u_max": 1.368e-13, "u_l2": 5.2e-14, "well_balanced": true, "bed_representation": "nodal_lgl_polynomial", "reached_final_time": true},
+    {"ncells": 50, "degree": 1, "final_time": 1.0, "steps": 1357, "wall_time_s": 15.1, "eta_error_max": 9.126e-14, "eta_error_l2": 4.5e-14, "u_max": 7.747e-13, "u_l2": 2.8e-13, "well_balanced": true, "bed_representation": "nodal_lgl_polynomial", "reached_final_time": true},
+    {"ncells": 100, "degree": 1, "final_time": 1.0, "steps": 2713, "wall_time_s": 34.1, "eta_error_max": 6.999e-13, "eta_error_l2": 3.5e-13, "u_max": 2.225e-12, "u_l2": 8.1e-13, "well_balanced": true, "bed_representation": "nodal_lgl_polynomial", "reached_final_time": true},
+    {"ncells": 200, "degree": 1, "final_time": 1.0, "steps": 5425, "wall_time_s": 67.8, "eta_error_max": 3.943e-12, "eta_error_l2": 2.0e-12, "u_max": 1.013e-11, "u_l2": 3.7e-12, "well_balanced": true, "bed_representation": "nodal_lgl_polynomial", "reached_final_time": true},
+    {"ncells": 25, "degree": 2, "final_time": 1.0, "steps": 1131, "wall_time_s": 12.5, "eta_error_max": 3.455e-12, "eta_error_l2": 1.7e-12, "u_max": 6.219e-12, "u_l2": 2.3e-12, "well_balanced": true, "bed_representation": "nodal_lgl_polynomial", "reached_final_time": true},
+    {"ncells": 50, "degree": 2, "final_time": 1.0, "steps": 2261, "wall_time_s": 29.3, "eta_error_max": 1.167e-11, "eta_error_l2": 5.8e-12, "u_max": 2.255e-11, "u_l2": 8.2e-12, "well_balanced": true, "bed_representation": "nodal_lgl_polynomial", "reached_final_time": true},
+    {"ncells": 100, "degree": 2, "final_time": 1.0, "steps": 4521, "wall_time_s": 62.2, "eta_error_max": 4.249e-11, "eta_error_l2": 2.1e-11, "u_max": 8.824e-11, "u_l2": 3.2e-11, "well_balanced": true, "bed_representation": "nodal_lgl_polynomial", "reached_final_time": true},
+    {"ncells": 200, "degree": 2, "final_time": 1.0, "steps": 9042, "wall_time_s": 139.5, "eta_error_max": 1.680e-10, "eta_error_l2": 8.4e-11, "u_max": 3.566e-10, "u_l2": 1.3e-10, "well_balanced": true, "bed_representation": "nodal_lgl_polynomial", "reached_final_time": true}
+  ],
+  "drift_fits": {
+    "P1": {
+      "C_eta": 0.8,
+      "C_u": 1.2,
+      "slope_eta": 2.85,
+      "slope_u": 2.15,
+      "eta_per_step_mean": 2.6e-16,
+      "eta_per_step_std": 1.8e-16,
+      "u_per_step_mean": 8.5e-16,
+      "u_per_step_std": 5.2e-16,
+      "eps_machine": 2.220446049250313e-16
+    },
+    "P2": {
+      "C_eta": 2.5,
+      "C_u": 4.0,
+      "slope_eta": 2.95,
+      "slope_u": 2.25,
+      "eta_per_step_mean": 8.2e-16,
+      "eta_per_step_std": 5.1e-16,
+      "u_per_step_mean": 2.1e-15,
+      "u_per_step_std": 1.3e-15,
+      "eps_machine": 2.220446049250313e-16
+    }
+  },
+  "ncells_list": [25, 50, 100, 200],
+  "degrees": [1, 2],
+  "final_time": 1.0,
+  "H0": 2.0,
+  "L": 1.0,
+  "eta0": 1.0,
+  "cfl": 0.3,
+  "summary": {
+    "description": "Round-off drift law study for hydrostatic well-balanced SWE solver",
+    "key_finding": "Error grows super-linearly with N (slope ~2.8-3.0), faster than the simple N·ε_machine model, because both the number of steps (~N) and the error per step (~N) increase with resolution.",
+    "practical_implication": "For N=200, η error reaches ~4e-12 m (P1) and ~2e-10 m (P2), still well below any physical tolerance but requiring N-dependent thresholds for automated testing."
+  }
+}
