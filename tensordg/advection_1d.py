@@ -21,6 +21,8 @@ from typing import Callable, Sequence
 import numpy as np
 import torch
 
+from .limiters import apply_limiter
+
 # The quadrature order is ``max(2*degree + 3, 4)`` and float64 Legendre
 # evaluation is stable far beyond this; the bound only keeps the Python-side
 # basis assembly sane.
@@ -73,15 +75,43 @@ def _rhs(u: torch.Tensor, h: float, speed: float, volume: torch.Tensor,
     return out
 
 
+def _limit(coeff: torch.Tensor, dx: float, limiter: str | None,
+           tvb_constant: float, troubled_policy: str = "tvb") -> torch.Tensor:
+    """Apply a 1-D limiter to the scalar modal state ``[ncells, nmodes]``.
+
+    The limiter kernel works on ``[..., nvar]`` tensors, so the scalar field is
+    given a trailing singleton axis.  ``periodic=True`` gives the end cells
+    genuine wrap-around neighbours; without it a discontinuity crossing the
+    periodic seam would leave cells 0 and N-1 unlimited (and un-limitable).
+    """
+    if limiter is None:
+        return coeff
+    limited = apply_limiter(
+        coeff.unsqueeze(-1), dx, kind=limiter, tvb_constant=tvb_constant,
+        periodic=True, limit_all=(troubled_policy == "all"),
+    )
+    return limited.squeeze(-1)
+
+
 def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
                     speed: float = 1.0, cfl: float = 0.08,
                     device: str = "cpu", dtype: torch.dtype = torch.float64,
-                    initial: Callable[[torch.Tensor], torch.Tensor] | None = None):
+                    initial: Callable[[torch.Tensor], torch.Tensor] | None = None,
+                    limiter: str | None = None, tvb_constant: float = 1.0,
+                    time_integrator: str = "rk4", troubled_policy: str = "tvb"):
     """Solve u_t + speed*u_x = 0 on [0,1] with periodic BC.
 
     ``initial`` defaults to ``sin(2*pi*x)`` (the historical benchmark); pass a
     callable to project any other profile (e.g. a square wave) as ``initial(x)``
     with ``x`` in physical coordinates in ``[0, 1]``.
+
+    ``limiter`` enables the Cockburn-Shu shock-capturing path: ``None`` (the
+    historical behaviour) leaves the scheme unlimited, ``"tvb"`` applies the
+    TVB/minmod limiter (M = ``tvb_constant``, M=0 is the strict TVD variant)
+    and ``"weno"`` the WENO limiter, both after every Runge-Kutta stage.
+    ``time_integrator`` selects classical ``"rk4"`` (default, 4th-order but
+    *not* strong-stability-preserving) or ``"ssp_rk3"`` (the TVD-RK scheme of
+    Cockburn & Shu 1998, required for the TVD property when limiting).
 
     Returns (cell_centers, modal_coefficients, metadata). The first modal
     coefficient is the cell-average because P0=1 and higher Legendre modes
@@ -93,6 +123,10 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
         )
     if final_time < 0 or cfl <= 0:
         raise ValueError("final_time must be >= 0 and cfl must be > 0")
+    if time_integrator not in ("rk4", "ssp_rk3"):
+        raise ValueError("time_integrator must be 'rk4' or 'ssp_rk3'")
+    if troubled_policy not in ("tvb", "all"):
+        raise ValueError("troubled_policy must be 'tvb' (paper indicator) or 'all' (strict)")
     profile = _sine if initial is None else initial
     dev = torch.device(device)
     h = 1.0 / ncells
@@ -113,14 +147,27 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
         dt_nominal = cfl * h / (abs(speed) * (2 * degree + 1))
         steps = math.ceil(final_time / dt_nominal)
     dt = final_time / steps if steps else 0.0
+    lim = lambda c: _limit(c, h, limiter, tvb_constant, troubled_policy)  # noqa: E731
     for _ in range(steps):
         k1 = _rhs(coeff, h, speed, volume, phi_l, phi_r)
-        k2 = _rhs(coeff + 0.5 * dt * k1, h, speed, volume, phi_l, phi_r)
-        k3 = _rhs(coeff + 0.5 * dt * k2, h, speed, volume, phi_l, phi_r)
-        k4 = _rhs(coeff + dt * k3, h, speed, volume, phi_l, phi_r)
-        coeff = coeff + (dt / 6.0) * (k1 + 2*k2 + 2*k3 + k4)
+        if time_integrator == "ssp_rk3":
+            u1 = lim(coeff + dt * k1)
+            k2 = _rhs(u1, h, speed, volume, phi_l, phi_r)
+            u2 = lim(0.75 * coeff + 0.25 * (u1 + dt * k2))
+            k3 = _rhs(u2, h, speed, volume, phi_l, phi_r)
+            coeff = lim((1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3))
+            continue
+        u2 = lim(coeff + 0.5 * dt * k1)
+        k2 = _rhs(u2, h, speed, volume, phi_l, phi_r)
+        u3 = lim(coeff + 0.5 * dt * k2)
+        k3 = _rhs(u3, h, speed, volume, phi_l, phi_r)
+        u4 = lim(coeff + dt * k3)
+        k4 = _rhs(u4, h, speed, volume, phi_l, phi_r)
+        coeff = lim(coeff + (dt / 6.0) * (k1 + 2*k2 + 2*k3 + k4))
     meta = {"ncells": ncells, "degree": degree, "final_time": final_time,
-            "speed": speed, "dt": dt, "steps": steps, "device": str(dev)}
+            "speed": speed, "dt": dt, "steps": steps, "device": str(dev),
+            "limiter": limiter or "none", "tvb_constant": tvb_constant,
+            "time_integrator": time_integrator, "troubled_policy": troubled_policy}
     return centers, coeff, meta
 
 
