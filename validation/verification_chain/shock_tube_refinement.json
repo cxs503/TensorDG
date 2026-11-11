@@ -1,0 +1,67 @@
+{
+  "cases": {
+    "sod": {
+      "left": [
+        1.0,
+        0.0,
+        1.0
+      ],
+      "right": [
+        0.125,
+        0.0,
+        0.1
+      ],
+      "final_time": 0.2,
+      "degree": 2,
+      "cfl": 0.15,
+      "limiter": "tvb",
+      "limiter_stage": "final",
+      "reference": "exact Riemann cell averages (benchmarks/riemann_exact.cell_averages, 8-point Gauss)",
+      "rows": [
+        {
+          "ncells": 50,
+          "relative_l2": {
+            "density": 0.02992720333929817,
+            "velocity": 0.0647374442923509,
+            "pressure": 0.03211563144905359
+          },
+          "steps": 713,
+          "wall_seconds": 11.69
+        },
+        {
+          "ncells": 100,
+          "relative_l2": {
+            "density": 0.02026873080926805,
+            "velocity": 0.060270009664734316,
+            "pressure": 0.019933861270704904
+          },
+          "steps": 1448,
+          "wall_seconds": 23.77
+        }
+      ],
+      "pairwise_order": {
+        "density": [
+          0.5622017143236134
+        ],
+        "velocity": [
+          0.10316011575452493
+        ],
+        "pressure": [
+          0.688054469417575
+        ]
+      },
+      "mean_order": {
+        "density": 0.5622017143236134,
+        "velocity": 0.10316011575452493,
+        "pressure": 0.688054469417575
+      }
+    }
+  },
+  "provenance": {
+    "generated_by": "validation/verification_chain/shock_tube_refinement.py",
+    "argv": [
+      "sod",
+      "50,100"
+    ]
+  }
+}
