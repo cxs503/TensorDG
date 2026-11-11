@@ -1,0 +1,235 @@
+{
+  "kappa": 0.4929577464788734,
+  "exact_wall_flux": 0.2464788732394367,
+  "prandtl": 0.71,
+  "mu": 0.1,
+  "temperatures": {
+    "hot": 1.0,
+    "cold": 0.5
+  },
+  "pressure": 1.0,
+  "orders": {
+    "p1_taylor": {
+      "wall_flux_error": 1.032600901272033,
+      "interior_flux_error": 2.0559331264659106,
+      "row_residual": 0.07919030605043433,
+      "row_residual_inner": 0.8673672231497257,
+      "l2_residual": 0.47535718148523615
+    },
+    "p1_face": {
+      "wall_flux_error": 1.0289688917344564,
+      "interior_flux_error": 2.0559331264659106,
+      "row_residual": 0.18914059871540378,
+      "row_residual_inner": 0.8673672231497257,
+      "l2_residual": 0.7268779688976921
+    },
+    "p2_taylor": {
+      "wall_flux_error": 2.0747397558992278,
+      "interior_flux_error": 2.0580738326841015,
+      "row_residual": 1.0598138849810153,
+      "row_residual_inner": 0.8726127454542157,
+      "l2_residual": 0.9818015671523409
+    },
+    "p2_face": {
+      "wall_flux_error": 2.047022982246428,
+      "interior_flux_error": 2.0580738326841015,
+      "row_residual": 1.052595530958918,
+      "row_residual_inner": 0.8726127454542157,
+      "l2_residual": 0.9843432147475462
+    }
+  },
+  "cases": [
+    {
+      "ny": 8,
+      "degree": 1,
+      "wall_gradient": "taylor",
+      "wall_flux": 0.2242646721607095,
+      "interior_flux": 0.24431377053434694,
+      "row_residual": 0.5966111165041781,
+      "row_residual_inner": 0.29398065036064613,
+      "l2_residual": 0.1929793611212972,
+      "wall_flux_error": -0.022214201078727208,
+      "interior_flux_error": -0.0021651027050897664
+    },
+    {
+      "ny": 16,
+      "degree": 1,
+      "wall_gradient": "taylor",
+      "wall_flux": 0.23580558984897085,
+      "interior_flux": 0.24597387509138435,
+      "row_residual": 0.5421238070567469,
+      "row_residual_inner": 0.17093204676291052,
+      "l2_residual": 0.13972782583308435,
+      "wall_flux_error": -0.01067328339046586,
+      "interior_flux_error": -0.0005049981480523547
+    },
+    {
+      "ny": 32,
+      "degree": 1,
+      "wall_gradient": "taylor",
+      "wall_flux": 0.24124486962455483,
+      "interior_flux": 0.24635670704815954,
+      "row_residual": 0.5169310331662071,
+      "row_residual_inner": 0.09291243717660436,
+      "l2_residual": 0.10052864789923688,
+      "wall_flux_error": -0.0052340036148818825,
+      "interior_flux_error": -0.00012216619127716766
+    },
+    {
+      "ny": 64,
+      "degree": 1,
+      "wall_gradient": "taylor",
+      "wall_flux": 0.24388684801602406,
+      "interior_flux": 0.24644881711690758,
+      "row_residual": 0.5047981729365105,
+      "row_residual_inner": 0.048553825727609023,
+      "l2_residual": 0.07181017471753116,
+      "wall_flux_error": -0.0025920252234126473,
+      "interior_flux_error": -3.005612252912626e-05
+    },
+    {
+      "ny": 8,
+      "degree": 1,
+      "wall_gradient": "face",
+      "wall_flux": 0.24097294716506132,
+      "interior_flux": 0.24431377053434694,
+      "row_residual": 0.1956125163997351,
+      "row_residual_inner": 0.29398065036064613,
+      "l2_residual": 0.09732328192547246,
+      "wall_flux_error": -0.005505926074375389,
+      "interior_flux_error": -0.0021651027050897664
+    },
+    {
+      "ny": 16,
+      "degree": 1,
+      "wall_gradient": "face",
+      "wall_flux": 0.24382092049847354,
+      "interior_flux": 0.24597387509138435,
+      "row_residual": 0.1573879358806165,
+      "row_residual_inner": 0.17093204676291052,
+      "l2_residual": 0.056997576490174055,
+      "wall_flux_error": -0.002657952740963171,
+      "interior_flux_error": -0.0005049981480523547
+    },
+    {
+      "ny": 32,
+      "degree": 1,
+      "wall_gradient": "face",
+      "wall_flux": 0.24517279098715314,
+      "interior_flux": 0.24635670704815954,
+      "row_residual": 0.13985058235677172,
+      "row_residual_inner": 0.09291243717660436,
+      "l2_residual": 0.03425731149976953,
+      "wall_flux_error": -0.0013060822522835691,
+      "interior_flux_error": -0.00012216619127716766
+    },
+    {
+      "ny": 64,
+      "degree": 1,
+      "wall_gradient": "face",
+      "wall_flux": 0.24583145099819592,
+      "interior_flux": 0.24644881711690758,
+      "row_residual": 0.13143440035951315,
+      "row_residual_inner": 0.048553825727609023,
+      "l2_residual": 0.021505235894986416,
+      "wall_flux_error": -0.000647422241240786,
+      "interior_flux_error": -3.005612252912626e-05
+    },
+    {
+      "ny": 8,
+      "degree": 2,
+      "wall_gradient": "taylor",
+      "wall_flux": 0.24711271664497675,
+      "interior_flux": 0.2478062189501129,
+      "row_residual": 0.05199957645571862,
+      "row_residual_inner": 0.17573258478405362,
+      "l2_residual": 0.062030490584166986,
+      "wall_flux_error": 0.000633843405540041,
+      "interior_flux_error": 0.0013273457106761921
+    },
+    {
+      "ny": 16,
+      "degree": 2,
+      "wall_gradient": "taylor",
+      "wall_flux": 0.24662354533067413,
+      "interior_flux": 0.24678734976916225,
+      "row_residual": 0.02413658477943592,
+      "row_residual_inner": 0.10134554857067801,
+      "l2_residual": 0.031615590351508065,
+      "wall_flux_error": 0.00014467209123741887,
+      "interior_flux_error": 0.0003084765297255432
+    },
+    {
+      "ny": 32,
+      "degree": 2,
+      "wall_gradient": "taylor",
+      "wall_flux": 0.2465134619424775,
+      "interior_flux": 0.24655343535653937,
+      "row_residual": 0.011652208440308343,
+      "row_residual_inner": 0.05495303701217402,
+      "l2_residual": 0.016000756430375056,
+      "wall_flux_error": 3.458870304079431e-05,
+      "interior_flux_error": 7.456211710266114e-05
+    },
+    {
+      "ny": 64,
+      "degree": 2,
+      "wall_gradient": "taylor",
+      "wall_flux": 0.24648733126781092,
+      "interior_flux": 0.24649721378117312,
+      "row_residual": 0.005727561578158458,
+      "row_residual_inner": 0.02869775476053249,
+      "l2_residual": 0.008054150453046496,
+      "wall_flux_error": 8.458028374208615e-06,
+      "interior_flux_error": 1.834054173641131e-05
+    },
+    {
+      "ny": 8,
+      "degree": 2,
+      "wall_gradient": "face",
+      "wall_flux": 0.24680230162326142,
+      "interior_flux": 0.2478062189501129,
+      "row_residual": 0.04454961593455131,
+      "row_residual_inner": 0.17573258478405362,
+      "l2_residual": 0.06241594542551106,
+      "wall_flux_error": 0.00032342838382470873,
+      "interior_flux_error": 0.0013273457106761921
+    },
+    {
+      "ny": 16,
+      "degree": 2,
+      "wall_gradient": "face",
+      "wall_flux": 0.24655522694077345,
+      "interior_flux": 0.24678734976916225,
+      "row_residual": 0.02085730206420333,
+      "row_residual_inner": 0.10134554857067801,
+      "l2_residual": 0.03172049188051426,
+      "wall_flux_error": 7.635370133673991e-05,
+      "interior_flux_error": 0.0003084765297255432
+    },
+    {
+      "ny": 32,
+      "degree": 2,
+      "wall_gradient": "face",
+      "wall_flux": 0.24649743313572464,
+      "interior_flux": 0.24655343535653937,
+      "row_residual": 0.010113442992031096,
+      "row_residual_inner": 0.05495303701217402,
+      "l2_residual": 0.0160279677678652,
+      "wall_flux_error": 1.8559896287934086e-05,
+      "interior_flux_error": 7.456211710266114e-05
+    },
+    {
+      "ny": 64,
+      "degree": 2,
+      "wall_gradient": "face",
+      "wall_flux": 0.24648344916111334,
+      "interior_flux": 0.24649721378117312,
+      "row_residual": 0.004982197092228802,
+      "row_residual_inner": 0.02869775476053249,
+      "l2_residual": 0.00806108050842054,
+      "wall_flux_error": 4.575921676630568e-06,
+      "interior_flux_error": 1.834054173641131e-05
+    }
+  ]
+}
