@@ -1,0 +1,110 @@
+{
+  "feature_slug": "CASE-EULER-VORTEX",
+  "anchor": "CASE-EULER-VORTEX",
+  "case_pool_entry": {
+    "id": "EULER-VORTEX",
+    "reference": "exact isentropic vortex",
+    "tolerance_relative_l2": 0.05
+  },
+  "decision": "adapt 仓内 P0 基线 + 高阶 DG 双路径，配契约化门禁与参考解自校核；不迁移任何外部源码",
+  "transfer_vocabulary": [
+    "adapt",
+    "adapt",
+    "reference",
+    "reject-as-is",
+    "reject"
+  ],
+  "candidates": [
+    {
+      "name": "tensordg/euler_2d.py (P0/Rusanov/SSP-RK3)",
+      "transfer": "adapt",
+      "role": "低阶基线与门禁反例",
+      "evidence": "case_euler_vortex/metrics.json:p0_coarse_percent"
+    },
+    {
+      "name": "tensordg/euler_dg_2d.py (modal DG/HLLC/SSP-RK3)",
+      "transfer": "adapt",
+      "role": "主路径",
+      "evidence": "case_euler_vortex/metrics.json:gate[0]"
+    },
+    {
+      "name": "Trixi.jl / deal.II 类 DG 实现的验证编排结构",
+      "transfer": "reference",
+      "role": "结构参照（解析解算子分离/求积节点 L2/阶梯观测阶），不搬代码",
+      "evidence": "docs/euler_vortex_method_survey.md"
+    },
+    {
+      "name": "前轮 m15260 一次性长跑做法",
+      "transfer": "reject-as-is",
+      "role": "无 fail_stage/reason，不可复现",
+      "evidence": "任务单 failure_reason=未留"
+    },
+    {
+      "name": "限制器开启的 DG",
+      "transfer": "reject",
+      "role": "光滑算例下降阶",
+      "evidence": "docs/limiter_verification.md"
+    }
+  ],
+  "external_anchor": [
+    "Shu, ICASE Report 97-65 / NASA CR-97-206253 (1998) §4.4.2 smooth isentropic vortex",
+    "Yee, Sandham & Djomehri, JCP 150 (1999) 同一算例",
+    "Cockburn & Shu, JCP 141 (1998) RKDG for conservation laws V",
+    "Gottlieb & Shu, Math. Comp. 67 (1998) SSP-RK",
+    "Toro, Riemann Solvers and Numerical Methods for Fluid Dynamics, 3rd ed. (2009) Ch.10 HLLC"
+  ],
+  "migration_plan": [
+    "契约化算例常量（域/beta/来流/t/CFL/网格/容差）",
+    "每配置一进程一检查点 results/<key>.json",
+    "参考解自校核五判据（div F, U_t+F_x+G_y, p=rho^gamma, div(u,v)=0, dp/dr=rho v_theta^2/r）",
+    "聚合器程序化注入报告数字（零手抄）+ 门禁三态 PASS/MISSING/FAIL"
+  ],
+  "measured": {
+    "gate": [
+      {
+        "task_key": "dg_d2_n32_t1_cfl0.2",
+        "max_percent": 0.012651985914081664,
+        "passed": true
+      },
+      {
+        "task_key": "p0_n128_t1_cfl0.4",
+        "max_percent": 2.816997317289924,
+        "passed": true
+      }
+    ],
+    "design_order_gate": true,
+    "observed_order_density": {
+      "p0_d0": [
+        0.6097334099007279,
+        0.7570888810941016,
+        0.8223283956673746
+      ],
+      "dg_d1": [
+        2.0384226977185493,
+        2.0336288231867057
+      ],
+      "dg_d2": [
+        3.0050534142890677,
+        3.0823214048765046
+      ],
+      "dg_d3": [
+        3.8794624292378566,
+        3.9558130792081685
+      ]
+    },
+    "p0_coarse_percent": 7.799898324635561,
+    "peak_tangential_mach": 0.7957747153179815,
+    "overall_passed": true
+  },
+  "artifacts": [
+    "benchmarks/case_euler_vortex.py",
+    "benchmarks/_case_euler_vortex_report.py",
+    "tools/run_case_euler_vortex.sh",
+    "docs/CASE-EULER-VORTEX.md",
+    "case_euler_vortex/metrics.json",
+    "case_euler_vortex/convergence.csv",
+    "tests/test_case_euler_vortex.py"
+  ],
+  "db_write_status": "blocked: no INSERT privilege on oss_solutions for local role; record kept as in-repo JSON for the ingester",
+  "date": "2026-11-11"
+}

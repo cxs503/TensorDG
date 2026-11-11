@@ -1,0 +1,35 @@
+{
+  "task": "residual",
+  "steady_frame_residual": 3.1686090444632217e-16,
+  "steady_frame_per_component": {
+    "mass": 0.0,
+    "momentum_x": 3.1686090444632217e-16,
+    "momentum_y": 3.1686090444632217e-16,
+    "energy": 0.0
+  },
+  "spacetime_residual": 1.32434286779535e-10,
+  "spacetime_per_component": {
+    "mass": 1.1317967965921487e-10,
+    "momentum_x": 1.32434286779535e-10,
+    "momentum_y": 1.32434286779535e-10,
+    "energy": 1.189963896103058e-10
+  },
+  "solution_properties": {
+    "isentropic_law": 0.0,
+    "divergence_free": 0.0,
+    "radial_balance": 1.0734058805862913e-15
+  },
+  "max_relative_residual": 1.32434286779535e-10,
+  "max_relative_l2": 1.32434286779535e-10,
+  "gate_pass": true,
+  "formula": "steady: max|div F| / max(|F_x|+|F_y|); space-time: max|U_t+F_x+G_y| / max(|F_x|+|F_y|) with central-difference U_t",
+  "config": {
+    "task": "residual",
+    "cells": 32,
+    "degree": 2,
+    "final_time": 1.0,
+    "cfl": 0.2,
+    "strength": 5.0
+  },
+  "task_key": "exact_solution_residual"
+}
