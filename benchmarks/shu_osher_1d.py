@@ -24,22 +24,19 @@ import torch
 from tensordg.euler_1d import GAMMA
 from tensordg.euler_dg_1d import solve_periodic_euler_dg_1d
 
-LEFT = (3.857143, 2.629369, 10.33333)  # rho, u, p for x < -4
-DIAPHRAGM = -4.0
-DOMAIN = (-5.0, 5.0)
-FINAL_TIME = 1.8
+# The case definition (domain, diaphragm position, final time, left state and
+# initial data) lives in the library, in ``tensordg.cases.shock_entropy``; this
+# benchmark re-exports it so that existing call sites keep working.  One owner
+# per constant means a benchmark cannot silently drift from the shipped case.
+from tensordg.cases.shock_entropy import (  # noqa: F401  (re-export)
+    DIAPHRAGM,
+    DOMAIN,
+    FINAL_TIME,
+    LEFT_STATE as LEFT,
+    initial_state,
+)
 #: high-frequency window that only exists if the scheme resolves the entropy waves
 WAVE_WINDOW = (0.0, 4.2)
-
-
-def initial_state(x: torch.Tensor):
-    """Shu--Osher initial data as ``(rho, u, p)`` on the given coordinates."""
-    left_rho, left_u, left_p = LEFT
-    rho = torch.where(x < DIAPHRAGM, torch.full_like(x, left_rho),
-                      torch.ones_like(x) + 0.2 * torch.sin(5.0 * x))
-    u = torch.where(x < DIAPHRAGM, torch.full_like(x, left_u), torch.zeros_like(x))
-    p = torch.where(x < DIAPHRAGM, torch.full_like(x, left_p), torch.ones_like(x))
-    return rho, u, p
 
 
 def solve_case(ncells, degree=2, limiter="weno", cfl=0.12, tvb_constant=1.0,
