@@ -458,9 +458,13 @@ def apply_weno_limiter_2d(
     Mission m14777 fixed a slice-write defect: both axis passes assigned the
     whole ``[..., 1, :, :]`` / ``[..., :, 1, :]`` slice, so for ``degree >= 2``
     every mixed mode (1, j) (resp. (i, 1)) was overwritten with the
-    one-dimensional slope.  That injected a spurious O(h) tensor-product term in
-    every limited cell and produced the limiter-on error plateau recorded in
-    ``docs/anisotropic_2d_verification.md``.  Only mode ``(1, 0)`` / ``(0, 1)``
+    one-dimensional slope, i.e. a spurious tensor-product term in every limited
+    cell of degree >= 2.  Mission m14777 measured that repairing it leaves the
+    vortex error norms bit-identical, so the limiter-on plateau in
+    ``docs/anisotropic_2d_verification.md`` has a *different* source: at the
+    default ``M`` the indicator legitimately flags resolved smooth cells and a
+    limited (linear) reconstruction is only second order -- see
+    ``docs/weno_limiter_smooth_flow_policy.md``.  Only mode ``(1, 0)`` / ``(0, 1)``
     is now touched, matching :func:`apply_tvb_limiter_2d`.
     """
     if coeff.shape[2] <= 1 and coeff.shape[3] <= 1:
