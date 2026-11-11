@@ -346,3 +346,134 @@ def thacker_planar_basin_boundary_flux(t: float, h0: float = 1.0,
         return np.array([h * u, h * u * u + 0.5 * gravity * h * h])
 
     return _flux(eta_c - s * half_width), _flux(eta_c + s * half_width)
+
+
+# ---------------------------------------------------------------------------
+# 2-D axisymmetric (radial) Thacker basin
+# ---------------------------------------------------------------------------
+# ``docs/validation_status_report.md`` (m6315) listed "extend Thacker to 2-D
+# (circular parabolic basin)" as an open action, and ``swe_2d`` could be run on
+# a bowl but had no analytic reference to compare against.  The exact solution
+# below is the circular-basin member of Thacker's (1981) family: the surface
+# stays a paraboloid of revolution and the velocity stays linear in ``r``, so
+# the 2-D system reduces to a closed ODE system that is solvable in closed
+# form.  With ``omega = sqrt(8 g h0) / L`` and ``A in (0, 1)``:
+#
+#     H(t) = h0 sqrt(1 - A^2) / (1 - A cos(omega t))      (depth at r = 0)
+#     B(t) = -H^2 / (h0 L^2)                              (h = H + B r^2)
+#     eta(r,t) = (H - h0) + (B + h0/L^2) r^2              (free surface)
+#     u_r(r,t) =  A omega r sin(omega t) / (2 (1 - A cos(omega t)))
+#
+# Its moving shoreline is ``r_s(t) = L sqrt(h0 / H(t))``, and the enclosed
+# volume is exactly ``pi h0 L^2 / 2`` for every ``t`` (independent of ``H``),
+# which is the mass invariant a numerical run must reproduce.
+#
+# ``docs/reports/tensordg-thacker-radial-2d-basin.md`` certifies the algebra two
+# independent ways: the residual of the radial shallow-water equations under
+# high-order finite differences, and agreement with a DOP853 integration of the
+# reduced ODE system.
+
+def thacker_radial_params(h0: float = 1.0, half_width: float = 1.0,
+                          gravity: float = GRAVITY) -> float:
+    """Angular frequency ``omega = sqrt(8 g h0) / L`` of the circular basin.
+
+    The factor 8 (not 2, as in the 1-D planar basin) is what the linearised
+    radial problem gives: ``L`` is the radius at which the paraboloid bed
+    ``z_b = -h0 (1 - r^2/L^2)`` reaches the still-water level.
+    """
+    if h0 <= 0.0 or half_width <= 0.0:
+        raise ValueError("h0 and half_width must be positive")
+    return math.sqrt(8.0 * gravity * h0) / half_width
+
+
+def thacker_radial_period(h0: float = 1.0, half_width: float = 1.0,
+                          gravity: float = GRAVITY) -> float:
+    """Exact oscillation period ``T = 2 pi L / sqrt(8 g h0)``."""
+    return 2.0 * math.pi / thacker_radial_params(h0, half_width, gravity)
+
+
+def thacker_radial_bed(r, h0: float = 1.0, half_width: float = 1.0):
+    """Bed elevation ``z_b(r) = -h0 (1 - (r/L)^2)`` of the paraboloid bowl.
+
+    The bowl is *not* truncated at ``r = L``: the exact solution needs the
+    paraboloid continued outward, because its shoreline radius
+    ``r_s = L sqrt(h0/H)`` exceeds ``L`` for part of every cycle.
+    """
+    r = np.asarray(r, dtype=float)
+    return -h0 * (1.0 - (r / half_width) ** 2)
+
+
+def thacker_radial_bed_slope(r, h0: float = 1.0, half_width: float = 1.0):
+    """Radial bed slope ``dz_b/dr = 2 h0 r / L^2``."""
+    r = np.asarray(r, dtype=float)
+    return 2.0 * h0 * r / half_width ** 2
+
+
+def _thacker_radial_H(t, h0, amplitude, half_width, gravity):
+    omega = thacker_radial_params(h0, half_width, gravity)
+    H = h0 * math.sqrt(1.0 - amplitude ** 2) / (1.0 - amplitude * math.cos(omega * t))
+    return H, omega
+
+
+def thacker_radial_shoreline(t, h0: float = 1.0, amplitude: float = 0.2,
+                             half_width: float = 1.0, gravity: float = GRAVITY):
+    """Radius ``r_s(t) = L sqrt(h0 / H(t))`` where the exact depth vanishes."""
+    H, _ = _thacker_radial_H(t, h0, amplitude, half_width, gravity)
+    return half_width * math.sqrt(h0 / H)
+
+
+def thacker_radial_basin(r, t: float, h0: float = 1.0, amplitude: float = 0.2,
+                         half_width: float = 1.0, gravity: float = GRAVITY,
+                         clip: bool = True):
+    """Exact circular-basin sloshing solution. Returns ``(h, u_r, eta)``.
+
+    Parameters
+    ----------
+    r : array_like
+        Radius from the bowl centre (``r >= 0``).
+    t : float
+        Time.
+    amplitude : float
+        ``A in (0, 1)``; the initial surface is ``eta(r,0) = (H0 - h0) +
+        (B0 + h0/L^2) r^2`` with zero velocity (an impulsive start).
+    clip : bool, default True
+        Clip the depth at zero outside the instantaneous shoreline.  Set
+        ``clip=False`` to obtain the analytic paraboloid everywhere, which is
+        what the PDE-residual certificate differentiates.
+    """
+    if not 0.0 < amplitude < 1.0:
+        raise ValueError("amplitude must lie in (0, 1)")
+    H, omega = _thacker_radial_H(t, h0, amplitude, half_width, gravity)
+    r = np.asarray(r, dtype=float)
+    B = -H ** 2 / (h0 * half_width ** 2)
+    h = H + B * r ** 2
+    eta = (H - h0) + (B + h0 / half_width ** 2) * r ** 2
+    s = 1.0 - amplitude * math.cos(omega * t)
+    u_r = amplitude * omega * r * math.sin(omega * t) / (2.0 * s)
+    if clip:
+        h = np.maximum(h, 0.0)
+    return h, u_r, eta
+
+
+def thacker_radial_basin_initial(r, h0: float = 1.0, amplitude: float = 0.2,
+                                 half_width: float = 1.0):
+    """Initial condition ``(h, u_r)`` of the radial Thacker solution (``u_r = 0``)."""
+    h, u_r, _ = thacker_radial_basin(r, 0.0, h0, amplitude, half_width)
+    return h, u_r
+
+
+def thacker_radial_velocity(x, y, t: float, h0: float = 1.0,
+                            amplitude: float = 0.2, half_width: float = 1.0,
+                            gravity: float = GRAVITY):
+    """Cartesian velocity ``(u, v)`` of the radial solution at ``(x, y, t)``.
+
+    ``u_r`` is linear in ``r``, so ``u = f(t) x`` and ``v = f(t) y`` with
+    ``f = A omega sin(omega t) / (2 (1 - A cos(omega t)))``.  This is the
+    field a 2-D Cartesian DG run has to initialise with.
+    """
+    H, omega = _thacker_radial_H(t, h0, amplitude, half_width, gravity)
+    s = 1.0 - amplitude * math.cos(omega * t)
+    f = amplitude * omega * math.sin(omega * t) / (2.0 * s)
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    return f * x, f * y
