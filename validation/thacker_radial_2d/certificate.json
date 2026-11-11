@@ -1,0 +1,112 @@
+{
+  "case": {
+    "name": "radial Thacker basin (circular paraboloid)",
+    "h0": 1.0,
+    "half_width": 1.0,
+    "amplitude": 0.2,
+    "gravity": 9.81,
+    "omega": 8.858893836140041,
+    "period": 0.7092516767214436,
+    "bed": "z_b = -h0 (1 - (r/L)^2), untruncated",
+    "reference": "Thacker (1981), Comm. Pure Appl. Math. 34(4) 543-552"
+  },
+  "residual": {
+    "points": [
+      [
+        0.2,
+        0.1
+      ],
+      [
+        0.5,
+        0.1
+      ],
+      [
+        0.7,
+        0.25
+      ],
+      [
+        0.3,
+        0.4
+      ],
+      [
+        0.6,
+        0.55
+      ]
+    ],
+    "survey": [
+      {
+        "step": 0.02,
+        "continuity": 2.5354869422107626e-05,
+        "momentum": 4.8015607402464785e-05
+      },
+      {
+        "step": 0.01,
+        "continuity": 1.5940480046414872e-06,
+        "momentum": 3.0168496904725683e-06
+      },
+      {
+        "step": 0.005,
+        "continuity": 9.976951995255308e-08,
+        "momentum": 1.8879173030082692e-07
+      },
+      {
+        "step": 0.0025,
+        "continuity": 6.237787961298024e-09,
+        "momentum": 1.1803171697469077e-08
+      }
+    ],
+    "orders": [
+      {
+        "range": [
+          0.02,
+          0.01
+        ],
+        "order_continuity": 3.9914958627732484,
+        "order_momentum": 3.9923887044610136
+      },
+      {
+        "range": [
+          0.01,
+          0.005
+        ],
+        "order_continuity": 3.99795213351447,
+        "order_momentum": 3.9981753419847004
+      },
+      {
+        "range": [
+          0.005,
+          0.0025
+        ],
+        "order_continuity": 3.9994927152143247,
+        "order_momentum": 3.9995490796977617
+      }
+    ],
+    "worst_continuity": 6.237787961298024e-09,
+    "worst_momentum": 1.1803171697469077e-08
+  },
+  "ode_reduction": {
+    "method": "DOP853 rtol=1e-13",
+    "samples": 41,
+    "max_relative_deviation": 5.3573754247114426e-14
+  },
+  "invariants": {
+    "volume_exact": 1.5707963267948966,
+    "volume_max_relative_drift": 1.562500015896492e-08,
+    "shoreline_min": 0.9036020036098449,
+    "shoreline_max": 1.1066819197003215,
+    "cycles_checked": 10,
+    "min_h_at_r0_over_period": 0.816496580927726
+  },
+  "dg_initial_state": {
+    "nx": 16,
+    "degree": 1,
+    "well_balanced": true,
+    "steps": 0,
+    "min_cell_average_depth": 0.0,
+    "max_cell_average_depth": 1.175467527641589,
+    "volume_cell_averages": 1.5588340265422853,
+    "all_finite": true,
+    "state_finite": true,
+    "u_zero_at_t0": 0.0
+  }
+}
