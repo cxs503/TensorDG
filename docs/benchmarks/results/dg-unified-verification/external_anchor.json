@@ -1,0 +1,46 @@
+{
+  "schema": "tensordg-external-anchor/1",
+  "generated_utc": "2026-11-11T08:42:28Z",
+  "anchors": [
+    {
+      "id": "airy-dispersion",
+      "criterion": "E3",
+      "statement": "omega^2 = g k tanh(kh) for linear surface gravity waves of wavenumber k in still-water depth h",
+      "source": "H. Lamb, Hydrodynamics, 6th ed., Cambridge UP (1932), art. 228; G. B. Airy (1845) for the finite-depth form",
+      "how_used": "closed-form reference evaluated at h = 1 m, g = 9.80665 m/s^2, kh in [0.1, 5]; the criterion is the relative error of the numerical operator's omega against this expression",
+      "type": "analytic (textbook)"
+    },
+    {
+      "id": "boussinesq-pade",
+      "criterion": "E3",
+      "statement": "Boussinesq / Green-Naghdi class models replace tanh(x)/x by a rational approximation; the [6/6] Pade is the member that stays within a few percent up to kh = O(5)",
+      "source": "J. Boussinesq (1872); A. E. Green & N. A. Naghdi, J. Fluid Mech. 78 (1976) 237; Pade table of tanh (Baker & Graves-Morris, 1996)",
+      "how_used": "the operator's own symbol is compared with the Pade expressions in tensordg/dispersive.py (model_dispersion_error); the low-kh members (boussinesq, pade22) are reported with their measured validity limit instead of being averaged away",
+      "type": "analytic (model hierarchy)"
+    },
+    {
+      "id": "leveque-deformation",
+      "criterion": "E2",
+      "statement": "the time-reversing deformational flow with cos(pi t/T) returns the initial field exactly at T, so the final-time L2 error is a pure measure of numerical dissipation incurred on unresolved filaments",
+      "source": "R. J. LeVeque, 'High-resolution conservative algorithms for advection', SIAM J. Numer. Anal. 33 (1996) 627-665; test 2 of the deformational-flow suite",
+      "how_used": "defines the velocity field and the exact-recovery reference at T",
+      "type": "analytic (literature test case)"
+    },
+    {
+      "id": "kdv-soliton",
+      "criterion": "E4",
+      "statement": "the KdV equation has the exact travelling solution eta = a sech^2((x - ct)/w), w = sqrt(4 h^3/(3a)), c = sqrt(gh)(1 + a/(2h)); its amplitude never decays",
+      "source": "D. J. Korteweg & G. de Vries (1895); N. J. Zabusky & M. D. Kruskal, Phys. Rev. Lett. 15 (1965) 240; P. G. Drazin & R. S. Johnson, Solitons: an Introduction, Cambridge UP (1989), ch. 3",
+      "how_used": "reference profile after a propagation of 10 soliton widths; the measured celerity is compared both with the KdV value and with the shallow-water form sqrt(g(h+a)) requested by the campaign",
+      "type": "analytic (exact solution)"
+    },
+    {
+      "id": "solid-body-rotation",
+      "criterion": "E1",
+      "statement": "under solid-body rotation the exact solution is the initial field rigidly rotated by -omega T; for T = 2 pi/omega it is the initial field itself",
+      "source": "standard advection-verification anchor (e.g. W. J. Rider & L. G. Margolin, 'Revisiting wall heating', J. Comput. Phys. 162 (2000) 395, rigid-rotation test)",
+      "how_used": "the reference field is built by rotating the coordinates back, independently of the solver's coefficient update",
+      "type": "analytic (closed form)"
+    }
+  ]
+}
