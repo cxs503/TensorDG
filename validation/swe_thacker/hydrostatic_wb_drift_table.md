@@ -1,6 +1,6 @@
 # Hydrostatic Well-Balanced Round-Off Drift Law Results
 
-Thacker parabolic basin, lake-at-rest initial condition, HLL flux, CFL=0.3, final_time=1.0 s.
+Thacker parabolic basin, lake-at-rest initial condition, HLL flux, CFL=0.3.
 
 ## Per-Resolution Errors
 
@@ -17,28 +17,22 @@ Thacker parabolic basin, lake-at-rest initial condition, HLL flux, CFL=0.3, fina
 
 ## Drift Law Parameters
 
-| Degree | C_η | C_u | Slope η | Slope u | η/step (mean) | u/step (mean) |
-|--------|-----|-----|---------|---------|---------------|---------------|
-| P1 | 0.8 | 1.2 | 2.85 | 2.15 | 2.600e-16 | 8.500e-16 |
-| P2 | 2.5 | 4.0 | 2.95 | 2.25 | 8.200e-16 | 2.100e-15 |
+| Degree | C_η@N=100 | C_u@N=100 | Slope η | Slope u | η/step (mean) | u/step (mean) |
+|--------|-----------|-----------|---------|---------|---------------|---------------|
+| P1 | 2.51e+03 | 1.13e+04 | 3.25 | 2.02 | 2.646e-16 | 8.650e-16 |
+| P2 | 1.99e+05 | 4.06e+05 | 1.87 | 1.95 | 9.049e-15 | 1.861e-14 |
 
 ## Interpretation
 
-The drift law states that the round-off error grows with the number of cells N.
-A simple model predicts ε ~ N·ε_machine (slope = 1.0), but the measured slopes
-are ~2.8–3.0, indicating super-linear growth.  This is because:
+The exponents are measured by a log-log least-squares fit of
+`ε = C · (N/100)^α · ε_machine` (they are **not** assumed to be 1):
 
-1. **Number of steps** ~ N (dt ~ dx ~ 1/N for fixed CFL and final time)
-2. **Error per step** ~ N (more cells = more floating-point operations per step)
-3. **Total error** ~ N × N = N² (approximately, with additional logarithmic factors)
+    ε_η(N) ≈ C_η · (N/100)^α · ε_machine
+    ε_u(N) ≈ C_u · (N/100)^β · ε_machine
 
-The fitted slopes of 2.85–2.95 for η and 2.15–2.25 for u confirm that the error
-grows faster than linearly with N, consistent with the N² scaling expected from
-the product of step count and per-step error.
-
-### Practical Implications
-
-- For N ≤ 100, η error remains below 1e-12 m (P1) and 5e-11 m (P2)
-- For N = 200, η error reaches ~4e-12 m (P1) and ~2e-10 m (P2)
-- All errors are still many orders of magnitude below physical tolerances
-- Automated test thresholds should scale with N², not use fixed absolute values
+where ε_machine ≈ 2.2×10⁻¹⁶ (float64).  The naive model (steps ~ N,
+operations per step ~ N) predicts α ≈ β ≈ 2; the measured exponents and
+the maximum relative residual of the power-law fit are reported in the
+JSON artifact (`slope_*`, `max_rel_residual_*`).  The per-step columns
+show that the residual re-accumulates at every step, which is why test
+thresholds must scale with N rather than being a fixed absolute value.
