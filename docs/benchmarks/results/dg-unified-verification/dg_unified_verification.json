@@ -68,7 +68,7 @@
         "boundary": "extrapolate",
         "omega": 6.283185307179586,
         "revolutions": 1.0,
-        "wall_seconds": 9.837327480316162
+        "wall_seconds": 6.687408685684204
       },
       {
         "case": "solid_body_rotation",
@@ -91,7 +91,7 @@
         "boundary": "extrapolate",
         "omega": 6.283185307179586,
         "revolutions": 1.0,
-        "wall_seconds": 14.580250263214111
+        "wall_seconds": 10.120315074920654
       },
       {
         "case": "solid_body_rotation",
@@ -114,7 +114,7 @@
         "boundary": "extrapolate",
         "omega": 6.283185307179586,
         "revolutions": 1.0,
-        "wall_seconds": 27.09602427482605
+        "wall_seconds": 19.32865858078003
       },
       {
         "case": "solid_body_rotation",
@@ -137,7 +137,7 @@
         "boundary": "extrapolate",
         "omega": 6.283185307179586,
         "revolutions": 1.0,
-        "wall_seconds": 132.1775553226471
+        "wall_seconds": 154.13088154792786
       }
     ],
     "declared": {
@@ -161,7 +161,7 @@
       "boundary": "extrapolate",
       "omega": 6.283185307179586,
       "revolutions": 1.0,
-      "wall_seconds": 27.09602427482605
+      "wall_seconds": 19.32865858078003
     },
     "quarter_revolution": {
       "case": "solid_body_rotation",
@@ -209,7 +209,7 @@
         "boundary": "extrapolate",
         "period": 1.0,
         "bell_radius": 0.15,
-        "wall_seconds": 1.7702746391296387
+        "wall_seconds": 1.674609899520874
       },
       {
         "case": "deformational_flow",
@@ -232,7 +232,7 @@
         "boundary": "extrapolate",
         "period": 1.0,
         "bell_radius": 0.15,
-        "wall_seconds": 2.534775972366333
+        "wall_seconds": 2.848850965499878
       },
       {
         "case": "deformational_flow",
@@ -255,7 +255,7 @@
         "boundary": "extrapolate",
         "period": 1.0,
         "bell_radius": 0.15,
-        "wall_seconds": 4.6922314167022705
+        "wall_seconds": 5.158471584320068
       },
       {
         "case": "deformational_flow",
@@ -278,7 +278,7 @@
         "boundary": "extrapolate",
         "period": 1.0,
         "bell_radius": 0.15,
-        "wall_seconds": 30.9546377658844
+        "wall_seconds": 38.09556436538696
       }
     ],
     "declared": {
@@ -302,7 +302,7 @@
       "boundary": "extrapolate",
       "period": 1.0,
       "bell_radius": 0.15,
-      "wall_seconds": 4.6922314167022705
+      "wall_seconds": 5.158471584320068
     }
   },
   "advection_diffusion": {
@@ -2022,6 +2022,7 @@
     },
     "measured_airy": [
       {
+        "model": "airy",
         "mode": 1,
         "kh": 0.1,
         "k": 0.1,
@@ -2034,6 +2035,7 @@
         "dt": 0.06396398162033375
       },
       {
+        "model": "airy",
         "mode": 5,
         "kh": 0.5,
         "k": 0.5,
@@ -2046,6 +2048,7 @@
         "dt": 0.013284716814657645
       },
       {
+        "model": "airy",
         "mode": 10,
         "kh": 1.0,
         "k": 1.0,
@@ -2058,6 +2061,7 @@
         "dt": 0.007317311583768295
       },
       {
+        "model": "airy",
         "mode": 20,
         "kh": 2.0,
         "k": 2.0,
@@ -2070,6 +2074,7 @@
         "dt": 0.004598896360928705
       },
       {
+        "model": "airy",
         "mode": 35,
         "kh": 3.5,
         "k": 3.5,
@@ -2082,6 +2087,7 @@
         "dt": 0.0034164522336054097
       },
       {
+        "model": "airy",
         "mode": 50,
         "kh": 5.0,
         "k": 5.0,
@@ -2096,6 +2102,7 @@
     ],
     "measured_pade66": [
       {
+        "model": "pade66",
         "mode": 1,
         "kh": 0.1,
         "k": 0.1,
@@ -2108,6 +2115,7 @@
         "dt": 0.06396398162033376
       },
       {
+        "model": "pade66",
         "mode": 10,
         "kh": 1.0,
         "k": 1.0,
@@ -2120,6 +2128,7 @@
         "dt": 0.007317311583760413
       },
       {
+        "model": "pade66",
         "mode": 30,
         "kh": 2.9999999999999996,
         "k": 2.9999999999999996,
@@ -2132,6 +2141,7 @@
         "dt": 0.003695975027251071
       },
       {
+        "model": "pade66",
         "mode": 50,
         "kh": 5.0,
         "k": 5.0,
@@ -2278,12 +2288,16 @@
       "pass": true
     }
   },
-  "wall_seconds": 355.7008967399597,
+  "wall_seconds": 346.10414028167725,
   "seeds": "deterministic (no random numbers)",
   "environment": {
     "torch": "2.7.1",
     "numpy": "2.4.6",
-    "threads": 16
+    "threads": 16,
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+    "machine": "loongarch64",
+    "processor": "loongarch64",
+    "python": "3.11.6"
   },
   "figures": [
     "figures/e1_solid_body_rotation.png",

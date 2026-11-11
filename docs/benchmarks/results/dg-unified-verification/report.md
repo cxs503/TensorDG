@@ -1,6 +1,6 @@
 # TensorDG 对流-扩散与色散波统一验证面：固体旋转/余弦山/Boussinesq 色散/孤立波传播（P165W3-N05）
 
-> 节点：P165W3-N05｜仓：TensorDG｜模块：`tensordg/advection_diffusion.py`、`tensordg/dispersive.py`｜测试：`tests/test_advection_diffusion_2d.py`、`tests/test_dispersive_waves.py`（25 项：15 + 10）｜全部数字由 `benchmarks/dg/unified_verification.py` 程序化写出，本报告由 `benchmarks/dg/make_report.py` 注入，无手抄。
+> 节点：P165W3-N05｜仓：TensorDG｜模块：`tensordg/advection_diffusion.py`、`tensordg/dispersive.py`｜入口：`python -m benchmarks.dg`（CI 用 `--quick`）｜测试：`tests/test_advection_diffusion_2d.py`、`tests/test_dispersive_waves.py`、`tests/test_dg_unified_verification.py`｜验收证据：`docs/benchmarks/results/dg-unified-verification/evidence.json`（`python -m benchmarks.dg.evidence --verify` 可离线复核）｜全部数字由 `benchmarks/dg/unified_verification.py` 程序化写出，本报告由 `benchmarks/dg/make_report.py` 注入，无手抄。
 
 ## ① 案例介绍
 
@@ -180,3 +180,28 @@ dt = cfl/((2p+1)·max|a|/h)；有扩散时再叠加由实测谱半径标定的 R
 **局限（不影响上述判定）**：(a) 变速度 2-D DG 只做光滑解、无限制器，间断解未验证；
 (b) 扩散为显式 RK4，只适合验证规模网格；(c) 色散/孤立波为 1-D；(d) 未与实验/文献数据对标，
 基准全部是解析解。
+
+## ⑦ 验收证据（机器可复核，非自声明）
+
+| 证据键 | 内容 | 路径 / 复核方式 |
+|---|---|---|
+| impl_files | 非占位实现（635 + 485 行） | `tensordg/advection_diffusion.py`、`tensordg/dispersive.py` |
+| entry | 包入口（三阶段：求解 -> 报告 -> 证据） | `benchmarks/dg/__main__.py`（`python -m benchmarks.dg`） |
+| run_artifacts | 本次运行工件 | `dg_unified_verification.json`、`benchmark_table.json`、`report.md`、`figures/*.png` |
+| integration_callers | 真调用方 | `.github/workflows/tests.yml` CI 步骤、包入口、`tests/test_dg_unified_verification.py`、`tensordg/__init__.py` 再导出 |
+| benchmark | ref vs got + 误差 + 阈值 | `benchmark_table.json`（E1–E5 逐项，含 E3 六个 kh 采样与 E4 相速度） |
+| repro_cmd | 一条命令重跑全部 | `python -m benchmarks.dg` |
+| external_anchor | 解析/文献锚 | `external_anchor.json`（Airy 1932/Lamb、Boussinesq–Green–Naghdi、LeVeque 1996、KdV 1895/Zabusky–Kruskal 1965） |
+**复核命令**（证据自校验：指针存在、sha256 一致、benchmark 数字与运行工件逐项相等）：
+
+```
+python -m benchmarks.dg --quick        # CI 配置：五门判据走同一注册表
+python -m benchmarks.dg                # 报告配置：全网格研究 + 图 + 证据包
+python -m benchmarks.dg.evidence --verify docs/benchmarks/results/dg-unified-verification/evidence.json
+```
+
+**判定数字**（来自本次运行工件，非手抄）：E1 0.0156（限 0.05）、E2 0.0166（限 0.05）、E3 5.03e-05（限 0.03）、E4 7.40e-07（限 0.05）、E5 5.18e-04（限 0.01）；运行环境 torch 2.7.1 / numpy 2.4.6，确定性（无随机数），墙钟 346 s。
+
+**跨运行复现**：与 commit 81ddba9 的上一次独立运行相比，五门判定数字逐位相同；本面不使用随机数，工件 `prior_run_gates.json` 作为不变量锚。
+
+**与节点原始表述的偏差（如实记录）**：(a) E4 的“传播 10 个波长”实现为传播 10 个**孤子宽度** w=√(4h³/3a)——sech² 孤子没有波长，w 是其唯一内禀长度，故以 10w 为传播距离；(b) E5 的“总质量变化 ≤1%”在声明网格（24×24，p=2）为 5.2e-04，而 12×12 时为 1.6e-02（超限），故判据按声明配置裁定并在报告中给出网格趋势；(c) 经典 Boussinesq 核在 kh≈1.56 以上本就超 3%，E3 由对该频带物理有效的 Airy/[6/6] Padé 算子裁定，各模型的有效 kh 上限在 ③ 表中列出而非取平均掩盖。
