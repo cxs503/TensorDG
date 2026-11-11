@@ -621,3 +621,204 @@ class TestHydrostaticHelpers:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+class TestHydrostaticDriftLaw:
+    """Tests for the round-off drift law in hydrostatic well-balanced simulations.
+
+    The drift law states that the round-off error in η and u grows with the
+    number of cells N (and thus with the number of time steps), rather than
+    decaying as a discretisation error would.  This is because:
+
+    1. Number of steps ~ N (dt ~ dx ~ 1/N for fixed CFL and final time)
+    2. Error per step ~ N (more cells = more floating-point operations)
+    3. Total error ~ N × N = N² (approximately)
+
+    See docs/swe-hydrostatic-roundoff-drift-law.md for details.
+    """
+
+    @pytest.mark.parametrize("ncells", [25, 50, 100])
+    def test_drift_grows_with_resolution(self, ncells):
+        """Verify that η error grows (not decays) with mesh refinement.
+
+        This is the key signature of the drift law: unlike discretisation
+        errors which decay as N^(-p), round-off errors grow with N because
+        more time steps are taken and each step accumulates more round-off.
+        """
+        eta0 = 1.0
+        H0, L = 2.0, 1.0
+
+        def zb(xx):
+            return -H0 + (H0 / L**2) * xx**2
+
+        x, coeff, zb_faces, meta = solve_swe_1d(
+            lambda xx: eta0 - zb(xx),
+            lambda xx: torch.zeros_like(xx),
+            zb,
+            ncells=ncells,
+            degree=1,
+            final_time=1.0,
+            domain=(-L, L),
+            cfl=0.3,
+            well_balanced=True,
+        )
+
+        h, u, eta = reconstruct_fields(coeff, zb_faces,
+                                       zb_center=meta["zb_modes"][:, 0])
+        eta_error = float((eta - eta0).abs().max())
+
+        # The error should be at round-off level (not discretisation level)
+        # For N=25: ~4e-15, N=50: ~9e-14, N=100: ~7e-13
+        # All are well below 1e-10 but grow with N
+        assert eta_error < 1e-10, f"η error {eta_error:.3e} too large for N={ncells}"
+        assert eta_error > 1e-16, f"η error {eta_error:.3e} suspiciously small (below eps)"
+
+    def test_drift_law_super_linear_growth(self):
+        """Verify that η error grows super-linearly with N.
+
+        The drift law predicts ε ~ N^α with α ≈ 2–3, not α = -p (convergence).
+        We test this by comparing errors at two resolutions.
+        """
+        eta0 = 1.0
+        H0, L = 2.0, 1.0
+
+        def zb(xx):
+            return -H0 + (H0 / L**2) * xx**2
+
+        # Run at two resolutions
+        errors = {}
+        for ncells in [50, 100]:
+            x, coeff, zb_faces, meta = solve_swe_1d(
+                lambda xx: eta0 - zb(xx),
+                lambda xx: torch.zeros_like(xx),
+                zb,
+                ncells=ncells,
+                degree=1,
+                final_time=1.0,
+                domain=(-L, L),
+                cfl=0.3,
+                well_balanced=True,
+            )
+            h, u, eta = reconstruct_fields(coeff, zb_faces,
+                                           zb_center=meta["zb_modes"][:, 0])
+            errors[ncells] = float((eta - eta0).abs().max())
+
+        # Error should grow when N doubles (not decay)
+        assert errors[100] > errors[50], (
+            f"η error should grow with N: {errors[50]:.3e} (N=50) vs "
+            f"{errors[100]:.3e} (N=100)"
+        )
+
+        # Growth factor should be > 2 (super-linear, not linear)
+        growth = errors[100] / errors[50]
+        assert growth > 2.0, (
+            f"Growth factor {growth:.2f} should be > 2 (super-linear drift)"
+        )
+
+    def test_drift_law_p2_higher_error(self):
+        """P2 should have larger drift than P1 due to more operations per cell.
+
+        The drift law constants C_η and C_u are larger for P2 because:
+        - More quadrature points per cell
+        - More basis functions
+        - More floating-point operations per time step
+        """
+        eta0 = 1.0
+        H0, L = 2.0, 1.0
+        ncells = 50
+
+        def zb(xx):
+            return -H0 + (H0 / L**2) * xx**2
+
+        errors = {}
+        for degree in [1, 2]:
+            x, coeff, zb_faces, meta = solve_swe_1d(
+                lambda xx: eta0 - zb(xx),
+                lambda xx: torch.zeros_like(xx),
+                zb,
+                ncells=ncells,
+                degree=degree,
+                final_time=1.0,
+                domain=(-L, L),
+                cfl=0.3,
+                well_balanced=True,
+            )
+            h, u, eta = reconstruct_fields(coeff, zb_faces,
+                                           zb_center=meta["zb_modes"][:, 0])
+            errors[degree] = float((eta - eta0).abs().max())
+
+        # P2 error should be larger than P1 (more operations = more round-off)
+        assert errors[2] > errors[1], (
+            f"P2 η error {errors[2]:.3e} should be > P1 {errors[1]:.3e}"
+        )
+
+    def test_drift_law_velocity_also_grows(self):
+        """Verify that u error also grows with N, not just η error."""
+        eta0 = 1.0
+        H0, L = 2.0, 1.0
+
+        def zb(xx):
+            return -H0 + (H0 / L**2) * xx**2
+
+        u_max_values = {}
+        for ncells in [50, 100]:
+            x, coeff, zb_faces, meta = solve_swe_1d(
+                lambda xx: eta0 - zb(xx),
+                lambda xx: torch.zeros_like(xx),
+                zb,
+                ncells=ncells,
+                degree=1,
+                final_time=1.0,
+                domain=(-L, L),
+                cfl=0.3,
+                well_balanced=True,
+            )
+            h, u, eta = reconstruct_fields(coeff, zb_faces,
+                                           zb_center=meta["zb_modes"][:, 0])
+            u_max_values[ncells] = float(u.abs().max())
+
+        # u error should also grow with N
+        assert u_max_values[100] > u_max_values[50], (
+            f"u max should grow with N: {u_max_values[50]:.3e} (N=50) vs "
+            f"{u_max_values[100]:.3e} (N=100)"
+        )
+
+    def test_drift_law_still_physically_acceptable(self):
+        """Even at N=100, drift errors are many orders below physical tolerances.
+
+        The drift law errors are at the round-off level (~1e-12 to 1e-10 m)
+        and never affect physical accuracy.  This test verifies that the
+        errors are still well below any reasonable physical tolerance.
+        """
+        eta0 = 1.0
+        H0, L = 2.0, 1.0
+        ncells = 100
+
+        def zb(xx):
+            return -H0 + (H0 / L**2) * xx**2
+
+        x, coeff, zb_faces, meta = solve_swe_1d(
+            lambda xx: eta0 - zb(xx),
+            lambda xx: torch.zeros_like(xx),
+            zb,
+            ncells=ncells,
+            degree=1,
+            final_time=1.0,
+            domain=(-L, L),
+            cfl=0.3,
+            well_balanced=True,
+        )
+        h, u, eta = reconstruct_fields(coeff, zb_faces,
+                                       zb_center=meta["zb_modes"][:, 0])
+
+        eta_error = float((eta - eta0).abs().max())
+        u_max = float(u.abs().max())
+
+        # Errors should be well below physical tolerances (1 mm for η, 1 mm/s for u)
+        assert eta_error < 1e-3, f"η error {eta_error:.3e} exceeds 1 mm tolerance"
+        assert u_max < 1e-3, f"u max {u_max:.3e} exceeds 1 mm/s tolerance"
+
+        # Errors should be at round-off level (< 1e-9 m for N=100)
+        assert eta_error < 1e-9, f"η error {eta_error:.3e} exceeds round-off level"
+        assert u_max < 1e-9, f"u max {u_max:.3e} exceeds round-off level"
+
