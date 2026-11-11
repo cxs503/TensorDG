@@ -38,6 +38,7 @@ from tensordg.euler_1d import (
 from tensordg.euler_dg_2d import solve_euler_dg_2d_sod, cell_fields
 
 THREE_PERCENT = 0.03
+DIAPHRAGM = 0.5  # x-position of the initial discontinuity
 
 
 # ---------------------------------------------------------------------------
@@ -53,7 +54,8 @@ def _exact_riemann_4c(left, right, x_over_t):
     Parameters
     ----------
     left, right : (..., 4) conservative states
-    x_over_t : (...) float, the similarity variable ``x / t``
+    x_over_t : (...) float, the similarity variable ``(x - x_0) / t``
+        where ``x_0`` is the diaphragm position.
 
     Returns
     -------
@@ -134,46 +136,112 @@ def _exact_riemann_4c(left, right, x_over_t):
     denom = rho_l * (s_l - u_l) - rho_r * (s_r - u_r)
     s_m = (p_r - p_l + rho_l * u_l * (s_l - u_l) - rho_r * u_r * (s_r - u_r)) / denom
 
+    # Sound speed in star regions
+    a_star_l = a_l * (p_star / p_l.clamp_min(1e-12)) ** ((GAMMA - 1.0) / (2.0 * GAMMA))
+    a_star_r = a_r * (p_star / p_r.clamp_min(1e-12)) ** ((GAMMA - 1.0) / (2.0 * GAMMA))
+
+    # Tail speeds of rarefactions
+    s_tl = s_m - a_star_l  # tail of left rarefaction
+    s_tr = s_m + a_star_r  # tail of right rarefaction
+
+    # Determine wave types
+    left_is_shock = p_star > p_l
+    right_is_shock = p_star > p_r
+
+    # Velocity in the fan regions
+    # Left rarefaction fan: u = 2/(γ+1) * (a_l + (γ-1)/2 * u_l + x/t)
+    u_in_left_fan = 2.0 / (GAMMA + 1.0) * (a_l + 0.5 * (GAMMA - 1.0) * u_l + x_over_t)
+    # Right rarefaction fan: u = 2/(γ+1) * (-a_r + (γ-1)/2 * u_r + x/t)
+    u_in_right_fan = 2.0 / (GAMMA + 1.0) * (-a_r + 0.5 * (GAMMA - 1.0) * u_r + x_over_t)
+
+    # Build velocity profile
+    if left_is_shock:
+        u = torch.where(x_over_t < s_l, u_l,
+                 torch.where(x_over_t < s_m, s_m,
+                     torch.where(x_over_t < s_r, s_m, u_r)))
+    else:
+        u = torch.where(x_over_t < s_l, u_l,
+                 torch.where(x_over_t < s_tl, u_in_left_fan,
+                     torch.where(x_over_t < s_m, s_m,
+                         torch.where(x_over_t < s_r, s_m, u_r))))
+
+    if right_is_shock:
+        u = torch.where(x_over_t < s_l, u_l,
+                 torch.where(x_over_t < s_m, s_m,
+                     torch.where(x_over_t < s_r, s_m, u_r)))
+    else:
+        u = torch.where(x_over_t < s_l, u_l,
+                 torch.where(x_over_t < s_m, s_m,
+                     torch.where(x_over_t < s_tr, u_in_right_fan, u_r)))
+
+    # Combine: use the more restrictive condition
+    u = torch.where(x_over_t < s_l, u_l,
+             torch.where(x_over_t < s_m,
+                 torch.where(left_is_shock, s_m,
+                     torch.where(x_over_t < s_tl, u_in_left_fan, s_m)),
+                 torch.where(x_over_t < s_r, s_m,
+                     torch.where(right_is_shock, s_m,
+                         torch.where(x_over_t < s_tr, u_in_right_fan, u_r)))))
+
     # Tangential velocity is constant
     v = torch.where(x_over_t <= s_m, v_l, v_r)
 
-    # Build states
-    def star_state(p_k, a_k, rho_k, u_k, v_k):
-        factor_val = s_m - u_k
-        energy_s = rho_s_k * (
-            (p_k / (GAMMA - 1.0) + 0.5 * rho_k * (u_k ** 2 + v_k ** 2)) / rho_k
-            + (s_m - u_k) * (s_m + p_k / (rho_k * factor_val))
-        )
-        return rho_s_k, rho_s_k * s_m, rho_s_k * v_k, energy_s
+    # Density and pressure
+    # Left star region density
+    rho_s_l = torch.where(left_is_shock,
+        rho_l * (s_l - u_l) / (s_m - u_l),
+        rho_l * (p_star / p_l.clamp_min(1e-12)) ** (1.0 / GAMMA))
+    # Right star region density
+    rho_s_r = torch.where(right_is_shock,
+        rho_r * (s_r - u_r) / (s_r - s_m),
+        rho_r * (p_star / p_r.clamp_min(1e-12)) ** (1.0 / GAMMA))
 
-    rho_s_l = rho_l * (s_l - u_l) / (s_m - u_l)
-    energy_s_l = rho_s_l * (
-        (p_l / (GAMMA - 1.0) + 0.5 * rho_l * (u_l ** 2 + v_l ** 2)) / rho_l
-        + (s_m - u_l) * (s_m + p_l / (rho_l * (s_l - u_l)))
-    )
-    rho_s_r = rho_r * (s_r - u_r) / (s_r - s_m)
-    energy_s_r = rho_s_r * (
-        (p_r / (GAMMA - 1.0) + 0.5 * rho_r * (u_r ** 2 + v_r ** 2)) / rho_r
-        + (s_m - u_r) * (s_m + p_r / (rho_r * (s_r - u_r)))
-    )
+    # Density in left rarefaction fan
+    rho_in_left_fan = rho_l * (
+        2.0 / (GAMMA + 1.0) * (1.0 + 0.5 * (GAMMA - 1.0) * (u_l - x_over_t) / a_l.clamp_min(1e-12))
+    ) ** (2.0 / (GAMMA - 1.0))
 
-    # Evaluate at x/t
+    # Density in right rarefaction fan
+    rho_in_right_fan = rho_r * (
+        2.0 / (GAMMA + 1.0) * (1.0 - 0.5 * (GAMMA - 1.0) * (u_r - x_over_t) / a_r.clamp_min(1e-12))
+    ) ** (2.0 / (GAMMA - 1.0))
+
+    # Build density profile
     rho = torch.where(x_over_t < s_l, rho_l,
-             torch.where(x_over_t < s_m, rho_s_l, rho_s_r))
-    u = torch.where(x_over_t < s_l, u_l,
-             torch.where(x_over_t < s_m, s_m, u_r))
+             torch.where(x_over_t < s_m,
+                 torch.where(left_is_shock, rho_s_l,
+                     torch.where(x_over_t < s_tl, rho_in_left_fan, rho_s_l)),
+                 torch.where(x_over_t < s_r, rho_s_r,
+                     torch.where(right_is_shock, rho_r,
+                         torch.where(x_over_t < s_tr, rho_in_right_fan, rho_r)))))
+
+    # Pressure profile
+    p_in_left_fan = p_l * (
+        2.0 / (GAMMA + 1.0) * (1.0 + 0.5 * (GAMMA - 1.0) * (u_l - x_over_t) / a_l.clamp_min(1e-12))
+    ) ** (2.0 * GAMMA / (GAMMA - 1.0))
+    p_in_right_fan = p_r * (
+        2.0 / (GAMMA + 1.0) * (1.0 - 0.5 * (GAMMA - 1.0) * (u_r - x_over_t) / a_r.clamp_min(1e-12))
+    ) ** (2.0 * GAMMA / (GAMMA - 1.0))
+
     p = torch.where(x_over_t < s_l, p_l,
-             torch.where(x_over_t < s_m, p_star, p_r))
+             torch.where(x_over_t < s_m,
+                 torch.where(left_is_shock, p_star,
+                     torch.where(x_over_t < s_tl, p_in_left_fan, p_star)),
+                 torch.where(x_over_t < s_r, p_star,
+                     torch.where(right_is_shock, p_r,
+                         torch.where(x_over_t < s_tr, p_in_right_fan, p_r)))))
 
     return rho, u, v, p
 
 
 def _sod_left():
-    return torch.tensor([[1.0, 0.0, 0.0, 2.5 / (GAMMA - 1.0)]])
+    """Left state of the Sod tube: (rho, rho*u, rho*v, E) with p=1."""
+    return torch.tensor([[1.0, 0.0, 0.0, 2.5]])
 
 
 def _sod_right():
-    return torch.tensor([[0.125, 0.0, 0.0, 0.25 / (GAMMA - 1.0)]])
+    """Right state of the Sod tube: (rho, rho*u, rho*v, E) with p=0.1."""
+    return torch.tensor([[0.125, 0.0, 0.0, 0.25]])
 
 
 # ---------------------------------------------------------------------------
@@ -212,12 +280,13 @@ def test_extruded_sod_velocity_gate():
     nx, ny = coeff.shape[:2]
     hx, hy = 1.0 / nx, 1.0 / ny
     # Cell-centre coordinates (the Sod set-up is y-invariant, so only the
-    # x-centres enter the self-similar variable x/t).
+    # x-centres enter the self-similar variable).
     x = (torch.arange(nx, device=coeff.device, dtype=coeff.dtype) + 0.5) * hx
     y = (torch.arange(ny, device=coeff.device, dtype=coeff.dtype) + 0.5) * hy
     xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
-    xot = xq / 0.2  # t = 0.2
+    # The diaphragm is at x=0.5, so the self-similar variable is (x - 0.5) / t
+    xot = (xq - DIAPHRAGM) / 0.2  # t = 0.2
     left = _sod_left()
     right = _sod_right()
     exact_rho, exact_u, exact_v, exact_p = _exact_riemann_4c(left, right, xot)
@@ -263,7 +332,7 @@ def test_extruded_sod_all_three_velocity_eoc():
         y = (torch.arange(ny, device=coeff.device, dtype=coeff.dtype) + 0.5) * hy
         xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
         yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
-        xot = xq / 0.2
+        xot = (xq - DIAPHRAGM) / 0.2
         left = _sod_left()
         right = _sod_right()
         exact_rho, exact_u, exact_v, exact_p = _exact_riemann_4c(left, right, xot)
@@ -289,13 +358,11 @@ def test_sod_velocity_sharpness():
     _, _, coeff, _ = solve_euler_dg_2d_sod(
         ncells=128, degree=2, final_time=0.2,
     )
-    # The contact is at x ≈ 0.664 at t=0.2 (approximate)
-    # Check that the velocity gradient across the contact is sharp
-    # (the difference between cells straddling the contact should be large)
-    contact_x = 0.664
+    # The contact is at x ≈ 0.5 + s_m * t ≈ 0.5 + 0.64 * 0.2 ≈ 0.628
+    contact_x = 0.628
     contact_cell = int(contact_x * 128)
-    u_left_cell = float(coeff[contact_cell - 1, 0, 1].item())  # cell average u
-    u_right_cell = float(coeff[contact_cell, 0, 1].item())
+    u_left_cell = float(coeff[contact_cell - 1, 0, 0, 1].item() / coeff[contact_cell - 1, 0, 0, 0].item())
+    u_right_cell = float(coeff[contact_cell, 0, 0, 1].item() / coeff[contact_cell, 0, 0, 0].item())
     # The velocity jump across the contact should be significant
     jump = abs(u_left_cell - u_right_cell)
     assert jump > 0.1, f"velocity jump at contact too small: {jump}"
