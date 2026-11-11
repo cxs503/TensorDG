@@ -56,6 +56,7 @@ import sys
 if __package__ in (None, ""):  # allow ``python benchmarks/shu_osher_case_pool.py``
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+import tensordg.cases.shock_entropy as _case  # noqa: E402
 from benchmarks.shu_osher_1d import (  # noqa: E402
     DIAPHRAGM, DOMAIN, FINAL_TIME, LEFT, initial_state, solve_case, shock_position,
 )
@@ -68,7 +69,7 @@ LADDER = [(200, 1), (400, 1), (800, 1), (200, 2), (400, 2), (800, 2),
           (200, 3), (400, 3), (800, 3)]
 #: reference pair (independent FV-WENO5), used to show the reference converged.
 #: The coarse leg of the pair is also the coarsest grid every ladder entry divides.
-REFERENCE = (3200, 6400)
+REFERENCE = (1600, 3200)
 #: CFL sensitivity at fixed grid/order (800 cells P2 also divides the reference grid)
 CFL_SWEEP = (0.1, 0.2, 0.4)
 CFL_CELLS, CFL_DEGREE = 400, 2
@@ -78,78 +79,18 @@ DG_PAIR = [(800, 3), (400, 3)]
 
 # --------------------------------------------------------------- analytic part
 def rankine_hugoniot_anchor() -> dict:
-    """Shock speed from the *initial* left state and the pre-shock state.
+    """Wave skeleton of the case, computed by the library case module.
 
-    The left state of the case is not free data: it is exactly the post-shock
-    state of a Mach-3 shock running into ``rho = 1, p = 1``.  Reproducing it
-    from the jump conditions both validates the case definition and yields the
-    analytic shock speed used as an anchor for the transmitted shock.
-
-    Mass jump: ``rho_L (u_L - S) = rho_R (u_R - S)`` with ``u_R = 0``.
+    Delegation (instead of a second copy of the Rankine--Hugoniot algebra) keeps
+    the benchmark and the solver library from drifting apart: the shipped case
+    definition in :mod:`tensordg.cases.shock_entropy` is the single owner.
     """
-    rho_l, u_l, p_l = LEFT
-    rho_r, u_r, p_r = 1.0, 0.0, 1.0
-    gamma = 1.4
-    shock_speed = (rho_r * u_r - rho_l * u_l) / (rho_r - rho_l)
-    # --- reconstruct the left state from the Mach-3 shock into (1, 1) --------
-    c_r = math.sqrt(gamma * p_r / rho_r)
-    mach = 3.0
-    s_from_mach = mach * c_r
-    rho_l_rh = rho_r * ((gamma + 1.0) * mach ** 2) / ((gamma - 1.0) * mach ** 2 + 2.0)
-    u_l_rh = s_from_mach * (1.0 - rho_r / rho_l_rh)
-    p_l_rh = p_r * (1.0 + 2.0 * gamma / (gamma + 1.0) * (mach ** 2 - 1.0))
-    contact_speed = u_l  # the contact discontinuity advects with the post-shock velocity
-    return {
-        "shock_speed_analytic": shock_speed,
-        "shock_speed_from_mach3": s_from_mach,
-        "contact_speed_analytic": contact_speed,
-        "shock_position_analytic": DIAPHRAGM + shock_speed * FINAL_TIME,
-        "contact_position_analytic": DIAPHRAGM + contact_speed * FINAL_TIME,
-        "hugoniot_left_state_from_mach3": {"rho": rho_l_rh, "u": u_l_rh, "p": p_l_rh},
-        "hugoniot_left_state_case": {"rho": rho_l, "u": u_l, "p": p_l},
-        "hugoniot_relative_error": {
-            "rho": abs(rho_l_rh - rho_l) / rho_l,
-            "u": abs(u_l_rh - u_l) / u_l,
-            "p": abs(p_l_rh - p_l) / p_l,
-        },
-        # the incident perturbation starts at x = -4, so the slowest family of
-        # waves it sheds (left-going acoustic, lab speed u2 - c2) only reaches
-        # x = -4 + (u2 - c2) t; everything to the left of that stays exactly at
-        # the uniform left state.
-        "quiet_zone_head_analytic": DIAPHRAGM + (u_l - math.sqrt(
-            gamma * p_l / rho_l)) * FINAL_TIME,
-        "post_shock_plateau": {"rho": rho_l, "window": [-5.0, -3.0]},
-    }
+    return _case.rankine_hugoniot_anchor()
 
 
 def exact_mass_budget() -> dict:
-    """Exact mass in the domain at ``t = 1.8`` (analytic, no discretisation).
-
-    The left boundary stays inside the uniform post-shock state for all
-    ``t <= 1.8`` (all waves move right), so the mass flux through ``x = -5`` is
-    the constant ``rho_L u_L`` and
-
-    ``M(t) = M(0) + rho_L u_L t``.
-
-    (``rho_L u_L > 0``: the boundary is an *inflow*, because the whole post-shock
-    state drifts to the right.)  No wave ever reaches ``x = -5``, so this
-    identity holds exactly for the continuous problem and it is the sharpest
-    global invariant available for a case whose domain is not periodic.
-    """
-    rho_l, u_l, _ = LEFT
-    n = 2_000_000
-    x = np.linspace(DOMAIN[0], DOMAIN[1], n, endpoint=False) + 0.5 * (DOMAIN[1] - DOMAIN[0]) / n
-    rho0 = np.where(x < DIAPHRAGM, rho_l, 1.0 + 0.2 * np.sin(5.0 * x))
-    mass0 = float(np.sum(rho0) * (DOMAIN[1] - DOMAIN[0]) / n)
-    flux = rho_l * u_l
-    return {
-        "mass_initial": mass0,
-        "left_boundary_mass_flux": flux,
-        "mass_inflow": flux * FINAL_TIME,
-        "mass_final_predicted": mass0 + flux * FINAL_TIME,
-        "mass_inflow_relative_to_initial": flux * FINAL_TIME / mass0,
-        "closure": "outflow/inflow through x=-5 only; no wave reaches the boundary",
-    }
+    """Exact global mass budget at the final time (delegated to the case module)."""
+    return _case.exact_mass_budget()
 
 
 # ------------------------------------------------------------------ DG ladder
@@ -160,15 +101,29 @@ def _key(tag: str, **kw) -> str:
 
 def run_dg(ncells: int, degree: int, limiter: str = "weno", cfl: float = 0.4,
            tag: str = "dg") -> Path:
-    """Solve one DG configuration and persist ``x, rho, rho_u, rho_E`` cell averages."""
+    """Solve one DG configuration and persist ``x, rho, rho_u, rho_E`` cell averages.
+
+    ``benchmarks.shu_osher_1d.solve_case`` returns the *full conserved state*
+    cell averages, shape ``(ncells, 3)`` (density, momentum, total energy); the
+    density is column 0.  Keeping the three columns separate matters: an earlier
+    revision of this driver stored the whole ``(ncells, 3)`` array under ``rho``,
+    so the reported ``rho`` extrema were really extrema over ``(rho, rho u,
+    rho E)`` (``rho E`` reaches ~39 on the post-shock plateau) and every profile
+    comparison was against the wrong quantity.
+    """
     key = _key(tag, n=ncells, p=degree, lim=limiter, cfl=cfl)
     path = RAW / f"{key}.npz"
     if path.exists():
         print(f"[skip] {key} (cached)", flush=True)
         return path
-    x, rho, meta = solve_case(ncells, degree, limiter, cfl=cfl)
+    x, state, meta = solve_case(ncells, degree, limiter, cfl=cfl)
+    state = np.asarray(state, dtype=float)
+    if state.ndim != 2 or state.shape[1] != 3:
+        raise ValueError(f"expected cell-averaged conserved state (ncells, 3), got {state.shape}")
     RAW.mkdir(parents=True, exist_ok=True)
-    np.savez(path, x=x, rho=rho, meta=json.dumps(meta))
+    np.savez(path, x=x, rho=state[:, 0], rho_u=state[:, 1], rho_e=state[:, 2],
+             meta=json.dumps(meta))
+    rho = state[:, 0]
     print(f"[done] {key}: steps={meta['steps']} wall={meta['wall_time_s']:.1f}s "
           f"rho=[{rho.min():.4f},{rho.max():.4f}]", flush=True)
     return path
@@ -199,6 +154,15 @@ def coarsen(values: np.ndarray, factor: int) -> np.ndarray:
 
 
 def relative_errors(candidate: np.ndarray, reference: np.ndarray) -> dict:
+    """Relative L1/L2/Linf of two profiles on the *same* grid.
+
+    The shape check is deliberate: the first revision of ``merge`` coarsened the
+    coarse DG profile instead of the fine reference (the factor is
+    ``reference_cells // ncells``, which belongs on the *reference*), which either
+    raised deep inside ``coarsen`` or silently broadcast the wrong arrays.
+    """
+    if candidate.shape != reference.shape:
+        raise ValueError(f"profile shapes differ: {candidate.shape} vs {reference.shape}")
     diff = candidate - reference
     l1 = float(np.sum(np.abs(diff)) / np.sum(np.abs(reference)))
     l2 = float(np.sqrt(np.sum(diff ** 2) / np.sum(reference ** 2)))
@@ -272,14 +236,14 @@ def merge(reference_cells: int = 25600) -> dict:
         "reference_anchor": profile_metrics(x_ref, rho_ref),
     }
     # ---- reference self-convergence (independent solver, two refinements) ----
-    avail = sorted(int(p.name.split("_n")[1].split("_")[0])
-                   for p in RAW.glob("fv_n*_cfl0p3.npz"))
+    avail = sorted(int(p.stem.split("_n")[1])
+                   for p in RAW.glob("fv_cfl0p3_n*.npz"))
     avail = [n for n in avail if n < reference_cells and reference_cells % n == 0]
     if avail:
         coarse_n = avail[-1]  # finest available coarser leg
         h = load_raw(RAW / f"{_key('fv', n=coarse_n, cfl=0.3)}.npz")
         out["reference_self_convergence"] = relative_errors(
-            coarsen(h["rho"], reference_cells // coarse_n), rho_ref)
+            h["rho"], coarsen(rho_ref, reference_cells // coarse_n))
         out["reference_self_convergence"]["coarse_ncells"] = int(coarse_n)
     # ---- DG ladder ----------------------------------------------------------
     rows = []
@@ -292,7 +256,7 @@ def merge(reference_cells: int = 25600) -> dict:
         row = {"ncells": ncells, "degree": degree, "limiter": "weno",
                "cfl": 0.4, "steps": d["meta"]["steps"],
                "wall_time_s": d["meta"]["wall_time_s"]}
-        row.update(relative_errors(coarsen(d["rho"], factor), rho_ref))
+        row.update(relative_errors(d["rho"], coarsen(rho_ref, factor)))
         row.update({k: v for k, v in profile_metrics(d["x"], d["rho"]).items()
                     if k in ("rho_min", "rho_max", "plateau_rho_dev_percent",
                              "shock_position", "preshock_sine_rel_l1_percent")})
@@ -315,9 +279,9 @@ def merge(reference_cells: int = 25600) -> dict:
     if fp.exists() and cp.exists():
         f, c = load_raw(fp), load_raw(cp)
         dg_pairs.append({"fine_ncells": fine_n, "coarse_ncells": coarse_n, "degree": fine_p,
-                         "self_convergence": relative_errors(coarsen(c["rho"], 2), f["rho"]),
+                         "self_convergence": relative_errors(coarsen(f["rho"], 2), c["rho"]),
                          "vs_fv_reference": relative_errors(
-                             coarsen(f["rho"], reference_cells // fine_n), rho_ref)})
+                             f["rho"], coarsen(rho_ref, reference_cells // fine_n))})
     out["dg_self_convergence"] = dg_pairs
     # ---- CFL sensitivity ----------------------------------------------------
     cfl_rows = []
@@ -328,13 +292,35 @@ def merge(reference_cells: int = 25600) -> dict:
         d = load_raw(p)
         row = {"cfl": cfl, "ncells": CFL_CELLS, "degree": CFL_DEGREE,
                "steps": d["meta"]["steps"], "wall_time_s": d["meta"]["wall_time_s"]}
-        row.update(relative_errors(coarsen(d["rho"], reference_cells // CFL_CELLS), rho_ref))
+        row.update(relative_errors(d["rho"], coarsen(rho_ref, reference_cells // CFL_CELLS)))
         cfl_rows.append(row)
     out["cfl_sweep"] = sorted(cfl_rows, key=lambda r: r["cfl"])
     if len(cfl_rows) >= 2:
         spread = max(r["rel_l1_percent"] for r in cfl_rows) - min(
             r["rel_l1_percent"] for r in cfl_rows)
         out["cfl_sweep_spread_percent_points"] = float(spread)
+    # ---- regression exhibit: the state-column mix-up that broke this driver ----
+    # ``run_dg`` used to persist the whole conserved state (ncells, 3) under the
+    # name ``rho``.  Re-deriving "what the old driver would have reported" from
+    # the (correct) artifact makes the defect measurable instead of anecdotal.
+    probe_n, probe_p = LADDER[0]
+    probe = RAW / _key("dg", n=probe_n, p=probe_p, lim="weno", cfl=0.4)
+    if probe.exists():
+        blob = np.load(probe, allow_pickle=False)
+        whole = np.max(np.stack((blob["rho"], blob["rho_u"], blob["rho_e"])))
+        out["state_column_regression"] = {
+            "artifact": str(probe),
+            "ncells": int(blob["rho"].size),
+            "degree": int(probe_p),
+            "cfl": 0.4,
+            "density_max_correct": float(blob["rho"].max()),
+            "density_max_if_whole_state_used": float(whole),
+            "overstatement_factor": float(whole / blob["rho"].max()),
+            "columns": ["rho", "rho_u", "rho_e"],
+            "note": "the third column rho E is ~39 on the post-shock plateau; "
+                    "using it as density inflates the reported peak and corrupts "
+                    "every profile error against the reference",
+        }
     # ---- profiles for plotting ---------------------------------------------
     prof = {"x_ref": x_ref, "rho_ref": rho_ref}
     for ncells, degree in LADDER:
