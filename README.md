@@ -138,6 +138,41 @@ pytest -q tests/test_in31_hp_ladder.py
 TENSORDG_IN31_SLOW=1 pytest -q tests/test_in31_hp_ladder.py   # + fresh Sod block
 ```
 
+### Advection--diffusion + dispersive-wave surface (`python -m benchmarks.dg`)
+
+Every case above is either hyperbolic-conservative or parabolic. The `P165W3-N05`
+surface adds the two answer classes that were missing: **transport by a velocity
+field that varies in space and in time** (`tensordg/advection_diffusion.py`,
+upwind/Rusanov DG + SIPG diffusion) and **dispersion-limited waves**
+(`tensordg/dispersive.py`: Airy operator, Boussinesq / Padé reductions, KdV
+solitary wave). Five machine-checkable criteria are declared before the runs:
+
+| id | criterion | limit |
+|---|---|---|
+| E1 | 2-D solid-body rotation (`omega = 2*pi`, one revolution) vs the analytic rotated bell | 5 % relative L2 |
+| E2 | LeVeque deformational flow (cosine hill), exact recovery at `T` | 5 % relative L2 |
+| E3 | dispersive operator vs `omega^2 = g k tanh(kh)`, `kh` in `[0.1, 5]` | 3 % |
+| E4 | KdV `sech^2` solitary wave propagated 10 widths | 5 % relative L2 |
+| E5 | total-mass change of the advection(-diffusion) solver | 1 % |
+
+```bash
+python -m benchmarks.dg --quick        # five criteria through the registry (CI)
+python -m benchmarks.dg                # full studies + figures + report.md + evidence
+python -m benchmarks.dg.evidence --verify \
+    docs/benchmarks/results/dg-unified-verification/evidence.json
+pytest -q tests/test_dg_unified_verification.py
+```
+
+The runner writes `dg_unified_verification.json` (every number in the report),
+`benchmark_table.json` (ref vs got per criterion), `external_anchor.json` (the
+analytic/literature anchor behind each criterion) and `evidence.json` (impl
+files, entry, run artifacts, integration callers, sha256 provenance). The
+evidence bundle is re-checked offline against the run artifact, so a hand-edited
+number fails. Method specification and the honest limits (classical Boussinesq
+diverges above `kh ~ 1.56`; the mass-drift criterion only holds on the declared
+mesh) are in
+[docs/benchmarks/dg-unified-verification.md](docs/benchmarks/dg-unified-verification.md).
+
 ## Quick start
 
 ```bash
@@ -153,6 +188,7 @@ python -m benchmarks.heat_1d --cells 16 --degree 2
 python -m benchmarks.lax_1d --cells 400 --degree 3
 python -m benchmarks.isentropic_vortex_2d --cells 192
 python -m benchmarks.convergence_study
+python -m benchmarks.dg --quick
 ```
 
 Add `--output-dir PATH` to the benchmark commands to write JSON metrics, CSV

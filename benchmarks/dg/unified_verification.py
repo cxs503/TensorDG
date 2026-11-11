@@ -28,6 +28,7 @@ import argparse
 import json
 import math
 import os
+import platform
 import sys
 import time
 
@@ -325,11 +326,17 @@ def make_figures(outdir: str, data: dict) -> list[str]:
     return names
 
 
-def main() -> dict:
+def main(argv: list[str] | None = None) -> dict:
+    """Run the whole surface and write ``dg_unified_verification.json`` + figures.
+
+    ``argv`` is forwarded to :mod:`argparse` so that the package entry point
+    (:mod:`benchmarks.dg.__main__`) and the CI step can drive the driver without
+    rewriting ``sys.argv``.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--outdir", default=DEFAULT_OUT)
     parser.add_argument("--quick", action="store_true")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     outdir = os.path.abspath(args.outdir)
     os.makedirs(outdir, exist_ok=True)
 
@@ -405,7 +412,10 @@ def main() -> dict:
         "wall_seconds": time.time() - started,
         "seeds": "deterministic (no random numbers)",
         "environment": {"torch": torch.__version__, "numpy": np.__version__,
-                        "threads": torch.get_num_threads()},
+                        "threads": torch.get_num_threads(),
+                        "platform": platform.platform(), "machine": platform.machine(),
+                        "processor": platform.processor() or "unknown",
+                        "python": platform.python_version()},
     }
 
     print("== figures ==", flush=True)
@@ -427,4 +437,4 @@ def main() -> dict:
 
 
 if __name__ == "__main__":
-    main()
+    main()  # argv=None -> argparse reads sys.argv

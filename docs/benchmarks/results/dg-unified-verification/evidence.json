@@ -1,0 +1,245 @@
+{
+  "schema": "tensordg-evidence/1",
+  "capability_id": "TensorDG.dg.unified-verification-surface",
+  "mission_id": 14548,
+  "repository": "TensorDG",
+  "node": "P165W3-N05",
+  "declared_level": 5,
+  "declared_level_note": "L2 impl_files+entry+run_artifacts, L3 integration_callers (CI + package entry + pytest), L4 benchmark ref-vs-got + repro_cmd, L5 external_anchor (analytic/textbook anchors: Airy dispersion, KdV soliton, LeVeque flow)",
+  "cited_kb": [],
+  "impl_files": [
+    "tensordg/advection_diffusion.py",
+    "tensordg/dispersive.py",
+    "benchmarks/dg/__init__.py",
+    "benchmarks/dg/__main__.py",
+    "benchmarks/dg/evidence.py",
+    "benchmarks/dg/unified_verification.py"
+  ],
+  "entry": [
+    "benchmarks/dg/__main__.py",
+    "benchmarks/dg/unified_verification.py"
+  ],
+  "run_artifacts": [
+    "docs/benchmarks/results/dg-unified-verification/dg_unified_verification.json",
+    "docs/benchmarks/results/dg-unified-verification/benchmark_table.json",
+    "docs/benchmarks/results/dg-unified-verification/external_anchor.json",
+    "docs/benchmarks/results/dg-unified-verification/report.md",
+    "docs/benchmarks/results/dg-unified-verification/figures/e1_solid_body_rotation.png",
+    "docs/benchmarks/results/dg-unified-verification/figures/e2_deformational_flow.png",
+    "docs/benchmarks/results/dg-unified-verification/figures/e3_dispersion.png",
+    "docs/benchmarks/results/dg-unified-verification/figures/e4_solitary_wave.png",
+    "docs/benchmarks/results/dg-unified-verification/figures/mesh_refinement.png"
+  ],
+  "integration_callers": [
+    "tensordg.dispersive: run_soliton_benchmark / measure_dispersion -> benchmarks/dg/__init__.py, tests/test_dg_unified_verification.py",
+    ".github/workflows/tests.yml: `python -m benchmarks.dg --quick` (CI harness step)",
+    "benchmarks/dg/__main__.py: main -> benchmarks.dg.unified_verification.main + benchmarks.dg.evidence.build_evidence",
+    "tests/test_dg_unified_verification.py: run_surface/run_criterion -> tensordg.advection_diffusion + tensordg.dispersive",
+    "tensordg/__init__.py: re-exports run_solid_body_rotation, run_deformational_flow, run_solitary_wave_benchmark (public API)"
+  ],
+  "benchmark": {
+    "E1": {
+      "physics": "2-D solid-body rotation, omega = 2*pi, T = 1 s",
+      "reference": "exact rotated cosine bell (analytic)",
+      "reference_value": 0.0,
+      "got": 0.015639815418607515,
+      "error": 0.015639815418607515,
+      "tolerance": 0.05,
+      "pass": true,
+      "metric": "relative L2 error at T",
+      "config": {
+        "ncells": 24,
+        "degree": 2
+      }
+    },
+    "E2": {
+      "physics": "LeVeque deformational flow, one period T = 1",
+      "reference": "initial cosine hill (exact recovery)",
+      "reference_value": 0.0,
+      "got": 0.01664760732232819,
+      "error": 0.01664760732232819,
+      "tolerance": 0.05,
+      "pass": true,
+      "metric": "relative L2 error at T",
+      "config": {
+        "ncells": 24,
+        "degree": 2
+      }
+    },
+    "E3": {
+      "physics": "linear dispersive operator vs Airy dispersion",
+      "reference": "omega^2 = g k tanh(kh) (Lamb 1932)",
+      "reference_value": 0.0,
+      "got": 5.027846332020445e-05,
+      "error": 5.027846332020445e-05,
+      "tolerance": 0.03,
+      "pass": true,
+      "metric": "max relative error of omega, kh in [0.1, 5]",
+      "reference_values": [
+        {
+          "kh": 0.1,
+          "omega_airy": 0.3126354376140427,
+          "omega_measured": 0.3126354366540909,
+          "relative_error": 3.0705151263927533e-09
+        },
+        {
+          "kh": 0.5,
+          "omega_airy": 1.5052941938777076,
+          "omega_measured": 1.5052942633628845,
+          "relative_error": 4.6160529435517214e-08
+        },
+        {
+          "kh": 1.0,
+          "omega_airy": 2.7328899226832393,
+          "omega_measured": 2.732890009880066,
+          "relative_error": 3.190645401569148e-08
+        },
+        {
+          "kh": 2.0,
+          "omega_airy": 4.348305662703695,
+          "omega_measured": 4.348305940628052,
+          "relative_error": 6.391555193590173e-08
+        },
+        {
+          "kh": 3.5,
+          "omega_airy": 5.853266991914089,
+          "omega_measured": 5.853267431259155,
+          "relative_error": 7.505980279260663e-08
+        },
+        {
+          "kh": 5.0,
+          "omega_airy": 7.002056697136127,
+          "omega_measured": 7.002056837081909,
+          "relative_error": 1.9986382305518716e-08
+        }
+      ],
+      "model_max_relative_error_omega": {
+        "airy": 1.9175617736651922e-16,
+        "boussinesq": 0.26804171518818554,
+        "pade22": 0.10101374993864763,
+        "pade66": 5.027846332020445e-05
+      },
+      "model_validity_limit_kh_3pct": {
+        "airy": Infinity,
+        "boussinesq": 1.5598768136114507,
+        "pade22": 3.2125771089689072,
+        "pade66": 15.641712871961957
+      }
+    },
+    "E4": {
+      "physics": "KdV solitary wave, 10 soliton widths",
+      "reference": "exact sech^2 travelling solution (Korteweg-de Vries 1895)",
+      "reference_value": 0.0,
+      "got": 7.401886834961857e-07,
+      "error": 7.401886834961857e-07,
+      "tolerance": 0.05,
+      "pass": true,
+      "metric": "relative L2 error against the exact profile",
+      "celerity": {
+        "reference_sqrt_g_h_plus_a": 3.208891163626464,
+        "reference_kdv": 3.209846048683643,
+        "measured": 3.209812635958529,
+        "relative_error_vs_sqrt": 0.00028716222678726875,
+        "relative_error_vs_kdv": 1.0409447869924916e-05
+      },
+      "peak_retention": 1.0000000866403327,
+      "config": {
+        "ncells": 256,
+        "amplitude": 0.05,
+        "widths": 10.0
+      }
+    },
+    "E5": {
+      "physics": "mass conservation of the DG advection operator",
+      "reference": "0 (invariant mass of a compactly supported field)",
+      "reference_value": 0.0,
+      "got": 0.0005179246172571563,
+      "error": 0.0005179246172571563,
+      "tolerance": 0.01,
+      "pass": true,
+      "metric": "max relative mass change over the E1 and E2 runs",
+      "mass_drift_rotation": 0.0005179246172571563,
+      "mass_drift_deformation": 4.951914861101392e-16
+    }
+  },
+  "repro_cmd": "python -m benchmarks.dg",
+  "external_anchor": [
+    "docs/benchmarks/results/dg-unified-verification/external_anchor.json"
+  ],
+  "tests": [
+    "tests/test_dg_unified_verification.py::test_registry_matches_campaign_criteria",
+    "tests/test_dg_unified_verification.py::test_rotation_criterion_declared_config",
+    "tests/test_dg_unified_verification.py::test_deformation_criterion_quick_config",
+    "tests/test_dg_unified_verification.py::test_dispersion_criterion_quick_config",
+    "tests/test_dg_unified_verification.py::test_soliton_criterion_quick_config",
+    "tests/test_dg_unified_verification.py::test_mass_conservation_criterion_quick_config",
+    "tests/test_dg_unified_verification.py::test_rotation_reference_is_independent_of_solver",
+    "tests/test_dg_unified_verification.py::test_dispersion_reference_is_closed_form",
+    "tests/test_dg_unified_verification.py::test_artifacts_contract",
+    "tests/test_dg_unified_verification.py::test_evidence_pointers_resolve",
+    "tests/test_dg_unified_verification.py::test_evidence_benchmark_matches_run_artifact",
+    "tests/test_dg_unified_verification.py::test_evidence_tamper_is_detected",
+    "tests/test_dg_unified_verification.py::test_gate_values_reproduce_across_independent_runs",
+    "tests/test_dg_unified_verification.py::test_entry_point_writes_artifacts_quick"
+  ],
+  "provenance": {
+    "generated_utc": "2026-11-11T08:42:28Z",
+    "run_artifact": "docs/benchmarks/results/dg-unified-verification/dg_unified_verification.json",
+    "run_artifact_sha256": "ce2358f232603bab67c7e307fa4dc28f790387518230a573dbe9cf9a9a56eb4e",
+    "artifact_sha256": {
+      "docs/benchmarks/results/dg-unified-verification/dg_unified_verification.json": "ce2358f232603bab67c7e307fa4dc28f790387518230a573dbe9cf9a9a56eb4e",
+      "docs/benchmarks/results/dg-unified-verification/benchmark_table.json": "6fb813eac54736d7e936b8394d523e7ce0ff20511e857c8f203f45c1a0e7a3d2",
+      "docs/benchmarks/results/dg-unified-verification/external_anchor.json": "27fce389dd292b494405b01a0b12888235ecc3d394e4f4c884d54c45193bed35",
+      "docs/benchmarks/results/dg-unified-verification/report.md": "9db35931abc3fb16d04a93121aab8557ad65c00b449aa191438f661d8ef8ec7e",
+      "docs/benchmarks/results/dg-unified-verification/figures/e1_solid_body_rotation.png": "49383ad3c8e2b54fa7fdc2cb74c2e2fd7ec9d30a84bde18bf60a22dddd0eac5c",
+      "docs/benchmarks/results/dg-unified-verification/figures/e2_deformational_flow.png": "3efb9dc595167ca12253e18004b1b19125a0c26a3e60b30033a5ca66eedde2f5",
+      "docs/benchmarks/results/dg-unified-verification/figures/e3_dispersion.png": "4a57941ff094a44486494b06fc873827cc00f2100a39a732ea2216d3254a63f2",
+      "docs/benchmarks/results/dg-unified-verification/figures/e4_solitary_wave.png": "c2cd194a7ca27f0a21c6b3ec144a585c33dcd5283872fecc8e9d6ec0de84fce7",
+      "docs/benchmarks/results/dg-unified-verification/figures/mesh_refinement.png": "fb055780a31b1cd5c79ac89890f1cea755961c3c759e42a732176c4cad6bbc30"
+    },
+    "environment": {
+      "torch": "2.7.1",
+      "numpy": "2.4.6",
+      "threads": 16,
+      "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+      "machine": "loongarch64",
+      "processor": "loongarch64",
+      "python": "3.11.6"
+    },
+    "seeds": "deterministic (no random numbers)",
+    "run_wall_seconds": 346.10414028167725
+  },
+  "reproducibility": {
+    "prior_run_source_commit": "81ddba95823255c861b120b8ae2c0ae9e8d66541",
+    "prior_run_artifact": "docs/benchmarks/results/dg-unified-verification/dg_unified_verification.json@81ddba9",
+    "prior_run_gates": {
+      "E1_rotation_l2": {
+        "value": 0.015639815418607515,
+        "limit": 0.05,
+        "pass": true
+      },
+      "E2_deformation_l2": {
+        "value": 0.01664760732232819,
+        "limit": 0.05,
+        "pass": true
+      },
+      "E3_dispersion": {
+        "value": 5.027846332020445e-05,
+        "limit": 0.03,
+        "pass": true
+      },
+      "E4_soliton_l2": {
+        "value": 7.401886834961857e-07,
+        "limit": 0.05,
+        "pass": true
+      },
+      "E5_mass_drift": {
+        "value": 0.0005179246172571563,
+        "limit": 0.01,
+        "pass": true
+      }
+    },
+    "gate_values_identical": true,
+    "note": "two independent runs of the same declared configurations; the run uses no random numbers, so identical gate values are expected and a mismatch would indicate a non-deterministic path"
+  }
+}
