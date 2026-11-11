@@ -464,6 +464,7 @@ Complete validation results are available in `validation/swe_thacker/hydrostatic
 - Mesh convergence study for P1 and P2
 - Error metrics (max and L2 norms) for η, u, and h
 - Computational performance (wall time, number of steps)
+- Round-off drift law study: `validation/swe_thacker/hydrostatic_wb_drift.json` and `docs/swe-hydrostatic-roundoff-drift-law.md`
 
 ### Provenance and regeneration
 
@@ -478,7 +479,7 @@ PYTHONPATH=. python validation/swe_thacker/run_hydrostatic_wb.py
 
 from a clean tree at commit `8589f0d` (`git_dirty: false`, `machine:
 loongarch64`); its numbers are reproduced bit-for-bit by a re-run on the same
-host.  This replaces the earlier artifact, which was a hand-carried
+host.  The earlier artifact was a hand-carried
 pre-`zb_center` snapshot: it carried an O(dx²) post-processing drift in its P2
 entries and no record of the code revision that produced it, so its numbers
 could not be traced back to a run.  `tests/test_swe_hydrostatic_results_artifact.py`
