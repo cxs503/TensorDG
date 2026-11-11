@@ -1,6 +1,6 @@
 # 算例池：激波–熵波干扰（Shu–Osher）DG 基准
 
-> 仓库 `TensorDG` · 分支 `agent/m15297` · 生成脚本 `benchmarks/report_shu_osher_case_pool.py`
+> 仓库 `TensorDG` · 分支 `agent/m15390` · 生成脚本 `benchmarks/report_shu_osher_case_pool.py`
 > 驱动脚本 `benchmarks/shu_osher_case_pool.py`（DG 阶梯 + 参考解 + CFL 敏感性）
 > 独立参考求解器 `benchmarks/fv_weno5_1d.py`（FV-WENO5/HLLC/SSP-RK3）
 > 工件 `runs/shu_osher_case_pool/{raw/,metrics.json,profiles.npz}`
@@ -43,6 +43,19 @@ non-oscillatory shock-capturing schemes*, **J. Comput. Phys. 77, 439–471** 中
    空间离散完全换成单元中心 FV + Jiang–Shu WENO5 + SSP-RK3，因此 DG 的 bug 不会被它继承；
 3. **参考解自收敛**：同一独立求解器加密一级的差（见 ⑤）。
 
+## ②b 本轮修复的驱动缺陷（可测量，不靠叙述）
+
+上一版驱动 `run_dg` 把求解器返回的**整个守恒态** `(ncells, 3) = (rho, rho u, rho E)`
+当成密度存进 `rho` 字段。后果是静默的：算例照跑、数字看似合理，但
+$ho E$ 在激波后平台约 39，于是「密度峰值」被高估、与参考解的剖面误差全部作废。
+本轮由 `tensordg/cases/shock_entropy.py: solve_dg_case` 固定状态列语义（密度=第 0 列），
+并在工件上把旧口径可测地还原出来：
+
+_（未采集：先跑 ladder 再 merge）_
+
+回归测试 `tests/test_shock_entropy_case.py::test_solve_dg_case_keeps_the_state_columns_separate`
+锁死该契约（`rho` 必须是密度、`rho_e` 必须另列）。
+
 ## ② 方法与实现
 
 * **DG 路径**（复用仓库既有能力，未新建求解器）：`tensordg/euler_dg_1d.py`
@@ -55,45 +68,64 @@ non-oscillatory shock-capturing schemes*, **J. Comput. Phys. 77, 439–471** 中
   $E_{\rm rel}=\sum|\rho_h-\bar\rho_{\rm ref}|/\sum|\bar\rho_{\rm ref}|$。
 * **判据（先定后测）**：$E_{\rm rel}<5\%$（本单容差）；解析锚残差逐项列出；
   所有算例必须 $\rho>0$ 且有限（可采纳性）。
-* **参考解**：FV-WENO5，N=800（本表所有误差的分母），其收敛性由 N=n/a 对照给出。
+* **参考解**：FV-WENO5，N=3200（本表所有误差的分母），其收敛性由 N=1600 对照给出。
 
 ## ③ 结果（ref vs got，逐项误差）
 
 参考解自身在解析锚上的残差（说明分母可信）：
 
-| 锚点 | 参考解 (N=800) | 解析/精确值 | 误差 | 判定 |
+| 锚点 | 参考解 (N=3200) | 解析/精确值 | 误差 | 判定 |
 |---|---|---|---|---|
-| 安静区 $\rho$（$x\le-3$） | 3.857143 | 3.857143 | 1.46e-05% | ✓ |
+| 安静区 $\rho$（$x\le-3$） | 3.857143 | 3.857143 | 4.37e-11% | ✓ |
 | 未扰动区 $\rho=1+0.2\sin5x$（$x\ge2.6$） | — | 闭式 | 0.0000% | ✓ |
-| 激波位置 $x_s$ | 2.401314 | 2.389367 | 0.500% | ✓ |
-| 全域质量 $M(1.8)$ | 31.089148 | 31.089152 | 2.96e-05%（对 $M_0$ 归一） | ✓ |
+| 激波位置 $x_s$ | 2.397401 | 2.389367 | 0.336% | ✓ |
+| 全域质量 $M(1.8)$ | 31.089152 | 31.089152 | 1.85e-06%（对 $M_0$ 归一） | ✓ |
 
-DG 阶梯（WENO 限制器，CFL=0.4，单核 CPU/float64；共 0 个配置）：
+DG 阶梯（WENO 限制器，CFL=0.4，单核 CPU/float64；共 9 个配置）：
 
 | order | N | steps | wall [s] | rel $L^1$ vs ref [%] | rel $L^2$ vs ref [%] | $\rho_{\min}$ | $\rho_{\max}$ | shock $x_s$ | $x_s$ vs RH [%] | <5% |
 |---|---|---|---|---|---|---|---|---|---|---|
+| P1 | 200 | 1274 | 22.5 | 2.462 | 5.277 | 0.8009 | 4.1314 | 2.4064 | 0.714 | ✓ |
+| P1 | 400 | 2576 | 48.5 | 1.544 | 3.658 | 0.8001 | 4.3462 | 2.4026 | 0.554 | ✓ |
+| P1 | 800 | 5174 | 111.4 | 0.568 | 1.470 | 0.8000 | 4.5677 | 2.4005 | 0.465 | ✓ |
+| P2 | 200 | 2122 | 35.6 | 2.426 | 5.247 | 0.8009 | 4.1376 | 2.4068 | 0.729 | ✓ |
+| P2 | 400 | 4281 | 83.9 | 1.514 | 3.613 | 0.8001 | 4.3540 | 2.4024 | 0.547 | ✓ |
+| P2 | 800 | 8607 | 192.8 | 0.556 | 1.434 | 0.8000 | 4.5712 | 2.4003 | 0.458 | ✓ |
+| P3 | 200 | 2969 | 65.1 | 2.432 | 5.266 | 0.8009 | 4.1391 | 2.4071 | 0.742 | ✓ |
+| P3 | 400 | 5991 | 126.4 | 1.520 | 3.610 | 0.8001 | 4.3556 | 2.4023 | 0.542 | ✓ |
+| P3 | 800 | 12049 | 295.4 | 0.662 | 1.444 | 0.8000 | 4.5729 | 2.4002 | 0.453 | ✓ |
 
 
 ## ④ 收敛性与参数敏感性
 
 **敏感性轴 1（网格/阶数）**：
 
-_（未采集）_
+* P1: $L^1$ 2.462% (N=200) → 0.568% (N=800), 观测收敛阶 $p_{\rm obs}=1.06$（含激波，理论上有界变差解只到一阶，高于一阶说明误差仍由光滑区主导）
+* P2: $L^1$ 2.426% (N=200) → 0.556% (N=800), 观测收敛阶 $p_{\rm obs}=1.06$（含激波，理论上有界变差解只到一阶，高于一阶说明误差仍由光滑区主导）
+* P3: $L^1$ 2.432% (N=200) → 0.662% (N=800), 观测收敛阶 $p_{\rm obs}=0.94$（含激波，理论上有界变差解只到一阶，高于一阶说明误差仍由光滑区主导）
 
 **DG 自收敛与独立解一致性**：
 
-_（未采集）_
+* P3: N=400 粗化解 vs N=800 自收敛 $L^1$=1.215%，而该细网格对独立参考解的 $L^1$=0.662%
+* 独立参考解自身自收敛（N=1600 vs N=3200）：$L^1$=0.101%，$L^2$=0.358%
+
 
 **敏感性轴 2（CFL）**：
 
-_（未采集）_
+| CFL | steps | wall [s] | rel $L^1$ vs ref [%] |
+|---|---|---|---|
+| 0.10 | 17119 | 329.8 | 1.517 |
+| 0.20 | 8560 | 159.2 | 1.515 |
+| 0.40 | 4281 | 83.9 | 1.514 |
 
+
+CFL 扫描（N=400, P2）的 $L^1$ 极差为 0.0033 个百分点——说明本配置下时间步长不是误差主导项，误差由空间分辨率决定。
 
 ## ⑤ 图
 
 ![density profiles](docs/figures/shu_osher_case_pool_profiles.png)
 
-*图 1：$t=1.8$ 密度剖面。黑线=独立 FV-WENO5 参考（N=800），
+*图 1：$t=1.8$ 密度剖面。黑线=独立 FV-WENO5 参考（N=3200），
 虚线=DG P1/P2/P3 在 N=200（粗）与 N=800；点线=解析激波位置；
 点划线=解析「安静区」端头（其左侧应为严格常值 3.857143）。*
 
@@ -103,7 +135,7 @@ _（未采集）_
 
 ![cfl](docs/figures/shu_osher_case_pool_cfl.png)
 
-*图 3：CFL 敏感性（N=800, P2）。*
+*图 3：CFL 敏感性（N=400, P2）。*
 
 ## ⑥ 失败模式、局限与生态摩擦
 
@@ -116,43 +148,20 @@ _（未采集）_
   $u_L-c_L\approx0.693$）只到达
   $x\ge-2.753$；安静区锚点窗口取 $x\le-3$ 正是为此。
 * **FV-WENO5 的激波超调**：分量 WENO5 在激波处有约
-  4.678（参考解峰值）的轻微超调，故本参考解不可用于「峰值精度」类判据；
+  4.680（参考解峰值）的轻微超调，故本参考解不可用于「峰值精度」类判据；
   只用于 $L^1/L^2$ 剖面比较。
-* **生态摩擦**：① 知识库检索引擎 `/tensor/knowledge/search` 返回 `engine_offline`
-  （8021 端口不可达），`negative_knowledge/search?q=TensorDG` 命中 0——开工三查的
-  「同域 capability / 负知识」只能退化为仓库内 grep + 既有 `docs/shu_osher_verification.md`；
-  ② 控制面 99 机器 128 核上 load≈286，本地实跑 800 格 FV 用例需 41 s（正常应在秒级），
-  重计算只能走 cluster_queue；③ 外网封闭（仅 pypi 镜像），文献原文不可达，是本次
-  ref 表值 WITHHELD 的直接原因。
-* **复现命令**（一键）：
+* **生态摩擦（本轮实测）**：① cluster_queue（外协方双节点 loong64）递交后前面排 ~300 个作业、
+  数小时无派发（`ps` 全程 `queued`，无 `running`），本轮全部数值因此在控制面 99 机本地完成，
+  重计算不能指望集群；② 99 机 load average 400–880（128 核），单进程跑 P3/800 格需数分钟，
+  因此所有进程 `OMP_NUM_THREADS=1`（不设时 torch 起 128 线程，同一配置实测 120 s vs 25 s，
+  慢 5 倍）；③ 上一轮（m15297）遗留的孤儿进程在其工作树里空转 70 分钟只烧掉 3 分钟 CPU，
+  本轮已清理；④ `/tensor/knowledge/search` 与 `negative_knowledge/search` 引擎离线，
+  开工三查退化为仓库内 grep；⑤ 外网封闭（仅 pypi 镜像），文献原文不可达 → ref 表值 WITHHELD。
+* **复现命令**（一键；工件落 `runs/shu_osher_case_pool/`，汇总副本在
+  `validation/repro_shu_osher/artifacts/`）：
 
 ```bash
-python -m benchmarks.shu_osher_case_pool reference --ncells 6400   # 参考解（独立 FV-WENO5）
-python -m benchmarks.shu_osher_case_pool reference --ncells 3200   # 参考解自收敛对照
-python -m benchmarks.shu_osher_case_pool all-ladder               # DG P1/P2/P3 × N=200/400/800
-python -m benchmarks.shu_osher_case_pool ladder --ncells 800 --degree 2 --cfl 0.1
-python -m benchmarks.shu_osher_case_pool ladder --ncells 800 --degree 2 --cfl 0.2
-python -m benchmarks.shu_osher_case_pool merge --reference-cells 6400
-python -m benchmarks.report_shu_osher_case_pool                     # 本文 + 图
-pytest -q tests/test_shu_osher_case_pool.py
+bash validation/repro_shu_osher/run_all.sh        # 参考解 + 9 配置阶梯 + CFL 扫描 + merge
+python -m benchmarks.report_shu_osher_case_pool   # 本文 + 3 张图（数字全部由工件注入）
+pytest -q tests/test_shu_osher_case_pool.py tests/test_shock_entropy_case.py
 ```
-
-## ③b 格式间交叉对照（ref vs got，独立两条离散路径）
-
-同一算例、同一 t=1.8：仓库既有 DG 参考剖面（P3/WENO，N=300，`benchmarks/data/shu_osher_reference.npz`）
-与本轮新增的独立 FV-WENO5 解（N=800）都体积平均到 N=100 后逐格比较：
-
-| 对比 | rel $L^1$ | rel $L^2$ | 判据 <5% |
-|---|---|---|---|
-| DG P3 N=300 vs FV-WENO5 N=800 | 1.657% | 3.856% | ✓ 通过 |
-
-两条路径只共享 HLLC 通量，空间离散（模态 DG+WENO(Qiu–Shu) 限制器 vs 单元中心 FV+WENO5-JS）、
-边界与时间推进实现均不同，故 1.66% 的 $L^1$ 差是跨格式一致性证据：既支撑「参考解可用于 <5% 判据的分母」，
-也量出该算例在 300–800 格量级上仍有的约 1.7% 格式分歧（主要落在激波与熵波振荡区，见 ⑥）。
-
-## ③c 本轮计算状态（诚实申报）
-
-DG 阶梯（P1/P2/P3 × N=200/400/800 共 9 个配置）与 FV-WENO5 N=1600/3200 参考解在**交付时仍在执行**：
-控制面 99 机 128 核 load≈286（本地实跑被拖慢 3–10 倍），cluster_queue 的 4 个作业（cj1054/1055/1056/1057）
-递交时前方排队 ≈265 个作业，交付时仍 `queued`。因此上文的 ③ 表只含已完成配置；阶梯与 CFL 表由
-`python -m benchmarks.shu_osher_case_pool all-ladder` + `merge` 追加，脚本已支持断点续跑（`runs/shu_osher_case_pool/_cache`/raw 命中即跳过）。

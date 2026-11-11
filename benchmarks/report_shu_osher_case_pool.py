@@ -211,9 +211,20 @@ def main():
                      f"N={ref['ncells']}）：$L^1$={rsc['rel_l1_percent']:.3f}%，"
                      f"$L^2$={rsc['rel_l2_percent']:.3f}%\n")
 
+    defect = m.get("state_column_regression")
+    defect_txt = "_（未采集：先跑 ladder 再 merge）_"
+    if defect:
+        defect_txt = (
+            f"* 工件 `{defect['artifact']}`（N={defect['ncells']}, P{defect['degree']}, "
+            f"CFL={defect['cfl']}）：正确口径 $\\max\\rho={defect['density_max_correct']:.4f}$；"
+            f"若把三列一起当密度（旧口径），$\\max={defect['density_max_if_whole_state_used']:.4f}$，"
+            f"高估 {defect['overstatement_factor']:.2f}×。"
+            f"旧口径下该配置的 $\\rho_{{\\min}}$ 为负（$\\rho u$ 列穿过 0），"
+            "这也是「方程组可采纳性」被误判的直接来源。")
+
     md = f"""# 算例池：激波–熵波干扰（Shu–Osher）DG 基准
 
-> 仓库 `TensorDG` · 分支 `agent/m15297` · 生成脚本 `benchmarks/report_shu_osher_case_pool.py`
+> 仓库 `TensorDG` · 分支 `agent/m15390` · 生成脚本 `benchmarks/report_shu_osher_case_pool.py`
 > 驱动脚本 `benchmarks/shu_osher_case_pool.py`（DG 阶梯 + 参考解 + CFL 敏感性）
 > 独立参考求解器 `benchmarks/fv_weno5_1d.py`（FV-WENO5/HLLC/SSP-RK3）
 > 工件 `runs/shu_osher_case_pool/{{raw/,metrics.json,profiles.npz}}`
@@ -255,6 +266,19 @@ non-oscillatory shock-capturing schemes*, **J. Comput. Phys. 77, 439–471** 中
 2. **独立离散锚**：`benchmarks/fv_weno5_1d.py`，与 DG 路径**只共享物理通量**（HLLC），
    空间离散完全换成单元中心 FV + Jiang–Shu WENO5 + SSP-RK3，因此 DG 的 bug 不会被它继承；
 3. **参考解自收敛**：同一独立求解器加密一级的差（见 ⑤）。
+
+## ②b 本轮修复的驱动缺陷（可测量，不靠叙述）
+
+上一版驱动 `run_dg` 把求解器返回的**整个守恒态** `(ncells, 3) = (rho, rho u, rho E)`
+当成密度存进 `rho` 字段。后果是静默的：算例照跑、数字看似合理，但
+$\rho E$ 在激波后平台约 39，于是「密度峰值」被高估、与参考解的剖面误差全部作废。
+本轮由 `tensordg/cases/shock_entropy.py: solve_dg_case` 固定状态列语义（密度=第 0 列），
+并在工件上把旧口径可测地还原出来：
+
+{defect_txt}
+
+回归测试 `tests/test_shock_entropy_case.py::test_solve_dg_case_keeps_the_state_columns_separate`
+锁死该契约（`rho` 必须是密度、`rho_e` 必须另列）。
 
 ## ② 方法与实现
 
@@ -334,23 +358,20 @@ DG 阶梯（WENO 限制器，CFL=0.4，单核 CPU/float64；共 {n_samples} 个�
 * **FV-WENO5 的激波超调**：分量 WENO5 在激波处有约
   {anchors['rho_max']:.3f}（参考解峰值）的轻微超调，故本参考解不可用于「峰值精度」类判据；
   只用于 $L^1/L^2$ 剖面比较。
-* **生态摩擦**：① 知识库检索引擎 `/tensor/knowledge/search` 返回 `engine_offline`
-  （8021 端口不可达），`negative_knowledge/search?q=TensorDG` 命中 0——开工三查的
-  「同域 capability / 负知识」只能退化为仓库内 grep + 既有 `docs/shu_osher_verification.md`；
-  ② 控制面 99 机器 128 核上 load≈286，本地实跑 800 格 FV 用例需 41 s（正常应在秒级），
-  重计算只能走 cluster_queue；③ 外网封闭（仅 pypi 镜像），文献原文不可达，是本次
-  ref 表值 WITHHELD 的直接原因。
-* **复现命令**（一键）：
+* **生态摩擦（本轮实测）**：① cluster_queue（外协方双节点 loong64）递交后前面排 ~300 个作业、
+  数小时无派发（`ps` 全程 `queued`，无 `running`），本轮全部数值因此在控制面 99 机本地完成，
+  重计算不能指望集群；② 99 机 load average 400–880（128 核），单进程跑 P3/800 格需数分钟，
+  因此所有进程 `OMP_NUM_THREADS=1`（不设时 torch 起 128 线程，同一配置实测 120 s vs 25 s，
+  慢 5 倍）；③ 上一轮（m15297）遗留的孤儿进程在其工作树里空转 70 分钟只烧掉 3 分钟 CPU，
+  本轮已清理；④ `/tensor/knowledge/search` 与 `negative_knowledge/search` 引擎离线，
+  开工三查退化为仓库内 grep；⑤ 外网封闭（仅 pypi 镜像），文献原文不可达 → ref 表值 WITHHELD。
+* **复现命令**（一键；工件落 `runs/shu_osher_case_pool/`，汇总副本在
+  `validation/repro_shu_osher/artifacts/`）：
 
 ```bash
-python -m benchmarks.shu_osher_case_pool reference --ncells 6400   # 参考解（独立 FV-WENO5）
-python -m benchmarks.shu_osher_case_pool reference --ncells 3200   # 参考解自收敛对照
-python -m benchmarks.shu_osher_case_pool all-ladder               # DG P1/P2/P3 × N=200/400/800
-python -m benchmarks.shu_osher_case_pool ladder --ncells 800 --degree 2 --cfl 0.1
-python -m benchmarks.shu_osher_case_pool ladder --ncells 800 --degree 2 --cfl 0.2
-python -m benchmarks.shu_osher_case_pool merge --reference-cells 6400
-python -m benchmarks.report_shu_osher_case_pool                     # 本文 + 图
-pytest -q tests/test_shu_osher_case_pool.py
+bash validation/repro_shu_osher/run_all.sh        # 参考解 + 9 配置阶梯 + CFL 扫描 + merge
+python -m benchmarks.report_shu_osher_case_pool   # 本文 + 3 张图（数字全部由工件注入）
+pytest -q tests/test_shu_osher_case_pool.py tests/test_shock_entropy_case.py
 ```
 """
     DOC.parent.mkdir(parents=True, exist_ok=True)
