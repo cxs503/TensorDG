@@ -22,7 +22,8 @@ Usage
     OMP_NUM_THREADS=1 python validation/repro_cks1998/repro_cks1998.py --profile quick
     OMP_NUM_THREADS=1 python validation/repro_cks1998/repro_cks1998.py --profile full
 
-Artifacts (written under ``runs/cks1998/<profile>/``):
+Artifacts (written under ``validation/repro_cks1998/artifacts/<profile>/``,
+``--outdir`` overrides):
     metrics.json   every number used by the report, plus the gate verdicts
     convergence.csv / sod.csv / tvd.csv   the tables
     summary.md     programmatically rendered report table (zero hand-copied digits)
@@ -57,6 +58,7 @@ from tensordg.euler_dg_1d import solve_euler_dg_1d  # noqa: E402
 SOD_LEFT = (1.0, 0.0, 1.0)
 SOD_RIGHT = (0.125, 0.0, 0.1)
 SOD_T = 0.2
+SOD_STATIONS = (0.10, 0.30, 0.45, 0.55, 0.70, 0.90)
 
 PROFILES = {
     "quick": {
@@ -214,6 +216,15 @@ def run_sod(profile: dict) -> dict:
         pre = (GAMMA - 1.0) * (avg[:, 2] - 0.5 * avg[:, 1] ** 2 / rho)
         _, ref = cell_averages(ncells, SOD_T)
         got = {"density": rho.numpy(), "velocity": vel.numpy(), "pressure": pre.numpy()}
+        # fixed x-stations -> literal ref (exact) vs got (cell average) numbers
+        stations = []
+        for xs in SOD_STATIONS:
+            idx = min(int(xs * ncells), ncells - 1)
+            stations.append({
+                "x": round((idx + 0.5) / ncells, 6),
+                "ref": {k: float(ref[k][idx]) for k in got},
+                "got": {k: float(got[k][idx]) for k in got},
+            })
         rel = {}
         for key in ("density", "velocity", "pressure"):
             diff = got[key] - ref[key]
@@ -227,6 +238,7 @@ def run_sod(profile: dict) -> dict:
             # the 3 % gate is declared on the finest mesh of each degree; the
             # coarser cases are reported to show the convergence trend
             "gate_case": gate_case,
+            "stations": stations,
             "pass": bool(worst < GATES["sod_rel_l2"]),
             "seconds": round(time.time() - t0, 2),
         }
@@ -426,7 +438,8 @@ def main() -> int:
     CURRENT_PROFILE = args.profile
     profile = PROFILES[args.profile]
     torch.set_num_threads(int(os.environ.get("TORCH_THREADS", "1")))
-    outdir = Path(args.outdir) if args.outdir else REPO / "runs" / "cks1998" / args.profile
+    outdir = (Path(args.outdir) if args.outdir
+             else REPO / "validation" / "repro_cks1998" / "artifacts" / args.profile)
     outdir.mkdir(parents=True, exist_ok=True)
 
     t_start = time.time()
@@ -466,6 +479,9 @@ def main() -> int:
         "sections": {
             "A1_smooth": smooth, "A2_discontinuous": discont,
             "E2_sod": sod, "E3_tvd": tvd,
+        },
+        "sod_reference_stations": {
+            tag: case["stations"] for tag, case in sod["cases"].items()
         },
         "verdict": verdict,
         "tvd_control_violates_gate": tvd["control_violates"],
