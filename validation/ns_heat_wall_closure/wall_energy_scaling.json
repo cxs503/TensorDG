@@ -1,0 +1,94 @@
+{
+  "config": {
+    "mu": 0.1,
+    "prandtl": 0.71,
+    "kappa": 0.4929577464788734,
+    "t_bottom": 1.0,
+    "t_top": 0.5,
+    "pressure": 1.0,
+    "rho_bottom": 1.0,
+    "rho_top": 2.0
+  },
+  "refinement": [
+    {
+      "ny": 16,
+      "mass_row_max": 9.971986966320896e-15,
+      "momentum_rows_max": 0.0,
+      "wall_energy_bottom": 0.5421238070567469,
+      "wall_energy_top": 0.814996826844272,
+      "interior_energy": 0.17093204676291052,
+      "wall_energy_top_mode_ge_1": 4.556880921789206e-13,
+      "bottom_over_kappa": 1.0997368657436861,
+      "top_over_kappa": 1.6532792773126654
+    },
+    {
+      "ny": 32,
+      "mass_row_max": 3.757064252557721e-14,
+      "momentum_rows_max": 0.0,
+      "wall_energy_bottom": 0.5169310331662071,
+      "wall_energy_top": 0.8965969805012701,
+      "interior_energy": 0.09291243717660436,
+      "wall_energy_top_mode_ge_1": 2.6575179776921486e-15,
+      "bottom_over_kappa": 1.048631524422877,
+      "top_over_kappa": 1.8188110175882901
+    },
+    {
+      "ny": 64,
+      "mass_row_max": 7.271877787264508e-14,
+      "momentum_rows_max": 0.0,
+      "wall_energy_bottom": 0.5047981729365105,
+      "wall_energy_top": 0.9402171796527021,
+      "interior_energy": 0.048553825727609023,
+      "wall_energy_top_mode_ge_1": 2.5058206916448404e-13,
+      "bottom_over_kappa": 1.024019150814064,
+      "top_over_kappa": 1.9072977072954809
+    },
+    {
+      "ny": 128,
+      "mass_row_max": 8.050273947461303e-14,
+      "momentum_rows_max": 0.0,
+      "wall_energy_bottom": 0.49884214359872914,
+      "wall_energy_top": 0.9627963846694456,
+      "interior_energy": 0.024835229095430122,
+      "wall_energy_top_mode_ge_1": 5.90487723066206e-13,
+      "bottom_over_kappa": 1.0119369198717074,
+      "top_over_kappa": 1.9531012374723034
+    }
+  ],
+  "kappa_scaling": [
+    {
+      "kappa_factor": 0.5,
+      "wall_energy_bottom": 0.25846551658310357,
+      "wall_energy_top": 0.44829849025063506
+    },
+    {
+      "kappa_factor": 1.0,
+      "wall_energy_bottom": 0.5169310331662071,
+      "wall_energy_top": 0.8965969805012701
+    },
+    {
+      "kappa_factor": 2.0,
+      "wall_energy_bottom": 1.0338620663324143,
+      "wall_energy_top": 1.7931939610025402
+    }
+  ],
+  "pressure_scaling": [
+    {
+      "pressure_factor": 0.5,
+      "wall_energy_bottom": 0.5169310331662071,
+      "wall_energy_top": 0.8965969805012701
+    },
+    {
+      "pressure_factor": 1.0,
+      "wall_energy_bottom": 0.5169310331662071,
+      "wall_energy_top": 0.8965969805012701
+    },
+    {
+      "pressure_factor": 2.0,
+      "wall_energy_bottom": 0.5169310331662071,
+      "wall_energy_top": 0.8965969805012701
+    }
+  ],
+  "kappa_linearity_relative_spread": 0.0,
+  "pressure_independence_relative_spread": 0.0
+}
