@@ -454,6 +454,14 @@ def apply_weno_limiter_2d(
     receives the WENO slope and modes >= 2 are zeroed, while the modal
     content of the other axis is kept.  The cell average (mode 0 of both axes)
     is never modified, so conservation is preserved exactly.
+
+    Mission m14777 fixed a slice-write defect: both axis passes assigned the
+    whole ``[..., 1, :, :]`` / ``[..., :, 1, :]`` slice, so for ``degree >= 2``
+    every mixed mode (1, j) (resp. (i, 1)) was overwritten with the
+    one-dimensional slope.  That injected a spurious O(h) tensor-product term in
+    every limited cell and produced the limiter-on error plateau recorded in
+    ``docs/anisotropic_2d_verification.md``.  Only mode ``(1, 0)`` / ``(0, 1)``
+    is now touched, matching :func:`apply_tvb_limiter_2d`.
     """
     if coeff.shape[2] <= 1 and coeff.shape[3] <= 1:
         return coeff
@@ -472,11 +480,15 @@ def apply_weno_limiter_2d(
         )
         if limited is coeff:
             limited = coeff.clone()
-        mask = troubled.view(*troubled.shape, 1, 1)
+        mask = troubled.unsqueeze(-1)  # (nx, ny, 1) broadcast over the 4 components
         mask_modes = troubled.view(*troubled.shape, 1, 1, 1)
         if axis == 0:
-            limited[..., 1, :, :] = torch.where(
-                mask, (0.5 * spacing) * slope.unsqueeze(2), limited[..., 1, :, :]
+            # Only the *pure* mode-1 of the offending axis is replaced.  Writing
+            # the whole ``[..., 1, :, :]`` slice (m14777 defect) stamped the
+            # one-dimensional slope into every mixed mode (1, j >= 1) and
+            # destroyed the tensor-product content of the other axis.
+            limited[..., 1, 0, :] = torch.where(
+                mask, (0.5 * spacing) * slope, limited[..., 1, 0, :]
             )
             if coeff.shape[2] > 2:
                 limited[..., 2:, :, :] = torch.where(
@@ -485,8 +497,8 @@ def apply_weno_limiter_2d(
                     limited[..., 2:, :, :],
                 )
         else:
-            limited[..., :, 1, :] = torch.where(
-                mask, (0.5 * spacing) * slope.unsqueeze(2), limited[..., :, 1, :]
+            limited[..., 0, 1, :] = torch.where(
+                mask, (0.5 * spacing) * slope, limited[..., 0, 1, :]
             )
             if coeff.shape[3] > 2:
                 limited[..., :, 2:, :] = torch.where(
