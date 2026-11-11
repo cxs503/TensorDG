@@ -1,0 +1,2029 @@
+{
+ "meta": {
+  "mission": "m15258",
+  "git_sha": "d0b157c78e4e5a29430e6dfb5bccb3a9d5012589",
+  "torch": "2.7.1",
+  "python": "3.11.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "dtype": "float64",
+  "device": "cpu",
+  "command": "PYTHONPATH=. python -m benchmarks.verify_ns_wall_flux_extrapolation",
+  "families": [
+   "conduction",
+   "curved"
+  ],
+  "cells": [
+   8,
+   16,
+   32,
+   64
+  ],
+  "degrees": [
+   1,
+   2
+  ],
+  "wall_gradients": [
+   "taylor",
+   "face"
+  ],
+  "points": [
+   1,
+   2,
+   3
+  ],
+  "extrapolation_weights": {
+   "1": [
+    1.0
+   ],
+   "2": [
+    2.0,
+    -1.0
+   ],
+   "3": [
+    3.0,
+    -3.0,
+    1.0
+   ]
+  },
+  "mu": 0.1,
+  "prandtl": 0.71,
+  "kappa": 0.4929577464788734,
+  "beta": 0.5,
+  "temperatures": {
+   "hot": 1.0,
+   "cold": 0.5
+  },
+  "pressure": 1.0,
+  "reference_wall_flux": {
+   "conduction": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "curved": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   }
+  },
+  "thresholds": {
+   "p1_order": 1.8,
+   "p1_rel_err_pct": 0.1,
+   "p2_order": 1.8,
+   "p1_improvement": 20.0,
+   "gradient_independence": 1e-12,
+   "points_marginal": 0.01,
+   "nearest_face_order": 1.3
+  },
+  "timestamp": "2026-11-11T21:30:50",
+  "wall_clock_s": 1.32
+ },
+ "cases": [
+  {
+   "family": "conduction",
+   "ny": 8,
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.28210327642162963,
+    "ymin": 0.2242646721607095
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.24041121186983863,
+     "ymin": 0.24431377053434694
+    },
+    "2": {
+     "ymax": 0.23924542062449267,
+     "ymin": 0.24463594338839956
+    },
+    "3": {
+     "ymax": 0.23893824380081308,
+     "ymin": 0.24455811183922566
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 16,
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.2655648150824959,
+    "ymin": 0.23580558984897085
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.24479509008391717,
+     "ymin": 0.24597387509138435
+    },
+    "2": {
+     "ymax": 0.24461257396473862,
+     "ymin": 0.24600814507268576
+    },
+    "3": {
+     "ymax": 0.2445844024413294,
+     "ymin": 0.2460045328534373
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 32,
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.25637294115583836,
+    "ymin": 0.24124486962455483
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.2460332927364958,
+     "ymin": 0.24635670704815954
+    },
+    "2": {
+     "ymax": 0.2460074427098654,
+     "ymin": 0.2463606808234321
+    },
+    "3": {
+     "ymax": 0.24600525611942792,
+     "ymin": 0.24636048371640176
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 64,
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.25151825033364245,
+    "ymin": 0.24388684801602406
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.24636411125580404,
+     "ymin": 0.24644881711690758
+    },
+    "2": {
+     "ymax": 0.2463606590846154,
+     "ymin": 0.24644929612495176
+    },
+    "3": {
+     "ymax": 0.24636050561530803,
+     "ymin": 0.24644928458153298
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 8,
+   "degree": 1,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.2554668208063514,
+    "ymin": 0.24097294716506132
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.24041121186983863,
+     "ymin": 0.24431377053434694
+    },
+    "2": {
+     "ymax": 0.23924542062449267,
+     "ymin": 0.24463594338839956
+    },
+    "3": {
+     "ymax": 0.23893824380081308,
+     "ymin": 0.24455811183922566
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 16,
+   "degree": 1,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.25127764543378506,
+    "ymin": 0.24382092049847354
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.24479509008391717,
+     "ymin": 0.24597387509138435
+    },
+    "2": {
+     "ymax": 0.24461257396473862,
+     "ymin": 0.24600814507268576
+    },
+    "3": {
+     "ymax": 0.2445844024413294,
+     "ymin": 0.2460045328534373
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 32,
+   "degree": 1,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.2489602423444764,
+    "ymin": 0.24517279098715314
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.2460332927364958,
+     "ymin": 0.24635670704815954
+    },
+    "2": {
+     "ymax": 0.2460074427098654,
+     "ymin": 0.2463606808234321
+    },
+    "3": {
+     "ymax": 0.24600525611942792,
+     "ymin": 0.24636048371640176
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 64,
+   "degree": 1,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.24774082247984622,
+    "ymin": 0.24583145099819592
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.24636411125580404,
+     "ymin": 0.24644881711690758
+    },
+    "2": {
+     "ymax": 0.2463606590846154,
+     "ymin": 0.24644929612495176
+    },
+    "3": {
+     "ymax": 0.24636050561530803,
+     "ymin": 0.24644928458153298
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 8,
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.24799364077981312,
+    "ymin": 0.24711271664497675
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.2502299942472802,
+     "ymin": 0.2478062189501129
+    },
+    "2": {
+     "ymax": 0.2509582052984796,
+     "ymin": 0.24760764083757003
+    },
+    "3": {
+     "ymax": 0.2511523457106287,
+     "ymin": 0.24765599584310088
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 16,
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.24692504880262245,
+    "ymin": 0.24662354533067413
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.2475100598871044,
+     "ymin": 0.24678734976916225
+    },
+    "2": {
+     "ymax": 0.24762220235496366,
+     "ymin": 0.2467663912981845
+    },
+    "3": {
+     "ymax": 0.2476395808027705,
+     "ymin": 0.2467686040786426
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 32,
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.24660027316438987,
+    "ymin": 0.2465134619424775
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.24675101920858078,
+     "ymin": 0.24655343535653937
+    },
+    "2": {
+     "ymax": 0.24676682210020937,
+     "ymin": 0.2465510093555227
+    },
+    "3": {
+     "ymax": 0.2467681603971759,
+     "ymin": 0.24655112973521648
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 64,
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.24651055870066982,
+    "ymin": 0.24648733126781092
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.24654891518039543,
+     "ymin": 0.24649721378117312
+    },
+    "2": {
+     "ymax": 0.24655102263742826,
+     "ymin": 0.2464969214659605
+    },
+    "3": {
+     "ymax": 0.24655111635602617,
+     "ymin": 0.24649692851057523
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 8,
+   "degree": 2,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.24741580819087788,
+    "ymin": 0.24680230162326142
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.2502299942472802,
+     "ymin": 0.2478062189501129
+    },
+    "2": {
+     "ymax": 0.2509582052984796,
+     "ymin": 0.24760764083757003
+    },
+    "3": {
+     "ymax": 0.2511523457106287,
+     "ymin": 0.24765599584310088
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 16,
+   "degree": 2,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.24673831322126744,
+    "ymin": 0.24655522694077345
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.2475100598871044,
+     "ymin": 0.24678734976916225
+    },
+    "2": {
+     "ymax": 0.24762220235496366,
+     "ymin": 0.2467663912981845
+    },
+    "3": {
+     "ymax": 0.2476395808027705,
+     "ymin": 0.2467686040786426
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 32,
+   "degree": 2,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.24654726352053313,
+    "ymin": 0.24649743313572464
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.24675101920858078,
+     "ymin": 0.24655343535653937
+    },
+    "2": {
+     "ymax": 0.24676682210020937,
+     "ymin": 0.2465510093555227
+    },
+    "3": {
+     "ymax": 0.2467681603971759,
+     "ymin": 0.24655112973521648
+    }
+   }
+  },
+  {
+   "family": "conduction",
+   "ny": 64,
+   "degree": 2,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.2464788732394367,
+    "ymax": 0.2464788732394367
+   },
+   "direct": {
+    "ymax": 0.2464964388011543,
+    "ymin": 0.24648344916111334
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.24654891518039543,
+     "ymin": 0.24649721378117312
+    },
+    "2": {
+     "ymax": 0.24655102263742826,
+     "ymin": 0.2464969214659605
+    },
+    "3": {
+     "ymax": 0.24655111635602617,
+     "ymin": 0.24649692851057523
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 8,
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.1150854454920624,
+    "ymin": 0.3432711959951822
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.1572179896329185,
+     "ymin": 0.3391847296475735
+    },
+    "2": {
+     "ymax": 0.1266421674648796,
+     "ymin": 0.3694496205705988
+    },
+    "3": {
+     "ymax": 0.1264537871827192,
+     "ymin": 0.3694825863198605
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 16,
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.11864176035560214,
+    "ymin": 0.3566808448245503
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.1394456737561029,
+     "ymin": 0.3543167310098791
+    },
+    "2": {
+     "ymax": 0.12404710510173228,
+     "ymin": 0.36965827092801673
+    },
+    "3": {
+     "ymax": 0.12403038373177411,
+     "ymin": 0.3696615214088933
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 32,
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12080712663600031,
+    "ymin": 0.36324879721918113
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.1311415423491793,
+     "ymin": 0.36200895664279426
+    },
+    "2": {
+     "ymax": 0.12343815933256,
+     "ymin": 0.3697038317641195
+    },
+    "3": {
+     "ymax": 0.1234369754468895,
+     "ymin": 0.36970405406367074
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 64,
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12198958117116182,
+    "ymin": 0.3664961582658216
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.12714036594113728,
+     "ymin": 0.36586441994759966
+    },
+    "2": {
+     "ymax": 0.12328890399865855,
+     "ymin": 0.36971472513044584
+    },
+    "3": {
+     "ymax": 0.12328882633185936,
+     "ymin": 0.36971473941008537
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 8,
+   "degree": 1,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.1215242802159872,
+    "ymin": 0.36370946412241234
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.1572179896329185,
+     "ymin": 0.3391847296475735
+    },
+    "2": {
+     "ymax": 0.1266421674648796,
+     "ymin": 0.3694496205705988
+    },
+    "3": {
+     "ymax": 0.1264537871827192,
+     "ymin": 0.3694825863198605
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 16,
+   "degree": 1,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12216896155144547,
+    "ymin": 0.36660357282238976
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.1394456737561029,
+     "ymin": 0.3543167310098791
+    },
+    "2": {
+     "ymax": 0.12404710510173228,
+     "ymin": 0.36965827092801673
+    },
+    "3": {
+     "ymax": 0.12403038373177411,
+     "ymin": 0.3696615214088933
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 32,
+   "degree": 1,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.1226508277585533,
+    "ymin": 0.3681363497443798
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.1311415423491793,
+     "ymin": 0.36200895664279426
+    },
+    "2": {
+     "ymax": 0.12343815933256,
+     "ymin": 0.3697038317641195
+    },
+    "3": {
+     "ymax": 0.1234369754468895,
+     "ymin": 0.36970405406367074
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 64,
+   "degree": 1,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12293180458493322,
+    "ymin": 0.36892153557662544
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.12714036594113728,
+     "ymin": 0.36586441994759966
+    },
+    "2": {
+     "ymax": 0.12328890399865855,
+     "ymin": 0.36971472513044584
+    },
+    "3": {
+     "ymax": 0.12328882633185936,
+     "ymin": 0.36971473941008537
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 8,
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12203841285354669,
+    "ymin": 0.3691159021064322
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.15235055531720879,
+     "ymin": 0.33902698136049586
+    },
+    "2": {
+     "ymax": 0.1213784690921568,
+     "ymin": 0.3701703290797281
+    },
+    "3": {
+     "ymax": 0.12148759085202271,
+     "ymin": 0.37014796272757877
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 16,
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12292822081358377,
+    "ymin": 0.36957853392513873
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.13820929906706655,
+     "ymin": 0.35438458542192963
+    },
+    "2": {
+     "ymax": 0.12279680639649332,
+     "ymin": 0.3698280288878258
+    },
+    "3": {
+     "ymax": 0.12280653302794795,
+     "ymin": 0.36982590616366945
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 32,
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12316055309522411,
+    "ymin": 0.36968453573576826
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.13083292492944026,
+     "ymin": 0.3620384204776341
+    },
+    "2": {
+     "ymax": 0.12313049723961386,
+     "ymin": 0.3697454803962574
+    },
+    "3": {
+     "ymax": 0.12313118926043468,
+     "ymin": 0.3697453369548634
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 64,
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12321960200524473,
+    "ymin": 0.3697100015904203
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.12706347871043996,
+     "ymin": 0.3658732925427144
+    },
+    "2": {
+     "ymax": 0.12321231763826784,
+     "ymin": 0.3697250854067567
+    },
+    "3": {
+     "ymax": 0.12321236314260137,
+     "ymin": 0.36972507623906764
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 8,
+   "degree": 2,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12282370851098738,
+    "ymin": 0.3697931399390961
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.15235055531720879,
+     "ymin": 0.33902698136049586
+    },
+    "2": {
+     "ymax": 0.1213784690921568,
+     "ymin": 0.3701703290797281
+    },
+    "3": {
+     "ymax": 0.12148759085202271,
+     "ymin": 0.37014796272757877
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 16,
+   "degree": 2,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12313285777545534,
+    "ymin": 0.3697414663181325
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.13820929906706655,
+     "ymin": 0.35438458542192963
+    },
+    "2": {
+     "ymax": 0.12279680639649332,
+     "ymin": 0.3698280288878258
+    },
+    "3": {
+     "ymax": 0.12280653302794795,
+     "ymin": 0.36982590616366945
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 32,
+   "degree": 2,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12321254415365168,
+    "ymin": 0.36972460506463417
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.13083292492944026,
+     "ymin": 0.3620384204776341
+    },
+    "2": {
+     "ymax": 0.12313049723961386,
+     "ymin": 0.3697454803962574
+    },
+    "3": {
+     "ymax": 0.12313118926043468,
+     "ymin": 0.3697453369548634
+    }
+   }
+  },
+  {
+   "family": "curved",
+   "ny": 64,
+   "degree": 2,
+   "wall_gradient": "face",
+   "ref": {
+    "ymin": 0.36971830985915505,
+    "ymax": 0.12323943661971835
+   },
+   "direct": {
+    "ymax": 0.12323268820834674,
+    "ymin": 0.3697199439430795
+   },
+   "extrapolated": {
+    "1": {
+     "ymax": 0.12706347871043996,
+     "ymin": 0.3658732925427144
+    },
+    "2": {
+     "ymax": 0.12321231763826784,
+     "ymin": 0.3697250854067567
+    },
+    "3": {
+     "ymax": 0.12321236314260137,
+     "ymin": 0.36972507623906764
+    }
+   }
+  }
+ ],
+ "benchmark": [
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24388684801602406,
+   "abs_err": -0.0025920252234126473,
+   "rel_err_pct": -1.0516216620702736,
+   "observed_order": 1.032600901272033
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24644881711690758,
+   "abs_err": -3.005612252912626e-05,
+   "rel_err_pct": -0.012194198283245507,
+   "observed_order": 2.0559331264659106
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24644929612495176,
+   "abs_err": -2.957711448495215e-05,
+   "rel_err_pct": -0.01199985787675201,
+   "observed_order": 1.9877884823563436
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24644928458153298,
+   "abs_err": -2.9588657903728555e-05,
+   "rel_err_pct": -0.01200454120665558,
+   "observed_order": 2.0063852032353497
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.25151825033364245,
+   "abs_err": 0.005039377094205738,
+   "rel_err_pct": 2.044547278220613,
+   "observed_order": 0.941252024333797
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24636411125580404,
+   "abs_err": -0.00011476198363266632,
+   "rel_err_pct": -0.04656057621668175,
+   "observed_order": 1.9091219914022275
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.2463606590846154,
+   "abs_err": -0.00011821415482130004,
+   "rel_err_pct": -0.04796117138464172,
+   "observed_order": 1.9790692446340905
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24636050561530803,
+   "abs_err": -0.00011836762412867352,
+   "rel_err_pct": -0.048023436075061814,
+   "observed_order": 1.998001732512569
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24583145099819592,
+   "abs_err": -0.000647422241240786,
+   "rel_err_pct": -0.26266845216054735,
+   "observed_order": 1.0289688917344564
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24644881711690758,
+   "abs_err": -3.005612252912626e-05,
+   "rel_err_pct": -0.012194198283245507,
+   "observed_order": 2.0559331264659106
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24644929612495176,
+   "abs_err": -2.957711448495215e-05,
+   "rel_err_pct": -0.01199985787675201,
+   "observed_order": 1.9877884823563436
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24644928458153298,
+   "abs_err": -2.9588657903728555e-05,
+   "rel_err_pct": -0.01200454120665558,
+   "observed_order": 2.0063852032353497
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24774082247984622,
+   "abs_err": 0.00126194924040951,
+   "rel_err_pct": 0.5119908346804296,
+   "observed_order": 0.9448542454318039
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24636411125580404,
+   "abs_err": -0.00011476198363266632,
+   "rel_err_pct": -0.04656057621668175,
+   "observed_order": 1.9091219914022275
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.2463606590846154,
+   "abs_err": -0.00011821415482130004,
+   "rel_err_pct": -0.04796117138464172,
+   "observed_order": 1.9790692446340905
+  },
+  {
+   "family": "conduction",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24636050561530803,
+   "abs_err": -0.00011836762412867352,
+   "rel_err_pct": -0.048023436075061814,
+   "observed_order": 1.998001732512569
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24648733126781092,
+   "abs_err": 8.458028374208615e-06,
+   "rel_err_pct": 0.0034315429403932083,
+   "observed_order": 2.0747397558992278
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24649721378117312,
+   "abs_err": 1.834054173641131e-05,
+   "rel_err_pct": 0.007441019790201157,
+   "observed_order": 2.0580738326841015
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.2464969214659605,
+   "abs_err": 1.8048226523792454e-05,
+   "rel_err_pct": 0.007322423332510079,
+   "observed_order": 1.9895101689237205
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24649692851057523,
+   "abs_err": 1.8055271138517348e-05,
+   "rel_err_pct": 0.0073252814333413215,
+   "observed_order": 2.008361614977668
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24651055870066982,
+   "abs_err": 3.168546123311078e-05,
+   "rel_err_pct": 0.012855244271719225,
+   "observed_order": 1.8615238724703556
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24654891518039543,
+   "abs_err": 7.004194095872052e-05,
+   "rel_err_pct": 0.028417016046109456,
+   "observed_order": 1.9150729705731857
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24655102263742826,
+   "abs_err": 7.214939799154996e-05,
+   "rel_err_pct": 0.0292720414708574,
+   "observed_order": 1.985781358972756
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24655111635602617,
+   "abs_err": 7.224311658945992e-05,
+   "rel_err_pct": 0.029310064444866585,
+   "observed_order": 2.00509032103604
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24648344916111334,
+   "abs_err": 4.575921676630568e-06,
+   "rel_err_pct": 0.0018565167945186868,
+   "observed_order": 2.047022982246428
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24649721378117312,
+   "abs_err": 1.834054173641131e-05,
+   "rel_err_pct": 0.007441019790201157,
+   "observed_order": 2.0580738326841015
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.2464969214659605,
+   "abs_err": 1.8048226523792454e-05,
+   "rel_err_pct": 0.007322423332510079,
+   "observed_order": 1.9895101689237205
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24649692851057523,
+   "abs_err": 1.8055271138517348e-05,
+   "rel_err_pct": 0.0073252814333413215,
+   "observed_order": 2.008361614977668
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.2464964388011543,
+   "abs_err": 1.7565561717586275e-05,
+   "rel_err_pct": 0.007126599325420715,
+   "observed_order": 1.9134919419643956
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24654891518039543,
+   "abs_err": 7.004194095872052e-05,
+   "rel_err_pct": 0.028417016046109456,
+   "observed_order": 1.9150729705731857
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24655102263742826,
+   "abs_err": 7.214939799154996e-05,
+   "rel_err_pct": 0.0292720414708574,
+   "observed_order": 1.985781358972756
+  },
+  {
+   "family": "conduction",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.2464788732394367,
+   "got": 0.24655111635602617,
+   "abs_err": 7.224311658945992e-05,
+   "rel_err_pct": 0.029310064444866585,
+   "observed_order": 2.00509032103604
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.3664961582658216,
+   "abs_err": -0.0032221515933334444,
+   "rel_err_pct": -0.871515288101617,
+   "observed_order": 1.0121976491234943
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.36586441994759966,
+   "abs_err": -0.003853889911555386,
+   "rel_err_pct": -1.042385461792123,
+   "observed_order": 0.9956425007881153
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.36971472513044584,
+   "abs_err": -3.5847287092050095e-06,
+   "rel_err_pct": -0.0009695837651564023,
+   "observed_order": 2.073581967564764
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.36971473941008537,
+   "abs_err": -3.5704490696786273e-06,
+   "rel_err_pct": -0.0009657214626559332,
+   "observed_order": 2.0128588447198763
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12198958117116182,
+   "abs_err": -0.0012498554485565333,
+   "rel_err_pct": -1.0141684211144437,
+   "observed_order": 0.9035813191814623
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12714036594113728,
+   "abs_err": 0.0039009293214189306,
+   "rel_err_pct": 3.1653255065227883,
+   "observed_order": 1.0404444056780717
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12328890399865855,
+   "abs_err": 4.946737894019615e-05,
+   "rel_err_pct": 0.04013924462575915,
+   "observed_order": 2.0335221776458505
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12328882633185936,
+   "abs_err": 4.9389712141009734e-05,
+   "rel_err_pct": 0.040076223565847884,
+   "observed_order": 2.0073963710547478
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.36892153557662544,
+   "abs_err": -0.0007967742825296109,
+   "rel_err_pct": -0.21550847260800898,
+   "observed_order": 0.9721931833027827
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.36586441994759966,
+   "abs_err": -0.003853889911555386,
+   "rel_err_pct": -1.042385461792123,
+   "observed_order": 0.9956425007881153
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.36971472513044584,
+   "abs_err": -3.5847287092050095e-06,
+   "rel_err_pct": -0.0009695837651564023,
+   "observed_order": 2.073581967564764
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.36971473941008537,
+   "abs_err": -3.5704490696786273e-06,
+   "rel_err_pct": -0.0009657214626559332,
+   "observed_order": 2.0128588447198763
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12293180458493322,
+   "abs_err": -0.00030763203478513523,
+   "rel_err_pct": -0.2496214225113668,
+   "observed_order": 0.830005750341258
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12714036594113728,
+   "abs_err": 0.0039009293214189306,
+   "rel_err_pct": 3.1653255065227883,
+   "observed_order": 1.0404444056780717
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12328890399865855,
+   "abs_err": 4.946737894019615e-05,
+   "rel_err_pct": 0.04013924462575915,
+   "observed_order": 2.0335221776458505
+  },
+  {
+   "family": "curved",
+   "degree": 1,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12328882633185936,
+   "abs_err": 4.9389712141009734e-05,
+   "rel_err_pct": 0.040076223565847884,
+   "observed_order": 2.0073963710547478
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.3697100015904203,
+   "abs_err": -8.308268734769086e-06,
+   "rel_err_pct": -0.0022471888768327807,
+   "observed_order": 2.0589271691234234
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.3658732925427144,
+   "abs_err": -0.0038450173164406576,
+   "rel_err_pct": -1.0399856360658537,
+   "observed_order": 0.9987858006508809
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.3697250854067567,
+   "abs_err": 6.7755476016451155e-06,
+   "rel_err_pct": 0.0018326243036830593,
+   "observed_order": 2.0193407043068734
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymin",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.36972507623906764,
+   "abs_err": 6.766379912592768e-06,
+   "rel_err_pct": 0.00183014466207271,
+   "observed_order": 1.9959080734385324
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12321960200524473,
+   "abs_err": -1.9834614473621115e-05,
+   "rel_err_pct": -0.016094372887166843,
+   "observed_order": 1.974042101730227
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12706347871043996,
+   "abs_err": 0.0038240420907216105,
+   "rel_err_pct": 3.1029370107569627,
+   "observed_order": 0.9764426193611135
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12321231763826784,
+   "abs_err": -2.7118981450510726e-05,
+   "rel_err_pct": -0.02200511637698584,
+   "observed_order": 2.0324394632710123
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "taylor",
+   "wall": "ymax",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12321236314260137,
+   "abs_err": -2.7073477116987266e-05,
+   "rel_err_pct": -0.021968192860641087,
+   "observed_order": 2.0047269241210754
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.3697199439430795,
+   "abs_err": 1.6340839244510796e-06,
+   "rel_err_pct": 0.0004419807948039109,
+   "observed_order": 1.8430282275642274
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.3658732925427144,
+   "abs_err": -0.0038450173164406576,
+   "rel_err_pct": -1.0399856360658537,
+   "observed_order": 0.9987858006508809
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.3697250854067567,
+   "abs_err": 6.7755476016451155e-06,
+   "rel_err_pct": 0.0018326243036830593,
+   "observed_order": 2.0193407043068734
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymin",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.36971830985915505,
+   "got": 0.36972507623906764,
+   "abs_err": 6.766379912592768e-06,
+   "rel_err_pct": 0.00183014466207271,
+   "observed_order": 1.9959080734385324
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "direct",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12323268820834674,
+   "abs_err": -6.74841137161819e-06,
+   "rel_err_pct": -0.005475853798684473,
+   "observed_order": 1.9821492828207061
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points1",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12706347871043996,
+   "abs_err": 0.0038240420907216105,
+   "rel_err_pct": 3.1029370107569627,
+   "observed_order": 0.9764426193611135
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points2",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12321231763826784,
+   "abs_err": -2.7118981450510726e-05,
+   "rel_err_pct": -0.02200511637698584,
+   "observed_order": 2.0324394632710123
+  },
+  {
+   "family": "curved",
+   "degree": 2,
+   "wall_gradient": "face",
+   "wall": "ymax",
+   "estimator": "extrapolated_points3",
+   "ny": 64,
+   "ref": 0.12323943661971835,
+   "got": 0.12321236314260137,
+   "abs_err": -2.7073477116987266e-05,
+   "rel_err_pct": -0.021968192860641087,
+   "observed_order": 2.0047269241210754
+  }
+ ],
+ "gates": [
+  {
+   "gate": "G1_p1_order[conduction,taylor,ymin]",
+   "threshold": ">= 1.8",
+   "measured": 1.9877884823563436,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G2_p1_rel_err_pct[conduction,taylor,ymin]",
+   "threshold": "<= 0.1",
+   "measured": 0.01199985787675201,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G4_p1_improvement[conduction,taylor,ymin]",
+   "threshold": ">= 20.0",
+   "measured": 87.63617643402581,
+   "pass": true,
+   "gating": false,
+   "note": "effect-size gate; kept for transparency, decision rests on G1/G2/G3"
+  },
+  {
+   "gate": "G3_p2_order[conduction,taylor,ymin]",
+   "threshold": ">= 1.8",
+   "measured": 1.9895101689237205,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G1_p1_order[conduction,taylor,ymax]",
+   "threshold": ">= 1.8",
+   "measured": 1.9790692446340905,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G2_p1_rel_err_pct[conduction,taylor,ymax]",
+   "threshold": "<= 0.1",
+   "measured": 0.04796117138464172,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G4_p1_improvement[conduction,taylor,ymax]",
+   "threshold": ">= 20.0",
+   "measured": 42.629218995166674,
+   "pass": true,
+   "gating": false,
+   "note": "effect-size gate; kept for transparency, decision rests on G1/G2/G3"
+  },
+  {
+   "gate": "G3_p2_order[conduction,taylor,ymax]",
+   "threshold": ">= 1.8",
+   "measured": 1.985781358972756,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G1_p1_order[conduction,face,ymin]",
+   "threshold": ">= 1.8",
+   "measured": 1.9877884823563436,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G2_p1_rel_err_pct[conduction,face,ymin]",
+   "threshold": "<= 0.1",
+   "measured": 0.01199985787675201,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G4_p1_improvement[conduction,face,ymin]",
+   "threshold": ">= 20.0",
+   "measured": 21.88929692821025,
+   "pass": true,
+   "gating": false,
+   "note": "effect-size gate; kept for transparency, decision rests on G1/G2/G3"
+  },
+  {
+   "gate": "G3_p2_order[conduction,face,ymin]",
+   "threshold": ">= 1.8",
+   "measured": 1.9895101689237205,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G1_p1_order[conduction,face,ymax]",
+   "threshold": ">= 1.8",
+   "measured": 1.9790692446340905,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G2_p1_rel_err_pct[conduction,face,ymax]",
+   "threshold": "<= 0.1",
+   "measured": 0.04796117138464172,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G4_p1_improvement[conduction,face,ymax]",
+   "threshold": ">= 20.0",
+   "measured": 10.675111134678854,
+   "pass": false,
+   "gating": false,
+   "note": "effect-size gate; kept for transparency, decision rests on G1/G2/G3"
+  },
+  {
+   "gate": "G3_p2_order[conduction,face,ymax]",
+   "threshold": ">= 1.8",
+   "measured": 1.985781358972756,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G5_gradient_independence",
+   "threshold": "<= 1e-12",
+   "measured": 0.0,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G6_points3_vs_points2",
+   "threshold": "<= 0.01",
+   "measured": 6.299577388347986e-07,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G7_p1_order[curved,taylor,ymin]",
+   "threshold": ">= 1.8",
+   "measured": 2.073581967564764,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G8_p1_rel_err_pct[curved,taylor,ymin]",
+   "threshold": "<= 0.1",
+   "measured": 0.0009695837651564023,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G9_nearest_face_order[curved,taylor,ymin]",
+   "threshold": "<= 1.3",
+   "measured": 0.9956425007881153,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G7_p1_order[curved,taylor,ymax]",
+   "threshold": ">= 1.8",
+   "measured": 2.0335221776458505,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G8_p1_rel_err_pct[curved,taylor,ymax]",
+   "threshold": "<= 0.1",
+   "measured": 0.04013924462575915,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G9_nearest_face_order[curved,taylor,ymax]",
+   "threshold": "<= 1.3",
+   "measured": 1.0404444056780717,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G7_p1_order[curved,face,ymin]",
+   "threshold": ">= 1.8",
+   "measured": 2.073581967564764,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G8_p1_rel_err_pct[curved,face,ymin]",
+   "threshold": "<= 0.1",
+   "measured": 0.0009695837651564023,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G9_nearest_face_order[curved,face,ymin]",
+   "threshold": "<= 1.3",
+   "measured": 0.9956425007881153,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G7_p1_order[curved,face,ymax]",
+   "threshold": ">= 1.8",
+   "measured": 2.0335221776458505,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G8_p1_rel_err_pct[curved,face,ymax]",
+   "threshold": "<= 0.1",
+   "measured": 0.04013924462575915,
+   "pass": true,
+   "gating": true
+  },
+  {
+   "gate": "G9_nearest_face_order[curved,face,ymax]",
+   "threshold": "<= 1.3",
+   "measured": 1.0404444056780717,
+   "pass": true,
+   "gating": true
+  }
+ ],
+ "decision_gates_pass": true,
+ "all_gates_pass": false
+}
