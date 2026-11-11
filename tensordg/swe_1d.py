@@ -17,6 +17,10 @@ Features
 * Positivity-preserving filter (h ≥ 0, Zhang-Shu scaling of the higher modes
   towards the cell average, so admissible cells -- including a dry-bank
   shoreline -- pass through unchanged).
+* Manning bottom friction, ∫ -g n² |u| u / h^(1/3) dx, as an opt-in source
+  (``manning_n``).  On a constant slope it balances the bed-slope source
+  exactly, so *steady uniform flow at the normal depth is a discrete fixed
+  point* (see ``docs/swe_manning_friction.md``).
 
 Analytical benchmarks
 ---------------------
@@ -29,6 +33,8 @@ References
 * Audusse et al. (2004), "A fast and stable well-balanced scheme..."
 * Ritter (1892), "Über die Fortpflanzung von Wasserwellen."
 * Thacker (1981), "Some exact solutions of the nonlinear shallow-water equations."
+* Chow (1959), "Open-Channel Hydraulics", §5 -- Manning friction slope
+  S_f = n² |u| u / h^(4/3) and normal depth h_n = (q n / √S₀)^(3/5).
 """
 from __future__ import annotations
 
@@ -80,6 +86,36 @@ def physical_flux(u: torch.Tensor) -> torch.Tensor:
 def sound_speed(u: torch.Tensor) -> torch.Tensor:
     """Linear wave speed c = sqrt(g h)."""
     return torch.sqrt(GRAVITY * u[..., 0].clamp_min(1e-12))
+
+
+def manning_friction_slope(u: torch.Tensor, h: torch.Tensor,
+                           manning_n: float) -> torch.Tensor:
+    """Manning friction slope ``S_f = n² |u| u / h^(4/3)`` (SI, Chow 1959 §5).
+
+    ``S_f`` is dimensionless and signed with the flow: it is the hydraulic
+    gradient that a uniform flow needs to overcome bed friction.  The momentum
+    source of the shallow water equations is ``-g h S_f``.
+    """
+    h_safe = h.clamp_min(DRY_DEPTH)
+    return manning_n ** 2 * torch.abs(u) * u / h_safe ** (4.0 / 3.0)
+
+
+def manning_normal_depth(discharge: float, bed_slope: float,
+                         manning_n: float) -> float:
+    """Uniform-flow (normal) depth ``h_n = (q n / √S₀)^(3/5)`` for unit width.
+
+    Obtained by setting the bed-slope source ``g h S₀`` equal to the friction
+    sink ``g n² u² / h^(1/3)`` with ``u = q / h``, i.e. from Manning's formula
+    ``u = (1/n) h^(2/3) √S₀``.  This is the exact steady state that
+    :func:`solve_swe_1d` with ``manning_n`` must reproduce to round-off.
+    """
+    if not discharge > 0.0:
+        raise ValueError("discharge must be positive")
+    if not 0.0 < bed_slope < 1.0:
+        raise ValueError("bed_slope must lie in (0, 1) for a normal depth")
+    if not manning_n > 0.0:
+        raise ValueError("manning_n must be positive")
+    return float((discharge * manning_n / math.sqrt(bed_slope)) ** 0.6)
 
 
 def hll_flux(left: torch.Tensor, right: torch.Tensor, flux_kind: str = "hll") -> torch.Tensor:
@@ -264,7 +300,9 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
          time: float = 0.0,
          bc_left_flux=None, bc_right_flux=None,
          zb_slope_quad: Optional[torch.Tensor] = None,
-         bed_modal: Optional[torch.Tensor] = None) -> torch.Tensor:
+         bed_modal: Optional[torch.Tensor] = None,
+         manning_n: float = 0.0,
+         friction_dt: Optional[float] = None) -> torch.Tensor:
     """Semi-discrete DG residual for SWE with bed slope source term.
 
     The source term −g h ∂z_b/∂x is treated by modal projection.
@@ -276,6 +314,25 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
 
     For lake-at-rest (h + z_b = const, hu = 0), the flux gradient and source
     cancel exactly at the discrete level, giving machine-precision well-balancedness.
+
+    Manning bottom friction (``manning_n > 0``) adds the momentum source
+    ``-g n² |u| u / h^(1/3)`` sampled at the same quadrature points and
+    projected exactly like the bed-slope source,
+        S_k = -(2k+1)/2 · g n² Σ_q w_q (|u| u / h^(1/3))(x_q) φ_k(xi_q),
+    so for a cellwise-constant state only the k = 0 mode is non-zero and the
+    friction sink cancels the bed-slope source algebraically when the flow is
+    at the normal depth.  Friction is evaluated with the dry guard of
+    :func:`_primitive`: a dry quadrature point (``h <= DRY_DEPTH``) carries zero
+    drag instead of ``0 / 0``.
+
+    Drag limiter (``friction_dt`` given): the sink is capped so that it cannot
+    remove more momentum in one step than the film carries,
+        |g n² |u| u / h^(1/3)| <= h |u| / dt,
+    i.e. friction may stop a cell but never reverse it.  Without the cap an
+    explicit drag is unbounded on a thin film (``h^(1/3) -> 0``) and the
+    dry-front verification *diverges*; with it the cap is inactive whenever
+    ``dt · g n² |u| / h^(4/3) < 1``, so the discrete steady state is untouched
+    (that is the regime of the normal-depth verification).
     """
     at_quad = torch.einsum("cmv,qm->cqv", coeff, phi)
     flux_quad = physical_flux(at_quad)
@@ -326,6 +383,19 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
     mom_factor = torch.arange(1, 2 * coeff.shape[1], 2,
                               device=coeff.device, dtype=coeff.dtype)  # 2k+1
 
+    drag_quad = None
+    if manning_n > 0.0:
+        # g n² |u| u / h^(1/3) at the quadrature points; u = 0 on dry points.
+        h_q, u_q, _ = _primitive(at_quad)
+        drag_quad = GRAVITY * manning_friction_slope(u_q, h_q, manning_n) * h_q
+        if friction_dt is not None and friction_dt > 0.0:
+            # Liang & Marche (2009) drag limiter: the step cannot remove more
+            # momentum than the cell carries, so friction never reverses the
+            # flow and an explicit drag stays bounded on a vanishing depth.
+            cap = h_q * torch.abs(u_q) / friction_dt
+            drag_quad = torch.sign(drag_quad) * torch.minimum(
+                torch.abs(drag_quad), cap)
+
     out = torch.empty_like(coeff)
     for k in range(coeff.shape[1]):
         # Flux divergence term (both equations)
@@ -343,6 +413,9 @@ def _rhs(coeff: torch.Tensor, dx: float, weights: torch.Tensor,
         else:
             src_k = -0.5 * GRAVITY * mom_factor[k] * torch.einsum(
                 "cq,q,q->c", at_quad[:, :, 0] * zb_slope_quad, weights, phi[:, k])
+        if drag_quad is not None:
+            src_k = src_k - 0.5 * mom_factor[k] * torch.einsum(
+                "cq,q,q->c", drag_quad, weights, phi[:, k])
         rhs_k[:, 1] += src_k
         out[:, k] = rhs_k
 
@@ -442,6 +515,8 @@ def solve_swe_1d(
     zb_slope: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
     well_balanced: bool = False,
     hydrostatic: bool = True,
+    manning_n: float = 0.0,
+    friction_limiter: bool = True,
 ) -> tuple:
     """Solve the 1-D shallow water equations with DG.
 
@@ -504,6 +579,24 @@ def solve_swe_1d(
         the same per-cell bed, i.e. it is an audit/validation switch that shows
         the spurious momentum injected by a bed jump; production runs keep the
         default.
+    manning_n : Manning roughness coefficient n (SI, s/m^(1/3)); 0 disables
+        friction and reproduces the frictionless scheme bit for bit.  The
+        momentum source ``-g n² |u| u / h^(1/3)`` is projected with the same
+        quadrature as the bed-slope source, so on the default
+        (piecewise-linear bed, ``well_balanced=False``) path a uniform flow at
+        the normal depth ``h_n = (q n / √S₀)^(3/5)`` is a discrete fixed point
+        to round-off.  On the ``well_balanced=True`` path the Audusse
+        reconstruction assumes a *lake at rest*, so a *sloped* uniform flow is
+        not a fixed point there; use the default path for steady-flow
+        verification of friction (see ``docs/swe_manning_friction.md`` §5).
+    friction_limiter : cap the drag so that one step cannot remove more
+        momentum than a cell carries, ``|g n² |u| u / h^(1/3)| <= h |u| / dt``
+        (Liang & Marche 2009).  This is what makes the explicit drag stable on a
+        receding film, where ``h^(1/3) -> 0`` would otherwise make the sink
+        unbounded: the dry-front run *diverges* without it.  The cap is inactive
+        in the smooth regime ``dt g n² |u| / h^(4/3) < 1``, so it does not
+        perturb the normal-depth fixed point.  ``False`` reproduces the
+        unbounded source (audit switch).
 
     Returns
     -------
@@ -520,6 +613,14 @@ def solve_swe_1d(
         raise ValueError("limiter_stage must be 'every' or 'final'")
     if flux_kind not in ("hll", "lf"):
         raise ValueError("flux_kind must be 'hll' or 'lf'")
+    if not manning_n >= 0.0:
+        raise ValueError("manning_n must be non-negative (0 disables friction)")
+    if manning_n > 0.0 and not friction_limiter:
+        warnings.warn(
+            "manning_n > 0 with friction_limiter=False: the explicit drag is "
+            "unbounded on a thin film (h^(1/3) -> 0) and a wetting front is "
+            "expected to diverge; this switch is for audit only.",
+            RuntimeWarning, stacklevel=2)
 
     lower, upper = domain
     if not upper > lower:
@@ -603,12 +704,21 @@ def solve_swe_1d(
     limit_each_stage = limiter_stage == "every"
     time, steps, dt = 0.0, 0, 0.0
     stalled = False
+    friction_limited = 0
 
     while time < final_time:
         values = torch.einsum("cmv,qm->cqv", coeff, phi)
         _, u_vals, c_vals = _primitive(values)
         max_speed = float(torch.max(torch.abs(u_vals) + c_vals).item())
         dt = min(cfl * dx / ((2 * degree + 1) * max(max_speed, 1e-12)), final_time - time)
+        # Diagnostic: is the drag limiter active on this step?  (Evaluated on
+        # the pre-step state; the cap itself is applied per RK stage.)
+        if manning_n > 0.0 and friction_limiter:
+            h_vals, u_fric, _ = _primitive(values)
+            rate = (GRAVITY * manning_n ** 2 * torch.abs(u_fric)
+                    / h_vals.clamp_min(DRY_DEPTH) ** (4.0 / 3.0))
+            if float(rate.max().item()) * dt > 1.0:
+                friction_limited += 1
         if dt < 1e-15:
             stalled = True
             break
@@ -616,7 +726,9 @@ def solve_swe_1d(
         if rk_order == 3:
             k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time,
-                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal,
+                      manning_n,
+                      dt if friction_limiter else None)
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
@@ -624,7 +736,9 @@ def solve_swe_1d(
 
             k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time + dt,
-                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal,
+                      manning_n,
+                      dt if friction_limiter else None)
             u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
             if limit_each_stage:
                 u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
@@ -632,12 +746,16 @@ def solve_swe_1d(
 
             k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time + 0.5 * dt,
-                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal,
+                      manning_n,
+                      dt if friction_limiter else None)
             coeff = (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3)
         else:
             k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time,
-                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal,
+                      manning_n,
+                      dt if friction_limiter else None)
             u1 = coeff + dt * k1
             if limit_each_stage:
                 u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
@@ -647,7 +765,9 @@ def solve_swe_1d(
             # analytic boundary flux and the time argument.
             k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right,
                       zb_jump, flux_kind, periodic, time + dt,
-                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal)
+                      bc_left_flux, bc_right_flux, zb_slope_quad, bed_modal,
+                      manning_n,
+                      dt if friction_limiter else None)
             coeff = 0.5 * coeff + 0.5 * (u1 + dt * k2)
 
         if limiter_stage == "final" and limiter is not None:
@@ -676,6 +796,9 @@ def solve_swe_1d(
         "time_reached": time,
         "reached_final_time": (not stalled) and time >= final_time - 1e-12,
         "dry_depth": DRY_DEPTH,
+        "manning_n": manning_n,
+        "friction_limiter": friction_limiter,
+        "friction_capped_steps": friction_limited,
     }
     if not metadata["reached_final_time"]:
         warnings.warn(
