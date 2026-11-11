@@ -14,8 +14,17 @@ from .burgers_1d import burgers_error, solve_burgers
 from .euler_1d import solve_riemann
 from .euler_2d import solve_euler_2d, solve_isentropic_vortex, vortex_error
 from .euler_dg_1d import solve_euler_dg_1d, solve_periodic_euler_dg_1d
+from .euler_dg_2d import (
+    apply_tvb_limiter_2d,
+    apply_weno_limiter_2d,
+    solve_euler_dg_2d,
+)
 from .heat_1d import heat_error, solve_heat_1d
 from .limiters import apply_limiter, apply_tvb_limiter, apply_weno_limiter
+from .ns_dg_2d import (
+    solve_couette_dg_2d,
+    solve_navier_stokes_dg_2d,
+)
 from .poisson_2d import poisson_error_2d, solve_poisson_2d
 from .poisson_2d_bc import (
     assemble_poisson_2d_bc,
@@ -74,6 +83,7 @@ from .swe_2d import (
     physical_flux_2d as swe_physical_flux_2d,
     hll_flux_2d as swe_hll_flux_2d,
 )
+from .tvb import minmod, troubled_from_differences
 
 __all__ = [
     "solve_advection_diffusion", "run_solid_body_rotation",
@@ -94,7 +104,10 @@ __all__ = [
     "solve_poisson_2d_bc", "assemble_poisson_2d_bc", "l2_error_2d",
     "solve_riemann", "solve_euler_dg_1d", "solve_periodic_euler_dg_1d",
     "solve_euler_2d", "solve_isentropic_vortex", "vortex_error",
+    "solve_euler_dg_2d", "apply_tvb_limiter_2d", "apply_weno_limiter_2d",
+    "solve_navier_stokes_dg_2d", "solve_couette_dg_2d",
     "apply_limiter", "apply_tvb_limiter", "apply_weno_limiter",
+    "minmod", "troubled_from_differences",
     "advance_advection_1d", "advance_euler_dg_1d", "advance_euler_dg_2d",
     "advance_heat_1d", "heat_1d_operators",
     "legendre_l2_sq", "legendre_l2_sq_2d", "probe_value",
