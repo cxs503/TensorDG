@@ -31,6 +31,72 @@ os.makedirs(FIGS, exist_ok=True)
 
 RESULT: dict = {"env": {"torch": torch.__version__, "numpy": np.__version__}}
 
+# ---------------------------------------------------------------------------
+# provenance (convention shared with validation/swe_2d_wb, swe_thacker)
+# ---------------------------------------------------------------------------
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+def collect_provenance() -> dict:
+    """Stamp *which* code produced the numbers (stale artifacts are detectable)."""
+    import platform
+    import subprocess
+    import sys
+    from datetime import datetime, timezone
+
+    def _git(*args: str) -> str:
+        try:
+            out = subprocess.run(("git",) + args, cwd=REPO_ROOT, capture_output=True,
+                                 text=True, timeout=30, check=False)
+            return out.stdout.strip()
+        except Exception:  # pragma: no cover - git absent
+            return ""
+
+    commit = _git("rev-parse", "HEAD")
+    return {
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "command": "python " + os.path.relpath(os.path.abspath(__file__), REPO_ROOT),
+        "argv": sys.argv[1:],
+        "git_commit": commit,
+        "git_commit_short": commit[:7],
+        "git_branch": _git("rev-parse", "--abbrev-ref", "HEAD"),
+        "git_dirty": bool(_git("status", "--porcelain")),
+        "python": platform.python_version(),
+        "torch": torch.__version__,
+        "numpy": np.__version__,
+        "platform": platform.platform(),
+        "cpu_count": os.cpu_count(),
+        "generator": "validation/swe_dam_break/study.py",
+    }
+
+
+def ritter_measurement(ncells: int = 200, degree: int = 1,
+                       final_time: float = 0.5) -> dict:
+    """Current-solver Ritter (dry-bed) dam break metric.
+
+    The predecessor artifact recorded ``rel_l1_h = 28.5 %``: that number was
+    produced by the *pre-dry-guard* solver, whose time step collapsed around
+    t ~ 0.076 s (see docs/swe_verification.md Sec. 2), so it measured the error
+    of the initial condition, not of the solver.  Current code reaches
+    ``final_time``; the refreshed value is the one quoted in the report.
+    """
+    x, h, hu, meta = dam_break_case(1.0, 0.0, ncells, degree)
+    m = dam_break_metrics(1.0, 0.0, x, h, hu, final_time)
+    return {
+        "ncells": ncells,
+        "degree": degree,
+        "final_time": final_time,
+        "rel_l1_h": m["rel_l1_h"],
+        "rel_l1_hu": m["rel_l1_hu"],
+        "linf_h": m["linf_h"],
+        "mass_err_rel": m["mass_err_rel"],
+        "h_min": m["h_min"],
+        "steps": meta.get("steps"),
+        "time_reached": meta.get("final_time", meta.get("time")),
+    }
+
+
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -157,8 +223,58 @@ def lake_at_rest_2d(nx=16, final_time=0.5, degree=1):
 # study
 # ---------------------------------------------------------------------------
 
-def main() -> None:
+def _load_existing() -> dict:
+    path = os.path.join(OUT, "metrics.json")
+    if not os.path.exists(path):
+        return {}
+    with open(path) as fh:
+        return json.load(fh)
+
+
+def main(only: str = "all") -> None:
     t_start = time.time()
+    existing = {} if only == "all" else _load_existing()
+    provenance = collect_provenance()
+    RESULT["provenance"] = provenance
+
+    if only in ("all", "ritter"):
+        # ---- Ritter dry-bed dam break, current solver -------------------
+        block = ritter_measurement()
+        block["_provenance"] = dict(provenance, block="ritter")
+        previous = existing.get("ritter") or {}
+        if "legacy_pre_dry_guard" in previous:
+            # carry the recorded before-value across refreshes
+            block["legacy_pre_dry_guard"] = previous["legacy_pre_dry_guard"]
+        elif "rel_l1_h" in previous:
+            block["legacy_pre_dry_guard"] = {
+                "rel_l1_h": previous.get("rel_l1_h"),
+                "h_min": previous.get("h_min"),
+                "ncells": previous.get("ncells"),
+                "note": ("recorded by the pre-dry-guard solver; the run silently stopped "
+                         f"near t = {previous.get('time_reached', 0.076) if previous.get('time_reached') else 0.076:.6f} s, "
+                         "so it measured the initial condition (docs/swe_verification.md Sec. 2)"),
+                "retired_by": "DRY_DEPTH guard in tensordg.swe_1d",
+            }
+        RESULT["ritter"] = block
+        print(f"  ritter deg={block['degree']} n={block['ncells']} "
+              f"relL1h={block['rel_l1_h'] * 100:.4f}% steps={block['steps']}", flush=True)
+
+    if only == "ritter":
+        merged = dict(existing)
+        merged.update(RESULT)
+        merged["env"] = {"torch": torch.__version__, "numpy": np.__version__}
+        merged["wall_clock_s"] = time.time() - t_start
+        merged.setdefault("blocks_not_remeasured_in_this_run",
+                          sorted(k for k in merged
+                                 if k not in ("env", "provenance", "ritter",
+                                              "wall_clock_s",
+                                              "blocks_not_remeasured_in_this_run")))
+        path = os.path.join(OUT, "metrics.json")
+        with open(path, "w") as fh:
+            json.dump(merged, fh, indent=2, sort_keys=True)
+        print(f"refreshed only 'ritter' in {path} "
+              f"({merged['wall_clock_s']:.1f}s, commit {provenance['git_commit_short']})", flush=True)
+        return
 
     # ---- 1-D dam break (Stoker wet bed, Ritter dry bed) -------------------
     RESULT["stoker"] = {}
@@ -276,4 +392,9 @@ def _make_figures(profiles) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--only", choices=("all", "ritter"), default="all",
+                        help="refresh a single block of metrics.json (keeps the others)")
+    main(parser.parse_args().only)
