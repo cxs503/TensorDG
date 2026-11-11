@@ -1,0 +1,262 @@
+{
+  "provenance": {
+    "generated_at_utc": "2026-11-10T23:50:24+00:00",
+    "command": "python validation/swe_2d_wb/run_wellbalanced_2d.py",
+    "git_commit": "e9773085f224f587908e96e1d307fd6998c9f4a2",
+    "git_commit_short": "e977308",
+    "git_branch": "agent/m12101",
+    "git_dirty": true,
+    "python": "3.11.6",
+    "torch": "2.7.1",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+    "machine": "loongarch64",
+    "cpu_count": 128,
+    "generator": "validation/swe_2d_wb/run_wellbalanced_2d.py"
+  },
+  "setup": {
+    "still_water_level_m": 2.0,
+    "domain": [
+      [
+        0.0,
+        1.0
+      ],
+      [
+        0.0,
+        1.0
+      ]
+    ],
+    "cfl": 0.3,
+    "dtype": "float64",
+    "curved_bed": "z_b = 0.2 x + 0.05 x^2",
+    "bed_jump_height_m": 2.5,
+    "dry_depth_m": 1e-06
+  },
+  "curved_bed_rest": [
+    {
+      "nx": 8,
+      "ny": 4,
+      "degree": 1,
+      "well_balanced": false,
+      "final_time": 0.1,
+      "steps": 36,
+      "dt": 0.0012025445795161294,
+      "eta_error_max": 1.3322676295501878e-15,
+      "u_max": 7.714710835045114e-15,
+      "v_max": 1.8586163284277747e-15,
+      "is_hydrostatic": true,
+      "wall_time_s": 0.9681388698518276
+    },
+    {
+      "nx": 8,
+      "ny": 4,
+      "degree": 1,
+      "well_balanced": true,
+      "final_time": 0.1,
+      "steps": 36,
+      "dt": 0.0011993266229899935,
+      "eta_error_max": 1.7763568394002505e-15,
+      "u_max": 6.078239529998191e-15,
+      "v_max": 1.7796778577355465e-15,
+      "is_hydrostatic": true,
+      "wall_time_s": 1.6551825311034918
+    },
+    {
+      "nx": 16,
+      "ny": 4,
+      "degree": 1,
+      "well_balanced": false,
+      "final_time": 0.1,
+      "steps": 71,
+      "dt": 0.0012152989547682819,
+      "eta_error_max": 1.7763568394002505e-15,
+      "u_max": 1.1699260884138373e-14,
+      "v_max": 2.055924614884761e-15,
+      "is_hydrostatic": true,
+      "wall_time_s": 2.2309434190392494
+    },
+    {
+      "nx": 16,
+      "ny": 4,
+      "degree": 1,
+      "well_balanced": true,
+      "final_time": 0.1,
+      "steps": 71,
+      "dt": 0.001214494806635158,
+      "eta_error_max": 3.1086244689504383e-15,
+      "u_max": 1.673916791593353e-14,
+      "v_max": 6.643627672561078e-15,
+      "is_hydrostatic": true,
+      "wall_time_s": 3.724718740209937
+    },
+    {
+      "nx": 32,
+      "ny": 4,
+      "degree": 1,
+      "well_balanced": false,
+      "final_time": 0.1,
+      "steps": 142,
+      "dt": 0.000516551182857039,
+      "eta_error_max": 3.108624468950438e-14,
+      "u_max": 8.708247868173381e-14,
+      "v_max": 1.2163563462772301e-14,
+      "is_hydrostatic": true,
+      "wall_time_s": 7.534132719039917
+    },
+    {
+      "nx": 32,
+      "ny": 4,
+      "degree": 1,
+      "well_balanced": true,
+      "final_time": 0.1,
+      "steps": 142,
+      "dt": 0.0005163487535616573,
+      "eta_error_max": 3.730349362740526e-14,
+      "u_max": 1.0002368190256411e-13,
+      "v_max": 1.4693340945001633e-14,
+      "is_hydrostatic": true,
+      "wall_time_s": 9.87820271961391
+    },
+    {
+      "nx": 8,
+      "ny": 4,
+      "degree": 2,
+      "well_balanced": false,
+      "final_time": 0.1,
+      "steps": 60,
+      "dt": 0.00014469122529740808,
+      "eta_error_max": 0.0049729445693214025,
+      "u_max": 0.011015894967637796,
+      "v_max": 9.962659820730441e-14,
+      "is_hydrostatic": false,
+      "wall_time_s": 2.6337592098861933
+    },
+    {
+      "nx": 8,
+      "ny": 4,
+      "degree": 2,
+      "well_balanced": true,
+      "final_time": 0.1,
+      "steps": 60,
+      "dt": 8.44901900311501e-05,
+      "eta_error_max": 4.907185768843192e-14,
+      "u_max": 8.087606440824489e-14,
+      "v_max": 9.248232342004048e-14,
+      "is_hydrostatic": true,
+      "wall_time_s": 4.504156989976764
+    },
+    {
+      "nx": 16,
+      "ny": 4,
+      "degree": 2,
+      "well_balanced": false,
+      "final_time": 0.1,
+      "steps": 119,
+      "dt": 0.00014214822509170388,
+      "eta_error_max": 0.004986820971386585,
+      "u_max": 0.011027053653972071,
+      "v_max": 1.395877463766826e-13,
+      "is_hydrostatic": false,
+      "wall_time_s": 7.391140440478921
+    },
+    {
+      "nx": 16,
+      "ny": 4,
+      "degree": 2,
+      "well_balanced": true,
+      "final_time": 0.1,
+      "steps": 119,
+      "dt": 9.244641959939293e-05,
+      "eta_error_max": 1.0369483049998962e-13,
+      "u_max": 1.5286105622412718e-13,
+      "v_max": 1.9189074733560019e-13,
+      "is_hydrostatic": true,
+      "wall_time_s": 9.511177921667695
+    },
+    {
+      "nx": 32,
+      "ny": 4,
+      "degree": 2,
+      "well_balanced": false,
+      "final_time": 0.1,
+      "steps": 237,
+      "dt": 0.00014158721805619667,
+      "eta_error_max": 0.004993876067534764,
+      "u_max": 0.01103366598255812,
+      "v_max": 5.711704483726799e-13,
+      "is_hydrostatic": false,
+      "wall_time_s": 15.042120281606913
+    },
+    {
+      "nx": 32,
+      "ny": 4,
+      "degree": 2,
+      "well_balanced": true,
+      "final_time": 0.1,
+      "steps": 237,
+      "dt": 9.642145263494273e-05,
+      "eta_error_max": 1.645350522494482e-12,
+      "u_max": 2.82802552503816e-12,
+      "v_max": 2.2147777157036603e-12,
+      "is_hydrostatic": true,
+      "wall_time_s": 23.563486140221357
+    }
+  ],
+  "bed_jump_rest": [
+    {
+      "nx": 16,
+      "ny": 6,
+      "degree": 1,
+      "jump_cell": 8,
+      "jump_height_m": 2.5,
+      "steps": 36,
+      "eta_error_max": 0.0,
+      "u_max": 1.989010695163714e-15,
+      "v_max": 3.817738878363686e-16,
+      "is_hydrostatic": true,
+      "dry_cells_remain_dry": true,
+      "wall_time_s": 2.5632321294397116
+    },
+    {
+      "nx": 16,
+      "ny": 6,
+      "degree": 2,
+      "jump_cell": 8,
+      "jump_height_m": 2.5,
+      "steps": 60,
+      "eta_error_max": 3.352873534367973e-14,
+      "u_max": 5.043395047797682e-14,
+      "v_max": 5.0048459361181453e-14,
+      "is_hydrostatic": true,
+      "dry_cells_remain_dry": true,
+      "wall_time_s": 5.497707508504391
+    }
+  ],
+  "dam_break": {
+    "nx": 16,
+    "ny": 8,
+    "degree": 1,
+    "final_time": 0.08,
+    "steps": 52,
+    "mass_initial": 0.7,
+    "mass_final": 0.6999999999999977,
+    "mass_drift": 2.220446049250313e-15,
+    "h_min": 0.38995040814201326,
+    "finite": true,
+    "wall_time_s": 3.4437453895807266
+  },
+  "summary": {
+    "test_description": "2-D hydrostatic well-balancedness: lake at rest on a curved bed and across a bed jump, plus an unsteady conservation check",
+    "pass_criteria": {
+      "well_balanced_eta_error_max": "< 1e-8 m",
+      "well_balanced_velocity_max": "< 1e-8 m/s",
+      "dam_break_mass_drift": "< 1e-10 (absolute, reference 0.7 m^3)"
+    },
+    "baseline_contrast": {
+      "max_u_max_default_path": 0.01103366598255812,
+      "max_u_max_well_balanced": 2.82802552503816e-12,
+      "note": "Same initial state, same grids: the default path's cell-constant bed slope leaves a spurious current that the well-balanced path removes."
+    },
+    "pass": true
+  }
+}
