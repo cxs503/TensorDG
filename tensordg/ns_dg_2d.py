@@ -75,6 +75,8 @@ __all__ = [
     "solve_shear_wave_dg_2d",
     "couette_exact",
     "heat_conduction_exact",
+    "wall_heat_flux",
+    "wall_heat_flux_summary",
     "shear_wave_exact",
     "gas_constants",
 ]
@@ -809,6 +811,104 @@ def _axis_fluxes_ns(coeff, basis, derivative, signs, weights, dx, dy, periodic,
                                               weights, basis)
     return flux_right, flux_left, adj_right, adj_left
 
+# ---------------------------------------------------------------------------
+# Wall heat-flux post-processing (m14554)
+# ---------------------------------------------------------------------------
+
+def wall_heat_flux(coeff, basis, derivative, signs, weights, dx, dy, boundary,
+                   mu, kappa, penalty, wall_gradient="face", wall_penalty=None,
+                   periodic=(False, False)):
+    """Physical wall-normal conductive heat flux of a DG Navier--Stokes state.
+
+    The Dirichlet (isothermal, no-slip) wall closure of :func:`_axis_fluxes_ns`
+    puts a face flux :math:`F^*_E = u tau_{xn} + v tau_{yn} + kappa \partial_n T`
+    into the strong-form divergence.  This function reads that flux back as a
+    *physical* quantity: it takes the ``k = 0`` modal coefficient of the
+    projected face flux (``int F^* phi_0 dxi``) and divides by
+    ``int phi_0 dxi = 2``, which is the exact inverse of the L2 face projection
+    for a face-constant flux.
+
+    Parameters
+    ----------
+    coeff, basis, derivative, signs, weights, dx, dy :
+        The DG state and the 1-D operators returned by
+        :func:`tensordg.euler_dg_2d.legendre_operators`.
+    boundary : dict
+        ``{"xmin", "xmax", "ymin", "ymax"}``; ``None`` marks an outflow/periodic
+        face (no wall flux is reported for it) and a
+        ``{"velocity": (u, v), "temperature": T}`` dict marks an isothermal wall.
+    mu, kappa, penalty :
+        Viscosity, conductivity (``kappa = mu c_p / Pr``) and the SIPG penalty
+        actually used by the operator (``wall_penalty`` overrides it on walls).
+    wall_gradient : {"face", "taylor", "one_sided", "recovered", "fd2", "br1"}
+        Normal-derivative estimator used on the wall, as in
+        :func:`solve_navier_stokes_dg_2d`.
+    wall_penalty : float or None
+        Penalty used on the wall faces only (``None`` reproduces the solver).
+    periodic : (bool, bool)
+        Periodicity of the two axes; a periodic axis is skipped (its faces are
+        interior faces, not walls).
+
+    Returns
+    -------
+    dict
+        ``{wall_name: torch.Tensor}`` with one entry per isothermal wall.  The
+        tensor holds one value per wall cell: the *physical* heat-flux component
+        along ``+axis``, ``q_axis = -kappa dT/dx_axis`` (Fourier's law with the
+        same sign for both walls of an axis, because the operator stores the
+        face flux with the normal along ``+axis``).  Steady conduction between
+        ``T_hot`` (ymin) and ``T_cold`` (ymax) over a unit gap with
+        ``kappa = mu c_p / Pr`` therefore reports ``q_y = kappa (T_hot -
+        T_cold)`` at *both* walls: heat crosses the hot wall into the domain and
+        leaves through the cold wall, so both values are positive.  An empty
+        dict means the state has no isothermal wall.
+
+    Notes
+    -----
+    The reported flux is exactly the flux the solver used, i.e. it inherits the
+    accuracy of the chosen wall-gradient estimator (design order ``p`` for
+    ``"face"``).  It is *not* a post-hoc higher-order reconstruction; see
+    ``benchmarks/verify_ns_wall_heat_flux.py`` for the measured orders and
+    ``docs/reports/tensordg-ns-heat-wall-flux-diagnosis.md`` for the audit.
+    """
+    if not boundary:
+        return {}
+    walls = {key: boundary.get(key) for key in ("xmin", "xmax", "ymin", "ymax")}
+    if all(value is None for value in walls.values()):
+        return {}
+    norm0 = float(weights @ basis[:, 0])
+    if norm0 == 0.0:
+        raise ValueError("degenerate modal basis: int phi_0 dxi == 0")
+    flux = {}
+    for axis, left_name, right_name in ((0, "xmin", "xmax"), (1, "ymin", "ymax")):
+        if periodic[axis]:
+            continue
+        wall_left, wall_right = walls[left_name], walls[right_name]
+        if wall_left is None and wall_right is None:
+            continue
+        right, left, _, _ = _axis_fluxes_ns(
+            coeff, basis, derivative, signs, weights, dx, dy, False,
+            wall_left, wall_right, mu, kappa, penalty, axis,
+            wall_gradient, wall_penalty)
+        if wall_right is not None:
+            face = right.narrow(axis, right.shape[axis] - 1, 1).squeeze(axis)
+            flux[right_name] = face[..., 0, 3] / norm0
+        if wall_left is not None:
+            face = left.narrow(axis, 0, 1).squeeze(axis)
+            flux[left_name] = face[..., 0, 3] / norm0
+    return flux
+
+
+def wall_heat_flux_summary(coeff, basis, derivative, signs, weights, dx, dy,
+                           boundary, mu, kappa, penalty, wall_gradient="face",
+                           wall_penalty=None, periodic=(False, False)):
+    """Tangential-cell average of :func:`wall_heat_flux` as plain floats."""
+    flux = wall_heat_flux(coeff, basis, derivative, signs, weights, dx, dy,
+                          boundary, mu, kappa, penalty, wall_gradient,
+                          wall_penalty, periodic)
+    return {name: float(value.mean()) for name, value in flux.items()}
+
+
 def _viscous_volume(coeff, basis, derivative, weights, dx, dy, mu, kappa):
     """Volume divergence of the viscous flux, evaluated with local gradients.
 
@@ -1129,6 +1229,10 @@ def solve_navier_stokes_dg_2d(
         steps += 1
         diffusive_steps += int(limited_by_diffusion)
 
+    wall_flux = wall_heat_flux_summary(
+        coeff, basis, derivative, signs, weights, dx, dy, boundary, mu, kappa,
+        penalty, wall_gradient, wall_penalty, periodic)
+
     metadata = {
         "ncells": (nx, ny),
         "degree": degree,
@@ -1147,6 +1251,7 @@ def solve_navier_stokes_dg_2d(
         "prandtl": prandtl,
         "penalty": penalty,
         "wall_gradient": wall_gradient,
+        "wall_heat_flux": wall_flux,
         "wall_adjoint": wall_adjoint,
         "boundary": {key: value for key, value in boundary.items()},
         "flux": "hllc + br1/sipg viscous",
