@@ -1,4 +1,13 @@
 {
+  "blocks_not_remeasured_in_this_run": [
+    "lake_rest_1d",
+    "lake_rest_2d",
+    "stoker"
+  ],
+  "env": {
+    "numpy": "2.4.6",
+    "torch": "2.7.1"
+  },
   "lake_rest_1d": {
     "fixed_max_drift": 0.0002881722400029929,
     "fixed_max_hu": 0.0005446516840113593,
@@ -11,10 +20,61 @@
     "nx": 16,
     "steps": 133
   },
+  "provenance": {
+    "argv": [
+      "--only",
+      "ritter"
+    ],
+    "command": "python validation/swe_dam_break/study.py",
+    "cpu_count": 128,
+    "generated_at_utc": "2026-11-11T10:28:00+00:00",
+    "generator": "validation/swe_dam_break/study.py",
+    "git_branch": "agent/m14698",
+    "git_commit": "1414a2e8eadd7da096ac5a98d13706980247485e",
+    "git_commit_short": "1414a2e",
+    "git_dirty": true,
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+    "python": "3.11.6",
+    "torch": "2.7.1"
+  },
   "ritter": {
-    "h_min": 6.779980723513033e-13,
+    "_provenance": {
+      "argv": [
+        "--only",
+        "ritter"
+      ],
+      "block": "ritter",
+      "command": "python validation/swe_dam_break/study.py",
+      "cpu_count": 128,
+      "generated_at_utc": "2026-11-11T10:28:00+00:00",
+      "generator": "validation/swe_dam_break/study.py",
+      "git_branch": "agent/m14698",
+      "git_commit": "1414a2e8eadd7da096ac5a98d13706980247485e",
+      "git_commit_short": "1414a2e",
+      "git_dirty": true,
+      "numpy": "2.4.6",
+      "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+      "python": "3.11.6",
+      "torch": "2.7.1"
+    },
+    "degree": 1,
+    "final_time": 0.5,
+    "h_min": 9.154164787635197e-07,
+    "legacy_pre_dry_guard": {
+      "h_min": 6.779980723513033e-13,
+      "ncells": 200,
+      "note": "recorded by the pre-dry-guard solver; the run silently stopped near t = 0.076000 s, so it measured the initial condition (docs/swe_verification.md Sec. 2)",
+      "rel_l1_h": 0.28546270856768313,
+      "retired_by": "DRY_DEPTH guard in tensordg.swe_1d"
+    },
+    "linf_h": 0.0078064571616770495,
+    "mass_err_rel": 3.2488243917327964e-07,
     "ncells": 200,
-    "rel_l1_h": 0.28546270856768313
+    "rel_l1_h": 0.0023952564398276965,
+    "rel_l1_hu": 0.008872733054188595,
+    "steps": 5711,
+    "time_reached": 0.5
   },
   "stoker": {
     "band_cells": 86,
@@ -52,5 +112,6 @@
       "wave_tail": 0.34994054078795145
     },
     "u_star_num": 0.0
-  }
+  },
+  "wall_clock_s": 64.15642499923706
 }
