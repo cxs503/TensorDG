@@ -1,0 +1,150 @@
+{
+  "mu": 0.1,
+  "prandtl": 0.71,
+  "kappa": 0.4929577464788734,
+  "cells": [
+    16,
+    32,
+    64,
+    128
+  ],
+  "quantity": "energy residual of the exact steady conduction state, max over the cold-wall row modes (np.mean-normalised)",
+  "table": {
+    "p1_taylor": {
+      "cases": [
+        {
+          "ny": 16,
+          "cold_wall_row": 0.814996826844272,
+          "hot_wall_row": 0.5421238070567469,
+          "interior_rows": 0.17093204676291052
+        },
+        {
+          "ny": 32,
+          "cold_wall_row": 0.8965969805012701,
+          "hot_wall_row": 0.5169310331662071,
+          "interior_rows": 0.09291243717660436
+        },
+        {
+          "ny": 64,
+          "cold_wall_row": 0.9402171796527021,
+          "hot_wall_row": 0.5047981729365105,
+          "interior_rows": 0.048553825727609023
+        },
+        {
+          "ny": 128,
+          "cold_wall_row": 0.9627963846694456,
+          "hot_wall_row": 0.49884214359872914,
+          "interior_rows": 0.024835229095430122
+        }
+      ],
+      "cold_wall_order": -0.07898432474424774,
+      "ratio_128_over_16": 1.1813498567809944,
+      "claim_pin_a_threshold": 0.25,
+      "claim_pin_b_threshold": 1e-06,
+      "fails_pin_a": true,
+      "fails_pin_b": true
+    },
+    "p1_face": {
+      "cases": [
+        {
+          "ny": 16,
+          "cold_wall_row": 0.1292126837061538,
+          "hot_wall_row": 0.1573879358806165,
+          "interior_rows": 0.17093204676291052
+        },
+        {
+          "ny": 32,
+          "cold_wall_row": 0.18497789461052072,
+          "hot_wall_row": 0.13985058235677172,
+          "interior_rows": 0.09291243717660436
+        },
+        {
+          "ny": 64,
+          "cold_wall_row": 0.21495103172382102,
+          "hot_wall_row": 0.13143440035951315,
+          "interior_rows": 0.048553825727609023
+        },
+        {
+          "ny": 128,
+          "cold_wall_row": 0.23051227450655176,
+          "hot_wall_row": 0.12730987708695096,
+          "interior_rows": 0.024835229095430122
+        }
+      ],
+      "cold_wall_order": -0.2721942801560319,
+      "ratio_128_over_16": 1.783975596627698,
+      "claim_pin_a_threshold": 0.25,
+      "claim_pin_b_threshold": 1e-06,
+      "fails_pin_a": true,
+      "fails_pin_b": true
+    },
+    "p2_taylor": {
+      "cases": [
+        {
+          "ny": 16,
+          "cold_wall_row": 0.07961491540995969,
+          "hot_wall_row": 0.02413658477943592,
+          "interior_rows": 0.10134554857067801
+        },
+        {
+          "ny": 32,
+          "cold_wall_row": 0.04226214269398737,
+          "hot_wall_row": 0.011652208440308343,
+          "interior_rows": 0.05495303701217402
+        },
+        {
+          "ny": 64,
+          "cold_wall_row": 0.0218068898741528,
+          "hot_wall_row": 0.005727561578158458,
+          "interior_rows": 0.02869775476053249
+        },
+        {
+          "ny": 128,
+          "cold_wall_row": 0.011081066840027631,
+          "hot_wall_row": 0.002839789709902618,
+          "interior_rows": 0.014676259639301747
+        }
+      ],
+      "cold_wall_order": 0.9489407744407211,
+      "ratio_128_over_16": 0.13918330231173504,
+      "claim_pin_a_threshold": 0.25,
+      "claim_pin_b_threshold": 1e-06,
+      "fails_pin_a": false,
+      "fails_pin_b": true
+    },
+    "p2_face": {
+      "cases": [
+        {
+          "ny": 16,
+          "cold_wall_row": 0.07065160750491906,
+          "hot_wall_row": 0.02085730206420333,
+          "interior_rows": 0.10134554857067801
+        },
+        {
+          "ny": 32,
+          "cold_wall_row": 0.03717321688374048,
+          "hot_wall_row": 0.010113442992031096,
+          "interior_rows": 0.05495303701217402
+        },
+        {
+          "ny": 64,
+          "cold_wall_row": 0.019095869167166768,
+          "hot_wall_row": 0.004982197092228802,
+          "interior_rows": 0.02869775476053249
+        },
+        {
+          "ny": 128,
+          "cold_wall_row": 0.009681909300269353,
+          "hot_wall_row": 0.0024729686469910916,
+          "interior_rows": 0.014676259639301747
+        }
+      ],
+      "cold_wall_order": 0.9563079658958256,
+      "ratio_128_over_16": 0.1370373533198839,
+      "claim_pin_a_threshold": 0.25,
+      "claim_pin_b_threshold": 1e-06,
+      "fails_pin_a": false,
+      "fails_pin_b": true
+    }
+  }
+}

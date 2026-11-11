@@ -5,20 +5,38 @@ and ``gas_constants`` shipped without any test.  These tests pin down
 
 * what *is* correct: the analytic steady state satisfies the compressible
   equations, and on it the DG mass/momentum rows are at machine zero;
-* what is *still broken*: the isothermal-wall energy closure is inconsistent, so
-  the exact steady state is not a discrete steady state -- the wall-cell energy
-  residual stagnates at an O(1) floor instead of decaying under refinement.
+* what the wall row *measures*: the isothermal-wall energy closure is
+  **consistent** -- the wall heat flux converges to the exact ``-kappa dT/dn``
+  at the design order (1.03 at P1, 2.07 at P2) -- and the wall-row residual of
+  the exact steady state is that ``O(h**p)`` flux mismatch divided by the cell
+  width ``h`` in the strong form, hence an ``O(h**(p-1))`` object (measured
+  order -0.08 at P1, +0.95 at P2).  The flat P1 residual is therefore a
+  property of the strong-form row, **not** an inconsistent closure.
 
-Ratchet status (re-adjudicated 2026-11-04 against main's m3139 wall repair,
-which restored the one-sided DG wall derivative and added the positivity
+Re-adjudication trail (2026-11-11, m15233): the two residual pins below still
+fail, and they are *kept* as ``xfail(strict=True)`` -- but their ``reason=`` no
+longer blames the closure.  They ask for a decay rate (``h**1.5`` between
+``ny=16`` and ``ny=128``) and for machine zero (``1e-6``) that an
+``O(h**(p-1))`` quantity cannot deliver at any mesh, so they are over-specified
+criteria, not defect evidence.  The rate that *is* true is pinned positively by
+``test_wall_row_residual_obeys_the_strong_form_law`` below.
+Evidence: ``validation/ns_heat_conduction/wall_row_law.json`` (measured here by
+``scratch/diag_wall_row_law.py``) and
+``validation/ns_heat_conduction/wall_flux_order.json``;
+see ``docs/reports/tensordg-ns-heat-wall-flux-diagnosis.md``.
+
+Earlier ratchet status (re-adjudicated 2026-11-04 against main's m3139 wall
+repair, which restored the one-sided DG wall derivative and added the positivity
 guards): the shipped wrapper now integrates its documented defaults
 (``final_time=40``) and preserves the exact steady state at ``final_time=0.05``.
 Those two pins therefore XPASSed, which is a red ``strict`` xfail -- they are
-flipped to positive assertions below.  The two residual-consistency pins still
-fail and stay ``xfail(strict=True)``.
-See ``docs/reports/tensordg-ns-heat-conduction-verification.md``.
+flipped to positive assertions below.
 """
 from __future__ import annotations
+
+import json
+import math
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -105,10 +123,43 @@ def test_interior_energy_residual_is_first_order_small():
     assert fine < coarse / 2.0, "interior truncation error must shrink with h"
 
 
+def _strong_form_order(degree, cells=(16, 32, 64, 128), gradient="taylor"):
+    """Observed log-log order of the cold-wall energy residual."""
+    values = [float(_wall_residual(ny, degree=degree, wall_gradient=gradient)[..., 3][:, -1].abs().max())
+              for ny in cells]
+    xs = [math.log(c) for c in cells]
+    ys = [math.log(v) for v in values]
+    mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+    order = -sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs)
+    return order, values
+
+
+def test_wall_row_residual_obeys_the_strong_form_law():
+    """The wall row is ``O(h**(p-1))``, so it is *not* a stalled defect signal.
+
+    The strong form divides the ``O(h**p)`` wall-flux mismatch by ``h``, which
+    leaves ``O(h**(p-1))``: flat at P1 (measured -0.08) and first order at P2
+    (measured +0.95).  A genuinely inconsistent closure would show an
+    h-independent (order ~0) residual at *both* degrees; that is exactly what
+    this pin rules out.  The flux itself converges at the design order -- see
+    ``tests/test_ns_wall_heat_flux_order.py``.
+    """
+    for degree in (1, 2):
+        order, values = _strong_form_order(degree)
+        target = degree - 1.0
+        assert target - 0.25 <= order <= target + 0.25, (degree, order, values)
+        # the O(h**(p-1)) coefficient is bounded across a 8x refinement: no h^-1 blow-up
+        ratio = values[-1] / (values[0] * (16.0 / 128.0) ** target)
+        assert 0.5 < ratio < 2.0, (degree, ratio, values)
+
+
 @pytest.mark.xfail(strict=True, reason=(
-    "known defect: isothermal-wall energy closure is inconsistent, the wall "
-    "residual of the exact steady state does not decay under refinement "
-    "(see docs/reports/tensordg-ns-heat-conduction-verification.md)"))
+    "over-specified criterion (re-adjudicated 2026-11-11): this pin wants the "
+    "strong-form wall-row residual to fall by 4x between ny=16 and ny=128, i.e. "
+    "an h**1.5 rate.  The row is O(h**(p-1)) by construction -- measured order "
+    "-0.08 at P1 (0.815 -> 0.963) and +0.95 at P2 -- so at P1 no mesh can pass "
+    "it.  The closure is consistent (wall flux order 1.03 at P1 / 2.07 at P2); "
+    "see validation/ns_heat_conduction/wall_row_law.json"))
 def test_wall_energy_residual_decays_under_refinement():
     coarse = float(_wall_residual(16)[..., 3][:, -1].abs().max())
     fine = float(_wall_residual(128)[..., 3][:, -1].abs().max())
@@ -117,13 +168,36 @@ def test_wall_energy_residual_decays_under_refinement():
 
 
 @pytest.mark.xfail(strict=True, reason=(
-    "known defect: the same wall residual appears for both wall_gradient "
-    "reconstructions, so the defect is in the closure and not in the "
-    "reconstruction choice"))
+    "over-specified criterion (re-adjudicated 2026-11-11): this pin wants "
+    "machine zero (1e-6) from the wall-row residual at ny=32, but that quantity "
+    "is the O(h**p) wall-flux mismatch divided by h -- measured 0.897 (taylor) "
+    "and 0.185 (face) at P1/ny=32.  Agreement between the two "
+    "reconstructions is a property of the fluxes, not of this residual; see "
+    "validation/ns_heat_conduction/wall_row_law.json"))
 def test_wall_energy_residual_is_small_for_both_reconstructions():
     for gradient in ("taylor", "face"):
         value = float(_wall_residual(32, wall_gradient=gradient)[..., 3][:, -1].abs().max())
         assert value < 1e-6, f"{gradient}: wall energy residual {value:.4f}"
+
+
+WALL_ROW_LAW = Path("validation/ns_heat_conduction/wall_row_law.json")
+
+
+@pytest.mark.skipif(not WALL_ROW_LAW.exists(), reason="run scratch/diag_wall_row_law.py")
+def test_wall_row_law_artifact_matches_the_pins():
+    """The evidence file the two ``xfail`` reasons quote, re-read not re-typed."""
+    table = json.loads(WALL_ROW_LAW.read_text())["table"]
+    for key, target in (("p1_taylor", 0.0), ("p2_taylor", 1.0)):
+        entry = table[key]
+        assert target - 0.25 <= entry["cold_wall_order"] <= target + 0.25, (key, entry)
+        # pin B (machine zero at ny=32) is unreachable at *both* degrees ...
+        assert entry["fails_pin_b"] is True, key
+    # ... while pin A (4x decay over 16->128) fails only where the rate law
+    # predicts it must: at P1, whose strong-form row is flat.  At P2 the same
+    # criterion *passes*, which is itself the evidence that the residual is a
+    # rate effect and not a stalled O(1) floor.
+    assert table["p1_taylor"]["fails_pin_a"] is True
+    assert table["p2_taylor"]["fails_pin_a"] is False
 
 
 def test_shipped_wrapper_runs_at_its_documented_defaults():
@@ -139,16 +213,17 @@ def test_shipped_wrapper_runs_at_its_documented_defaults():
     fields = ns.cell_fields(coeff)
     assert float(fields["pressure"].min()) > 0.0, "cell-average pressure left the physical cone"
     assert float(fields["density"].min()) > 0.0
-    # No accuracy claim here: the wall closure is still inconsistent (the two
-    # xfails above), so this pin only rules out the abort it used to assert.
+    # No accuracy claim here: this pin only rules out the abort it used to
+    # assert.  Wall-flux accuracy is pinned by tests/test_ns_wall_heat_flux_order.py.
 
 
 def test_exact_steady_state_is_approximately_preserved():
     """Ratchet flip (2026-11-04): the collapse at ``final_time=0.05`` is gone.
 
     Kept as a positive pin because it separates the two original symptoms: the
-    transient no longer collapses on the exact steady state, while the wall
-    residual of that same state still does not decay (the two xfails below).
+    transient no longer collapses on the exact steady state, while the wall-row
+    residual of that same state only decays at the strong-form rate ``p - 1``
+    (see ``test_wall_row_residual_obeys_the_strong_form_law``).
     """
     x, y, coeff, metadata = ns.solve_navier_stokes_dg_2d(
         _steady_initial, ncells=(2, 16), degree=1, final_time=0.05, cfl=0.3,

@@ -116,8 +116,9 @@ m3210 用 P1（`p − 1 = 0`，残差按构造不会衰减）作判据，因此�
   对流主导（Couette/剪切波）壁面精度面另有既有基准（`test_ns_dg_2d_wall*`）。
 - **未做**：本单没有改算子实现（无需改：闭合本身是对的）；
   `tests/test_ns_heat_conduction.py` 的两条 `xfail(strict=True)` **保留**（它们仍然失败），
-  但 `reason=` 已改写为「强形式壁行残差按构造为 `p−1` 阶」的口径并指向本报告与证据文件，
-  避免把正确实现记成缺陷。真正剩下的开放性问题是**壁面通量能否提到与内面同阶（`O(h²)`）**，
+  `reason=` 改写为「强形式壁行残差按构造为 `p−1` 阶」的口径并指向本报告与证据文件，
+  避免把正确实现记成缺陷（**该项在 m15233 才真正落到代码**，见 §6.7）。
+  真正剩下的开放性问题是**壁面通量能否提到与内面同阶（`O(h²)`）**，
   那是精度优化（P1 壁热流 3.9% → 更低），不是正确性缺陷。
 
 ## 5. 误差判定（逐项 vs 基准）
@@ -230,6 +231,57 @@ x 向壁面与 y 向算例旋转等价）+
 5. §3.3 的残差结论不变：算子实现未改动，`tests/test_ns_heat_conduction.py` 的两条
    `xfail(strict=True)` 仍然 xfail（判据本身在 P1 上不成立）。
 
+
+### 6.7 xfail 判据再表述（m15233：报告说法与测试代码对齐）
+
+§4「未做」曾写「两条 `xfail` 的 `reason=` **已**改写为强形式 `p−1` 口径」——
+**当时代码并未改**（PR #272 的 commit message 也这么写，但 `tests/test_ns_heat_conduction.py` 未被改动），
+两条 pin 的 `reason=` 仍写着已被证伪的归因「isothermal-wall energy closure is inconsistent」。
+本单把这句话变成事实，并且不只改文案：在同口径网格（`ny ∈ {16,32,64,128}`、`2×N`、P1/P2、
+两种 `wall_gradient`）上把两条 pin 判据**要的量**量出来，作为新工件登记。
+
+复现：`PYTHONPATH=. python scratch/diag_wall_row_law.py` → `validation/ns_heat_conduction/wall_row_law.json`（下表数字由脚本写入 JSON 后回读，零手抄）。
+
+被测量：精确稳态在**冷壁行**（`ymin` 侧为热壁、`ymax` 侧为冷壁，这里取 `ymax`）上的能量方程残差
+`max |R_E|`（模态残差，与两条 pin 读法一致）。
+
+| 组合 | ny=16 | ny=32 | ny=64 | ny=128 | 观测阶 | 比值 128/16 | pin A（要求 <0.25） | pin B（要求 <1e-6，ny=32） |
+|---|---:|---:|---:|---:|---:|---:|---|---|
+| p1_taylor | 0.8150 | 0.8966 | 0.9402 | 0.9628 | -0.079 | 1.181 | ❌ 未过 | ❌ 未过 |
+| p1_face | 0.1292 | 0.1850 | 0.2150 | 0.2305 | -0.272 | 1.784 | ❌ 未过 | ❌ 未过 |
+| p2_taylor | 0.0796 | 0.0423 | 0.0218 | 0.0111 | +0.949 | 0.139 | ✅ 过 | ❌ 未过 |
+| p2_face | 0.0707 | 0.0372 | 0.0191 | 0.0097 | +0.956 | 0.137 | ✅ 过 | ❌ 未过 |
+
+**判读**
+
+1. 残差按 `O(h^{p−1})` 走：P1 观测阶 `−0.079 / −0.272`（近似平坦），P2 `+0.949 / +0.956`。
+   这正是强形式把 `O(h^p)` 的壁面通量失配除以 `h` 的结果，与 §3.3 的机制一致，
+   与「闭合不一致 → O(1) 地板**不随阶改变**」的预言**不同**：P2 上残差确实在衰减。
+2. 因此 pin A（16→128 要 4 倍衰减，即 `h^{1.5}`）**只在 P1 上不可达**，在 P2 上实测比值
+   0.139 < 0.25 **是过的**——同一判据在同阶算例上过关，
+   说明它量的是**阶**而不是**缺陷**。pin B（`ny=32` 要机器零 `1e-6`）在两种阶上都不可能过
+   （实测 0.897 / 0.185）。
+3. 处置（棘轮纪律：不删未解决的 pin，只纠正归因）：两条 pin **保留** `xfail(strict=True)`，
+   `reason=` 改写为「判据过严（`h^{1.5}` / 机器零）」并给出实测数；
+   同时**新增正性 pin** `test_wall_row_residual_obeys_the_strong_form_law`，断言真实律
+   `order ∈ [p−1 ± 0.25]` 且系数在 8 倍细化下有界（防 `h^{-1}` 爆掉）。
+   若将来闭合真的坏了（残差在 P2 上也变平），这条正性 pin 会红——覆盖没有丢。
+4. 新增工件 pin `test_wall_row_law_artifact_matches_the_pins` 复读 JSON：
+   P1 上 pin A 不达标、P2 上达标、两阶 pin B 都不达标，三者同时成立才算证据自洽。
+
+### 6.8 图（`docs/figures/ns_wall_row_law.png`，由 JSON 程序化绘制）
+
+`PYTHONPATH=. python tools/plot_ns_wall_row_law.py` 从
+`validation/ns_heat_conduction/wall_row_law.json` 绘图，不手抄任何数字：
+
+1. 左：冷壁行残差 vs `ny`（log-log），叠画 `h^0`（P1 参考）与 `h^1`（P2 参考）两条斜率线，
+   以及 pin A 在 `ny=128` 的目标线（`0.25 × ny=16` 值）—— P1 曲线**平在目标线之上**，
+   P2 曲线**穿过目标线**（同一判据在 P2 是过的）；
+2. 右：残差除以 `h^{p−1}`：四条曲线都在 `O(1)` 带内近似水平 → 系数在 8 倍细化下有界，
+   没有 `1/h` 放大失控（若闭合坏了，这里会翘起来）。
+
+回归：`PYTHONPATH=. python -m pytest -q tests/test_ns_heat_conduction.py`（全文件，含 11 条 pin）
+＋ `tests/test_ns_wall_heat_flux_order.py`（8 passed）＋ `tests/test_ns_wall_heat_flux_api.py`。
 <!-- END m14554-capability -->
 
 
