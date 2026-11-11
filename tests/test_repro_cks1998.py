@@ -141,3 +141,41 @@ def test_sod_via_dg_p2_matches_exact_riemann_solution_within_three_percent():
         rel = np.sqrt(np.mean((got - ref[key]) ** 2)) / np.sqrt(np.mean(ref[key] ** 2))
         assert rel < 0.03, (key, rel)
     assert meta["limiter"] == "tvb"
+
+# ---------------------------------------------------------------------------
+# L3 integration: the benchmark entry point (non-test caller of the new API)
+# ---------------------------------------------------------------------------
+def test_benchmark_module_integration_probe():
+    """``benchmarks.cks1998_benchmark`` is the non-test caller of the new path."""
+    from benchmarks.cks1998_benchmark import integration_calls
+
+    probe = integration_calls(ncells=40, degree=1)
+    assert probe["probe_pass"], probe
+    solver = probe["calls"][0]
+    assert solver["time_integrator"] == "ssp_rk3" and solver["limiter"] == "tvb"
+    assert solver["overshoot_pct"] <= 1e-9          # strict policy: no bulge
+    lim = probe["calls"][1]
+    assert lim["cells_modified"] > 0
+    assert lim["edge_cell_modified"] and lim["last_cell_modified"]  # periodic seam
+
+
+def test_benchmark_ref_vs_got_table_from_committed_artifacts():
+    """The committed run artifacts must regenerate a FAIL-free ref-vs-got table."""
+    import json
+    import pathlib
+
+    import pytest
+    from benchmarks.cks1998_benchmark import build_ref_vs_got
+
+    metrics_path = (pathlib.Path(__file__).resolve().parents[1]
+                    / "validation" / "repro_cks1998" / "artifacts" / "quick"
+                    / "metrics.json")
+    if not metrics_path.exists():
+        pytest.skip("run artifacts not present")
+    metrics = json.loads(metrics_path.read_text())
+    table = build_ref_vs_got(metrics, "quick")
+    assert table["counts"]["total"] > 20
+    assert table["counts"]["FAIL"] == 0
+    assert any(r["ref_source"] == "analytic" and r["ref"] is not None
+               for r in table["rows"])
+    assert any(r["ref_source"] == "paper_theorem" for r in table["rows"])
