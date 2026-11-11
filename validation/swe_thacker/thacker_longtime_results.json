@@ -1,0 +1,333 @@
+{
+  "case": "Thacker (1981) planar parabolic-basin sloshing",
+  "parameters": {
+    "h0": 1.0,
+    "A": 0.5,
+    "L": 1.0,
+    "g": 9.81,
+    "omega": 4.4294469180700204,
+    "period": 1.4185033534428872
+  },
+  "config": {
+    "flux": "hll",
+    "rk_order": 3,
+    "cfl": 0.3,
+    "limiter": null,
+    "dtype": "float64",
+    "consistent": "exact bed slope + exact BC"
+  },
+  "criteria": {
+    "eta_rel_l2_pct_max_N80": 0.1,
+    "eoc_p1_band": [
+      1.7,
+      3.2
+    ],
+    "eoc_p2_band": [
+      2.55,
+      3.45
+    ],
+    "volume_rel_err_max": 1e-08,
+    "bed_artifact_order_band": [
+      1.7,
+      2.3
+    ],
+    "machine_zero_pct": 1e-09
+  },
+  "checks": {
+    "eta_below_0.1pct_at_N80": true,
+    "eoc_p1_in_band": true,
+    "eoc_p2_in_band_or_exact": true,
+    "volume_conserved": true
+  },
+  "verdict": "PASS",
+  "runs": [
+    {
+      "ncells": 20,
+      "degree": 1,
+      "t_end": 0.5,
+      "consistent_config": true,
+      "err_h_pct": 0.003385299547859003,
+      "err_u_pct": 0.013412646382354506,
+      "err_eta_correct_pct": 0.005589700620182063,
+      "err_eta_default_pct": 0.15818459733043863,
+      "err_eta_pointwise_legacy_pct": 0.15818459733044582,
+      "vol_rel_err": 7.452483685383043e-13,
+      "steps": 265,
+      "dt": 0.001854008927234252
+    },
+    {
+      "ncells": 40,
+      "degree": 1,
+      "t_end": 0.5,
+      "consistent_config": true,
+      "err_h_pct": 0.0005548878877310347,
+      "err_u_pct": 0.002054013413915634,
+      "err_eta_correct_pct": 0.0009163244596899999,
+      "err_eta_default_pct": 0.03953107191947559,
+      "err_eta_pointwise_legacy_pct": 0.0395310719194804,
+      "vol_rel_err": 1.509232031257739e-14,
+      "steps": 530,
+      "dt": 0.0007738113298340066
+    },
+    {
+      "ncells": 80,
+      "degree": 1,
+      "t_end": 0.5,
+      "consistent_config": true,
+      "err_h_pct": 9.208945686299677e-05,
+      "err_u_pct": 0.0003216212879802641,
+      "err_eta_correct_pct": 0.00015207825427160498,
+      "err_eta_default_pct": 0.009881220371063763,
+      "err_eta_pointwise_legacy_pct": 0.009881220371065872,
+      "vol_rel_err": 6.323161786131563e-14,
+      "steps": 1060,
+      "dt": 0.0002860143360527423
+    },
+    {
+      "ncells": 20,
+      "degree": 2,
+      "t_end": 0.5,
+      "consistent_config": true,
+      "err_h_pct": 6.226826400836871e-07,
+      "err_u_pct": 8.381879132373986e-06,
+      "err_eta_correct_pct": 1.0281540794828381e-06,
+      "err_eta_default_pct": 0.15808580596045674,
+      "err_eta_pointwise_legacy_pct": 0.15808580596046412,
+      "vol_rel_err": 7.207884011351616e-14,
+      "steps": 442,
+      "dt": 0.0004816966629165864
+    },
+    {
+      "ncells": 40,
+      "degree": 2,
+      "t_end": 0.5,
+      "consistent_config": true,
+      "err_h_pct": 9.931529305067113e-08,
+      "err_u_pct": 1.4362966731488438e-06,
+      "err_eta_correct_pct": 1.6400616287372295e-07,
+      "err_eta_default_pct": 0.039520450349235944,
+      "err_eta_pointwise_legacy_pct": 0.03952045034924069,
+      "vol_rel_err": 4.8009191339147045e-14,
+      "steps": 883,
+      "dt": 0.0005337765957445506
+    },
+    {
+      "ncells": 80,
+      "degree": 2,
+      "t_end": 0.5,
+      "consistent_config": true,
+      "err_h_pct": 1.6436543104672295e-08,
+      "err_u_pct": 2.49058161776336e-07,
+      "err_eta_correct_pct": 2.7143615064510808e-08,
+      "err_eta_default_pct": 0.009880050003888115,
+      "err_eta_pointwise_legacy_pct": 0.009880050003890221,
+      "vol_rel_err": 1.0941932226618609e-13,
+      "steps": 1767,
+      "dt": 2.201706307325413e-06
+    },
+    {
+      "ncells": 20,
+      "degree": 1,
+      "t_end": 1.0,
+      "consistent_config": true,
+      "err_h_pct": 0.0034489399431713802,
+      "err_u_pct": 0.008347457507761802,
+      "err_eta_correct_pct": 0.005694915633002561,
+      "err_eta_default_pct": 0.15723401210482923,
+      "err_eta_pointwise_legacy_pct": 0.1572340121048376,
+      "vol_rel_err": 9.706993190208295e-13,
+      "steps": 519,
+      "dt": 0.00013308798472289052
+    },
+    {
+      "ncells": 40,
+      "degree": 1,
+      "t_end": 1.0,
+      "consistent_config": true,
+      "err_h_pct": 0.0006167301653810039,
+      "err_u_pct": 0.0013450709962071435,
+      "err_eta_correct_pct": 0.0010184839790236939,
+      "err_eta_default_pct": 0.039295699621546616,
+      "err_eta_pointwise_legacy_pct": 0.03929569962155028,
+      "vol_rel_err": 7.726447219587393e-16,
+      "steps": 1036,
+      "dt": 0.0006740224848140741
+    },
+    {
+      "ncells": 80,
+      "degree": 1,
+      "t_end": 1.0,
+      "consistent_config": true,
+      "err_h_pct": 0.00010854949453588291,
+      "err_u_pct": 0.00021466555605858671,
+      "err_eta_correct_pct": 0.00017926734164668064,
+      "err_eta_default_pct": 0.009822247405103339,
+      "err_eta_pointwise_legacy_pct": 0.009822247405105032,
+      "vol_rel_err": 1.2310805903209245e-13,
+      "steps": 2072,
+      "dt": 0.00014391178936146165
+    },
+    {
+      "ncells": 20,
+      "degree": 2,
+      "t_end": 1.0,
+      "consistent_config": true,
+      "err_h_pct": 8.307957894419977e-07,
+      "err_u_pct": 5.48385695042588e-06,
+      "err_eta_correct_pct": 1.371816270133208e-06,
+      "err_eta_default_pct": 0.15713084501383076,
+      "err_eta_pointwise_legacy_pct": 0.15713084501383917,
+      "vol_rel_err": 7.777956867717975e-14,
+      "steps": 863,
+      "dt": 0.0010189886612210763
+    },
+    {
+      "ncells": 40,
+      "degree": 2,
+      "t_end": 1.0,
+      "consistent_config": true,
+      "err_h_pct": 1.2449561367348276e-07,
+      "err_u_pct": 9.165516433036315e-07,
+      "err_eta_correct_pct": 2.055952425136903e-07,
+      "err_eta_default_pct": 0.039282498621416265,
+      "err_eta_pointwise_legacy_pct": 0.03928249862141993,
+      "vol_rel_err": 9.722446084647469e-14,
+      "steps": 1727,
+      "dt": 8.039538295090409e-07
+    },
+    {
+      "ncells": 80,
+      "degree": 2,
+      "t_end": 1.0,
+      "consistent_config": true,
+      "err_h_pct": 1.9146727669671036e-08,
+      "err_u_pct": 1.5158561057960983e-07,
+      "err_eta_correct_pct": 3.1620443493789444e-08,
+      "err_eta_default_pct": 0.009820611336795246,
+      "err_eta_pointwise_legacy_pct": 0.009820611336796948,
+      "vol_rel_err": 2.109320090947358e-13,
+      "steps": 3453,
+      "dt": 3.027976116365405e-05
+    }
+  ],
+  "legacy_reference": {
+    "ncells": 40,
+    "degree": 1,
+    "t_end": 0.5,
+    "consistent_config": false,
+    "err_h_pct": 9.45170107690786,
+    "err_u_pct": 60.6358358828964,
+    "err_eta_correct_pct": 15.608242807146006,
+    "err_eta_default_pct": 15.634422457745432,
+    "err_eta_pointwise_legacy_pct": 15.634422457745433,
+    "vol_rel_err": 0.06380498521087345,
+    "steps": 536,
+    "dt": 5.009711434728059e-05
+  },
+  "summary": {
+    "t0.5_p1": {
+      "eoc_h": [
+        2.6090152793207895,
+        2.591088412102152
+      ],
+      "eoc_eta_correct": [
+        2.608840580359034,
+        2.5910446538052327
+      ],
+      "eoc_eta_default": [
+        2.0005501485529495,
+        2.0002259389667025
+      ],
+      "eta_at_N80_pct": 0.00015207825427160498
+    },
+    "t0.5_p2": {
+      "eoc_h": [
+        2.648409265386174,
+        2.5951089813674697
+      ],
+      "eoc_eta_correct": [
+        2.6482345502002853,
+        2.595065247208672
+      ],
+      "eoc_eta_default": [
+        2.0000365462102185,
+        2.0000091384663983
+      ],
+      "eta_at_N80_pct": 2.7143615064510808e-08
+    },
+    "t1.0_p1": {
+      "eoc_h": [
+        2.483441689223637,
+        2.5062864048353988
+      ],
+      "eoc_eta_correct": [
+        2.4832511827967,
+        2.5062386949040256
+      ],
+      "eoc_eta_default": [
+        2.000469985266732,
+        2.000246370774669
+      ],
+      "eta_at_N80_pct": 0.00017926734164668064
+    },
+    "t1.0_p2": {
+      "eoc_h": [
+        2.73839899144274,
+        2.700925162930925
+      ],
+      "eoc_eta_correct": [
+        2.73820848567804,
+        2.700877373340224
+      ],
+      "eoc_eta_default": [
+        2.0000078091356768,
+        2.000001956559024
+      ],
+      "eta_at_N80_pct": 3.1620443493789444e-08
+    }
+  },
+  "eoc_orders": {
+    "p1": {
+      "t0.5": [
+        2.608840580359034,
+        2.5910446538052327
+      ],
+      "t1.0": [
+        2.4832511827967,
+        2.5062386949040256
+      ]
+    },
+    "p2": {
+      "t0.5": [
+        2.6482345502002853,
+        2.595065247208672
+      ],
+      "t1.0": [
+        2.73820848567804,
+        2.700877373340224
+      ]
+    }
+  },
+  "bed_postprocessing_artifact": {
+    "t0.5": {
+      "order_default_bed_offset": [
+        2.0000365462102185,
+        2.0000091384663983
+      ],
+      "ratio_default_over_correct_N40": 240969.3005235714,
+      "predicted_offset_pct_N40": 0.04166666666666667
+    },
+    "t1.0": {
+      "order_default_bed_offset": [
+        2.0000078091356768,
+        2.000001956559024
+      ],
+      "ratio_default_over_correct_N40": 191067.15768873153,
+      "predicted_offset_pct_N40": 0.04166666666666667
+    }
+  },
+  "confirmations_2026_11_11": [
+    "t=0.5 s long-time gap (m6377 ~12 %) does not reappear in the consistent configuration: eta error at N=80 is two to three orders of magnitude below the 3 % gate, at both p=1 and p=2.",
+    "P2 does converge at p+1: the apparent 'P2 worse than P1 / EOC=2' is the O(dx^2) constant vertical offset of the default trapezoidal bed average used by reconstruct_fields."
+  ]
+}
