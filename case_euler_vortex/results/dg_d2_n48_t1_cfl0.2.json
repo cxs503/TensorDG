@@ -1,0 +1,33 @@
+{
+  "task": "dg",
+  "degree": 2,
+  "cells": 48,
+  "dx": 0.20833333333333334,
+  "steps": 703,
+  "dt": 0.0008951432629068501,
+  "dofs": 82944,
+  "errors": {
+    "density": 1.4191338919333653e-05,
+    "velocity_x": 8.864341931580503e-05,
+    "velocity_y": 8.864366278382242e-05,
+    "pressure": 2.0073104646237286e-05
+  },
+  "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+  "wall_seconds": 220.52089977264404,
+  "final_time": 1.0,
+  "cfl": 0.2,
+  "strength": 5.0,
+  "max_relative_l2": 8.864366278382242e-05,
+  "max_percent": 0.008864366278382243,
+  "gate_pass": true,
+  "reference": "C.-W. Shu, 'Essentially non-oscillatory and weighted essentially non-oscillatory schemes for hyperbolic conservation laws', ICASE Report 97-65 / NASA CR-97-206253 (1998), \u00a74.4.2 smooth isentropic vortex: domain [-5,5]^2, beta=5, (u,v)_inf=(1,1), gamma=1.4, periodic, exact solution; tolerance <5% relative L2 per primitive field.",
+  "config": {
+    "task": "dg",
+    "cells": 48,
+    "degree": 2,
+    "final_time": 1.0,
+    "cfl": 0.2,
+    "strength": 5.0
+  },
+  "task_key": "dg_d2_n48_t1_cfl0.2"
+}
