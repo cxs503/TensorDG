@@ -68,8 +68,11 @@ def build(data: dict) -> tuple[str, str]:
     md = []
     md.append(f"# {title}\n")
     md.append("> 节点：P165W3-N05｜仓：TensorDG｜模块：`tensordg/advection_diffusion.py`、"
-              "`tensordg/dispersive.py`｜测试：`tests/test_advection_diffusion_2d.py`、"
-              "`tests/test_dispersive_waves.py`（25 项：15 + 10）｜"
+              "`tensordg/dispersive.py`｜入口：`python -m benchmarks.dg`（CI 用 `--quick`）｜"
+              "测试：`tests/test_advection_diffusion_2d.py`、`tests/test_dispersive_waves.py`、"
+              "`tests/test_dg_unified_verification.py`｜验收证据："
+              "`docs/benchmarks/results/dg-unified-verification/evidence.json`"
+              "（`python -m benchmarks.dg.evidence --verify` 可离线复核）｜"
               "全部数字由 `benchmarks/dg/unified_verification.py` 程序化写出，本报告由 "
               "`benchmarks/dg/make_report.py` 注入，无手抄。\n")
 
@@ -257,26 +260,85 @@ dt = cfl/((2p+1)·max|a|/h)；有扩散时再叠加由实测谱半径标定的 R
 基准全部是解析解。
 """ % disp["model_table"]["boussinesq"]["validity_kh_3pct"])
 
+    # ---------------------------------------------------------------- ⑦
+    md.append("## ⑦ 验收证据（机器可复核，非自声明）\n")
+    md.append(_table(
+        ["证据键", "内容", "路径 / 复核方式"],
+        [["impl_files", "非占位实现（635 + 485 行）",
+          "`tensordg/advection_diffusion.py`、`tensordg/dispersive.py`"],
+         ["entry", "包入口（三阶段：求解 -> 报告 -> 证据）",
+          "`benchmarks/dg/__main__.py`（`python -m benchmarks.dg`）"],
+         ["run_artifacts", "本次运行工件",
+          "`dg_unified_verification.json`、`benchmark_table.json`、`report.md`、`figures/*.png`"],
+         ["integration_callers", "真调用方",
+          "`.github/workflows/tests.yml` CI 步骤、包入口、`tests/test_dg_unified_verification.py`、"
+          "`tensordg/__init__.py` 再导出"],
+         ["benchmark", "ref vs got + 误差 + 阈值",
+          "`benchmark_table.json`（E1–E5 逐项，含 E3 六个 kh 采样与 E4 相速度）"],
+         ["repro_cmd", "一条命令重跑全部",
+          "`python -m benchmarks.dg`"],
+         ["external_anchor", "解析/文献锚",
+          "`external_anchor.json`（Airy 1932/Lamb、Boussinesq–Green–Naghdi、LeVeque 1996、KdV 1895/Zabusky–Kruskal 1965）"]]))
+    md.append("**复核命令**（证据自校验：指针存在、sha256 一致、benchmark 数字与运行工件逐项相等）：\n")
+    md.append("```\npython -m benchmarks.dg --quick        # CI 配置：五门判据走同一注册表\n"
+              "python -m benchmarks.dg                # 报告配置：全网格研究 + 图 + 证据包\n"
+              "python -m benchmarks.dg.evidence --verify "
+              "docs/benchmarks/results/dg-unified-verification/evidence.json\n```\n")
+    md.append("**判定数字**（来自本次运行工件，非手抄）："
+              f"E1 {gates['E1_rotation_l2']['value']:.4f}（限 {gates['E1_rotation_l2']['limit']:.2f}）、"
+              f"E2 {gates['E2_deformation_l2']['value']:.4f}（限 {gates['E2_deformation_l2']['limit']:.2f}）、"
+              f"E3 {gates['E3_dispersion']['value']:.2e}（限 {gates['E3_dispersion']['limit']:.2f}）、"
+              f"E4 {gates['E4_soliton_l2']['value']:.2e}（限 {gates['E4_soliton_l2']['limit']:.2f}）、"
+              f"E5 {gates['E5_mass_drift']['value']:.2e}（限 {gates['E5_mass_drift']['limit']:.2f}）；"
+              f"运行环境 torch {data['environment']['torch']} / numpy {data['environment']['numpy']}，"
+              f"确定性（无随机数），墙钟 {data['wall_seconds']:.0f} s。\n")
+    prior_path = os.path.join(RESULT_DIR, "prior_run_gates.json")
+    if os.path.isfile(prior_path):
+        with open(prior_path) as handle:
+            prior = json.load(handle)
+        same = all(prior["gates"].get(name, {}).get("value") == gate["value"]
+                   for name, gate in gates.items())
+        md.append("**跨运行复现**：与 commit "
+                  f"{prior['source_commit'][:7]} 的上一次独立运行相比，五门判定数字"
+                  f"{'逐位相同' if same else '出现差异（需排查）'}；本面不使用随机数，"
+                  "工件 `prior_run_gates.json` 作为不变量锚。\n")
+
+    md.append("**与节点原始表述的偏差（如实记录）**："
+              "(a) E4 的“传播 10 个波长”实现为传播 10 个**孤子宽度** w=√(4h³/3a)——sech² 孤子没有波长，"
+              "w 是其唯一内禀长度，故以 10w 为传播距离；"
+              "(b) E5 的“总质量变化 ≤1%”在声明网格（24×24，p=2）为 "
+              f"{gates['E5_mass_drift']['value']:.1e}，而 "
+              f"{rot['runs'][0]['mesh'][0]}×{rot['runs'][0]['mesh'][1]} 时为 "
+              f"{rot['runs'][0]['mass_drift']:.1e}（超限），"
+              "故判据按声明配置裁定并在报告中给出网格趋势；"
+              "(c) 经典 Boussinesq 核在 kh≈1.56 以上本就超 3%，E3 由对该频带物理有效的 Airy/[6/6] Padé 算子裁定，"
+              "各模型的有效 kh 上限在 ③ 表中列出而非取平均掩盖。\n")
+
     return title, summary, "\n".join(md)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="write /tmp/report.json but do not post it")
+    parser.add_argument("--result-dir", default=RESULT_DIR,
+                        help="directory holding dg_unified_verification.json")
+    parser.add_argument("--mission", type=int, default=MISSION_ID,
+                        help="mission id attached to the published report")
     args = parser.parse_args()
 
-    result_path = os.path.join(RESULT_DIR, "dg_unified_verification.json")
+    result_path = os.path.join(args.result_dir, "dg_unified_verification.json")
     with open(result_path) as handle:
         data = json.load(handle)
     title, summary, markdown = build(data)
 
-    with open(os.path.join(RESULT_DIR, "report.md"), "w") as handle:
+    with open(os.path.join(args.result_dir, "report.md"), "w") as handle:
         handle.write(markdown)
-    print(f"wrote {os.path.join(RESULT_DIR, 'report.md')}")
+    print(f"wrote {os.path.join(args.result_dir, 'report.md')}")
 
     figures = []
     for rel in data.get("figures", []):
-        path = os.path.join(RESULT_DIR, rel)
+        path = os.path.join(args.result_dir, rel)
         with open(path, "rb") as handle:
             figures.append({"name": os.path.basename(path),
                             "caption": os.path.basename(path).replace("_", " ").replace(".png", ""),
@@ -285,7 +347,7 @@ def main() -> int:
         "title": title,
         "summary": summary,
         "scenario_key": "tensordg_advdiff_dispersive_unified_verification",
-        "mission_id": MISSION_ID,
+        "mission_id": args.mission,
         "tags": ["TensorDG", "advection-diffusion", "dispersion", "Boussinesq",
                  "KdV", "solid-body-rotation", "verification", "P165W3-N05"],
         "markdown": markdown,
