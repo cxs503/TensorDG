@@ -88,6 +88,8 @@ def _detect(
     dx: float,
     tvb_constant: float,
     limit_boundaries: bool = False,
+    periodic: bool = False,
+    limit_all: bool = False,
 ):
     """Troubled-cell mask and minmod slope in one pass.
 
@@ -98,12 +100,25 @@ def _detect(
     """
     ncells = coeff.shape[0]
     avg = coeff[:, 0]  # [ncells, nvar]
-    # Pad with copies of the boundary cells for one-sided stencils
-    avg_pad = avg.index_select(0, _pad_index(ncells, coeff.device))  # [ncells+2, nvar]
+    if periodic:
+        # Genuine wrap-around neighbours: the end cells of a periodic domain do
+        # have a full two-sided stencil, so the one-sided clamping below would
+        # both mis-estimate their slope and (with the interior mask) skip them.
+        avg_pad = torch.cat((avg[-1:], avg, avg[:1]), dim=0)  # [ncells+2, nvar]
+    else:
+        # Pad with copies of the boundary cells for one-sided stencils
+        avg_pad = avg.index_select(0, _pad_index(ncells, coeff.device))  # [ncells+2, nvar]
     d_left = avg - avg_pad[:-2]   # u_i - u_{i-1}
     d_right = avg_pad[2:] - avg   # u_{i+1} - u_i
     troubled, slope = troubled_from_differences(d_left, d_right, dx, tvb_constant)
-    if not limit_boundaries:
+    if limit_all:
+        # Strict TVD policy: minmod every cell, including the monotone ones the
+        # TVB indicator releases.  Those released cells keep their full DG
+        # polynomial and their trace can still bulge past the neighbouring cell
+        # averages (measured 1.4 % of the jump amplitude at N=80, O(h) decay);
+        # flagging every cell removes that bulge but clips smooth extrema.
+        troubled = torch.ones_like(troubled)
+    elif not limit_boundaries and not periodic:
         # End cells have no full stencil; leave them unlimited (default).
         # A cached mask AND-ed in is one kernel instead of two scalar writes.
         troubled = troubled & _interior_mask(ncells, coeff.device)
@@ -169,6 +184,8 @@ def apply_tvb_limiter(
     dx: float,
     tvb_constant: float = 1.0,
     limit_boundaries: bool = False,
+    periodic: bool = False,
+    limit_all: bool = False,
 ) -> torch.Tensor:
     """Apply the TVB limiter to a modal DG coefficient tensor.
 
@@ -187,7 +204,8 @@ def apply_tvb_limiter(
         return coeff  # P0 -- nothing to limit
 
     troubled, slope = _detect(
-        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries
+        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries,
+        periodic=periodic, limit_all=limit_all,
     )
     if not troubled.any():
         return coeff
