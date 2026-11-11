@@ -79,6 +79,8 @@ __all__ = [
     "wall_heat_flux_summary",
     "shear_wave_exact",
     "gas_constants",
+    "taylor_green_exact",
+    "solve_taylor_green_dg_2d",
 ]
 
 # Safety factor for the explicit diffusive step (see solve_navier_stokes_dg_2d).
@@ -1480,3 +1482,164 @@ def solve_shear_wave_dg_2d(
         dtype=dtype,
     )
 
+
+
+def taylor_green_exact(x, y, time, amplitude, wavenumber, kinematic_viscosity,
+                       pressure, background_temperature=1.0):
+    """Taylor--Green vortex: exact solution of the incompressible Navier--Stokes.
+
+    The 2D Taylor--Green vortex is a classical benchmark for viscous flow solvers.
+    It has the exact solution (incompressible limit):
+
+        u(x, y, t) = -A cos(k x) sin(k y) exp(-2 nu k^2 t)
+        v(x, y, t) =  A sin(k x) cos(k y) exp(-2 nu k^2 t)
+        p(x, y, t) = -A^2/4 (cos(2k x) + cos(2k y)) exp(-4 nu k^2 t) + p0
+
+    For the compressible equations at low Mach number (A << c), this is an
+    approximate solution with errors O(M^2) from the acoustic terms. With
+    A ~ 0.1 and unit sound speed, the Mach number is ~0.1 and the compressibility
+    error is ~1%.
+
+    The velocity field is divergence-free by construction, so the continuity
+    equation is satisfied exactly. The momentum equations reduce to the Stokes
+    equations (the convective term u·∇u = -∇(A^2/8 (cos(2kx) + cos(2ky)) exp(-4νk²t))
+    is exactly balanced by the pressure gradient), and the viscous term gives
+    the exponential decay.
+
+    Parameters
+    ----------
+    x, y : torch.Tensor
+        Spatial coordinates (typically on [0, 2π/k] × [0, 2π/k] or [0, 1]² with k=2π).
+    time : float
+        Evaluation time.
+    amplitude : float
+        Initial velocity amplitude A.
+    wavenumber : float
+        Wavenumber k (typically 2π for unit domain).
+    kinematic_viscosity : float
+        Kinematic viscosity ν = μ/ρ.
+    pressure : float
+        Reference pressure p0 (background).
+    background_temperature : float
+        Background temperature T0 (for density = p/T).
+
+    Returns
+    -------
+    dict with keys: density, velocity_x, velocity_y, pressure, temperature
+    """
+    k = wavenumber
+    nu = kinematic_viscosity
+    A = amplitude
+    t = float(time)
+
+    decay_vel = np.exp(-2.0 * nu * k**2 * t)
+    decay_pres = np.exp(-4.0 * nu * k**2 * t)
+
+    u = -A * torch.cos(k * x) * torch.sin(k * y) * decay_vel
+    v = A * torch.sin(k * x) * torch.cos(k * y) * decay_vel
+    p = pressure - 0.25 * A**2 * (torch.cos(2.0 * k * x) + torch.cos(2.0 * k * y)) * decay_pres
+
+    # Low Mach: density ≈ p/T with T ≈ T0 (temperature variations are O(M^2))
+    temperature = torch.full_like(x, background_temperature)
+    density = p / temperature
+
+    return {
+        "density": density,
+        "velocity_x": u,
+        "velocity_y": v,
+        "pressure": p,
+        "temperature": temperature,
+    }
+
+
+def solve_taylor_green_dg_2d(
+    ncells=(8, 8),
+    degree=1,
+    final_time=0.1,
+    amplitude=0.1,
+    wavenumber=2.0 * np.pi,
+    mu=0.01,
+    pressure=1.0,
+    temperature=1.0,
+    cfl=0.3,
+    cfl_viscous=1.0,
+    penalty=None,
+    wall_penalty=None,
+    domain=None,
+    device="cpu",
+    wall_gradient="face",
+    dtype=torch.float64,
+):
+    """Taylor--Green vortex decay: 2D benchmark for convective + diffusive terms.
+
+    The Taylor--Green vortex is the canonical test for viscous flow solvers:
+    it exercises both the convective (nonlinear) and diffusive (viscous) terms
+    simultaneously, with an exact solution for comparison. Unlike the shear wave
+    (which is 1D and linear), the TGV has genuine 2D structure and nonlinear
+    convective balance.
+
+    Default domain is [0, 1]² with k = 2π (one full period in each direction).
+    The flow is periodic in both directions.
+
+    Parameters
+    ----------
+    ncells : tuple of int
+        Number of cells (nx, ny).
+    degree : int
+        Polynomial degree (1, 2, or 3).
+    final_time : float
+        Integration time.
+    amplitude : float
+        Initial velocity amplitude (Mach number ~ A/c with c=1).
+    wavenumber : float
+        Wavenumber k (default 2π for unit domain).
+    mu : float
+        Dynamic viscosity.
+    pressure : float
+        Reference pressure.
+    temperature : float
+        Background temperature.
+    cfl : float
+        CFL number for convective step.
+    cfl_viscous : float
+        CFL number for viscous step.
+    domain : tuple, optional
+        ((xmin, xmax), (ymin, ymax)). Default ((0, 1), (0, 1)).
+    device : str
+        PyTorch device.
+    wall_gradient : str
+        Wall gradient treatment (not used for periodic, kept for API consistency).
+    dtype : torch.dtype
+        Data type.
+
+    Returns
+    -------
+    x, y, coeff, metadata : as returned by solve_navier_stokes_dg_2d
+    """
+    if domain is None:
+        domain = ((0.0, 1.0), (0.0, 1.0))
+
+    density0 = pressure / temperature
+    nu = mu / density0
+
+    def initial(x, y):
+        state = taylor_green_exact(x, y, 0.0, amplitude, wavenumber, nu, pressure, temperature)
+        return (state["density"], state["velocity_x"], state["velocity_y"], state["pressure"])
+
+    return solve_navier_stokes_dg_2d(
+        initial,
+        ncells=ncells,
+        degree=degree,
+        domain=domain,
+        final_time=final_time,
+        cfl=cfl,
+        cfl_viscous=cfl_viscous,
+        mu=mu,
+        prandtl=0.71,
+        periodic=(True, True),
+        penalty=penalty,
+        wall_penalty=wall_penalty,
+        wall_gradient=wall_gradient,
+        device=device,
+        dtype=dtype,
+    )
