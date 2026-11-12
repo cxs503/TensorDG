@@ -369,6 +369,16 @@ from .ns_poiseuille import (
     BodyForcePoiseuille,
 )
 
+# ---- artificial_viscosity
+from .artificial_viscosity import (
+    apply_av_filter,
+    av_sensor,
+    av_strength,
+    exponential_filter_factor,
+    modal_smoothness,
+    sensor_reference,
+)
+
 # ---- poisson_2d
 from .poisson_2d import (
     interior_face_operator,
@@ -495,6 +505,12 @@ from .swe_1d import GRAVITY as SWE_GRAVITY
 from .cases import CASES, ELASTIC_ROD_CASE_KEY
 
 __all__ = [
+    "apply_av_filter",
+    "av_sensor",
+    "av_strength",
+    "exponential_filter_factor",
+    "modal_smoothness",
+    "sensor_reference",
     "ldg_poisson_2d_manufactured_solution",
     "ldg_poisson_2d_superposition_solution",
     "solve_poisson_2d_ldg",
