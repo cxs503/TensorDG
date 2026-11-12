@@ -111,7 +111,7 @@ def test_claim_baseline_is_auditable():
     # the mission's regression set: capabilities merged before this fix but
     # unreachable from `from tensordg import ...`
     "solve_elastic_1d", "dalembert_pulse", "elastic_wave_speed",
-    "ritter_exact", "thacker_radial_basin", "solve_poisson_2d_ldg",
+    "ritter_exact", "thacker_radial_basin", "solve_ldg_dirichlet_1d",
     "solve_poisson_2d_sparse", "solve_poisson_2d_matrixfree",
     "solve_kovasznay_dg_2d", "solve_taylor_green_dg_2d",
     "solve_shear_wave_dg_2d", "wall_heat_flux",
@@ -121,6 +121,28 @@ def test_claim_baseline_is_auditable():
 def test_named_capabilities_are_exported(tensordg, name):
     assert name in tensordg.__all__, f"{name} missing from tensordg.__all__"
     assert hasattr(tensordg, name), f"tensordg.{name} does not resolve"
+
+
+def test_prototypes_are_excluded_from_the_contract_and_stay_unexported(contract, tensordg):
+    """An unvalidated prototype is not a capability: it may not be exported.
+
+    Regression for the red-suite defect found by m16505: the API-coverage sweep
+    (m16429) exported ``tensordg.poisson_2d_ldg`` even though the module's own
+    docstring says it is deliberately not re-exported and
+    ``tests/test_ldg_closure_rank.py`` forbids it.  The gate is now machine
+    checked from both sides: excluded from the coverage denominator, marker
+    required, and no symbol may leak into the root namespace.
+    """
+    prototypes = contract["prototypes"]
+    assert prototypes["prototypes"], "prototype registry must not be empty"
+    for record in prototypes["prototypes"]:
+        assert record["marker_present"], (
+            f"{record['module']} lost its '{record['marker']}' status marker")
+        assert record["leaked_exports"] == [], (
+            f"prototype {record['module']} leaked into the public API: "
+            f"{record['leaked_exports']}")
+        for name in record["leaked_exports"]:
+            assert not hasattr(tensordg, name)
 
 
 def test_colliding_names_are_disambiguated_by_alias(tensordg):
