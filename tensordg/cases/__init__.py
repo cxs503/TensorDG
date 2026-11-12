@@ -6,12 +6,25 @@ callers read the case from a single place instead of copying constants.
 """
 
 from . import elastic_rod_1d
+from . import lax_1d
 from . import viscous_burgers_1d
 from .elastic_rod_1d import (
     CASE_KEY as ELASTIC_ROD_CASE_KEY,
     anchor_table as elastic_rod_anchor_table,
     parameters as elastic_rod_parameters,
     solve_case as solve_elastic_rod_case,
+)
+from .lax_1d import (
+    CASE_KEY as LAX_CASE_KEY,
+    DIAPHRAGM as LAX_DIAPHRAGM,
+    DOMAIN as LAX_DOMAIN,
+    FINAL_TIME as LAX_FINAL_TIME,
+    GAMMA as LAX_GAMMA,
+    LEFT_STATE as LAX_LEFT_STATE,
+    RIGHT_STATE as LAX_RIGHT_STATE,
+    lax_parameters,
+    solve_lax_case,
+    star_state as lax_star_state,
 )
 from .shock_entropy import (
     CASE_KEY,
@@ -35,6 +48,16 @@ viscous_burgers_parameters = parameters
 
 __all__ = [
     "CASE_KEY",
+    "LAX_CASE_KEY",
+    "LAX_DIAPHRAGM",
+    "LAX_DOMAIN",
+    "LAX_FINAL_TIME",
+    "LAX_GAMMA",
+    "LAX_LEFT_STATE",
+    "LAX_RIGHT_STATE",
+    "lax_parameters",
+    "solve_lax_case",
+    "lax_star_state",
     "VISCOUS_BURGERS_CASE_KEY",
     "viscous_burgers_parameters",
     "solve_viscous_burgers_1d",
@@ -60,4 +83,5 @@ CASES = {
     "shock_entropy": CASE_KEY,
     "elastic_rod_1d": ELASTIC_ROD_CASE_KEY,
     "viscous_burgers_1d": VISCOUS_BURGERS_CASE_KEY,
+    "lax_1d": LAX_CASE_KEY,
 }
