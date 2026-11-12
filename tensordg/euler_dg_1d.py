@@ -143,6 +143,7 @@ def solve_euler_dg_1d(
     tvb_constant=1.0,
     limiter_stage="every",
     positivity="scale",
+    limiter_kwargs=None,
 ):
     """Solve a Riemann problem with modal DG/HLLC/SSP-RK3.
 
@@ -166,6 +167,11 @@ def solve_euler_dg_1d(
         destroys high-order accuracy there (see
         ``docs/limiter_verification.md``).  ``"final"`` limits only the
         updated state at the end of the time step.
+    limiter_kwargs : dict, optional
+        Extra keyword arguments forwarded to :func:`tensordg.limiters.apply_limiter`,
+        i.e. to the selected limiter.  Used for the sensor parameters of the
+        ``"av"`` (modal artificial viscosity) kind, e.g.
+        ``limiter_kwargs={"s0": -4.5, "kappa": 1.0, "alpha_max": 20.0}``.
     positivity : {"scale", "collapse", "none"}
         Admissibility treatment applied to every sub-step.  ``"scale"``
         (default) is the Zhang-Shu scaling limiter (:func:`_positivity_scale`):
@@ -216,6 +222,7 @@ def solve_euler_dg_1d(
             stats["cell_stages"] += int(changed.numel())
             return fixed
         return state
+    limiter_kwargs = dict(limiter_kwargs or {})
     limit_each_stage = limiter_stage == "every"
     time, steps, dt = 0.0, 0, 0.0
     while time < final_time:
@@ -226,17 +233,17 @@ def solve_euler_dg_1d(
         k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right)
         u1 = coeff + dt * k1
         if limit_each_stage:
-            u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
+            u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant, **limiter_kwargs)
         u1 = _admissible_fix(u1)
         k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right)
         u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
         if limit_each_stage:
-            u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
+            u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant, **limiter_kwargs)
         u2 = _admissible_fix(u2)
         k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right)
         coeff = apply_limiter(
             (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3),
-            dx, kind=limiter, tvb_constant=tvb_constant,
+            dx, kind=limiter, tvb_constant=tvb_constant, **limiter_kwargs,
         )
         coeff = _admissible_fix(coeff)
         average = coeff[:, 0]
@@ -254,6 +261,7 @@ def solve_euler_dg_1d(
         "flux": "hllc", "limiter": limiter_name, "device": str(dev),
         "limiter_stage": limiter_stage,
         "positivity": positivity,
+        "limiter_kwargs": dict(limiter_kwargs),
         "positivity_stats": dict(stats),
     }
     return x, coeff, metadata
@@ -272,6 +280,7 @@ def solve_periodic_euler_dg_1d(
     tvb_constant=1.0,
     limiter_stage="every",
     boundary="periodic",
+    limiter_kwargs=None,
 ):
     """Advance smooth Euler data with the same modal DG/HLLC kernels.
 
@@ -285,6 +294,8 @@ def solve_periodic_euler_dg_1d(
         start at the full design order (a cell-average-only projection would
         cap the scheme at first order).
     limiter, tvb_constant, limiter_stage
+        As in :func:`solve_euler_dg_1d`.
+    limiter_kwargs : dict, optional
         As in :func:`solve_euler_dg_1d`.
     boundary : {"periodic", "transmissive"}
         Face closure at the two ends of the domain.  ``"transmissive"``
@@ -327,6 +338,7 @@ def solve_periodic_euler_dg_1d(
         return (c[:, 0].sum(dim=0) * dx).clone()
 
     totals_initial = _totals(coeff)
+    limiter_kwargs = dict(limiter_kwargs or {})
     limit_each_stage = limiter_stage == "every"
     time, steps, dt = 0.0, 0, 0.0
     while time < final_time:
@@ -337,17 +349,17 @@ def solve_periodic_euler_dg_1d(
         k1 = _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right, periodic=is_periodic)
         u1 = coeff + dt * k1
         if limit_each_stage:
-            u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
+            u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant, **limiter_kwargs)
         u1 = _positivity_filter(u1, check_points)
         k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right, periodic=is_periodic)
         u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
         if limit_each_stage:
-            u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
+            u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant, **limiter_kwargs)
         u2 = _positivity_filter(u2, check_points)
         k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right, periodic=is_periodic)
         coeff = apply_limiter(
             (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3),
-            dx, kind=limiter, tvb_constant=tvb_constant,
+            dx, kind=limiter, tvb_constant=tvb_constant, **limiter_kwargs,
         )
         coeff = _positivity_filter(coeff, check_points)
         if not torch.isfinite(coeff).all():
