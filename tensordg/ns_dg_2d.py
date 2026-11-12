@@ -1215,9 +1215,12 @@ def solve_navier_stokes_dg_2d(
                 (4.0 / 3.0) * mu / rho_min, kappa / (rho_min * CV)
             )
             # Explicit stability limit of the BR1/SIPG operator.  The
-            # dimensionless group S = dt * diffusivity * (p+1)**4 / h**2 was
-            # measured by bisection on the shear-wave and Couette cases
-            # (S_max ~ 0.3-0.5); VISCOUS_STABILITY = 0.1 keeps a 3-5x margin.
+            # dimensionless group S = dt * diffusivity * (p+1)**4 / h**2 is
+            # measured at S_max = 0.16, 0.21, 0.24, 0.26 for p = 0..3 (SIPG
+            # spectrum times the SSP-RK3 real-axis interval, see
+            # docs/DG-SIPG-EXPLICIT-STABILITY.md), i.e. VISCOUS_STABILITY = 0.1
+            # keeps a 1.6-2.6x margin -- not the 3-5x stated earlier, and the
+            # lower end of the range is below the formerly claimed 0.3.
             rate_viscous = diffusivity * (degree + 1.0) ** 4 / (VISCOUS_STABILITY * h_min**2)
             if rate_viscous > 0.0:
                 candidate = cfl_viscous / rate_viscous
