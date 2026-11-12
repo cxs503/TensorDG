@@ -1,0 +1,214 @@
+{
+  "case": "1-D linear elastodynamics (velocity-stress DG)",
+  "parameters": {
+    "degree": 2,
+    "cfl": 0.3,
+    "pulse_time": 0.2,
+    "standing_time": 0.5,
+    "meshes": [
+      50,
+      100,
+      200,
+      400
+    ],
+    "standing_meshes": [
+      40,
+      80,
+      160
+    ],
+    "rho": 1.0,
+    "young": 1.0,
+    "c": 1.0,
+    "pulse_center": 0.5,
+    "pulse_width": 0.05,
+    "reference": "Graff 1975 (d'Alembert bar waves); LeVeque 2002 Ch. 3 (characteristic BCs)"
+  },
+  "pulse_case": [
+    {
+      "cells": 50,
+      "steps": 167,
+      "dt": 0.0011976047904191617,
+      "rel_l2_v": 0.0015066612656139968,
+      "rel_l2_sigma": 0.0015066612415545254,
+      "energy": 0.03132749741871371,
+      "peak_left": {
+        "x": 0.29949107912342754,
+        "sigma": 0.5007319541896119
+      },
+      "peak_right": {
+        "x": 0.7005089208765723,
+        "sigma": -0.500731954189612
+      },
+      "peak_left_exact": {
+        "x": 0.29949107912342754,
+        "sigma": 0.4999482025914346
+      },
+      "peak_right_exact": {
+        "x": 0.6994910791234277,
+        "sigma": -0.49994820259143463
+      },
+      "centroid_left": 0.29999998951147355,
+      "centroid_right": 0.7000000104885263,
+      "centroid_exact": {
+        "left": 0.3,
+        "right": 0.7
+      },
+      "pulse_speed_error": 5.244263218129319e-08,
+      "energy_exact": 0.031332853432887504
+    },
+    {
+      "cells": 100,
+      "steps": 334,
+      "dt": 0.0005988023952095808,
+      "rel_l2_v": 0.00018203242810351848,
+      "rel_l2_sigma": 0.00018203242797428516,
+      "energy": 0.03133263627475086,
+      "peak_left": {
+        "x": 0.2997455395617138,
+        "sigma": 0.5000512018231423
+      },
+      "peak_right": {
+        "x": 0.7002544604382862,
+        "sigma": -0.5000512018231428
+      },
+      "peak_left_exact": {
+        "x": 0.2997455395617138,
+        "sigma": 0.4999870501447711
+      },
+      "peak_right_exact": {
+        "x": 0.6997455395617138,
+        "sigma": -0.4999870501447711
+      },
+      "centroid_left": 0.2999999966424412,
+      "centroid_right": 0.7000000033575587,
+      "centroid_exact": {
+        "left": 0.3,
+        "right": 0.7
+      },
+      "pulse_speed_error": 1.6787793932770967e-08,
+      "energy_exact": 0.031332853432887504,
+      "eoc_sigma": 3.049087691329764,
+      "eoc_v": 3.0490877133435395
+    },
+    {
+      "cells": 200,
+      "steps": 667,
+      "dt": 0.0002998500749625188,
+      "rel_l2_v": 2.2706841611212723e-05,
+      "rel_l2_sigma": 2.2706841608992115e-05,
+      "energy": 0.031332841490225964,
+      "peak_left": {
+        "x": 0.29987276978085686,
+        "sigma": 0.5000010975179294
+      },
+      "peak_right": {
+        "x": 0.7001272302191431,
+        "sigma": -0.50000109751793
+      },
+      "peak_left_exact": {
+        "x": 0.29987276978085686,
+        "sigma": 0.4999967625047488
+      },
+      "peak_right_exact": {
+        "x": 0.6998727697808569,
+        "sigma": -0.4999967625047488
+      },
+      "centroid_left": 0.2999999968786336,
+      "centroid_right": 0.7000000031213665,
+      "centroid_exact": {
+        "left": 0.3,
+        "right": 0.7
+      },
+      "pulse_speed_error": 1.5606832493020306e-08,
+      "energy_exact": 0.031332853432887504,
+      "eoc_sigma": 3.002996526166897,
+      "eoc_v": 3.002996527050046
+    },
+    {
+      "cells": 400,
+      "steps": 1334,
+      "dt": 0.0001499250374812594,
+      "rel_l2_v": 2.838146661013966e-06,
+      "rel_l2_sigma": 2.8381466609086235e-06,
+      "energy": 0.031332852425388344,
+      "peak_left": {
+        "x": 0.29993638489042845,
+        "sigma": 0.4999994602178149
+      },
+      "peak_right": {
+        "x": 0.7000636151095716,
+        "sigma": -0.4999994602178156
+      },
+      "peak_left_exact": {
+        "x": 0.29993638489042845,
+        "sigma": 0.49999919062422193
+      },
+      "peak_right_exact": {
+        "x": 0.6999363848904284,
+        "sigma": -0.49999919062422193
+      },
+      "centroid_left": 0.2999999969080559,
+      "centroid_right": 0.700000003091944,
+      "centroid_exact": {
+        "left": 0.3,
+        "right": 0.7
+      },
+      "pulse_speed_error": 1.5459720448252057e-08,
+      "energy_exact": 0.031332853432887504,
+      "eoc_sigma": 3.0001060018800376,
+      "eoc_v": 3.0001060019675774
+    }
+  ],
+  "standing_case": [
+    {
+      "cells": 40,
+      "steps": 334,
+      "dt": 0.0014970059880239522,
+      "rel_l2_v": 3.5580101328044146e-07,
+      "rel_l2_sigma": 3.5424525671144106e-07,
+      "energy": 0.6168502745306165,
+      "energy_exact": 0.6168502750680849,
+      "energy_drift": 8.713109563863362e-10,
+      "sigma_norm_at_wall": 0.0,
+      "sigma_at_free_end": 0.0
+    },
+    {
+      "cells": 80,
+      "steps": 667,
+      "dt": 0.0007496251874062968,
+      "rel_l2_v": 4.4419249396833744e-08,
+      "rel_l2_sigma": 4.4336557221961566e-08,
+      "energy": 0.6168502750017321,
+      "energy_exact": 0.6168502750680849,
+      "energy_drift": 1.0756712741403281e-10,
+      "sigma_norm_at_wall": 0.0,
+      "sigma_at_free_end": 0.0,
+      "eoc_sigma": 2.998179882858348
+    },
+    {
+      "cells": 160,
+      "steps": 1334,
+      "dt": 0.0003748125937031484,
+      "rel_l2_v": 5.548894609883332e-09,
+      "rel_l2_sigma": 5.545587367332612e-09,
+      "energy": 0.6168502750597392,
+      "energy_exact": 0.6168502750680849,
+      "energy_drift": 1.3529470336198865e-11,
+      "sigma_norm_at_wall": 0.0,
+      "sigma_at_free_end": 0.0,
+      "eoc_sigma": 2.9990845695259845
+    }
+  ],
+  "gate": {
+    "criteria": {
+      "rel_l2_sigma_pulse": 0.02,
+      "rel_l2_sigma_standing": 0.02
+    },
+    "worst": {
+      "rel_l2_sigma_pulse": 0.0015066612415545254,
+      "rel_l2_sigma_standing": 3.5424525671144106e-07
+    },
+    "passed": true
+  },
+  "figure": "validation/elastic_1d/elastic_1d_dalembert.png"
+}

@@ -1,0 +1,27 @@
+{
+  "case": "clamped-free eigenmode, characteristic pairing fault injection",
+  "parameters": {
+    "cells": 40,
+    "degree": 2,
+    "final_time": 0.5,
+    "cfl": 0.3,
+    "rho": 1.0,
+    "young": 1.0
+  },
+  "correct_pairing": {
+    "cells": 40,
+    "steps": 334,
+    "energy": 0.6168502745306165,
+    "energy_exact": 0.6168502750680849,
+    "energy_ratio": 0.9999999991286891
+  },
+  "swapped_pairing": {
+    "cells": 40,
+    "steps": 334,
+    "energy": 89343358.04759084,
+    "energy_exact": 0.6168502750680849,
+    "energy_ratio": 144837996.60740942
+  },
+  "detected": true,
+  "note": "energy of the discrete solution / analytic eigenmode energy; the wrong pairing feeds the outgoing invariant back into the domain and the amplitude grows geometrically in time."
+}
