@@ -1,13 +1,19 @@
-import time, torch
-import tensordg.euler_dg_2d as dg2
-from benchmarks.verify_anisotropic_2d import _operators, _vortex_error, DOMAIN, FINAL_TIME, CFL, TVB
-torch.set_default_dtype(torch.float64)
-torch.set_num_threads(4)
-nodes, weights, basis, _, _ = _operators(2)
-for (nx,ny) in ((8,16),(16,32)):
-    for lim in (None,"weno"):
-        t0=time.time()
-        _, _, coeff, meta = dg2.solve_euler_dg_2d_vortex(ncells=(nx,ny), degree=2,
-            final_time=FINAL_TIME, cfl=CFL, limiter=lim, tvb_constant=TVB, domain=DOMAIN)
-        errs=_vortex_error(coeff, basis, nodes, DOMAIN, FINAL_TIME)
-        print(f"{nx}x{ny} P2 lim={lim}: steps={meta['steps']} rho={errs['density']:.4e} | {time.time()-t0:.1f}s", flush=True)
+import math, torch
+from tensordg.elastic_2d import (ElasticMedium, legendre_operators_2d, _rhs,
+                                 plane_wave, solve_elastic_2d, relative_l2_error)
+
+med = ElasticMedium()
+for deg in (1,2,3):
+    ops = legendre_operators_2d(deg)
+    K = deg+1
+    c = torch.zeros(4,4,K,K,5, dtype=torch.float64)
+    c[...,0,0,2] = 1.7; c[...,0,0,3] = -0.3; c[...,0,0,0] = 0.4
+    r = _rhs(c, ops, med, 0.25, 0.25, "periodic", "periodic")
+    # smooth state test: U = sin(2 pi x) * const  -> compare rhs to analytic
+    print(f"deg={deg} constant-state |rhs|max = {r.abs().max().item():.3e}")
+
+# operator test: exact derivative of a polynomial field through dmat
+ops = legendre_operators_2d(3)
+print("dmat(deg3)@coeff(P_3) expected P_3' = 1.5+7.5xi^2?")
+c = torch.zeros(4,1); c[3]=1.0
+print("got", (ops['dmat']@c).flatten().tolist())
