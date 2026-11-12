@@ -154,3 +154,22 @@ All predeclared criteria met:
 - ✅ Monotonically decreasing errors
 - ✅ Superlinear convergence confirmed
 - ✅ All 12 pytest gates pass
+
+## 7. 独立复核（m16499 verifier 席，2026-11-12）
+
+本算例的已发布数值已由 `docs/AUDIT-m16499-CASE-DG-PREFINEMENT-EXPONENTIAL.md` 独立复核：
+
+- **可复现**：用当前代码整跑 `python -m benchmarks.p_refinement_exponential`（79.5 s）得到与上文
+  逐位一致的六个误差值，σ = 3.9271 不变。工件现已带 `provenance.json`（sha256 + git commit + 环境）。
+- **测量独立**：`benchmarks/p_refinement_independent_check.py` 用自建 NumPy Legendre 基与四套 Gauss
+  阶数（2p+4/16/32/64）重测 L2，相对离散度 p≤3 ≤4.1e-12、p=6 为 1.3e-6（p=6 已接近 float64 差分地板）；
+  另以 L1/L∞ 与 SSP-RK3 交叉，结论不随测量路径改变。
+- **门禁已加固**：旧 `tests/test_p_refinement_exponential.py` 的 12 道闸门**只读工件**（0.14 s、零 solver
+  调用），属自证；新增 `tests/test_p_refinement_exponential_live.py` 的 10 道活闸门在 N=16/cfl=0.08 下
+  重算 p=1..3 并独立求积核对，与工件比对相对差 ≤3.6e-9。
+- **判据收紧建议（重要）**：预登记判据 `σ > 0.5` **不具鉴别力**——证伪对照显示代数误差律 p⁻¹ 给出
+  σ=0.549、p⁻² 给出 1.099，都能通过；而真指数 σ=0.5 恰好被卡在边界。本案指数收敛的**鉴别证据**是
+  σ=3.93 且相邻衰减率单调递增（3.576→4.269，代数律必递减）。后续算例建议预登记复合判据：
+  `σ > 1` 且相邻衰减率不减且 `e(p_min)/e(p_max) > 10³`。
+- **适用范围**：一维周期线性对流光滑解；p≥7 的验证受 roundoff 限制（`MAX_DEGREE=8` 但测量先失效），
+  二维/变系数未覆盖。
