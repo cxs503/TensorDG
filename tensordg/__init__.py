@@ -6,7 +6,7 @@ Every solver entry point, analytic anchor and measurement helper that a
 ``tensordg`` module defines as public (no leading underscore, not a ``main``
 CLI hook) is re-exported from the package root, so that::
 
-    from tensordg import solve_poisson_2d_ldg, ritter_exact, wall_heat_flux
+    from tensordg import solve_ldg_dirichlet_1d, ritter_exact, wall_heat_flux
 
 works for *every* merged capability instead of only for the ones added before
 the root ``__init__`` drifted.  The contract is machine-checked by
@@ -384,13 +384,18 @@ from .poisson_2d_bc import (
     l2_error_2d,
 )
 
-# ---- poisson_2d_ldg
-from .poisson_2d_ldg import (
-    manufactured_solution,
-    superposition_solution,
-    solve_poisson_2d_ldg,
-    ldg_poisson_convergence,
+# ---- ldg_dirichlet_1d (validated 1-D LDG; see docs/LDG-DIRICHLET-CLOSURE-1D.md)
+from .ldg_dirichlet_1d import (
+    assemble_ldg_dirichlet_1d,
+    ldg_l2_error_1d,
+    solve_ldg_dirichlet_1d,
 )
+
+# ---- poisson_2d_ldg
+# STATUS: PROTOTYPE -- NOT VALIDATED (rank-deficient Dirichlet closure, see
+# docs/ldg_poisson_status.md).  Deliberately NOT re-exported: coverage of the
+# public contract excludes prototype modules (tools/api_contract.py
+# PROTOTYPE_MODULES) and tests/test_ldg_closure_rank.py enforces the guard.
 
 # ---- sipg_matrixfree
 from .sipg_matrixfree import (
@@ -488,6 +493,9 @@ from .swe_1d import GRAVITY as SWE_GRAVITY
 from .cases import CASES, ELASTIC_ROD_CASE_KEY
 
 __all__ = [
+    "assemble_ldg_dirichlet_1d",
+    "ldg_l2_error_1d",
+    "solve_ldg_dirichlet_1d",
     "advance_advection_1d",
     "advance_euler_dg_1d",
     "advance_euler_dg_2d",
@@ -622,7 +630,6 @@ __all__ = [
     "l2_error",
     "l2_error_2d",
     "lax_friedrichs_flux",
-    "ldg_poisson_convergence",
     "legendre_derivative_matrix",
     "legendre_eval_matrix",
     "legendre_l2_sq",
@@ -633,7 +640,6 @@ __all__ = [
     "linf_error",
     "manning_friction_slope",
     "manning_normal_depth",
-    "manufactured_solution",
     "mass_3d",
     "mass_balance_trace",
     "math_sqrt2",
@@ -733,7 +739,6 @@ __all__ = [
     "solve_periodic_euler_dg_1d",
     "solve_poisson_2d",
     "solve_poisson_2d_bc",
-    "solve_poisson_2d_ldg",
     "solve_poisson_2d_matrixfree",
     "solve_poisson_2d_sparse",
     "solve_riemann",
@@ -749,7 +754,6 @@ __all__ = [
     "stoker_exact",
     "stoker_star_state",
     "stress_profile",
-    "superposition_solution",
     "SWE_GRAVITY",
     "swe_hll_flux",
     "swe_hll_flux_2d",
