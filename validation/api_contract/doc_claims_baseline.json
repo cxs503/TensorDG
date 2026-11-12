@@ -1,0 +1,40 @@
+{
+  "note": "Registered stale tensordg/<path>.py references in documentation. The gate in tools/api_contract.py fails on any claim NOT listed here (ratchet). Each entry keeps an explicit status so a registered gap cannot quietly become invisible.",
+  "known_stale": [
+    {
+      "claim": "tensordg/cases/p_refinement.py",
+      "status": "OPEN_OVERCLAIM",
+      "reason": "docs/board_audit/m16319/AUDIT-m16248-CASE-DG-PREFINEMENT-EXPONENTIAL.md describes it as a 379-line in-library case module (L3 evidence), but it exists only on branch agent/m16248 (commit 4942b0b) and is not an ancestor of main; ledger anchor CASE-DG-PREFINEMENT-EXPONENTIAL is still open. Registered here, not fixed by this mission."
+    },
+    {
+      "claim": "tensordg/conservation.py",
+      "status": "PLANNED_MOVE",
+      "reason": "docs/dev_report_S3_conservation.md §7 states the measurement library lives in tests/_conservation_tools.py and has NOT been promoted to the package; the doc uses the path as a target, not as an existing file."
+    },
+    {
+      "claim": "tensordg/converge.py",
+      "status": "HISTORICAL_UPSTREAM",
+      "reason": "docs/upstream_delta_audit_m1634.md lists it in the 'upstream file / retained lines = 0' table: an upstream TensorDG file deliberately not carried over."
+    },
+    {
+      "claim": "tensordg/converge_advection.py",
+      "status": "HISTORICAL_UPSTREAM",
+      "reason": "Same upstream-delta table (0 retained lines)."
+    },
+    {
+      "claim": "tensordg/converge_poisson.py",
+      "status": "HISTORICAL_UPSTREAM",
+      "reason": "Same upstream-delta table (0 retained lines)."
+    },
+    {
+      "claim": "tensordg/gen_plots.py",
+      "status": "HISTORICAL_UPSTREAM",
+      "reason": "Same upstream-delta table (0 retained lines)."
+    },
+    {
+      "claim": "tensordg/run_all_convergence.py",
+      "status": "HISTORICAL_UPSTREAM",
+      "reason": "Same upstream-delta table (0 retained lines)."
+    }
+  ]
+}
