@@ -4,7 +4,7 @@
     "artifacts",
     "docs/benchmarks/results"
   ],
-  "generated_at_utc": "2026-11-11T10:30:06+00:00",
+  "generated_at_utc": "2026-11-12T15:20:53+00:00",
   "generator": "tools/audit_evidence_integrity.py --write",
   "orphans": {
     "validation/euler_dg_2d/probe_galilean.json": {
@@ -43,6 +43,46 @@
       "reason": "\u540c\u4e0a\uff1a\u9010\u7b97\u4f8b\u539f\u59cb\u8bb0\u5f55\uff0c\u805a\u5408\u4ef6 gate_power_audit.json \u624d\u662f\u95f8\u95e8\u8f93\u5165\u3002",
       "status": "archival"
     },
+    "validation/kovasznay/p1_24.json": {
+      "reason": "auto-registered by tools/audit_evidence_integrity.py; needs a consumer or an explicit retirement note",
+      "registered_at_utc": "2026-11-12T15:20:53+00:00",
+      "status": "needs_review"
+    },
+    "validation/kovasznay/p2_12.json": {
+      "reason": "auto-registered by tools/audit_evidence_integrity.py; needs a consumer or an explicit retirement note",
+      "registered_at_utc": "2026-11-12T15:20:53+00:00",
+      "status": "needs_review"
+    },
+    "validation/kovasznay/p2_24.json": {
+      "reason": "auto-registered by tools/audit_evidence_integrity.py; needs a consumer or an explicit retirement note",
+      "registered_at_utc": "2026-11-12T15:20:53+00:00",
+      "status": "needs_review"
+    },
+    "validation/kovasznay/p3_12.json": {
+      "reason": "auto-registered by tools/audit_evidence_integrity.py; needs a consumer or an explicit retirement note",
+      "registered_at_utc": "2026-11-12T15:20:53+00:00",
+      "status": "needs_review"
+    },
+    "validation/kovasznay/probe_time_p1_12.json": {
+      "reason": "auto-registered by tools/audit_evidence_integrity.py; needs a consumer or an explicit retirement note",
+      "registered_at_utc": "2026-11-12T15:20:53+00:00",
+      "status": "needs_review"
+    },
+    "validation/ldg_closure/closure_scan.json": {
+      "reason": "auto-registered by tools/audit_evidence_integrity.py; needs a consumer or an explicit retirement note",
+      "registered_at_utc": "2026-11-12T15:20:53+00:00",
+      "status": "needs_review"
+    },
+    "validation/ldg_closure/trace_orientation_probe.json": {
+      "reason": "auto-registered by tools/audit_evidence_integrity.py; needs a consumer or an explicit retirement note",
+      "registered_at_utc": "2026-11-12T15:20:53+00:00",
+      "status": "needs_review"
+    },
+    "validation/ldg_closure/verification_scan.json": {
+      "reason": "auto-registered by tools/audit_evidence_integrity.py; needs a consumer or an explicit retirement note",
+      "registered_at_utc": "2026-11-12T15:20:53+00:00",
+      "status": "needs_review"
+    },
     "validation/limiter_2d_order/degree1.json": {
       "reason": "benchmarks/limiter_2d_order_study.py \u7684\u7814\u7a76\u8f93\u51fa\uff1b\u95f8\u95e8 tests/test_limiter_2d_order.py \u76f4\u63a5\u4ece\u6a21\u5757\u91cd\u7b97\uff0c\u4e0d\u8bfb\u8be5\u6587\u4ef6\u3002",
       "status": "archival"
@@ -55,9 +95,24 @@
       "reason": "\u540c\u4e0a\uff1a\u7814\u7a76\u8f93\u51fa\uff0c\u95f8\u95e8\u91cd\u7b97\u4e0d\u8bfb\u76d8\u3002",
       "status": "archival"
     },
+    "validation/ns_dg_2d/extended/d2_n32.json": {
+      "reason": "auto-registered by tools/audit_evidence_integrity.py; needs a consumer or an explicit retirement note",
+      "registered_at_utc": "2026-11-12T15:20:53+00:00",
+      "status": "needs_review"
+    },
     "validation/ns_wall_diag/tool_convention_baseline.json": {
       "reason": "\u58c1\u9762\u8bca\u65ad\u5de5\u5177\u7ea6\u5b9a\u7684\u5386\u53f2\u57fa\u7ebf\uff1b\u88ab\u95f8\u95e8\u7684\u7ea6\u5b9a\u5ba1\u8ba1\u662f validation/ns_wall_diag/convention_audit.json\uff08tests/test_ns_wall_diag_binding.py\uff09\u3002",
       "status": "archival"
+    },
+    "validation/solid_body_rotation_2d/results_ladderA.json": {
+      "reason": "auto-registered by tools/audit_evidence_integrity.py; needs a consumer or an explicit retirement note",
+      "registered_at_utc": "2026-11-12T15:20:53+00:00",
+      "status": "needs_review"
+    },
+    "validation/solid_body_rotation_2d/results_ladderB.json": {
+      "reason": "auto-registered by tools/audit_evidence_integrity.py; needs a consumer or an explicit retirement note",
+      "registered_at_utc": "2026-11-12T15:20:53+00:00",
+      "status": "needs_review"
     }
   },
   "policy": {

@@ -1,0 +1,145 @@
+{
+  "case_key": "DG-VISCOUS-BURGERS-COLEHOPF",
+  "parameters": {
+    "case_key": "DG-VISCOUS-BURGERS-COLEHOPF",
+    "nu": 0.05,
+    "final_time": 0.2,
+    "degree": 2,
+    "cells": 16,
+    "penalty": 20.0,
+    "tolerance": 0.03,
+    "initial_condition": "sin(2*pi*x)",
+    "domain": [
+      0.0,
+      1.0
+    ],
+    "boundary": "periodic"
+  },
+  "reference": {
+    "mean": -2.7755575615628914e-17,
+    "max_abs_antisymmetry": 2.220446049250313e-16,
+    "energy": 0.10195363424001913,
+    "max_fourier_vs_quadrature": 7.771561172376096e-16,
+    "amplitude": 0.652890715409947,
+    "layer_width_estimate": 0.2
+  },
+  "runs": [
+    {
+      "cells": 8,
+      "degree": 1,
+      "dofs": 16,
+      "steps": 243,
+      "dt": 0.000823045267489712,
+      "lambda_max": 60672.000000000015,
+      "relative_l2_error": 0.07047794243612698,
+      "total_mass": 1.8388068845354155e-16,
+      "total_energy": 0.09815755767250058,
+      "h": 0.125
+    },
+    {
+      "cells": 16,
+      "degree": 1,
+      "dofs": 32,
+      "steps": 969,
+      "dt": 0.00020639834881320952,
+      "lambda_max": 242688.0000000001,
+      "relative_l2_error": 0.017064090407169094,
+      "total_mass": -1.682681771697503e-16,
+      "total_energy": 0.1009053870609731,
+      "h": 0.0625
+    },
+    {
+      "cells": 32,
+      "degree": 1,
+      "dofs": 64,
+      "steps": 3873,
+      "dt": 5.1639555899819264e-05,
+      "lambda_max": 970752.0,
+      "relative_l2_error": 0.004307960422143205,
+      "total_mass": 9.194034422677078e-17,
+      "total_energy": 0.10168517928058918,
+      "h": 0.03125
+    },
+    {
+      "cells": 8,
+      "degree": 2,
+      "dofs": 24,
+      "steps": 1086,
+      "dt": 0.0001841620626151013,
+      "lambda_max": 272000.3018864565,
+      "relative_l2_error": 0.005520025463728597,
+      "total_mass": 2.3592239273284576e-16,
+      "total_energy": 0.10191313162642218,
+      "h": 0.125
+    },
+    {
+      "cells": 16,
+      "degree": 2,
+      "dofs": 48,
+      "steps": 4341,
+      "dt": 4.6072333563695005e-05,
+      "lambda_max": 1088001.2075458262,
+      "relative_l2_error": 0.0012457840830070513,
+      "total_mass": -3.131175874138137e-16,
+      "total_energy": 0.10195024657324736,
+      "h": 0.0625
+    },
+    {
+      "cells": 8,
+      "degree": 3,
+      "dofs": 32,
+      "steps": 3212,
+      "dt": 6.2266500622665e-05,
+      "lambda_max": 804995.8595857727,
+      "relative_l2_error": 0.0018748411750562875,
+      "total_mass": -4.544975507059235e-16,
+      "total_energy": 0.10195273289087665,
+      "h": 0.125
+    }
+  ],
+  "observed_orders": {
+    "1": [
+      {
+        "cells": [
+          8,
+          16
+        ],
+        "observed_order": 2.046208291856683
+      },
+      {
+        "cells": [
+          16,
+          32
+        ],
+        "observed_order": 1.9858866135393047
+      }
+    ],
+    "2": [
+      {
+        "cells": [
+          8,
+          16
+        ],
+        "observed_order": 2.1476208773399543
+      }
+    ],
+    "3": []
+  },
+  "documented_run": {
+    "cells": 16,
+    "degree": 2,
+    "dofs": 48,
+    "steps": 4341,
+    "dt": 4.6072333563695005e-05,
+    "lambda_max": 1088001.2075458262,
+    "relative_l2_error": 0.0012457840830070513,
+    "total_mass": -3.131175874138137e-16,
+    "total_energy": 0.10195024657324736,
+    "h": 0.0625
+  },
+  "acceptance": {
+    "tolerance": 0.03,
+    "measured": 0.0012457840830070513,
+    "passes": true
+  }
+}
