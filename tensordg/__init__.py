@@ -10,6 +10,12 @@ from .convergence import (
     richardson_extrapolate,
 )
 from .advection_2d import error_2d, solve_advection_2d
+from .advection_3d import (
+    error_3d,
+    exact_solution_3d,
+    mass_3d,
+    solve_advection_3d,
+)
 from .burgers_1d import burgers_error, solve_burgers
 from .euler_1d import solve_riemann
 from .euler_2d import solve_euler_2d, solve_isentropic_vortex, vortex_error
@@ -103,6 +109,7 @@ __all__ = [
     "observed_order", "pairwise_orders", "richardson_extrapolate",
     "gci_study", "convergence_table", "p_decay_diagnostics",
     "solve_advection_2d", "error_2d",
+    "solve_advection_3d", "error_3d", "mass_3d", "exact_solution_3d",
     "solve_burgers", "burgers_error",
     "solve_heat_1d", "heat_error",
     "solve_poisson_2d", "poisson_error_2d",
