@@ -58,6 +58,7 @@ import torch
 
 from .euler_1d import GAMMA
 from .euler_dg_2d import (
+    _conservative,
     _hllc,
     _initial_coefficients,
     _physical_flux,
@@ -595,6 +596,30 @@ def _boundary_flux(side, wall, axis, h, mu, kappa, penalty, normal_scale,
             inviscid = torch.stack([zeros, pressure, zeros, zeros], dim=-1)
         else:
             inviscid = torch.stack([zeros, zeros, pressure, zeros], dim=-1)
+        prescribed = wall.get("state")
+        if prescribed is not None:
+            # m16075: prescribed-state (inlet/outlet) face.  A wall dict without
+            # ``"state"`` carries no convective flux (zero mass and energy
+            # transport), which is right for an impermeable wall and wrong for a
+            # through-flow boundary.  With ``"state"`` -- a dict of ``rho``,
+            # ``velocity_x``, ``velocity_y``, ``pressure`` broadcastable to the
+            # face arrays -- the inviscid flux becomes the HLLC flux of the
+            # ghost (prescribed) state against the interior trace, so mass,
+            # momentum and energy cross the face while the Dirichlet viscous
+            # penalty above still imposes the prescribed velocity/temperature.
+            # ``_hllc`` is written with the normal along ``+axis`` and expects
+            # the state on the low side of the interface first: at the low-side
+            # face the ghost is that state, at the high-side face it is not.
+            ghost = _conservative(
+                prescribed["rho"],
+                prescribed["velocity_x"],
+                prescribed["velocity_y"],
+                prescribed["pressure"],
+            ).expand_as(side["state"])
+            if side_name == "left":
+                inviscid = _hllc(ghost, side["state"], axis)
+            else:
+                inviscid = _hllc(side["state"], ghost, axis)
     if wall is None or neighbour is None:
         tangential_u = side["u_t"] * tangential_scale
         tangential_v = side["v_t"] * tangential_scale
