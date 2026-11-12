@@ -26,12 +26,16 @@ Run::
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
+import subprocess
+import sys
 import time
 from pathlib import Path
 
 import numpy as np
+import torch
 
 from tensordg.advection_1d import l2_error, solve_advection
 from tensordg.convergence import p_decay_diagnostics
@@ -51,6 +55,16 @@ CFL_BASE = 0.08  # will be refined per degree to suppress temporal error
 DECAY_RATE_MIN = 0.5       # sigma > 0.5 (slope of log(e) vs p < -0.5)
 MONOTONE_REQUIRED = True   # error must decrease at every p level
 TEMPORAL_TOLERANCE = 0.01  # temporal error < 1% of spatial error
+
+
+def _git_commit() -> str | None:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=Path(__file__).resolve().parent,
+            stderr=subprocess.DEVNULL, text=True,
+        ).strip()
+    except Exception:  # pragma: no cover - git not always available
+        return None
 
 
 def temporal_converged_advection(
@@ -225,7 +239,14 @@ def generate_figures(study: dict, outdir: Path):
     fig2.savefig(png2_path, dpi=150)
     plt.close(fig2)
 
-    return {"p_refinement_semilog.png": str(png_path), "p_refinement_log10.png": str(png2_path)}
+    # Repo-relative paths: an absolute path bakes in the worktree that happened
+    # to run the benchmark and cannot be resolved by anyone else (audit
+    # m16499 found the historical artifact pointing at .../work/m16180/...).
+    root = Path(__file__).resolve().parent.parent
+    return {
+        "p_refinement_semilog.png": png_path.relative_to(root).as_posix(),
+        "p_refinement_log10.png": png2_path.relative_to(root).as_posix(),
+    }
 
 
 def build_report(study: dict, checks: dict, figures: dict, runtime: float) -> dict:
@@ -253,6 +274,7 @@ def build_report(study: dict, checks: dict, figures: dict, runtime: float) -> di
         "results": {
             "degrees": study["degrees"],
             "errors": study["errors"],
+            "levels": study["levels"],
             "diagnostics": study["diagnostics"],
         },
         "checks": checks,
@@ -282,6 +304,26 @@ def main():
     # Save JSON artifact
     json_path = outdir / "p_refinement_results.json"
     json_path.write_text(json.dumps(report, indent=2))
+
+    # Provenance manifest: hash of the artifact above, plus the environment that
+    # produced it, so a verifier can tell a fresh run from a stale file.
+    provenance = {
+        "case": "CASE-DG-PREFINEMENT-EXPONENTIAL",
+        "artifact": json_path.name,
+        "artifact_sha256": hashlib.sha256(json_path.read_bytes()).hexdigest(),
+        "schema": SCHEMA,
+        "generated_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "python": sys.version.split()[0],
+        "numpy": np.__version__,
+        "torch": torch.__version__,
+        "degrees": list(degrees),
+        "ncells": study["ncells"],
+        "cfl_base": CFL_BASE,
+        "temporal_tolerance": TEMPORAL_TOLERANCE,
+        "git_commit": _git_commit(),
+        "runtime_seconds": runtime,
+    }
+    (outdir / "provenance.json").write_text(json.dumps(provenance, indent=2))
 
     # Save CSV table
     csv_path = outdir / "p_refinement_table.csv"

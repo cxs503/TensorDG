@@ -35,6 +35,86 @@
       1.5926921301455606e-09,
       2.228252443658065e-11
     ],
+    "levels": [
+      {
+        "degree": 1,
+        "ncells": 16,
+        "h": 0.0625,
+        "dofs": 32,
+        "relative_l2": 0.007464013366971308,
+        "cfl": 0.04,
+        "dt": 0.0008333333333333334,
+        "steps": 1200,
+        "temporal_change": 2.6236016380734845e-09,
+        "temporal_converged": true,
+        "refinements": 1
+      },
+      {
+        "degree": 2,
+        "ncells": 16,
+        "h": 0.0625,
+        "dofs": 48,
+        "relative_l2": 0.00020893393344450516,
+        "cfl": 0.04,
+        "dt": 0.0005,
+        "steps": 2000,
+        "temporal_change": 4.3387612145921664e-10,
+        "temporal_converged": true,
+        "refinements": 1
+      },
+      {
+        "degree": 3,
+        "ncells": 16,
+        "h": 0.0625,
+        "dofs": 64,
+        "relative_l2": 5.041732675406567e-06,
+        "cfl": 0.04,
+        "dt": 0.00035714285714285714,
+        "steps": 2800,
+        "temporal_change": 3.5803904564017783e-09,
+        "temporal_converged": true,
+        "refinements": 1
+      },
+      {
+        "degree": 4,
+        "ncells": 16,
+        "h": 0.0625,
+        "dofs": 80,
+        "relative_l2": 9.73171862695147e-08,
+        "cfl": 0.04,
+        "dt": 0.0002777777777777778,
+        "steps": 3600,
+        "temporal_change": 1.6011917297520175e-08,
+        "temporal_converged": true,
+        "refinements": 1
+      },
+      {
+        "degree": 5,
+        "ncells": 16,
+        "h": 0.0625,
+        "dofs": 96,
+        "relative_l2": 1.5926921301455606e-09,
+        "cfl": 0.04,
+        "dt": 0.00022727272727272727,
+        "steps": 4400,
+        "temporal_change": 1.1945390493385062e-06,
+        "temporal_converged": true,
+        "refinements": 1
+      },
+      {
+        "degree": 6,
+        "ncells": 16,
+        "h": 0.0625,
+        "dofs": 112,
+        "relative_l2": 2.228252443658065e-11,
+        "cfl": 0.04,
+        "dt": 0.0001923076923076923,
+        "steps": 5200,
+        "temporal_change": 0.0015992256004215874,
+        "temporal_converged": true,
+        "refinements": 1
+      }
+    ],
     "diagnostics": {
       "degrees": [
         1,
@@ -86,8 +166,8 @@
   },
   "verdict": "PASS",
   "figures": {
-    "p_refinement_semilog.png": "/root/tp-agent/work/m16180/docs/benchmarks/results/p-refinement-exponential/p_refinement_semilog.png",
-    "p_refinement_log10.png": "/root/tp-agent/work/m16180/docs/benchmarks/results/p-refinement-exponential/p_refinement_log10.png"
+    "p_refinement_semilog.png": "docs/benchmarks/results/p-refinement-exponential/p_refinement_semilog.png",
+    "p_refinement_log10.png": "docs/benchmarks/results/p-refinement-exponential/p_refinement_log10.png"
   },
-  "runtime_seconds": 84.42459225654602
+  "runtime_seconds": 79.5315752029419
 }

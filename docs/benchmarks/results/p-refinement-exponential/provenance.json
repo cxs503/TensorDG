@@ -1,0 +1,23 @@
+{
+  "case": "CASE-DG-PREFINEMENT-EXPONENTIAL",
+  "artifact": "p_refinement_results.json",
+  "artifact_sha256": "d2c5b07c4e862c06e1f1d6f45432d365b5cc603f6ff67c2af8e2f50120622060",
+  "schema": "tensordg-p-refinement-exponential/1",
+  "generated_at_utc": "2026-11-12T15:38:34Z",
+  "python": "3.11.6",
+  "numpy": "2.4.6",
+  "torch": "2.7.1",
+  "degrees": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "ncells": 16,
+  "cfl_base": 0.08,
+  "temporal_tolerance": 0.01,
+  "git_commit": "5998d1da5752c9ae6246a97862056f48e71099f0",
+  "runtime_seconds": 79.5315752029419
+}
