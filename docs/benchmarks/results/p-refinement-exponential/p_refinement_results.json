@@ -1,0 +1,93 @@
+{
+  "schema": "tensordg-p-refinement-exponential/1",
+  "case": "CASE-DG-PREFINEMENT-EXPONENTIAL",
+  "reference": {
+    "authors": "Babuska & Suri",
+    "year": 1994,
+    "journal": "SIAM Review",
+    "volume": 36,
+    "pages": "578-632",
+    "doi": "10.21236/ada260237",
+    "key_result": "Theorem 3.1: ||u-u_h||_L2 <= C*exp(-sigma*p) for analytic solutions"
+  },
+  "problem": {
+    "equation": "u_t + u_x = 0",
+    "domain": "[0, 1] periodic",
+    "initial_condition": "sin(2*pi*x)",
+    "final_time": 1.0,
+    "exact_solution": "sin(2*pi*(x - t)) = sin(2*pi*x) at t=1.0",
+    "ncells": 16
+  },
+  "results": {
+    "degrees": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "errors": [
+      0.007464013366971308,
+      0.00020893393344450516,
+      5.041732675406567e-06,
+      9.73171862695147e-08,
+      1.5926921301455606e-09,
+      2.228252443658065e-11
+    ],
+    "diagnostics": {
+      "degrees": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "errors": [
+        0.007464013366971308,
+        0.00020893393344450516,
+        5.041732675406567e-06,
+        9.73171862695147e-08,
+        1.5926921301455606e-09,
+        2.228252443658065e-11
+      ],
+      "reduction_factors": [
+        35.72427534349666,
+        41.440898773486964,
+        51.807217909524844,
+        61.10232130086598,
+        71.47718539156536
+      ],
+      "decay_rates": [
+        3.5758304393133975,
+        3.7242682862654304,
+        3.947529481440978,
+        4.112549857286745,
+        4.269378313348721
+      ],
+      "lsq_decay_rate": 3.9270958355627648,
+      "monotone_decreasing": true,
+      "superlinear": true
+    }
+  },
+  "checks": {
+    "decay_rate": {
+      "measured": 3.9270958355627648,
+      "threshold": 0.5,
+      "pass": true
+    },
+    "monotone_decreasing": {
+      "measured": true,
+      "required": true,
+      "pass": true
+    },
+    "overall_pass": true
+  },
+  "verdict": "PASS",
+  "figures": {
+    "p_refinement_semilog.png": "/root/tp-agent/work/m16180/docs/benchmarks/results/p-refinement-exponential/p_refinement_semilog.png",
+    "p_refinement_log10.png": "/root/tp-agent/work/m16180/docs/benchmarks/results/p-refinement-exponential/p_refinement_log10.png"
+  },
+  "runtime_seconds": 84.42459225654602
+}
