@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Render the markdown tables of the ice-edge DG benchmark artifact.
 
-Numbers are injected programmatically from ``artifacts/dg_advection_bench.json``
+Numbers are injected programmatically from ``validation/dg_advection_bench/dg_advection_bench.json``
 so that the documentation never contains hand-copied values::
 
     python tools/render_bench_tables.py > /tmp/tables.md
@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT = ROOT / "artifacts" / "dg_advection_bench.json"
+ARTIFACT = ROOT / "validation" / "dg_advection_bench" / "dg_advection_bench.json"
 
 NAMES = {
     "shear_transport": "periodic shear (analytic)",

@@ -10,7 +10,7 @@ That hatch is fine while the artifact is committed and fatal when it is not:
 the ecosystem merge gate filters files out of agent branches, the artifact
 disappears from ``main``, and the gate silently stops asserting anything while
 CI stays green.  ``test_dg_advection_bench`` and ``test_shu_osher_case_pool``
-were in exactly that state (see ``artifacts/gate_vacuity/gate_vacuity.json``).
+were in exactly that state (see ``validation/gate_vacuity/gate_vacuity.json``).
 
 The gates here defend the *census*, not the physics: they (1) keep the
 committed census in sync with the tree, (2) forbid a new vacuous gate from
@@ -30,7 +30,7 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 import audit_gate_vacuity as gv  # noqa: E402
 
-CENSUS = ROOT / "artifacts" / "gate_vacuity" / "gate_vacuity.json"
+CENSUS = ROOT / "validation" / "gate_vacuity" / "gate_vacuity.json"
 REPORT = ROOT / "docs" / "GATE-VACUITY-AUDIT.md"
 
 

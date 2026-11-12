@@ -30,9 +30,12 @@ Any number this file emits is computed, never transcribed.
 
 Artifacts (all inside the worktree)::
 
-    runs/shu_osher_case_pool/raw/<key>.npz     one file per configuration
-    runs/shu_osher_case_pool/metrics.json      merged comparison tables
-    runs/shu_osher_case_pool/profiles.npz      profiles for plotting
+    validation/shu_osher_case_pool/raw/<key>.npz     one file per configuration
+    validation/shu_osher_case_pool/metrics.json      merged comparison tables
+    validation/shu_osher_case_pool/profiles.npz      profiles for plotting
+
+The output directory is anchored at the repository root (``Path(__file__)``),
+so the driver behaves identically from any cwd.
 
 Usage::
 
@@ -46,6 +49,7 @@ import argparse
 import itertools
 import json
 import math
+import shutil
 import time
 from pathlib import Path
 
@@ -61,7 +65,13 @@ from benchmarks.shu_osher_1d import (  # noqa: E402
     DIAPHRAGM, DOMAIN, FINAL_TIME, LEFT, initial_state, solve_case, shock_position,
 )
 
-OUT = Path("runs/shu_osher_case_pool")
+#: Evidence directory.  It lives under ``validation/`` (the repo's tracked
+#: evidence tree) and is resolved from this file, *not* from the caller's cwd:
+#: the same case used to be written to ``runs/shu_osher_case_pool``, which is
+#: never tracked by git (``git ls-files runs | wc -l`` == 0 in every merged
+#: revision), so every gate that read it from ``runs/`` was skipped on ``main``.
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "validation" / "shu_osher_case_pool"
 RAW = OUT / "raw"
 
 #: resolution ladder: every ``ncells`` divides the finest grid used below (3200)
@@ -340,6 +350,57 @@ def merge(reference_cells: int = 25600) -> dict:
 
 
 # ------------------------------------------------------------------------ CLI
+def seed(source: str | Path) -> list[str]:
+    """Import already-committed raw legs into :data:`RAW` (idempotent).
+
+    Re-running the whole ladder costs tens of minutes, while the legs themselves
+    are committed as evidence under ``validation/repro_shu_osher/artifacts/raw``
+    (same configuration keys, post-fix ``rho`` column).  ``seed`` copies them
+    into the evidence directory so that ``merge`` can rebuild ``metrics.json``
+    from committed data.  It never overwrites a locally computed leg, and it
+    does not invent numbers: every copied leg is an existing artifact whose
+    ``meta`` (ncells/degree/cfl/limiter/final_time/domain) is re-checked against
+    the requested configuration by :func:`_verify_seed`.
+    """
+    src = Path(source)
+    if not src.is_absolute():
+        src = ROOT / src
+    if not src.is_dir():
+        raise SystemExit(f"seed source not found: {src}")
+    RAW.mkdir(parents=True, exist_ok=True)
+    copied: list[str] = []
+    for item in sorted(src.glob("*.npz")):
+        dst = RAW / item.name
+        if dst.exists():
+            continue
+        shutil.copyfile(item, dst)
+        copied.append(item.name)
+    return copied
+
+
+def _verify_seed() -> dict:
+    """Re-check the ``meta`` of every seeded leg against the ladder definition."""
+    checked, bad = [], []
+    for ncells, degree in LADDER:
+        path = RAW / f"{_key('dg', n=ncells, p=degree, lim='weno', cfl=0.4)}.npz"
+        if not path.exists():
+            bad.append(f"missing {path.name}")
+            continue
+        meta = json.loads(str(np.load(path)["meta"]))
+        ok = (meta["ncells"] == ncells and meta["degree"] == degree
+              and abs(meta["cfl"] - 0.4) < 1e-12 and meta["limiter"] == "weno")
+        (checked if ok else bad).append(path.name)
+    for ncells, cfl in [(REFERENCE[0], 0.3), (REFERENCE[1], 0.3)]:
+        path = RAW / f"{_key('fv', n=ncells, cfl=cfl)}.npz"
+        if not path.exists():
+            bad.append(f"missing {path.name}")
+            continue
+        meta = json.loads(str(np.load(path)["meta"]))
+        ok = meta["ncells"] == ncells and abs(meta["cfl"] - cfl) < 1e-12
+        (checked if ok else bad).append(path.name)
+    return {"checked": checked, "bad": bad}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="stage", required=True)
@@ -359,6 +420,10 @@ def main(argv=None):
 
     p = sub.add_parser("merge", help="merge raw artifacts into metrics.json")
     p.add_argument("--reference-cells", type=int, default=REFERENCE[1])
+
+    p = sub.add_parser("seed", help="import committed raw legs into the evidence dir")
+    p.add_argument("--source", default=str(Path("validation/repro_shu_osher/artifacts/raw")))
+    p.add_argument("--verify-only", action="store_true")
     args = ap.parse_args(argv)
 
     if args.stage == "ladder":
@@ -373,6 +438,14 @@ def main(argv=None):
         run_fv(args.ncells, args.cfl)
     elif args.stage == "merge":
         merge(args.reference_cells)
+    elif args.stage == "seed":
+        if not args.verify_only:
+            copied = seed(args.source)
+            print(f"[seed] copied {len(copied)} leg(s) from {args.source}", flush=True)
+        report = _verify_seed()
+        print(f"[seed] verified {len(report['checked'])} leg(s); "
+              f"problems: {report['bad'] or 'none'}", flush=True)
+        raise SystemExit(0 if not report["bad"] else 1)
 
 
 if __name__ == "__main__":

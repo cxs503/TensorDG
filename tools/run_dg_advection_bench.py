@@ -4,7 +4,7 @@
 Runs the case suite of :mod:`tensordg.ice_edge_bench` (order of accuracy for
 p = 1, 2, 3, peak retention of a rotating ice-edge front, reentrant vortex
 error, global mass balance), evaluates the machine-checkable criteria, writes
-``artifacts/dg_advection_bench.json`` and the figures in ``docs/figures/``.
+``validation/dg_advection_bench/dg_advection_bench.json`` and the figures in ``docs/figures/``.
 
 Usage::
 
@@ -32,7 +32,7 @@ from tensordg import ice_edge_bench as bench  # noqa: E402
 from tensordg.advection_2d_var import DGAdvection2D  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT = ROOT / "artifacts" / "dg_advection_bench.json"
+ARTIFACT = ROOT / "validation" / "dg_advection_bench" / "dg_advection_bench.json"
 FIGDIR = ROOT / "docs" / "figures"
 
 # Resolution sets per case and degree.  ``quick`` keeps the whole run inside a

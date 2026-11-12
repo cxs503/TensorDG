@@ -2,7 +2,7 @@
 
 **Owner repository:** TensorDG (DG formulations and their numerical verification).
 **Campaign node:** `IN12-P5` (纵贯军 P5 · ice-edge transport high-order reference).
-**Artifact:** `artifacts/dg_advection_bench.json` (machine-readable record).
+**Artifact:** `validation/dg_advection_bench/dg_advection_bench.json` (machine-readable record).
 **Report:** `docs/reports/ice_edge_transport_dg_bench_IN12-P5.md` (paper-level).
 **Tests:** `tests/test_dg_advection_bench.py` (15 assertions, ~50 s with `-n 8`).
 
@@ -66,7 +66,7 @@ rates are also stored for diagnostics. The acceptance test uses the least-square
 slope because it is the standard ("observed order") estimate and is less
 sensitive to pre-asymptotic behaviour on the coarsest mesh.
 
-## 5. Results (injected from `artifacts/dg_advection_bench.json`)
+## 5. Results (injected from `validation/dg_advection_bench/dg_advection_bench.json`)
 
 <!-- BEGIN GENERATED TABLES （由 tools/render_bench_tables.py 生成） -->
 
@@ -141,7 +141,7 @@ python -m pytest tests/test_dg_advection_bench.py -q -n 8
 python tools/render_bench_tables.py
 ```
 
-`artifacts/dg_advection_bench.json` schema (top level):
+`validation/dg_advection_bench/dg_advection_bench.json` schema (top level):
 `benchmark, campaign_node, repo, branch, commit, generated_utc, config,
 environment, purpose, discretisation, criteria, cases{case}{degree},
 order_summary[], peak_preservation{}, mass_balance{}, verdict{},
