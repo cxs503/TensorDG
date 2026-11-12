@@ -1,0 +1,498 @@
+{
+  "case": "subcritical steady flow over a parabolic bump",
+  "reference": "Goutal & Maurel (1997); Garcia-Navarro & Vazquez-Cendon (2000)",
+  "parameters": {
+    "discharge": 4.42,
+    "depth_out": 2.0,
+    "bump_height": 0.2,
+    "bump_half_width": 2.0,
+    "domain": [
+      0.0,
+      25.0
+    ],
+    "gravity": 9.81
+  },
+  "exact": {
+    "head": 2.248934760448522,
+    "h_crest": 1.7073474679150333,
+    "critical_depth": 1.2581290119012154,
+    "critical_margin": 0.16174124259669886,
+    "froude_max": 0.6325646137744997
+  },
+  "defect_rows": [
+    {
+      "path": "well_balanced",
+      "degree": 1,
+      "runs": [
+        {
+          "ncells": 25,
+          "degree": 1,
+          "well_balanced": true,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 0.0,
+          "defect_hu": 0.012767363254595227,
+          "defect_hu_linf": 0.19638003121867395,
+          "dx": 1.0
+        },
+        {
+          "ncells": 50,
+          "degree": 1,
+          "well_balanced": true,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 0.0,
+          "defect_hu": 0.00665993134708722,
+          "defect_hu_linf": 0.11660108553764444,
+          "dx": 0.5
+        },
+        {
+          "ncells": 100,
+          "degree": 1,
+          "well_balanced": true,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 0.0,
+          "defect_hu": 0.0033631281112604778,
+          "defect_hu_linf": 0.061923741202034525,
+          "dx": 0.25
+        },
+        {
+          "ncells": 200,
+          "degree": 1,
+          "well_balanced": true,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 2.972632307246462e-15,
+          "defect_hu": 0.001685684368118982,
+          "defect_hu_linf": 0.03175163795277286,
+          "dx": 0.125
+        },
+        {
+          "ncells": 400,
+          "degree": 1,
+          "well_balanced": true,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 4.559858641258655e-15,
+          "defect_hu": 0.0008433564535680743,
+          "defect_hu_linf": 0.01605945568316692,
+          "dx": 0.0625
+        }
+      ],
+      "orders": [
+        0.9388813964061433,
+        0.9857035692347088,
+        0.9964693086976686,
+        0.9991199920624279
+      ]
+    },
+    {
+      "path": "well_balanced",
+      "degree": 2,
+      "runs": [
+        {
+          "ncells": 25,
+          "degree": 2,
+          "well_balanced": true,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 3.095528189021267e-15,
+          "defect_hu": 0.003194117925039059,
+          "defect_hu_linf": 0.03723619027491347,
+          "dx": 1.0
+        },
+        {
+          "ncells": 50,
+          "degree": 2,
+          "well_balanced": true,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 5.613564500706302e-15,
+          "defect_hu": 0.0007983801197073377,
+          "defect_hu_linf": 0.010718751570223888,
+          "dx": 0.5
+        },
+        {
+          "ncells": 100,
+          "degree": 2,
+          "well_balanced": true,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 1.1583383280485253e-14,
+          "defect_hu": 0.0001999466786220736,
+          "defect_hu_linf": 0.002805144713748067,
+          "dx": 0.25
+        },
+        {
+          "ncells": 200,
+          "degree": 2,
+          "well_balanced": true,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 2.3250857111461886e-14,
+          "defect_hu": 5.000894699499181e-05,
+          "defect_hu_linf": 0.0007069973346353174,
+          "dx": 0.125
+        },
+        {
+          "ncells": 400,
+          "degree": 2,
+          "well_balanced": true,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 5.050458466249188e-14,
+          "defect_hu": 1.250363392640665e-05,
+          "defect_hu_linf": 0.00017691016193257793,
+          "dx": 0.0625
+        }
+      ],
+      "orders": [
+        2.0002698752283585,
+        1.9974604806011635,
+        1.9993571836688295,
+        1.9998387817558743
+      ]
+    },
+    {
+      "path": "legacy_exact_slope",
+      "degree": 1,
+      "runs": [
+        {
+          "ncells": 25,
+          "degree": 1,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 0.010928081067605197,
+          "defect_hu": 0.0637375127453602,
+          "defect_hu_linf": 0.7945868836376156,
+          "dx": 1.0
+        },
+        {
+          "ncells": 50,
+          "degree": 1,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 0.0034973200820737223,
+          "defect_hu": 0.03338464309749705,
+          "defect_hu_linf": 0.4117191857516897,
+          "dx": 0.5
+        },
+        {
+          "ncells": 100,
+          "degree": 1,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 0.0011614844245686187,
+          "defect_hu": 0.017030684388729445,
+          "defect_hu_linf": 0.20840575284443996,
+          "dx": 0.25
+        },
+        {
+          "ncells": 200,
+          "degree": 1,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 0.0003975412564494343,
+          "defect_hu": 0.008596033039645469,
+          "defect_hu_linf": 0.10455904315768998,
+          "dx": 0.125
+        },
+        {
+          "ncells": 400,
+          "degree": 1,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 0.00013828436853066485,
+          "defect_hu": 0.004317839450083083,
+          "defect_hu_linf": 0.05232543626666379,
+          "dx": 0.0625
+        }
+      ],
+      "orders": [
+        0.9329581043341968,
+        0.9710482052240963,
+        0.986393478765702,
+        0.9933614271770503
+      ]
+    },
+    {
+      "path": "legacy_exact_slope",
+      "degree": 2,
+      "runs": [
+        {
+          "ncells": 25,
+          "degree": 2,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 0.0010679034009915662,
+          "defect_hu": 0.001910220230713029,
+          "defect_hu_linf": 0.02595940495960488,
+          "dx": 1.0
+        },
+        {
+          "ncells": 50,
+          "degree": 2,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 0.00026501239698267147,
+          "defect_hu": 0.0003464203532153242,
+          "defect_hu_linf": 0.004135678549511246,
+          "dx": 0.5
+        },
+        {
+          "ncells": 100,
+          "degree": 2,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 6.465396810339917e-05,
+          "defect_hu": 7.5655464932365e-05,
+          "defect_hu_linf": 0.0010276720749342882,
+          "dx": 0.25
+        },
+        {
+          "ncells": 200,
+          "degree": 2,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 1.6022250394376623e-05,
+          "defect_hu": 1.8001566770661727e-05,
+          "defect_hu_linf": 0.00025444768349264235,
+          "dx": 0.125
+        },
+        {
+          "ncells": 400,
+          "degree": 2,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": true,
+          "defect_h": 3.996125888833708e-06,
+          "defect_hu": 4.418592684877815e-06,
+          "defect_hu_linf": 6.348973789741669e-05,
+          "dx": 0.0625
+        }
+      ],
+      "orders": [
+        2.463143376988444,
+        2.1950074915050592,
+        2.071321821189913,
+        2.0264636256385913
+      ]
+    },
+    {
+      "path": "legacy_face_slope",
+      "degree": 1,
+      "runs": [
+        {
+          "ncells": 25,
+          "degree": 1,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": false,
+          "defect_h": 0.010928081067605197,
+          "defect_hu": 0.029266626329322747,
+          "defect_hu_linf": 0.4789012249815482,
+          "dx": 1.0
+        },
+        {
+          "ncells": 50,
+          "degree": 1,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": false,
+          "defect_h": 0.0034973200820737223,
+          "defect_hu": 0.01157363129923302,
+          "defect_hu_linf": 0.25345820742646896,
+          "dx": 0.5
+        },
+        {
+          "ncells": 100,
+          "degree": 1,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": false,
+          "defect_h": 0.0011614844245686187,
+          "defect_hu": 0.00477442942878883,
+          "defect_hu_linf": 0.12991820506727295,
+          "dx": 0.25
+        },
+        {
+          "ncells": 200,
+          "degree": 1,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": false,
+          "defect_h": 0.0003975412564494343,
+          "defect_hu": 0.0020724606482438513,
+          "defect_hu_linf": 0.06564629211643702,
+          "dx": 0.125
+        },
+        {
+          "ncells": 400,
+          "degree": 1,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": false,
+          "defect_h": 0.00013828436853066485,
+          "defect_hu": 0.000945538060140228,
+          "defect_hu_linf": 0.03297989366370068,
+          "dx": 0.0625
+        }
+      ],
+      "orders": [
+        1.33841486054856,
+        1.2774413516893837,
+        1.203983625089632,
+        1.1321372718363887
+      ]
+    },
+    {
+      "path": "legacy_face_slope",
+      "degree": 2,
+      "runs": [
+        {
+          "ncells": 25,
+          "degree": 2,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": false,
+          "defect_h": 0.0010679034009915662,
+          "defect_hu": 0.0019102202307129963,
+          "defect_hu_linf": 0.025959404959604953,
+          "dx": 1.0
+        },
+        {
+          "ncells": 50,
+          "degree": 2,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": false,
+          "defect_h": 0.00026501239698267147,
+          "defect_hu": 0.0003464203532153488,
+          "defect_hu_linf": 0.00413567854951169,
+          "dx": 0.5
+        },
+        {
+          "ncells": 100,
+          "degree": 2,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": false,
+          "defect_h": 6.465396810339917e-05,
+          "defect_hu": 7.565546493232205e-05,
+          "defect_hu_linf": 0.001027672074937508,
+          "dx": 0.25
+        },
+        {
+          "ncells": 200,
+          "degree": 2,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": false,
+          "defect_h": 1.6022250394376623e-05,
+          "defect_hu": 1.8001566770654825e-05,
+          "defect_hu_linf": 0.00025444768349483504,
+          "dx": 0.125
+        },
+        {
+          "ncells": 400,
+          "degree": 2,
+          "well_balanced": false,
+          "hydrostatic": true,
+          "exact_slope": false,
+          "defect_h": 3.996125888833708e-06,
+          "defect_hu": 4.418592684881792e-06,
+          "defect_hu_linf": 6.348973791493046e-05,
+          "dx": 0.0625
+        }
+      ],
+      "orders": [
+        2.463143376988317,
+        2.1950074915059807,
+        2.071321821189647,
+        2.0264636256367394
+      ]
+    }
+  ],
+  "drift": [
+    {
+      "ncells": 50,
+      "degree": 1,
+      "samples": [
+        {
+          "time": 1.0,
+          "steps": 101,
+          "dt_last": 0.0021978588214190964,
+          "rel_l2_h": 0.0008994179798001178,
+          "rel_l2_hu": 7.897581813340919e-05,
+          "hu_relative_spread": 7.97742992232456e-05,
+          "time_reached": 1.0
+        },
+        {
+          "time": 2.0,
+          "steps": 201,
+          "dt_last": 0.004382048998704091,
+          "rel_l2_h": 0.0009193942571421713,
+          "rel_l2_hu": 8.577393926120937e-05,
+          "hu_relative_spread": 8.658833308166746e-05,
+          "time_reached": 2.0
+        },
+        {
+          "time": 4.0,
+          "steps": 404,
+          "dt_last": 0.001967995504875919,
+          "rel_l2_h": 0.0009460408773209356,
+          "rel_l2_hu": 0.00010979048100614902,
+          "hu_relative_spread": 0.00011086432619945426,
+          "time_reached": 4.0
+        }
+      ],
+      "predicted_defect": 0.00665993134708722,
+      "defect_h": 0.0
+    },
+    {
+      "ncells": 100,
+      "degree": 1,
+      "samples": [
+        {
+          "time": 1.0,
+          "steps": 201,
+          "dt_last": 0.0021997859656089913,
+          "rel_l2_h": 0.00022495638886586085,
+          "rel_l2_hu": 2.1483851844811904e-05,
+          "hu_relative_spread": 2.159158594200989e-05,
+          "time_reached": 1.0
+        },
+        {
+          "time": 2.0,
+          "steps": 401,
+          "dt_last": 0.00439573971863938,
+          "rel_l2_h": 0.00022992502886286446,
+          "rel_l2_hu": 2.4006380705039925e-05,
+          "hu_relative_spread": 2.4108978367305967e-05,
+          "time_reached": 2.0
+        },
+        {
+          "time": 4.0,
+          "steps": 806,
+          "dt_last": 0.003303007311510342,
+          "rel_l2_h": 0.00024301117922186013,
+          "rel_l2_hu": 3.055591094368818e-05,
+          "hu_relative_spread": 3.069284261678245e-05,
+          "time_reached": 4.0
+        }
+      ],
+      "predicted_defect": 0.0033631281112604778,
+      "defect_h": 0.0
+    }
+  ]
+}
