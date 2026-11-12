@@ -37,7 +37,10 @@ from tensordg.advection_2d_var import (
 
 OMEGA = 2.0 * math.pi
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT = ROOT / "artifacts" / "dg_advection_bench.json"
+# The record lives on a git-tracked path (``docs/``).  ``artifacts/`` and ``runs/``
+# are filtered out of agent branches by the merge gate, so a gate pinned there
+# either skips forever (vacuous) or fails on every clean checkout.
+ARTIFACT = ROOT / "docs" / "benchmarks" / "results" / "dg_advection_bench.json"
 
 
 def _order(case: str, degree: int, cells, cfl: float = 0.3) -> dict:
@@ -143,8 +146,10 @@ def test_peak_preservation_under_deformation() -> None:
 # ---------------------------------------------------------------------------
 def test_artifact_contract() -> None:
     """The campaign artifact exists, declares the criteria and passes them."""
-    if not ARTIFACT.exists():
-        pytest.skip("artifacts/dg_advection_bench.json not generated yet")
+    # hard assert: a skip here would hide the whole record contract on ``main``
+    assert ARTIFACT.exists(), (
+        f"missing committed record {ARTIFACT.relative_to(ROOT)}; regenerate with "
+        "`python tools/run_dg_advection_bench.py`")
     payload = json.loads(ARTIFACT.read_text())
     assert payload["benchmark"] == "dg_advection_bench"
     assert payload["campaign_node"] == "IN12-P5"

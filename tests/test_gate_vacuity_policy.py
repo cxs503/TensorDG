@@ -10,7 +10,7 @@ That hatch is fine while the artifact is committed and fatal when it is not:
 the ecosystem merge gate filters files out of agent branches, the artifact
 disappears from ``main``, and the gate silently stops asserting anything while
 CI stays green.  ``test_dg_advection_bench`` and ``test_shu_osher_case_pool``
-were in exactly that state (see ``artifacts/gate_vacuity/gate_vacuity.json``).
+were in exactly that state (see ``docs/gate_vacuity/gate_vacuity.json``).
 
 The gates here defend the *census*, not the physics: they (1) keep the
 committed census in sync with the tree, (2) forbid a new vacuous gate from
@@ -30,7 +30,8 @@ sys.path.insert(0, str(ROOT / "tools"))
 
 import audit_gate_vacuity as gv  # noqa: E402
 
-CENSUS = ROOT / "artifacts" / "gate_vacuity" / "gate_vacuity.json"
+# tracked census path (``artifacts/`` was filtered out of ``main``; see m16815/m16875)
+CENSUS = ROOT / "docs" / "gate_vacuity" / "gate_vacuity.json"
 REPORT = ROOT / "docs" / "GATE-VACUITY-AUDIT.md"
 
 
@@ -93,6 +94,33 @@ def test_allowance_list_is_self_cleaning():
         assert reason.strip(), f"allowance for {module} needs a reason"
 
 
+def test_no_gate_hard_asserts_an_unfetchable_artifact():
+    """A hard assert on a git-untracked artifact is RED on every clean checkout.
+
+    Regression of a live defect (m16875): ``tests/test_positivity_scaling_limiter.py``
+    hard-asserted ``artifacts/positivity_limiter/metrics.json``, a path the merge
+    gate never carries, so three of its gates failed on ``main`` while the author's
+    worktree was green (and the old census blessed it as ``HARDENED``).
+    """
+    data = _census()
+    red = set(data["red_on_clean_modules"])
+    declared = set(gv.ALLOWED_RED_CLEAN)
+    assert not red - declared, (
+        "gate(s) hard-assert an artifact git does not carry (red on a clean "
+        f"checkout): {sorted(red - declared)}")
+    stale = sorted(declared - red)
+    assert not stale, f"ALLOWED_RED_CLEAN entries no longer red: {stale}"
+    for module, reason in gv.ALLOWED_RED_CLEAN.items():
+        assert reason.strip(), f"declaration for {module} needs a reason"
+
+
+def test_no_skip_gate_pins_a_git_untracked_artifact():
+    """A skip-guard on an untracked artifact is vacuous forever, not just today."""
+    data = _census()
+    assert data["untracked_artifacts"] == [], (
+        f"skip gate(s) pinned on untracked artifacts: {data['untracked_artifacts']}")
+
+
 # ---------------------------------------------------------------------------
 # 3. the classifier has teeth (fault injection on synthetic modules)
 # ---------------------------------------------------------------------------
@@ -116,9 +144,13 @@ def test_gate():
     assert True
 '''
 
-_HARDENED_FIXTURE = '''
+# A genuinely HARDENED gate pins a *git-tracked* artifact: since m16875 the
+# classifier separates that from "hard assert on a path git never carries"
+# (RED-ON-CLEAN).  The fixture therefore points at a record that really is tracked.
+_HARDENED_TARGET = ROOT / "validation" / "advection_1d" / "highorder_summary.json"
+_HARDENED_FIXTURE = f'''
 from pathlib import Path
-ARTIFACT = Path(__file__).resolve().parents[1] / "does_not_exist_xyz.json"
+ARTIFACT = Path(r"{_HARDENED_TARGET}")
 
 def test_gate():
     assert ARTIFACT.exists(), "run benchmarks.foo"
@@ -164,6 +196,21 @@ def test_classifier_recognises_a_hard_assert(tmp_path):
     rep = _scan(tmp_path, "test_hard.py", _HARDENED_FIXTURE)
     assert rep.verdict == gv.VERDICT_HARDENED
     assert any(".exists()" in a for a in rep.hard_asserts)
+
+
+_RED_CLEAN_FIXTURE = '''
+from pathlib import Path
+ARTIFACT = Path(__file__).resolve().parents[1] / "runs" / "never_committed" / "metrics.json"
+
+def test_gate():
+    assert ARTIFACT.exists(), "missing committed artifact"
+'''
+
+
+def test_classifier_flags_a_hard_assert_on_an_untrackable_artifact(tmp_path):
+    rep = _scan(tmp_path, "test_red.py", _RED_CLEAN_FIXTURE)
+    assert rep.verdict == gv.VERDICT_RED_CLEAN
+    assert rep.red_artifacts and "missing" in rep.red_artifacts[0]
 
 
 def test_environment_skips_are_not_counted_as_vacuity(tmp_path):
