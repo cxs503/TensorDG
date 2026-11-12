@@ -32,7 +32,11 @@ from benchmarks.shu_osher_case_pool import (
     rankine_hugoniot_anchor,
 )
 
-RUN = Path("runs/shu_osher_case_pool")
+# The record lives on a git-tracked path (``docs/``).  ``artifacts/`` and ``runs/``
+# are filtered out of agent branches by the merge gate, so a gate pinned there
+# either skips forever (vacuous) or fails on every clean checkout.
+ROOT = Path(__file__).resolve().parents[1]
+RUN = ROOT / "validation" / "repro_shu_osher" / "artifacts"
 COMMITTED_REFERENCE = Path("benchmarks/data/shu_osher_reference.npz")
 
 
@@ -110,9 +114,11 @@ def test_fv_weno5_leaves_a_uniform_flow_untouched():
     assert meta["density_min"] == pytest.approx(1.0, abs=1e-12)
 
 
-@pytest.mark.skipif(not (RUN / "metrics.json").exists(), reason="case artefacts not generated")
 def test_ladder_artifacts_are_admissible_and_report_the_5pct_gate():
-    metrics = json.loads((RUN / "metrics.json").read_text())
+    """Ladder gate on the *tracked* record (``runs/`` never reaches ``main``)."""
+    record = RUN / "metrics.json"
+    assert record.exists(), f"missing committed record {record}"
+    metrics = json.loads(record.read_text())
     rows = metrics["ladder"]
     assert rows, "ladder table is empty"
     for row in rows:

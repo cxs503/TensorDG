@@ -1,0 +1,895 @@
+{
+  "case": "CASE-LAX-DG",
+  "anchor": "CASE-LAX-DG",
+  "purpose": "R3 region-rule sensitivity: is the published analytic-region order failure a method property or a measurement artifact?",
+  "generated_at_utc": "2026-11-12T21:33:41Z",
+  "config": {
+    "cfl": 0.35,
+    "ladder": [
+      [
+        100,
+        1
+      ],
+      [
+        200,
+        1
+      ],
+      [
+        400,
+        1
+      ],
+      [
+        100,
+        2
+      ],
+      [
+        200,
+        2
+      ],
+      [
+        400,
+        2
+      ],
+      [
+        100,
+        3
+      ],
+      [
+        200,
+        3
+      ],
+      [
+        400,
+        3
+      ]
+    ],
+    "quick": false,
+    "baseline_band_cells": 4.0,
+    "nested_bands": {
+      "nested_0p01": 0.01,
+      "nested_0p02": 0.02,
+      "nested_0p05": 0.05
+    },
+    "order_fraction": 0.85
+  },
+  "ladder": [
+    {
+      "cells": 100,
+      "degree": 1,
+      "steps": 555,
+      "wall_seconds": 19.13391089439392,
+      "rules": {
+        "band_4h": {
+          "band_width": 0.04,
+          "retained_fraction": 0.68,
+          "retained_length": 0.68,
+          "errors": {
+            "density": 0.001014266949545202,
+            "velocity": 0.001293089763810498,
+            "pressure": 0.0007986445890396165
+          }
+        },
+        "nested_0p01": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.007531531006050571,
+            "velocity": 0.003910743885957307,
+            "pressure": 0.0023852362875133306
+          }
+        },
+        "nested_0p02": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.0044293157387373825,
+            "velocity": 0.002234993985111008,
+            "pressure": 0.0014140030179733767
+          }
+        },
+        "nested_0p05": {
+          "band_width": 0.05,
+          "retained_fraction": 0.6,
+          "retained_length": 0.6,
+          "errors": {
+            "density": 0.0006167413292664812,
+            "velocity": 0.0010390052458996051,
+            "pressure": 0.0006010954651802715
+          }
+        }
+      }
+    },
+    {
+      "cells": 200,
+      "degree": 1,
+      "steps": 1103,
+      "wall_seconds": 35.898853063583374,
+      "rules": {
+        "band_4h": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.0008583222575693835,
+            "velocity": 0.0008595597609984579,
+            "pressure": 0.0005358963876477205
+          }
+        },
+        "nested_0p01": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.002685611657086015,
+            "velocity": 0.0013084886801861427,
+            "pressure": 0.0008228092459886488
+          }
+        },
+        "nested_0p02": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.0008583222575693835,
+            "velocity": 0.0008595597609984579,
+            "pressure": 0.0005358963876477205
+          }
+        },
+        "nested_0p05": {
+          "band_width": 0.05,
+          "retained_fraction": 0.6,
+          "retained_length": 0.6,
+          "errors": {
+            "density": 9.493910850850328e-05,
+            "velocity": 0.00021661422516749626,
+            "pressure": 0.00011998452009618732
+          }
+        }
+      }
+    },
+    {
+      "cells": 400,
+      "degree": 1,
+      "steps": 2199,
+      "wall_seconds": 65.43143486976624,
+      "rules": {
+        "band_4h": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.0007625066521048837,
+            "velocity": 0.0005250240276128679,
+            "pressure": 0.0003232507166727749
+          }
+        },
+        "nested_0p01": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.0007625066521048837,
+            "velocity": 0.0005250240276128679,
+            "pressure": 0.0003232507166727749
+          }
+        },
+        "nested_0p02": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.00013653144027569962,
+            "velocity": 0.000303361873065941,
+            "pressure": 0.00017801345896739762
+          }
+        },
+        "nested_0p05": {
+          "band_width": 0.05,
+          "retained_fraction": 0.6,
+          "retained_length": 0.6,
+          "errors": {
+            "density": 8.503380202361373e-06,
+            "velocity": 2.5186632400458835e-05,
+            "pressure": 1.307524848947744e-05
+          }
+        }
+      }
+    },
+    {
+      "cells": 100,
+      "degree": 2,
+      "steps": 913,
+      "wall_seconds": 25.352404356002808,
+      "rules": {
+        "band_4h": {
+          "band_width": 0.04,
+          "retained_fraction": 0.68,
+          "retained_length": 0.68,
+          "errors": {
+            "density": 0.003436144866710789,
+            "velocity": 0.006696410761775029,
+            "pressure": 0.003854225035574871
+          }
+        },
+        "nested_0p01": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.0065050092230279225,
+            "velocity": 0.007487533572308867,
+            "pressure": 0.004602419000053151
+          }
+        },
+        "nested_0p02": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.004475477736727363,
+            "velocity": 0.006961289092703773,
+            "pressure": 0.004247026904276481
+          }
+        },
+        "nested_0p05": {
+          "band_width": 0.05,
+          "retained_fraction": 0.6,
+          "retained_length": 0.6,
+          "errors": {
+            "density": 0.0028984203881803547,
+            "velocity": 0.006679596194483163,
+            "pressure": 0.0036462329887309796
+          }
+        }
+      }
+    },
+    {
+      "cells": 200,
+      "degree": 2,
+      "steps": 1828,
+      "wall_seconds": 47.624348878860474,
+      "rules": {
+        "band_4h": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.0019418053633558719,
+            "velocity": 0.002240231273166446,
+            "pressure": 0.0015561333349833684
+          }
+        },
+        "nested_0p01": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.0025451386473552204,
+            "velocity": 0.0025420589380266015,
+            "pressure": 0.0017843606843041785
+          }
+        },
+        "nested_0p02": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.0019418053633558719,
+            "velocity": 0.002240231273166446,
+            "pressure": 0.0015561333349833684
+          }
+        },
+        "nested_0p05": {
+          "band_width": 0.05,
+          "retained_fraction": 0.6,
+          "retained_length": 0.6,
+          "errors": {
+            "density": 0.0009210558740898249,
+            "velocity": 0.001679538724074266,
+            "pressure": 0.0009725076144109911
+          }
+        }
+      }
+    },
+    {
+      "cells": 400,
+      "degree": 2,
+      "steps": 3662,
+      "wall_seconds": 98.77159905433655,
+      "rules": {
+        "band_4h": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.0009544719810280684,
+            "velocity": 0.0007571287099181123,
+            "pressure": 0.0006187165953467686
+          }
+        },
+        "nested_0p01": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.0009544719810280684,
+            "velocity": 0.0007571287099181123,
+            "pressure": 0.0006187165953467686
+          }
+        },
+        "nested_0p02": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.0006030174951073241,
+            "velocity": 0.000483889273514562,
+            "pressure": 0.0003986782588666767
+          }
+        },
+        "nested_0p05": {
+          "band_width": 0.05,
+          "retained_fraction": 0.6,
+          "retained_length": 0.6,
+          "errors": {
+            "density": 0.00017590055884648606,
+            "velocity": 0.00017309948379927635,
+            "pressure": 0.00012343555636434026
+          }
+        }
+      }
+    },
+    {
+      "cells": 100,
+      "degree": 3,
+      "steps": 1271,
+      "wall_seconds": 30.2104172706604,
+      "rules": {
+        "band_4h": {
+          "band_width": 0.04,
+          "retained_fraction": 0.68,
+          "retained_length": 0.68,
+          "errors": {
+            "density": 0.007448578474540186,
+            "velocity": 0.018890152242081844,
+            "pressure": 0.010191334466121216
+          }
+        },
+        "nested_0p01": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.009260490725779306,
+            "velocity": 0.018253921690935412,
+            "pressure": 0.010417229436948183
+          }
+        },
+        "nested_0p02": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.008553524720362365,
+            "velocity": 0.018298459736507924,
+            "pressure": 0.010337323918441636
+          }
+        },
+        "nested_0p05": {
+          "band_width": 0.05,
+          "retained_fraction": 0.6,
+          "retained_length": 0.6,
+          "errors": {
+            "density": 0.00679960379806146,
+            "velocity": 0.01940089878599078,
+            "pressure": 0.010135548337723644
+          }
+        }
+      }
+    },
+    {
+      "cells": 200,
+      "degree": 3,
+      "steps": 2547,
+      "wall_seconds": 60.4189453125,
+      "rules": {
+        "band_4h": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.007432439251141991,
+            "velocity": 0.015608396690664082,
+            "pressure": 0.008915610914085301
+          }
+        },
+        "nested_0p01": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.0076172982343350485,
+            "velocity": 0.015301355906406999,
+            "pressure": 0.008899556727893556
+          }
+        },
+        "nested_0p02": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.007432439251141991,
+            "velocity": 0.015608396690664082,
+            "pressure": 0.008915610914085301
+          }
+        },
+        "nested_0p05": {
+          "band_width": 0.05,
+          "retained_fraction": 0.6,
+          "retained_length": 0.6,
+          "errors": {
+            "density": 0.00609222073755686,
+            "velocity": 0.01678716977885259,
+            "pressure": 0.008831291714984755
+          }
+        }
+      }
+    },
+    {
+      "cells": 400,
+      "degree": 3,
+      "steps": 5109,
+      "wall_seconds": 123.51353907585144,
+      "rules": {
+        "band_4h": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.006368514592774124,
+            "velocity": 0.011929177150665977,
+            "pressure": 0.007071423047711829
+          }
+        },
+        "nested_0p01": {
+          "band_width": 0.01,
+          "retained_fraction": 0.92,
+          "retained_length": 0.92,
+          "errors": {
+            "density": 0.006368514592774124,
+            "velocity": 0.011929177150665977,
+            "pressure": 0.007071423047711829
+          }
+        },
+        "nested_0p02": {
+          "band_width": 0.02,
+          "retained_fraction": 0.84,
+          "retained_length": 0.84,
+          "errors": {
+            "density": 0.006143050619471798,
+            "velocity": 0.01214659418997057,
+            "pressure": 0.007052790784328142
+          }
+        },
+        "nested_0p05": {
+          "band_width": 0.05,
+          "retained_fraction": 0.6,
+          "retained_length": 0.6,
+          "errors": {
+            "density": 0.004763079896922495,
+            "velocity": 0.012933862136668733,
+            "pressure": 0.006825178050865232
+          }
+        }
+      }
+    }
+  ],
+  "orders": {
+    "band_4h": {
+      "p1": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 0.17076948640647943,
+          "velocity": 0.7112144978199966,
+          "pressure": 0.7293005226022162
+        },
+        "retained_fraction": {
+          "coarse": 0.84,
+          "fine": 0.92
+        },
+        "band_width": {
+          "coarse": 0.02,
+          "fine": 0.01
+        }
+      },
+      "p2": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 1.0246238472524358,
+          "velocity": 1.5650371978660265,
+          "pressure": 1.330615044957958
+        },
+        "retained_fraction": {
+          "coarse": 0.84,
+          "fine": 0.92
+        },
+        "band_width": {
+          "coarse": 0.02,
+          "fine": 0.01
+        }
+      },
+      "p3": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 0.2228788521934333,
+          "velocity": 0.38782781749987555,
+          "pressure": 0.3343330862726517
+        },
+        "retained_fraction": {
+          "coarse": 0.84,
+          "fine": 0.92
+        },
+        "band_width": {
+          "coarse": 0.02,
+          "fine": 0.01
+        }
+      }
+    },
+    "nested_0p01": {
+      "p1": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 1.816428875484838,
+          "velocity": 1.3174460895651185,
+          "pressure": 1.347904437050662
+        },
+        "retained_fraction": {
+          "coarse": 0.92,
+          "fine": 0.92
+        },
+        "band_width": {
+          "coarse": 0.01,
+          "fine": 0.01
+        }
+      },
+      "p2": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 1.4149694974047484,
+          "velocity": 1.7473869992469515,
+          "pressure": 1.528056630112266
+        },
+        "retained_fraction": {
+          "coarse": 0.92,
+          "fine": 0.92
+        },
+        "band_width": {
+          "coarse": 0.01,
+          "fine": 0.01
+        }
+      },
+      "p3": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 0.25832246740812087,
+          "velocity": 0.3591649683901204,
+          "pressure": 0.3317329085432718
+        },
+        "retained_fraction": {
+          "coarse": 0.92,
+          "fine": 0.92
+        },
+        "band_width": {
+          "coarse": 0.01,
+          "fine": 0.01
+        }
+      }
+    },
+    "nested_0p02": {
+      "p1": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 2.652286198821189,
+          "velocity": 1.5025581696436954,
+          "pressure": 1.5899677688322498
+        },
+        "retained_fraction": {
+          "coarse": 0.84,
+          "fine": 0.84
+        },
+        "band_width": {
+          "coarse": 0.02,
+          "fine": 0.02
+        }
+      },
+      "p2": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 1.6871268354434397,
+          "velocity": 2.210898814328472,
+          "pressure": 1.9646688427497074
+        },
+        "retained_fraction": {
+          "coarse": 0.84,
+          "fine": 0.84
+        },
+        "band_width": {
+          "coarse": 0.02,
+          "fine": 0.02
+        }
+      },
+      "p3": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 0.27488049501845624,
+          "velocity": 0.3617704997970559,
+          "pressure": 0.3381394134631859
+        },
+        "retained_fraction": {
+          "coarse": 0.84,
+          "fine": 0.84
+        },
+        "band_width": {
+          "coarse": 0.02,
+          "fine": 0.02
+        }
+      }
+    },
+    "nested_0p05": {
+      "p1": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 3.480894152618763,
+          "velocity": 3.104397845237814,
+          "pressure": 3.1979380176805687
+        },
+        "retained_fraction": {
+          "coarse": 0.6,
+          "fine": 0.6
+        },
+        "band_width": {
+          "coarse": 0.05,
+          "fine": 0.05
+        }
+      },
+      "p2": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 2.388528610956998,
+          "velocity": 3.278391731716981,
+          "pressure": 2.977951514511902
+        },
+        "retained_fraction": {
+          "coarse": 0.6,
+          "fine": 0.6
+        },
+        "band_width": {
+          "coarse": 0.05,
+          "fine": 0.05
+        }
+      },
+      "p3": {
+        "coarse_cells": 200,
+        "fine_cells": 400,
+        "order": {
+          "density": 0.35507346651655164,
+          "velocity": 0.3762058828653735,
+          "pressure": 0.3717577874686514
+        },
+        "retained_fraction": {
+          "coarse": 0.6,
+          "fine": 0.6
+        },
+        "band_width": {
+          "coarse": 0.05,
+          "fine": 0.05
+        }
+      }
+    }
+  },
+  "verdicts": {
+    "band_4h": {
+      "per_degree": {
+        "p1": {
+          "order": 0.17076948640647943,
+          "requirement": 1.7,
+          "ratio": 0.10045263906263496,
+          "status": "FAIL"
+        },
+        "p2": {
+          "order": 1.0246238472524358,
+          "requirement": 2.55,
+          "ratio": 0.4018132734323278,
+          "status": "FAIL"
+        },
+        "p3": {
+          "order": 0.2228788521934333,
+          "requirement": 3.4,
+          "ratio": 0.06555260358630392,
+          "status": "FAIL"
+        }
+      },
+      "status": "FAIL"
+    },
+    "nested_0p01": {
+      "per_degree": {
+        "p1": {
+          "order": 1.816428875484838,
+          "requirement": 1.7,
+          "ratio": 1.0684875738146105,
+          "status": "PASS"
+        },
+        "p2": {
+          "order": 1.4149694974047484,
+          "requirement": 2.55,
+          "ratio": 0.5548899989822543,
+          "status": "FAIL"
+        },
+        "p3": {
+          "order": 0.25832246740812087,
+          "requirement": 3.4,
+          "ratio": 0.07597719629650614,
+          "status": "FAIL"
+        }
+      },
+      "status": "FAIL"
+    },
+    "nested_0p02": {
+      "per_degree": {
+        "p1": {
+          "order": 2.652286198821189,
+          "requirement": 1.7,
+          "ratio": 1.5601683522477583,
+          "status": "PASS"
+        },
+        "p2": {
+          "order": 1.6871268354434397,
+          "requirement": 2.55,
+          "ratio": 0.6616183668405646,
+          "status": "FAIL"
+        },
+        "p3": {
+          "order": 0.27488049501845624,
+          "requirement": 3.4,
+          "ratio": 0.08084720441719301,
+          "status": "FAIL"
+        }
+      },
+      "status": "FAIL"
+    },
+    "nested_0p05": {
+      "per_degree": {
+        "p1": {
+          "order": 3.480894152618763,
+          "requirement": 1.7,
+          "ratio": 2.047584795658096,
+          "status": "PASS"
+        },
+        "p2": {
+          "order": 2.388528610956998,
+          "requirement": 2.55,
+          "ratio": 0.9366778866498031,
+          "status": "FAIL"
+        },
+        "p3": {
+          "order": 0.35507346651655164,
+          "requirement": 3.4,
+          "ratio": 0.10443337250486813,
+          "status": "FAIL"
+        }
+      },
+      "status": "FAIL"
+    }
+  },
+  "nestedness": {
+    "band_4h": {
+      "p1": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.68,
+        "fine_retained": 0.92,
+        "relative_change": 0.3529411764705882
+      },
+      "p2": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.68,
+        "fine_retained": 0.92,
+        "relative_change": 0.3529411764705882
+      },
+      "p3": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.68,
+        "fine_retained": 0.92,
+        "relative_change": 0.3529411764705882
+      }
+    },
+    "nested_0p01": {
+      "p1": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.92,
+        "fine_retained": 0.92,
+        "relative_change": 0.0
+      },
+      "p2": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.92,
+        "fine_retained": 0.92,
+        "relative_change": 0.0
+      },
+      "p3": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.92,
+        "fine_retained": 0.92,
+        "relative_change": 0.0
+      }
+    },
+    "nested_0p02": {
+      "p1": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.84,
+        "fine_retained": 0.84,
+        "relative_change": 0.0
+      },
+      "p2": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.84,
+        "fine_retained": 0.84,
+        "relative_change": 0.0
+      },
+      "p3": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.84,
+        "fine_retained": 0.84,
+        "relative_change": 0.0
+      }
+    },
+    "nested_0p05": {
+      "p1": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.6,
+        "fine_retained": 0.6,
+        "relative_change": 0.0
+      },
+      "p2": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.6,
+        "fine_retained": 0.6,
+        "relative_change": 0.0
+      },
+      "p3": {
+        "coarse_cells": 100,
+        "fine_cells": 400,
+        "coarse_retained": 0.6,
+        "fine_retained": 0.6,
+        "relative_change": 0.0
+      }
+    }
+  },
+  "figures": [
+    "docs/benchmarks/results/lax_region_band/figures/region_order.png"
+  ],
+  "wall_seconds": 507.9373092651367
+}

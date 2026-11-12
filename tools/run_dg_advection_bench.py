@@ -32,7 +32,10 @@ from tensordg import ice_edge_bench as bench  # noqa: E402
 from tensordg.advection_2d_var import DGAdvection2D  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT = ROOT / "artifacts" / "dg_advection_bench.json"
+# Evidence must live where git actually carries it: ``artifacts/`` is filtered out of
+# agent branches by the merge gate, so a gate pinned there is vacuous on ``main``
+# (see docs/GATE-VACUITY-AUDIT.md).  ``docs/`` is tracked, so this record survives.
+ARTIFACT = ROOT / "docs" / "benchmarks" / "results" / "dg_advection_bench.json"
 FIGDIR = ROOT / "docs" / "figures"
 
 # Resolution sets per case and degree.  ``quick`` keeps the whole run inside a
@@ -261,6 +264,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--quick", action="store_true", help="smoke configuration")
     parser.add_argument("--no-figures", action="store_true")
+    parser.add_argument("--out", default=str(ARTIFACT),
+                        help="record path (default: tracked docs/ path)")
     parser.add_argument("--jobs", type=int, default=min(16, os.cpu_count() or 1),
                         help="parallel worker processes")
     args = parser.parse_args()
@@ -417,9 +422,10 @@ def main() -> int:
         ],
     }
 
-    ARTIFACT.parent.mkdir(parents=True, exist_ok=True)
-    ARTIFACT.write_text(json.dumps(payload, indent=2) + "\n")
-    print(f"\nwrote {ARTIFACT.relative_to(ROOT)}")
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(payload, indent=2) + "\n")
+    print(f"\nwrote {out}")
     print("verdict:", payload["verdict"])
     return 0 if payload["verdict"]["overall"] == "PASS" else 1
 

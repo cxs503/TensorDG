@@ -11,21 +11,24 @@
 | LATENT | 有缺失即 skip 的写法，但工件已提交 → 该 skip 是永不触发的安全网，离 VACUOUS 只差一次合并门过滤 |
 | HARDENED | 用 `assert … .exists()` 硬断言工件，缺失即红 |
 | UNRESOLVED | 有工件类 skip，但路径静态不可解析（诚实登记：未裁决，不算通过） |
+| RED-ON-CLEAN | 硬断言一个 **git 不携带** 的工件 → 干净检出上必红（作者机上却绿） |
 | PLAIN | 不依赖已提交工件 |
 
 ## 统计
 
-- 扫描测试模块 **144**：VACUOUS **3** · LATENT **6** · HARDENED **8** · UNRESOLVED **9** · PLAIN **118**
-- skip 位点：工件类 **27** · 环境类 **3**
-- 缺失工件（skip 会真的触发）：**3**
+- 扫描测试模块 **147**：VACUOUS **0** · LATENT **7** · HARDENED **8** · RED-ON-CLEAN **3** · UNRESOLVED **9** · PLAIN **120**
+- skip 位点：工件类 **24** · 环境类 **4**
+- 缺失工件（skip 会真的触发）：**0**
 - cwd 依赖（相对路径）工件常量：**8**
+- 干净检出上必红的模块（RED-ON-CLEAN）：**3**
+- 钉在 git 不携带工件上的 skip 门：**0**
 
 ## 逐模块清单（非 PLAIN）
 
 | 模块 | 判级 | 工件类 skip | 硬断言 | cwd 依赖 |
 |---|---|---|---|---|
 | `tests/test_case_dg_solid_body_rotation_2d.py` | UNRESOLVED | 1 | 0 | — |
-| `tests/test_dg_advection_bench.py` | VACUOUS | 1 | 1 | — |
+| `tests/test_dg_advection_bench.py` | RED-ON-CLEAN | 0 | 2 | — |
 | `tests/test_dispersion_analysis.py` | HARDENED | 0 | 1 | — |
 | `tests/test_dispersion_time_domain.py` | HARDENED | 0 | 1 | — |
 | `tests/test_elastic_dispersion.py` | LATENT | 1 | 0 | — |
@@ -33,16 +36,17 @@
 | `tests/test_evidence_integrity.py` | UNRESOLVED | 1 | 0 | — |
 | `tests/test_in31_hp_ladder.py` | UNRESOLVED | 2 | 0 | — |
 | `tests/test_lax_case_pool.py` | UNRESOLVED | 2 | 0 | — |
-| `tests/test_lax_region_band.py` | VACUOUS | 1 | 1 | — |
+| `tests/test_lax_region_band.py` | RED-ON-CLEAN | 0 | 2 | — |
 | `tests/test_ns_heat_conduction.py` | LATENT | 1 | 0 | WALL_ROW_LAW |
 | `tests/test_ns_wall_heat_flux_order.py` | LATENT | 1 | 0 | EVIDENCE |
 | `tests/test_oblique_shock_theta_beta.py` | LATENT | 1 | 0 | ANCHOR_FILE |
 | `tests/test_oss_inventory_dg_registry.py` | HARDENED | 0 | 4 | — |
 | `tests/test_p_refinement_exponential.py` | LATENT | 1 | 4 | — |
 | `tests/test_p_refinement_exponential_live.py` | UNRESOLVED | 4 | 0 | — |
+| `tests/test_positivity_scaling_limiter.py` | RED-ON-CLEAN | 0 | 1 | — |
 | `tests/test_repro_cks1998.py` | UNRESOLVED | 1 | 0 | — |
 | `tests/test_riemann_vacuum_1d.py` | UNRESOLVED | 1 | 0 | — |
-| `tests/test_shu_osher_case_pool.py` | VACUOUS | 2 | 0 | COMMITTED_REFERENCE |
+| `tests/test_shu_osher_case_pool.py` | LATENT | 1 | 1 | COMMITTED_REFERENCE |
 | `tests/test_sipg_backend_comparison.py` | HARDENED | 0 | 1 | — |
 | `tests/test_solid_body_rotation_case_pool.py` | HARDENED | 0 | 1 | — |
 | `tests/test_swe_manning_friction.py` | HARDENED | 0 | 1 | — |
@@ -53,19 +57,7 @@
 
 ## VACUOUS 明细（当下零验证）
 
-### `tests/test_dg_advection_bench.py`
-- 缺失工件：`/root/tp-agent/work/m16815/artifacts/dg_advection_bench.json`
-- L147: `not ARTIFACT.exists()` → skip("artifacts/dg_advection_bench.json not generated yet")
-
-### `tests/test_lax_region_band.py`
-- 缺失工件：`/root/tp-agent/work/m16815/runs/lax_region_band/metrics.json`
-- L109: `not ARTIFACT.exists()` → skip("audit artifact not committed yet")
-
-### `tests/test_shu_osher_case_pool.py`
-- 缺失工件：`/root/tp-agent/work/m16815/runs/shu_osher_case_pool/metrics.json`
-- L65: `not COMMITTED_REFERENCE.exists()` → skip("committed reference missing")
-- L113: `not (RUN / 'metrics.json').exists()` → skip("case artefacts not generated")
-
+（无）
 
 ## 为什么这比「测试绿」重要
 

@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import subprocess
 import json
 import sys
 from dataclasses import dataclass, field
@@ -49,7 +50,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TESTS = ROOT / "tests"
-JSON_OUT = ROOT / "artifacts" / "gate_vacuity" / "gate_vacuity.json"
+# The census must itself live on a *tracked* path: when it sat under
+# ``artifacts/`` the merge gate dropped it, so ``--check`` returned 1 on ``main``
+# and the drift guard was dead (reported in docs/AUDIT-m16815-gate-vacuity-red-main.md).
+JSON_OUT = ROOT / "docs" / "gate_vacuity" / "gate_vacuity.json"
 MD_OUT = ROOT / "docs" / "GATE-VACUITY-AUDIT.md"
 
 SKIP_ARTIFACT = "artifact_missing"
@@ -60,8 +64,11 @@ VERDICT_LATENT = "LATENT"
 VERDICT_HARDENED = "HARDENED"
 VERDICT_UNRESOLVED = "UNRESOLVED"
 VERDICT_PLAIN = "PLAIN"
+# A hard assert on an artifact that git does not carry: the module is RED on every
+# clean checkout (CI, ``main``) while staying green on the author's worktree.
+VERDICT_RED_CLEAN = "RED-ON-CLEAN"
 VERDICTS = (VERDICT_VACUOUS, VERDICT_LATENT, VERDICT_HARDENED,
-            VERDICT_UNRESOLVED, VERDICT_PLAIN)
+            VERDICT_RED_CLEAN, VERDICT_UNRESOLVED, VERDICT_PLAIN)
 
 # Names whose module-level binding is a file path worth adjudicating.
 HINTS = ("path", "file", "artifact", "json", "csv", "metrics", "reference",
@@ -75,35 +82,67 @@ ARTIFACT_HINTS = ("run ", "generate", "generated", "missing", "artifact",
 
 # Legacy vacuity that this mission could not close.  Each entry must carry a
 # reason; the policy test fails on stale entries (self-cleaning).
-ALLOWED_VACUOUS: dict[str, str] = {
-    # Registered 2026-11-12 (m16367 vacuity census).  Both modules guard their
-    # acceptance assertions with "artifact missing -> skip" and the artifact is
-    # NOT in the tree, so their numbers are unverified on main today.  The fix
-    # is to commit the generator output (artifacts/dg_advection_bench.json,
-    # runs/shu_osher_case_pool/metrics.json); until then the vacuity is
-    # declared here instead of being hidden behind a green skip.  The policy
-    # test fails if either entry stops being vacuous (self-cleaning).
+# Modules whose hard-asserted record is not in the tree *yet*.  Same contract as
+# ALLOWED_VACUOUS: every entry needs a reason and the list self-cleans (an entry
+# that stops being RED-ON-CLEAN makes the policy gate red).  A declared red is a
+# defect report, not a fix.
+ALLOWED_RED_CLEAN: dict[str, str] = {
     "tests/test_dg_advection_bench.py":
-        "artifacts/dg_advection_bench.json not committed (filtered by the merge "
-        "gate); regenerate with tools/run_dg_advection_bench.py and drop this entry",
-    # Registered 2026-11-12 (m16815).  Found already-live on main: the dynamic
-    # run of m16606 (audit AUDIT-m16606-CASE-LAX-DG-R3-region-rule.md) produced
-    # runs/lax_region_band/metrics.json, but that artifact did not survive the
-    # merge gate, so the six R3-region-rule invariants in
-    # tests/test_lax_region_band.py have been skipping since the merge while
-    # main stayed green.  Regenerate with `python -m benchmarks.lax_region_band`
-    # (243 s on 1 core) and delete this entry.
-    "tests/test_lax_region_band.py":
-        "runs/lax_region_band/metrics.json not in the tree (merge-gate filtered); "
-        "regenerate with `python -m benchmarks.lax_region_band` and drop this entry",
-    "tests/test_shu_osher_case_pool.py":
-        "runs/shu_osher_case_pool/metrics.json not committed; regenerate with "
-        "python -m benchmarks.shu_osher_case_pool and drop this entry",
+        "record moved to the tracked path docs/benchmarks/results/dg_advection_bench.json; "
+        "generation pending (full config ~5 min, machine at load1>250 during m16875). "
+        "Regenerate with `python tools/run_dg_advection_bench.py` and drop this entry",
+    "tests/test_positivity_scaling_limiter.py":
+        "RED ON main since it landed: hard-asserted artifacts/positivity_limiter/metrics.json, "
+        "a path the merge gate never carries (3 gates failing on any clean checkout; "
+        "m16875 repointed it to docs/benchmarks/results/positivity_limiter/). "
+        "Regenerate with `python -m benchmarks.positivity_limiter --out "
+        "docs/benchmarks/results/positivity_limiter` and drop this entry",
+}
+
+ALLOWED_VACUOUS: dict[str, str] = {
+    # m16875: the three long-standing entries (test_dg_advection_bench,
+    # test_lax_region_band, test_shu_osher_case_pool) are CLOSED -- their records
+    # now live on tracked paths (docs/benchmarks/results/*, validation/*) and the
+    # guards are hard asserts, so the list is empty again.  Do not re-add an entry
+    # without a reason: an allowance is a declared vacuity, not a fix.
 }
 
 
 class _Unknown(Exception):
     pass
+
+
+_TRACKED: frozenset[str] | None = None
+
+
+def _tracked_files() -> frozenset[str] | None:
+    """POSIX paths git carries (relative to ROOT), or ``None`` if git is unusable.
+
+    ``None`` means *not adjudicated* -- the census never turns an unknown into a
+    pass.  Why this matters: the failure mode below is not "the file is missing
+    today" (a snapshot that can flip) but "the file is not carried by git", which
+    makes a skip-guard vacuous *forever* and a hard-assert red on every clean
+    checkout.
+    """
+    global _TRACKED
+    if _TRACKED is None:
+        try:
+            out = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT,
+                                 capture_output=True, text=True, check=True).stdout
+            _TRACKED = frozenset(x for x in out.split("\0") if x)
+        except Exception:
+            return None
+    return _TRACKED
+
+
+def _is_tracked(path: str | None, tracked: frozenset[str] | None) -> bool | None:
+    if path is None or tracked is None:
+        return None
+    try:
+        rel = Path(path).resolve().relative_to(ROOT)
+    except ValueError:
+        return False
+    return str(rel) in tracked
 
 
 # ---------------------------------------------------------------------------
@@ -188,6 +227,7 @@ class Artifact:
     path: str
     anchored: bool
     exists: bool
+    tracked: bool | None = None
 
 
 @dataclass
@@ -210,6 +250,8 @@ class ModuleReport:
     vacuous_artifacts: list[str] = field(default_factory=list)
     unresolved_guards: list[str] = field(default_factory=list)
     cwd_dependent: list[str] = field(default_factory=list)
+    untracked_artifacts: list[str] = field(default_factory=list)
+    red_artifacts: list[str] = field(default_factory=list)
 
     def as_dict(self) -> dict:
         return {
@@ -221,6 +263,8 @@ class ModuleReport:
             "vacuous_artifacts": self.vacuous_artifacts,
             "unresolved_guards": self.unresolved_guards,
             "cwd_dependent": self.cwd_dependent,
+            "untracked_artifacts": self.untracked_artifacts,
+            "red_artifacts": self.red_artifacts,
         }
 
 
@@ -380,19 +424,35 @@ def scan_module(path: Path) -> ModuleReport:
     rep.skip_sites.sort(key=lambda s: s.line)
 
     # -- verdict --------------------------------------------------------------
+    tracked = _tracked_files()
+    for art in rep.artifacts:
+        art.tracked = _is_tracked(art.path, tracked)
     art_skips = [s for s in rep.skip_sites if s.kind == SKIP_ARTIFACT]
-    resolved_missing = [s.artifact for s in art_skips
-                        if s.artifact is not None and s.artifact_exists is False]
+    missing = [s.artifact for s in art_skips
+               if s.artifact is not None and s.artifact_exists is False]
+    untracked = [s.artifact for s in art_skips
+                 if s.artifact is not None
+                 and _is_tracked(s.artifact, tracked) is False]
     if art_skips:
-        if resolved_missing:
+        if missing or untracked:
             rep.verdict = VERDICT_VACUOUS
-            rep.vacuous_artifacts = sorted(set(resolved_missing))
+            rep.vacuous_artifacts = sorted({p for p in missing + untracked})
+            rep.untracked_artifacts = sorted(set(untracked))
         elif all(s.artifact_exists for s in art_skips):
             rep.verdict = VERDICT_LATENT
         else:
             rep.verdict = VERDICT_UNRESOLVED
     elif rep.hard_asserts:
-        rep.verdict = VERDICT_HARDENED
+        heads = {t.split(".")[0].strip() for t in rep.hard_asserts}
+        pinned = [a for a in rep.artifacts if a.expr in heads]
+        broken = [a for a in pinned if not a.exists or a.tracked is False]
+        if broken:
+            rep.verdict = VERDICT_RED_CLEAN
+            rep.red_artifacts = sorted(
+                f"{a.path} ({'missing' if not a.exists else 'untracked'})"
+                for a in broken)
+        else:
+            rep.verdict = VERDICT_HARDENED
     else:
         rep.verdict = VERDICT_PLAIN
 
@@ -424,6 +484,10 @@ def census() -> dict:
         "vacuous_modules": sorted(m.file for m in modules
                                   if m.verdict == VERDICT_VACUOUS),
         "missing_artifacts": missing_artifacts,
+        "red_on_clean_modules": sorted(m.file for m in modules
+                                       if m.verdict == VERDICT_RED_CLEAN),
+        "untracked_artifacts": sorted(f"{m.file}::{a}" for m in modules
+                                      for a in m.untracked_artifacts),
         "cwd_dependent_artifacts": sorted(
             f"{m.file}::{a}" for m in modules for a in m.cwd_dependent),
         "modules": [m.as_dict() for m in modules],
@@ -450,6 +514,7 @@ def render_markdown(data: dict) -> str:
         "| LATENT | 有缺失即 skip 的写法，但工件已提交 → 该 skip 是永不触发的安全网，离 VACUOUS 只差一次合并门过滤 |",
         "| HARDENED | 用 `assert … .exists()` 硬断言工件，缺失即红 |",
         "| UNRESOLVED | 有工件类 skip，但路径静态不可解析（诚实登记：未裁决，不算通过） |",
+        "| RED-ON-CLEAN | 硬断言一个 **git 不携带** 的工件 → 干净检出上必红（作者机上却绿） |",
         "| PLAIN | 不依赖已提交工件 |",
         "",
         "## 统计",
@@ -459,6 +524,8 @@ def render_markdown(data: dict) -> str:
         f"- skip 位点：工件类 **{s[SKIP_ARTIFACT]}** · 环境类 **{s[SKIP_ENV]}**",
         f"- 缺失工件（skip 会真的触发）：**{len(data['missing_artifacts'])}**",
         f"- cwd 依赖（相对路径）工件常量：**{len(data['cwd_dependent_artifacts'])}**",
+        f"- 干净检出上必红的模块（RED-ON-CLEAN）：**{len(data['red_on_clean_modules'])}**",
+        f"- 钉在 git 不携带工件上的 skip 门：**{len(data['untracked_artifacts'])}**",
         "",
         "## 逐模块清单（非 PLAIN）",
         "",

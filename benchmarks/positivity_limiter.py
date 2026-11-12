@@ -245,7 +245,9 @@ def run_case(ncells, degree, positivity, final_time=FINAL_TIME):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--quick", action="store_true", help="coarse sweep for CI")
-    ap.add_argument("--out", default="artifacts/positivity_limiter")
+    # tracked evidence path: ``artifacts/`` does not survive the merge gate, so a
+    # hard-asserting gate pinned there is RED on every clean checkout.
+    ap.add_argument("--out", default="docs/benchmarks/results/positivity_limiter")
     ap.add_argument("--degrees", default="", help="comma separated, overrides the sweep")
     ap.add_argument("--mesh", default="", help="comma separated cell counts, overrides the sweep")
     ap.add_argument("--modes", default="none,collapse,scale")
