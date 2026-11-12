@@ -347,6 +347,45 @@ class DGAdvection2D:
         return {"absolute_l2": abs_l2, "reference_l2": ref_l2,
                 "relative_l2": abs_l2 / ref_l2 if ref_l2 else abs_l2}
 
+    def l1_error(self, coeff: torch.Tensor, exact: Callable[..., torch.Tensor],
+                 t: float = 0.0, radius: float | None = None,
+                 center: Sequence[float] = (0.5, 0.5)) -> dict:
+        """L1 (mass-norm) error against an analytic field, same quadrature as :meth:`l2_error`.
+
+        Also returns ``coverage``: the fraction of the *global* reference L1 mass
+        that the (optional) disk mask keeps.  It is reported so that a masked
+        gate can never silently drop an unquantified part of the field -- the
+        solid-body-rotation seam argument is only honest if the excluded share
+        is on record.
+        """
+        b = basis_1d(self.degree, max(2 * self.degree + 6, 10), self.device, self.dtype)
+        num = torch.einsum("xykl,qk,rl->xyqr", coeff, b.phi, b.phi)
+        xq = torch.as_tensor(
+            [(i + 0.5) * self.hx for i in range(self.nx)], device=self.device,
+            dtype=self.dtype)[:, None] + 0.5 * self.hx * b.nodes[None, :]
+        yq = torch.as_tensor(
+            [(j + 0.5) * self.hy for j in range(self.ny)], device=self.device,
+            dtype=self.dtype)[:, None] + 0.5 * self.hy * b.nodes[None, :]
+        X = xq[:, None, :, None]
+        Y = yq[None, :, None, :]
+        ref = exact(X, Y, t)
+        wq = b.weights[None, None, :, None] * b.weights[None, None, None, :]
+        jac = 0.25 * self.hx * self.hy
+        ref_l1_global = jac * torch.sum(wq * ref.abs())
+        if radius is not None:
+            x0, y0 = float(center[0]), float(center[1])
+            mask = ((X - x0) ** 2 + (Y - y0) ** 2 <= radius ** 2).to(wq.dtype)
+            wq = wq * mask
+        abs_l1 = jac * torch.sum(wq * (num - ref).abs())
+        ref_l1 = jac * torch.sum(wq * ref.abs())
+        abs_l1_v = float(abs_l1.item())
+        ref_l1_v = float(ref_l1.item())
+        return {"absolute_l1": abs_l1_v, "reference_l1": ref_l1_v,
+                "relative_l1": abs_l1_v / ref_l1_v if ref_l1_v else abs_l1_v,
+                "coverage": (ref_l1_v / float(ref_l1_global.item())
+                             if float(ref_l1_global.item()) else 0.0),
+                "masked": radius is not None}
+
     def l2_difference(self, coeff_a: torch.Tensor, coeff_b: torch.Tensor) -> dict:
         """Exact L2 norm of the difference of two modal fields (polynomial)."""
         diff = coeff_a - coeff_b

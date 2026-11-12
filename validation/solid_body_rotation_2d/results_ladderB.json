@@ -1,0 +1,36 @@
+{
+  "anchor": "CASE-DG-SOLID-BODY-ROTATION-2D",
+  "generated_at_utc": "2026-11-12T12:18:38.146192+00:00",
+  "provenance": {
+    "git_commit": "d401c10374143b77ea3f7e3ab93870a76a30f331",
+    "host": "36cb7828dbd5",
+    "torch": "2.7.1",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38"
+  },
+  "runs": [
+    {
+      "ncells": 25,
+      "degree": 2,
+      "cfl": 0.5,
+      "steps": 1506,
+      "dt": 0.0006640106241699867,
+      "dofs": 5625,
+      "wall_s": 23.133,
+      "metrics": {
+        "relative_l1_disk": 0.023169243621963948,
+        "absolute_l1_disk": 0.00048699379734672626,
+        "reference_l1_disk": 0.021018976937385497,
+        "coverage": 1.0,
+        "relative_l2_disk": 0.013966396466811361,
+        "relative_l1_global": 0.02366554418669762,
+        "global_minus_disk_rel_l1": 0.0004963005647336712,
+        "projection_relative_l1_disk": 0.002948618853703474,
+        "mass_drift_rel": 1.650620826950596e-16,
+        "mass_drift_abs": 3.469446951953614e-18,
+        "peak_cell_average": 0.9592523395670159,
+        "peak_nodal": 0.9974526747582371,
+        "peak_retention": 0.9974526747582371
+      }
+    }
+  ]
+}
