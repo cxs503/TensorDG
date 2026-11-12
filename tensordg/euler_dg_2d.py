@@ -50,6 +50,8 @@ __all__ = [
     "solve_euler_dg_2d_vortex",
     "cell_fields",
     "legendre_operators",
+    "conservative_state",
+    "normalise_bcs",
 ]
 
 
@@ -226,13 +228,108 @@ def _traces(coeff, basis, signs, axis):
     return right, left
 
 
-def _axis_fluxes(coeff, basis, signs, weights, periodic, axis):
+# --- m16803 boundary conditions ---
+#
+# ``solve_euler_dg_2d`` historically exposed only periodic faces and a
+# zero-gradient ("outflow") outer face, which made the Woodward--Colella double
+# Mach reflection impossible: the reflecting floor and the tracked post-shock
+# inflow have no representation.  The boundary is now described per face as
+#
+#   * ``"outflow"`` / ``None`` -- interior trace on both sides (old behaviour),
+#   * ``"wall"`` -- impermeable inviscid slip wall, implemented with the exact
+#     wall flux ``(0, p, 0, 0)`` normal to the face (no mass, momentum or
+#     energy leak; free-stream preservation is exact, not O(M^2)),
+#   * ``callable(X, Y, t) -> state`` or ``-> (state, wall_mask)`` -- a general
+#     ghost state given at the face quadrature points ``X, Y`` (physical
+#     coordinates, shapes ``(n_face, q)``) and the stage time ``t``.  ``state``
+#     is a *conservative* ``(rho, rho u, rho v, E)`` array broadcastable to
+#     ``(n_face, q, 4)``; a ``True`` entry in ``wall_mask`` switches that point
+#     to the exact wall flux.  ``conservative_state`` builds the array from
+#     primitive variables.  This covers supersonic inflow, tracked moving
+#     post-shock states and piecewise wall/inflow segments on one face.
+
+
+def conservative_state(rho, velocity_x, velocity_y, pressure):
+    """Conservative variables ``(rho, rho u, rho v, E)`` from primitives."""
+    return _conservative(rho, velocity_x, velocity_y, pressure)
+
+
+def _wall_flux(state, axis):
+    """Exact inviscid slip-wall flux: only the normal pressure does work."""
+    pressure = _pressure(state).clamp_min(0.0)
+    flux = torch.zeros_like(state)
+    flux[..., 1 if axis == 0 else 2] = pressure
+    return flux
+
+
+def _face_points(geom, axis, high):
+    """Physical coordinates of the quadrature points of a boundary face."""
+    nodes = geom["nodes"]
+    count = nodes.numel()
+    if axis == 0:
+        x_face = geom["xmax"] if high else geom["xmin"]
+        X = torch.full((geom["ny"], count), x_face, device=nodes.device, dtype=nodes.dtype)
+        Y = geom["y"][:, None] + 0.5 * geom["dy"] * nodes[None, :]
+    else:
+        y_face = geom["ymax"] if high else geom["ymin"]
+        X = geom["x"][:, None] + 0.5 * geom["dx"] * nodes[None, :]
+        Y = torch.full((geom["nx"], count), y_face, device=nodes.device, dtype=nodes.dtype)
+    return X, Y
+
+
+def _ghost_state(bc, interior, X, Y, time, axis):
+    """Exterior trace of a boundary face and its optional wall mask."""
+    if bc is None or bc == "outflow":
+        return interior, None
+    if bc == "wall":
+        ghost = interior.clone()
+        ghost[..., 1 if axis == 0 else 2] = -ghost[..., 1 if axis == 0 else 2]
+        return ghost, torch.ones(interior.shape[:-1], device=interior.device, dtype=torch.bool)
+    if bc == "periodic":  # pragma: no cover - guarded in solve_euler_dg_2d
+        raise ValueError("a periodic axis must not carry a boundary condition")
+    out = bc(X, Y, time)
+    wall = None
+    if isinstance(out, tuple):
+        out, wall = out
+    state = torch.as_tensor(out, device=interior.device, dtype=interior.dtype)
+    state = torch.broadcast_to(state, interior.shape)
+    if wall is not None:
+        wall = torch.as_tensor(wall, device=interior.device, dtype=torch.bool)
+        wall = torch.broadcast_to(wall, interior.shape[:-1])
+    return state, wall
+
+
+def _boundary_flux(bc, interior, weights, basis, geom, axis, high, time):
+    """Integrated numerical flux through one boundary face."""
+    if bc is None or bc == "outflow":
+        # Zero-gradient outer face: both traces are the interior one, so HLLC
+        # collapses to the physical flux.  No quadrature coordinates needed,
+        # which keeps the residual callable without a geometry record.
+        flux = _hllc(interior, interior, axis)
+        if axis == 0:
+            return torch.einsum("ybv,b,bl->ylv", flux, weights, basis)
+        return torch.einsum("xav,a,ak->xkv", flux, weights, basis)
+    X, Y = _face_points(geom, axis, high)
+    ghost, wall = _ghost_state(bc, interior, X, Y, time, axis)
+    if high:
+        flux = _hllc(interior, ghost, axis)
+    else:
+        flux = _hllc(ghost, interior, axis)
+    if wall is not None:
+        flux = torch.where(wall.unsqueeze(-1), _wall_flux(interior, axis), flux)
+    if axis == 0:
+        return torch.einsum("ybv,b,bl->ylv", flux, weights, basis)
+    return torch.einsum("xav,a,ak->xkv", flux, weights, basis)
+
+
+def _axis_fluxes(coeff, basis, signs, weights, periodic, axis, geom, stage_time=0.0):
     """Integrated interface fluxes ``(F_right, F_left)`` per cell.
 
     ``F_right[x, y, l, v]`` (x direction) is the numerical flux of the face
     between cell ``x`` and cell ``x+1``, projected onto the test functions of
-    the remaining direction.  Non-periodic boundaries use the interior trace on
-    both sides, which makes HLLC collapse to the physical flux (outflow).
+    the remaining direction.  Non-periodic boundaries take their exterior trace
+    from ``geom["bcs"]`` (default ``None`` = outflow, i.e. the interior trace on
+    both sides, which makes HLLC collapse to the physical flux).
     """
     trace_right, trace_left = _traces(coeff, basis, signs, axis)
     if axis == 0:
@@ -247,8 +344,13 @@ def _axis_fluxes(coeff, basis, signs, weights, periodic, axis):
         flux_right = torch.einsum("xybv,b,bl->xylv", interface, weights, basis)
         flux_left = torch.roll(flux_right, shifts=1, dims=0)
         if not periodic:
-            outer = _hllc(trace_left[:1], trace_left[:1], axis)
-            flux_left[0] = torch.einsum("ybv,b,bl->ylv", outer[0], weights, basis)
+            bcs = geom["bcs"] if geom else {}
+            flux_left[0] = _boundary_flux(
+                bcs.get("left"), trace_left[0], weights, basis, geom, 0, False, stage_time
+            )
+            flux_right[-1] = _boundary_flux(
+                bcs.get("right"), trace_right[-1], weights, basis, geom, 0, True, stage_time
+            )
     else:
         neighbour = torch.roll(trace_left, shifts=-1, dims=1)
         if not periodic:
@@ -257,14 +359,39 @@ def _axis_fluxes(coeff, basis, signs, weights, periodic, axis):
         flux_right = torch.einsum("xyav,a,ak->xykv", interface, weights, basis)
         flux_left = torch.roll(flux_right, shifts=1, dims=1)
         if not periodic:
-            outer = _hllc(trace_left[:, :1], trace_left[:, :1], axis)
-            flux_left[:, 0] = torch.einsum(
-                "xav,a,ak->xkv", outer[:, 0], weights, basis
+            bcs = geom["bcs"] if geom else {}
+            flux_left[:, 0] = _boundary_flux(
+                bcs.get("bottom"), trace_left[:, 0], weights, basis, geom, 1, False, stage_time
+            )
+            flux_right[:, -1] = _boundary_flux(
+                bcs.get("top"), trace_right[:, -1], weights, basis, geom, 1, True, stage_time
             )
     return flux_right, flux_left
 
 
-def _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic):
+def normalise_bcs(bcs):
+    """Validate and normalise the ``bcs`` mapping of ``solve_euler_dg_2d``."""
+    if bcs is None:
+        return {}
+    if not isinstance(bcs, dict):
+        raise ValueError("bcs must be a dict keyed by 'left'/'right'/'bottom'/'top'")
+    allowed = {"left", "right", "bottom", "top"}
+    unknown = set(bcs) - allowed
+    if unknown:
+        raise ValueError(f"unknown boundary faces {sorted(unknown)}")
+    for face, value in bcs.items():
+        if value is None or value in ("outflow", "wall"):
+            continue
+        if not callable(value):
+            raise ValueError(
+                f"boundary {face!r} must be 'outflow', 'wall', None or a callable"
+            )
+    return {face: value for face, value in bcs.items() if value not in (None, "outflow")}
+# --- end m16803 boundary conditions ---
+
+
+def _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic, geom=None,
+         stage_time=0.0):
     """DG residual of the 2-D Euler equations on a Cartesian mesh."""
     degree = coeff.shape[2] - 1
     modes = torch.arange(degree + 1, device=coeff.device, dtype=coeff.dtype)
@@ -280,8 +407,12 @@ def _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic):
         weights, weights, basis, derivative,
     )
 
-    right_x, left_x = _axis_fluxes(coeff, basis, signs, weights, periodic[0], 0)
-    right_y, left_y = _axis_fluxes(coeff, basis, signs, weights, periodic[1], 1)
+    right_x, left_x = _axis_fluxes(
+        coeff, basis, signs, weights, periodic[0], 0, geom, stage_time
+    )
+    right_y, left_y = _axis_fluxes(
+        coeff, basis, signs, weights, periodic[1], 1, geom, stage_time
+    )
 
     face_x = (
         right_x.unsqueeze(2)
@@ -600,6 +731,7 @@ def solve_euler_dg_2d(
     limiter_stage="every",
     periodic=(True, True),
     quadrature=None,
+    bcs=None,
     initial_projection="l2",
     device="cpu",
     dtype=torch.float64,
@@ -633,7 +765,17 @@ def solve_euler_dg_2d(
         ``docs/limiter_verification.md``).  ``"final"`` limits only the
         updated state at the end of the time step.
     periodic : (bool, bool)
-        Periodicity in ``x`` and ``y``; non-periodic faces are outflow.
+        Periodicity in ``x`` and ``y``; non-periodic faces are outflow unless
+        ``bcs`` overrides them.
+    bcs : dict or None
+        Boundary conditions for the non-periodic faces, keyed by ``"left"`` /
+        ``"right"`` / ``"bottom"`` / ``"top"``.  Each value is ``"outflow"``
+        (default), ``"wall"`` (impermeable inviscid slip wall, exact wall flux
+        ``(0, p, 0, 0)``) or ``callable(X, Y, t)`` returning a conservative
+        ghost state, or ``(state, wall_mask)`` where ``True`` switches that
+        point to the wall flux.  ``X``/``Y`` are the physical coordinates of
+        the face quadrature points, shape ``(n_face, quadrature)``; ``t`` is the
+        RK stage time.  Entries of a periodic axis are ignored.
     initial_projection : str
         ``"l2"`` (default, full modal L2 projection -- preserves design order)
         or ``"cell-average"`` (P0 only, the legacy m2143 behaviour).
@@ -651,6 +793,8 @@ def solve_euler_dg_2d(
     (xmin, xmax), (ymin, ymax) = domain
     if not xmax > xmin or not ymax > ymin:
         raise ValueError("each domain interval must be increasing")
+    periodic_flags_pre = (bool(periodic[0]), bool(periodic[1]))
+    periodic_flags = periodic_flags_pre
     dev = torch.device(device)
     order = quadrature if quadrature is not None else max(degree + 2, 3)
     nodes, weights, basis, derivative, signs = legendre_operators(
@@ -660,6 +804,25 @@ def solve_euler_dg_2d(
     dy = (ymax - ymin) / ny
     x = xmin + (torch.arange(nx, device=dev, dtype=dtype) + 0.5) * dx
     y = ymin + (torch.arange(ny, device=dev, dtype=dtype) + 0.5) * dy
+
+    face_bcs = normalise_bcs(bcs)
+    for face, axis in (("left", 0), ("right", 0), ("bottom", 1), ("top", 1)):
+        if face in face_bcs and periodic_flags_pre[axis]:
+            face_bcs.pop(face)  # periodic axis wins; documented above
+    geom = {
+        "nodes": nodes,
+        "x": x,
+        "y": y,
+        "dx": dx,
+        "dy": dy,
+        "xmin": xmin,
+        "xmax": xmax,
+        "ymin": ymin,
+        "ymax": ymax,
+        "nx": nx,
+        "ny": ny,
+        "bcs": face_bcs,
+    }
 
     if initial_projection == "l2":
         coeff = _initial_coefficients(
@@ -671,8 +834,6 @@ def solve_euler_dg_2d(
         coeff[..., 0, 0, :] = averages
     else:
         raise ValueError("initial_projection must be 'l2' or 'cell-average'")
-
-    periodic_flags = (bool(periodic[0]), bool(periodic[1]))
 
     limit_each_stage = limiter_stage == "every"
 
@@ -705,19 +866,23 @@ def solve_euler_dg_2d(
             dt = min(cfl / max(rate, 1e-12), final_time - time)
         else:
             dt = min(prescribed_dt, final_time - time)
-        k1 = _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic)
+        k1 = _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic, geom, time)
         u1 = coeff + dt * k1
         if limit_each_stage:
             u1 = impose(u1)
         else:
             u1 = _positivity_filter(u1, basis, signs)
-        k2 = _rhs(u1, basis, derivative, weights, signs, dx, dy, periodic)
+        k2 = _rhs(
+            u1, basis, derivative, weights, signs, dx, dy, periodic, geom, time + dt
+        )
         u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
         if limit_each_stage:
             u2 = impose(u2)
         else:
             u2 = _positivity_filter(u2, basis, signs)
-        k3 = _rhs(u2, basis, derivative, weights, signs, dx, dy, periodic)
+        k3 = _rhs(
+            u2, basis, derivative, weights, signs, dx, dy, periodic, geom, time + 0.5 * dt
+        )
         coeff = impose(coeff / 3.0 + (2.0 / 3.0) * (u2 + dt * k3))
         if not torch.isfinite(coeff).all():
             raise FloatingPointError("non-finite 2-D DG state; reduce the CFL number")
@@ -741,6 +906,10 @@ def solve_euler_dg_2d(
         "prescribed_dt": prescribed_dt,
         "domain": domain,
         "periodic": tuple(periodic),
+        "bcs": {
+            face: (value if isinstance(value, str) else getattr(value, "__name__", "callable"))
+            for face, value in face_bcs.items()
+        },
         "flux": "hllc",
         "limiter": limiter if limiter else "local positivity fallback",
         "limiter_stage": limiter_stage,
