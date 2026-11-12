@@ -86,6 +86,16 @@ ALLOWED_VACUOUS: dict[str, str] = {
     "tests/test_dg_advection_bench.py":
         "artifacts/dg_advection_bench.json not committed (filtered by the merge "
         "gate); regenerate with tools/run_dg_advection_bench.py and drop this entry",
+    # Registered 2026-11-12 (m16815).  Found already-live on main: the dynamic
+    # run of m16606 (audit AUDIT-m16606-CASE-LAX-DG-R3-region-rule.md) produced
+    # runs/lax_region_band/metrics.json, but that artifact did not survive the
+    # merge gate, so the six R3-region-rule invariants in
+    # tests/test_lax_region_band.py have been skipping since the merge while
+    # main stayed green.  Regenerate with `python -m benchmarks.lax_region_band`
+    # (243 s on 1 core) and delete this entry.
+    "tests/test_lax_region_band.py":
+        "runs/lax_region_band/metrics.json not in the tree (merge-gate filtered); "
+        "regenerate with `python -m benchmarks.lax_region_band` and drop this entry",
     "tests/test_shu_osher_case_pool.py":
         "runs/shu_osher_case_pool/metrics.json not committed; regenerate with "
         "python -m benchmarks.shu_osher_case_pool and drop this entry",
