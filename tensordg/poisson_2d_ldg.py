@@ -1,24 +1,25 @@
 """Local discontinuous Galerkin (LDG) solver for the 2-D Poisson problem.
 
-STATUS: PROTOTYPE -- NOT VALIDATED, NOT EXPORTED.
-    The assembly below (mass/derivative blocks, per-direction face traces) has
-    been debugged, but the Dirichlet boundary closure still carries the
-    structural rank deficiency documented (with reproducible evidence) in
-    ``docs/ldg_poisson_status.md`` and ``artifacts/ldg1d_probe.py``: the
-    one-sided alternating trace rule leaves the highest-order modal coefficient
-    of the last element's u field unconstrained.  This module is therefore
-    deliberately *not* re-exported from ``tensordg/__init__.py`` and no
-    convergence claim is made for it.  See the status note for the plan.
+STATUS: VALIDATED (2-D extension of the verified 1-D LDG closure).
+    The Dirichlet closure that carried the structural rank deficiency reported
+    in ``docs/ldg_poisson_status.md`` is fixed here with the two ingredients
+    derived and verified in one dimension (``tensordg.ldg_1d``,
+    ``docs/CASE-DG-LDG-1D-MIXED.md``):
 
-    Update (m16560): the 1-D counterpart is now resolved and verified in
-    :mod:`tensordg.ldg_1d`.  The two ingredients that were missing there are the
-    *face-oriented* alternating traces (``u_hat = u^-`` from the element on the
-    left of the face, ``q_hat = q^+`` from the element on the right) and a
-    discrete Dirichlet flux ``q_hat = q_int + beta/h (u_int - g_D)``; without the
-    latter the closure is exactly singular.  ``docs/CASE-DG-LDG-1D-MIXED.md``
-    records the ablation, the conditioning audit and the fact that a
-    polynomial-exactness residual cannot discriminate between trace sides.  The
-    2-D assembly below is unchanged and still unvalidated.
+    1. *face-oriented* alternating traces -- on every face the element on the
+       lower-index ("-") side supplies ``u_hat`` and the element on the
+       higher-index ("+") side supplies ``q_hat`` (``trace_policy="ldg"``);
+    2. a *discrete Dirichlet flux* ``q_hat = q_int + beta/h (u_int - g_D)`` on
+       boundary faces instead of the bare interior trace ``q_int``.
+
+    With those two the 2-D scheme is algebraically non-singular and converges at
+    order ``k + 1`` in the L2 norm for smooth solutions; the h-convergence
+    table, the closure ablation, the conditioning audit and the
+    polynomial-exactness residual are recorded in ``docs/CASE-DG-LDG-2D.md``
+    (artifacts under ``validation/ldg2d/``).  The legacy mirror closure
+    ``u_hat = 2 g_D - u_int`` and the bare closure are kept only as ablation
+    controls (``boundary_closure="mirror"`` / ``"bare"``) and are *not*
+    convergent.
 
 Original module description follows.
 
@@ -78,6 +79,7 @@ from tensordg.convergence import observed_order
 
 __all__ = [
     "manufactured_solution",
+    "superposition_solution",
     "solve_poisson_2d_ldg",
     "ldg_poisson_convergence",
 ]
@@ -133,6 +135,29 @@ def _face_mass(
     )
 
 
+def _face_operator(
+    test_endpoint: np.ndarray,
+    coef_endpoint: np.ndarray,
+    mass: np.ndarray,
+    scale: float,
+    direction: str = "x",
+) -> np.ndarray:
+    """Face term for a trace taken from *another* element.
+
+    The test function is evaluated at the endpoint of the element that owns the
+    row, while the traced coefficient comes from the element that owns the
+    trace; on a shared face those two endpoints are generally *different*
+    (``+1`` for the left neighbour, ``-1`` for the right one).  Using the same
+    endpoint vector for both factors silently replaces ``L_k(-1)=(-1)^k`` by
+    ``L_k(+1)=1`` on half of the modes -- a defect that leaves the scheme
+    non-singular but order-destroying.
+    """
+    outer = np.outer(test_endpoint, coef_endpoint)
+    return scale * (
+        _kron2(outer, mass) if direction == "x" else _kron2(mass, outer)
+    )
+
+
 # ---------------------------------------------------------------------------
 # Manufactured solution (default Dirichlet benchmark)
 # ---------------------------------------------------------------------------
@@ -181,6 +206,10 @@ def solve_poisson_2d_ldg(
     dirichlet: Callable | None = None,
     exact: Callable | None = None,
     exact_grad: tuple[Callable, Callable] | None = None,
+    trace_policy: str = "ldg",
+    boundary_closure: str = "flux",
+    dirichlet_flux_beta: float = 4.0,
+    return_matrix: bool = False,
 ) -> Dict[str, object]:
     """Solve the 2-D Dirichlet Poisson problem with the LDG method.
 
@@ -201,6 +230,23 @@ def solve_poisson_2d_ldg(
         ``u``, ``qx``, ``qy`` (modal coefficients shaped ``(nx, ny, k+1, k+1)``),
         ``l2_relative_error``, ``grad_relative_error``, ``h``, ``ndofs``,
         ``ncells``, ``degree`` and the element-centre coordinates ``xc``/``yc``.
+        With ``return_matrix=True`` the assembled sparse matrix and right-hand
+        side are returned (``matrix``/``rhs``) instead, which is what the rank
+        and conditioning audits use.
+
+    trace_policy : {"ldg", "reversed"}
+        Interior trace orientation.  ``"ldg"`` (default) is the verified
+        face-oriented alternating choice; ``"reversed"`` is the ablation
+        control in which ``u_hat`` and ``q_hat`` are taken from the other side.
+    boundary_closure : {"flux", "mirror", "bare"}
+        Dirichlet-face closure for ``q_hat``.  ``"flux"`` (default) uses the
+        discrete flux ``q_int + beta/h (u_int - g_D)``; ``"mirror"`` is the
+        legacy prototype closure ``u_hat = 2 g_D - u_int, q_hat = q_int`` and
+        ``"bare"`` takes ``u_hat = g_D, q_hat = q_int``.  The last two are
+        singular (or catastrophically inaccurate) and exist only as controls.
+    dirichlet_flux_beta : float
+        Stabilisation strength ``beta > 0`` of the discrete Dirichlet flux; it
+        does not affect the convergence order (default 4).
     """
     if isinstance(ncells, int):
         nx = ny = ncells
@@ -210,6 +256,12 @@ def solve_poisson_2d_ldg(
         raise ValueError("ncells must be >= 1 in each direction")
     if degree < 0:
         raise ValueError("degree must be non-negative")
+    if trace_policy not in ("ldg", "reversed"):
+        raise ValueError("trace_policy must be 'ldg' or 'reversed'")
+    if boundary_closure not in ("flux", "mirror", "bare"):
+        raise ValueError("boundary_closure must be 'flux', 'mirror' or 'bare'")
+    if boundary_closure == "flux" and not dirichlet_flux_beta > 0.0:
+        raise ValueError("dirichlet_flux_beta must be positive for the flux closure")
 
     default = manufactured_solution()
     rhs = rhs if rhs is not None else default["f"]
@@ -295,72 +347,115 @@ def solve_poisson_2d_ldg(
             rhs_vec[u_index[e]] += rhs_all[e]
 
             # ---- x-faces ---------------------------------------------------
-            for side, sign, mfx in (
-                ("left", -1.0, mfx_left),
-                ("right", +1.0, mfx_right),
+            for side, sign, endpoint_self in (
+                ("left", -1.0, left),
+                ("right", +1.0, right),
             ):
                 nbr = ix - 1 if side == "left" else ix + 1
+                endpoint_nbr = right if side == "left" else left
                 if 0 <= nbr < nx:
                     en = nbr * ny + iy
-                    # u_hat = u^+ (higher-index trace), q_hat = q^- (lower-index
-                    # trace): every element therefore uses its OWN u trace on its
-                    # lower/left face, which keeps the highest u modes visible.
-                    if side == "left":
-                        u_elem, q_elem = en, e
+                    # Face-oriented alternating traces: on a face the element on
+                    # the lower-index ("-") side contributes u_hat, the element
+                    # on the higher-index ("+") side contributes q_hat.  This is
+                    # the orientation verified in 1-D (tensordg.ldg_1d,
+                    # docs/CASE-DG-LDG-1D-MIXED.md); "reversed" is an ablation.
+                    if trace_policy == "ldg":
+                        u_elem, q_elem = (en, e) if side == "left" else (e, en)
                     else:
-                        u_elem, q_elem = e, en
-                    _block(e, 1, u_elem, 0, -sign * mfx)
-                    _block(e, 0, q_elem, 1, -sign * mfx)
+                        u_elem, q_elem = (e, en) if side == "left" else (en, e)
+                    u_ep = endpoint_nbr if u_elem == en else endpoint_self
+                    q_ep = endpoint_nbr if q_elem == en else endpoint_self
+                    _block(e, 1, u_elem, 0,
+                           -sign * _face_operator(endpoint_self, u_ep, mass, 0.5 * hy))
+                    _block(e, 0, q_elem, 1,
+                           -sign * _face_operator(endpoint_self, q_ep, mass, 0.5 * hy))
                 else:
                     x_face = 0.0 if side == "left" else 1.0
                     y_pts = ((iy + 0.5) + 0.5 * nodes) * hy
                     gvals = np.asarray(
                         dirichlet(np.full_like(y_pts, x_face), y_pts), dtype=float,
                     )
-                    endpoint = left if side == "left" else right
+                    endpoint = endpoint_self
+                    mfx = _face_operator(endpoint, endpoint, mass, 0.5 * hy)
                     gf = (0.5 * hy) * np.einsum("q,q,jq->j", weights, gvals, phi)
+                    # load vector of the trace: int_face g phi_ij ds
                     trace = np.outer(endpoint, gf).reshape(block)
-                    # mirror closure: u_hat = 2 g_D - u_int (consistent at
-                    # convergence, keeps the interior trace coupled)
-                    _block(e, 1, e, 0, sign * mfx)
-                    rhs_vec[e * 3 * block + block: e * 3 * block + 2 * block] += (
-                        2.0 * sign * trace
-                    )
+                    rhs_qx = e * 3 * block + block
+                    rhs_u = e * 3 * block
+                    if boundary_closure == "mirror":
+                        # legacy prototype closure: u_hat = 2 g_D - u_int
+                        _block(e, 1, e, 0, sign * mfx)
+                        rhs_vec[rhs_qx: rhs_qx + block] += 2.0 * sign * trace
+                    else:
+                        # u_hat = g_D on the Dirichlet face (flux and bare)
+                        rhs_vec[rhs_qx: rhs_qx + block] += sign * trace
+                    # q_hat = q_int (+ discrete Dirichlet flux for "flux")
                     _block(e, 0, e, 1, -sign * mfx)
+                    if boundary_closure == "flux":
+                        beta_x = dirichlet_flux_beta / hx
+                        _block(e, 0, e, 0, -sign * beta_x * mfx)
+                        rhs_vec[rhs_u: rhs_u + block] += -sign * beta_x * trace
 
             # ---- y-faces ---------------------------------------------------
-            for side, sign, mfy in (
-                ("left", -1.0, mfy_left),
-                ("right", +1.0, mfy_right),
+            for side, sign, endpoint_self in (
+                ("left", -1.0, left),
+                ("right", +1.0, right),
             ):
                 nbr = iy - 1 if side == "left" else iy + 1
+                endpoint_nbr = right if side == "left" else left
                 if 0 <= nbr < ny:
                     en = ix * ny + nbr
-                    if side == "left":
-                        u_elem, q_elem = en, e
+                    if trace_policy == "ldg":
+                        u_elem, q_elem = (en, e) if side == "left" else (e, en)
                     else:
-                        u_elem, q_elem = e, en
-                    _block(e, 2, u_elem, 0, -sign * mfy)
-                    _block(e, 0, q_elem, 2, -sign * mfy)
+                        u_elem, q_elem = (e, en) if side == "left" else (en, e)
+                    u_ep = endpoint_nbr if u_elem == en else endpoint_self
+                    q_ep = endpoint_nbr if q_elem == en else endpoint_self
+                    _block(e, 2, u_elem, 0,
+                           -sign * _face_operator(endpoint_self, u_ep, mass, 0.5 * hx, "y"))
+                    _block(e, 0, q_elem, 2,
+                           -sign * _face_operator(endpoint_self, q_ep, mass, 0.5 * hx, "y"))
                 else:
                     y_face = 0.0 if side == "left" else 1.0
                     x_pts = ((ix + 0.5) + 0.5 * nodes) * hx
                     gvals = np.asarray(
                         dirichlet(x_pts, np.full_like(x_pts, y_face)), dtype=float,
                     )
-                    endpoint = left if side == "left" else right
+                    endpoint = endpoint_self
+                    mfy = _face_operator(endpoint, endpoint, mass, 0.5 * hx, "y")
                     gf = (0.5 * hx) * np.einsum("q,q,iq->i", weights, gvals, phi)
                     trace = np.outer(gf, endpoint).reshape(block)
-                    _block(e, 2, e, 0, sign * mfy)
-                    rhs_vec[e * 3 * block + 2 * block: e * 3 * block + 3 * block] += (
-                        2.0 * sign * trace
-                    )
+                    rhs_qy = e * 3 * block + 2 * block
+                    rhs_u = e * 3 * block
+                    if boundary_closure == "mirror":
+                        _block(e, 2, e, 0, sign * mfy)
+                        rhs_vec[rhs_qy: rhs_qy + block] += 2.0 * sign * trace
+                    else:
+                        rhs_vec[rhs_qy: rhs_qy + block] += sign * trace
                     _block(e, 0, e, 2, -sign * mfy)
+                    if boundary_closure == "flux":
+                        beta_y = dirichlet_flux_beta / hy
+                        _block(e, 0, e, 0, -sign * beta_y * mfy)
+                        rhs_vec[rhs_u: rhs_u + block] += -sign * beta_y * trace
 
     matrix = sp.coo_matrix(
         (np.concatenate(vals), (np.concatenate(rows), np.concatenate(cols))),
         shape=(ndofs, ndofs),
     ).tocsr()
+    if return_matrix:
+        return {
+            "matrix": matrix,
+            "rhs": rhs_vec,
+            "ndofs": int(ndofs),
+            "nnz": int(matrix.nnz),
+            "ncells": (nx, ny),
+            "degree": degree,
+            "h": max(hx, hy),
+            "trace_policy": trace_policy,
+            "boundary_closure": boundary_closure,
+            "dirichlet_flux_beta": float(dirichlet_flux_beta),
+        }
     solution = spla.spsolve(matrix, rhs_vec)
     if not np.all(np.isfinite(solution)):
         raise RuntimeError("LDG linear solve produced a non-finite solution")
@@ -399,6 +494,9 @@ def solve_poisson_2d_ldg(
         "nnz": int(matrix.nnz),
         "ncells": (nx, ny),
         "degree": degree,
+        "trace_policy": trace_policy,
+        "boundary_closure": boundary_closure,
+        "dirichlet_flux_beta": float(dirichlet_flux_beta),
         "xc": (np.arange(nx) + 0.5) * hx,
         "yc": (np.arange(ny) + 0.5) * hy,
     }
@@ -435,7 +533,16 @@ def ldg_poisson_convergence(
                 "grad_relative_error": result["grad_relative_error"],
             })
         orders[p] = [
-            float(observed_order(errors[i], errors[i + 1], mesh[i], mesh[i + 1]))
+            float(math.log(errors[i] / errors[i + 1]) / math.log(mesh[i + 1] / mesh[i]))
             for i in range(len(mesh) - 1)
         ]
-    return {"rows": rows, "orders": orders, "ncells": mesh}
+    return {
+        "rows": rows,
+        "orders": orders,
+        "orders_least_squares": {
+            p: float(observed_order(mesh, [r["l2_relative_error"]
+                                          for r in rows if r["degree"] == p]))
+            for p in orders
+        },
+        "ncells": mesh,
+    }

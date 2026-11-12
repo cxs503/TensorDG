@@ -59,9 +59,10 @@ EXCLUDED_NAMES = {"main"}
 # ``main``.  The prototype is not a capability: it is excluded from the coverage
 # denominator *and* required to carry its status marker (see
 # ``prototype_report``), so neither silent export nor silent deletion is possible.
-PROTOTYPE_MODULES = {
-    "tensordg.poisson_2d_ldg": "STATUS: PROTOTYPE",
-}
+#: Modules carrying a "STATUS: PROTOTYPE" marker that must stay out of the
+#: public namespace.  Empty since the 2-D LDG closure was validated
+#: (docs/CASE-DG-LDG-2D.md).
+PROTOTYPE_MODULES: dict[str, str] = {}
 DOC_GLOBS = ("docs/**/*.md", "README.md", "AGENTS.md", "TASK_COMPLETION_SUMMARY.md")
 
 
@@ -141,8 +142,13 @@ def prototype_report(inventory: list[dict], registry: dict[str, dict]) -> dict:
             "leaked_exports": leaked,
             "ok": (marker in text) and not leaked,
         })
+    # The gate reads "every registered prototype is still marked and still
+    # unexported".  It is vacuously satisfied when no prototype is registered
+    # any more (the 2-D LDG module was promoted after validation -- see
+    # docs/CASE-DG-LDG-2D.md); requiring a non-empty registry would make the
+    # gate impossible to keep green once the last prototype is validated.
     return {"prototypes": records,
-            "all_ok": all(r["ok"] for r in records) and bool(records)}
+            "all_ok": all(r["ok"] for r in records)}
 
 
 def coverage_report(inventory: list[dict], registry: dict[str, dict]) -> dict:

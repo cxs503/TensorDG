@@ -1,0 +1,494 @@
+{
+  "ablation": {
+    "bare_k1": {
+      "closure": "bare",
+      "degree": 1,
+      "errors": [],
+      "failure": "RuntimeError: LDG linear solve produced a non-finite solution"
+    },
+    "bare_k2": {
+      "closure": "bare",
+      "degree": 2,
+      "errors": [
+        4.9881096671301004e+73,
+        2.636275844465466e+71,
+        9.2082770532241e+68
+      ],
+      "failure": null
+    },
+    "flux_k1": {
+      "closure": "flux",
+      "degree": 1,
+      "errors": [
+        0.05162345071774476,
+        0.013204481083603748,
+        0.003314651139169524
+      ],
+      "failure": null
+    },
+    "flux_k2": {
+      "closure": "flux",
+      "degree": 2,
+      "errors": [
+        0.0032925838643383045,
+        0.0004078032756100474,
+        5.152899726453735e-05
+      ],
+      "failure": null
+    },
+    "mirror_k1": {
+      "closure": "mirror",
+      "degree": 1,
+      "errors": [
+        210097962544834.25,
+        22963022824279.87,
+        2474014581254.9175
+      ],
+      "failure": null
+    },
+    "mirror_k2": {
+      "closure": "mirror",
+      "degree": 2,
+      "errors": [
+        1794672424793.899,
+        12040304497.495369,
+        84366339.92960635
+      ],
+      "failure": null
+    }
+  },
+  "beta_sensitivity": {
+    "1": {
+      "max_relative_spread": 0.0028981419302546844,
+      "rows": [
+        {
+          "beta": 1.0,
+          "grad_relative_error": 0.0033984072615279954,
+          "l2_relative_error": 0.0033242574686201177
+        },
+        {
+          "beta": 2.0,
+          "grad_relative_error": 0.0034548626664018104,
+          "l2_relative_error": 0.0033151406006261103
+        },
+        {
+          "beta": 4.0,
+          "grad_relative_error": 0.0035369206156545207,
+          "l2_relative_error": 0.003314651139169524
+        },
+        {
+          "beta": 8.0,
+          "grad_relative_error": 0.0036229092119065046,
+          "l2_relative_error": 0.0033156120647889913
+        },
+        {
+          "beta": 16.0,
+          "grad_relative_error": 0.0036924350870895187,
+          "l2_relative_error": 0.0033165043449641493
+        }
+      ]
+    },
+    "2": {
+      "max_relative_spread": 0.01347401107343031,
+      "rows": [
+        {
+          "beta": 1.0,
+          "grad_relative_error": 9.846292932968468e-05,
+          "l2_relative_error": 5.1865717894093854e-05
+        },
+        {
+          "beta": 2.0,
+          "grad_relative_error": 0.00015285475801954368,
+          "l2_relative_error": 5.15925041760981e-05
+        },
+        {
+          "beta": 4.0,
+          "grad_relative_error": 0.00022996836448090205,
+          "l2_relative_error": 5.152899726453735e-05
+        },
+        {
+          "beta": 8.0,
+          "grad_relative_error": 0.00031483720883376316,
+          "l2_relative_error": 5.1772946047114743e-05
+        },
+        {
+          "beta": 16.0,
+          "grad_relative_error": 0.0003881858433576872,
+          "l2_relative_error": 5.222329954428248e-05
+        }
+      ]
+    }
+  },
+  "case": "CASE-DG-LDG-2D",
+  "conditioning": [
+    {
+      "condition": 2487.6240338892253,
+      "degree": 1,
+      "ncells": 2,
+      "ndofs": 48,
+      "sigma_max": 12.716837263645491,
+      "sigma_min": 0.005112041486334898
+    },
+    {
+      "condition": 30427.454007727698,
+      "degree": 1,
+      "ncells": 4,
+      "ndofs": 192,
+      "sigma_max": 12.643159827418431,
+      "sigma_min": 0.00041551816409639243
+    },
+    {
+      "condition": 37030.4971432896,
+      "degree": 2,
+      "ncells": 2,
+      "ndofs": 108,
+      "sigma_max": 16.88882673596577,
+      "sigma_min": 0.0004560788549668781
+    },
+    {
+      "condition": 78760.25958987058,
+      "degree": 2,
+      "ncells": 4,
+      "ndofs": 432,
+      "sigma_max": 16.794538970385926,
+      "sigma_min": 0.00021323620640460516
+    }
+  ],
+  "config": {
+    "beta_values": [
+      1.0,
+      2.0,
+      4.0,
+      8.0,
+      16.0
+    ],
+    "grids": [
+      4,
+      8,
+      16,
+      32
+    ],
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+    "python": "3.11.6",
+    "scipy": "1.16.0"
+  },
+  "convergence": {
+    "homogeneous": {
+      "1": {
+        "finest_error": 0.0008293379572807416,
+        "least_squares_order": 1.9873866604093287,
+        "local_orders": [
+          1.9669989732995463,
+          1.9940986643706624,
+          1.998825008904004
+        ],
+        "local_orders_grad": [
+          2.0996201205030087,
+          2.0746878645359854,
+          2.043817554657446
+        ],
+        "rows": [
+          {
+            "degree": 1,
+            "grad_relative_error": 0.06385828150753331,
+            "l2_relative_error": 0.05162345071774476,
+            "ncells": 4,
+            "ndofs": 192
+          },
+          {
+            "degree": 1,
+            "grad_relative_error": 0.014899393535980372,
+            "l2_relative_error": 0.013204481083603748,
+            "ncells": 8,
+            "ndofs": 768
+          },
+          {
+            "degree": 1,
+            "grad_relative_error": 0.0035369206156545207,
+            "l2_relative_error": 0.003314651139169524,
+            "ncells": 16,
+            "ndofs": 3072
+          },
+          {
+            "degree": 1,
+            "grad_relative_error": 0.0008577780382888817,
+            "l2_relative_error": 0.0008293379572807416,
+            "ncells": 32,
+            "ndofs": 12288
+          }
+        ]
+      },
+      "2": {
+        "finest_error": 6.485233428654992e-06,
+        "least_squares_order": 2.994795484536336,
+        "local_orders": [
+          3.013274918653585,
+          2.98441694004389,
+          2.990154109742355
+        ],
+        "local_orders_grad": [
+          2.456552252890031,
+          2.5046311571494586,
+          2.510351496331631
+        ],
+        "rows": [
+          {
+            "degree": 2,
+            "grad_relative_error": 0.007163629512264408,
+            "l2_relative_error": 0.0032925838643383045,
+            "ncells": 4,
+            "ndofs": 432
+          },
+          {
+            "degree": 2,
+            "grad_relative_error": 0.0013050802063182757,
+            "l2_relative_error": 0.0004078032756100474,
+            "ncells": 8,
+            "ndofs": 1728
+          },
+          {
+            "degree": 2,
+            "grad_relative_error": 0.00022996836448090205,
+            "l2_relative_error": 5.152899726453735e-05,
+            "ncells": 16,
+            "ndofs": 6912
+          },
+          {
+            "degree": 2,
+            "grad_relative_error": 4.036240134394277e-05,
+            "l2_relative_error": 6.485233428654992e-06,
+            "ncells": 32,
+            "ndofs": 27648
+          }
+        ]
+      }
+    },
+    "non_homogeneous": {
+      "1": {
+        "finest_error": 0.0004170491836000428,
+        "least_squares_order": 1.9873866604094026,
+        "local_orders": [
+          1.9669989732995616,
+          1.9940986643706995,
+          1.9988250089041841
+        ],
+        "local_orders_grad": [
+          2.0996201205030185,
+          2.074687864536039,
+          2.0438175546576978
+        ],
+        "rows": [
+          {
+            "degree": 1,
+            "grad_relative_error": 0.05823029326992028,
+            "l2_relative_error": 0.02595988497505601,
+            "ncells": 4,
+            "ndofs": 192
+          },
+          {
+            "degree": 1,
+            "grad_relative_error": 0.01358627314519474,
+            "l2_relative_error": 0.006640137482476059,
+            "ncells": 8,
+            "ndofs": 768
+          },
+          {
+            "degree": 1,
+            "grad_relative_error": 0.003225203056829586,
+            "l2_relative_error": 0.001666838638427137,
+            "ncells": 16,
+            "ndofs": 3072
+          },
+          {
+            "degree": 1,
+            "grad_relative_error": 0.0007821799389348609,
+            "l2_relative_error": 0.0004170491836000428,
+            "ncells": 32,
+            "ndofs": 12288
+          }
+        ]
+      },
+      "2": {
+        "finest_error": 3.261229373548695e-06,
+        "least_squares_order": 2.9947954845351856,
+        "local_orders": [
+          3.0132749186534182,
+          2.984416940042212,
+          2.990154109740927
+        ],
+        "local_orders_grad": [
+          2.4565522528901775,
+          2.5046311571502047,
+          2.510351496328462
+        ],
+        "rows": [
+          {
+            "degree": 2,
+            "grad_relative_error": 0.006532281131414389,
+            "l2_relative_error": 0.0016557416677991771,
+            "ncells": 4,
+            "ndofs": 432
+          },
+          {
+            "degree": 2,
+            "grad_relative_error": 0.001190060260949986,
+            "l2_relative_error": 0.00020507203567564125,
+            "ncells": 8,
+            "ndofs": 1728
+          },
+          {
+            "degree": 2,
+            "grad_relative_error": 0.00020970068392677746,
+            "l2_relative_error": 2.59123871665026e-05,
+            "ncells": 16,
+            "ndofs": 6912
+          },
+          {
+            "degree": 2,
+            "grad_relative_error": 3.680516311830958e-05,
+            "l2_relative_error": 3.261229373548695e-06,
+            "ncells": 32,
+            "ndofs": 27648
+          }
+        ]
+      }
+    }
+  },
+  "figures": [
+    {
+      "caption": "G1/G2 convergence of the 2-D LDG solver",
+      "name": "fig_ldg2d_convergence.png"
+    },
+    {
+      "caption": "G4 closure/orientation ablation",
+      "name": "fig_ldg2d_ablation.png"
+    },
+    {
+      "caption": "G3 beta insensitivity and G6 conditioning",
+      "name": "fig_ldg2d_beta_condition.png"
+    }
+  ],
+  "gate_results": {
+    "G1/homogeneous/k1": {
+      "finest_error": 0.0008293379572807416,
+      "measured_order": 1.9873866604093287,
+      "pass": true,
+      "target_order": 1.7
+    },
+    "G1/homogeneous/k2": {
+      "finest_error": 6.485233428654992e-06,
+      "measured_order": 2.994795484536336,
+      "pass": true,
+      "target_order": 2.7
+    },
+    "G1/non_homogeneous/k1": {
+      "finest_error": 0.0004170491836000428,
+      "measured_order": 1.9873866604094026,
+      "pass": true,
+      "target_order": 1.7
+    },
+    "G1/non_homogeneous/k2": {
+      "finest_error": 3.261229373548695e-06,
+      "measured_order": 2.9947954845351856,
+      "pass": true,
+      "target_order": 2.7
+    },
+    "G3": {
+      "max_relative_spread": 0.01347401107343031,
+      "pass": true
+    },
+    "G4/bare_singular": {
+      "deficiencies": [
+        1,
+        1
+      ],
+      "pass": true
+    },
+    "G4/mirror_diverges": {
+      "max_error_at_n8": 22963022824279.87,
+      "pass": true
+    },
+    "G5": {
+      "pass": true,
+      "residuals": {
+        "1": 0.02187186534113956,
+        "2": 3.67328556339833e-16
+      }
+    },
+    "G6": {
+      "max_condition": 78760.25958987058,
+      "min_sigma": 0.00021323620640460516,
+      "pass": true
+    }
+  },
+  "gates": {
+    "beta_spread_max": 0.05,
+    "condition_max": 100000000.0,
+    "fine_error_max": 0.03,
+    "order_margin": 0.3,
+    "polynomial_residual_coarse": 1e-06,
+    "polynomial_residual_exact": 1e-12
+  },
+  "polynomial_exactness": {
+    "1": {
+      "degree": 1,
+      "ncells": 3,
+      "ndofs": 108,
+      "residual_abs": 0.25837592020316713,
+      "residual_relative": 0.02187186534113956,
+      "rhs_norm": 11.81316344871504
+    },
+    "2": {
+      "degree": 2,
+      "ncells": 3,
+      "ndofs": 243,
+      "residual_abs": 5.2778011275739684e-15,
+      "residual_relative": 3.67328556339833e-16,
+      "rhs_norm": 14.368066507443611
+    }
+  },
+  "provenance": {
+    "git_commit": "0bdb105eef36bf935fb6f0b8e8534540e67d6f50",
+    "runtime_seconds": 16.4,
+    "script": "/root/tp-agent/work/m16732/validation/ldg2d/ldg_poisson_2d_study.py",
+    "script_sha256": "c2830262513820ab28541445287303409df7d36e6b483e642cfbabeeb8bec8c6"
+  },
+  "rank_deficiency": [
+    {
+      "deficiency": 1,
+      "degree": 1,
+      "ncells": 4,
+      "ndofs": 192,
+      "sigma_max": 1.0442031574199329,
+      "sigma_min": 2.9415837711456893e-34
+    },
+    {
+      "deficiency": 1,
+      "degree": 2,
+      "ncells": 4,
+      "ndofs": 432,
+      "sigma_max": 1.3516193280407154,
+      "sigma_min": 2.5861166065628768e-21
+    }
+  ],
+  "reversed_traces": {
+    "1": {
+      "errors": [
+        0.09259758038809662,
+        0.014538215207861492,
+        0.0033561786928408667
+      ],
+      "failure": null
+    },
+    "2": {
+      "errors": [
+        0.011486431637888532,
+        0.0011666187250477275,
+        0.00011220454785129722
+      ],
+      "failure": null
+    }
+  },
+  "verdict": "PASS"
+}
