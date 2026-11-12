@@ -30,6 +30,16 @@ from .euler_dg_2d import (
     apply_weno_limiter_2d,
     solve_euler_dg_2d,
 )
+from .elastic_1d import (
+    dalembert_pulse,
+    elastic_energy,
+    elastic_wave_speed,
+    peak_stress,
+    solve_elastic_1d,
+    standing_wave,
+    stress_profile,
+    upwind_flux,
+)
 from .heat_1d import heat_error, solve_heat_1d
 from .limiters import apply_limiter, apply_tvb_limiter, apply_weno_limiter
 from .ns_dg_2d import (

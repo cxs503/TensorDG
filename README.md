@@ -23,6 +23,7 @@ feature set.
 | Euler Lax shock tube | P3 DG, HLLC, positivity fallback | Exact Riemann solution | max 2.769420% |
 | 2D isentropic vortex | P0 DG / finite volume, Rusanov | Analytical moving vortex | max 1.972990% |
 | 1D shallow water, Ritter dry-bed dam break | P1 DG, HLL, SSP-RK3 | Exact self-similar solution | 0.357053% |
+| 1D linear elastodynamics (bar) | P2 DG, upwind (characteristic) flux, SSP-RK3 | d'Alembert two-pulse / clamped-free eigenmode | 0.000284% (pulse, 400 cells) / 0.0000354% (eigenmode, 40 cells) |
 
 The 1-D shallow-water dry-bed case is gated on the relative L1 error of the
 depth (0.2494% at 200 cells; the table quotes L2 for consistency); it also
@@ -39,6 +40,9 @@ multidimensional shock capturing.
 **Chinese tutorials with methods, commands, contours, curves, and measured errors:**
 
 - [Classic DG benchmarks](docs/tutorials/classic-dg-benchmarks.md)
+- [Elastic wave (d'Alembert) verification](docs/elastic_wave_verification.md)
+  — velocity--stress elastodynamics, characteristic boundary conditions,
+  two-pulse splitting and the clamped-free eigenmode
 - [Nonlinear and time-dependent benchmarks](docs/tutorials/nonlinear-dg-benchmarks.md)
 - [Burgers shock capturing and the Gibbs bound](docs/burgers_shock_verification.md)
   — smooth-regime order $\ge p+0.9$, Rankine--Hugoniot shock position to
