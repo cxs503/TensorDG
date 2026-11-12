@@ -6,6 +6,7 @@ callers read the case from a single place instead of copying constants.
 """
 
 from . import elastic_rod_1d
+from . import viscous_burgers_1d
 from .elastic_rod_1d import (
     CASE_KEY as ELASTIC_ROD_CASE_KEY,
     anchor_table as elastic_rod_anchor_table,
@@ -25,8 +26,18 @@ from .shock_entropy import (
     solve_dg_case,
 )
 
+from .viscous_burgers_1d import CASE_KEY as VISCOUS_BURGERS_CASE_KEY
+from .viscous_burgers_1d import solve_viscous_burgers_1d
+from .viscous_burgers_1d import viscous_burgers_parameters as parameters
+
+#: alias so the package-level convention (``<case>_parameters``) holds
+viscous_burgers_parameters = parameters
+
 __all__ = [
     "CASE_KEY",
+    "VISCOUS_BURGERS_CASE_KEY",
+    "viscous_burgers_parameters",
+    "solve_viscous_burgers_1d",
     "DIAPHRAGM",
     "DOMAIN",
     "FINAL_TIME",
@@ -48,4 +59,5 @@ __all__ = [
 CASES = {
     "shock_entropy": CASE_KEY,
     "elastic_rod_1d": ELASTIC_ROD_CASE_KEY,
+    "viscous_burgers_1d": VISCOUS_BURGERS_CASE_KEY,
 }
