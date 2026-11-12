@@ -1,17 +1,17 @@
 {
   "totals": {
-    "public_symbols": 302,
-    "exported_before": 90,
-    "exported_after": 302,
-    "ratio_before": 0.2980132450331126,
-    "ratio_after": 1.0
+    "public_symbols": 305,
+    "exported_before": 302,
+    "exported_after": 301,
+    "ratio_before": 0.9901639344262295,
+    "ratio_after": 0.9868852459016394
   },
   "modules": {
     "tensordg.advection_1d": {
       "before": {
         "public": 4,
-        "exported": 2,
-        "ratio": 0.5
+        "exported": 4,
+        "ratio": 1.0
       },
       "after": {
         "public": 4,
@@ -34,8 +34,8 @@
     "tensordg.advection_2d_var": {
       "before": {
         "public": 13,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 13,
+        "ratio": 1.0
       },
       "after": {
         "public": 13,
@@ -58,8 +58,8 @@
     "tensordg.advection_diffusion": {
       "before": {
         "public": 18,
-        "exported": 8,
-        "ratio": 0.4444444444444444
+        "exported": 18,
+        "ratio": 1.0
       },
       "after": {
         "public": 18,
@@ -70,8 +70,8 @@
     "tensordg.advection_diffusion_1d": {
       "before": {
         "public": 6,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 6,
+        "ratio": 1.0
       },
       "after": {
         "public": 6,
@@ -82,8 +82,8 @@
     "tensordg.burgers_1d": {
       "before": {
         "public": 4,
-        "exported": 2,
-        "ratio": 0.5
+        "exported": 4,
+        "ratio": 1.0
       },
       "after": {
         "public": 4,
@@ -94,8 +94,8 @@
     "tensordg.burgers_shock_1d": {
       "before": {
         "public": 14,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 14,
+        "ratio": 1.0
       },
       "after": {
         "public": 14,
@@ -106,8 +106,8 @@
     "tensordg.cases.elastic_rod_1d": {
       "before": {
         "public": 15,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 15,
+        "ratio": 1.0
       },
       "after": {
         "public": 15,
@@ -118,8 +118,8 @@
     "tensordg.cases.shock_entropy": {
       "before": {
         "public": 8,
-        "exported": 3,
-        "ratio": 0.375
+        "exported": 8,
+        "ratio": 1.0
       },
       "after": {
         "public": 8,
@@ -130,8 +130,8 @@
     "tensordg.convergence": {
       "before": {
         "public": 11,
-        "exported": 6,
-        "ratio": 0.5454545454545454
+        "exported": 11,
+        "ratio": 1.0
       },
       "after": {
         "public": 11,
@@ -142,8 +142,8 @@
     "tensordg.curved_geometry": {
       "before": {
         "public": 19,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 19,
+        "ratio": 1.0
       },
       "after": {
         "public": 19,
@@ -166,8 +166,8 @@
     "tensordg.dispersion_analysis": {
       "before": {
         "public": 7,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 7,
+        "ratio": 1.0
       },
       "after": {
         "public": 7,
@@ -178,8 +178,8 @@
     "tensordg.dispersive": {
       "before": {
         "public": 14,
-        "exported": 10,
-        "ratio": 0.7142857142857143
+        "exported": 14,
+        "ratio": 1.0
       },
       "after": {
         "public": 14,
@@ -190,8 +190,8 @@
     "tensordg.elastic_1d": {
       "before": {
         "public": 14,
-        "exported": 8,
-        "ratio": 0.5714285714285714
+        "exported": 14,
+        "ratio": 1.0
       },
       "after": {
         "public": 14,
@@ -202,8 +202,8 @@
     "tensordg.euler_1d": {
       "before": {
         "public": 13,
-        "exported": 1,
-        "ratio": 0.07692307692307693
+        "exported": 13,
+        "ratio": 1.0
       },
       "after": {
         "public": 13,
@@ -214,8 +214,8 @@
     "tensordg.euler_2d": {
       "before": {
         "public": 4,
-        "exported": 3,
-        "ratio": 0.75
+        "exported": 4,
+        "ratio": 1.0
       },
       "after": {
         "public": 4,
@@ -238,8 +238,8 @@
     "tensordg.euler_dg_2d": {
       "before": {
         "public": 8,
-        "exported": 3,
-        "ratio": 0.375
+        "exported": 8,
+        "ratio": 1.0
       },
       "after": {
         "public": 8,
@@ -250,8 +250,8 @@
     "tensordg.heat_1d": {
       "before": {
         "public": 5,
-        "exported": 2,
-        "ratio": 0.4
+        "exported": 5,
+        "ratio": 1.0
       },
       "after": {
         "public": 5,
@@ -262,8 +262,8 @@
     "tensordg.ice_edge_bench": {
       "before": {
         "public": 7,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 7,
+        "ratio": 1.0
       },
       "after": {
         "public": 7,
@@ -274,12 +274,24 @@
     "tensordg.kovasznay": {
       "before": {
         "public": 8,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 8,
+        "ratio": 1.0
       },
       "after": {
         "public": 8,
         "exported": 8,
+        "ratio": 1.0
+      }
+    },
+    "tensordg.ldg_dirichlet_1d": {
+      "before": {
+        "public": 3,
+        "exported": 0,
+        "ratio": 0.0
+      },
+      "after": {
+        "public": 3,
+        "exported": 3,
         "ratio": 1.0
       }
     },
@@ -298,8 +310,8 @@
     "tensordg.mms_ns_2d": {
       "before": {
         "public": 3,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 3,
+        "ratio": 1.0
       },
       "after": {
         "public": 3,
@@ -310,8 +322,8 @@
     "tensordg.ns_dg_2d": {
       "before": {
         "public": 12,
-        "exported": 2,
-        "ratio": 0.16666666666666666
+        "exported": 12,
+        "ratio": 1.0
       },
       "after": {
         "public": 12,
@@ -322,8 +334,8 @@
     "tensordg.ns_poiseuille": {
       "before": {
         "public": 1,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 1,
+        "ratio": 1.0
       },
       "after": {
         "public": 1,
@@ -334,8 +346,8 @@
     "tensordg.poisson_2d": {
       "before": {
         "public": 4,
-        "exported": 2,
-        "ratio": 0.5
+        "exported": 4,
+        "ratio": 1.0
       },
       "after": {
         "public": 4,
@@ -358,20 +370,20 @@
     "tensordg.poisson_2d_ldg": {
       "before": {
         "public": 4,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 4,
+        "ratio": 1.0
       },
       "after": {
         "public": 4,
-        "exported": 4,
-        "ratio": 1.0
+        "exported": 0,
+        "ratio": 0.0
       }
     },
     "tensordg.sipg_matrixfree": {
       "before": {
         "public": 5,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 5,
+        "ratio": 1.0
       },
       "after": {
         "public": 5,
@@ -382,8 +394,8 @@
     "tensordg.sipg_sparse": {
       "before": {
         "public": 4,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 4,
+        "ratio": 1.0
       },
       "after": {
         "public": 4,
@@ -394,8 +406,8 @@
     "tensordg.swe_1d": {
       "before": {
         "public": 12,
-        "exported": 5,
-        "ratio": 0.4166666666666667
+        "exported": 12,
+        "ratio": 1.0
       },
       "after": {
         "public": 12,
@@ -406,8 +418,8 @@
     "tensordg.swe_2d": {
       "before": {
         "public": 7,
-        "exported": 3,
-        "ratio": 0.42857142857142855
+        "exported": 7,
+        "ratio": 1.0
       },
       "after": {
         "public": 7,
@@ -418,8 +430,8 @@
     "tensordg.swe_exact": {
       "before": {
         "public": 18,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 18,
+        "ratio": 1.0
       },
       "after": {
         "public": 18,
@@ -430,8 +442,8 @@
     "tensordg.swe_steady_bump": {
       "before": {
         "public": 7,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 7,
+        "ratio": 1.0
       },
       "after": {
         "public": 7,
@@ -454,8 +466,8 @@
     "tensordg.wall_flux_extrapolation": {
       "before": {
         "public": 3,
-        "exported": 0,
-        "ratio": 0.0
+        "exported": 3,
+        "ratio": 1.0
       },
       "after": {
         "public": 3,
