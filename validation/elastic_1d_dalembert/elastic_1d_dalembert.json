@@ -1,0 +1,237 @@
+{
+  "case": "dalembert-elastic-rod-1d",
+  "parameters": {
+    "case": "dalembert-elastic-rod-1d",
+    "length": 1.0,
+    "rho": 1.0,
+    "young": 1.0,
+    "c": 1.0,
+    "pulse_amplitude": 1.0,
+    "pulse_center": 0.5,
+    "pulse_width": 0.05,
+    "pulse_time": 0.2,
+    "standing_time": 0.5,
+    "degree": 2,
+    "cfl": 0.3,
+    "meshes": [
+      50,
+      100,
+      200,
+      400
+    ],
+    "standing_meshes": [
+      40,
+      80,
+      160
+    ],
+    "nondimensional_groups": {
+      "pulse_width_over_length": 0.05,
+      "travel_distance_over_length": 0.2,
+      "pulse_amplitude_over_c": 1.0,
+      "samples_per_pulse_width": 6.666666666666667
+    },
+    "material_cross_check": {
+      "steel": {
+        "E": 210000000000.0,
+        "rho": 7850.0,
+        "c": 5172.194153034851
+      },
+      "aluminium": {
+        "E": 70000000000.0,
+        "rho": 2700.0,
+        "c": 5091.750772173155
+      }
+    },
+    "reference": "Graff 1975 Ch. 1 (d'Alembert bar waves, c = sqrt(E/rho), reflection rules); exact forms recomputed here"
+  },
+  "pulse_case": [
+    {
+      "cells": 50,
+      "steps": 167,
+      "dt": 0.0011976047904191617,
+      "rel_l2_v": 0.0015066612656139968,
+      "rel_l2_sigma": 0.0015066612415545254,
+      "linf_sigma": 0.001570238004715896,
+      "sigma_peak_num": 0.500731954189612,
+      "sigma_peak_exact": 0.49994820259143463,
+      "energy": 0.03132749741871371,
+      "energy_exact": 0.031332853432887504,
+      "energy_drift": 0.00017093924066840165,
+      "centroid_left": 0.40973100271611074,
+      "centroid_right": 0.5902689972838868,
+      "centroid_exact": {
+        "left": 0.3,
+        "right": 0.7
+      },
+      "pulse_speed_error": 0.5486550135805657
+    },
+    {
+      "cells": 100,
+      "steps": 334,
+      "dt": 0.0005988023952095808,
+      "rel_l2_v": 0.00018203242810351848,
+      "rel_l2_sigma": 0.00018203242797428516,
+      "linf_sigma": 0.0002032966745246223,
+      "sigma_peak_num": 0.5000512018231428,
+      "sigma_peak_exact": 0.4999870501447711,
+      "energy": 0.03133263627475086,
+      "energy_exact": 0.031332853432887504,
+      "energy_drift": 6.930684979315626e-06,
+      "centroid_left": 0.4102115737319568,
+      "centroid_right": 0.5897884262680418,
+      "centroid_exact": {
+        "left": 0.3,
+        "right": 0.7
+      },
+      "pulse_speed_error": 0.5510578686597906,
+      "eoc_sigma": 3.049087691329764,
+      "eoc_v": 3.0490877133435395
+    },
+    {
+      "cells": 200,
+      "steps": 667,
+      "dt": 0.0002998500749625188,
+      "rel_l2_v": 2.2706841611212723e-05,
+      "rel_l2_sigma": 2.2706841608992115e-05,
+      "linf_sigma": 2.5388546894322683e-05,
+      "sigma_peak_num": 0.50000109751793,
+      "sigma_peak_exact": 0.4999967625047488,
+      "energy": 0.031332841490225964,
+      "energy_exact": 0.031332853432887504,
+      "energy_drift": 3.8115461031451433e-07,
+      "centroid_left": 0.41038961154805126,
+      "centroid_right": 0.589610388451953,
+      "centroid_exact": {
+        "left": 0.3,
+        "right": 0.7
+      },
+      "pulse_speed_error": 0.5519480577402563,
+      "eoc_sigma": 3.002996526166897,
+      "eoc_v": 3.002996527050046
+    },
+    {
+      "cells": 400,
+      "steps": 1334,
+      "dt": 0.0001499250374812594,
+      "rel_l2_v": 2.838146661013966e-06,
+      "rel_l2_sigma": 2.8381466609086235e-06,
+      "linf_sigma": 3.182189366124355e-06,
+      "sigma_peak_num": 0.4999994602178156,
+      "sigma_peak_exact": 0.49999919062422193,
+      "energy": 0.031332852425388344,
+      "energy_exact": 0.031332853432887504,
+      "energy_drift": 3.2154721007010044e-08,
+      "centroid_left": 0.41043726845278533,
+      "centroid_right": 0.5895627315472184,
+      "centroid_exact": {
+        "left": 0.3,
+        "right": 0.7
+      },
+      "pulse_speed_error": 0.5521863422639267,
+      "eoc_sigma": 3.0001060018800376,
+      "eoc_v": 3.0001060019675774
+    }
+  ],
+  "standing_case": [
+    {
+      "cells": 40,
+      "steps": 334,
+      "dt": 0.0014970059880239522,
+      "rel_l2_v": 3.5580101328044146e-07,
+      "rel_l2_sigma": 3.5424525671144106e-07,
+      "energy": 0.6168502745306165,
+      "energy_exact": 0.6168502750680849,
+      "energy_drift": 8.713109563863362e-10,
+      "sigma_wall": 1.1107201868631287,
+      "sigma_free_end": -5.735597257727713e-07,
+      "sigma_wall_exact": 1.110720179996677
+    },
+    {
+      "cells": 80,
+      "steps": 667,
+      "dt": 0.0007496251874062968,
+      "rel_l2_v": 4.4419249396833744e-08,
+      "rel_l2_sigma": 4.4336557221961566e-08,
+      "energy": 0.6168502750017321,
+      "energy_exact": 0.6168502750680849,
+      "energy_drift": 1.0756712741403281e-10,
+      "sigma_wall": 1.1107206652425916,
+      "sigma_free_end": -7.088672090088474e-08,
+      "sigma_wall_exact": 1.1107205959038542,
+      "eoc_sigma": 2.998179882858348
+    },
+    {
+      "cells": 160,
+      "steps": 1334,
+      "dt": 0.0003748125937031484,
+      "rel_l2_v": 5.548894609883332e-09,
+      "rel_l2_sigma": 5.545587367332612e-09,
+      "energy": 0.6168502750597392,
+      "energy_exact": 0.6168502750680849,
+      "energy_drift": 1.3529470336198865e-11,
+      "sigma_wall": 1.110720725825436,
+      "sigma_free_end": -8.809784046244592e-09,
+      "sigma_wall_exact": 1.1107206998806567,
+      "eoc_sigma": 2.9990845695259845
+    }
+  ],
+  "degree_sweep": [
+    {
+      "degree": 1,
+      "cells": 200,
+      "steps": 400,
+      "rel_l2_sigma": 0.0012577866244372262
+    },
+    {
+      "degree": 2,
+      "cells": 200,
+      "steps": 667,
+      "rel_l2_sigma": 2.2706841608992115e-05
+    },
+    {
+      "degree": 3,
+      "cells": 200,
+      "steps": 934,
+      "rel_l2_sigma": 4.191623600487666e-07
+    }
+  ],
+  "cfl_sweep": [
+    {
+      "cfl": 0.1,
+      "cells": 200,
+      "degree": 2,
+      "steps": 2000,
+      "dt": 0.0001,
+      "rel_l2_sigma": 2.270654252813456e-05
+    },
+    {
+      "cfl": 0.3,
+      "cells": 200,
+      "degree": 2,
+      "steps": 667,
+      "dt": 0.0002998500749625188,
+      "rel_l2_sigma": 2.2706841608992115e-05
+    },
+    {
+      "cfl": 0.8,
+      "cells": 200,
+      "degree": 2,
+      "steps": 250,
+      "dt": 0.0008,
+      "rel_l2_sigma": 2.3746907083567112e-05
+    }
+  ],
+  "gate": {
+    "criteria": {
+      "rel_l2_sigma_pulse": 0.02,
+      "rel_l2_sigma_standing": 0.02
+    },
+    "worst": {
+      "rel_l2_sigma_pulse": 0.0015066612415545254,
+      "rel_l2_sigma_standing": 3.5424525671144106e-07
+    },
+    "passed": true
+  },
+  "figure": "validation/elastic_1d_dalembert/elastic_1d_dalembert.png",
+  "profile_csv": "validation/elastic_1d_dalembert/sigma_profile_ref_vs_got.csv"
+}
