@@ -164,18 +164,65 @@ def upwind_fv_symbol(theta: float) -> complex:
 # --------------------------------------------------------------------------- #
 # physical branch, dissipation and phase error
 # --------------------------------------------------------------------------- #
+def _pick_continuation(values: np.ndarray, target: complex, anchor: int) -> complex:
+    """Choose the eigenvalue continuing the *right-going* physical branch.
+
+    Nearest-neighbour tracking alone is ambiguous whenever two candidates are
+    equidistant from the predicted target.  That is not a corner case: at the
+    Nyquist wavenumber ``theta = pi`` the symbol matrix is real, so its spectrum
+    is closed under complex conjugation and the physical pair
+    ``Re(lambda) +- i Im(lambda)`` is *exactly* degenerate in distance.  Before
+    this anchor existed the tie was broken by whatever order ``eigvals``
+    returned, and a point query ``physical_branch(3, [pi])`` reported
+    ``c_num = -1.0006`` -- a right-going wave described as left-going -- while
+    the full sweep from below happened to keep the correct member.  A
+    time-domain measurement of the shipped solver (see
+    ``tools/dispersion_time_domain.py``) gives ``+1.0006``, so the *sign* was
+    the only wrong quantity.
+
+    The anchor is the sign of ``Im(lambda)`` already established along the
+    tracked branch (``anchor = 0`` before the first non-real pick, where the
+    right-going mode has ``Im(lambda) <= 0`` because ``c_num = -Im(lambda) /
+    theta > 0``).  Ties are therefore resolved physically instead of
+    numerically.  Near-ties within the round-off of the symbol matrix
+    (``1e-9`` relative) are treated as exact ties: a genuine, well-separated
+    second branch is never masked, because its distance differs by more than
+    that.
+    """
+    distance = np.abs(values - target)
+    best = float(distance.min())
+    candidates = np.flatnonzero(distance <= best + 1e-9 + 1e-9 * best)
+    if candidates.size > 1:
+        if anchor == 0:
+            keep = [int(i) for i in candidates if values[i].imag <= 0.0]
+        else:
+            keep = [int(i) for i in candidates if anchor * values[i].imag >= 0.0]
+        if keep:
+            candidates = np.asarray(keep)
+    return complex(values[candidates[int(np.argmin(distance[candidates]))]])
+
+
 def physical_branch(degree: int, thetas: np.ndarray | None = None) -> np.ndarray:
-    """Least-damped eigenvalue branch, tracked continuously from ``theta = 0``."""
-    thetas = THETA if thetas is None else np.asarray(thetas, dtype=float)
+    """Least-damped right-going eigenvalue branch, tracked from ``theta = 0``.
+
+    The branch is *sign anchored*: degenerate (conjugate) candidates are
+    resolved with the ``Im(lambda) <= 0`` continuation instead of by
+    eigval ordering -- see :func:`_pick_continuation` for the defect this
+    prevents and the time-domain measurement that adjudicates it.
+    """
+    thetas = THETA if thetas is None else np.atleast_1d(np.asarray(thetas, dtype=float))
     matrix = assemble_operator(degree)
     branch = []
     previous = 0.0 + 0.0j  # theta = 0 eigenvalue of the constant mode
     slope = 0.0 + 0.0j
+    anchor = 0
     last = None
     for theta in thetas:
         values = np.linalg.eigvals(symbol_matrix(matrix, degree, float(theta)))
         target = previous + slope * (theta - last) if last is not None else previous
-        pick = values[np.argmin(np.abs(values - target))]
+        pick = _pick_continuation(values, target, anchor)
+        if pick.imag != 0.0:
+            anchor = int(np.sign(pick.imag))
         if last is not None:
             slope = (pick - previous) / (theta - last)
         branch.append(pick)
