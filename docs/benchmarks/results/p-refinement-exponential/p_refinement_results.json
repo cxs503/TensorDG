@@ -162,12 +162,249 @@
       "required": true,
       "pass": true
     },
+    "discriminating": {
+      "conditions": {
+        "sigma_above_threshold": {
+          "measured": 3.9270958355627648,
+          "threshold": 1.0,
+          "pass": true
+        },
+        "decay_rates_non_decreasing": {
+          "measured": [
+            3.5758304393133975,
+            3.7242682862654304,
+            3.947529481440978,
+            4.112549857286745,
+            4.269378313348721
+          ],
+          "tolerance": 1e-09,
+          "pass": true
+        },
+        "error_ratio_above_threshold": {
+          "measured": 334971622.6370576,
+          "threshold": 1000.0,
+          "pass": true
+        },
+        "monotone_decreasing": {
+          "measured": true,
+          "pass": true
+        }
+      },
+      "pass": true
+    },
     "overall_pass": true
+  },
+  "criterion": {
+    "statement": "spectral decay: sigma > 1 AND pairwise decay rates non-decreasing AND e(p_min)/e(p_max) > 1e3 AND error monotone decreasing",
+    "legacy_threshold": 0.5,
+    "discriminating": {
+      "sigma_above_threshold": {
+        "measured": 3.9270958355627648,
+        "threshold": 1.0,
+        "pass": true
+      },
+      "decay_rates_non_decreasing": {
+        "measured": [
+          3.5758304393133975,
+          3.7242682862654304,
+          3.947529481440978,
+          4.112549857286745,
+          4.269378313348721
+        ],
+        "tolerance": 1e-09,
+        "pass": true
+      },
+      "error_ratio_above_threshold": {
+        "measured": 334971622.6370576,
+        "threshold": 1000.0,
+        "pass": true
+      },
+      "monotone_decreasing": {
+        "measured": true,
+        "pass": true
+      }
+    }
+  },
+  "falsification_control": {
+    "degrees": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "criterion": {
+      "sigma_min": 1.0,
+      "error_ratio_min": 1000.0,
+      "decay_rates_non_decreasing": true,
+      "monotone_decreasing": true
+    },
+    "laws": {
+      "constant": {
+        "lsq_decay_rate": 3.1227224276558194e-16,
+        "decay_rates": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "error_ratio": 1.0,
+        "passes_legacy_sigma_gt_0.5": false,
+        "passes_discriminating": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "algebraic_p^-1": {
+        "lsq_decay_rate": 0.3427243318347009,
+        "decay_rates": [
+          0.6931471805599453,
+          0.40546510810816455,
+          0.28768207245178085,
+          0.22314355131420976,
+          0.1823215567939548
+        ],
+        "error_ratio": 6.000000000000001,
+        "passes_legacy_sigma_gt_0.5": false,
+        "passes_discriminating": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "algebraic_p^-2": {
+        "lsq_decay_rate": 0.6854486636694013,
+        "decay_rates": [
+          1.3862943611198906,
+          0.8109302162163288,
+          0.5753641449035618,
+          0.44628710262841953,
+          0.36464311358790935
+        ],
+        "error_ratio": 36.0,
+        "passes_legacy_sigma_gt_0.5": true,
+        "passes_discriminating": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "algebraic_p^-3": {
+        "lsq_decay_rate": 1.028172995504102,
+        "decay_rates": [
+          2.0794415416798357,
+          1.2163953243244934,
+          0.8630462173553427,
+          0.6694306539426291,
+          0.546964670381864
+        ],
+        "error_ratio": 216.00000000000003,
+        "passes_legacy_sigma_gt_0.5": true,
+        "passes_discriminating": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "algebraic_p^-4": {
+        "lsq_decay_rate": 1.3708973273388025,
+        "decay_rates": [
+          2.772588722239781,
+          1.6218604324326575,
+          1.1507282898071236,
+          0.8925742052568388,
+          0.7292862271758187
+        ],
+        "error_ratio": 1296.0,
+        "passes_legacy_sigma_gt_0.5": true,
+        "passes_discriminating": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "algebraic_p^-5": {
+        "lsq_decay_rate": 1.7136216591735032,
+        "decay_rates": [
+          3.4657359027997265,
+          2.0273255405408217,
+          1.4384103622589046,
+          1.1157177565710488,
+          0.911607783969773
+        ],
+        "error_ratio": 7776.0,
+        "passes_legacy_sigma_gt_0.5": true,
+        "passes_discriminating": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "exponential_sigma_0.5": {
+        "lsq_decay_rate": 0.5,
+        "decay_rates": [
+          0.5,
+          0.4999999999999999,
+          0.5,
+          0.4999999999999999,
+          0.5
+        ],
+        "error_ratio": 12.182493960703471,
+        "passes_legacy_sigma_gt_0.5": false,
+        "passes_discriminating": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "exponential_sigma_1.0": {
+        "lsq_decay_rate": 1.0000000000000004,
+        "decay_rates": [
+          1.0,
+          1.0,
+          1.0,
+          1.0000000000000002,
+          1.0
+        ],
+        "error_ratio": 148.4131591025766,
+        "passes_legacy_sigma_gt_0.5": true,
+        "passes_discriminating": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "exponential_sigma_1.5": {
+        "lsq_decay_rate": 1.5,
+        "decay_rates": [
+          1.5,
+          1.5,
+          1.5000000000000002,
+          1.5,
+          1.5
+        ],
+        "error_ratio": 1808.0424144560632,
+        "passes_legacy_sigma_gt_0.5": true,
+        "passes_discriminating": true,
+        "expected": true,
+        "as_expected": true
+      },
+      "exponential_sigma_3.93": {
+        "lsq_decay_rate": 3.926999999999999,
+        "decay_rates": [
+          3.927,
+          3.927,
+          3.9270000000000005,
+          3.9269999999999996,
+          3.9270000000000014
+        ],
+        "error_ratio": 336800053.7760371,
+        "passes_legacy_sigma_gt_0.5": true,
+        "passes_discriminating": true,
+        "expected": true,
+        "as_expected": true
+      }
+    },
+    "gate_pass": true,
+    "legacy_threshold_false_positives": [
+      "algebraic_p^-2",
+      "algebraic_p^-3",
+      "algebraic_p^-4",
+      "algebraic_p^-5",
+      "exponential_sigma_1.0"
+    ]
   },
   "verdict": "PASS",
   "figures": {
     "p_refinement_semilog.png": "docs/benchmarks/results/p-refinement-exponential/p_refinement_semilog.png",
     "p_refinement_log10.png": "docs/benchmarks/results/p-refinement-exponential/p_refinement_log10.png"
   },
-  "runtime_seconds": 79.5315752029419
+  "runtime_seconds": 80.63678193092346
 }

@@ -371,3 +371,74 @@ def modal_l2_norm_1d(centers, coeff) -> float:
     uh = values @ basis.T                       # [cells, quadrature]
     integral = 0.5 * h * np.sum(weights[None, :] * uh ** 2)
     return float(np.sqrt(integral))
+
+
+# ---------------------------------------------------------------------------
+# Verification floor: is a measured error still a *signal*?
+#
+# A p-refinement study pushes the discretisation error towards the roundoff
+# level of the discrete solution itself.  Once the measured error approaches
+# ``eps * ||u_h||`` the number stops being a discretisation measurement: it is
+# a difference of two O(1) float64 numbers.  These helpers make that boundary
+# explicit instead of leaving a claim like "spectral convergence continues"
+# unverifiable (see docs/AUDIT-m16499-CASE-DG-PREFINEMENT-EXPONENTIAL.md F5).
+# ---------------------------------------------------------------------------
+
+FLOAT64_EPS = float(np.finfo(np.float64).eps)
+
+
+def roundoff_floor(field_norm: float, eps: float = FLOAT64_EPS) -> float:
+    """Smallest L2 error the float64 representation of a solution can resolve.
+
+    ``u_h - u`` is a difference of two numbers of size ``||u||``; each carries
+    an absolute rounding of order ``eps * ||u||``, so an error norm much below
+    that is measurement noise rather than discretisation error.
+    """
+    if field_norm < 0.0:
+        raise ValueError("field_norm must be non-negative")
+    return float(eps * field_norm)
+
+
+def signal_to_noise(errors: Iterable[float], floor: float) -> list[float]:
+    """Error-to-floor ratio per level (``inf`` when the floor vanishes)."""
+    e = np.asarray(list(errors), dtype=float)
+    if floor < 0.0:
+        raise ValueError("floor must be non-negative")
+    if floor == 0.0:
+        return [float("inf")] * int(e.size)
+    return [float(v) for v in e / floor]
+
+
+def resolved_levels(
+    degrees: Sequence[int],
+    errors: Sequence[float],
+    floor: float,
+    snr_min: float = 10.0,
+) -> dict:
+    """Split p-levels into measurement-resolved and floor-limited ones.
+
+    A level counts as *resolved* only if its error exceeds ``snr_min * floor``.
+    Only resolved levels may be used to fit a decay rate; the returned
+    ``max_resolvable_reduction`` is the largest error reduction the float64
+    measurement can certify at all (``e_coarsest / (snr_min * floor)``).
+    """
+    p = np.asarray(list(degrees), dtype=int)
+    e = _as_positive_array(errors, "errors")
+    if p.size != e.size:
+        raise ValueError("degrees and errors must have the same length")
+    if snr_min <= 0.0:
+        raise ValueError("snr_min must be positive")
+    snr = signal_to_noise(e, floor)
+    resolved = [int(v) for v, s in zip(p, snr) if s >= snr_min]
+    limited = [int(v) for v, s in zip(p, snr) if s < snr_min]
+    threshold = snr_min * floor
+    return {
+        "floor": float(floor),
+        "snr_min": float(snr_min),
+        "snr": [float(s) for s in snr],
+        "resolved_degrees": resolved,
+        "floor_limited_degrees": limited,
+        "max_resolvable_reduction": (
+            float(e[0] / threshold) if threshold > 0.0 else float("inf")
+        ),
+    }
