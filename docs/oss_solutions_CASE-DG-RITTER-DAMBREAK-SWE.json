@@ -1,0 +1,67 @@
+{
+  "feature_slug": "CASE-DG-RITTER-DAMBREAK-SWE",
+  "anchor": "CASE-DG-RITTER-DAMBREAK-SWE",
+  "case_pool_entry": {
+    "id": "DG-RITTER-DAMBREAK-SWE",
+    "reference": "Ritter (1892) dam-break exact self-similar solution",
+    "tolerance_relative_l1": 0.05
+  },
+  "decision": "adapt 仓内已有 Ritter 算例（benchmarks/ritter_dam_break.py）+ 复用 tensordg/swe_1d.py 求解器；不迁移任何外部源码",
+  "transfer_vocabulary": [
+    "adapt",
+    "adapt",
+    "reference",
+    "reject-as-is",
+    "reject"
+  ],
+  "candidates": [
+    {
+      "name": "tensordg/swe_1d.py (modal Legendre DG P1/P2 + HLL + SSP-RK3)",
+      "transfer": "adapt",
+      "role": "主路径求解器（复用，不另起炉灶）",
+      "evidence": "artifacts/ritter_t2_metrics.json:rel_l1_h"
+    },
+    {
+      "name": "benchmarks/ritter_dam_break.py (算例+扫描+判据)",
+      "transfer": "adapt",
+      "role": "算例编排与判据（复用）",
+      "evidence": "artifacts/ritter_t2_metrics.json:wet_front_error_cells"
+    },
+    {
+      "name": "tensordg/swe_exact.py (Ritter/Stoker 闭式解析解)",
+      "transfer": "reference",
+      "role": "解析解参照（不搬代码，仅作基准）",
+      "evidence": "tensordg/swe_exact.py:ritter_exact"
+    },
+    {
+      "name": "前轮 m6308 一次性长跑做法（无 fail_stage/失败原因）",
+      "transfer": "reject-as-is",
+      "role": "无 fail_stage/reason，不可复现",
+      "evidence": "任务单 failure_reason=未留"
+    },
+    {
+      "name": "P2 默认 CFL 的 DG",
+      "transfer": "reject",
+      "role": "P2 在 CFL=0.15 下触发 FloatingPointError（非物理态），需 CFL≤0.08",
+      "evidence": "docs/swe_verification.md"
+    }
+  ],
+  "external_anchor": [
+    "Ritter, A. (1892). 'Über die Fortpflanzung von Wasserwellen.' Z. Ver. deut. Ing. 36, 947-954.",
+    "Cockburn & Shu (1998). 'The Runge-Kutta Discontinuous Galerkin Method for Conservation Laws V.' J. Comput. Phys. 141, 199-224."
+  ],
+  "oss_survey": {
+    "method": "oss_inventory 检索 TensorDG/SWE/Ritter 0 命中（同域无外部开源实现）；仓内已有算例复用",
+    "files": "docs/CASE-DG-RITTER-DAMBREAK-SWE.md#1.1",
+    "conventions": "不把未执行作业当结论；文献 PDF 不可达如实标 WITHHELD",
+    "transfer": "同类算例调研先查平台库存再决定是否外部调研",
+    "evidence": "oss_inventory / cj1239 / Ritter pub page 200"
+  },
+  "negative_knowledge": {
+    "method": "negative_knowledge_ledger 检索 TensorDG 0 条（无已知失败模式）；本单记录 P2 CFL 不稳定为已知限制",
+    "files": "docs/CASE-DG-RITTER-DAMBREAK-SWE.md#6",
+    "conventions": "P2 在 CFL=0.15 下触发 FloatingPointError（非物理态），需 CFL≤0.08",
+    "transfer": "高阶格式在湿润锋附近需更小 CFL 或专门 wet-dry 处理",
+    "evidence": "docs/swe_verification.md"
+  }
+}
