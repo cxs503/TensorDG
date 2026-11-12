@@ -42,17 +42,16 @@ WAVE_WINDOW = (0.0, 4.2)
 def solve_case(ncells, degree=2, limiter="weno", cfl=0.12, tvb_constant=1.0,
                limiter_stage="every", final_time=FINAL_TIME, device="cpu"):
     """Run one configuration and return ``(x_centers, cell_averages, metadata)``."""
-    start = time.perf_counter()
-    x, coeff, meta = solve_periodic_euler_dg_1d(
-        initial_state, ncells=ncells, degree=degree, final_time=final_time,
-        domain=DOMAIN, cfl=cfl, device=device, limiter=limiter,
-        tvb_constant=tvb_constant, limiter_stage=limiter_stage,
-        boundary="transmissive",
-    )
-    meta = dict(meta)
-    meta["wall_time_s"] = time.perf_counter() - start
-    meta["limiter"] = meta["limiter"]
-    return x.detach().cpu().numpy(), coeff[:, 0].detach().cpu().numpy(), meta
+    # Single owner: the case (data, anchors, solver call) lives in the library at
+    # ``tensordg.cases.shock_entropy``; this driver only folds the modal state into
+    # the ``(ncells, 3)`` cell-average array the comparison code expects.
+    from tensordg.cases.shock_entropy import solve_dg_case
+
+    out = solve_dg_case(ncells, degree=degree, limiter=limiter, cfl=cfl,
+                        final_time=final_time, device=device,
+                        tvb_constant=tvb_constant, limiter_stage=limiter_stage)
+    state = np.stack((out["rho"], out["rho_u"], out["rho_e"]), axis=-1)
+    return out["x"], state, out["meta"]
 
 
 def coarsen(values: np.ndarray, factor: int) -> np.ndarray:

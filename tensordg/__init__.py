@@ -13,7 +13,12 @@ from .advection_2d import error_2d, solve_advection_2d
 from .burgers_1d import burgers_error, solve_burgers
 from .euler_1d import solve_riemann
 from .euler_2d import solve_euler_2d, solve_isentropic_vortex, vortex_error
-from .euler_dg_1d import solve_euler_dg_1d, solve_periodic_euler_dg_1d
+from .euler_dg_1d import solve_euler_dg_1d, solve_periodic_euler_dg_1d, verify_shock_entropy
+from .cases.shock_entropy import (
+    solve_dg_case as solve_shock_entropy_dg,
+    rankine_hugoniot_anchor as shock_entropy_anchor,
+    gate_report as shock_entropy_gate_report,
+)
 from .euler_dg_2d import (
     apply_tvb_limiter_2d,
     apply_weno_limiter_2d,
@@ -105,6 +110,9 @@ __all__ = [
     "solve_riemann", "solve_euler_dg_1d", "solve_periodic_euler_dg_1d",
     "solve_euler_2d", "solve_isentropic_vortex", "vortex_error",
     "solve_euler_dg_2d", "apply_tvb_limiter_2d", "apply_weno_limiter_2d",
+    # Shu--Osher (1988) shock/entropy-wave case, shipped with the library
+    "solve_shock_entropy_dg", "shock_entropy_anchor", "shock_entropy_gate_report",
+    "verify_shock_entropy",
     "solve_navier_stokes_dg_2d", "solve_couette_dg_2d",
     "apply_limiter", "apply_tvb_limiter", "apply_weno_limiter",
     "minmod", "troubled_from_differences",
