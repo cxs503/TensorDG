@@ -52,9 +52,19 @@ SPEED = 1.0
 CFL_BASE = 0.08  # will be refined per degree to suppress temporal error
 
 # --- Thresholds (predeclared) ----------------------------------------------
-DECAY_RATE_MIN = 0.5       # sigma > 0.5 (slope of log(e) vs p < -0.5)
+DECAY_RATE_MIN = 0.5       # legacy: sigma > 0.5 -- necessary, NOT sufficient
 MONOTONE_REQUIRED = True   # error must decrease at every p level
 TEMPORAL_TOLERANCE = 0.01  # temporal error < 1% of spatial error
+
+# --- Discriminating criterion (predeclared) --------------------------------
+# Audit m16499 (F4) showed that ``sigma > 0.5`` alone is accepted by algebraic
+# error laws (p**-1 .. p**-3 with a 3-point fit) and even rejects a genuine
+# exponential law sitting exactly on the threshold.  The published verdict is
+# therefore gated on the composite criterion below; ``DECAY_RATE_MIN`` is kept
+# only as a comparability threshold and is recorded as a sub-check.
+SIGMA_MIN_DISCRIMINATING = 1.0     # spectral decay rate must exceed any algebraic rate
+ERROR_RATIO_MIN = 1.0e3            # e(p_min)/e(p_max): >3 decades of reduction
+DECAY_RATE_TOL = 1.0e-9            # relative slack on "pairwise rates non-decreasing"
 
 
 def _git_commit() -> str | None:
@@ -152,10 +162,17 @@ def p_refinement_study(
 
 
 def check_criterion(diag: dict) -> dict:
-    """Predeclared pass/fail checks."""
+    """Predeclared pass/fail checks (legacy thresholds + discriminating gate).
+
+    ``decay_rate`` keeps the historical ``sigma > 0.5`` threshold so that older
+    audits stay comparable, but the *verdict* is now driven by
+    :func:`check_discriminating_criterion`: a bare ``sigma > 0.5`` accepts an
+    algebraic error law (audit m16499 F4).
+    """
     lsq_rate = diag["lsq_decay_rate"]
     monotone = diag["monotone_decreasing"]
-    return {
+    discriminating = check_discriminating_criterion(diag)
+    legacy = {
         "decay_rate": {
             "measured": lsq_rate,
             "threshold": DECAY_RATE_MIN,
@@ -166,7 +183,129 @@ def check_criterion(diag: dict) -> dict:
             "required": MONOTONE_REQUIRED,
             "pass": monotone or not MONOTONE_REQUIRED,
         },
-        "overall_pass": lsq_rate > DECAY_RATE_MIN and (monotone or not MONOTONE_REQUIRED),
+    }
+    return {
+        **legacy,
+        "discriminating": discriminating,
+        "overall_pass": bool(
+            legacy["decay_rate"]["pass"]
+            and legacy["monotone_decreasing"]["pass"]
+            and discriminating["pass"]
+        ),
+    }
+
+
+def _known_decay_laws(degrees: tuple[int, ...]) -> dict:
+    """Sequences whose convergence law is known a priori (falsification suite)."""
+    p = np.asarray(degrees, dtype=float)
+    p = p - p[0]
+    scale = 1.0e-2
+    return {
+        # no convergence at all
+        "constant": np.full_like(p, 1.0),
+        # algebraic: what a low-order scheme produces and what the old gate let through
+        "algebraic_p^-1": 1.0 / (p + 1.0),
+        "algebraic_p^-2": 1.0 / (p + 1.0) ** 2,
+        "algebraic_p^-3": 1.0 / (p + 1.0) ** 3,
+        "algebraic_p^-4": 1.0 / (p + 1.0) ** 4,
+        "algebraic_p^-5": 1.0 / (p + 1.0) ** 5,
+        # genuine exponential laws: below / at / above the discriminating threshold
+        "exponential_sigma_0.5": np.exp(-0.5 * p),
+        "exponential_sigma_1.0": np.exp(-1.0 * p),
+        "exponential_sigma_1.5": np.exp(-1.5 * p),
+        "exponential_sigma_3.93": np.exp(-3.927 * p),
+    }
+
+
+# Which known laws the composite criterion must accept / reject.  Predeclared so
+# that the gate cannot be re-tuned after seeing the data.
+FALSIFICATION_EXPECTED = {
+    "constant": False,
+    "algebraic_p^-1": False,
+    "algebraic_p^-2": False,
+    "algebraic_p^-3": False,
+    "algebraic_p^-4": False,
+    "algebraic_p^-5": False,
+    "exponential_sigma_0.5": False,   # only 12x reduction over p=1..6: unprovable
+    "exponential_sigma_1.0": False,   # 150x < 1e3 decades gate
+    "exponential_sigma_1.5": True,    # 1808x
+    "exponential_sigma_3.93": True,
+}
+
+
+def check_discriminating_criterion(diag: dict) -> dict:
+    """Composite predeclared criterion separating spectral from algebraic decay.
+
+    All three conditions must hold (audit m16499 F4):
+      1. ``sigma > SIGMA_MIN_DISCRIMINATING`` (an algebraic law in p cannot),
+      2. pairwise decay rates non-decreasing (they decrease for an algebraic law),
+      3. ``e(p_min) / e(p_max) > ERROR_RATIO_MIN`` (at least three decades).
+    """
+    rate = float(diag["lsq_decay_rate"])
+    rates = [float(v) for v in diag["decay_rates"]]
+    errors = [float(v) for v in diag["errors"]]
+    ratio = errors[0] / errors[-1]
+    non_decreasing = all(
+        b >= a * (1.0 - DECAY_RATE_TOL) for a, b in zip(rates, rates[1:])
+    ) if len(rates) > 1 else True
+    conditions = {
+        "sigma_above_threshold": {
+            "measured": rate,
+            "threshold": SIGMA_MIN_DISCRIMINATING,
+            "pass": rate > SIGMA_MIN_DISCRIMINATING,
+        },
+        "decay_rates_non_decreasing": {
+            "measured": rates,
+            "tolerance": DECAY_RATE_TOL,
+            "pass": bool(non_decreasing),
+        },
+        "error_ratio_above_threshold": {
+            "measured": ratio,
+            "threshold": ERROR_RATIO_MIN,
+            "pass": ratio > ERROR_RATIO_MIN,
+        },
+        "monotone_decreasing": {
+            "measured": bool(diag["monotone_decreasing"]),
+            "pass": bool(diag["monotone_decreasing"]),
+        },
+    }
+    return {
+        "conditions": conditions,
+        "pass": all(c["pass"] for c in conditions.values()),
+    }
+
+
+def falsification_control(degrees: tuple[int, ...] = DEGREES_FULL) -> dict:
+    """Run the predeclared criterion on known laws; gate = expected verdicts met."""
+    laws = _known_decay_laws(tuple(degrees))
+    rows = {}
+    for name, seq in laws.items():
+        diag = p_decay_diagnostics(tuple(degrees), [float(1.0e-2 * v) for v in seq])
+        verdict = check_discriminating_criterion(diag)
+        rows[name] = {
+            "lsq_decay_rate": float(diag["lsq_decay_rate"]),
+            "decay_rates": [float(v) for v in diag["decay_rates"]],
+            "error_ratio": float(diag["errors"][0] / diag["errors"][-1]),
+            "passes_legacy_sigma_gt_0.5": bool(diag["lsq_decay_rate"] > DECAY_RATE_MIN),
+            "passes_discriminating": bool(verdict["pass"]),
+            "expected": bool(FALSIFICATION_EXPECTED[name]),
+            "as_expected": bool(verdict["pass"] == FALSIFICATION_EXPECTED[name]),
+        }
+    return {
+        "degrees": list(degrees),
+        "criterion": {
+            "sigma_min": SIGMA_MIN_DISCRIMINATING,
+            "error_ratio_min": ERROR_RATIO_MIN,
+            "decay_rates_non_decreasing": True,
+            "monotone_decreasing": True,
+        },
+        "laws": rows,
+        # the gate: every known law must land on its predeclared side
+        "gate_pass": all(r["as_expected"] for r in rows.values()),
+        "legacy_threshold_false_positives": [
+            name for name, r in rows.items()
+            if r["passes_legacy_sigma_gt_0.5"] and not FALSIFICATION_EXPECTED[name]
+        ],
     }
 
 
@@ -249,7 +388,8 @@ def generate_figures(study: dict, outdir: Path):
     }
 
 
-def build_report(study: dict, checks: dict, figures: dict, runtime: float) -> dict:
+def build_report(study: dict, checks: dict, figures: dict, runtime: float,
+                 falsification: dict | None = None) -> dict:
     """Build the full benchmark report."""
     return {
         "schema": SCHEMA,
@@ -278,6 +418,15 @@ def build_report(study: dict, checks: dict, figures: dict, runtime: float) -> di
             "diagnostics": study["diagnostics"],
         },
         "checks": checks,
+        "criterion": {
+            "statement": (
+                "spectral decay: sigma > 1 AND pairwise decay rates non-decreasing "
+                "AND e(p_min)/e(p_max) > 1e3 AND error monotone decreasing"
+            ),
+            "legacy_threshold": DECAY_RATE_MIN,
+            "discriminating": checks["discriminating"]["conditions"],
+        },
+        "falsification_control": falsification or {},
         "verdict": "PASS" if checks["overall_pass"] else "FAIL",
         "figures": figures,
         "runtime_seconds": runtime,
@@ -298,8 +447,9 @@ def main():
     runtime = time.time() - t0
 
     checks = check_criterion(study["diagnostics"])
+    falsification = falsification_control(tuple(degrees))
     figures = generate_figures(study, outdir)
-    report = build_report(study, checks, figures, runtime)
+    report = build_report(study, checks, figures, runtime, falsification)
 
     # Save JSON artifact
     json_path = outdir / "p_refinement_results.json"
@@ -355,6 +505,15 @@ def main():
     print(f"\nLeast-squares decay rate (sigma): {study['diagnostics']['lsq_decay_rate']:.4f}")
     print(f"Threshold (sigma > {DECAY_RATE_MIN}): {'PASS' if checks['decay_rate']['pass'] else 'FAIL'}")
     print(f"Monotone decreasing: {'PASS' if checks['monotone_decreasing']['pass'] else 'FAIL'}")
+    disc = checks["discriminating"]["conditions"]
+    print(f"sigma > {SIGMA_MIN_DISCRIMINATING}: {'PASS' if disc['sigma_above_threshold']['pass'] else 'FAIL'}"
+          f" (measured {disc['sigma_above_threshold']['measured']:.4f})")
+    print(f"decay rates non-decreasing: {'PASS' if disc['decay_rates_non_decreasing']['pass'] else 'FAIL'}")
+    print(f"error ratio > {ERROR_RATIO_MIN:.0e}: "
+          f"{'PASS' if disc['error_ratio_above_threshold']['pass'] else 'FAIL'}"
+          f" (measured {disc['error_ratio_above_threshold']['measured']:.3e})")
+    print(f"falsification gate (known laws land on their side): "
+          f"{'PASS' if falsification['gate_pass'] else 'FAIL'}")
     print(f"Overall verdict: {report['verdict']}")
     print(f"Runtime: {runtime:.1f}s")
     print(f"\nArtifacts saved to: {outdir}")

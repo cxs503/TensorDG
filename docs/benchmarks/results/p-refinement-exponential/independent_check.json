@@ -51,7 +51,7 @@
       "quadrature_spread_rel": 1.3322676295501878e-15,
       "l1": 0.0061609211625007106,
       "linf": 0.01968335976290181,
-      "wall_seconds": 0.719214677810669,
+      "wall_seconds": 0.6859183311462402,
       "ssp_rk3_l2": 0.007464115261727735,
       "integrator_rel_gap": 1.3654093887828019e-05,
       "ssp_rk3_steps": 600,
@@ -91,7 +91,7 @@
       "quadrature_spread_rel": 3.423927807943983e-13,
       "l1": 0.00015288975115376584,
       "linf": 0.0009902885070913747,
-      "wall_seconds": 1.5436065196990967,
+      "wall_seconds": 1.533111333847046,
       "ssp_rk3_l2": 0.00020893517795288067,
       "integrator_rel_gap": 5.95690229427813e-06,
       "ssp_rk3_steps": 1000,
@@ -131,7 +131,7 @@
       "quadrature_spread_rel": 4.148237309209435e-12,
       "l1": 3.663088146761155e-06,
       "linf": 2.7663136536237865e-05,
-      "wall_seconds": 2.7429192066192627,
+      "wall_seconds": 2.713726282119751,
       "ssp_rk3_l2": 5.041771390516586e-06,
       "integrator_rel_gap": 7.682509966965558e-06,
       "ssp_rk3_steps": 1400,
@@ -171,7 +171,7 @@
       "quadrature_spread_rel": 8.749581059674938e-10,
       "l1": 7.081160722810677e-08,
       "linf": 6.102164838428514e-07,
-      "wall_seconds": 4.448764324188232,
+      "wall_seconds": 4.260706424713135,
       "ssp_rk3_l2": 9.731718895456499e-08,
       "integrator_rel_gap": 4.3602628271333006e-08,
       "ssp_rk3_steps": 14400,
@@ -211,7 +211,7 @@
       "quadrature_spread_rel": 7.53452833457402e-09,
       "l1": 1.153670117079642e-09,
       "linf": 1.068405885984447e-08,
-      "wall_seconds": 6.604316473007202,
+      "wall_seconds": 6.13567328453064,
       "ssp_rk3_l2": 1.5927185196325462e-09,
       "integrator_rel_gap": 1.5374550001524554e-05,
       "ssp_rk3_steps": 17600,
@@ -245,7 +245,7 @@
       "quadrature_spread_rel": 1.3155293410171964e-06,
       "l1": 1.6141181043017688e-11,
       "linf": 1.5837026134946086e-10,
-      "wall_seconds": 8.385465860366821,
+      "wall_seconds": 8.045156717300415,
       "ssp_rk3_l2": 2.307533645927601e-11,
       "integrator_rel_gap": 0.03392650942701323,
       "ssp_rk3_steps": 20800,
@@ -294,7 +294,7 @@
   },
   "artifact_provenance": {
     "primary_artifact": "docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
-    "primary_sha256": "d2c5b07c4e862c06e1f1d6f45432d365b5cc603f6ff67c2af8e2f50120622060"
+    "primary_sha256": "a1c11ddd5f95d72a790a743637090a126a6274fbe23b4ff2943bbdacfb1d8932"
   },
   "artifact_cross_check": {
     "1": {
@@ -372,145 +372,5 @@
       "passes_predeclared_sigma_gt_0.5": true
     }
   },
-  "generated_at_utc": "2026-11-12T15:45:54Z",
-  "temporal_refinement": {
-    "1": {
-      "levels": [
-        {
-          "cfl": 0.08,
-          "steps": 600,
-          "l2": 0.0074640133473887,
-          "rel_change_vs_previous": null
-        },
-        {
-          "cfl": 0.04,
-          "steps": 1200,
-          "l2": 0.007464013366971303,
-          "rel_change_vs_previous": 2.623602451514174e-09
-        },
-        {
-          "cfl": 0.02,
-          "steps": 2400,
-          "l2": 0.007464013368251652,
-          "rel_change_vs_previous": 1.715361642734899e-10
-        }
-      ],
-      "final_rel_change": 1.715361642734899e-10
-    },
-    "2": {
-      "levels": [
-        {
-          "cfl": 0.08,
-          "steps": 1000,
-          "l2": 0.0002089339333537822,
-          "rel_change_vs_previous": null
-        },
-        {
-          "cfl": 0.04,
-          "steps": 2000,
-          "l2": 0.00020893393344443052,
-          "rel_change_vs_previous": 4.3386120247902934e-10
-        },
-        {
-          "cfl": 0.02,
-          "steps": 4000,
-          "l2": 0.00020893393345032996,
-          "rel_change_vs_previous": 2.8235921655557892e-11
-        }
-      ],
-      "final_rel_change": 2.8235921655557892e-11
-    },
-    "3": {
-      "levels": [
-        {
-          "cfl": 0.08,
-          "steps": 1400,
-          "l2": 5.041732657370788e-06,
-          "rel_change_vs_previous": null
-        },
-        {
-          "cfl": 0.04,
-          "steps": 2800,
-          "l2": 5.041732675415863e-06,
-          "rel_change_vs_previous": 3.579141512166024e-09
-        },
-        {
-          "cfl": 0.02,
-          "steps": 5600,
-          "l2": 5.041732676445979e-06,
-          "rel_change_vs_previous": 2.043178004030309e-10
-        }
-      ],
-      "final_rel_change": 2.043178004030309e-10
-    },
-    "4": {
-      "levels": [
-        {
-          "cfl": 0.08,
-          "steps": 1800,
-          "l2": 9.731718475848697e-08,
-          "rel_change_vs_previous": null
-        },
-        {
-          "cfl": 0.04,
-          "steps": 3600,
-          "l2": 9.731718631889174e-08,
-          "rel_change_vs_previous": 1.6034215840335467e-08
-        },
-        {
-          "cfl": 0.02,
-          "steps": 7200,
-          "l2": 9.73171864392192e-08,
-          "rel_change_vs_previous": 1.236446168622731e-09
-        }
-      ],
-      "final_rel_change": 1.236446168622731e-09
-    },
-    "5": {
-      "levels": [
-        {
-          "cfl": 0.08,
-          "steps": 2200,
-          "l2": 1.592694025882342e-09,
-          "rel_change_vs_previous": null
-        },
-        {
-          "cfl": 0.04,
-          "steps": 4400,
-          "l2": 1.5926921196703602e-09,
-          "rel_change_vs_previous": 1.1968490069695768e-06
-        },
-        {
-          "cfl": 0.02,
-          "steps": 8800,
-          "l2": 1.592692109870246e-09,
-          "rel_change_vs_previous": 6.153175534390252e-09
-        }
-      ],
-      "final_rel_change": 6.153175534390252e-09
-    },
-    "6": {
-      "levels": [
-        {
-          "cfl": 0.08,
-          "steps": 2600,
-          "l2": 2.2318138753417846e-11,
-          "rel_change_vs_previous": null
-        },
-        {
-          "cfl": 0.04,
-          "steps": 5200,
-          "l2": 2.2282505298126996e-11,
-          "rel_change_vs_previous": 0.0015991673653431011
-        },
-        {
-          "cfl": 0.02,
-          "steps": 10400,
-          "l2": 2.228237642850187e-11,
-          "rel_change_vs_previous": 5.783477607973106e-06
-        }
-      ],
-      "final_rel_change": 5.783477607973106e-06
-    }
-  }
+  "generated_at_utc": "2026-11-12T22:33:51Z"
 }
