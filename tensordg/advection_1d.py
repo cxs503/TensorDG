@@ -76,7 +76,8 @@ def _rhs(u: torch.Tensor, h: float, speed: float, volume: torch.Tensor,
 
 
 def _limit(coeff: torch.Tensor, dx: float, limiter: str | None,
-           tvb_constant: float, troubled_policy: str = "tvb") -> torch.Tensor:
+           tvb_constant: float, troubled_policy: str = "tvb",
+           weno_variant: str = "js") -> torch.Tensor:
     """Apply a 1-D limiter to the scalar modal state ``[ncells, nmodes]``.
 
     The limiter kernel works on ``[..., nvar]`` tensors, so the scalar field is
@@ -89,6 +90,7 @@ def _limit(coeff: torch.Tensor, dx: float, limiter: str | None,
     limited = apply_limiter(
         coeff.unsqueeze(-1), dx, kind=limiter, tvb_constant=tvb_constant,
         periodic=True, limit_all=(troubled_policy == "all"),
+        **({"weno_variant": weno_variant} if limiter == "weno" else {}),
     )
     return limited.squeeze(-1)
 
@@ -98,7 +100,8 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
                     device: str = "cpu", dtype: torch.dtype = torch.float64,
                     initial: Callable[[torch.Tensor], torch.Tensor] | None = None,
                     limiter: str | None = None, tvb_constant: float = 1.0,
-                    time_integrator: str = "rk4", troubled_policy: str = "tvb"):
+                    time_integrator: str = "rk4", troubled_policy: str = "tvb",
+                    weno_variant: str = "js"):
     """Solve u_t + speed*u_x = 0 on [0,1] with periodic BC.
 
     ``initial`` defaults to ``sin(2*pi*x)`` (the historical benchmark); pass a
@@ -112,6 +115,10 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
     ``time_integrator`` selects classical ``"rk4"`` (default, 4th-order but
     *not* strong-stability-preserving) or ``"ssp_rk3"`` (the TVD-RK scheme of
     Cockburn & Shu 1998, required for the TVD property when limiting).
+
+    ``weno_variant`` selects the non-linear weights of the WENO limiter
+    (``"js"`` Jiang--Shu, the default and historical behaviour, or ``"z"``
+    WENO-Z, Borges et al. 2008); see :func:`tensordg.limiters._weno_weights`.
 
     Returns (cell_centers, modal_coefficients, metadata). The first modal
     coefficient is the cell-average because P0=1 and higher Legendre modes
@@ -147,7 +154,9 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
         dt_nominal = cfl * h / (abs(speed) * (2 * degree + 1))
         steps = math.ceil(final_time / dt_nominal)
     dt = final_time / steps if steps else 0.0
-    lim = lambda c: _limit(c, h, limiter, tvb_constant, troubled_policy)  # noqa: E731
+    lim = lambda c: _limit(  # noqa: E731
+        c, h, limiter, tvb_constant, troubled_policy, weno_variant
+    )
     for _ in range(steps):
         k1 = _rhs(coeff, h, speed, volume, phi_l, phi_r)
         if time_integrator == "ssp_rk3":
