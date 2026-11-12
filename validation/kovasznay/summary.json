@@ -1,0 +1,163 @@
+{
+ "case": "CASE-DG-KOVASZNAY-NS",
+ "reference": "Kovasznay 1948 closed form (verified by kovasznay_residual)",
+ "gate": 0.01,
+ "analytic_residual": {
+  "continuity_max": 4.440892098500626e-16,
+  "momentum_x_max": 3.774758283725532e-15,
+  "momentum_y_max": 5.273559366969494e-16,
+  "continuity_relative": 2.2097083001516562e-16,
+  "momentum_x_relative": 1.1973941641953873e-15,
+  "momentum_y_relative": 1.334592795683053e-15,
+  "points": 64,
+  "decay_rate": -0.9637405441957689,
+  "reynolds": 40.0,
+  "wavenumber": 6.283185307179586
+ },
+ "rows": {
+  "primary": {
+   "degree": 3,
+   "ncells": [
+    24,
+    24
+   ],
+   "sound_speed": 60.0,
+   "mach": 0.04365166215443273,
+   "outlet": "prescribed",
+   "initial_mode": "exact",
+   "wall_adjoint": false,
+   "velocity": 8.818188869671156e-05,
+   "u": 8.452181340142625e-05,
+   "v": 0.00031207594975243293,
+   "steady_residual": 9.930843041485109e-05,
+   "gate_passed": true,
+   "steps": 2592,
+   "wall_seconds": 597.0345931053162
+  },
+  "p1_12": {
+   "degree": 1,
+   "ncells": [
+    12,
+    12
+   ],
+   "sound_speed": 60.0,
+   "mach": 0.04365166215443273,
+   "outlet": "prescribed",
+   "initial_mode": "exact",
+   "wall_adjoint": false,
+   "velocity": 0.02429648077679581,
+   "u": 0.02408747443113855,
+   "v": 0.04498885286153554,
+   "steady_residual": 0.0003119508438848705,
+   "gate_passed": false,
+   "steps": 1040,
+   "wall_seconds": 97.65087461471558
+  },
+  "p2_12": {
+   "degree": 2,
+   "ncells": [
+    12,
+    12
+   ],
+   "sound_speed": 60.0,
+   "mach": 0.04365166215443273,
+   "outlet": "prescribed",
+   "initial_mode": "exact",
+   "wall_adjoint": false,
+   "velocity": 0.0029679067414038326,
+   "u": 0.002946625551994857,
+   "v": 0.00516266212972929,
+   "steady_residual": 4.027741118821311e-05,
+   "gate_passed": true,
+   "steps": 1730,
+   "wall_seconds": 164.20185208320618
+  },
+  "p3_12": {
+   "degree": 3,
+   "ncells": [
+    12,
+    12
+   ],
+   "sound_speed": 60.0,
+   "mach": 0.04365166215443273,
+   "outlet": "prescribed",
+   "initial_mode": "exact",
+   "wall_adjoint": false,
+   "velocity": 0.00022828742782677504,
+   "u": 0.00022552646196782864,
+   "v": 0.00047932303515167457,
+   "steady_residual": 3.417738211252459e-05,
+   "gate_passed": true,
+   "steps": 2420,
+   "wall_seconds": 260.95790362358093
+  },
+  "p1_24": {
+   "degree": 1,
+   "ncells": [
+    24,
+    24
+   ],
+   "sound_speed": 60.0,
+   "mach": 0.04365166215443273,
+   "outlet": "prescribed",
+   "initial_mode": "exact",
+   "wall_adjoint": false,
+   "velocity": 0.0057384041918102585,
+   "u": 0.005692993132696101,
+   "v": 0.010321088012164296,
+   "steady_residual": 5.3733821458870315e-05,
+   "gate_passed": true,
+   "steps": 2070,
+   "wall_seconds": 272.3977749347687
+  },
+  "p2_24": {
+   "degree": 2,
+   "ncells": [
+    24,
+    24
+   ],
+   "sound_speed": 60.0,
+   "mach": 0.04365166215443273,
+   "outlet": "prescribed",
+   "initial_mode": "exact",
+   "wall_adjoint": false,
+   "velocity": 0.00039140533839966555,
+   "u": 0.000388126244075179,
+   "v": 0.0007180459256773603,
+   "steady_residual": 3.182133165428028e-05,
+   "gate_passed": true,
+   "steps": 3450,
+   "wall_seconds": 570.0595054626465
+  }
+ },
+ "order_table": [
+  {
+   "degree": 1,
+   "errors": [
+    [
+     12,
+     0.02429648077679581
+    ],
+    [
+     24,
+     0.0057384041918102585
+    ]
+   ],
+   "observed_order": -2.0820258669717573
+  },
+  {
+   "degree": 2,
+   "errors": [
+    [
+     12,
+     0.0029679067414038326
+    ],
+    [
+     24,
+     0.00039140533839966555
+    ]
+   ],
+   "observed_order": -2.9227104215951782
+  }
+ ]
+}
