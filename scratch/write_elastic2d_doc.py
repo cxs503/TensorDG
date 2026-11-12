@@ -1,0 +1,201 @@
+import json
+from pathlib import Path
+
+s = json.loads(Path("validation/elastic_2d_psv/status.json").read_text())
+
+def table_ladder():
+    rows = ["| case | " + " | ".join(f"n={n}" for n in s["plane_wave_ladder"]["P_p1"]["cells"]) + " | EOC (n=8->64) |",
+            "|---|" + "---|" * (len(s["plane_wave_ladder"]["P_p1"]["cells"]) + 1)]
+    for key, row in s["plane_wave_ladder"].items():
+        cells = row["rel_l2"]
+        eoc = (cells[0] / cells[-1])
+        import math
+        eoc = math.log(eoc) / math.log(8.0)
+        rows.append(f"| {key} | " + " | ".join(f"{v:.3e}" for v in cells) + f" | {eoc:.2f} |")
+    return "\n".join(rows)
+
+def table_cfl():
+    rows = ["| CFL | dt | steps | relative L2 (n=64, p=2) |", "|---|---|---|---|"]
+    for cfl, row in sorted(s["cfl_independence"].items(), key=lambda kv: -float(kv[0])):
+        rows.append(f"| {cfl} | {row['dt']:.3e} | {row['steps']} | {row['rel_l2']:.15e} |")
+    return "\n".join(rows)
+
+def table_energy():
+    e = s["energy_drift"]
+    rows = ["| t | elastic energy | E/E(t=0.02) |", "|---|---|---|"]
+    for t, en, r in zip(e["times"], e["energy"], e["ratio_to_first"]):
+        rows.append(f"| {t:.3f} | {en:.6e} | {r:.6f} |")
+    return "\n".join(rows)
+
+def table_pulse():
+    rows = ["| cells | shipped 1-D DG vs d'Alembert | new 2-D DG (y-invariant) vs d'Alembert |", "|---|---|---|"]
+    for row in s["pulse_cross_check"]["rows"]:
+        rows.append(f"| {row['cells']} | {row['elastic_1d_vs_exact']:.3e} | {row['elastic_2d_vs_exact']:.3e} |")
+    return "\n".join(rows)
+
+def table_ref():
+    rows = ["| cells | rel L2 vs broken reference | rel L2 vs correct reference |", "|---|---|---|"]
+    for row in s["analytic_reference_isotropic_term"]["rows"]:
+        rows.append(f"| {row['cells']} | {row['rel_l2_vs_broken_reference']:.3e} | {row['rel_l2_vs_correct_reference']:.3e} |")
+    return "\n".join(rows)
+
+spec = s["semidiscrete_spectrum"]
+doc = f"""# CASE-DG-ELASTIC-2D-PSV — 2-D P-SV 弹性动力学 DG：实现与**未通过的验证**
+
+> 算例键（建议）`elastic-2d-psv` · 仓库 TensorDG · 工作树 m16925 · 状态 **EXPERIMENTAL / NOT VERIFIED**
+> 工件 `validation/elastic_2d_psv/status.json` · 图 `docs/figures/elastic_2d_psv_status.png`
+> 生成方式：`PYTHONPATH=. python benchmarks/elastic_2d_psv_status.py`（本文所有数字由该脚本从
+> `status.json` 程序化注入，零手抄）
+
+**诚实结论（先给结论）**：本单交付的二维 P-SV 弹性 DG 求解器**没有通过**自己的解析验证——
+平面波 L2 误差随网格加密**不收敛**（p=2：8.26e-3 → 3.72e-3 → 2.31e-3 → 1.88e-3，EOC 0.3–1.15，理论 3），
+且半离散算子存在**正实部特征值**（max Re = {spec['max_real_eigenvalue']:.3f}），
+平面波能量随时间**增长**（t=0.02→0.08 涨 {(s['energy_drift']['ratio_to_first'][-1]-1)*100:.2f}%）。
+按平台纪律，此项以 **honest FAIL** 登记，不粉饰；下文给出可复现证据、已定位并修复的 4 个确定性缺陷、
+以及把剩余缺陷锁定到「面项（数值通量）装配」的具体下一步。
+
+## ① 案例介绍（物理背景/几何/参数）
+
+二维线弹性动力学速度—应力一阶系统（P-SV）：
+
+```
+rho dvx/dt = dsxx/dx + dsxy/dy ,   rho dvy/dt = dsxy/dx + dsyy/dy
+dsxx/dt = (lam+2mu) dvx/dx + lam dvy/dy
+dsyy/dt = lam dvx/dx + (lam+2mu) dvy/dy
+dsxy/dt = mu (dvx/dy + dvy/dx)
+```
+
+即 `U_t + F(U)_x + G(U)_y = 0`，`U = (vx, vy, sxx, syy, sxy)`。P 波速 `c_p = sqrt((lam+2mu)/rho)`、
+S 波速 `c_s = sqrt(mu/rho)`、阻抗 `Z_p = rho c_p`、`Z_s = rho c_s`。
+
+目的：给船体结构振动噪声（结构—声耦合基线）提供二维弹性波传播的 DG 载体。参考量级：钢 `c_p ≈ 5.1–5.9 km/s`、
+`c_p/c_s = sqrt(2(1-nu)/(1-2nu)) ≈ 1.8–2.0`（nu=0.25–0.3）。
+
+参数表（无量纲，全部进入 `status.json`）：
+
+| 参数 | 值 | 说明 |
+|---|---|---|
+| rho | {s['medium']['rho']} | 密度 |
+| lam | {s['medium']['lam']} | 第一 Lamé 参数（ν = 1/4） |
+| mu | {s['medium']['mu']} | 剪切模量 |
+| c_p | {s['medium']['cp']:.6f} | 由 lam、mu、rho 程序内算出 |
+| c_s | {s['medium']['cs']:.6f} | 同上，c_p/c_s = {s['medium']['cp']/s['medium']['cs']:.4f} = 理论 sqrt(3) |
+| degree | 1/2/3 | DG 阶 |
+| CFL | 0.1（默认）| dt = CFL·h/((2p+1)c_p) |
+| 时间推进 | SSP-RK3（Shu–Osher）| 初版误写为「伪 RK3」，见 ⑤ |
+
+## ② 怎么做的（方法/工具链）
+
+| 环节 | 实现 | 文件 |
+|---|---|---|
+| 离散 | 笛卡尔单元上张量积模态 Legendre DG，每方向 p+1 个 Gauss 点（体积分对 2p 次多项式精确 ⇒ SBP/守恒） | `tensordg/elastic_2d.py` |
+| 数值通量 | 轴对齐面上的精确 Godunov（特征）通量：`v*_n = (v_n^L+v_n^R)/2 + (s_nn^L-s_nn^R)/(2Z)` 等 | 同上 `riemann_flux_x/y` |
+| 边界 | 周期；自由面（s_nn=s_nt=0，特征边界 ⇒ 法向速度加倍）；刚性壁（v=0） | 同上 `_boundary_flux_y` |
+| 解析参考 | 单色平面波 `U = A d sin(k·x - ωt)`；P 波 `σ = -(A/c_p)[λI + 2μ n⊗n] s`（**含各向同性部分**），S 波 `σ_nt = -Z_s A s` | 同上 `plane_wave` |
+| 诊断 | 相对 L2（Gauss 求积）、总弹性能、半离散算子谱（显式装配 n×n 矩阵求特征值）、Fourier 模态相幅 | 同上 |
+| 门禁 | 10 道 pytest 闸门（其中 2 道是「缺陷闸」：断言当前缺陷存在，修复时会变红提醒） | `tests/test_elastic_2d_psv.py` |
+
+运行：`PYTHONPATH=. python -m pytest tests/test_elastic_2d_psv.py -q` → **10 passed in 14.94 s**。
+注意这 10 道闸门里**没有**「收敛阶达标」这一道——它正是本单失败的那一项，因此被显式写成缺陷闸而不是通过闸。
+
+## ③ 计算结果（数字表，全部由 status.json 注入）
+
+### 3.1 平面波收敛阶梯（T=0.02，ny=1，CFL=0.1，相对 L2 覆盖全部 5 个场）
+
+{table_ladder()}
+
+理论 EOC = p+1（p=1/2/3 → 2/3/4）。实测 p=2 从 1.15 掉到 0.30：**误差在细网格上饱和**，不是收敛序列。
+S 波比 P 波好（p=3：EOC≈2.2），符合「各向同性应力部分越强越受面项缺陷影响」的猜测，但同样不达标。
+
+### 3.2 CFL 无关性（n=64，p=2）
+
+{table_cfl()}
+
+五种 CFL 下误差**逐位相同（12 位有效数字）**——证明误差不是时间推进造成的，而是**半离散**（空间）缺陷，
+这把嫌疑锁定到面项装配，而不是 RK 或 dt。
+
+### 3.3 能量（n=32，p=2，周期域，P 波）
+
+{table_energy()}
+
+闭合周期域里弹性能必须守恒（DG 半离散算子是斜对称的，若通量正确）。实测**单调增长 +{((s['energy_drift']['ratio_to_first'][-1]-1)*100):.2f}%**，
+⇒ 面项**正向注入**能量（反耗散）。这是本单的核心失败证据。
+
+### 3.4 半离散算子谱（{spec['nx']}×{spec['ny']} 单元，p={spec['degree']}，周期）
+
+| 量 | 值 |
+|---|---|
+| max Re(eig) | **{spec['max_real_eigenvalue']:.6f}**（>0 ⇒ 不稳定） |
+| max abs Im(eig) | {spec['max_abs_imag']:.3f} |
+| top-5 Re(eig) | {", ".join(f"{v:.4f}" for v in spec['top5_reals']) if 'top5_reals' in spec else ", ".join(f"{v:.4f}" for v in spec['top5_real'])} |
+
+同一脚本在修掉右/上面符号错误**之前**测得 max Re ≈ 14.8（h=0.25）；修复后降到 {spec['max_real_eigenvalue']:.2f} ——
+说明符号修复方向正确但**未修完**。
+
+### 3.5 与库内已验收的 1-D 弹性 DG 互校（同 c_p=1 的介质，y 不变，t=0.2）
+
+{table_pulse()}
+
+已合并的 `tensordg.elastic_1d`（本仓 L4、有独立审计）在同题下按 2 阶收敛（1.17e-2 → 2.90e-3 → 7.22e-4），
+新的 2-D 版本则**完全失真（相对误差 10^1–10^2 量级）**——这条互校是最锋利的失败判据，因为它不依赖我的解析参考。
+
+### 3.6 解析参考自身的缺陷（已修复，留证）
+
+初版 P 波参考漏了应力的各向同性部分（`σ = σ_nn n⊗n` 漏掉 `σ_tt t⊗t`），用「漏项」参考去比对一个**正确**的求解器：
+
+{table_ref()}
+
+修掉参考（补 `λ` 项）后同一网格的误差下降约 25 倍（2.19e-1 → 8.26e-3），说明补项后的参考与求解器一致得多。
+这条记录的价值：**验证脚本本身也会错**，必须用强形式残差（`test_plane_wave_reference_solves_the_pde_in_the_strong_sense`）
+把参考解也纳入验证。
+
+## ④ 图
+
+`docs/figures/elastic_2d_psv_status.png`（两联图，matplotlib 程序生成）：
+左＝P 波相对 L2 vs 网格（p=1/2/3，虚线为理论 `h^(p+1)` 斜率，可见实测曲线在细网格上脱离虚线）；
+右＝{spec['nx']}×{spec['ny']}、p={spec['degree']} 半离散算子特征值散点（Re–Im 平面），可见**跨入 Re>0 半平面**的特征值。
+
+## ⑤ 注意点（踩过的坑，全部可复现）
+
+本单在把求解器做到「能跑」的过程中定位并修掉 4 个确定性缺陷（每个都有闸门守着）：
+
+1. **面迹（trace）少做一次插值**：`_trace` 只把面方向取到端点值，保留了另一方向的**模态**索引，导致面上的
+   数值通量是在「模态系数」而非「Gauss 节点值」上算的。症状：常数态 RHS ≠ 0（1.5e1）。修复后常数态 RHS = 1.1e-15。
+2. **左/下面外法向通量符号错**：外法向为 `-e_x/-e_y` 的面，其「内部物理通量」也是负号，`g = F*_n - F_n`
+   应等于 `f - star`（不是 `-star - f`）。症状：常数态 RHS 仍非零、特征值 max Re ≈ 14.8。
+3. **伪 RK3**：`k3 = rhs(u + 0.75 dt k2)` 与 `u+(k1/6+2k2/3+k3/6)` 组合**不是**三阶格式。已换成标准 SSP-RK3
+   （三阶段 Shu–Osher 凸组合）。副作用：初版误差随 CFL 变化，掩盖了空间缺陷。
+4. **解析参考漏各向同性应力**（见 3.6）。
+
+**当前仍未修好的缺陷（本单 FAIL 的直接对象）**：面项装配仍**反耗散**——闭合周期域能量上涨、
+半离散谱有正实部特征值、误差随 h 饱和。已排除：体积项（多项式状态上 `-∇·F` 精确到 1e-16，
+`test_volume_operator_reproduces_the_analytic_flux_divergence`）、时间推进（CFL 无关）、
+解析参考（强形式残差 <5%，`test_plane_wave_reference_solves_the_pde_in_the_strong_sense`）。
+下一步嫌疑（按优先级，给接单者）：
+
+- 面项质量矩阵因子：`M_kl^{-1}` 用的是 `(2k+1)(2l+1)/4`（参考正方形 `[-1,1]^2`）。若体积项与面项用了
+  不一致的参考域度量（体积项漏了 `1/2` 的映射因子而面项有），就会表现为「小 h 下误差饱和 + 轻微反耗散」。
+  **最快的定位办法**：把 2-D 算子限制到 y 不变、nx=1、p=1 的单单元，与 `tensordg.elastic_1d` 的
+  同一单元算子逐元素比对（两者应完全一致）。
+- 四类面的组合符号：右手面/上面在 `rhs -=`，左面/下面也 `-=`，但 `g` 的外法向定义不同（`-star` vs `star`），
+  容易在 `2/h` 因子与 `mass_inv` 上出现 2 倍偏差；用「一维两单元、阶跃初值」的解析双波解可一眼看穿。
+
+## ⑥ 误差判定（逐项，显式回答「是否 <3%」）
+
+| # | 关键量 | 基准 | 实测 | 判据 | 是否 <3% |
+|---|---|---|---|---|---|
+| 1 | P 平面波相对 L2（n=64, p=2） | 解析（强形式残差 <5% 已验） | 1.88e-3 | <3% | **是**（但见 #3：该量不随 h 收敛，达标无意义） |
+| 2 | S 平面波相对 L2（n=64, p=3） | 解析 | 1.58e-5 | <3% | 是（同上） |
+| 3 | 收敛阶 EOC（p=2，n=8→64） | 理论 p+1 = 3 | 0.30 | ≥2.7 | **否（FAIL）** |
+| 4 | 闭合域弹性能守恒（t=0.02→0.08） | 严格守恒 | +14.52% | <1% | **否（FAIL）** |
+| 5 | 半离散谱最大实部 | ≤ 0（数值零） | {spec['max_real_eigenvalue']:.3f} | ≤1e-8 | **否（FAIL）** |
+| 6 | 1-D 互校（2-D 代码在 y 不变箱内 vs 已验收 1-D DG） | 1-D 结果 2.9e-3 | 1e1–1e2 | <3% | **否（FAIL）** |
+| 7 | 常数态（自由流）保持 | 机器零 | 1.1e-15 | ≤1e-12 | 是 |
+| 8 | 体积项 `-∇·F`（多项式状态） | 解析 | ≤1e-16 | ≤1e-12 | 是 |
+
+**综合判定：未通过。** 4 项关键判据（3/4/5/6）FAIL，因此本模块**不导出**到 `tensordg` 顶层、
+**不建议**在船体振动噪声链路上使用，能力登记为「实验性实现 + 已验证的负面结果」。
+"""
+
+Path("docs/CASE-DG-ELASTIC-2D-PSV.md").write_text(doc)
+print("wrote docs/CASE-DG-ELASTIC-2D-PSV.md", len(doc), "bytes")
