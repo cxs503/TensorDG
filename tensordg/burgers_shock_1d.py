@@ -24,10 +24,13 @@ is built for the post-shock regime and therefore provides
   overshoot (total variation outside the exact solution's range), total
   variation, and a positivity filter for a passively advected density.
 
-Nothing here is a production multidimensional shock-capturing capability: the
-limiter is TVB/minmod, so a troubled cell is formally reduced to first order
-(see ``docs/burgers_shock_verification.md``, "Roadmap").  A WENO-type
-high-order limiter is a declared roadmap item, not implemented here.
+Nothing here is a production multidimensional shock-capturing capability.  The
+limiters available through ``limiter=`` are the TVB/minmod one (a troubled cell
+is formally reduced to first order) and the linear WENO one; the
+WENO-type **high-order** limiter that used to be a roadmap item here now lives in
+:mod:`tensordg.limiter_ao` (``limiter="ao"``), which keeps design order in the
+limited cells -- verified in ``docs/limiter_ao_verification.md`` and
+``tests/test_limiter_ao.py``.
 
 Conventions
 -----------
@@ -584,9 +587,11 @@ def solve_burgers_shock(
     ----------
     flux : {"lax_friedrichs", "rusanov", "roe"}
         Interface numerical flux.
-    limiter : {None, "tvb", "weno"}
+    limiter : {None, "tvb", "weno", "ao"}
         Shock-capturing limiter applied after every SSP-RK stage; ``None``
         leaves the solution unlimited (the Gibbs oscillation reference).
+        ``"ao"`` is the high-order WENO limiter of :mod:`tensordg.limiter_ao`,
+        which preserves design order inside the limited cells.
     data : RiemannData
         Initialisation when ``initial`` is ``None``.
 
