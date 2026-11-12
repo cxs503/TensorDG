@@ -2,9 +2,9 @@
 
 > 锚点：**CASE-DG-DALEMBERT-ELASTIC-1D**（算例池｜ref: Graff 1975 *Wave Motion in
 > Elastic Solids* 一维杆波解析｜容差 <2%｜指标：应力剖面 σ(x,t) vs d'Alembert 双行波）
-> 工件：`validation/elastic_1d/elastic_1d_dalembert.json`（主验证）、
+> 工件：`validation/elastic_1d_dalembert/`（主验证，见 `docs/CASE-DG-DALEMBERT-ELASTIC-1D.md`）、
 > `validation/elastic_1d/bc_fault_injection.json`（故障注入）、
-> `validation/elastic_1d/elastic_1d_dalembert.png`（图）。
+> `validation/elastic_1d_dalembert/elastic_1d_dalembert.png`（图）。
 > 驱动：`benchmarks/elastic_1d_dalembert.py`、`benchmarks/elastic_1d_bc_fault_injection.py`；
 > 本文表格由脚本从上述 JSON 直接注入，零手抄。
 > 求解器：`tensordg/elastic_1d.py`；测试：`tests/test_elastic_1d_dalembert.py`（12 项）。
