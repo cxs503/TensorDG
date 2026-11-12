@@ -1,0 +1,78 @@
+{
+ "audit_mission": 15550,
+ "audited_mission": 15480,
+ "audited_commit": "537c9ad (worktree /root/tp-agent/work/m15480)",
+ "audit_report": "m15550 docs/board_audit/CASE-SHU-OSHER_m15480_audit.md",
+ "impl_files": [
+  "tensordg/cases/shock_entropy.py:62 initial_state, :80 solve_dg_case, :115 rankine_hugoniot_anchor, :154 exact_mass_budget, :193 relative_l1_error, :214 gate_report, :280 main (case owner, single definition source)",
+  "tensordg/euler_dg_1d.py:281 verify_shock_entropy (:297 -> cases.shock_entropy.gate_report, self-check hook of the main periodic Euler DG solver)",
+  "benchmarks/shu_osher_case_pool.py:150 coarsen, :185 profile_metrics, :214 merge, :270 passes_5pct (DG ladder driver)",
+  "benchmarks/fv_weno5_1d.py (independent FV-WENO5-JS/HLLC/SSP-RK3 reference solver, N=3200)"
+ ],
+ "entry": "python -m tensordg.cases.shock_entropy --ncells 400 --degree 2 --limiter weno --cfl 0.4 [--reference <npz>]; python -m benchmarks.shu_osher_case_pool merge; bash validation/repro_shu_osher/run_all.sh",
+ "run_artifacts": [
+  "runs/shu_osher_case_pool/metrics.json (9 ladder legs + cfl_sweep 3 legs + analytic anchors)",
+  "runs/shu_osher_case_pool/profiles.npz",
+  "runs/shu_osher_case_pool/raw/ 14 npz (fv_cfl0p3_n800/1600/3200 + 11 dg_* legs); artifacts.sha256.json 16/16 sha256 MATCH (audit rechecked)",
+  "validation/repro_shu_osher/artifacts/{repro_smoke.json,platform_bench.json,shu_osher_case_pool_profiles.png,shu_osher_case_pool_convergence.png,shu_osher_case_pool_cfl.png} (png md5 identical to docs/figures/)",
+  "audit-side: docs/board_audit/audit_shu_osher_m15550.json + fig_profiles_and_gate.png + data/ (byte copy of raw, 404 kB)"
+ ],
+ "tests": [
+  "tests/test_shu_osher_case_pool.py",
+  "tests/test_shock_entropy_case_api.py",
+  "tests/test_shu_osher_1d.py",
+  "audit run attempt: pytest on the three files -> NOT COMPLETED inside the 120 s harness cap on a saturated host (10 dots, no failure seen); resubmitted to the cluster as cj1158"
+ ],
+ "integration_callers": [
+  "tensordg/__init__.py:16-20 exports solve_shock_entropy_dg / shock_entropy_anchor / shock_entropy_gate_report; :114-115 __all__",
+  "tensordg/euler_dg_1d.py:281-297 verify_shock_entropy -> cases.shock_entropy.gate_report",
+  "benchmarks/shu_osher_case_pool.py:59 imports tensordg.cases.shock_entropy (drivers consume the library case, not a private copy)"
+ ],
+ "benchmark": {
+  "anchor_slug_expected_by_audit_task": "CASE-SHU-OSHER",
+  "tensor_benchmark_cases_rows": 0,
+  "tensor_benchmark_cases_note": "SELECT case_name,metric,tolerance ... WHERE anchor_slug='CASE-SHU-OSHER' -> 0 rows; fuzzy %SHU%/%OSHER%/%entropy% -> 0 rows. tensor_case_pool id=83 (SHU-OSHER-DG, TensorDG, tol_policy '<5%', status dispatched, mission_id 15297, linked_anchor NULL) is the only registration. Deliverable's own platform probe validation/repro_shu_osher/artifacts/platform_bench.json -> CLAIMED_NOT_PROVEN, rows=0.",
+  "ref": "FV-WENO5-JS/HLLC/SSP-RK3 N=3200 (independent discretisation); self-convergence 1600 vs 3200 = 0.1010% rel L1 (audit recomputed)",
+  "metric": "relative L1 of density (DG cell average, k=0 mode) vs volume-averaged reference",
+  "tolerance_percent": 5.0,
+  "got_recomputed_by_audit_percent": {
+   "P1N200": 2.4615,
+   "P2N200": 2.426,
+   "P3N200": 2.4322,
+   "P1N400": 1.5438,
+   "P2N400": 1.5136,
+   "P3N400": 1.5204,
+   "P1N800": 0.5676,
+   "P2N800": 0.5561,
+   "P3N800": 0.6618,
+   "P2N400_cfl0.1": 1.5168,
+   "P2N400_cfl0.2": 1.5153
+  },
+  "drift_vs_tabulated_pp": 0.0,
+  "all_pass_5pct": true,
+  "best_rel_l1_percent": 0.5561,
+  "strict_3pct_pass": true,
+  "rho_min_all_configs": "0.800033 - 0.800917 (>0, no negative density)",
+  "audit_method": "docs/board_audit/audit_shu_osher_m15550.py recomputes every number from raw npz without importing the deliverable metric helpers"
+ },
+ "repro_cmd": "bash validation/repro_shu_osher/run_all.sh (~30 min, 8 procs) | fast: python validation/repro_shu_osher/smoke_repro.py (claimed ~25 s; NOT finished inside the audit's 120 s harness cap on a saturated host) | cluster proof submitted: run_cluster cj1158 (stage_dir=/root/tp-agent/work/m15480; smoke_repro + 3 pytest files), queued at audit close",
+ "external_anchor": "Closed-form only, no literature dataset: RH jump relations re-derived by the audit from the left state (shock speed 3.5496481, Mach 3.0000002, residuals rho 1.0e-8 / u 0.0 / p 1.7e-7), analytic shock position -4+3.5496481*1.8=2.389367, exact unshocked sine 1+0.2 sin(5x), post-shock plateau rho=3.857143 (ref dev 0.0%), global mass budget M0=12.833811, flux 10.141852, M(1.8)=31.089145. Shu & Osher 1988/1989 tabulate no numbers and no PDF is reachable -> literature values WITHHELD, not transcribed.",
+ "level": 4,
+ "level_reason": "complete case + error analysis (9 legs x L1/L2/Linf, CFL study, ref self-convergence, RH anchors, mass budget) + reproducible artifacts (sha256 manifest verified, independent recomputation drift 0.0 pp). Not L5: no literature/experimental validation (WITHHELD) and no new numerical method.",
+ "findings": {
+  "F1_no_referee_row": "blocking for platform-side confirmation: no tensor_benchmark_cases row and no tensorbench_results row / cluster job binding -> platform L4 endpoint CLAIMED_NOT_PROVEN. Fix = register the referee row (unify slug CASE-SHU-OSHER vs CASE-SHU-OSHER-DG) + bind one run_cluster job.",
+  "F2_case_pool_stale": "tensor_case_pool id=83 still status='dispatched', mission_id=15297, linked_anchor NULL after delivery",
+  "F3_figure_caption_rotation": "tensor_reports id=14555 figures[] pairs cfl.png with the density-profile caption and profiles.png with the CFL caption (file md5 identical to docs/figures -> publication-side rotation, reader mislabels figures)",
+  "F4_figure_title_wrong_N": "benchmarks/report_shu_osher_case_pool.py plot_cfl title says 'CFL sensitivity: DG P2, N=800' while metrics.json cfl_sweep is N=400, P2 (three legs 400/2/0.1|0.2|0.4)",
+  "F5_doc_defects": "report table has a separator row but no header (12 unnamed columns); section 5 references 'section 2b' which does not exist",
+  "F6_scope_note": "the 5% line is cross-scheme code verification, not experimental/literature validation",
+  "F7_ungated": "P3 mass error 0.3019% of M0 (P3N800) reported but not gated; conservation_drift NaN by design for transmissive BC",
+  "F8_duplicate_audit": "a prior verdict for the same delivery exists (tensor_maturity_verdicts id=337, scope 'm15480 CASE-SHU-OSHER-DG', mission 15552, level 4, gate pending); this is a second closing audit"
+ },
+ "disposition": "approve with notes (L4 on substance; F1/F2 need platform-side registration repair, F3-F5 doc-level fixes). A machine gate keyed on tensor_benchmark_cases / tensorbench_results is expected to mark this reopened - that is F1's correct signature, not a numeric fraud.",
+ "not_run": [
+  "full run_all.sh (~30 min) not executed by the audit",
+  "smoke_repro.py did not complete within the 120 s harness cap on the audit host",
+  "cluster job cj1158 still queued at close"
+ ]
+}
