@@ -1,0 +1,25 @@
+{
+ "feature_slug": "CASE-SHU-OSHER-DG",
+ "rows": [
+  {
+   "repo": "TensorDG",
+   "feature_slug": "CASE-SHU-OSHER-DG",
+   "tag": "oss_survey",
+   "method": "oss_inventory(33 rows) DG/WENO/Galerkin 检索 0 命中；集群 ~/oss-cache 扫描 job cj1181（queued, not_run）",
+   "files": "docs/CASE-SHU-OSHER-DG-r2.md#1.1",
+   "conventions": "不把未执行作业当结论；文献 PDF 不可达如实标 WITHHELD",
+   "transfer": "同类算例调研先查平台库存再决定是否外部调研",
+   "evidence": "psql oss_inventory 33 rows / cj1181 / Shu pub page 200"
+  },
+  {
+   "repo": "TensorDG",
+   "feature_slug": "CASE-SHU-OSHER-DG",
+   "tag": "method_selection",
+   "method": "DG(P1-P3,L2投影)+Qiu-Shu WENO 限制器+HLLC+SSP-RK3；参考解=独立 FV-WENO5-JS/HLLC/SSP-RK3 N=3200 + RH/正弦/质量 闭式锚点",
+   "files": "tensordg/cases/shock_entropy.py;tensordg/euler_dg_1d.py;benchmarks/fv_weno5_1d.py;benchmarks/shu_osher_case_pool.py;validation/repro_shu_osher/tensorbench_ingest.py",
+   "conventions": "左态由 RH 从 M=3 反推并检验而非抄写；参考解必须异族离散且证自身收敛；诊断量不得跨分辨率（TV 已剔除）",
+   "transfer": "激波-熵波类算例通用：阶梯 N×p + CFL 扫 + 闭式锚点 + 平台契约驱动的证据回路",
+   "evidence": "validation/repro_shu_osher/benchmark_ref_vs_got.json;docs/CASE-SHU-OSHER-DG-r2.md"
+  }
+ ]
+}

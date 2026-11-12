@@ -1,0 +1,122 @@
+{
+ "spec": {
+  "benchmark": {
+   "benchmark_id": "CASE-SHU-OSHER-DG",
+   "version": "1988.1"
+  },
+  "workload": {
+   "workload_id": "shu-osher-dg-ladder",
+   "version": "1",
+   "command": [
+    "python",
+    "-m",
+    "benchmarks.shu_osher_case_pool",
+    "merge",
+    "--reference-cells",
+    "3200"
+   ],
+   "cwd": ".",
+   "precision": "float64",
+   "configuration": {
+    "case": "Shu-Osher 1988 shock/entropy-wave",
+    "gamma": 1.4,
+    "domain": [
+     -5.0,
+     5.0
+    ],
+    "final_time": 1.8,
+    "reference_scheme": "FV-WENO5-JS/HLLC/SSP-RK3 N=3200",
+    "dg_scheme": "n800_p2",
+    "cfl": 0.4
+   }
+  },
+  "implementation": {
+   "project": "TensorDG",
+   "revision": "dabe2c252f5a8db9e14e76899a45b6cf6d30af33"
+  },
+  "execution": {
+   "timeout_seconds": 7200
+  },
+  "evaluation": {
+   "extract": {
+    "format": "json_stdout"
+   },
+   "metrics": [
+    {
+     "name": "plateau_rho",
+     "got_pointer": "dg.plateau_rho",
+     "ref_pointer": "reference.plateau_rho",
+     "tolerance_rel": 0.05,
+     "unit": "-"
+    },
+    {
+     "name": "shock_position",
+     "got_pointer": "dg.shock_position",
+     "ref_pointer": "reference.shock_position",
+     "tolerance_rel": 0.05,
+     "unit": "-"
+    },
+    {
+     "name": "wave_amplitude",
+     "got_pointer": "dg.wave_amplitude",
+     "ref_pointer": "reference.wave_amplitude",
+     "tolerance_rel": 0.05,
+     "unit": "-"
+    },
+    {
+     "name": "mass_integral",
+     "got_pointer": "dg.mass_integral",
+     "ref_pointer": "reference.mass_integral",
+     "tolerance_rel": 0.05,
+     "unit": "-"
+    }
+   ],
+   "notes": "ref = converged reference solution (FV-WENO5 N=3200) measured independently of the DG value; pointers index the workload stdout doc."
+  },
+  "notes": "round-2 (m15804): platform evidence loop for CASE-SHU-OSHER-DG; 4 physical anchors, 5% relative tolerance, numbers recomputed by the platform."
+ },
+ "result": {
+  "schema_version": "1.0.0",
+  "run_id": "shu-osher-dg-n800_p2",
+  "benchmark": {
+   "benchmark_id": "CASE-SHU-OSHER-DG",
+   "version": "1988.1"
+  },
+  "implementation": {
+   "project": "TensorDG",
+   "revision": "dabe2c252f5a8db9e14e76899a45b6cf6d30af33"
+  },
+  "workload": {
+   "workload_id": "shu-osher-dg-ladder",
+   "version": "1"
+  },
+  "execution": {
+   "status": "success",
+   "mission_id": 15804
+  },
+  "metrics": {
+   "plateau_rho": {
+    "value": 3.8571430165109666,
+    "unit": "-"
+   },
+   "shock_position": {
+    "value": 2.4000000000000004,
+    "unit": "-"
+   },
+   "wave_amplitude": {
+    "value": 3.7711793407809795,
+    "unit": "-"
+   },
+   "mass_integral": {
+    "value": 31.05899913880415,
+    "unit": "-"
+   }
+  },
+  "validation": {
+   "profile_rel_l1_percent": 0.5560602136582468,
+   "tolerance_rel": 0.05,
+   "source": "validation/repro_shu_osher/tensorbench_ingest.py"
+  }
+ },
+ "workload_stdout": "{\n \"case\": \"shu-osher-1988-shock-entropy\",\n \"dg\": {\n  \"mass_integral\": 31.05899913880415,\n  \"plateau_rho\": 3.8571430165109666,\n  \"shock_position\": 2.4000000000000004,\n  \"wave_amplitude\": 3.7711793407809795\n },\n \"dg_configuration\": \"n800_p2\",\n \"provenance\": {\n  \"metric_tolerance_rel\": 0.05,\n  \"profiles\": \"/root/tp-agent/work/m15804/validation/repro_shu_osher/artifacts/profiles.npz\"\n },\n \"reference\": {\n  \"mass_integral\": 31.08160644432312,\n  \"plateau_rho\": 3.8571429999996356,\n  \"shock_position\": 2.396875,\n  \"wave_amplitude\": 3.8803863579142988\n }\n}"
+}
