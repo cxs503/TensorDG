@@ -32,8 +32,12 @@ from benchmarks.shu_osher_case_pool import (
     rankine_hugoniot_anchor,
 )
 
-RUN = Path("runs/shu_osher_case_pool")
-COMMITTED_REFERENCE = Path("benchmarks/data/shu_osher_reference.npz")
+ROOT = Path(__file__).resolve().parents[1]
+# Evidence is read from the *tracked* ``validation/`` tree and anchored at the
+# repository root: the old constants were cwd-relative, so the gates skipped
+# themselves whenever pytest was not started from the repo root.
+RUN = ROOT / "validation" / "shu_osher_case_pool"
+COMMITTED_REFERENCE = ROOT / "benchmarks" / "data" / "shu_osher_reference.npz"
 
 
 def test_rankine_hugoniot_reproduces_the_case_left_state():
@@ -62,9 +66,11 @@ def test_exact_mass_budget_closure():
     assert budget["mass_inflow"] > 0.0  # inflow, not outflow: the left boundary is upstream
 
 
-@pytest.mark.skipif(not COMMITTED_REFERENCE.exists(), reason="committed reference missing")
 def test_committed_reference_satisfies_the_exact_anchors():
     """The 300-cell P3 profile shipped with the repo must obey the closed-form anchors."""
+    assert COMMITTED_REFERENCE.exists(), (
+        f"committed reference missing: {COMMITTED_REFERENCE} - it is a tracked "
+        "input of this gate, not a regenerable artifact")
     blob = np.load(COMMITTED_REFERENCE, allow_pickle=False)
     x, rho = blob["x"], blob["rho"]
     metrics = profile_metrics(x, rho)
@@ -110,9 +116,14 @@ def test_fv_weno5_leaves_a_uniform_flow_untouched():
     assert meta["density_min"] == pytest.approx(1.0, abs=1e-12)
 
 
-@pytest.mark.skipif(not (RUN / "metrics.json").exists(), reason="case artefacts not generated")
 def test_ladder_artifacts_are_admissible_and_report_the_5pct_gate():
-    metrics = json.loads((RUN / "metrics.json").read_text())
+    """Hard gate (no skip): missing evidence is red, not silently green."""
+    metrics_path = RUN / "metrics.json"
+    assert metrics_path.exists(), (
+        f"gate evidence missing: {metrics_path}.  Regenerate with\n"
+        "  python -m benchmarks.shu_osher_case_pool seed   # committed raw legs\n"
+        "  python -m benchmarks.shu_osher_case_pool merge")
+    metrics = json.loads(metrics_path.read_text())
     rows = metrics["ladder"]
     assert rows, "ladder table is empty"
     for row in rows:

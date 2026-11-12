@@ -1,7 +1,7 @@
 """Acceptance tests for the ice-edge transport DG benchmarks (IN12-P5).
 
 The tests assert the *same* machine-checkable criteria as the campaign artifact
-``artifacts/dg_advection_bench.json`` (written by
+``validation/dg_advection_bench/dg_advection_bench.json`` (written by
 ``tools/run_dg_advection_bench.py``), on a reduced configuration so that the
 module stays fast (roughly 1-2 minutes single-threaded):
 
@@ -37,7 +37,7 @@ from tensordg.advection_2d_var import (
 
 OMEGA = 2.0 * math.pi
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT = ROOT / "artifacts" / "dg_advection_bench.json"
+ARTIFACT = ROOT / "validation" / "dg_advection_bench" / "dg_advection_bench.json"
 
 
 def _order(case: str, degree: int, cells, cfl: float = 0.3) -> dict:
@@ -143,8 +143,9 @@ def test_peak_preservation_under_deformation() -> None:
 # ---------------------------------------------------------------------------
 def test_artifact_contract() -> None:
     """The campaign artifact exists, declares the criteria and passes them."""
-    if not ARTIFACT.exists():
-        pytest.skip("artifacts/dg_advection_bench.json not generated yet")
+    assert ARTIFACT.exists(), (
+        f"gate evidence missing: {ARTIFACT}.  Regenerate with\n"
+        "  python tools/run_dg_advection_bench.py   (~20 s)")
     payload = json.loads(ARTIFACT.read_text())
     assert payload["benchmark"] == "dg_advection_bench"
     assert payload["campaign_node"] == "IN12-P5"

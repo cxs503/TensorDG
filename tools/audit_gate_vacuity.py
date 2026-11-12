@@ -49,7 +49,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TESTS = ROOT / "tests"
-JSON_OUT = ROOT / "artifacts" / "gate_vacuity" / "gate_vacuity.json"
+#: The census lives under ``validation/`` because ``artifacts/`` and ``runs/``
+#: are not tracked by git in practice (evidence: the markdown report from
+#: the same mission landed while this JSON did not).
+JSON_OUT = ROOT / "validation" / "gate_vacuity" / "gate_vacuity.json"
 MD_OUT = ROOT / "docs" / "GATE-VACUITY-AUDIT.md"
 
 SKIP_ARTIFACT = "artifact_missing"
@@ -76,19 +79,16 @@ ARTIFACT_HINTS = ("run ", "generate", "generated", "missing", "artifact",
 # Legacy vacuity that this mission could not close.  Each entry must carry a
 # reason; the policy test fails on stale entries (self-cleaning).
 ALLOWED_VACUOUS: dict[str, str] = {
-    # Registered 2026-11-12 (m16367 vacuity census).  Both modules guard their
-    # acceptance assertions with "artifact missing -> skip" and the artifact is
-    # NOT in the tree, so their numbers are unverified on main today.  The fix
-    # is to commit the generator output (artifacts/dg_advection_bench.json,
-    # runs/shu_osher_case_pool/metrics.json); until then the vacuity is
-    # declared here instead of being hidden behind a green skip.  The policy
-    # test fails if either entry stops being vacuous (self-cleaning).
-    "tests/test_dg_advection_bench.py":
-        "artifacts/dg_advection_bench.json not committed (filtered by the merge "
-        "gate); regenerate with tools/run_dg_advection_bench.py and drop this entry",
-    "tests/test_shu_osher_case_pool.py":
-        "runs/shu_osher_case_pool/metrics.json not committed; regenerate with "
-        "python -m benchmarks.shu_osher_case_pool and drop this entry",
+    # Closed 2026-11-12 (m16795): the two original registrations were retired by
+    # moving their evidence into the *tracked* ``validation/`` tree and replacing
+    # "artifact missing -> skip" with hard asserts (see docs/GATE-VACUITY-CLOSURE.md).
+    #   tests/test_dg_advection_bench.py  -> validation/dg_advection_bench/
+    #   tests/test_shu_osher_case_pool.py -> validation/shu_osher_case_pool/
+    "tests/test_lax_region_band.py":
+        "reads runs/lax_region_band/metrics.json; runs/ is not tracked by git, so "
+        "the artifact never reaches main. Same root cause as the two modules closed "
+        "in m16795; fix = regenerate (python -m benchmarks.lax_region_band, ~244 s) "
+        "and relocate the evidence to validation/lax_region_band/",
 }
 
 
@@ -264,7 +264,11 @@ def _resolve(expr: str, env: dict[str, object], here: Path) -> Path | None:
     if not isinstance(value, (str, Path)):
         return None
     path = Path(value)
-    return path if path.is_absolute() else (Path.cwd() / path)
+    # Relative paths are resolved against the repository root, never against
+    # the cwd of the auditing process: ``Path("runs/...")`` in a gate module
+    # means <repo>/runs/..., and resolving it from an arbitrary cwd silently
+    # turned every such gate into a false VACUOUS.
+    return path if path.is_absolute() else (ROOT / path)
 
 
 def scan_module(path: Path) -> ModuleReport:
@@ -292,7 +296,7 @@ def scan_module(path: Path) -> ModuleReport:
         if p.suffix not in (".json", ".csv", ".npz", ".png", ".npy", ".txt", ".md"):
             continue
         anchored = p.is_absolute()
-        resolved = p if anchored else (Path.cwd() / p)
+        resolved = p if anchored else (ROOT / p)
         rep.artifacts.append(Artifact(expr=name, path=str(resolved),
                                       anchored=anchored,
                                       exists=resolved.exists()))

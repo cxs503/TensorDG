@@ -1,7 +1,7 @@
 # Ice-edge transport high-order reference: rotating front and reentrant vortex in DG (IN12-P5)
 
 **Node:** `IN12-P5` (纵贯军 P5) · **Repository:** TensorDG · **Branch:** `agent/m4933`
-**Artifact:** `artifacts/dg_advection_bench.json` · **Registry:** `docs/benchmarks/dg_advection_bench.md`
+**Artifact:** `validation/dg_advection_bench/dg_advection_bench.json` · **Registry:** `docs/benchmarks/dg_advection_bench.md`
 **Tests:** `tests/test_dg_advection_bench.py` (15 collected, all passing)
 **Evidence level:** REAL (measured convergence orders, analytic/reentrant references, round-off mass balance)
 **Scope statement:** route-level verification of a *transport operator*. No ice
