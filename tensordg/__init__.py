@@ -492,7 +492,20 @@ from .dispersive import DISPERSION_MODELS
 from .swe_1d import GRAVITY as SWE_GRAVITY
 from .cases import CASES, ELASTIC_ROD_CASE_KEY
 
+from .acoustics import (
+    acoustic_pulse_exact_pressure,
+    acoustic_pulse_initial_state,
+    acoustic_pulse_on_axis_asymptote,
+    acoustic_pulse_sound_speed,
+    alpha_from_width,
+)
+
 __all__ = [
+    "acoustic_pulse_exact_pressure",
+    "acoustic_pulse_initial_state",
+    "acoustic_pulse_on_axis_asymptote",
+    "acoustic_pulse_sound_speed",
+    "alpha_from_width",
     "assemble_ldg_dirichlet_1d",
     "ldg_l2_error_1d",
     "solve_ldg_dirichlet_1d",
