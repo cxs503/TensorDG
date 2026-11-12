@@ -62,6 +62,11 @@ C. 惰性/守恒：`sensor < s0-κ` 时滤波**逐位恒等**；mode 0 在满强
 `validation/artificial_viscosity/figures/{sensor_law,sod_profiles,sensor_profile,error_tv}.png`
 （由脚本生成：传感器标度律 log-log、Sod 密度剖面 vs 精确解、沿解传感器分布与阈值线、L1/TV 柱图）。
 
+> 复核注（m16938）：m16874 合并时这 3 个二进制 PNG 被合并门禁滤除，树内只剩文本工件。图现在是
+> **可再生产物**：`python -m benchmarks.artificial_viscosity_verification --output-dir validation/artificial_viscosity
+> --cells 64 96 128`；其数据源 `metrics.json`/`profiles.csv` 已入树并被 `metrics.sha256` 钉住，
+> `tests/test_artificial_viscosity.py::test_committed_metrics_artifact_matches_its_sha256` 在工件被改写/滤除时变红。
+
 ## ⑤ 注意点（局限与适用范围）
 
 - **过度耗散是真实代价**：默认参数下 L1 从 0.329 % 升到 0.830 %（仍 < 3 % 门槛），换来 25× 的振荡削减；
@@ -96,3 +101,15 @@ C. 惰性/守恒：`sensor < s0-κ` 时滤波**逐位恒等**；mode 0 在满强
 PYTHONPATH=. python -m benchmarks.artificial_viscosity_verification --output-dir validation/artificial_viscosity --cells 64 --degree 2 --quick
 PYTHONPATH=. python -m pytest tests/test_artificial_viscosity.py -q
 ```
+
+## ⑦ 独立复核补证（m16938，见 `docs/AUDIT-m16938-AV-SVV-RECHECK.md`）
+
+1. **网格阶梯（原作者标 not_run，本次补齐）**：N=64/96/128，AV L1(ρ)=0.830/0.571/0.437 %，
+   TV 超出=0.00186/0.00529/0.00954；同网格无限制 0.329/0.210/0.152 % 与 0.0502/0.0530/0.0609。
+   即 L1 代价 2.52×/2.71×/2.88×，**TV 削减 27.0×/10.0×/6.4×——削减倍数随加密下降**，§③B 的「25×」只是 N=64。
+2. **TVB 头对头（N=64，同网格同格式）**：AV 0.830 % / 0.00186 vs TVB 1.685 % / 0.0119（标记率 12.5 % vs 25 %）。
+   本算例上 AV 两项都优于 TVB；仍**不得**外推到 N≥96 或 WENO/AO。
+3. **守恒度量修正**：原 `conservation drift = inf` 因动量初始均值恒为 0；且 Sod 开域 `p_L != p_R` 使精确解
+   的域平均动量按 `(p_L-p_R)t = 0.18` 变化（实测 +0.18000087）。现按边界通量预算比较，N=64 相对漂移 1.46e-10。
+4. **饱和语义**：α_max=20 时最高模因子 `exp(-20(p/(p+1))^4)` = 0.287/0.019/0.0018/2.8e-4（p=1..4），
+   即 p=1 上「满强度」仍保留 28.7 % 模幅；α_max 不是阻尼上界，已由门禁固化。
