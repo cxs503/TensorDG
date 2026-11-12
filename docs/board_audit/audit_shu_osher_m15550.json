@@ -1,0 +1,201 @@
+{
+ "audit_mission": 15550,
+ "audited_mission": 15480,
+ "audit_data_dir": "/root/tp-agent/work/m15550/docs/board_audit/data",
+ "audited_worktree": "/root/tp-agent/work/m15480 @537c9ad",
+ "gate_percent": 5.0,
+ "n_configurations": 9,
+ "all_pass_5pct": true,
+ "best_config": {
+  "key": "DG P2 N=800 WENO CFL=0.4",
+  "got_rel_l1_percent": 0.5561
+ },
+ "worst_config": {
+  "key": "DG P1 N=200 WENO CFL=0.4",
+  "got_rel_l1_percent": 2.4615
+ },
+ "max_abs_drift_vs_table_pp": 0.0,
+ "all_within_strict_3pct": [
+  "DG P1 N=200 WENO CFL=0.4",
+  "DG P2 N=200 WENO CFL=0.4",
+  "DG P3 N=200 WENO CFL=0.4",
+  "DG P1 N=400 WENO CFL=0.4",
+  "DG P2 N=400 WENO CFL=0.4",
+  "DG P3 N=400 WENO CFL=0.4",
+  "DG P1 N=800 WENO CFL=0.4",
+  "DG P2 N=800 WENO CFL=0.4",
+  "DG P3 N=800 WENO CFL=0.4"
+ ],
+ "no_negative_density": true,
+ "legs": [
+  {
+   "config": "dg_cfl0p4_limweno_n200_p1",
+   "key": "DG P1 N=200 WENO CFL=0.4",
+   "ncells": 200,
+   "factor": 16,
+   "got_rel_l1_percent": 2.4615,
+   "tabulated_rel_l1_percent": 2.461510294775401,
+   "drift_pp": 0.0,
+   "passes_5pct": true,
+   "passes_3pct": true,
+   "rho_min": 0.800917,
+   "rho_max": 4.131404,
+   "mass_abs_error_percent_of_initial": 4e-12,
+   "shock_position_rel_error_percent": 0.7139
+  },
+  {
+   "config": "dg_cfl0p4_limweno_n200_p2",
+   "key": "DG P2 N=200 WENO CFL=0.4",
+   "ncells": 200,
+   "factor": 16,
+   "got_rel_l1_percent": 2.426,
+   "tabulated_rel_l1_percent": 2.4259725088111233,
+   "drift_pp": 0.0,
+   "passes_5pct": true,
+   "passes_3pct": true,
+   "rho_min": 0.800917,
+   "rho_max": 4.137634,
+   "mass_abs_error_percent_of_initial": 2.5634e-08,
+   "shock_position_rel_error_percent": 0.7288
+  },
+  {
+   "config": "dg_cfl0p4_limweno_n200_p3",
+   "key": "DG P3 N=200 WENO CFL=0.4",
+   "ncells": 200,
+   "factor": 16,
+   "got_rel_l1_percent": 2.4322,
+   "tabulated_rel_l1_percent": 2.432178866727159,
+   "drift_pp": 0.0,
+   "passes_5pct": true,
+   "passes_3pct": true,
+   "rho_min": 0.800917,
+   "rho_max": 4.139074,
+   "mass_abs_error_percent_of_initial": 0.001195400882,
+   "shock_position_rel_error_percent": 0.7419
+  },
+  {
+   "config": "dg_cfl0p4_limweno_n400_p1",
+   "key": "DG P1 N=400 WENO CFL=0.4",
+   "ncells": 400,
+   "factor": 8,
+   "got_rel_l1_percent": 1.5438,
+   "tabulated_rel_l1_percent": 1.5437954887425662,
+   "drift_pp": 0.0,
+   "passes_5pct": true,
+   "passes_3pct": true,
+   "rho_min": 0.80013,
+   "rho_max": 4.346179,
+   "mass_abs_error_percent_of_initial": 1.6e-11,
+   "shock_position_rel_error_percent": 0.5537
+  },
+  {
+   "config": "dg_cfl0p4_limweno_n400_p2",
+   "key": "DG P2 N=400 WENO CFL=0.4",
+   "ncells": 400,
+   "factor": 8,
+   "got_rel_l1_percent": 1.5136,
+   "tabulated_rel_l1_percent": 1.5135709924829863,
+   "drift_pp": 0.0,
+   "passes_5pct": true,
+   "passes_3pct": true,
+   "rho_min": 0.80013,
+   "rho_max": 4.354035,
+   "mass_abs_error_percent_of_initial": 5.1109e-08,
+   "shock_position_rel_error_percent": 0.5473
+  },
+  {
+   "config": "dg_cfl0p4_limweno_n400_p3",
+   "key": "DG P3 N=400 WENO CFL=0.4",
+   "ncells": 400,
+   "factor": 8,
+   "got_rel_l1_percent": 1.5204,
+   "tabulated_rel_l1_percent": 1.5204144295846167,
+   "drift_pp": 0.0,
+   "passes_5pct": true,
+   "passes_3pct": true,
+   "rho_min": 0.80013,
+   "rho_max": 4.355584,
+   "mass_abs_error_percent_of_initial": 0.018944926392,
+   "shock_position_rel_error_percent": 0.5418
+  },
+  {
+   "config": "dg_cfl0p4_limweno_n800_p1",
+   "key": "DG P1 N=800 WENO CFL=0.4",
+   "ncells": 800,
+   "factor": 4,
+   "got_rel_l1_percent": 0.5676,
+   "tabulated_rel_l1_percent": 0.5676447226504273,
+   "drift_pp": 0.0,
+   "passes_5pct": true,
+   "passes_3pct": true,
+   "rho_min": 0.800033,
+   "rho_max": 4.567725,
+   "mass_abs_error_percent_of_initial": 3.9e-11,
+   "shock_position_rel_error_percent": 0.465
+  },
+  {
+   "config": "dg_cfl0p4_limweno_n800_p2",
+   "key": "DG P2 N=800 WENO CFL=0.4",
+   "ncells": 800,
+   "factor": 4,
+   "got_rel_l1_percent": 0.5561,
+   "tabulated_rel_l1_percent": 0.5560602136582468,
+   "drift_pp": 0.0,
+   "passes_5pct": true,
+   "passes_3pct": true,
+   "rho_min": 0.800033,
+   "rho_max": 4.571213,
+   "mass_abs_error_percent_of_initial": 4.32014e-07,
+   "shock_position_rel_error_percent": 0.4576
+  },
+  {
+   "config": "dg_cfl0p4_limweno_n800_p3",
+   "key": "DG P3 N=800 WENO CFL=0.4",
+   "ncells": 800,
+   "factor": 4,
+   "got_rel_l1_percent": 0.6618,
+   "tabulated_rel_l1_percent": 0.6618218944852408,
+   "drift_pp": 0.0,
+   "passes_5pct": true,
+   "passes_3pct": true,
+   "rho_min": 0.800033,
+   "rho_max": 4.572905,
+   "mass_abs_error_percent_of_initial": 0.301913136251,
+   "shock_position_rel_error_percent": 0.4535
+  }
+ ],
+ "cfl_sweep": [
+  {
+   "config": "dg_cfl0p1_limweno_n400_p2",
+   "cfl": 0.1,
+   "got_rel_l1_percent": 1.5168,
+   "passes_5pct": true
+  },
+  {
+   "config": "dg_cfl0p2_limweno_n400_p2",
+   "cfl": 0.2,
+   "got_rel_l1_percent": 1.5153,
+   "passes_5pct": true
+  }
+ ],
+ "anchors": {
+  "plateau_dev_ref_percent": 0.0,
+  "sine_dev_ref_percent": 0.0,
+  "ref_self_convergence_1600_to_3200_rel_l1_percent": 0.101,
+  "rh": {
+   "shock_speed": 3.5496481,
+   "shock_mach": 3.0000002,
+   "rho_L_rel_res": 1e-08,
+   "p_L_rel_res": 1.7e-07,
+   "u_L_rel_res": 0.0,
+   "x_shock_at_t1p8": 2.38936659
+  },
+  "mass_budget": {
+   "M0": 12.833811,
+   "flux": 10.141852,
+   "t": 1.8,
+   "M_pred": 31.089145
+  }
+ },
+ "recomputed_by": "docs/board_audit/audit_shu_osher_m15550.py (no import of deliverable metric helpers)"
+}
