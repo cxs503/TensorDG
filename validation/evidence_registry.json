@@ -4,7 +4,7 @@
     "artifacts",
     "docs/benchmarks/results"
   ],
-  "generated_at_utc": "2026-11-12T15:20:53+00:00",
+  "generated_at_utc": "2026-11-12T16:48:00+00:00",
   "generator": "tools/audit_evidence_integrity.py --write",
   "orphans": {
     "validation/euler_dg_2d/probe_galilean.json": {
