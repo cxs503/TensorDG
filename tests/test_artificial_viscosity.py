@@ -12,7 +12,12 @@ import numpy as np
 import pytest
 import torch
 
-from benchmarks.artificial_viscosity_verification import project, sensor_law
+from benchmarks.artificial_viscosity_verification import (
+    conservation_drift,
+    expected_state_mean,
+    project,
+    sensor_law,
+)
 from tensordg.artificial_viscosity import (
     apply_av_filter, av_sensor, av_strength, exponential_filter_factor, modal_smoothness,
     sensor_reference,
@@ -60,13 +65,19 @@ def test_sensor_scaling_law_is_reproduced():
     """
     for normalisation in ("fraction", "global"):
         law = sensor_law(2, cells=(20, 40, 80), normalisation=normalisation)
-        assert abs(law["smooth_slope"] - 4.0) < 1.5, (normalisation, law["smooth"])
+        # ``smooth_slope`` is the polyfit slope of log10(sensor) against
+        # log10(cells), hence *negative* for a decaying sensor (measured
+        # -4.003 / -3.987, doc table §③A).  The original gate compared the
+        # signed slope against +4.0 and could therefore never pass (audit
+        # m16938 F1); compare magnitudes and keep a tolerance with teeth.
+        theory = law["theory_smooth_slope"]
+        assert abs(-law["smooth_slope"] - theory) < 0.35, (normalisation, law["smooth_slope"], theory)
         assert all(-3.0 < value < 0.0 for value in law["jump"]), (normalisation, law["jump"])
     # p = 1: the local (fraction) form is dominated by the element at the zero
     # crossing; the global form recovers the theoretical 2.
     local = sensor_law(1, cells=(20, 40, 80), normalisation="fraction")
     global_ = sensor_law(1, cells=(20, 40, 80), normalisation="global")
-    assert abs(global_["smooth_slope"] - 2.0) < 1.0, global_["smooth"]
+    assert abs(-global_["smooth_slope"] - 2.0) < 0.5, global_["smooth"]
     assert abs(local["smooth_slope"]) < abs(global_["smooth_slope"]), (local["smooth"], global_["smooth"])
 
 
@@ -136,3 +147,123 @@ def test_sod_av_reduces_total_variation_relative_to_unlimited():
     assert p_av > 0.0 and p_none > 0.0
     assert tv_av < tv_none, (tv_av, tv_none)
     assert meta["limiter_kwargs"]["s0"] == -2.0
+
+
+# ---------------------------------------------------------------------------
+# Audit m16938 additions: metric soundness, end-to-end inertness, provenance.
+# ---------------------------------------------------------------------------
+
+def test_expected_state_mean_accounts_for_the_boundary_momentum_flux():
+    """Open domain with p_L != p_R: the mean momentum *must* move by (p_L-p_R)t."""
+    left, right = (1.0, 0.0, 1.0), (0.125, 0.0, 0.1)
+    expected = expected_state_mean(left, right, final_time=0.2)
+    assert np.allclose(expected, [0.5625, 0.18, 1.375], atol=1e-15), expected
+    assert expected_state_mean(left, left, final_time=0.2)[1] == 0.0
+
+
+def test_conservation_drift_metric_is_defined_for_a_zero_mean_component():
+    """The drift metric must not report ``inf`` just because a mean is zero."""
+    initial = np.array([0.5625, 0.0, 2.75])
+    numeric = initial.copy()
+    numeric += np.array([1e-15, 1e-15, -1e-15])
+    drift = conservation_drift(numeric, initial)
+    assert np.isfinite(drift["relative"]), drift
+    assert np.isfinite(drift["absolute"]), drift
+    assert drift["relative"] < 1e-12
+    assert drift["zero_mean_components"] == 1, drift
+
+
+def test_conservation_drift_metric_has_teeth():
+    """An injected non-conservation of the momentum mean must be caught."""
+    expected = expected_state_mean((1.0, 0.0, 1.0), (0.125, 0.0, 0.1), final_time=0.2)
+    broken = expected.copy()
+    broken[1] += 1e-3
+    drift = conservation_drift(broken, expected)
+    assert drift["absolute"] > 1e-4, drift
+    # ... while the relative branch stays finite (no inf poisoning the column).
+    assert np.isfinite(drift["relative"]), drift
+
+
+def test_zero_strength_av_is_bitwise_the_unlimited_solver():
+    """``alpha_max = 0`` must reproduce the unlimited run bit for bit.
+
+    This is the end-to-end version of the documented inertness claim: the
+    synthetic-coefficient test only covers ``apply_av_filter``, not the RK path
+    (``limiter_kwargs`` forwarding, per-substep filtering, positivity scaling).
+    """
+    common = dict(ncells=24, degree=2, final_time=0.1, cfl=0.12)
+    _, coeff_none, meta_none = solve_euler_dg_1d(
+        (1.0, 0.0, 1.0), (0.125, 0.0, 0.1), limiter=None, **common,
+    )
+    _, coeff_av, meta_av = solve_euler_dg_1d(
+        (1.0, 0.0, 1.0), (0.125, 0.0, 0.1), limiter="av",
+        limiter_kwargs={"alpha_max": 0.0}, **common,
+    )
+    assert meta_av["steps"] == meta_none["steps"]
+    assert torch.equal(coeff_av, coeff_none)
+
+
+def test_av_run_does_not_add_conservation_error():
+    """The AV run must conserve as well as the unlimited one (same setup).
+
+    The absolute level (~1e-6 relative on this mesh) is set by the positivity
+    scaling and the open-domain boundary trace, not by the filter: the filter
+    leaves mode 0 bitwise intact.  The gate is therefore *relative* -- AV may
+    not make the drift worse -- plus a loose absolute ceiling so a regression to
+    a genuinely non-conservative closure is still caught.
+    """
+    common = dict(ncells=24, degree=2, final_time=0.2, cfl=0.12)
+    expected = expected_state_mean((1.0, 0.0, 1.0), (0.125, 0.0, 0.1), final_time=0.2)
+
+    def drift(limiter, kwargs=None):
+        _, coeff, _ = solve_euler_dg_1d(
+            (1.0, 0.0, 1.0), (0.125, 0.0, 0.1), limiter=limiter,
+            limiter_kwargs=kwargs, **common,
+        )
+        return conservation_drift(coeff[:, 0].mean(dim=0).numpy(), expected)
+
+    plain = drift(None)
+    filtered = drift("av", {"s0": -2.0, "kappa": 0.5, "alpha_max": 20.0})
+    assert np.isfinite(filtered["relative"]) and np.isfinite(filtered["absolute"]), filtered
+    assert filtered["relative"] < 1e-5, filtered
+    assert filtered["relative"] < 2.0 * plain["relative"] + 1e-12, (filtered, plain)
+
+
+def test_top_mode_damping_is_degree_dependent_as_documented():
+    """Lock the documented (degree dependent) saturation semantics.
+
+    ``sigma_p = exp(-alpha_max * (p/(p+1))^{2*order})``: at ``alpha_max = 20``
+    the top mode keeps 28.7 % of its amplitude for ``p = 1`` and 1.9 % for
+    ``p = 2``.  That is *not* full damping, so ``alpha_max`` is not a damping
+    bound.  The gate exists so any change of the modal scaling must show up as
+    a documentation change (``docs/CASE-DG-AV-SHOCK-CAPTURE.md`` §⑤).
+    """
+    alpha = torch.tensor([20.0], dtype=torch.float64)
+    measured = {
+        p: exponential_filter_factor(p + 1, alpha, order=2.0)[0, p].item()
+        for p in (1, 2, 3)
+    }
+    for p, value in measured.items():
+        expected = float(np.exp(-20.0 * (p / (p + 1)) ** 4))
+        assert abs(value - expected) < 1e-12, (p, value, expected)
+    assert measured[1] > 0.2, measured
+    assert measured[3] < 1e-2, measured
+
+
+def test_committed_metrics_artifact_matches_its_sha256():
+    """Provenance gate: the published numbers must be the hashed ones."""
+    import hashlib
+    import json
+    import pathlib
+
+    root = pathlib.Path(__file__).resolve().parents[1]
+    metrics = root / "validation" / "artificial_viscosity" / "metrics.json"
+    digest = root / "validation" / "artificial_viscosity" / "metrics.sha256"
+    assert metrics.exists(), f"missing artifact {metrics}"
+    assert digest.exists(), f"missing digest {digest}"
+    assert hashlib.sha256(metrics.read_bytes()).hexdigest() == digest.read_text().strip()
+    data = json.loads(metrics.read_text())
+    assert data["runs"], "metrics.json must carry the runs it summarises"
+    for run in data["runs"]:
+        assert np.isfinite(run["conservation_drift"]), run["limiter"]
+        assert np.isfinite(run["conservation_drift_absolute"]), run["limiter"]

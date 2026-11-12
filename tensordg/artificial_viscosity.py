@@ -89,18 +89,19 @@ def modal_smoothness(
         the solvers in this package: ``mode 0`` is the cell average).
     top_mode : int, optional
         Mode index treated as "top"; defaults to the last one (degree ``p``).
-    normalisation : {"global", "fraction"}
-        ``"fraction"`` (default) divides the top-mode energy of an element by the
-        **mesh-mean** element energy of the same variable; ``"fraction"`` is
-        the default because it separates shocks from smooth data by ~5 decades
-        on the documented configuration; ``"global"`` divides  The local ratio is
-        ill-conditioned where the field passes through zero (``E_e -> 0`` with
-        the top mode still finite): measured on a resolved sine, ``p = 1``
-        gives a *mesh independent* ``s_e = -0.603`` for 20..160 cells instead of
-        the theoretical ``2p = 2`` per-decade decay, because the element at the
-        zero crossing dominates the max.  The global normalisation is
-        sign-robust and reproduces the ``2p`` law for both degrees (measured
-        4.00 at ``p = 2``, 2.00 at ``p = 1``).
+    normalisation : {"fraction", "global"}
+        ``"fraction"`` (default) divides the top-mode energy of an element by
+        **that same element's** total modal energy (plus ``floor``); it
+        separates shocks from smooth data by ~5 decades on the documented
+        configuration.  The local ratio is ill-conditioned where the field
+        passes through zero (``E_e -> 0`` with the top mode still finite):
+        measured on a resolved sine, ``p = 1`` gives a *mesh independent*
+        ``s_e = -0.603`` for 20..160 cells instead of the theoretical
+        ``2p = 2`` per-decade decay, because the element at the zero crossing
+        dominates the max.  ``"global"`` divides the top-mode energy by the
+        **mesh-mean** element energy of the same variable; it is sign-robust
+        and reproduces the ``2p`` law for both degrees (measured 4.00 at
+        ``p = 2``, 2.00 at ``p = 1``).
     floor_rel : float
         The fraction is taken against ``E_e + floor_rel * max_e E_e`` (per
         variable).  Without a floor the ratio is **not scale aware**, and a
