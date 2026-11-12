@@ -1,0 +1,7 @@
+{
+  "results_sha256": "c1f2279f4915ee6a17ce151cd4dc2e402d3b230002041e73813ebd2c73581dac",
+  "figure_sha256": "571b5882a841216d8300d62a8ba8279fdb9b26b26d1a772127906a7a8b55f2f8",
+  "figure": "sipg_explicit_stability.png",
+  "git_commit": "b022bb60c2437437eae445e4b5d7507e15230d11",
+  "repro": "python -m benchmarks.sipg_explicit_stability --output-dir validation/sipg_explicit_stability"
+}
