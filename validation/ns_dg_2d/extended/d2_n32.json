@@ -1,0 +1,77 @@
+{
+ "decomposition": {
+  "density": {
+   "fluctuation_l2": 8.990727026821709e-06,
+   "mean_l2": 4.674257356366597e-11,
+   "mean_offset": -4.674257356366597e-11,
+   "orthogonality_residual": 4.3654456827486036e-21,
+   "reference_l2": 1.0049875621120892,
+   "relative_fluctuation_l2": 8.946107758713682e-06,
+   "relative_l2": 8.946107758593016e-06,
+   "total_l2": 8.990727026700441e-06
+  },
+  "energy": {
+   "fluctuation_l2": 2.5156404916132502e-05,
+   "mean_l2": 1.1485931512157743e-10,
+   "mean_offset": -1.1485931512157743e-10,
+   "orthogonality_residual": 2.6359557785074195e-20,
+   "reference_l2": 2.726471983898675,
+   "relative_fluctuation_l2": 9.226724156600539e-06,
+   "relative_l2": 9.226724156504555e-06,
+   "total_l2": 2.5156404915870803e-05
+  },
+  "momentum_x": {
+   "fluctuation_l2": 4.8842416166636325e-06,
+   "mean_l2": 2.3550575845856032e-11,
+   "mean_offset": -2.3550575845856032e-11,
+   "orthogonality_residual": 1.1081764515767054e-21,
+   "reference_l2": 0.504983222000806,
+   "relative_fluctuation_l2": 9.672086920653844e-06,
+   "relative_l2": 9.67208692054163e-06,
+   "total_l2": 4.884241616606966e-06
+  },
+  "momentum_y": {
+   "fluctuation_l2": 3.2446437593682267e-06,
+   "mean_l2": 2.200879473226367e-11,
+   "mean_offset": 2.200879473226367e-11,
+   "orthogonality_residual": 9.678239349069169e-22,
+   "reference_l2": 0.39516859717356934,
+   "relative_fluctuation_l2": 8.210783403781163e-06,
+   "relative_l2": 8.21078340359264e-06,
+   "total_l2": 3.244643759293729e-06
+  }
+ },
+ "degree": 2,
+ "diffusive_steps": 1227,
+ "dt": 1.552022472186762e-05,
+ "errors": {
+  "density": {
+   "l2": 8.990727026700441e-06,
+   "relative_l2": 8.946107758593016e-06
+  },
+  "energy": {
+   "l2": 2.5156404915870803e-05,
+   "relative_l2": 9.226724156504555e-06
+  },
+  "momentum_x": {
+   "l2": 4.884241616606966e-06,
+   "relative_l2": 9.67208692054163e-06
+  },
+  "momentum_y": {
+   "l2": 3.244643759293729e-06,
+   "relative_l2": 8.21078340359264e-06
+  }
+ },
+ "ncells": 32,
+ "provenance": {
+  "arch": "loongarch64",
+  "git_dirty": true,
+  "git_sha": "b6b7155e19249243a6b16b75133ff6f2108a8519",
+  "python": "3.11.6",
+  "torch": "2.7.1",
+  "torch_threads": 2
+ },
+ "quadrature": 7,
+ "steps": 1227,
+ "wall_seconds": 699.569016456604
+}
