@@ -10,6 +10,16 @@ STATUS: PROTOTYPE -- NOT VALIDATED, NOT EXPORTED.
     deliberately *not* re-exported from ``tensordg/__init__.py`` and no
     convergence claim is made for it.  See the status note for the plan.
 
+    Update (m16560): the 1-D counterpart is now resolved and verified in
+    :mod:`tensordg.ldg_1d`.  The two ingredients that were missing there are the
+    *face-oriented* alternating traces (``u_hat = u^-`` from the element on the
+    left of the face, ``q_hat = q^+`` from the element on the right) and a
+    discrete Dirichlet flux ``q_hat = q_int + beta/h (u_int - g_D)``; without the
+    latter the closure is exactly singular.  ``docs/CASE-DG-LDG-1D-MIXED.md``
+    records the ablation, the conditioning audit and the fact that a
+    polynomial-exactness residual cannot discriminate between trace sides.  The
+    2-D assembly below is unchanged and still unvalidated.
+
 Original module description follows.
 
 The model problem is the Dirichlet problem
