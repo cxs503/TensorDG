@@ -153,7 +153,50 @@ def rotated_profile(profile: Callable[..., torch.Tensor], omega: float,
         ys = y0 - s * (x - x0) + c * (y - y0)
         return profile(xs, ys, 0.0)
 
-    return exact# --------------------------------------------------------------------------
+    return exact
+
+def cone_profile(x, y, t=0.0, center: Sequence[float] = (0.5, 0.5),
+                 radius: float = 0.15, peak: float = 1.0):
+    """LeVeque Ch.19 cone: linear ramp from 0 at r=radius to peak at center.
+
+    Reference: LeVeque 2002, *Finite Volume Methods for Hyperbolic Problems*,
+    Cambridge Univ. Press, Ch. 19 (solid-body rotation benchmark).
+    DOI: 10.1017/cbo9780511791253
+    """
+    del t
+    x0, y0 = float(center[0]), float(center[1])
+    r = torch.sqrt((x - x0) ** 2 + (y - y0) ** 2)
+    return torch.where(r <= radius, peak * (1.0 - r / radius), 0.0)
+
+
+def slotted_cylinder(x, y, t=0.0, center: Sequence[float] = (0.5, 0.5),
+                     radius: float = 0.15, height: float = 1.0,
+                     slot_width: float = 0.05, slot_x_start: float = 0.5):
+    """LeVeque-style slotted cylinder: unit-height disk with a rectangular slot.
+
+    The slot removes material from ``x >= slot_x_start`` within ``|y - y0| <= slot_width/2``.
+    This is the classic Zalesak/LeVeque discontinuous advection test.
+    """
+    x0, y0 = float(center[0]), float(center[1])
+    r = torch.sqrt((x - x0) ** 2 + (y - y0) ** 2)
+    in_disk = r <= radius
+    in_slot = (x >= slot_x_start) & (torch.abs(y - y0) <= slot_width / 2.0)
+    return torch.where(in_disk & ~in_slot, height, 0.0)
+
+
+def smooth_bump(x, y, t=0.0, center: Sequence[float] = (0.5, 0.35),
+                radius: float = 0.15, peak: float = 1.0):
+    """C^1 compactly supported bump: ``peak * (1 - (r/R)^2)^2`` for r <= R.
+
+    Used for solid-body rotation tests where a smooth but compact profile
+    is preferred over a Gaussian (which has infinite support).
+    """
+    del t
+    x0, y0 = float(center[0]), float(center[1])
+    r = torch.sqrt((x - x0) ** 2 + (y - y0) ** 2)
+    ratio = r / radius
+    return torch.where(ratio <= 1.0, peak * (1.0 - ratio ** 2) ** 2, 0.0)
+# --------------------------------------------------------------------------
 # Solver
 # --------------------------------------------------------------------------
 class DGAdvection2D:
@@ -355,6 +398,39 @@ class DGAdvection2D:
         wq = b.weights[None, None, :, None] * b.weights[None, None, None, :]
         jac = 0.25 * self.hx * self.hy
         return {"absolute_l2": float(torch.sqrt(jac * torch.sum(wq * num ** 2)).item())}
+
+
+    def l1_error(self, coeff: torch.Tensor, exact: Callable[..., torch.Tensor],
+                 t: float = 0.0, radius: float | None = None,
+                 center: Sequence[float] = (0.5, 0.5)) -> dict:
+        """L1 error against an analytic field (Gauss quadrature).
+
+        Returns ``absolute_l1``, ``reference_l1``, and ``relative_l1``.
+        The ``radius`` parameter works identically to :meth:`l2_error`.
+        """
+        b = basis_1d(self.degree, max(2 * self.degree + 6, 10), self.device, self.dtype)
+        num = torch.einsum("xykl,qk,rl->xyqr", coeff, b.phi, b.phi)
+        xq = torch.as_tensor(
+            [(i + 0.5) * self.hx for i in range(self.nx)], device=self.device,
+            dtype=self.dtype)[:, None] + 0.5 * self.hx * b.nodes[None, :]
+        yq = torch.as_tensor(
+            [(j + 0.5) * self.hy for j in range(self.ny)], device=self.device,
+            dtype=self.dtype)[:, None] + 0.5 * self.hy * b.nodes[None, :]
+        X = xq[:, None, :, None]
+        Y = yq[None, :, None, :]
+        ref = exact(X, Y, t)
+        wq = b.weights[None, None, :, None] * b.weights[None, None, None, :]
+        if radius is not None:
+            x0, y0 = float(center[0]), float(center[1])
+            mask = ((X - x0) ** 2 + (Y - y0) ** 2 <= radius ** 2).to(wq.dtype)
+            wq = wq * mask
+        jac = 0.25 * self.hx * self.hy
+        abs_l1 = jac * torch.sum(wq * torch.abs(num - ref))
+        ref_l1 = jac * torch.sum(wq * torch.abs(ref))
+        abs_l1 = float(abs_l1.item())
+        ref_l1 = float(ref_l1.item())
+        return {"absolute_l1": abs_l1, "reference_l1": ref_l1,
+                "relative_l1": abs_l1 / ref_l1 if ref_l1 else abs_l1}
 
 
 def estimate_max_speed(velocity: Velocity, times: Sequence[float] = (0.0,),
