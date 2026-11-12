@@ -4,7 +4,7 @@
   "degree": 3,
   "final_time": 0.13,
   "steps": 5087,
-  "dt": 1.6406746756930657e-05,
+  "dt": 1.64067467569029e-05,
   "diaphragm": 0.5,
   "domain": [
     0.0,
@@ -24,25 +24,26 @@
   "flux": "hllc",
   "limiter": "local positivity fallback",
   "device": "cpu",
+  "limiter_stage": "every",
   "errors": {
     "density": {
-      "absolute_l2": 0.016497280693564844,
-      "relative_l2": 0.027694200699042482,
-      "relative_l2_percent": 2.7694200699042484
+      "absolute_l2": 0.016497282294380772,
+      "relative_l2": 0.027694203386353103,
+      "relative_l2_percent": 2.7694203386353102
     },
     "velocity": {
-      "absolute_l2": 0.01963108949034162,
-      "relative_l2": 0.016052694357682654,
-      "relative_l2_percent": 1.6052694357682653
+      "absolute_l2": 0.01963110111755489,
+      "relative_l2": 0.016052703865463716,
+      "relative_l2_percent": 1.6052703865463716
     },
     "pressure": {
-      "absolute_l2": 0.023312323695990934,
-      "relative_l2": 0.009193637712234793,
-      "relative_l2_percent": 0.9193637712234793
+      "absolute_l2": 0.023312461963096914,
+      "relative_l2": 0.009193692240376066,
+      "relative_l2_percent": 0.9193692240376066
     }
   },
-  "max_relative_l2": 0.027694200699042482,
-  "max_relative_l2_percent": 2.7694200699042484,
+  "max_relative_l2": 0.027694203386353103,
+  "max_relative_l2_percent": 2.7694203386353102,
   "acceptance_threshold": 0.03,
   "passed": true,
   "reference": "exact general Riemann solution with 8-point quadrature",
