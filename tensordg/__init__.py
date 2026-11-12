@@ -391,11 +391,13 @@ from .ldg_dirichlet_1d import (
     solve_ldg_dirichlet_1d,
 )
 
-# ---- poisson_2d_ldg
-# STATUS: PROTOTYPE -- NOT VALIDATED (rank-deficient Dirichlet closure, see
-# docs/ldg_poisson_status.md).  Deliberately NOT re-exported: coverage of the
-# public contract excludes prototype modules (tools/api_contract.py
-# PROTOTYPE_MODULES) and tests/test_ldg_closure_rank.py enforces the guard.
+# ---- poisson_2d_ldg (validated 2-D LDG; see docs/CASE-DG-LDG-2D.md)
+from .poisson_2d_ldg import (
+    manufactured_solution as ldg_poisson_2d_manufactured_solution,
+    superposition_solution as ldg_poisson_2d_superposition_solution,
+    solve_poisson_2d_ldg,
+    ldg_poisson_convergence,
+)
 
 # ---- sipg_matrixfree
 from .sipg_matrixfree import (
@@ -493,6 +495,10 @@ from .swe_1d import GRAVITY as SWE_GRAVITY
 from .cases import CASES, ELASTIC_ROD_CASE_KEY
 
 __all__ = [
+    "ldg_poisson_2d_manufactured_solution",
+    "ldg_poisson_2d_superposition_solution",
+    "solve_poisson_2d_ldg",
+    "ldg_poisson_convergence",
     "assemble_ldg_dirichlet_1d",
     "ldg_l2_error_1d",
     "solve_ldg_dirichlet_1d",

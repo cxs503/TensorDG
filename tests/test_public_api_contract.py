@@ -134,7 +134,11 @@ def test_prototypes_are_excluded_from_the_contract_and_stay_unexported(contract,
     required, and no symbol may leak into the root namespace.
     """
     prototypes = contract["prototypes"]
-    assert prototypes["prototypes"], "prototype registry must not be empty"
+    # The registry may legitimately be *empty*: the last prototype
+    # (``tensordg.poisson_2d_ldg``) was validated and promoted, see
+    # ``docs/CASE-DG-LDG-2D.md``.  What must never happen is a registered
+    # prototype that lost its marker or leaked into the root namespace.
+    assert contract["gates"]["prototypes_excluded_and_marked"]
     for record in prototypes["prototypes"]:
         assert record["marker_present"], (
             f"{record['module']} lost its '{record['marker']}' status marker")
