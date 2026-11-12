@@ -1,0 +1,397 @@
+{
+  "schema": "tensordg-elastic-dispersion/1",
+  "anchor": "CASE-DG-DALEMBERT-ELASTIC-1D",
+  "git_sha": "0bdb105",
+  "verdict": "PASS",
+  "convention": "select_sign: |Im| for phase, -Re for dissipation at assembled p=0 spectrum",
+  "rows": [
+    {
+      "degree": 0,
+      "phase": {
+        "metric": "phase_error",
+        "exponent": 1.9784895054316796,
+        "window": [
+          0.15,
+          1.0
+        ],
+        "points_used": 40,
+        "error_at_theta_lo": 0.0037457835093381853,
+        "error_at_theta_hi": 0.15852901519210383,
+        "measurable": true
+      },
+      "dissipation": {
+        "metric": "dissipation",
+        "exponent": 1.9639529095474164,
+        "window": [
+          0.15,
+          1.0
+        ],
+        "points_used": 40,
+        "error_at_theta_lo": 0.011228922063957689,
+        "error_at_theta_hi": 0.45969769413186
+      },
+      "resolution": {
+        "ppw_0.01": 25.618571,
+        "diss_0.01": 0.029926,
+        "ppw_0.02": 18.085866,
+        "diss_0.02": 0.059742,
+        "max_phase_error": 1.0
+      },
+      "symbol_union_error": 1.1957467920563633e-15,
+      "p0_anchor_error": 4.578893257833848e-16
+    },
+    {
+      "degree": 1,
+      "phase": {
+        "metric": "phase_error",
+        "exponent": 3.9016486345298427,
+        "window": [
+          0.15,
+          1.0
+        ],
+        "points_used": 40,
+        "error_at_theta_lo": 1.8645943256068165e-06,
+        "error_at_theta_hi": 0.002961353348820639,
+        "measurable": true
+      },
+      "dissipation": {
+        "metric": "dissipation",
+        "exponent": 3.9593627930657087,
+        "window": [
+          0.15,
+          1.0
+        ],
+        "points_used": 40,
+        "error_at_theta_lo": 7.013784344048202e-06,
+        "error_at_theta_hi": 0.012693381969408673
+      },
+      "resolution": {
+        "ppw_0.01": 4.41751,
+        "diss_0.01": 0.04886,
+        "ppw_0.02": 3.534838,
+        "diss_0.02": 0.113827,
+        "max_phase_error": 0.05694
+      },
+      "symbol_union_error": 1.6300083908956452e-15,
+      "p0_anchor_error": null
+    },
+    {
+      "degree": 2,
+      "phase": {
+        "metric": "phase_error",
+        "exponent": 5.9808373748295605,
+        "window": [
+          0.15,
+          1.0
+        ],
+        "points_used": 40,
+        "error_at_theta_lo": 2.709510393827941e-10,
+        "error_at_theta_hi": 2.2750626449408173e-05,
+        "measurable": true
+      },
+      "dissipation": {
+        "metric": "dissipation",
+        "exponent": 5.9740435171852315,
+        "window": [
+          0.15,
+          1.0
+        ],
+        "points_used": 40,
+        "error_at_theta_lo": 1.5798958526644778e-09,
+        "error_at_theta_hi": 0.00013073998064512394
+      },
+      "resolution": {
+        "ppw_0.01": 2.109759,
+        "diss_0.01": 0.059685,
+        "ppw_0.02": 2.0,
+        "diss_0.02": 0.078822,
+        "max_phase_error": 0.012951
+      },
+      "symbol_union_error": 3.270040841753514e-15,
+      "p0_anchor_error": null
+    },
+    {
+      "degree": 3,
+      "phase": {
+        "metric": "phase_error",
+        "exponent": 7.969991203044629,
+        "window": [
+          0.15,
+          1.0
+        ],
+        "points_used": 18,
+        "error_at_theta_lo": 1.7319479184152442e-14,
+        "error_at_theta_hi": 8.716518018481167e-08,
+        "measurable": true
+      },
+      "dissipation": {
+        "metric": "dissipation",
+        "exponent": 7.968215456981028,
+        "window": [
+          0.15,
+          1.0
+        ],
+        "points_used": 23,
+        "error_at_theta_lo": 1.8138753839776803e-13,
+        "error_at_theta_hi": 6.801467944776871e-07
+      },
+      "resolution": {
+        "ppw_0.01": 2.0,
+        "diss_0.01": 0.004434,
+        "ppw_0.02": 2.0,
+        "diss_0.02": 0.004434,
+        "max_phase_error": 0.000609
+      },
+      "symbol_union_error": 3.711680166609314e-15,
+      "p0_anchor_error": null
+    },
+    {
+      "degree": 4,
+      "phase": {
+        "metric": "phase_error",
+        "exponent": NaN,
+        "window": [
+          0.15,
+          1.0
+        ],
+        "points_used": 2,
+        "error_at_theta_lo": 7.549516567451064e-15,
+        "error_at_theta_hi": 2.1537527317150307e-10,
+        "measurable": false,
+        "reason": "phase error at theta<=1 sits below the 1e-10 noise floor; the exponent cannot be resolved in float64"
+      },
+      "dissipation": {
+        "metric": "dissipation",
+        "exponent": 9.953264508477172,
+        "window": [
+          0.15,
+          1.0
+        ],
+        "points_used": 7,
+        "error_at_theta_lo": 1.9713500365839214e-15,
+        "error_at_theta_hi": 2.1204559646414706e-09
+      },
+      "resolution": {
+        "ppw_0.01": 2.0,
+        "diss_0.01": 0.00015,
+        "ppw_0.02": 2.0,
+        "diss_0.02": 0.00015,
+        "max_phase_error": 1.6e-05
+      },
+      "symbol_union_error": 7.335785035851695e-15,
+      "p0_anchor_error": null
+    }
+  ],
+  "analyse": {
+    "schema": "tensordg-elastic-dispersion/1",
+    "anchor": "CASE-DG-DALEMBERT-ELASTIC-1D",
+    "assembly_cells": 8,
+    "fit_window": [
+      0.01,
+      0.1
+    ],
+    "rows": [
+      {
+        "degree": 0,
+        "symbol_union_error": 1.1957467920563633e-15,
+        "p0_anchor_error": 4.578893257833848e-16,
+        "phase": {
+          "metric": "phase_error",
+          "exponent": 1.9784895054316796,
+          "window": [
+            0.15,
+            1.0
+          ],
+          "points_used": 40,
+          "error_at_theta_lo": 0.0037457835093381853,
+          "error_at_theta_hi": 0.15852901519210383
+        },
+        "dissipation": {
+          "metric": "dissipation",
+          "exponent": 1.9639529095474164,
+          "window": [
+            0.15,
+            1.0
+          ],
+          "points_used": 40,
+          "error_at_theta_lo": 0.011228922063957689,
+          "error_at_theta_hi": 0.45969769413186
+        },
+        "resolution": {
+          "ppw_0.01": 25.618571,
+          "diss_0.01": 0.029926,
+          "ppw_0.02": 18.085866,
+          "diss_0.02": 0.059742,
+          "max_phase_error": 1.0
+        },
+        "max_dissipation": 1.9999999999999993
+      },
+      {
+        "degree": 1,
+        "symbol_union_error": 1.6300083908956452e-15,
+        "p0_anchor_error": null,
+        "phase": {
+          "metric": "phase_error",
+          "exponent": 3.9016486345298427,
+          "window": [
+            0.15,
+            1.0
+          ],
+          "points_used": 40,
+          "error_at_theta_lo": 1.8645943256068165e-06,
+          "error_at_theta_hi": 0.002961353348820639
+        },
+        "dissipation": {
+          "metric": "dissipation",
+          "exponent": 3.9593627930657087,
+          "window": [
+            0.15,
+            1.0
+          ],
+          "points_used": 40,
+          "error_at_theta_lo": 7.013784344048202e-06,
+          "error_at_theta_hi": 0.012693381969408673
+        },
+        "resolution": {
+          "ppw_0.01": 4.41751,
+          "diss_0.01": 0.04886,
+          "ppw_0.02": 3.534838,
+          "diss_0.02": 0.113827,
+          "max_phase_error": 0.05694
+        },
+        "max_dissipation": 1.0
+      },
+      {
+        "degree": 2,
+        "symbol_union_error": 3.270040841753514e-15,
+        "p0_anchor_error": null,
+        "phase": {
+          "metric": "phase_error",
+          "exponent": 5.9808373748295605,
+          "window": [
+            0.15,
+            1.0
+          ],
+          "points_used": 40,
+          "error_at_theta_lo": 2.709510393827941e-10,
+          "error_at_theta_hi": 2.2750626449408173e-05
+        },
+        "dissipation": {
+          "metric": "dissipation",
+          "exponent": 5.9740435171852315,
+          "window": [
+            0.15,
+            1.0
+          ],
+          "points_used": 40,
+          "error_at_theta_lo": 1.5798958526644778e-09,
+          "error_at_theta_hi": 0.00013073998064512394
+        },
+        "resolution": {
+          "ppw_0.01": 2.109759,
+          "diss_0.01": 0.059685,
+          "ppw_0.02": 2.0,
+          "diss_0.02": 0.078822,
+          "max_phase_error": 0.012951
+        },
+        "max_dissipation": 0.07882219334759563
+      },
+      {
+        "degree": 3,
+        "symbol_union_error": 3.711680166609314e-15,
+        "p0_anchor_error": null,
+        "phase": {
+          "metric": "phase_error",
+          "exponent": 7.969991203044629,
+          "window": [
+            0.15,
+            1.0
+          ],
+          "points_used": 18,
+          "error_at_theta_lo": 1.7319479184152442e-14,
+          "error_at_theta_hi": 8.716518018481167e-08
+        },
+        "dissipation": {
+          "metric": "dissipation",
+          "exponent": 7.968215456981028,
+          "window": [
+            0.15,
+            1.0
+          ],
+          "points_used": 23,
+          "error_at_theta_lo": 1.8138753839776803e-13,
+          "error_at_theta_hi": 6.801467944776871e-07
+        },
+        "resolution": {
+          "ppw_0.01": 2.0,
+          "diss_0.01": 0.004434,
+          "ppw_0.02": 2.0,
+          "diss_0.02": 0.004434,
+          "max_phase_error": 0.000609
+        },
+        "max_dissipation": 0.00443430919016427
+      },
+      {
+        "degree": 4,
+        "symbol_union_error": 7.335785035851695e-15,
+        "p0_anchor_error": null,
+        "phase": {
+          "metric": "phase_error",
+          "exponent": NaN,
+          "window": [
+            0.15,
+            1.0
+          ],
+          "points_used": 2,
+          "error_at_theta_lo": 7.549516567451064e-15,
+          "error_at_theta_hi": 2.1537527317150307e-10
+        },
+        "dissipation": {
+          "metric": "dissipation",
+          "exponent": 9.953264508477172,
+          "window": [
+            0.15,
+            1.0
+          ],
+          "points_used": 7,
+          "error_at_theta_lo": 1.9713500365839214e-15,
+          "error_at_theta_hi": 2.1204559646414706e-09
+        },
+        "resolution": {
+          "ppw_0.01": 2.0,
+          "diss_0.01": 0.00015,
+          "ppw_0.02": 2.0,
+          "diss_0.02": 0.00015,
+          "max_phase_error": 1.6e-05
+        },
+        "max_dissipation": 0.00014986423358972917
+      }
+    ]
+  },
+  "case_budget": {
+    "configuration": {
+      "ncells": 200,
+      "degree": 3,
+      "cfl": 0.3,
+      "final_time": 0.2,
+      "length": 1.0,
+      "width": 0.05
+    },
+    "elements_per_pulse_width": 10.0,
+    "theta_dominant": 0.19999999999999998,
+    "measured_relative_l2_stress_error": 2.584787124795118e-07,
+    "scheme_phase_error_at_theta_dominant": 2.2959412149248237e-13,
+    "scheme_dissipation_at_theta_dominant": 1.8100606324215426e-12,
+    "dispersion_share_of_error": 8.882515673730038e-07,
+    "time_steps": 934,
+    "dt": 0.00021413276231263385
+  },
+  "figures": [
+    "spectrum.png",
+    "resolution_budget.png"
+  ],
+  "notes": [
+    "Exponents are measured on the shipped operator, window theta in [0.15, 1.0]; p=4 phase error sits at the double-precision floor (~1e-13) and is reported as not measurable rather than extrapolated.",
+    "Independent anchor: the assembled p=0 symbol reproduces the characteristic-upwind finite-volume symbol in closed form."
+  ]
+}
