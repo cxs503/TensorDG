@@ -1,6 +1,6 @@
 # CASE-LAX-DG · Lax 激波管（Toro test 2）DG 算例池验证
 
-> 工件 `runs/lax_case_pool/metrics.json` 生成于 2026-11-12T08:46:44Z，本文全部数字由 `benchmarks/lax_case_pool.py` 从该 JSON 注入（零手抄）。
+> 工件 `runs/lax_case_pool/metrics.json` 首次生成于 2026-11-12T08:46:44Z；m16585 于 **2026-11-12T17:03:14Z** 在干净工作树上全量重跑（`quick=false`，9 腿，墙钟 373.2 s）并把 metrics.json / profiles.npz / 3 张 PNG 随仓提交，阶梯数字与初版逐位一致。本文全部数字由 `benchmarks/lax_case_pool.py` 从该 JSON 注入（零手抄）。
 
 ## ① 案例介绍
 
@@ -66,11 +66,33 @@ Lax (1954) 激波管 / Toro (1999) test 2：`[0,1]` 域内隔膜 `x0 = 0.5` 两�
 Overall verdict: **FAIL**
 
 
-## ④ 图
+## ④ 图与工件（已随仓提交，m16585 落盘）
 
-* `runs/lax_case_pool/figures/lax_profiles.png`
-* `runs/lax_case_pool/figures/lax_convergence.png`
-* `runs/lax_case_pool/figures/entropy_wave_order.png`
+三张图由 `benchmarks/lax_case_pool.py` 直接渲染（剖面 + 与精确解比较 + 熵波设计阶拟合）：
+
+* `runs/lax_case_pool/figures/lax_profiles.png` — 最细腿 (N=400, P3) 的 rho/u/p 数值 vs 精确解
+* `runs/lax_case_pool/figures/lax_convergence.png` — 全场与解析区相对 L1 随 N 收敛（log-log）
+* `runs/lax_case_pool/figures/entropy_wave_order.png` — 光滑熵波实测阶 vs p+1
+
+工件清单（`sha256` 由 `sha256sum` 直读，重跑可逐位校验）：
+
+| 文件 | 用途 | bytes | sha256[:16] |
+|---|---|---|---|
+| `runs/lax_case_pool/metrics.json` | 实测值 + 判据 verdict + 全部容差配置 | 14022 | 63c83d5d37c980b8 |
+| `runs/lax_case_pool/profiles.npz` | 最细腿原始量 vs 精确解逐点场 | 225846 | 3542bd55f1684d40 |
+| `runs/lax_case_pool/summary.md` | 由 metrics.json 渲染的表（禁手改） | 2300 | 89416a1dfa43148c |
+| `runs/lax_case_pool/figures/lax_profiles.png` | 场量对比图 | 89240 | 6a75d44ad7c6a95b |
+| `runs/lax_case_pool/figures/lax_convergence.png` | 收敛图 | 87338 | 71975d1e790c85d8 |
+| `runs/lax_case_pool/figures/entropy_wave_order.png` | 熵波阶数图 | 59423 | 91bd74b53d9a4da5 |
+
+**复现与门禁状态**（2026-11-12，m16585）：`PYTHONPATH=. python -m benchmarks.lax_case_pool`
+全量（非 `--quick`）墙钟 **373.2 s**，9 条阶梯腿的 rel L1 rho/u/p 与解析区 rho 与本文表格
+**逐位一致（相对差 < 1e-6，9 腿 × 7 量全对）**，verdict 仍为 **FAIL**；
+`pytest tests/test_lax_case_pool.py` 由 **9 passed / 2 skipped** 变为 **11 passed**——
+此前被 `skipif(not METRICS.exists())` 跳过的两条工件层测试（`test_committed_artifact_is_self_consistent`
+从 metric 里的数重判门禁 + 容差一致性 + 阶梯单调性、`test_committed_artifact_profiles_agree_with_the_exact_solution`
+要求 `profiles.npz` 三场相对 L1 < 5%）**首次真正执行并通过**。工件生成不等于判据变好：
+`verdict` 未变，只把「已发布数字」变成「可离线复核的数字」。
 
 ## ⑤ 注意点 / 局限
 
@@ -91,4 +113,19 @@ Overall verdict: **FAIL**
 | R5 | 熵波阶偏差（最差） | 0.849 % | < 3.000 % | PASS |
 
 **总判定：FAIL**。（判据逐条为 PASS/FAIL，未达标的条目按 honest-FAIL 原样记录，不重跑调参掩盖。）
+
+**与算例池台账口径（ref: 精确解，容差 <3%）的逐项比对**（台账原文容差是百分比型，
+而本算例池的 C3/R3 是阶数型判据，两者必须分开判，不能用一个 FAIL 盖住全部）：
+
+| 关键量 | 实测 | 台账 <3% 口径 |
+|---|---|---|
+| C1 最差波位置误差（rarefaction_tail） | 0.245 % | 是（< 3 %） |
+| C2 最差星区量误差（star_right.density） | 0.030 % | 是（< 3 %） |
+| R5 最差设计阶偏差 | 0.849 % | 是（< 3 %） |
+| C3 全场密度 L1 阶 | 0.565（最细一对） | 否——阶数判据，要求 ≥ 1.0 |
+| R3 解析区密度阶 / 要求 | 0.063–0.377（比值） | 否——阶数判据，要求比值 ≥ 1.0 |
+
+即：**误差百分比意义上的三个判据全部远优于台账 <3%；作为整体的 verdict=FAIL 只由两条
+阶数判据（C3/R3）驱动**。这是本算例在「间断主导的全场误差无法达到设计阶」这一物理事实下的
+如实结论，不是把结果判活，也不因重跑而改变。
 
