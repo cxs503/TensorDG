@@ -1,0 +1,32 @@
+{
+  "case": "dalembert-elastic-rod-1d",
+  "generated_utc": "2026-11-12T11:51:34+00:00",
+  "git_sha": "e723dd420c0019b3cf7ce8a03e885d96f07fdca4",
+  "command": "python -m benchmarks.elastic_1d_dalembert --output-dir validation/elastic_1d_dalembert",
+  "quick": false,
+  "elapsed_seconds": 79.0,
+  "environment": {
+    "python": "3.11.6",
+    "numpy": "2.4.6",
+    "torch": "2.7.1",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38"
+  },
+  "artifacts": {
+    "elastic_1d_dalembert.json": {
+      "bytes": 6548,
+      "sha256": "daad5203505f4072a231ecfdbe43d4951cb7d52cf5adb99138eb830eedc414e9"
+    },
+    "benchmark_ref_vs_got.json": {
+      "bytes": 4277,
+      "sha256": "10af1797a4d548adb24bc797af73b43e003f3b87069c14f2d1e26dee00b4a868"
+    },
+    "sigma_profile_ref_vs_got.csv": {
+      "bytes": 285644,
+      "sha256": "19a0393f8f6e6ac850c537bbae67fd121ce1e24fe1bbe40f63a342ced98ccc72"
+    },
+    "elastic_1d_dalembert.png": {
+      "bytes": 194519,
+      "sha256": "37c4b1168a570870b883607b06ca92d8b1fe441d06f788c1cae804249da13b20"
+    }
+  }
+}

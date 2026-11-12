@@ -1,0 +1,137 @@
+{
+  "case": "dalembert-elastic-rod-1d",
+  "metric": "stress profile sigma(x,t) vs d'Alembert two-wave exact solution (no physical dispersion)",
+  "tolerance_pct": 2.0,
+  "settings": {
+    "degree": 2,
+    "cfl": 0.3,
+    "ncells_profile": 400,
+    "ncells_dynamic": 25,
+    "ncells_freq": 16,
+    "pulse_time": 0.2
+  },
+  "rows": [
+    {
+      "quantity": "relative L2 error of sigma(x,t) vs d'Alembert (N=400, P2, t=0.2)",
+      "unit": "%",
+      "ref": 0.0,
+      "got": 0.00028381466609086233,
+      "abs_error": 0.00028381466609086233,
+      "rel_error_pct": 0.00028381466609086233,
+      "criterion_pct": 2.0,
+      "verdict": "PASS",
+      "ref_source": "exact d'Alembert superposition (ref = 0 by definition)",
+      "note": "the row value *is* the error in %, compare against the 2% gate"
+    },
+    {
+      "quantity": "peak stress of one packet sigma_max",
+      "unit": "-",
+      "ref": 0.5,
+      "got": 0.4999994602178156,
+      "abs_error": 5.397821843944328e-07,
+      "rel_error_pct": 0.00010795643687888656,
+      "criterion_pct": 2.0,
+      "verdict": "PASS",
+      "ref_source": "Graff 1975 Ch.1: two half-amplitude d'Alembert waves",
+      "note": ""
+    },
+    {
+      "quantity": "right-going packet position x_R",
+      "unit": "L",
+      "ref": 0.7,
+      "got": 0.7000000030917475,
+      "abs_error": 3.0917475246639015e-09,
+      "rel_error_pct": 4.4167821780912876e-07,
+      "criterion_pct": 2.0,
+      "verdict": "PASS",
+      "ref_source": "x_R = L/2 + c t",
+      "note": ""
+    },
+    {
+      "quantity": "left-going packet position x_L",
+      "unit": "L",
+      "ref": 0.3,
+      "got": 0.2999999969082526,
+      "abs_error": 3.091747413641599e-09,
+      "rel_error_pct": 1.0305824712138665e-06,
+      "criterion_pct": 2.0,
+      "verdict": "PASS",
+      "ref_source": "x_L = L/2 - c t",
+      "note": ""
+    },
+    {
+      "quantity": "measured bar wave speed c",
+      "unit": "L/T",
+      "ref": 1.0,
+      "got": 0.9999229137190426,
+      "abs_error": 7.708628095737247e-05,
+      "rel_error_pct": 0.007708628095737247,
+      "criterion_pct": 2.0,
+      "verdict": "PASS",
+      "ref_source": "c = sqrt(E/rho)",
+      "note": ""
+    },
+    {
+      "quantity": "pulse arrival time at probe x=0.8",
+      "unit": "T",
+      "ref": 0.30000000000000004,
+      "got": 0.2981935275282207,
+      "abs_error": 0.0018064724717793412,
+      "rel_error_pct": 0.6021574905931136,
+      "criterion_pct": 2.0,
+      "verdict": "PASS",
+      "ref_source": "t = |x_p - L/2| / c",
+      "note": "parabolic refinement over 21 snapshots"
+    },
+    {
+      "quantity": "clamped-free first eigenfrequency f1",
+      "unit": "1/T",
+      "ref": 0.25,
+      "got": 0.25014657025600945,
+      "abs_error": 0.0001465702560094484,
+      "rel_error_pct": 0.05862810240377936,
+      "criterion_pct": 2.0,
+      "verdict": "PASS",
+      "ref_source": "f1 = c/(4L)",
+      "note": "bisection on the wall stress zero crossing, 8 bisection steps at N=16 P2 (bracket [0.7,1.4])"
+    },
+    {
+      "quantity": "wall stress at the fixed end / pulse amplitude",
+      "unit": "-",
+      "ref": 2.0,
+      "got": 2.000003171695446,
+      "abs_error": 3.1716954458360647e-06,
+      "rel_error_pct": 0.00015858477229180323,
+      "criterion_pct": 2.0,
+      "verdict": "PASS",
+      "ref_source": "Graff 1975 Ch.1 reflection rule at a fixed end",
+      "note": "pulse width resolves 6 cells at N=200 P2"
+    },
+    {
+      "quantity": "elastic energy at t (periodic, exactly conserved)",
+      "unit": "-",
+      "ref": 0.031332853432887504,
+      "got": 0.031332852425388344,
+      "abs_error": 1.0074991604880346e-09,
+      "rel_error_pct": 3.2154721007010044e-06,
+      "criterion_pct": 2.0,
+      "verdict": "PASS",
+      "ref_source": "0.5 rho * integral v0^2 dx (d'Alembert splitting conserves energy)",
+      "note": ""
+    }
+  ],
+  "worst_rel_error_pct": 0.6021574905931136,
+  "all_rows_pass": true,
+  "l2_gate": {
+    "criteria": {
+      "rel_l2_sigma_pulse": 0.02,
+      "rel_l2_sigma_standing": 0.02
+    },
+    "worst": {
+      "rel_l2_sigma_pulse": 0.0015066612415545254,
+      "rel_l2_sigma_standing": 3.5424525671144106e-07
+    },
+    "passed": true
+  },
+  "repro_cmd": "python -m benchmarks.elastic_1d_dalembert --output-dir validation/elastic_1d_dalembert"
+}
