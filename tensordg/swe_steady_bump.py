@@ -51,6 +51,7 @@ equations", *Computers & Fluids* 29, 951-979.
 """
 from __future__ import annotations
 
+import functools
 import math
 from typing import Callable, Optional
 
@@ -71,6 +72,12 @@ __all__ = [
     "bernoulli_head",
     "bump_steady_state",
     "bump_boundary_flux",
+    "BUMP_SHOCK_DISCHARGE",
+    "BUMP_SHOCK_DEPTH_OUT",
+    "momentum_flux",
+    "shock_heads",
+    "shock_position",
+    "bump_transcritical_state",
     "steady_state_defect",
 ]
 
@@ -263,4 +270,221 @@ def steady_state_defect(h_fn, u_fn, bed_fn, ncells: int = 100, degree: int = 1,
         "defect_hu": float(torch.linalg.norm(residual[:, :, 1])) / scale_hu,
         "defect_hu_linf": float(residual[:, :, 1].abs().max()),
         "dx": dx,
+    }
+
+# ===========================================================================
+# Transcritical (choked) regime: smooth passage through critical at the crest
+# followed by a stationary lee-side hydraulic jump.
+# ===========================================================================
+#
+# The subcritical branch built by :func:`bump_steady_state` exists only while
+# ``head - z_b >= 1.5 h_c`` everywhere.  When the bump is high enough for that
+# condition to fail, the flow is *choked*: the smooth branch no longer exists
+# and the standard solution of Goutal & Maurel (1997, test 3) is transcritical
+# -- subcritical upstream, critical exactly at the crest, supercritical on the
+# lee side, and a **stationary shock** that restores the subcritical downstream
+# control.  That regime was previously unsupported (the module raised
+# ``ValueError``); the helpers below supply it.
+#
+# Construction (all three ingredients are stated in the docstrings below and
+# each one is re-checked numerically by ``tests/test_swe_steady_bump_shock.py``):
+#
+# 1. Energy head is conserved along the *smooth* parts of a steady solution,
+#       H = z_b + h + q^2/(2 g h^2) = const,        (Bernoulli)
+#    because the steady momentum balance  d/dx(q^2/h + g h^2/2) = -g h dz_b/dx
+#    is exactly equivalent to dH/dx = 0 where the solution is differentiable.
+# 2. The crest (maximum bed) is the section of minimum specific head, so a
+#    solution that reaches it must pass through the critical depth, which pins
+#    the upstream head: ``H_L = z_b(crest) + 1.5 h_c``.
+# 3. Across the stationary shock both mass and momentum are conserved (there is
+#    no bed-slope force over a zero-width jump, and the bed is continuous):
+#       q = const,   q^2/h + g h^2/2 = const,
+#    while the energy head *drops* by the (positive) shock loss.  The shock
+#    location ``x_s`` is the running point where the momentum fluxes of the two
+#    branches are equal; it is found by bisection of that scalar residual.
+#
+# Because the downstream head is fixed by the outlet control ``depth_out`` at
+# ``x = x_right`` (flat bed there), ``H_R = depth_out + q^2/(2 g depth_out^2)``,
+# and the shock loss is ``H_L - H_R > 0`` for the choked case.
+
+BUMP_SHOCK_DISCHARGE = 0.18       # m^2/s  (Goutal & Maurel 1997, test 3)
+BUMP_SHOCK_DEPTH_OUT = 0.33       # m      (downstream subcritical control)
+
+
+def momentum_flux(h, discharge: float = BUMP_SHOCK_DISCHARGE,
+                  gravity: float = GRAVITY):
+    """Steady momentum flux ``q^2/h + g h^2/2`` (the quantity a jump conserves)."""
+    h = torch.as_tensor(h, dtype=torch.float64)
+    return discharge * discharge / h + 0.5 * gravity * h * h
+
+
+def shock_heads(discharge: float = BUMP_SHOCK_DISCHARGE,
+                depth_out: float = BUMP_SHOCK_DEPTH_OUT,
+                gravity: float = GRAVITY,
+                height: float = BUMP_HEIGHT,
+                x_right: float = DOMAIN[1]) -> dict:
+    """Upstream/downstream energy heads of the choked bump case.
+
+    ``H_L = height + 1.5 h_c`` (critical passage at the crest) and
+    ``H_R = depth_out + q^2/(2 g depth_out^2)`` (outlet control).  Raises
+    ``ValueError`` when ``H_L <= H_R``: then no shock (and no energy loss) is
+    needed -- the case is not the choked one.
+    """
+    hc = (discharge * discharge / gravity) ** (1.0 / 3.0)
+    head_left = height + 1.5 * hc
+    head_right = depth_out + discharge * discharge / (2.0 * gravity * depth_out * depth_out)
+    if head_left <= head_right:
+        raise ValueError(
+            "not a choked transcritical case: upstream head %.6g <= downstream head %.6g"
+            % (head_left, head_right))
+    return {
+        "head_left": head_left,
+        "head_right": head_right,
+        "head_loss": head_left - head_right,
+        "critical_depth": hc,
+        "critical_head": 1.5 * hc,
+    }
+
+
+def _depth_of_head_tensor(head, discharge: float, gravity: float, subcritical: bool = True,
+                          iterations: int = 90):
+    """Vectorised inversion of ``h + q^2/(2 g h^2) = head`` on one branch.
+
+    Same bracket as :func:`_depth_of_head` (bisection, monotone on each branch)
+    but operating on tensors, because the exact state is evaluated at every RK
+    stage of the validation runs.
+    """
+    head = torch.as_tensor(head, dtype=torch.float64)
+    hc = (discharge * discharge / gravity) ** (1.0 / 3.0)
+    q2 = discharge * discharge
+    if subcritical:
+        lo = torch.full_like(head, hc * (1.0 + 1e-14))
+        hi = torch.maximum(head, torch.full_like(head, hc)) * 4.0 + 1.0
+    else:
+        lo = torch.full_like(head, 1e-14)
+        hi = torch.full_like(head, hc * (1.0 - 1e-14))
+    for _ in range(iterations):
+        mid = 0.5 * (lo + hi)
+        f = mid + q2 / (2.0 * gravity * mid * mid) - head
+        below = f < 0.0
+        if subcritical:
+            lo = torch.where(below, mid, lo)
+            hi = torch.where(below, hi, mid)
+        else:
+            hi = torch.where(below, mid, hi)
+            lo = torch.where(below, lo, mid)
+    return 0.5 * (lo + hi)
+
+
+@functools.lru_cache(maxsize=32)
+def shock_position(discharge: float = BUMP_SHOCK_DISCHARGE,
+                   depth_out: float = BUMP_SHOCK_DEPTH_OUT,
+                   gravity: float = GRAVITY, height: float = BUMP_HEIGHT,
+                   centre: float = BUMP_CENTRE, half_width: float = BUMP_HALF_WIDTH,
+                   iterations: int = 200) -> float:
+    """Leeward location ``x_s`` of the stationary shock (momentum-flux balance).
+
+    On the lee slope the left (supercritical, head ``H_L``) and right
+    (subcritical, head ``H_R``) branches both exist once ``H_R - z_b >= 1.5 h_c``;
+    at the first such section the two branches coincide at the critical depth and
+    the residual is identically zero (a degenerate root).  The physical shock is
+    the *second* root, where the residual crosses from positive to negative; it
+    is bracketed by scanning and then bisected.
+    """
+    heads = shock_heads(discharge, depth_out, gravity, height)
+    hc = heads["critical_depth"]
+    head_left, head_right = heads["head_left"], heads["head_right"]
+    # deepest section that still admits a subcritical root of the right family
+    gap = head_right - 1.5 * hc
+    if gap <= 0.0:
+        x_window = centre + half_width
+    else:
+        frac = max(0.0, 1.0 - gap / height)
+        x_window = centre + half_width * math.sqrt(frac)
+
+    def residual(xv: float) -> float:
+        z = float(bump_bed([xv], height=height, centre=centre, half_width=half_width)[0])
+        h_left = _depth_of_head(head_left - z, discharge, gravity, subcritical=False)
+        h_right = _depth_of_head(head_right - z, discharge, gravity, subcritical=True)
+        return float(momentum_flux(h_left, discharge, gravity)
+                     - momentum_flux(h_right, discharge, gravity))
+
+    lo = x_window + 1e-9 * (half_width + 1.0)
+    hi = centre + half_width
+    xs_grid = [lo + (hi - lo) * k / 64.0 for k in range(65)]
+    bracket = None
+    for a, b in zip(xs_grid[:-1], xs_grid[1:]):
+        fa, fb = residual(a), residual(b)
+        if fa > 0.0 and fb <= 0.0:
+            bracket = (a, b)
+            break
+    if bracket is None:
+        raise ValueError("no stationary shock: the momentum-flux residual does not "
+                         "change sign on the lee slope")
+    a, b = bracket
+    for _ in range(iterations):
+        mid = 0.5 * (a + b)
+        if residual(mid) > 0.0:
+            a = mid
+        else:
+            b = mid
+    return 0.5 * (a + b)
+
+
+def bump_transcritical_state(x, discharge: float = BUMP_SHOCK_DISCHARGE,
+                             depth_out: float = BUMP_SHOCK_DEPTH_OUT,
+                             gravity: float = GRAVITY, x_right: float = DOMAIN[1],
+                             height: float = BUMP_HEIGHT, centre: float = BUMP_CENTRE,
+                             half_width: float = BUMP_HALF_WIDTH) -> dict:
+    """Exact transcritical steady solution of the (choked) bump case.
+
+    Returns the same keys as :func:`bump_steady_state` plus ``x_shock``,
+    ``head_left`` / ``head_right`` / ``head_loss``, ``shock_depths``,
+    ``froude_left`` / ``froude_right`` (Froude numbers immediately left/right of
+    the jump) and ``regime="transcritical_shock"``.  The depth is piecewise:
+
+    * ``x <= crest``: subcritical root of ``h + q^2/(2 g h^2) = H_L - z_b``;
+    * ``crest < x < x_s``: supercritical root of the same equation;
+    * ``x > x_s``: subcritical root of ``h + q^2/(2 g h^2) = H_R - z_b``.
+
+    Sampling exactly at ``crest`` or ``x_s`` returns the left-hand limit; the
+    right-hand limit is obtained by sampling ``crest + eps`` / ``x_s + eps``.
+    The evaluation is vectorised (bisection on tensors) because the validation
+    drivers call it at every RK stage.
+    """
+    x = torch.as_tensor(x, dtype=torch.float64)
+    heads = shock_heads(discharge, depth_out, gravity, height)
+    head_left, head_right = heads["head_left"], heads["head_right"]
+    x_s = shock_position(discharge, depth_out, gravity, height, centre, half_width)
+    z = bump_bed(x, height=height, centre=centre, half_width=half_width)
+    h_up = _depth_of_head_tensor(head_left - z, discharge, gravity, subcritical=True)
+    h_lee = _depth_of_head_tensor(head_left - z, discharge, gravity, subcritical=False)
+    h_down = _depth_of_head_tensor(head_right - z, discharge, gravity, subcritical=True)
+    h = torch.where(x <= centre, h_up, torch.where(x <= x_s, h_lee, h_down))
+    u = discharge / h
+    froude = u / torch.sqrt(gravity * h)
+    z_s = float(bump_bed([x_s], height=height, centre=centre, half_width=half_width)[0])
+    h_left_lim = float(_depth_of_head_tensor(torch.tensor([head_left - z_s]), discharge,
+                                             gravity, subcritical=False)[0])
+    h_right_lim = float(_depth_of_head_tensor(torch.tensor([head_right - z_s]), discharge,
+                                              gravity, subcritical=True)[0])
+    return {
+        "h": h,
+        "u": u,
+        "eta": h + z,
+        "head": head_left,                     # upstream (pre-shock) energy head
+        "head_left": head_left,
+        "head_right": head_right,
+        "head_loss": head_left - head_right,
+        "x_shock": x_s,
+        "shock_depths": (h_left_lim, h_right_lim),
+        "shock_momentum_flux": float(momentum_flux(h_left_lim, discharge, gravity)),
+        "froude_left": float(discharge / h_left_lim / math.sqrt(gravity * h_left_lim)),
+        "froude_right": float(discharge / h_right_lim / math.sqrt(gravity * h_right_lim)),
+        "froude_max": float(froude.max()),
+        "critical_depth": heads["critical_depth"],
+        "regime": "transcritical_shock",
+        "discharge": discharge,
+        "depth_out": depth_out,
+        "geometry": {"height": height, "centre": centre, "half_width": half_width},
     }

@@ -1,0 +1,366 @@
+{
+  "case": "transcritical steady flow over a parabolic bump with a stationary jump",
+  "defect": [
+    {
+      "degree": 1,
+      "orders": [
+        -0.18825488498918153,
+        -0.6587355742998565,
+        -0.41110542419466606
+      ],
+      "ratios": [
+        1.1393846577321907,
+        1.5786983936813626,
+        1.3297042720841892
+      ],
+      "regime": "transcritical",
+      "runs": [
+        {
+          "defect_h": 9.318847659605395e-16,
+          "defect_hu": 0.9493015398854303,
+          "defect_hu_linf": 1.2044668846255218,
+          "degree": 1,
+          "dx": 0.5,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 50,
+          "wall_s": 0.16163420677185059,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 1.9834385330859095e-15,
+          "defect_hu": 1.0816196101070026,
+          "defect_hu_linf": 1.9451628648288397,
+          "degree": 1,
+          "dx": 0.25,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 100,
+          "wall_s": 0.1489427089691162,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 3.975567932637616e-15,
+          "defect_hu": 1.7075511410501867,
+          "defect_hu_linf": 4.346179938975916,
+          "degree": 1,
+          "dx": 0.125,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 200,
+          "wall_s": 0.12179994583129883,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 7.787068994253192e-15,
+          "defect_hu": 2.270538047056665,
+          "defect_hu_linf": 8.173740286134828,
+          "degree": 1,
+          "dx": 0.0625,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 400,
+          "wall_s": 0.12693238258361816,
+          "well_balanced": true
+        }
+      ]
+    },
+    {
+      "degree": 2,
+      "orders": [
+        -1.262661666971399,
+        0.17960089226443302,
+        -1.121060351172539
+      ],
+      "ratios": [
+        2.399380009155033,
+        0.8829472213817907,
+        2.1750677677746233
+      ],
+      "regime": "transcritical",
+      "runs": [
+        {
+          "defect_h": 1.4615947318588524e-15,
+          "defect_hu": 1.4071377223338186,
+          "defect_hu_linf": 1.7691510070485486,
+          "degree": 2,
+          "dx": 0.5,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 50,
+          "wall_s": 0.11446690559387207,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 2.829211607988719e-15,
+          "defect_hu": 3.37625812109571,
+          "defect_hu_linf": 6.075117251306921,
+          "degree": 2,
+          "dx": 0.25,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 100,
+          "wall_s": 0.11910271644592285,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 5.441628720401476e-15,
+          "defect_hu": 2.9810577266891625,
+          "defect_hu_linf": 7.509899387420093,
+          "degree": 2,
+          "dx": 0.125,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 200,
+          "wall_s": 0.12467432022094727,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 1.2746758197812235e-14,
+          "defect_hu": 6.484002575197089,
+          "defect_hu_linf": 23.32801965363417,
+          "degree": 2,
+          "dx": 0.0625,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 400,
+          "wall_s": 0.15302681922912598,
+          "well_balanced": true
+        }
+      ]
+    },
+    {
+      "degree": 1,
+      "orders": [
+        0.15695890906223772,
+        0.9640600148827785,
+        0.9259783070097765,
+        0.9723522141719331
+      ],
+      "ratios": [
+        0.8969137052550525,
+        0.5126122942666804,
+        0.5263234913241925,
+        0.5096743963078727
+      ],
+      "regime": "subcritical",
+      "runs": [
+        {
+          "defect_h": 0.0,
+          "defect_hu": 0.008308634364484455,
+          "defect_hu_linf": 0.09724893589581374,
+          "degree": 1,
+          "dx": 1.25,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 20,
+          "wall_s": 0.01782703399658203,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 0.0,
+          "defect_hu": 0.007452128033459212,
+          "defect_hu_linf": 0.1305287930421577,
+          "degree": 1,
+          "dx": 0.625,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 40,
+          "wall_s": 0.02167534828186035,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 0.0,
+          "defect_hu": 0.0038200524484005723,
+          "defect_hu_linf": 0.07200481011977809,
+          "degree": 1,
+          "dx": 0.3125,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 80,
+          "wall_s": 0.029532909393310547,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 2.0392358963641085e-15,
+          "defect_hu": 0.002010583341683719,
+          "defect_hu_linf": 0.037452531737950594,
+          "degree": 1,
+          "dx": 0.15625,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 160,
+          "wall_s": 0.048753976821899414,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 4.078486082520908e-15,
+          "defect_hu": 0.0010247428508993147,
+          "defect_hu_linf": 0.019674316752732207,
+          "degree": 1,
+          "dx": 0.078125,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 320,
+          "wall_s": 0.10332226753234863,
+          "well_balanced": true
+        }
+      ]
+    },
+    {
+      "degree": 2,
+      "orders": [
+        2.817657663213749,
+        0.5253225791225818,
+        1.5750492413959551,
+        0.892315165650336
+      ],
+      "ratios": [
+        0.14184058894593046,
+        0.694803738042317,
+        0.3356316698755533,
+        0.5387488666450837
+      ],
+      "regime": "subcritical",
+      "runs": [
+        {
+          "defect_h": 3.0323375131927078e-15,
+          "defect_hu": 0.009757072639395166,
+          "defect_hu_linf": 0.12297943714840362,
+          "degree": 2,
+          "dx": 1.25,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 20,
+          "wall_s": 0.018244028091430664,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 4.519901557460226e-15,
+          "defect_hu": 0.0013839489295600345,
+          "defect_hu_linf": 0.017508316143676594,
+          "degree": 2,
+          "dx": 0.625,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 40,
+          "wall_s": 0.027142047882080078,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 1.0494900854664988e-14,
+          "defect_hu": 0.0009615728895179753,
+          "defect_hu_linf": 0.025352218980988564,
+          "degree": 2,
+          "dx": 0.3125,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 80,
+          "wall_s": 0.04565715789794922,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 1.7707375757008356e-14,
+          "defect_hu": 0.00032273431461597897,
+          "defect_hu_linf": 0.012389223524438992,
+          "degree": 2,
+          "dx": 0.15625,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 160,
+          "wall_s": 0.0787363052368164,
+          "well_balanced": true
+        },
+        {
+          "defect_h": 3.9833001066202894e-14,
+          "defect_hu": 0.00017387274622683653,
+          "defect_hu_linf": 0.009639261986416382,
+          "degree": 2,
+          "dx": 0.078125,
+          "exact_slope": true,
+          "hydrostatic": true,
+          "ncells": 320,
+          "wall_s": 0.1403210163116455,
+          "well_balanced": true
+        }
+      ]
+    }
+  ],
+  "exact": {
+    "critical_depth": 0.14892193399548317,
+    "depth_min_supercritical": 0.07597027171953791,
+    "froude_left": 2.744558434645296,
+    "froude_right": 0.43519054755117037,
+    "h_inlet": 0.4137357305845032,
+    "h_outlet": 0.32999999999999996,
+    "head_left": 0.4233829009932248,
+    "head_loss": 0.0782187490484223,
+    "head_right": 0.3451641519448025,
+    "shock_depths": [
+      0.07597027171953791,
+      0.2593218025551528
+    ],
+    "x_shock": 11.665618384315366
+  },
+  "figure": "fig_transcritical_bump.png",
+  "figure_sha256": "f9ba6070fc09059d4696c48fd71609ac223108b1fb38ba00d77dae0c9c45fc0b",
+  "git_commit": "5ee54fdc557ea211d39b88f98da3211e3612748a",
+  "march": [
+    {
+      "aborted_dt_underflow": true,
+      "degree": 1,
+      "depth_max": 0.41360783599878104,
+      "depth_min": 0.08415547991660498,
+      "discharge_spread": 0.06066494630388357,
+      "l1_rel_depth": 0.005132995316784437,
+      "l1_rel_depth_away_from_jump": 0.0031098684703728748,
+      "limiter": null,
+      "linf_depth": 0.06911773534770846,
+      "linf_depth_away_from_jump": 0.02539358422479654,
+      "linf_depth_x": 11.625,
+      "ncells": 100,
+      "requested_time": 400.0,
+      "steps": 1307,
+      "time_reached": 6.229907328949499,
+      "tvb_constant": null,
+      "wall_s": 19.47139549255371,
+      "within_5pct_away_from_jump": true
+    },
+    {
+      "aborted_dt_underflow": true,
+      "degree": 1,
+      "depth_max": 0.423314748553658,
+      "depth_min": 0.08071800821478861,
+      "discharge_spread": 0.12053029257205565,
+      "l1_rel_depth": 0.00724955386546334,
+      "l1_rel_depth_away_from_jump": 0.00461280839311917,
+      "limiter": "tvb",
+      "linf_depth": 0.0811046350889788,
+      "linf_depth_away_from_jump": 0.02823305626963213,
+      "linf_depth_x": 11.625,
+      "ncells": 100,
+      "requested_time": 400.0,
+      "steps": 918,
+      "time_reached": 7.1364883395115815,
+      "tvb_constant": 1e-06,
+      "wall_s": 13.329651594161987,
+      "within_5pct_away_from_jump": true
+    }
+  ],
+  "parameters": {
+    "bump_height": 0.2,
+    "cfl": 0.4,
+    "depth_out": 0.33,
+    "depth_tol": 0.05,
+    "discharge": 0.18,
+    "domain": [
+      0.0,
+      25.0
+    ],
+    "gravity": 9.81,
+    "rk_order": 3,
+    "shock_band_cells": 2.0
+  },
+  "reference": "Goutal & Maurel (1997) 2nd Workshop on Dam-Break Wave Simulation, test 3; Delestre et al. (2013) SWASHES 'Bump with shock'",
+  "started_at": "2026-11-12T21:29:46Z"
+}
