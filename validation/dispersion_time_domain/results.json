@@ -1,0 +1,748 @@
+{
+ "config": {
+  "ncells": 16,
+  "degrees": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "modes": [
+   1,
+   2,
+   4,
+   6,
+   8
+  ],
+  "theta": [
+   0.39269908169872414,
+   0.7853981633974483,
+   1.5707963267948966,
+   2.356194490192345,
+   3.141592653589793
+  ],
+  "integrator": "production advection_1d RK4 kernel (_rhs), dt=cfl*h/(2p+1)",
+  "cfl_cap": 0.144,
+  "dt_max": 0.002,
+  "sample_dt": 0.02,
+  "t_max": 6.0,
+  "decay_time_window": [
+   0.4,
+   1.0
+  ],
+  "phase_time_window": [
+   0.2,
+   1.0
+  ],
+  "decay_min_span": 0.2,
+  "operator": "tensordg.advection_1d._rhs, upwind flux, speed=1"
+ },
+ "summary": {
+  "cases": 25,
+  "phase_cases": 24,
+  "decay_cases": 12,
+  "max_phase_speed_rel_error": 0.0007436309881743219,
+  "max_decay_rel_error": 0.003656339443563139,
+  "max_phase_speed_abs_error": 0.0007850619867719733,
+  "max_p0_closed_form_phase_rel_error": 2.5531072551506227e-07,
+  "max_p0_closed_form_phase_abs_error": 7.662013729037298e-08,
+  "max_rk4_decay_bias_over_measured_decay": 6.675482932615839e-11,
+  "max_p0_closed_form_decay_rel_error": 1.474213245922229e-07,
+  "decay_not_measurable": [
+   {
+    "degree": 1,
+    "mode": 1
+   },
+   {
+    "degree": 2,
+    "mode": 1
+   },
+   {
+    "degree": 2,
+    "mode": 2
+   },
+   {
+    "degree": 2,
+    "mode": 4
+   },
+   {
+    "degree": 3,
+    "mode": 1
+   },
+   {
+    "degree": 3,
+    "mode": 2
+   },
+   {
+    "degree": 3,
+    "mode": 4
+   },
+   {
+    "degree": 3,
+    "mode": 6
+   },
+   {
+    "degree": 4,
+    "mode": 1
+   },
+   {
+    "degree": 4,
+    "mode": 2
+   },
+   {
+    "degree": 4,
+    "mode": 4
+   },
+   {
+    "degree": 4,
+    "mode": 6
+   },
+   {
+    "degree": 4,
+    "mode": 8
+   }
+  ]
+ },
+ "records": [
+  {
+   "degree": 0,
+   "mode": 1,
+   "theta": 0.39269908169872414,
+   "t_end": 5.671729551587408,
+   "dt": 0.0019999046373721466,
+   "predicted_phase_speed": 0.9744953584044327,
+   "predicted_decay_rate": 1.2179274798194122,
+   "measured_phase_speed": 0.9744953582907272,
+   "measured_decay_rate": 1.2179274787734462,
+   "phase_fit_window": [
+    1.1399456433021236,
+    5.671729551587408,
+    228
+   ],
+   "decay_fit_window": [
+    2.279891286604247,
+    5.671729551587408,
+    171
+   ],
+   "final_amplitude_ratio": 0.0010000000059324369,
+   "rk4_decay_bias_estimate": 1.1649906883411458e-18,
+   "phase_speed_abs_error": 1.1370548946842973e-10,
+   "phase_speed_error_vs_exact": 0.0255046417092728,
+   "phase_speed_rel_error": 1.1668140693312565e-10,
+   "decay_rel_error": 8.588080963984833e-10,
+   "p0_closed_form_phase_speed": 0.9744953584044327,
+   "p0_closed_form_decay_rate": 1.2179274798194122,
+   "p0_phase_speed_abs_error_vs_closed_form": 1.1370548946842973e-10,
+   "p0_phase_speed_rel_error_vs_closed_form": 1.1668140693312565e-10,
+   "p0_decay_rel_error_vs_closed_form": 8.588080963984833e-10
+  },
+  {
+   "degree": 0,
+   "mode": 2,
+   "theta": 0.7853981633974483,
+   "t_end": 1.4740344849409475,
+   "dt": 0.0019973367004619885,
+   "predicted_phase_speed": 0.9003163161571061,
+   "predicted_decay_rate": 4.686291501015239,
+   "measured_phase_speed": 0.9003163172268915,
+   "measured_decay_rate": 4.686291466748591,
+   "phase_fit_window": [
+    0.29960050506929825,
+    1.4740344849409475,
+    60
+   ],
+   "decay_fit_window": [
+    0.5992010101385965,
+    1.4740344849409475,
+    45
+   ],
+   "final_amplitude_ratio": 0.0010000000505102221,
+   "rk4_decay_bias_estimate": 7.378049895393949e-15,
+   "phase_speed_abs_error": 1.069785482421537e-09,
+   "phase_speed_error_vs_exact": 0.09968368277310846,
+   "phase_speed_rel_error": 1.1882329168350408e-09,
+   "decay_rel_error": 7.312103435775981e-09,
+   "p0_closed_form_phase_speed": 0.9003163161571061,
+   "p0_closed_form_decay_rate": 4.686291501015239,
+   "p0_phase_speed_abs_error_vs_closed_form": 1.069785482421537e-09,
+   "p0_phase_speed_rel_error_vs_closed_form": 1.1882329168350408e-09,
+   "p0_decay_rel_error_vs_closed_form": 7.312103435775981e-09
+  },
+  {
+   "degree": 0,
+   "mode": 4,
+   "theta": 1.5707963267948966,
+   "t_end": 0.5,
+   "dt": 0.002,
+   "predicted_phase_speed": 0.6366197723675814,
+   "predicted_decay_rate": 15.999999999999998,
+   "measured_phase_speed": 0.6366197958220737,
+   "measured_decay_rate": 16.00000055882379,
+   "phase_fit_window": [
+    0.1,
+    0.5,
+    21
+   ],
+   "decay_fit_window": [
+    0.2,
+    0.5,
+    16
+   ],
+   "final_amplitude_ratio": 0.0003354625341702749,
+   "rk4_decay_bias_estimate": 1.2067955732250408e-11,
+   "phase_speed_abs_error": 2.34544923483071e-08,
+   "phase_speed_error_vs_exact": 0.36338020417792627,
+   "phase_speed_rel_error": 3.68422304275598e-08,
+   "decay_rel_error": 3.492648692482448e-08,
+   "p0_closed_form_phase_speed": 0.6366197723675814,
+   "p0_closed_form_decay_rate": 15.999999999999998,
+   "p0_phase_speed_abs_error_vs_closed_form": 2.34544923483071e-08,
+   "p0_phase_speed_rel_error_vs_closed_form": 3.68422304275598e-08,
+   "p0_decay_rel_error_vs_closed_form": 3.492648692482448e-08
+  },
+  {
+   "degree": 0,
+   "mode": 6,
+   "theta": 2.356194490192345,
+   "t_end": 0.5,
+   "dt": 0.002,
+   "predicted_phase_speed": 0.3001054387190354,
+   "predicted_decay_rate": 27.31370849898476,
+   "measured_phase_speed": 0.3001053620988981,
+   "measured_decay_rate": 27.313709759850433,
+   "phase_fit_window": [
+    0.1,
+    0.5,
+    21
+   ],
+   "decay_fit_window": [
+    0.2,
+    0.5,
+    16
+   ],
+   "final_amplitude_ratio": 1.1719343544668444e-06,
+   "rk4_decay_bias_estimate": 4.594999063284577e-11,
+   "phase_speed_abs_error": 7.662013729037298e-08,
+   "phase_speed_error_vs_exact": 0.699894637901102,
+   "phase_speed_rel_error": 2.5531072551506227e-07,
+   "decay_rel_error": 4.616237568946676e-08,
+   "p0_closed_form_phase_speed": 0.3001054387190354,
+   "p0_closed_form_decay_rate": 27.31370849898476,
+   "p0_phase_speed_abs_error_vs_closed_form": 7.662013729037298e-08,
+   "p0_phase_speed_rel_error_vs_closed_form": 2.5531072551506227e-07,
+   "p0_decay_rel_error_vs_closed_form": 4.616237568946676e-08
+  },
+  {
+   "degree": 0,
+   "mode": 8,
+   "theta": 3.141592653589793,
+   "t_end": 0.5,
+   "dt": 0.002,
+   "predicted_phase_speed": 3.8981718325193755e-17,
+   "predicted_decay_rate": 32.0,
+   "measured_phase_speed": -1.9274987877100754e-11,
+   "measured_decay_rate": 31.999995282517613,
+   "phase_fit_window": [
+    0.1,
+    0.5,
+    21
+   ],
+   "decay_fit_window": [
+    0.2,
+    0.5,
+    16
+   ],
+   "final_amplitude_ratio": 1.1253544016215397e-07,
+   "rk4_decay_bias_estimate": 6.826666666666668e-11,
+   "phase_speed_abs_error": 1.927502685881908e-11,
+   "phase_speed_error_vs_exact": 1.000000000019275,
+   "decay_rel_error": 1.474213245922229e-07,
+   "p0_closed_form_phase_speed": 3.8981718325193755e-17,
+   "p0_closed_form_decay_rate": 32.0,
+   "p0_phase_speed_abs_error_vs_closed_form": 1.927502685881908e-11,
+   "p0_decay_rel_error_vs_closed_form": 1.474213245922229e-07
+  },
+  {
+   "degree": 1,
+   "mode": 1,
+   "theta": 0.39269908169872414,
+   "t_end": 6.0,
+   "dt": 0.002,
+   "predicted_phase_speed": 1.0000848332343673,
+   "predicted_decay_rate": 0.005198062521630575,
+   "measured_phase_speed": 1.0000848330264753,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.22,
+    6.0,
+    240
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.9693427526590818,
+   "rk4_decay_bias_estimate": 9.61209626869891e-19,
+   "phase_speed_abs_error": 2.0789192589631966e-10,
+   "phase_speed_error_vs_exact": 8.483302647532831e-05,
+   "phase_speed_rel_error": 2.078742912478513e-10
+  },
+  {
+   "degree": 1,
+   "mode": 2,
+   "theta": 0.7853981633974483,
+   "t_end": 6.0,
+   "dt": 0.002,
+   "predicted_phase_speed": 1.0012215168024636,
+   "predicted_decay_rate": 0.07963751418846776,
+   "measured_phase_speed": 1.001221513456643,
+   "measured_decay_rate": 0.07963751373949313,
+   "phase_fit_window": [
+    1.22,
+    6.0,
+    240
+   ],
+   "decay_fit_window": [
+    2.42,
+    6.0,
+    180
+   ],
+   "final_amplitude_ratio": 0.620551937413289,
+   "rk4_decay_bias_estimate": 3.093695113783499e-17,
+   "phase_speed_abs_error": 3.345820731581739e-09,
+   "phase_speed_error_vs_exact": 0.0012215134566428976,
+   "phase_speed_rel_error": 3.3417387415594806e-09,
+   "decay_rel_error": 5.637727895236574e-09
+  },
+  {
+   "degree": 1,
+   "mode": 4,
+   "theta": 1.5707963267948966,
+   "t_end": 6.0,
+   "dt": 0.002,
+   "predicted_phase_speed": 1.0137061130251392,
+   "predicted_decay_rate": 1.1396819015009072,
+   "measured_phase_speed": 1.0137060566243294,
+   "measured_decay_rate": 1.1396816420147535,
+   "phase_fit_window": [
+    1.22,
+    6.0,
+    240
+   ],
+   "decay_fit_window": [
+    2.42,
+    6.0,
+    180
+   ],
+   "final_amplitude_ratio": 0.001078597649701977,
+   "rk4_decay_bias_estimate": 1.0584343275661337e-15,
+   "phase_speed_abs_error": 5.640080980029438e-08,
+   "phase_speed_error_vs_exact": 0.013706056624329443,
+   "phase_speed_rel_error": 5.5638225986406455e-08,
+   "decay_rel_error": 2.2768296428467863e-07
+  },
+  {
+   "degree": 1,
+   "mode": 6,
+   "theta": 2.356194490192345,
+   "t_end": 1.2978881574126826,
+   "dt": 0.001999827669356984,
+   "predicted_phase_speed": 1.0415468887764356,
+   "predicted_decay_rate": 5.322303959343174,
+   "measured_phase_speed": 1.041546591916563,
+   "measured_decay_rate": 5.32229645464227,
+   "phase_fit_window": [
+    0.25997759701640794,
+    1.2978881574126826,
+    53
+   ],
+   "decay_fit_window": [
+    0.5199551940328159,
+    1.2978881574126826,
+    40
+   ],
+   "final_amplitude_ratio": 0.0010149107335561105,
+   "rk4_decay_bias_estimate": 4.375794722791545e-12,
+   "phase_speed_abs_error": 2.9685987268379677e-07,
+   "phase_speed_error_vs_exact": 0.04154659191656296,
+   "phase_speed_rel_error": 2.850182511058479e-07,
+   "decay_rel_error": 1.4100474081733123e-06
+  },
+  {
+   "degree": 1,
+   "mode": 8,
+   "theta": 3.141592653589793,
+   "t_end": 0.5,
+   "dt": 0.002,
+   "predicted_phase_speed": 1.0557144595323658,
+   "predicted_decay_rate": 16.0,
+   "measured_phase_speed": 1.0549293975455938,
+   "measured_decay_rate": 15.94149856890299,
+   "phase_fit_window": [
+    0.1,
+    0.5,
+    21
+   ],
+   "decay_fit_window": [
+    0.2,
+    0.5,
+    16
+   ],
+   "final_amplitude_ratio": 0.0003501409535771095,
+   "rk4_decay_bias_estimate": 1.0641720161703173e-09,
+   "phase_speed_abs_error": 0.0007850619867719733,
+   "phase_speed_error_vs_exact": 0.05492939754559378,
+   "phase_speed_rel_error": 0.0007436309881743219,
+   "decay_rel_error": 0.003656339443563139
+  },
+  {
+   "degree": 2,
+   "mode": 1,
+   "theta": 0.39269908169872414,
+   "t_end": 6.0,
+   "dt": 0.001799640071985603,
+   "predicted_phase_speed": 1.0000000867533871,
+   "predicted_decay_rate": 8.074609770147845e-06,
+   "measured_phase_speed": 1.0000000866171639,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.2075584883023396,
+    6.0,
+    244
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.9999516039946554,
+   "rk4_decay_bias_estimate": 6.298773459536883e-19,
+   "phase_speed_abs_error": 1.3622325489848208e-10,
+   "phase_speed_error_vs_exact": 8.661716388580487e-08,
+   "phase_speed_rel_error": 1.3622324308065434e-10
+  },
+  {
+   "degree": 2,
+   "mode": 2,
+   "theta": 0.7853981633974483,
+   "t_end": 6.0,
+   "dt": 0.001799640071985603,
+   "predicted_phase_speed": 1.0000054385902188,
+   "predicted_decay_rate": 0.0005025299976272324,
+   "measured_phase_speed": 1.000005436410827,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.2075584883023396,
+    6.0,
+    244
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.9969924926149701,
+   "rk4_decay_bias_estimate": 2.015661451687144e-17,
+   "phase_speed_abs_error": 2.179391778156514e-09,
+   "phase_speed_error_vs_exact": 5.436410827064364e-06,
+   "phase_speed_rel_error": 2.179379925402169e-09
+  },
+  {
+   "degree": 2,
+   "mode": 4,
+   "theta": 1.5707963267948966,
+   "t_end": 6.0,
+   "dt": 0.001799640071985603,
+   "predicted_phase_speed": 1.0003162028133472,
+   "predicted_decay_rate": 0.028759342182447134,
+   "measured_phase_speed": 1.0003161678995913,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.2075584883023396,
+    6.0,
+    244
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.8416553392410052,
+   "rk4_decay_bias_estimate": 6.460166257758935e-16,
+   "phase_speed_abs_error": 3.4913755886378794e-08,
+   "phase_speed_error_vs_exact": 0.0003161678995913242,
+   "phase_speed_rel_error": 3.490271954826416e-08
+  },
+  {
+   "degree": 2,
+   "mode": 6,
+   "theta": 2.356194490192345,
+   "t_end": 6.0,
+   "dt": 0.001799640071985603,
+   "predicted_phase_speed": 1.0029976872522535,
+   "predicted_decay_rate": 0.27503760437156966,
+   "measured_phase_speed": 1.0029975080829,
+   "measured_decay_rate": 0.2750377419220547,
+   "phase_fit_window": [
+    1.2075584883023396,
+    6.0,
+    244
+   ],
+   "decay_fit_window": [
+    2.415116976604679,
+    6.0,
+    183
+   ],
+   "final_amplitude_ratio": 0.1922716676479032,
+   "rk4_decay_bias_estimate": 4.972435440356936e-15,
+   "phase_speed_abs_error": 1.791693535757588e-07,
+   "phase_speed_error_vs_exact": 0.0029975080828998912,
+   "phase_speed_rel_error": 1.7863386511548137e-07,
+   "decay_rel_error": 5.001151946908462e-07
+  },
+  {
+   "degree": 2,
+   "mode": 8,
+   "theta": 3.141592653589793,
+   "t_end": 5.4773241722985615,
+   "dt": 0.0017999750812680124,
+   "predicted_phase_speed": 1.0129511933947173,
+   "predicted_decay_rate": 1.261155093561551,
+   "measured_phase_speed": 1.0129523217690273,
+   "measured_decay_rate": 1.261104864684604,
+   "phase_fit_window": [
+    1.1087846500610956,
+    5.4773241722985615,
+    222
+   ],
+   "decay_fit_window": [
+    2.1977695742282433,
+    5.4773241722985615,
+    167
+   ],
+   "final_amplitude_ratio": 0.0010263812222272666,
+   "rk4_decay_bias_estimate": 3.1766459509597575e-14,
+   "phase_speed_abs_error": 1.1283743099888e-06,
+   "phase_speed_error_vs_exact": 0.012952321769027275,
+   "phase_speed_rel_error": 1.113947362268525e-06,
+   "decay_rel_error": 3.982767639244728e-05
+  },
+  {
+   "degree": 3,
+   "mode": 1,
+   "theta": 0.39269908169872414,
+   "t_end": 6.0,
+   "dt": 0.0012856224555388902,
+   "predicted_phase_speed": 1.000000000050635,
+   "predicted_decay_rate": 6.371985280996251e-09,
+   "measured_phase_speed": 1.0000000000151625,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.2136275980287123,
+    5.985858152989072,
+    233
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.9999999617875176,
+   "rk4_decay_bias_estimate": 1.6404650380161094e-19,
+   "phase_speed_abs_error": 3.547251381519345e-11,
+   "phase_speed_error_vs_exact": 1.5162537891910688e-11,
+   "phase_speed_rel_error": 3.54725138133973e-11
+  },
+  {
+   "degree": 3,
+   "mode": 2,
+   "theta": 0.7853981633974483,
+   "t_end": 6.0,
+   "dt": 0.0012856224555388902,
+   "predicted_phase_speed": 1.0000000127752107,
+   "predicted_decay_rate": 1.6006070077916818e-06,
+   "measured_phase_speed": 1.000000012207574,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.2136275980287123,
+    5.985858152989072,
+    233
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.999990402974177,
+   "rk4_decay_bias_estimate": 5.249488455639317e-18,
+   "phase_speed_abs_error": 5.676366043871894e-10,
+   "phase_speed_error_vs_exact": 1.22075740627281e-08,
+   "phase_speed_rel_error": 5.676365971355123e-10
+  },
+  {
+   "degree": 3,
+   "mode": 4,
+   "theta": 1.5707963267948966,
+   "t_end": 6.0,
+   "dt": 0.0012856224555388902,
+   "predicted_phase_speed": 1.0000030814868914,
+   "predicted_decay_rate": 0.0003795347400005588,
+   "measured_phase_speed": 1.0000030724076399,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.2136275980287123,
+    5.985858152989072,
+    233
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.9977270339541637,
+   "rk4_decay_bias_estimate": 1.679862081586552e-16,
+   "phase_speed_abs_error": 9.079251572785552e-09,
+   "phase_speed_error_vs_exact": 3.072407639859165e-06,
+   "phase_speed_rel_error": 9.079223595277058e-09
+  },
+  {
+   "degree": 3,
+   "mode": 6,
+   "theta": 2.356194490192345,
+   "t_end": 6.0,
+   "dt": 0.0012856224555388902,
+   "predicted_phase_speed": 1.000071222209836,
+   "predicted_decay_rate": 0.008539947827287309,
+   "measured_phase_speed": 1.0000711762422287,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.2136275980287123,
+    5.985858152989072,
+    233
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.9500860103145435,
+   "rk4_decay_bias_estimate": 1.2760801060091481e-15,
+   "phase_speed_abs_error": 4.59676072761539e-08,
+   "phase_speed_error_vs_exact": 7.117624222874319e-05,
+   "phase_speed_rel_error": 4.596433359474164e-08
+  },
+  {
+   "degree": 3,
+   "mode": 8,
+   "theta": 3.141592653589793,
+   "t_end": 6.0,
+   "dt": 0.0012856224555388902,
+   "predicted_phase_speed": 1.0006093301523153,
+   "predicted_decay_rate": 0.07094894704261175,
+   "measured_phase_speed": 1.0006092287480988,
+   "measured_decay_rate": 0.07095090080975698,
+   "phase_fit_window": [
+    1.2136275980287123,
+    5.985858152989072,
+    233
+   ],
+   "decay_fit_window": [
+    2.4066852367688023,
+    5.985858152989072,
+    175
+   ],
+   "final_amplitude_ratio": 0.6534408199823623,
+   "rk4_decay_bias_estimate": 5.3918998259197305e-15,
+   "phase_speed_abs_error": 1.0140421657922616e-07,
+   "phase_speed_error_vs_exact": 0.0006092287480987668,
+   "phase_speed_rel_error": 1.0134246555925092e-07,
+   "decay_rel_error": 2.7537648219948642e-05
+  },
+  {
+   "degree": 4,
+   "mode": 1,
+   "theta": 0.39269908169872414,
+   "t_end": 6.0,
+   "dt": 0.001,
+   "predicted_phase_speed": 1.0000000000000155,
+   "predicted_decay_rate": 3.075058338353206e-12,
+   "measured_phase_speed": 0.9999999999870317,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.22,
+    6.0,
+    240
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.9999999999792218,
+   "rk4_decay_bias_estimate": 6.005002339392634e-20,
+   "phase_speed_abs_error": 1.298383622838628e-11,
+   "phase_speed_error_vs_exact": 1.2968293106041529e-11,
+   "phase_speed_rel_error": 1.2983836228386079e-11
+  },
+  {
+   "degree": 4,
+   "mode": 2,
+   "theta": 0.7853981633974483,
+   "t_end": 6.0,
+   "dt": 0.001,
+   "predicted_phase_speed": 1.0000000000194242,
+   "predicted_decay_rate": 3.066269815389841e-09,
+   "measured_phase_speed": 0.9999999998116296,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.22,
+    6.0,
+    240
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.9999999814491864,
+   "rk4_decay_bias_estimate": 1.921600748792122e-18,
+   "phase_speed_abs_error": 2.077946703593625e-10,
+   "phase_speed_error_vs_exact": 1.8837043036512569e-10,
+   "phase_speed_rel_error": 2.0779467035532625e-10
+  },
+  {
+   "degree": 4,
+   "mode": 4,
+   "theta": 1.5707963267948966,
+   "t_end": 6.0,
+   "dt": 0.001,
+   "predicted_phase_speed": 1.0000000189735674,
+   "predicted_decay_rate": 2.9642134821016595e-06,
+   "measured_phase_speed": 1.0000000156494215,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.22,
+    6.0,
+    240
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.9999822146166092,
+   "rk4_decay_bias_estimate": 6.149122978891751e-17,
+   "phase_speed_abs_error": 3.324145847471982e-09,
+   "phase_speed_error_vs_exact": 1.5649421536423347e-08,
+   "phase_speed_rel_error": 3.324145784401078e-09
+  },
+  {
+   "degree": 4,
+   "mode": 6,
+   "theta": 2.356194490192345,
+   "t_end": 6.0,
+   "dt": 0.001,
+   "predicted_phase_speed": 1.0000010107516728,
+   "predicted_decay_rate": 0.0001551079066283527,
+   "measured_phase_speed": 1.000000993927822,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.22,
+    6.0,
+    240
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.9990701987834122,
+   "rk4_decay_bias_estimate": 4.669513417829893e-16,
+   "phase_speed_abs_error": 1.682385075696402e-08,
+   "phase_speed_error_vs_exact": 9.939278220461034e-07,
+   "phase_speed_rel_error": 1.6823833752245913e-08
+  },
+  {
+   "degree": 4,
+   "mode": 8,
+   "theta": 3.141592653589793,
+   "t_end": 6.0,
+   "dt": 0.001,
+   "predicted_phase_speed": 1.00001603282159,
+   "predicted_decay_rate": 0.00239782773743174,
+   "measured_phase_speed": 1.0000159771577142,
+   "measured_decay_rate": null,
+   "phase_fit_window": [
+    1.22,
+    6.0,
+    240
+   ],
+   "decay_fit_window": null,
+   "final_amplitude_ratio": 0.9857323592630296,
+   "rk4_decay_bias_estimate": 1.9678769232767406e-15,
+   "phase_speed_abs_error": 5.566387573097131e-08,
+   "phase_speed_error_vs_exact": 1.5977157714175405e-05,
+   "phase_speed_rel_error": 5.566298329629096e-08
+  }
+ ],
+ "provenance": {
+  "git_sha": "5998d1da5752c9ae6246a97862056f48e71099f0",
+  "arch": "loongarch64",
+  "torch": "2.7.1",
+  "numpy": "2.4.6"
+ }
+}
