@@ -376,9 +376,15 @@ def solve(nx: int = 32, ny: int | None = None, degree: int = 1,
               if speed > 0.0 else float("inf"))
     dt = dt_adv
     if nu > 0.0:
-        # explicit-RK4 diffusion bound.  The spectral radius of the SIPG operator
-        # measures ~50*sigma*nu/h^2 for p in [0,3] (power iteration, see the
-        # benchmark report), so dt <= 0.5*2.78*h^2/(50*sigma*nu).
+        # explicit-RK4 diffusion bound.  Measured (dense probe + Lanczos on this
+        # very residual, see docs/DG-SIPG-EXPLICIT-STABILITY.md) the spectral
+        # radius of the SIPG operator is c(p)*sigma*nu/h^2 with
+        # c = 7.92, 23.87, 46.66, 76.99 for p = 0..3 -- a single constant 50 is
+        # only valid near p = 2.  Keeping 50 together with the 0.5 factor is
+        # conservative for every supported p (safety factor dt_code/dt_max =
+        # 0.08, 0.24, 0.47, 0.77); raising the degree range above 3 would require
+        # replacing the constant by the tabulated c(p).
+        # dt_diff = 0.5*2.78*h^2/(50*sigma*nu)
         sigma = penalty * (degree + 1) ** 2
         dt_diff = 0.5 * 2.78 * min(hx, hy) ** 2 / (50.0 * sigma * nu)
         dt = min(dt, dt_diff)
