@@ -1,7 +1,7 @@
 {
   "all_gates_green": false,
   "coverage": {
-    "exported_symbols": 302,
+    "exported_symbols": 305,
     "modules": [
       {
         "aliases": {},
@@ -232,6 +232,13 @@
         "aliases": {},
         "exported": 3,
         "missing": [],
+        "module": "tensordg.ldg_dirichlet_1d",
+        "public": 3
+      },
+      {
+        "aliases": {},
+        "exported": 3,
+        "missing": [],
         "module": "tensordg.limiters",
         "public": 3
       },
@@ -271,7 +278,10 @@
         "public": 3
       },
       {
-        "aliases": {},
+        "aliases": {
+          "ldg_poisson_2d_manufactured_solution": "manufactured_solution",
+          "ldg_poisson_2d_superposition_solution": "superposition_solution"
+        },
         "exported": 4,
         "missing": [],
         "module": "tensordg.poisson_2d_ldg",
@@ -339,18 +349,30 @@
         "missing": [],
         "module": "tensordg.wall_flux_extrapolation",
         "public": 3
+      },
+      {
+        "aliases": {},
+        "exported": 0,
+        "missing": [
+          "stencil_weights",
+          "wall_heat_flux_stencil",
+          "wall_heat_flux_stencil_summary"
+        ],
+        "module": "tensordg.wall_flux_stencil",
+        "public": 3
       }
     ],
     "modules_with_zero_exports": [
       "tensordg.cases.viscous_burgers_1d",
-      "tensordg.ldg_1d"
+      "tensordg.ldg_1d",
+      "tensordg.wall_flux_stencil"
     ],
-    "public_symbols": 320,
-    "ratio": 0.94375
+    "public_symbols": 326,
+    "ratio": 0.9355828220858896
   },
   "docs": {
     "baseline_entries": 7,
-    "doc_files_scanned": 184,
+    "doc_files_scanned": 194,
     "missing_module_claims": [
       "tensordg/cases/p_refinement.py",
       "tensordg/conservation.py",
@@ -369,12 +391,12 @@
       "tensordg/gen_plots.py",
       "tensordg/run_all_convergence.py"
     ],
-    "snippets_checked": 17,
+    "snippets_checked": 18,
     "snippets_unresolved": [],
     "unregistered_claims": []
   },
   "dunder_all": {
-    "count": 306,
+    "count": 309,
     "duplicates": [],
     "in_all_not_in_namespace": [],
     "in_all_not_in_registry": [],
@@ -388,10 +410,11 @@
     "docs_snippets_resolve": true,
     "dunder_all_consistent": true,
     "identity_clean": true,
-    "no_unregistered_module_claims": true
+    "no_unregistered_module_claims": true,
+    "prototypes_excluded_and_marked": true
   },
   "identity": {
-    "checked": 306,
+    "checked": 309,
     "violations": []
   },
   "inventory": [
@@ -404,6 +427,7 @@
         "solve_advection": "FunctionDef"
       },
       "module": "tensordg.advection_1d",
+      "prototype": false,
       "public": [
         "solve_advection",
         "l2_error",
@@ -418,6 +442,7 @@
         "solve_advection_2d": "FunctionDef"
       },
       "module": "tensordg.advection_2d",
+      "prototype": false,
       "public": [
         "solve_advection_2d",
         "error_2d"
@@ -441,6 +466,7 @@
         "trig_profile": "FunctionDef"
       },
       "module": "tensordg.advection_2d_var",
+      "prototype": false,
       "public": [
         "Basis1D",
         "basis_1d",
@@ -466,6 +492,7 @@
         "solve_advection_3d": "FunctionDef"
       },
       "module": "tensordg.advection_3d",
+      "prototype": false,
       "public": [
         "exact_solution_3d",
         "solve_advection_3d",
@@ -496,6 +523,7 @@
         "vanishing_velocity": "FunctionDef"
       },
       "module": "tensordg.advection_diffusion",
+      "prototype": false,
       "public": [
         "Operators",
         "project",
@@ -528,6 +556,7 @@
         "solve_advection_diffusion_1d": "FunctionDef"
       },
       "module": "tensordg.advection_diffusion_1d",
+      "prototype": false,
       "public": [
         "exact_solution",
         "exact_flux",
@@ -546,6 +575,7 @@
         "solve_burgers": "FunctionDef"
       },
       "module": "tensordg.burgers_1d",
+      "prototype": false,
       "public": [
         "initial_profile",
         "exact_profile",
@@ -572,6 +602,7 @@
         "total_variation": "FunctionDef"
       },
       "module": "tensordg.burgers_shock_1d",
+      "prototype": false,
       "public": [
         "RiemannData",
         "riemann_initial",
@@ -609,6 +640,7 @@
         "solve_case": "FunctionDef"
       },
       "module": "tensordg.cases.elastic_rod_1d",
+      "prototype": false,
       "public": [
         "exact_pulse",
         "exact_standing",
@@ -640,6 +672,7 @@
         "solve_dg_case": "FunctionDef"
       },
       "module": "tensordg.cases.shock_entropy",
+      "prototype": false,
       "public": [
         "initial_state",
         "conserved_state",
@@ -668,6 +701,7 @@
         "viscous_burgers_parameters": "FunctionDef"
       },
       "module": "tensordg.cases.viscous_burgers_1d",
+      "prototype": false,
       "public": [
         "viscous_burgers_parameters",
         "initial_profile",
@@ -699,6 +733,7 @@
         "richardson_extrapolate": "FunctionDef"
       },
       "module": "tensordg.convergence",
+      "prototype": false,
       "public": [
         "pairwise_orders",
         "observed_order",
@@ -737,6 +772,7 @@
         "warped_periodic_mesh": "FunctionDef"
       },
       "module": "tensordg.curved_geometry",
+      "prototype": false,
       "public": [
         "legendre_eval_matrix",
         "legendre_derivative_matrix",
@@ -777,6 +813,7 @@
         "relative_difference": "FunctionDef"
       },
       "module": "tensordg.differentiable",
+      "prototype": false,
       "public": [
         "advance_advection_1d",
         "advance_euler_dg_1d",
@@ -805,6 +842,7 @@
         "upwind_fv_symbol": "FunctionDef"
       },
       "module": "tensordg.dispersion_analysis",
+      "prototype": false,
       "public": [
         "assemble_operator",
         "symbol_matrix",
@@ -834,6 +872,7 @@
         "validity_limit": "FunctionDef"
       },
       "module": "tensordg.dispersive",
+      "prototype": false,
       "public": [
         "kernel_airy",
         "kernel_boussinesq",
@@ -870,6 +909,7 @@
         "upwind_flux": "FunctionDef"
       },
       "module": "tensordg.elastic_1d",
+      "prototype": false,
       "public": [
         "elastic_wave_speed",
         "gaussian_pulse",
@@ -905,6 +945,7 @@
         "toro_wave_speeds": "FunctionDef"
       },
       "module": "tensordg.euler_1d",
+      "prototype": false,
       "public": [
         "primitive_to_conservative",
         "primitive_fields",
@@ -930,6 +971,7 @@
         "vortex_primitive": "FunctionDef"
       },
       "module": "tensordg.euler_2d",
+      "prototype": false,
       "public": [
         "vortex_primitive",
         "solve_euler_2d",
@@ -945,6 +987,7 @@
         "verify_shock_entropy": "FunctionDef"
       },
       "module": "tensordg.euler_dg_1d",
+      "prototype": false,
       "public": [
         "solve_euler_dg_1d",
         "solve_periodic_euler_dg_1d",
@@ -964,6 +1007,7 @@
         "solve_euler_dg_2d_vortex": "FunctionDef"
       },
       "module": "tensordg.euler_dg_2d",
+      "prototype": false,
       "public": [
         "legendre_operators",
         "apply_tvb_limiter_2d",
@@ -985,6 +1029,7 @@
         "solve_heat_1d_exact_time": "FunctionDef"
       },
       "module": "tensordg.heat_1d",
+      "prototype": false,
       "public": [
         "exact_temperature",
         "assemble_sipg_1d",
@@ -1005,6 +1050,7 @@
         "run_vortex_peak_check": "FunctionDef"
       },
       "module": "tensordg.ice_edge_bench",
+      "prototype": false,
       "public": [
         "observed_order",
         "OrderStudy",
@@ -1028,6 +1074,7 @@
         "velocity_l2_error": "FunctionDef"
       },
       "module": "tensordg.kovasznay",
+      "prototype": false,
       "public": [
         "default_domain",
         "decay_rate",
@@ -1050,6 +1097,7 @@
         "solve_ldg_1d": "FunctionDef"
       },
       "module": "tensordg.ldg_1d",
+      "prototype": false,
       "public": [
         "ReferenceOperators",
         "reference_operators",
@@ -1060,6 +1108,21 @@
       ]
     },
     {
+      "file": "tensordg/ldg_dirichlet_1d.py",
+      "kinds": {
+        "assemble_ldg_dirichlet_1d": "FunctionDef",
+        "ldg_l2_error_1d": "FunctionDef",
+        "solve_ldg_dirichlet_1d": "FunctionDef"
+      },
+      "module": "tensordg.ldg_dirichlet_1d",
+      "prototype": false,
+      "public": [
+        "assemble_ldg_dirichlet_1d",
+        "solve_ldg_dirichlet_1d",
+        "ldg_l2_error_1d"
+      ]
+    },
+    {
       "file": "tensordg/limiters.py",
       "kinds": {
         "apply_limiter": "FunctionDef",
@@ -1067,6 +1130,7 @@
         "apply_weno_limiter": "FunctionDef"
       },
       "module": "tensordg.limiters",
+      "prototype": false,
       "public": [
         "apply_tvb_limiter",
         "apply_weno_limiter",
@@ -1081,6 +1145,7 @@
         "mms_source": "FunctionDef"
       },
       "module": "tensordg.mms_ns_2d",
+      "prototype": false,
       "public": [
         "mms_primitives",
         "mms_conserved",
@@ -1104,6 +1169,7 @@
         "wall_heat_flux_summary": "FunctionDef"
       },
       "module": "tensordg.ns_dg_2d",
+      "prototype": false,
       "public": [
         "gas_constants",
         "wall_heat_flux",
@@ -1125,6 +1191,7 @@
         "BodyForcePoiseuille": "ClassDef"
       },
       "module": "tensordg.ns_poiseuille",
+      "prototype": false,
       "public": [
         "BodyForcePoiseuille"
       ]
@@ -1138,6 +1205,7 @@
         "solve_poisson_2d": "FunctionDef"
       },
       "module": "tensordg.poisson_2d",
+      "prototype": false,
       "public": [
         "interior_face_operator",
         "dirichlet_face_operator",
@@ -1153,6 +1221,7 @@
         "solve_poisson_2d_bc": "FunctionDef"
       },
       "module": "tensordg.poisson_2d_bc",
+      "prototype": false,
       "public": [
         "assemble_poisson_2d_bc",
         "solve_poisson_2d_bc",
@@ -1168,6 +1237,7 @@
         "superposition_solution": "FunctionDef"
       },
       "module": "tensordg.poisson_2d_ldg",
+      "prototype": false,
       "public": [
         "manufactured_solution",
         "superposition_solution",
@@ -1185,6 +1255,7 @@
         "solve_poisson_2d_matrixfree": "FunctionDef"
       },
       "module": "tensordg.sipg_matrixfree",
+      "prototype": false,
       "public": [
         "matvec_poisson_2d",
         "solve_poisson_2d_matrixfree",
@@ -1202,6 +1273,7 @@
         "solve_poisson_2d_sparse": "FunctionDef"
       },
       "module": "tensordg.sipg_sparse",
+      "prototype": false,
       "public": [
         "assemble_heat_1d_sparse",
         "assemble_poisson_2d_sparse",
@@ -1226,6 +1298,7 @@
         "validate_well_balanced_setup": "FunctionDef"
       },
       "module": "tensordg.swe_1d",
+      "prototype": false,
       "public": [
         "physical_flux",
         "sound_speed",
@@ -1253,6 +1326,7 @@
         "sound_speed_2d": "FunctionDef"
       },
       "module": "tensordg.swe_2d",
+      "prototype": false,
       "public": [
         "physical_flux_2d",
         "sound_speed_2d",
@@ -1286,6 +1360,7 @@
         "thacker_radial_velocity": "FunctionDef"
       },
       "module": "tensordg.swe_exact",
+      "prototype": false,
       "public": [
         "stoker_star_state",
         "stoker_exact",
@@ -1319,6 +1394,7 @@
         "steady_state_defect": "FunctionDef"
       },
       "module": "tensordg.swe_steady_bump",
+      "prototype": false,
       "public": [
         "bump_bed",
         "bump_bed_slope",
@@ -1336,6 +1412,7 @@
         "troubled_from_differences": "FunctionDef"
       },
       "module": "tensordg.tvb",
+      "prototype": false,
       "public": [
         "minmod",
         "troubled_from_differences"
@@ -1349,12 +1426,32 @@
         "wall_heat_flux_extrapolated_summary": "FunctionDef"
       },
       "module": "tensordg.wall_flux_extrapolation",
+      "prototype": false,
       "public": [
         "extrapolation_weights",
         "wall_heat_flux_extrapolated",
         "wall_heat_flux_extrapolated_summary"
       ]
+    },
+    {
+      "file": "tensordg/wall_flux_stencil.py",
+      "kinds": {
+        "stencil_weights": "FunctionDef",
+        "wall_heat_flux_stencil": "FunctionDef",
+        "wall_heat_flux_stencil_summary": "FunctionDef"
+      },
+      "module": "tensordg.wall_flux_stencil",
+      "prototype": false,
+      "public": [
+        "stencil_weights",
+        "wall_heat_flux_stencil",
+        "wall_heat_flux_stencil_summary"
+      ]
     }
   ],
-  "package": "tensordg"
+  "package": "tensordg",
+  "prototypes": {
+    "all_ok": true,
+    "prototypes": []
+  }
 }

@@ -65,10 +65,18 @@ def test_null_vector_is_supported_on_a_single_element_u_block(degree: int):
     assert record["energy_fraction_in_argmax_element_u"] > 0.999
 
 
-def test_prototype_solver_is_not_exported_as_a_validated_capability():
-    """The 2-D prototype must stay out of the public namespace until it converges."""
+def test_two_dimensional_solver_is_now_a_validated_capability():
+    """The 2-D prototype was promoted once the closure was fixed and verified.
+
+    The blocker recorded in this file (rank-deficient Dirichlet closure) is
+    resolved by the discrete flux ``q_hat = q_int + beta/h (u_int - g_D)``; the
+    convergence evidence lives in ``tests/test_poisson_2d_ldg.py`` and
+    ``docs/CASE-DG-LDG-2D.md``.  The 1-D probe above keeps the historical
+    rank-deficiency evidence for the *bare* closure.
+    """
     import tensordg
 
-    assert not hasattr(tensordg, "solve_poisson_2d_ldg")
+    assert hasattr(tensordg, "solve_poisson_2d_ldg")
     module = (ROOT / "tensordg" / "poisson_2d_ldg.py").read_text()
-    assert "STATUS: PROTOTYPE" in module
+    assert "STATUS: PROTOTYPE" not in module
+    assert "STATUS: VALIDATED" in module

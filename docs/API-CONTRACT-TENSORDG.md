@@ -92,7 +92,7 @@
 | `tensordg.ns_poiseuille` | 1 | 0 | 1 |
 | `tensordg.poisson_2d` | 4 | 2 | 4 |
 | `tensordg.poisson_2d_bc` | 3 | 3 | 3 |
-| `tensordg.poisson_2d_ldg` | 4 | 0 | 4 |
+| `tensordg.poisson_2d_ldg` | 4 | 4 | 0 |
 | `tensordg.sipg_matrixfree` | 5 | 0 | 5 |
 | `tensordg.sipg_sparse` | 4 | 0 | 4 |
 | `tensordg.swe_1d` | 12 | 5 | 12 |
