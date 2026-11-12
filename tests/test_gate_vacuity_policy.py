@@ -35,8 +35,17 @@ REPORT = ROOT / "docs" / "GATE-VACUITY-AUDIT.md"
 
 
 def _census() -> dict:
-    assert CENSUS.exists(), "run python tools/audit_gate_vacuity.py --write"
-    return json.loads(CENSUS.read_text())
+    """Committed census, or a fresh in-memory scan if the file did not survive.
+
+    The merge gate filters files out of agent branches, so ``artifacts/``
+    content cannot be relied on to reach ``main`` -- and a census that
+    disappears turns this module red without telling anyone anything.  The
+    scan behind the census is a 0.15 s static pass, so the honest repair is to
+    redo it in memory and keep asserting on its content.
+    """
+    if CENSUS.exists():
+        return json.loads(CENSUS.read_text())
+    return gv.census()
 
 
 # ---------------------------------------------------------------------------
@@ -178,3 +187,22 @@ def test_census_covers_every_test_module():
     assert [m["file"] for m in data["modules"]] == on_disk
     assert data["n_test_modules"] == len(on_disk)
     assert sum(data["verdicts"].values()) == len(on_disk)
+
+# ---------------------------------------------------------------------------
+# 4. the gate must survive its own artifact being filtered out of the branch
+# ---------------------------------------------------------------------------
+def test_census_survives_a_filtered_artifact(monkeypatch, tmp_path):
+    """Simulate the merge gate dropping ``artifacts/gate_vacuity/*``.
+
+    Regression of a live defect: the census JSON was filtered out of ``main``,
+    so five of the ten gates in this module failed for *absence of the file*
+    rather than for any property of the test suite.  With the fallback in
+    ``_census()`` the module keeps adjudicating the tree.
+    """
+    monkeypatch.setattr(sys.modules[__name__], "CENSUS", tmp_path / "missing.json")
+    assert not (tmp_path / "missing.json").exists()
+    filtered = _census()  # must not raise
+    fresh = gv.census()
+    assert filtered["modules"] == fresh["modules"]
+    assert filtered["verdicts"] == fresh["verdicts"]
+    assert filtered["vacuous_modules"] == fresh["vacuous_modules"]
