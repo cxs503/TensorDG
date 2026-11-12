@@ -223,21 +223,84 @@ def apply_tvb_limiter(
 # WENO limiter
 # ---------------------------------------------------------------------------
 
+# WENO-Z (Borges et al. 2008) constants.  ``_Z_EPSILON`` is the relative floor
+# of the ``tau / (beta_k + eps)`` ratio (indicators are normalised by their common
+# maximum first, so it is a scale-free number, not a modelling scale);
+# ``_Z_RATIO_CAP`` bounds the ratio so ``r**q`` cannot overflow in single
+# precision -- a weight that has reached the cap already equals its ideal value.
+_Z_EPSILON = 1e-12
+_Z_RATIO_CAP = 1e6
+
+
 def _weno_weights(
     beta0: torch.Tensor,
     beta1: torch.Tensor,
     beta2: torch.Tensor,
     epsilon: float = 1e-6,
     ideal: tuple = (1 / 6, 2 / 3, 1 / 6),
+    variant: str = "js",
+    q: int = 2,
 ) -> tuple:
-    """Compute non-linear WENO weights from smoothness indicators."""
-    d0, d1, d2 = ideal
-    alpha0 = d0 / (epsilon + beta0) ** 2
-    alpha1 = d1 / (epsilon + beta1) ** 2
-    alpha2 = d2 / (epsilon + beta2) ** 2
+    """Compute non-linear WENO weights from smoothness indicators.
+
+    Parameters
+    ----------
+    beta0, beta1, beta2 : smoothness indicators of the three candidate stencils
+    epsilon : Jiang--Shu regularisation (``"js"`` only, see below)
+    ideal : linear weights ``d_k`` of the stencils
+    variant : ``"js"`` (default, Jiang & Shu 1996) or ``"z"`` (WENO-Z, Borges,
+        Carmona, Costa & Don, JCP 227 (2008) 3101--3111)
+    q : exponent of the WENO-Z global smoothness indicator (``2`` is the
+        published value; unused by ``"js"``)
+
+    Notes
+    -----
+    ``"js"`` uses ``alpha_k = d_k / (epsilon + beta_k)**2``.  Its weakness is
+    that ``epsilon`` fixes an absolute scale: when every ``beta_k`` is much
+    smaller than ``epsilon`` -- small-amplitude fields, or fine meshes, since
+    ``beta ~ dx * (du/dx)**2`` -- all the weights collapse to the ideal
+    ``d = (1/6, 2/3, 1/6)`` and the stencil that crosses a discontinuity is no
+    longer rejected.
+
+    ``"z"`` replaces the normalisation by a *ratio*,
+
+        ``alpha_k = d_k * (1 + (tau / (beta_k + eps_z))**q)``,
+        ``tau = |beta_0 - beta_2|``,
+
+    so the weights depend on ``beta`` only through ratios and are invariant under
+    a uniform rescaling of the indicators.  ``eps_z`` is the floating-point
+    ``tiny`` of the working dtype: it only guards an exactly zero indicator, it is
+    not a modelling scale, and ``epsilon`` is therefore unused by this variant.
+    ``w -> d`` is still recovered for uniform data (``tau = 0``).
+    """
+    if variant == "js":
+        d0, d1, d2 = ideal
+        alpha0 = d0 / (epsilon + beta0) ** 2
+        alpha1 = d1 / (epsilon + beta1) ** 2
+        alpha2 = d2 / (epsilon + beta2) ** 2
+    elif variant == "z":
+        d0, d1, d2 = ideal
+        # Work with the indicators normalised by their common maximum: the
+        # weights then depend on the data only through scale-free ratios, which
+        # is the invariance property the variant exists for, and the ratio can
+        # never overflow (it is capped at _Z_RATIO_CAP, far beyond the range
+        # where the weight is already indistinguishable from the ideal one).
+        scale = (
+            torch.maximum(torch.maximum(beta0.abs(), beta1.abs()), beta2.abs())
+            .clamp_min(torch.finfo(beta0.dtype).tiny)
+        )
+        b0, b1, b2 = beta0 / scale, beta1 / scale, beta2 / scale
+        tau = (b2 - b0).abs()
+        r0 = (tau / (b0.abs() + _Z_EPSILON)).clamp_max(_Z_RATIO_CAP)
+        r1 = (tau / (b1.abs() + _Z_EPSILON)).clamp_max(_Z_RATIO_CAP)
+        r2 = (tau / (b2.abs() + _Z_EPSILON)).clamp_max(_Z_RATIO_CAP)
+        alpha0 = d0 * (1.0 + r0**q)
+        alpha1 = d1 * (1.0 + r1**q)
+        alpha2 = d2 * (1.0 + r2**q)
+    else:
+        raise ValueError(f"unknown WENO weight variant {variant!r}; choose from ['js', 'z']")
     total = alpha0 + alpha1 + alpha2
     return alpha0 / total, alpha1 / total, alpha2 / total
-
 
 def apply_weno_limiter(
     coeff: torch.Tensor,
@@ -245,6 +308,10 @@ def apply_weno_limiter(
     tvb_constant: float = 1.0,
     epsilon: float = 1e-6,
     limit_boundaries: bool = False,
+    weno_variant: str = "js",
+    weno_q: int = 2,
+    periodic: bool = False,
+    limit_all: bool = False,
 ) -> torch.Tensor:
     """Apply a WENO reconstruction limiter to troubled cells.
 
@@ -258,13 +325,26 @@ def apply_weno_limiter(
     coeff : (ncells, nmodes, nvar)
     dx : cell width
     tvb_constant : M for the troubled-cell detector
-    epsilon : WENO regularisation
+    epsilon : WENO regularisation (``weno_variant="js"``)
+    weno_variant : ``"js"`` (Jiang--Shu, default, historical behaviour) or
+        ``"z"`` (WENO-Z, Borges et al. 2008).  ``"z"`` makes the weights
+        invariant under a rescaling of the smoothness indicators, i.e. under a
+        change of the field amplitude or of the mesh spacing, and loses the
+        ``epsilon``-driven degeneration of the weights to the ideal stencil
+        weights on small-amplitude data -- see :func:`_weno_weights`.
+    weno_q : exponent of the WENO-Z global smoothness indicator (default 2)
+    periodic : use wrap-around neighbours for the end cells (both in the
+        troubled-cell detector and in the stencil averages) instead of the
+        one-sided clamping of the open-domain case.
+    limit_all : force the reconstruction in every cell (strict TVD policy),
+        see :func:`_detect`.
     """
     if coeff.shape[1] <= 1:
         return coeff
 
     troubled, _ = _detect(
-        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries
+        coeff, dx, tvb_constant, limit_boundaries=limit_boundaries,
+        periodic=periodic, limit_all=limit_all,
     )
     if not troubled.any():
         return coeff
@@ -272,8 +352,12 @@ def apply_weno_limiter(
     ncells, nmodes, nvar = coeff.shape
     avg = coeff[:, 0]  # [ncells, nvar]
 
-    # Pad averages for stencil access
-    avg_pad = avg.index_select(0, _pad_index(ncells, coeff.device))  # [ncells+2]
+    # Pad averages for stencil access.  A periodic domain wraps; the open case
+    # replicates the boundary cells (there is no neighbour to reach for).
+    if periodic:
+        avg_pad = torch.cat((avg[-1:], avg, avg[:1]), dim=0)
+    else:
+        avg_pad = avg.index_select(0, _pad_index(ncells, coeff.device))  # [ncells+2]
     # In padded indexing, cell i maps to index i+1
     u_im1 = avg_pad[:-2]  # [ncells]
     u_i   = avg
@@ -298,7 +382,10 @@ def apply_weno_limiter(
     beta1_scalar = beta1.max(dim=-1).values
     beta2_scalar = beta2.max(dim=-1).values
 
-    w0, w1, w2 = _weno_weights(beta0_scalar, beta1_scalar, beta2_scalar, epsilon)
+    w0, w1, w2 = _weno_weights(
+        beta0_scalar, beta1_scalar, beta2_scalar, epsilon,
+        variant=weno_variant, q=weno_q,
+    )
 
     # WENO combined slope
     weno_slope = (
