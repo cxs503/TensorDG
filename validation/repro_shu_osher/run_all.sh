@@ -28,3 +28,10 @@ printf '%s\n' 0.1 0.2 | xargs -P "$JOBS" -n 1 sh -c \
 
 # merge -> runs/shu_osher_case_pool/metrics.json + profiles.npz
 python -m benchmarks.shu_osher_case_pool merge --reference-cells 3200
+
+# one fresh configuration end-to-end (proves the artifacts come from the code)
+python validation/repro_shu_osher/smoke_repro.py
+
+# publish the curated bundle: benchmark_ref_vs_got.{json,md}, evidence.md,
+# artifacts/ (incl. sha256 manifest) read back from runs/
+python validation/repro_shu_osher/make_evidence.py

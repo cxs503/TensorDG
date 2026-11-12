@@ -78,7 +78,8 @@ def conserved_state(x):
 
 
 def solve_dg_case(ncells: int, degree: int = 2, limiter: str = "weno", cfl: float = 0.4,
-                  final_time: float = FINAL_TIME, device: str = "cpu") -> dict:
+                  final_time: float = FINAL_TIME, device: str = "cpu",
+                  tvb_constant: float = 1.0, limiter_stage: str = "every") -> dict:
     """Run the case with the modal DG solver and return cell-averaged fields.
 
     Returns a dict with ``x`` (cell centres), the three conserved cell averages
@@ -92,6 +93,7 @@ def solve_dg_case(ncells: int, degree: int = 2, limiter: str = "weno", cfl: floa
     x, coeff, meta = solve_periodic_euler_dg_1d(
         initial_state, ncells=ncells, degree=degree, final_time=final_time,
         domain=DOMAIN, cfl=cfl, device=device, limiter=limiter,
+        tvb_constant=tvb_constant, limiter_stage=limiter_stage,
         boundary="transmissive",
     )
     meta = dict(meta)
@@ -171,3 +173,153 @@ def exact_mass_budget(samples: int = 2_000_000) -> dict:
         "mass_inflow_relative_to_initial": flux * FINAL_TIME / mass0,
         "closure": "inflow through x=-5 only; no wave reaches the boundary",
     }
+
+
+# ------------------------------------------------------------ error measurement
+def coarsen(values, factor: int):
+    """Volume-average a uniform-grid profile by an integer ``factor``.
+
+    Only cell averages are compared across grids, so a coarse grid relates to a
+    fine one by a plain mean (the conservative projection of the ``k = 0`` mode).
+    """
+    import numpy as _np
+
+    values = _np.asarray(values, dtype=float)
+    if factor < 1 or values.shape[0] % factor:
+        raise ValueError(f"factor {factor} does not divide {values.shape[0]}")
+    return values.reshape(values.shape[0] // factor, factor).mean(axis=1)
+
+
+def relative_l1_error(candidate, reference, factor: int = 1) -> dict:
+    """Relative L1/L2/Linf of ``candidate`` against ``reference`` (same grid after coarsening).
+
+    ``factor`` is the refinement ratio of the *reference* grid to the candidate
+    grid (``reference.size // candidate.size``); it is applied to the reference,
+    never to the candidate.
+    """
+    import numpy as _np
+
+    cand = _np.asarray(candidate, dtype=float)
+    ref = coarsen(reference, factor) if factor > 1 else _np.asarray(reference, dtype=float)
+    if cand.shape != ref.shape:
+        raise ValueError(f"profile shapes differ: {cand.shape} vs {ref.shape}")
+    diff = cand - ref
+    l1 = float(_np.sum(_np.abs(diff)) / _np.sum(_np.abs(ref)))
+    l2 = float(_np.sqrt(_np.sum(diff ** 2) / _np.sum(ref ** 2)))
+    linf = float(_np.max(_np.abs(diff)) / _np.max(_np.abs(ref)))
+    return {"rel_l1": l1, "rel_l1_percent": 100.0 * l1,
+            "rel_l2_percent": 100.0 * l2, "linf_percent": 100.0 * linf}
+
+
+def gate_report(ncells: int, degree: int = 2, limiter: str = "weno", cfl: float = 0.4,
+                reference=None, reference_cells: int | None = None,
+                tolerance_percent: float = 5.0) -> dict:
+    """Solve the case and report the analytic anchors (library-side acceptance).
+
+    ``reference`` is an optional ``(x, rho)`` reference profile (e.g. the
+    converged FV-WENO5 solution shipped in ``benchmarks/data``); when given, the
+    relative L1 error against it is added and compared with ``tolerance_percent``.
+    Without a reference the report still carries the closed-form anchors, which
+    need no external data: the post-shock plateau, the exact unshocked sine, the
+    global mass budget and the Rankine--Hugoniot shock position.
+    """
+    import numpy as _np
+
+    out = solve_dg_case(ncells, degree=degree, limiter=limiter, cfl=cfl)
+    x, rho = out["x"], out["rho"]
+    anchors = rankine_hugoniot_anchor()
+    budget = exact_mass_budget()
+    plateau = rho[(x >= DOMAIN[0]) & (x <= -3.0)]
+    unshocked = x >= 2.6
+    sine = 1.0 + WAVE_AMPLITUDE * _np.sin(WAVE_NUMBER * x[unshocked])
+    mass = float(_np.sum(rho) * (DOMAIN[1] - DOMAIN[0]) / rho.size)
+    # rightmost upward crossing of rho = 2.0 is the transmitted shock
+    level = 2.0
+    xs = None
+    for i in range(rho.size - 1, 0, -1):
+        if rho[i - 1] > level >= rho[i]:
+            xs = x[i]
+            break
+    report = {
+        "case": CASE_KEY,
+        "configuration": {"ncells": ncells, "degree": degree, "limiter": limiter, "cfl": cfl},
+        "steps": out["meta"]["steps"],
+        "wall_time_s": out["meta"]["wall_time_s"],
+        "rho_min": float(rho.min()),
+        "rho_max": float(rho.max()),
+        "rho_positive": bool(rho.min() > 0.0),
+        "plateau_rho_mean": float(plateau.mean()),
+        "plateau_target": LEFT_STATE[0],
+        "plateau_dev_percent": 100.0 * abs(float(plateau.mean()) - LEFT_STATE[0]) / LEFT_STATE[0],
+        "preshock_sine_rel_l1_percent": 100.0 * float(
+            _np.sum(_np.abs(rho[unshocked] - sine)) / _np.sum(_np.abs(sine))),
+        "mass_t1p8": mass,
+        "mass_analytic": budget["mass_final_predicted"],
+        "mass_error_percent_of_initial": 100.0 * abs(
+            mass - budget["mass_final_predicted"]) / budget["mass_initial"],
+        "shock_position": xs,
+        "shock_position_analytic": anchors["shock_position_analytic"],
+        "tolerance_percent": tolerance_percent,
+    }
+    if xs is not None:
+        report["shock_position_percent_error"] = 100.0 * abs(
+            xs - anchors["shock_position_analytic"]) / abs(anchors["shock_position_analytic"])
+    if reference is not None:
+        ref_x, ref_rho = reference
+        factor = len(ref_rho) // ncells
+        err = relative_l1_error(rho, ref_rho, factor)
+        report["reference"] = {"ncells": int(len(ref_rho)), "coarsen_factor": int(factor),
+                               "reference_cells": reference_cells or int(len(ref_rho))}
+        report.update(err)
+        report["passes_gate"] = bool(err["rel_l1_percent"] < tolerance_percent)
+    else:
+        report["passes_gate"] = None
+    return report
+
+
+def main(argv=None) -> int:
+    """``python -m tensordg.cases.shock_entropy`` - run the case from the library.
+
+    Prints the acceptance report as JSON; exit code 0 iff every check passes.
+    With ``--reference`` an ``.npz`` holding ``x`` and ``rho`` (a converged
+    reference profile, e.g. ``benchmarks/data/shu_osher_reference.npz``) the
+    relative error against it is evaluated too.
+    """
+    import argparse
+    import json as _json
+
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--ncells", type=int, default=400)
+    ap.add_argument("--degree", type=int, default=2)
+    ap.add_argument("--limiter", default="weno")
+    ap.add_argument("--cfl", type=float, default=0.4)
+    ap.add_argument("--tolerance-percent", type=float, default=5.0)
+    ap.add_argument("--reference", default=None,
+                    help="optional .npz with x/rho of a converged reference profile")
+    ap.add_argument("--json-out", default=None)
+    args = ap.parse_args(argv)
+
+    reference = None
+    reference_cells = None
+    if args.reference:
+        loaded = np.load(args.reference, allow_pickle=True)
+        reference = (loaded["x"], loaded["rho"])
+        reference_cells = int(reference[0].size)
+    report = gate_report(args.ncells, args.degree, args.limiter, args.cfl,
+                         reference=reference, reference_cells=reference_cells,
+                         tolerance_percent=args.tolerance_percent)
+    text = _json.dumps(report, indent=2)
+    print(text)
+    if args.json_out:
+        from pathlib import Path as _Path
+        _Path(args.json_out).write_text(text + "\n")
+    ok = (report["rho_positive"]
+          and report["plateau_dev_percent"] < 1.0
+          and report["preshock_sine_rel_l1_percent"] < 0.5
+          and report["mass_error_percent_of_initial"] < 0.1
+          and (report["passes_gate"] is not False))
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

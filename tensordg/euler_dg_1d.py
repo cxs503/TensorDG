@@ -276,3 +276,24 @@ def solve_periodic_euler_dg_1d(
         "conservation_drift": drift,
     }
     return x, coeff, metadata
+
+
+def verify_shock_entropy(ncells: int = 200, degree: int = 1, limiter: str = "weno",
+                         cfl: float = 0.4) -> dict:
+    """Self-check of this solver on the Shu--Osher (1988) shock/entropy-wave case.
+
+    The case data, the closed-form anchors and the acceptance report live in
+    :mod:`tensordg.cases.shock_entropy`; this hook exists so that the Euler DG
+    solver can validate itself without importing the benchmark scripts.  It is
+    imported lazily to keep the module graph acyclic (the case module imports
+    this solver at import time).
+
+    Returns the acceptance report (density extrema, plateau/unshocked-sine/mass
+    residuals, shock position vs the Rankine--Hugoniot value).  ``rho_positive``
+    and ``mass_error_percent_of_initial`` are the two hard invariants: a negative
+    density or a mass leak means the run is not admissible regardless of how
+    small the profile error looks.
+    """
+    from .cases.shock_entropy import gate_report
+
+    return gate_report(ncells, degree=degree, limiter=limiter, cfl=cfl)
