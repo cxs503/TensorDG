@@ -260,6 +260,15 @@ data, and PNG plots. See `docs/benchmarks/` for method specifications and
   L2 norm for every conserved variable at degrees 1--3
   ([docs/reports/tensordg-ns-mms-verification.md](docs/reports/tensordg-ns-mms-verification.md)).
 
+- **Three-dimensional periodic advection** (`tensordg/advection_3d.py`):
+  modal tensor-product Legendre DG on uniform hexahedral meshes with an
+  upwind face flux and classical RK4, verified against the closed-form
+  translated separable field `1 + sin(2 pi (x-a_x t)) ...`. The ladder
+  `python -m benchmarks.advection_3d` gates the observed order against
+  `p + 1` (15 % tolerance, P1--P3), round-off mass conservation for
+  sign-changing velocities, and the documented 8x8x8 3 % case; see
+  [docs/advection_3d_verification.md](docs/advection_3d_verification.md).
+
 Sparse/matrix-free elliptic solvers, unstructured meshes, genuinely
 multidimensional (non-directional) WENO stencils, limiter performance
 optimisation, and additional Euler/Navier--Stokes benchmarks remain future work.
