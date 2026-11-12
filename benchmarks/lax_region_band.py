@@ -34,10 +34,9 @@ so the regions cannot drift with the solution.
 
 Artifacts (inside the worktree)::
 
-    runs/lax_region_band/metrics.json
-    runs/lax_region_band/summary.md
-    runs/lax_region_band/figures/region_order.png
-    runs/lax_region_band/figures/region_measure.png
+    docs/benchmarks/results/lax_region_band/metrics.json
+    docs/benchmarks/results/lax_region_band/summary.md
+    docs/benchmarks/results/lax_region_band/figures/*.png
 
 Usage::
 
@@ -59,7 +58,9 @@ from benchmarks.lax_case_pool import (CFL, FINAL_TIME, LADDER, LEFT,
                                       exact_reference, exact_waves, modal_fields,
                                       solve_euler_dg_1d, _weighted_l1)
 
-OUT = Path("runs/lax_region_band")
+# ``runs/`` is never committed (0 tracked files), so a gate pinned there is
+# vacuous on ``main``; keep the record on the tracked ``docs/`` path.
+OUT = Path("docs/benchmarks/results/lax_region_band")
 WAVES = ("rarefaction_head", "rarefaction_tail", "contact", "shock")
 
 #: band half-width in *physical* units for the nested rules

@@ -31,7 +31,10 @@ from benchmarks.lax_case_pool import (CFL, FINAL_TIME, LEFT, RIGHT,
                                       solve_euler_dg_1d, _weighted_l1)
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT = ROOT / "runs" / "lax_region_band" / "metrics.json"
+# The record lives on a git-tracked path (``docs/``).  ``artifacts/`` and ``runs/``
+# are filtered out of agent branches by the merge gate, so a gate pinned there
+# either skips forever (vacuous) or fails on every clean checkout.
+ARTIFACT = ROOT / "docs" / "benchmarks" / "results" / "lax_region_band" / "metrics.json"
 
 
 def _uniform_points(cells):
@@ -106,8 +109,11 @@ def test_quick_ladder_keeps_a_coarse_fine_pair_per_degree():
         assert degrees.count(degree) >= 2
 
 
-@pytest.mark.skipif(not ARTIFACT.exists(), reason="audit artifact not committed yet")
 def test_committed_artifact_is_self_consistent():
+    """Re-derive every stored number from the stored ladder (no trust in verdicts)."""
+    assert ARTIFACT.exists(), (
+        f"missing committed record {ARTIFACT.relative_to(ROOT)}; regenerate with "
+        "`python -m benchmarks.lax_region_band`")
     metrics = json.loads(ARTIFACT.read_text())
     entries = metrics["ladder"]
     orders = rule_orders(entries)
@@ -124,6 +130,7 @@ def test_committed_artifact_is_self_consistent():
     # every figure the artifact advertises must live inside the worktree
     for figure in metrics["figures"]:
         path = Path(figure)
+        path = path if path.is_absolute() else ROOT / path
         assert path.exists(), figure
         assert path.resolve().is_relative_to(ROOT), figure
     # the ladder must be strictly finer in cells for every degree
