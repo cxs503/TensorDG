@@ -21,9 +21,6 @@ OMP_NUM_THREADS=1 python -m pytest tests/test_repro_cks1998.py -x -q
 | `validation/repro_cks1998/artifacts/quick/A2_discontinuous.csv` | 1791 | `4a1aca7b867c2848c605f4d1cded899cca8abd962d7ed8436c8ebc983cc1dfdc` |
 | `validation/repro_cks1998/artifacts/quick/E2_sod.csv` | 315 | `f6356e7c05ab3515269f682abc95e440ca61dbf2afb6ea6146aed43f4744c04a` |
 | `validation/repro_cks1998/artifacts/quick/E3_tvd.csv` | 970 | `0452439ab093adeabf79f34e0978eaf67b9e7035913382e876eb23c9f0184fb8` |
-| `validation/repro_cks1998/artifacts/quick/a1_l2_order.png` | 69693 | `3685b434f92d5694590b4fb96a1b08bcd77b9fa6750649a41ea83e5a28e04c59` |
-| `validation/repro_cks1998/artifacts/quick/e2_sod.png` | 35106 | `c4887f8302c97b6b99d6fec0aca0ac5a2447661d1858652767251eef318a8eaa` |
-| `validation/repro_cks1998/artifacts/quick/e3_limiter.png` | 65068 | `70a73f4c878f0baf467a70229491375da468ab20f106e6cd7f6b701b9a668d46` |
 | `validation/repro_cks1998/artifacts/quick/metrics.json` | 26835 | `ec4d26b7d59e9a2981d92952fd4bc9c9774abab79c5475310e0bc3cae395882e` |
 | `validation/repro_cks1998/artifacts/quick/summary.md` | 2223 | `9f5d7f73be1a5da01d4a38fcb2bb5ec1eab5e6d618cea03f75a097f5c7c90afc` |
 
@@ -52,6 +49,51 @@ OMP_NUM_THREADS=1 python -m pytest tests/test_repro_cks1998.py -x -q
 | E3_overshoot_pct | p2_strict_all | 0.000 % |
 
 Gate verdict: `{"A1_smooth_order": true, "A2_discontinuous_order": true, "E2_sod_three_percent": true, "E3_tvd_no_new_extrema": true, "all_pass": true}` · wall 347.1 s · 3.11.6/torch 2.7.1 on loongarch64 · loadavg [341.0390625, 393.06494140625, 365.26220703125]
+
+## Profile `full` — artifact manifest
+
+| file | bytes | sha256 |
+|---|---:|---|
+| `validation/repro_cks1998/artifacts/full/A1_smooth.csv` | 943 | `ac43d311f52333022328c2286d378311e750b8774eb4a2251b3b0d9c67b5fab5` |
+| `validation/repro_cks1998/artifacts/full/A2_discontinuous.csv` | 2359 | `f93c2fd241870033f02e3933e9fe2de23dfffb73ad1ea2f4b0d47ec3399dcedc` |
+| `validation/repro_cks1998/artifacts/full/E2_sod.csv` | 425 | `9fa48ae4fd9ab4c1e22a10d4552f89c80e3b63791eb9954e5aeeafd627cfed94` |
+| `validation/repro_cks1998/artifacts/full/E3_tvd.csv` | 1404 | `a9a3bc141426ed15af198f9737760bae387cc67bb9e946552ca12e3ad5fa9f2a` |
+| `validation/repro_cks1998/artifacts/full/a1_l2_order.png` | 79293 | `fe9cc648d69bfe7b81531bab034cc8f17fcabd3d338c84e80391ca2c30e4194b` |
+| `validation/repro_cks1998/artifacts/full/e2_sod.png` | 35106 | `c4887f8302c97b6b99d6fec0aca0ac5a2447661d1858652767251eef318a8eaa` |
+| `validation/repro_cks1998/artifacts/full/e3_limiter.png` | 78047 | `911ba352b35ff498ac0abec2a98a7f78189bb48cdf38dc5bd94307da6bdd9913` |
+| `validation/repro_cks1998/artifacts/full/metrics.json` | 38465 | `e5fe3177e32f33e9ac1cf3e40ca0809bda7cbb5f86e3d84ff5034e3c80c93936` |
+| `validation/repro_cks1998/artifacts/full/summary.md` | 2871 | `229d31850ea8e9189bb90519d92ed81cd63ab3b84e25223990cb3c0db0f6026f` |
+
+### Key numbers
+
+| quantity | key | value |
+|---|---|---:|
+| A1_order | p1 | 2.00424 |
+| A1_order | p2 | 2.99993 |
+| A1_order | p3 | 3.9999 |
+| A1_gate | p1 | 1.5 |
+| A1_gate | p2 | 2.5 |
+| A1_gate | p3 | 3.5 |
+| A2_l1_order | p1 | 0.667553 |
+| A2_l1_order | p2 | 0.664722 |
+| A2_l1_order | p3 | 0.664227 |
+| E2_worst_rel_l2 | p2_n200 | 4.173 % |
+| E2_worst_rel_l2 | p2_n400 | 2.368 % |
+| E2_worst_rel_l2 | p1_n400 | 2.346 % |
+| E2_gate_case | p2_n200 | 0 |
+| E2_gate_case | p2_n400 | 1 |
+| E2_gate_case | p1_n400 | 1 |
+| E3_overshoot_pct | p1_unlimited | 6.326 % |
+| E3_overshoot_pct | p1_tvb_M0 | 1.404 % |
+| E3_overshoot_pct | p1_strict_all | 0.000 % |
+| E3_overshoot_pct | p2_unlimited | 8.573 % |
+| E3_overshoot_pct | p2_tvb_M0 | 0.779 % |
+| E3_overshoot_pct | p2_strict_all | 0.000 % |
+| E3_overshoot_pct | p3_unlimited | 10.118 % |
+| E3_overshoot_pct | p3_tvb_M0 | 0.445 % |
+| E3_overshoot_pct | p3_strict_all | 0.000 % |
+
+Gate verdict: `{"A1_smooth_order": true, "A2_discontinuous_order": true, "E2_sod_three_percent": true, "E3_tvd_no_new_extrema": true, "all_pass": true}` · wall 452.5 s · 3.11.6/torch 2.7.1 on loongarch64 · loadavg [200.47607421875, 177.2783203125, 120.36181640625]
 
 ## Reference vs got (from `benchmark_ref_vs_got.json`)
 

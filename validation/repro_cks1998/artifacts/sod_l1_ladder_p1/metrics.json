@@ -1,0 +1,277 @@
+{
+  "anchor": "REPRO-DG-CKS1998 round 2 / Sod L1 ladder",
+  "checks": {
+    "C1_monotone": true,
+    "C2_order_bracket": true,
+    "C3_cross_check": true,
+    "C4_gate_extension": true,
+    "C5_not_roundoff": true,
+    "C6_limiter_active": true
+  },
+  "config": {
+    "cells": [
+      100,
+      200,
+      400,
+      800
+    ],
+    "cfl": 0.12,
+    "control_cells": 800,
+    "degree": 1,
+    "final_time": 0.2,
+    "left": [
+      1.0,
+      0.0,
+      1.0
+    ],
+    "limiter_stage": "final",
+    "quadrature": 8,
+    "right": [
+      0.125,
+      0.0,
+      0.1
+    ],
+    "tvb_constant": 1.0
+  },
+  "control": {
+    "degree": 1,
+    "density_max": 1.003735984735223,
+    "density_min": 0.09638308701285653,
+    "finite": true,
+    "h": 0.00125,
+    "l1_abs_density": 0.0005394200976694401,
+    "l1_abs_pressure": 0.000316278647421644,
+    "l1_abs_velocity": 0.000839383589997974,
+    "l1_rel_density": 0.000959002216412097,
+    "l1_rel_pressure": 0.0006071657206210338,
+    "l1_rel_velocity": 0.0019023590269765113,
+    "l1_rel_worst": 0.0019023590269765113,
+    "l2_cellavg_rel_density": 0.004027611545486231,
+    "l2_cellavg_rel_pressure": 0.001316342082411026,
+    "l2_cellavg_rel_velocity": 0.009547157255162001,
+    "l2_cellavg_worst": 0.009547157255162001,
+    "limiter": null,
+    "ncells": 800,
+    "overshoot_density": 0.028616912987143472,
+    "pressure_min": 0.04790244840040826,
+    "seconds": 142.839,
+    "steps": 9263
+  },
+  "criteria": {
+    "C1_monotone": "relative L1 error strictly decreases on every rung, every field",
+    "C2_order_bracket": "density L1 order on the finest pair within [0.5, 2.0] (limiter half-order floor .. below the design order p+1=3)",
+    "C3_cross_check": "cell-average relative L2 at overlapping meshes reproduces the round-1 E2 numbers to <=1e-6 relative",
+    "C4_gate_extension": "report whether the finest rung meets the 3% relative-L2 gate (verdict recorded, gate itself unchanged)",
+    "C5_not_roundoff": "finest mesh relative L1 error > 1e-10 (not a roundoff floor)",
+    "C6_limiter_active": "unlimited control at the finest mesh has a strictly larger density overshoot than the limited run"
+  },
+  "cross_check_round1": [
+    {
+      "max_rel_diff": 0.0,
+      "ncells": 400,
+      "profile": "full",
+      "rel_diff": {
+        "density": 0.0,
+        "pressure": 0.0,
+        "velocity": 0.0
+      },
+      "tag": "p1_n400"
+    }
+  ],
+  "environment": {
+    "OMP_NUM_THREADS": "1",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+    "python": "3.11.6"
+  },
+  "gate_mesh_in_round1": [],
+  "generated_at": "2026-11-12T20:39:48+0000",
+  "git_commit": "103e778f8c77e81a706a1f8c1126c713cec49dac",
+  "orders": {
+    "l1_rel_density": [
+      {
+        "coarse": 0,
+        "fine": 1,
+        "order": 0.8769390631511046
+      },
+      {
+        "coarse": 1,
+        "fine": 2,
+        "order": 0.8638605450427068
+      },
+      {
+        "coarse": 2,
+        "fine": 3,
+        "order": 0.8553281174043008
+      }
+    ],
+    "l1_rel_pressure": [
+      {
+        "coarse": 0,
+        "fine": 1,
+        "order": 0.9873709366997321
+      },
+      {
+        "coarse": 1,
+        "fine": 2,
+        "order": 0.9765653217852907
+      },
+      {
+        "coarse": 2,
+        "fine": 3,
+        "order": 0.9819724603362332
+      }
+    ],
+    "l1_rel_velocity": [
+      {
+        "coarse": 0,
+        "fine": 1,
+        "order": 0.991208808320064
+      },
+      {
+        "coarse": 1,
+        "fine": 2,
+        "order": 0.970287231119686
+      },
+      {
+        "coarse": 2,
+        "fine": 3,
+        "order": 0.9632356716063186
+      }
+    ],
+    "l1_rel_worst": [
+      {
+        "coarse": 0,
+        "fine": 1,
+        "order": 0.991208808320064
+      },
+      {
+        "coarse": 1,
+        "fine": 2,
+        "order": 0.970287231119686
+      },
+      {
+        "coarse": 2,
+        "fine": 3,
+        "order": 0.9632356716063186
+      }
+    ],
+    "l2_cellavg_worst": [
+      {
+        "coarse": 0,
+        "fine": 1,
+        "order": 0.5112802693079882
+      },
+      {
+        "coarse": 1,
+        "fine": 2,
+        "order": 0.790373899124749
+      },
+      {
+        "coarse": 2,
+        "fine": 3,
+        "order": 0.750946130224777
+      }
+    ]
+  },
+  "rungs": [
+    {
+      "degree": 1,
+      "density_max": 1.0031305076009516,
+      "density_min": 0.12499782522371125,
+      "finite": true,
+      "h": 0.01,
+      "l1_abs_density": 0.007044067093875161,
+      "l1_abs_pressure": 0.005758177419911816,
+      "l1_abs_velocity": 0.01203073000727206,
+      "l1_rel_density": 0.012524325488032015,
+      "l1_rel_pressure": 0.011053631173307037,
+      "l1_rel_velocity": 0.027259890568029674,
+      "l1_rel_worst": 0.027259890568029674,
+      "l2_cellavg_rel_density": 0.019389746953932866,
+      "l2_cellavg_rel_pressure": 0.01914425454816814,
+      "l2_cellavg_rel_velocity": 0.05783528927925491,
+      "l2_cellavg_worst": 0.05783528927925491,
+      "limiter": "tvb",
+      "ncells": 100,
+      "overshoot_density": 0.003130507600951571,
+      "pressure_min": 0.09999756414228483,
+      "seconds": 13.148,
+      "steps": 1096
+    },
+    {
+      "degree": 1,
+      "density_max": 1.0025780920767753,
+      "density_min": 0.12499965940987884,
+      "finite": true,
+      "h": 0.005,
+      "l1_abs_density": 0.003835685958895724,
+      "l1_abs_pressure": 0.0029041205029751676,
+      "l1_abs_velocity": 0.006048893853249664,
+      "l1_rel_density": 0.0068197645863137014,
+      "l1_rel_pressure": 0.00557540859927934,
+      "l1_rel_velocity": 0.013713254145801199,
+      "l1_rel_worst": 0.013713254145801199,
+      "l2_cellavg_rel_density": 0.015608161460550265,
+      "l2_cellavg_rel_pressure": 0.011110191246915539,
+      "l2_cellavg_rel_velocity": 0.04057721302044544,
+      "l2_cellavg_worst": 0.04057721302044544,
+      "limiter": "tvb",
+      "ncells": 200,
+      "overshoot_density": 0.0025780920767752846,
+      "pressure_min": 0.09999961853709756,
+      "seconds": 27.587,
+      "steps": 2208
+    },
+    {
+      "degree": 1,
+      "density_max": 1.0019492456473138,
+      "density_min": 0.12499989080846877,
+      "finite": true,
+      "h": 0.0025,
+      "l1_abs_density": 0.0021078047915556787,
+      "l1_abs_pressure": 0.0014759270928662693,
+      "l1_abs_velocity": 0.003088365019592825,
+      "l1_rel_density": 0.0037473257488083492,
+      "l1_rel_pressure": 0.002833356656734613,
+      "l1_rel_velocity": 0.006999305728294079,
+      "l1_rel_worst": 0.006999305728294079,
+      "l2_cellavg_rel_density": 0.010848164707516294,
+      "l2_cellavg_rel_pressure": 0.005796619466932558,
+      "l2_cellavg_rel_velocity": 0.023461510178163086,
+      "l2_cellavg_worst": 0.023461510178163086,
+      "limiter": "tvb",
+      "ncells": 400,
+      "overshoot_density": 0.001949245647313802,
+      "pressure_min": 0.0999998777056001,
+      "seconds": 62.216,
+      "steps": 4433
+    },
+    {
+      "degree": 1,
+      "density_max": 1.0015350907622882,
+      "density_min": 0.12499996017217282,
+      "finite": true,
+      "h": 0.00125,
+      "l1_abs_density": 0.0011650633487681136,
+      "l1_abs_pressure": 0.0007472410279393442,
+      "l1_abs_velocity": 0.0015840180449519553,
+      "l1_rel_density": 0.002071295338376154,
+      "l1_rel_pressure": 0.0014344918346686525,
+      "l1_rel_velocity": 0.003589980865262461,
+      "l1_rel_worst": 0.003589980865262461,
+      "l2_cellavg_rel_density": 0.007777400188792023,
+      "l2_cellavg_rel_pressure": 0.0029118990951965064,
+      "l2_cellavg_rel_velocity": 0.01394115170588926,
+      "l2_cellavg_worst": 0.01394115170588926,
+      "limiter": "tvb",
+      "ncells": 800,
+      "overshoot_density": 0.0015350907622881937,
+      "pressure_min": 0.09999995539273074,
+      "seconds": 141.16,
+      "steps": 8883
+    }
+  ],
+  "verdict": true,
+  "wall_seconds": 386.95
+}
