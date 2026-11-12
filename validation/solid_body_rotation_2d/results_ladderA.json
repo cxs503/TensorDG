@@ -1,0 +1,108 @@
+{
+  "anchor": "CASE-DG-SOLID-BODY-ROTATION-2D",
+  "generated_at_utc": "2026-11-12T12:16:05.649028+00:00",
+  "provenance": {
+    "git_commit": "d401c10374143b77ea3f7e3ab93870a76a30f331",
+    "host": "36cb7828dbd5",
+    "torch": "2.7.1",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38"
+  },
+  "runs": [
+    {
+      "ncells": 16,
+      "degree": 1,
+      "cfl": 0.5,
+      "steps": 579,
+      "dt": 0.0017271157167530224,
+      "dofs": 1024,
+      "wall_s": 6.669,
+      "metrics": {
+        "relative_l1_disk": 0.5664151135242661,
+        "absolute_l1_disk": 0.011905602804435103,
+        "reference_l1_disk": 0.021019218096702586,
+        "coverage": 1.0,
+        "relative_l2_disk": 0.35539166508068404,
+        "relative_l1_global": 0.5903265022368198,
+        "global_minus_disk_rel_l1": 0.023911388712553716,
+        "projection_relative_l1_disk": 0.05761846513140586,
+        "mass_drift_rel": 4.951806771277113e-16,
+        "mass_drift_abs": 1.0408340855860843e-17,
+        "peak_cell_average": 0.5621321242577272,
+        "peak_nodal": 0.7128601776189055,
+        "peak_retention": 0.7128601776189055
+      }
+    },
+    {
+      "ncells": 25,
+      "degree": 1,
+      "cfl": 0.5,
+      "steps": 904,
+      "dt": 0.0011061946902654867,
+      "dofs": 2500,
+      "wall_s": 14.248,
+      "metrics": {
+        "relative_l1_disk": 0.2644982714050212,
+        "absolute_l1_disk": 0.0055594830666404705,
+        "reference_l1_disk": 0.021018976937385497,
+        "coverage": 1.0,
+        "relative_l2_disk": 0.16906191308357743,
+        "relative_l1_global": 0.27175565473893454,
+        "global_minus_disk_rel_l1": 0.0072573833339133476,
+        "projection_relative_l1_disk": 0.02565334576494808,
+        "mass_drift_rel": 0.0,
+        "mass_drift_abs": 0.0,
+        "peak_cell_average": 0.8206068384411183,
+        "peak_nodal": 0.852281287127405,
+        "peak_retention": 0.852281287127405
+      }
+    },
+    {
+      "ncells": 32,
+      "degree": 1,
+      "cfl": 0.5,
+      "steps": 1157,
+      "dt": 0.000864304235090752,
+      "dofs": 4096,
+      "wall_s": 22.091,
+      "metrics": {
+        "relative_l1_disk": 0.1607676652042182,
+        "absolute_l1_disk": 0.0033791708104231916,
+        "reference_l1_disk": 0.021018970488442035,
+        "coverage": 1.0,
+        "relative_l2_disk": 0.10138864697462431,
+        "relative_l1_global": 0.1636491994906708,
+        "global_minus_disk_rel_l1": 0.002881534286452603,
+        "projection_relative_l1_disk": 0.01637378897494953,
+        "mass_drift_rel": 1.6506263627844056e-16,
+        "mass_drift_abs": 3.469446951953614e-18,
+        "peak_cell_average": 0.8691756153990529,
+        "peak_nodal": 0.9710125193009245,
+        "peak_retention": 0.9710125193009245
+      }
+    },
+    {
+      "ncells": 16,
+      "degree": 2,
+      "cfl": 0.5,
+      "steps": 964,
+      "dt": 0.001037344398340249,
+      "dofs": 2304,
+      "wall_s": 11.745,
+      "metrics": {
+        "relative_l1_disk": 0.07808756607395469,
+        "absolute_l1_disk": 0.0016413395819491272,
+        "reference_l1_disk": 0.021019218096702586,
+        "coverage": 1.0,
+        "relative_l2_disk": 0.04210309919030055,
+        "relative_l1_global": 0.0806301284011404,
+        "global_minus_disk_rel_l1": 0.0025425623271857073,
+        "projection_relative_l1_disk": 0.012503851925091174,
+        "mass_drift_rel": 0.0,
+        "mass_drift_abs": 0.0,
+        "peak_cell_average": 0.7446165702058563,
+        "peak_nodal": 1.0175407686738076,
+        "peak_retention": 1.0175407686738076
+      }
+    }
+  ]
+}
