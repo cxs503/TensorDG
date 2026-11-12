@@ -404,9 +404,17 @@ def apply_weno_limiter(
 # Convenience dispatcher
 # ---------------------------------------------------------------------------
 
+# Hierarchical high-order limiter, registered in _LIMITERS below.  ``limiter_ao``
+# only imports numpy/torch at module scope, so this import cannot cycle.
+from .limiter_ao import apply_ao_limiter  # noqa: E402
+
 _LIMITERS = {
     "tvb": apply_tvb_limiter,
     "weno": apply_weno_limiter,
+    # Hierarchical high-order limiter (design order kept in troubled cells);
+    # imported here, not at module top, because tensordg.limiter_ao imports the
+    # troubled-cell detector from this module.
+    "ao": apply_ao_limiter,
 }
 
 
