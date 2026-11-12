@@ -408,9 +408,17 @@ def apply_weno_limiter(
 # only imports numpy/torch at module scope, so this import cannot cycle.
 from .limiter_ao import apply_ao_limiter  # noqa: E402
 
+# Sensor-gated modal (SVV) artificial viscosity; also torch-only at module
+# scope, so this import cannot cycle.
+from .artificial_viscosity import apply_av_filter  # noqa: E402
+
 _LIMITERS = {
     "tvb": apply_tvb_limiter,
     "weno": apply_weno_limiter,
+    # Continuous-strength alternative to reconstruction limiters: damps the top
+    # modes of each element in proportion to a smoothness sensor instead of
+    # replacing the polynomial (see tensordg/artificial_viscosity.py).
+    "av": apply_av_filter,
     # Hierarchical high-order limiter (design order kept in troubled cells);
     # imported here, not at module top, because tensordg.limiter_ao imports the
     # troubled-cell detector from this module.
