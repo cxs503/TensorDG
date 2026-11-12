@@ -1,0 +1,769 @@
+{
+  "benchmark": "dg_advection_bench",
+  "campaign_node": "IN12-P5",
+  "repo": "TensorDG",
+  "branch": "agent/m4933",
+  "commit": "27d502c",
+  "generated_utc": "2026-11-12T21:35:56+00:00",
+  "config": "full",
+  "environment": {
+    "python": "3.11.6",
+    "torch": "2.7.1",
+    "numpy": "2.4.6",
+    "device": "cpu",
+    "dtype": "float64",
+    "machine": "loongarch64",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38"
+  },
+  "purpose": "High-order reference for the transport step of ice-condition assimilation (A2) and passive frazil transport: rotating front / convection-dominated standards with verified DG convergence and exact discrete mass conservation.",
+  "discretisation": {
+    "space": "modal tensor-product Legendre DG on a uniform periodic square",
+    "flux": "upwind, node-wise sign of the face-normal velocity",
+    "time": "classical RK4, dt = cfl / ((2p+1)(|a_x|/h_x + |a_y|/h_y))",
+    "cfl": 0.3
+  },
+  "criteria": {
+    "order_rule": "observed_order >= degree + 0.9 for degree = 1, 2 (degree = 3 reported)",
+    "order_degrees_required": [
+      1,
+      2
+    ],
+    "order_margin": 0.9,
+    "mass_rule": "relative global mass drift <= 1e-12 over the whole run",
+    "mass_tolerance": 1e-12,
+    "peak_rule": "Gaussian ice-edge front peak retention >= 0.99 after one revolution (p = 3)",
+    "peak_tolerance": 0.99,
+    "pytest_min_tests": 5
+  },
+  "cases": {
+    "shear_transport": {
+      "1": {
+        "case": "shear_transport",
+        "degree": 1,
+        "cells": [
+          12,
+          16,
+          24
+        ],
+        "final_time": 0.05,
+        "cfl": 0.3,
+        "norm": "global",
+        "errors_l2": [
+          0.01031317213921265,
+          0.005859017149589081,
+          0.002623543688071763
+        ],
+        "relative_errors_l2": [
+          0.009224381586774565,
+          0.005240464251127295,
+          0.0023465688113875863
+        ],
+        "peaks": [
+          2.0510415323265403,
+          2.0274977338449327,
+          2.012833397326666
+        ],
+        "mass_drift_rel": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "steps": [
+          19,
+          25,
+          37
+        ],
+        "observed_order": 1.9753369927781412,
+        "pairwise_orders": [
+          1.9655032871695792,
+          1.9815660951962044
+        ],
+        "finest_pair_order": 1.9815660951962044,
+        "required_order": 1.9,
+        "order_pass": true
+      },
+      "2": {
+        "case": "shear_transport",
+        "degree": 2,
+        "cells": [
+          8,
+          12,
+          16
+        ],
+        "final_time": 0.05,
+        "cfl": 0.3,
+        "norm": "global",
+        "errors_l2": [
+          0.001738004784116333,
+          0.000509366040913538,
+          0.0002142370308556353
+        ],
+        "relative_errors_l2": [
+          0.0015545187370015869,
+          0.000455590837165044,
+          0.0001916194257163682
+        ],
+        "peaks": [
+          1.9993782574162764,
+          2.0000829492272034,
+          1.999924176335423
+        ],
+        "mass_drift_rel": [
+          2.220446049250312e-16,
+          0.0,
+          2.220446049250312e-16
+        ],
+        "steps": [
+          21,
+          31,
+          41
+        ],
+        "observed_order": 3.020599019261071,
+        "pairwise_orders": [
+          3.026958765340687,
+          3.0105590702451717
+        ],
+        "finest_pair_order": 3.0105590702451717,
+        "required_order": 2.9,
+        "order_pass": true
+      },
+      "3": {
+        "case": "shear_transport",
+        "degree": 3,
+        "cells": [
+          8,
+          12,
+          16
+        ],
+        "final_time": 0.05,
+        "cfl": 0.3,
+        "norm": "global",
+        "errors_l2": [
+          9.974908634548265e-05,
+          1.955785931598337e-05,
+          6.182775360209944e-06
+        ],
+        "relative_errors_l2": [
+          8.921829510479809e-05,
+          1.749308116996654e-05,
+          5.530042398016072e-06
+        ],
+        "peaks": [
+          1.9993257905187745,
+          1.9998816166261273,
+          1.9997135121429965
+        ],
+        "mass_drift_rel": [
+          0.0,
+          0.0,
+          1.1102230246251568e-16
+        ],
+        "steps": [
+          29,
+          43,
+          57
+        ],
+        "observed_order": 4.012392171128389,
+        "pairwise_orders": [
+          4.018300581255634,
+          4.003064733255879
+        ],
+        "finest_pair_order": 4.003064733255879,
+        "required_order": 3.9,
+        "order_pass": null
+      }
+    },
+    "solid_body_rotation_front": {
+      "1": {
+        "case": "solid_body_rotation_front",
+        "degree": 1,
+        "cells": [
+          16,
+          24,
+          32
+        ],
+        "final_time": 0.5,
+        "cfl": 0.3,
+        "norm": "disk r<=0.28",
+        "errors_l2": [
+          0.012057425992244235,
+          0.0047951052655412765,
+          0.0024032379402523837
+        ],
+        "relative_errors_l2": [
+          0.09115193054527009,
+          0.03625850824644874,
+          0.018170122139829596
+        ],
+        "peaks": [
+          0.9831944554917683,
+          0.9878144652628438,
+          1.0136152621197045
+        ],
+        "mass_drift_rel": [
+          1.9633083640717048e-16,
+          3.926616728143492e-16,
+          1.9633083640717462e-16
+        ],
+        "steps": [
+          482,
+          723,
+          964
+        ],
+        "observed_order": 2.3234097029937186,
+        "pairwise_orders": [
+          2.2741416100113216,
+          2.4011878305260774
+        ],
+        "finest_pair_order": 2.4011878305260774,
+        "required_order": 1.9,
+        "order_pass": true
+      },
+      "2": {
+        "case": "solid_body_rotation_front",
+        "degree": 2,
+        "cells": [
+          12,
+          16,
+          24
+        ],
+        "final_time": 0.5,
+        "cfl": 0.3,
+        "norm": "disk r<=0.28",
+        "errors_l2": [
+          0.002202735433929052,
+          0.0008569423696368621,
+          0.00023318019521870805
+        ],
+        "relative_errors_l2": [
+          0.016655249438054825,
+          0.006478327249006779,
+          0.0017632075967140776
+        ],
+        "peaks": [
+          0.9993431209430653,
+          0.9986763158668049,
+          0.9996603581997662
+        ],
+        "mass_drift_rel": [
+          1.9633083640717506e-16,
+          0.0,
+          1.9633083640717454e-16
+        ],
+        "steps": [
+          603,
+          803,
+          1205
+        ],
+        "observed_order": 3.2378271323075847,
+        "pairwise_orders": [
+          3.281694157367172,
+          3.2100398257978267
+        ],
+        "finest_pair_order": 3.2100398257978267,
+        "required_order": 2.9,
+        "order_pass": true
+      },
+      "3": {
+        "case": "solid_body_rotation_front",
+        "degree": 3,
+        "cells": [
+          12,
+          16,
+          24
+        ],
+        "final_time": 0.5,
+        "cfl": 0.3,
+        "norm": "disk r<=0.28",
+        "errors_l2": [
+          0.0002483541138776229,
+          7.945693821676565e-05,
+          1.5470420278371024e-05
+        ],
+        "relative_errors_l2": [
+          0.001877579877114141,
+          0.0006007094060411191,
+          0.00011695690447713892
+        ],
+        "peaks": [
+          0.9984111674351337,
+          0.9990127554548913,
+          0.9992681948127111
+        ],
+        "mass_drift_rel": [
+          0.0,
+          3.9266167281434934e-16,
+          0.0
+        ],
+        "steps": [
+          843,
+          1124,
+          1686
+        ],
+        "observed_order": 4.006833403711549,
+        "pairwise_orders": [
+          3.9614577970810725,
+          4.035576312258339
+        ],
+        "finest_pair_order": 4.035576312258339,
+        "required_order": 3.9,
+        "order_pass": null
+      }
+    },
+    "reentrant_deformational_vortex": {
+      "1": {
+        "case": "reentrant_deformational_vortex",
+        "degree": 1,
+        "cells": [
+          12,
+          16,
+          24
+        ],
+        "final_time": 1.0,
+        "cfl": 0.3,
+        "norm": "global",
+        "errors_l2": [
+          0.017637768682596824,
+          0.008745391996706134,
+          0.003256977826322356
+        ],
+        "relative_errors_l2": [
+          0.015775699898281363,
+          0.007822116397807014,
+          0.002913129528346517
+        ],
+        "peaks": [
+          2.0606498720038924,
+          2.036277673051792,
+          2.0170755504776694
+        ],
+        "mass_drift_rel": [
+          3.3306690738754706e-16,
+          1.1102230246251568e-16,
+          0.0
+        ],
+        "steps": [
+          237,
+          316,
+          474
+        ],
+        "observed_order": 2.4369948365674423,
+        "pairwise_orders": [
+          2.438510025942777,
+          2.436035048855932
+        ],
+        "finest_pair_order": 2.436035048855932,
+        "required_order": 1.9,
+        "order_pass": true
+      },
+      "2": {
+        "case": "reentrant_deformational_vortex",
+        "degree": 2,
+        "cells": [
+          12,
+          16,
+          24
+        ],
+        "final_time": 1.0,
+        "cfl": 0.3,
+        "norm": "global",
+        "errors_l2": [
+          0.0015575469427238607,
+          0.0007029701517852415,
+          0.00019692989678262796
+        ],
+        "relative_errors_l2": [
+          0.0013931123368310094,
+          0.0006287556182180581,
+          0.00017613945440318933
+        ],
+        "peaks": [
+          2.0005045910103223,
+          1.9993546090218282,
+          2.000028656901887
+        ],
+        "mass_drift_rel": [
+          2.2204460492503126e-16,
+          2.220446049250312e-16,
+          2.2204460492503126e-16
+        ],
+        "steps": [
+          395,
+          527,
+          790
+        ],
+        "observed_order": 2.9936797040643275,
+        "pairwise_orders": [
+          2.7653894128719068,
+          3.1382888332667167
+        ],
+        "finest_pair_order": 3.1382888332667167,
+        "required_order": 2.9,
+        "order_pass": true
+      },
+      "3": {
+        "case": "reentrant_deformational_vortex",
+        "degree": 3,
+        "cells": [
+          10,
+          14,
+          20
+        ],
+        "final_time": 1.0,
+        "cfl": 0.3,
+        "norm": "global",
+        "errors_l2": [
+          0.000391839125879335,
+          9.88486604398018e-05,
+          2.4556457204626802e-05
+        ],
+        "relative_errors_l2": [
+          0.00035047156868411595,
+          8.841292969127642e-05,
+          2.1963963038443987e-05
+        ],
+        "peaks": [
+          1.9999080554475712,
+          1.9997802478666575,
+          1.9999091130443387
+        ],
+        "mass_drift_rel": [
+          1.1102230246251568e-16,
+          4.440892098500628e-16,
+          0.0
+        ],
+        "steps": [
+          461,
+          645,
+          922
+        ],
+        "observed_order": 3.995171012957496,
+        "pairwise_orders": [
+          4.093239246542722,
+          3.9044378628193233
+        ],
+        "finest_pair_order": 3.9044378628193233,
+        "required_order": 3.9,
+        "order_pass": null
+      }
+    }
+  },
+  "order_summary": [
+    {
+      "case": "shear_transport",
+      "degree": 1,
+      "observed_order": 1.9753369927781412,
+      "required_order": 1.9,
+      "check_applied": true,
+      "pass": true
+    },
+    {
+      "case": "shear_transport",
+      "degree": 2,
+      "observed_order": 3.020599019261071,
+      "required_order": 2.9,
+      "check_applied": true,
+      "pass": true
+    },
+    {
+      "case": "shear_transport",
+      "degree": 3,
+      "observed_order": 4.012392171128389,
+      "required_order": 3.9,
+      "check_applied": false,
+      "pass": null
+    },
+    {
+      "case": "solid_body_rotation_front",
+      "degree": 1,
+      "observed_order": 2.3234097029937186,
+      "required_order": 1.9,
+      "check_applied": true,
+      "pass": true
+    },
+    {
+      "case": "solid_body_rotation_front",
+      "degree": 2,
+      "observed_order": 3.2378271323075847,
+      "required_order": 2.9,
+      "check_applied": true,
+      "pass": true
+    },
+    {
+      "case": "solid_body_rotation_front",
+      "degree": 3,
+      "observed_order": 4.006833403711549,
+      "required_order": 3.9,
+      "check_applied": false,
+      "pass": null
+    },
+    {
+      "case": "reentrant_deformational_vortex",
+      "degree": 1,
+      "observed_order": 2.4369948365674423,
+      "required_order": 1.9,
+      "check_applied": true,
+      "pass": true
+    },
+    {
+      "case": "reentrant_deformational_vortex",
+      "degree": 2,
+      "observed_order": 2.9936797040643275,
+      "required_order": 2.9,
+      "check_applied": true,
+      "pass": true
+    },
+    {
+      "case": "reentrant_deformational_vortex",
+      "degree": 3,
+      "observed_order": 3.995171012957496,
+      "required_order": 3.9,
+      "check_applied": false,
+      "pass": null
+    }
+  ],
+  "peak_preservation": {
+    "solid_body_rotation_front": [
+      {
+        "degree": 1,
+        "cells": [
+          24,
+          24
+        ],
+        "revolutions": 1.0,
+        "cfl": 0.3,
+        "steps": 1446,
+        "peak_initial": 1.0160729736879983,
+        "peak_final": 0.9536500617340041,
+        "peak_retention": 0.9385645386005886,
+        "relative_l2_disk": 0.059531320213640514,
+        "relative_l2_global": 0.06057013615038489,
+        "mass_drift_rel": 3.926616728143492e-16,
+        "mass_abs": 0.03534286325514609,
+        "error_norm_reference": 0.13293403881654417
+      },
+      {
+        "degree": 2,
+        "cells": [
+          16,
+          16
+        ],
+        "revolutions": 1.0,
+        "cfl": 0.3,
+        "steps": 1606,
+        "peak_initial": 0.9992417128282023,
+        "peak_final": 0.9932374439062043,
+        "peak_retention": 0.9939911746628313,
+        "relative_l2_disk": 0.008699658442400495,
+        "relative_l2_global": 0.008780492749270147,
+        "mass_drift_rel": 1.9633083640717454e-16,
+        "mass_abs": 0.035342863255146094,
+        "error_norm_reference": 0.13293403881654417
+      },
+      {
+        "degree": 3,
+        "cells": [
+          16,
+          16
+        ],
+        "revolutions": 1.0,
+        "cfl": 0.3,
+        "steps": 2248,
+        "peak_initial": 0.9981528209426433,
+        "peak_final": 0.9990636716951323,
+        "peak_retention": 1.0009125363705618,
+        "relative_l2_disk": 0.0006874657011247399,
+        "relative_l2_global": 0.0006947078079501265,
+        "mass_drift_rel": 3.9266167281434934e-16,
+        "mass_abs": 0.03534286325514607,
+        "error_norm_reference": 0.1329340388165442
+      }
+    ],
+    "solid_body_rotation_resolution_study": [
+      {
+        "degree": 3,
+        "cells": [
+          8,
+          8
+        ],
+        "revolutions": 1.0,
+        "cfl": 0.3,
+        "steps": 1124,
+        "peak_initial": 1.0022275011932078,
+        "peak_final": 0.995070412137493,
+        "peak_retention": 0.9928588179358541,
+        "relative_l2_disk": 0.011494309586618385,
+        "relative_l2_global": 0.011573887244467316,
+        "mass_drift_rel": 5.889925092215249e-16,
+        "mass_abs": 0.03534286325514602,
+        "error_norm_reference": 0.1329340388165442
+      },
+      {
+        "degree": 3,
+        "cells": [
+          12,
+          12
+        ],
+        "revolutions": 1.0,
+        "cfl": 0.3,
+        "steps": 1686,
+        "peak_initial": 0.9998233014309796,
+        "peak_final": 0.997215341852177,
+        "peak_retention": 0.9973915795170306,
+        "relative_l2_disk": 0.0022321796593254835,
+        "relative_l2_global": 0.0022487606726600737,
+        "mass_drift_rel": 9.816541820358734e-16,
+        "mass_abs": 0.03534286325514607,
+        "error_norm_reference": 0.13293403881654417
+      },
+      {
+        "degree": 3,
+        "cells": [
+          20,
+          20
+        ],
+        "revolutions": 1.0,
+        "cfl": 0.3,
+        "steps": 2810,
+        "peak_initial": 0.9995079653574402,
+        "peak_final": 0.9997861792859319,
+        "peak_retention": 1.0002783508867708,
+        "relative_l2_disk": 0.00027910707188494424,
+        "relative_l2_global": 0.00028225922718495334,
+        "mass_drift_rel": 0.0,
+        "mass_abs": 0.035342863255146066,
+        "error_norm_reference": 0.1329340388165442
+      }
+    ],
+    "reentrant_deformational_vortex": [
+      {
+        "degree": 2,
+        "cells": [
+          12,
+          12
+        ],
+        "steps": 395,
+        "peak_initial": 0.9924669839908524,
+        "peak_final": 0.9924502567392238,
+        "peak_retention": 0.9999831457853022,
+        "relative_l2": 0.006017082971307249,
+        "mass_drift_rel": 2.208733621763827e-16
+      },
+      {
+        "degree": 3,
+        "cells": [
+          12,
+          12
+        ],
+        "steps": 553,
+        "peak_initial": 0.9972677958451093,
+        "peak_final": 0.9968536724068956,
+        "peak_retention": 0.9995847419921319,
+        "relative_l2": 0.0006238376854401755,
+        "mass_drift_rel": 4.417467243527657e-16
+      },
+      {
+        "degree": 3,
+        "cells": [
+          16,
+          16
+        ],
+        "steps": 738,
+        "peak_initial": 1.0001890605585209,
+        "peak_final": 1.000258988345654,
+        "peak_retention": 1.0000699145690457,
+        "relative_l2": 0.0002023489169414506,
+        "mass_drift_rel": 2.2087336217638274e-16
+      }
+    ]
+  },
+  "mass_balance": {
+    "tolerance": 1e-12,
+    "max_relative_drift_observed": 9.816541820358734e-16,
+    "trace": {
+      "degree": 2,
+      "cells": [
+        12,
+        12
+      ],
+      "steps": 395,
+      "mass_initial": 1.0000000000000002,
+      "relative_drift": [
+        0.0,
+        -2.2204460492503126e-16,
+        0.0,
+        0.0,
+        0.0,
+        -2.2204460492503126e-16,
+        0.0,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        0.0,
+        0.0,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        0.0,
+        -2.2204460492503126e-16,
+        0.0,
+        0.0,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16,
+        -2.2204460492503126e-16
+      ],
+      "relative_drift_max": 2.2204460492503126e-16,
+      "relative_drift_final": 2.2204460492503126e-16
+    }
+  },
+  "verdict": {
+    "orders_pass": true,
+    "mass_pass": true,
+    "peak_pass": true,
+    "pytest_module": "tests/test_dg_advection_bench.py",
+    "pytest_min_tests": 5,
+    "overall": "PASS"
+  },
+  "figures": [
+    {
+      "name": "dg_advection_convergence.png",
+      "caption": "Observed L2 convergence for the three ice-edge transport cases, p=1,2,3, with p+1 reference slopes."
+    },
+    {
+      "name": "dg_advection_peak_preservation.png",
+      "caption": "Peak retention of the rotating ice-edge front after one revolution (left) and versus resolution (right)."
+    },
+    {
+      "name": "dg_advection_mass_balance.png",
+      "caption": "Relative global mass drift per RK4 step (reentrant vortex)."
+    },
+    {
+      "name": "dg_advection_rotation_fields.png",
+      "caption": "Initial front, DG solution after one revolution and the numerical-minus-exact field."
+    }
+  ],
+  "limitations": [
+    "The rigid-rotation velocity of a periodic square is discontinuous at the seam (a_y jumps by 2*pi); the rotation convergence order is therefore measured in the disk r<=0.28 around the rotation centre (characteristics are circles, so seam noise stays at its own radius). The global norm of the same run is reported for transparency.",
+    "The reentrant vortex uses the classical LeVeque/Nair amplitude A=1/pi (max speed 1); the peak/shape metrics are for smooth (C-infinity) fronts. Sharp (C0/discontinuous) ice edges require limiters and are out of scope for this route-level verification node.",
+    "No physical ice model is integrated: this node fixes the *transport operator* reference only (no frazil thermodynamics, no coupling)."
+  ]
+}

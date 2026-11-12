@@ -40,8 +40,11 @@ from tensordg.euler_dg_1d import (
     solve_euler_dg_1d,
 )
 
-ARTIFACT = (Path(__file__).resolve().parent.parent
-            / "artifacts" / "positivity_limiter" / "metrics.json")
+# The record lives on a git-tracked path (``docs/``).  ``artifacts/`` and ``runs/``
+# are filtered out of agent branches by the merge gate, so a gate pinned there
+# either skips forever (vacuous) or fails on every clean checkout.
+ARTIFACT = (Path(__file__).resolve().parents[1]
+            / "docs" / "benchmarks" / "results" / "positivity_limiter" / "metrics.json")
 
 # Toro, *Riemann Solvers and Numerical Methods for Fluid Dynamics*, 3rd ed.,
 # Table 4.1, test 2 (the "123 problem"): p* = 1.89e-3, u* = 0, rho* = 2.185e-2.
