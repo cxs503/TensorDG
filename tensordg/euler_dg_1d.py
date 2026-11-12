@@ -44,6 +44,71 @@ def _positivity_filter(coeff, check_points):
     return torch.where(valid_cell[:, None, None], coeff, average_only)
 
 
+def _scaling_factors(coeff, check_points, eta=1e-10):
+    """Zhang-Shu admissible scaling factors ``theta`` for one modal cell block.
+
+    For every cell the state is written as ``u_theta = ubar + theta (u - ubar)``
+    with ``theta in [0, 1]``.  Because the density is *linear* in the
+    conservative variables and the pressure is *concave*, the point values of
+    the scaled state satisfy
+
+        rho(u_theta) = rho_bar + theta (rho_i - rho_bar)
+        p(u_theta)   >= p_bar + theta (p_i - p_bar)          (concavity)
+
+    so a per-point bound ``theta_i`` derived from the linear interpolation of
+    the density and of the pressure guarantees admissibility of the whole cell
+    at every check point (interior quadrature nodes *and* both traces), while
+    keeping the cell average ``ubar`` unchanged.  Taking the minimum over the
+    check points gives the largest admissible ``theta`` (Zhang & Shu, JCP 2010;
+    Zhang, Xia & Shu, JCP 2012).  ``eta`` is the relative floor on the cell
+    average (never a hard zero, so the bound stays finite).
+    """
+    values = torch.einsum("cmv,qm->cqv", coeff, check_points)
+    average = coeff[:, 0]
+    rho_avg = average[:, 0]
+    pressure_avg = (GAMMA - 1.0) * (
+        average[:, 2] - 0.5 * average[:, 1] ** 2 / rho_avg.clamp_min(1e-300)
+    )
+    # Non-admissible cell averages cannot be repaired by scaling: collapse.
+    admissible_avg = (rho_avg > 0.0) & (pressure_avg > 0.0)
+    rho = values[..., 0]
+    pressure = (GAMMA - 1.0) * (
+        values[..., 2] - 0.5 * values[..., 1] ** 2 / rho.clamp_min(1e-300)
+    )
+    finite = torch.isfinite(values).all(dim=-1) & torch.isfinite(pressure)
+    rho_floor = (eta * rho_avg).clamp_min(0.0)
+    pressure_floor = (eta * pressure_avg).clamp_min(0.0)
+
+    def _bound(point_value, point_floor, cell_average):
+        # theta such that average + theta (point - average) >= floor
+        deficit = cell_average[:, None] - point_value
+        safe = deficit.clamp_min(1e-300)
+        bound = (cell_average[:, None] - point_floor[:, None]) / safe
+        bound = torch.where(point_value >= point_floor[:, None], torch.ones_like(bound), bound)
+        return torch.where(deficit <= 0.0, torch.ones_like(bound), bound)
+
+    theta = torch.minimum(
+        _bound(rho, rho_floor, rho_avg), _bound(pressure, pressure_floor, pressure_avg)
+    )
+    theta = torch.where(finite, theta, torch.zeros_like(theta))
+    theta = theta.clamp(0.0, 1.0).min(dim=1).values
+    return torch.where(admissible_avg, theta, torch.zeros_like(theta))
+
+
+def _positivity_scale(coeff, check_points, eta=1e-10):
+    """Zhang-Shu scaling limiter: admissible cell, maximum retained high order.
+
+    Unlike :func:`_positivity_filter` (which throws the whole cell back to its
+    first-order average), this only rescales the higher modes, so an admissible
+    cell is left *bitwise* untouched and a nearly-admissible cell keeps the
+    fraction of its high-order content that the positivity bound allows.
+    """
+    theta = _scaling_factors(coeff, check_points, eta=eta)
+    out = coeff.clone()
+    out[:, 1:] = coeff[:, 1:] * theta[:, None, None]
+    return out
+
+
 def _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right, periodic=False):
     at_quadrature = torch.einsum("cmv,qm->cqv", coeff, phi)
     flux_quadrature = physical_flux(at_quadrature)
@@ -77,6 +142,7 @@ def solve_euler_dg_1d(
     limiter=None,
     tvb_constant=1.0,
     limiter_stage="every",
+    positivity="scale",
 ):
     """Solve a Riemann problem with modal DG/HLLC/SSP-RK3.
 
@@ -100,11 +166,22 @@ def solve_euler_dg_1d(
         destroys high-order accuracy there (see
         ``docs/limiter_verification.md``).  ``"final"`` limits only the
         updated state at the end of the time step.
+    positivity : {"scale", "collapse", "none"}
+        Admissibility treatment applied to every sub-step.  ``"scale"``
+        (default) is the Zhang-Shu scaling limiter (:func:`_positivity_scale`):
+        the higher modes of a cell are scaled by ``theta <= 1`` so that the
+        density and the pressure stay positive at the quadrature nodes and at
+        both traces, and the cell average is preserved exactly.  ``"collapse"``
+        is the historic first-order fallback (:func:`_positivity_filter`) that
+        resets a whole offending cell to its average.  ``"none"`` disables the
+        treatment, which is only safe for well-resolved smooth data.
     """
     if ncells < 20 or degree not in (1, 2, 3) or final_time < 0.0 or not 0 < cfl <= 0.5:
         raise ValueError("invalid cells, degree, final_time, or CFL")
     if limiter_stage not in ("every", "final"):
         raise ValueError("limiter_stage must be 'every' or 'final'")
+    if positivity not in ("scale", "collapse", "none"):
+        raise ValueError("positivity must be 'scale', 'collapse' or 'none'")
     lower, upper = domain
     if not upper > lower or not lower < diaphragm < upper:
         raise ValueError("domain must be increasing and contain the diaphragm")
@@ -121,6 +198,24 @@ def solve_euler_dg_1d(
     nodes, weights, phi, dphi, phi_left, phi_right = _operators(degree, dev, dtype)
     check_points = torch.cat((phi, phi_left[None, :], phi_right[None, :]), dim=0)
 
+    stats = {"limited_cells": 0, "cell_stages": 0, "min_theta": 1.0}
+
+    def _admissible_fix(state):
+        if positivity == "scale":
+            theta = _scaling_factors(state, check_points)
+            stats["limited_cells"] += int((theta < 1.0).sum().item())
+            stats["cell_stages"] += int(theta.numel())
+            stats["min_theta"] = min(stats["min_theta"], float(theta.min().item()))
+            out = state.clone()
+            out[:, 1:] = state[:, 1:] * theta[:, None, None]
+            return out
+        if positivity == "collapse":
+            fixed = _positivity_filter(state, check_points)
+            changed = (fixed != state).any(dim=-1).any(dim=-1)
+            stats["limited_cells"] += int(changed.sum().item())
+            stats["cell_stages"] += int(changed.numel())
+            return fixed
+        return state
     limit_each_stage = limiter_stage == "every"
     time, steps, dt = 0.0, 0, 0.0
     while time < final_time:
@@ -132,18 +227,18 @@ def solve_euler_dg_1d(
         u1 = coeff + dt * k1
         if limit_each_stage:
             u1 = apply_limiter(u1, dx, kind=limiter, tvb_constant=tvb_constant)
-        u1 = _positivity_filter(u1, check_points)
+        u1 = _admissible_fix(u1)
         k2 = _rhs(u1, dx, weights, phi, dphi, phi_left, phi_right)
         u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
         if limit_each_stage:
             u2 = apply_limiter(u2, dx, kind=limiter, tvb_constant=tvb_constant)
-        u2 = _positivity_filter(u2, check_points)
+        u2 = _admissible_fix(u2)
         k3 = _rhs(u2, dx, weights, phi, dphi, phi_left, phi_right)
         coeff = apply_limiter(
             (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3),
             dx, kind=limiter, tvb_constant=tvb_constant,
         )
-        coeff = _positivity_filter(coeff, check_points)
+        coeff = _admissible_fix(coeff)
         average = coeff[:, 0]
         rho_now = average[:, 0]
         pressure_now = (GAMMA - 1.0) * (average[:, 2] - 0.5 * average[:, 1] ** 2 / rho_now.clamp_min(1e-12))
@@ -158,6 +253,8 @@ def solve_euler_dg_1d(
         "left_state": tuple(left_state), "right_state": tuple(right_state),
         "flux": "hllc", "limiter": limiter_name, "device": str(dev),
         "limiter_stage": limiter_stage,
+        "positivity": positivity,
+        "positivity_stats": dict(stats),
     }
     return x, coeff, metadata
 
