@@ -1,0 +1,53 @@
+{
+  "case": "CASE-SHU-OSHER-DG",
+  "configuration": {
+    "ncells": 200,
+    "degree": 1,
+    "limiter": "weno",
+    "cfl": 0.4
+  },
+  "reference": {
+    "solver": "benchmarks/fv_weno5_1d.py FV-WENO5/HLLC/SSP-RK3",
+    "ncells": 3200
+  },
+  "steps": 1274,
+  "wall_time_s": 22.061,
+  "got": {
+    "rel_l1_percent": 2.46151,
+    "rel_l2_percent": 5.276974,
+    "linf_percent": 14.821844,
+    "rho_min": 0.800917,
+    "rho_max": 4.131404,
+    "shock_position": 2.406425
+  },
+  "tabulated": {
+    "rel_l1_percent": 2.461510294775401,
+    "rel_l2_percent": 5.276974021976416,
+    "steps": 1274,
+    "wall_time_s": 22.526125660166144
+  },
+  "drift_percent_points": 0.0,
+  "tolerance_percent": 0.001,
+  "anchors": {
+    "plateau_rho_mean": 3.857142062,
+    "plateau_target": 3.857143,
+    "preshock_sine_rel_l1_percent": 0.034738204123988654,
+    "mass_t1p8": 31.089152189,
+    "mass_analytic": 31.08915218897799,
+    "mass_error_percent_of_initial": 0.0,
+    "shock_position_vs_rh_percent": 0.713917,
+    "gamma": 1.4
+  },
+  "checks": {
+    "rel_l1_reproduces_tabulated": true,
+    "rel_l1_under_5pct": true,
+    "density_positive": true,
+    "plateau_matches_left_state": true,
+    "unshocked_sine_exact": true,
+    "mass_budget_closed": true,
+    "shock_position_vs_rh": true
+  },
+  "all_checks_pass": true,
+  "generated_by": "validation/repro_shu_osher/smoke_repro.py",
+  "timestamp": "2026-11-12T00:33:53Z"
+}
