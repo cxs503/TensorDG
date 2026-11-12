@@ -1,0 +1,12 @@
+DONE 09:58
+fields_primary.npz
+p1_12.json
+p1_24.json
+p2_12.json
+p2_24.json
+p3_12.json
+primary.json
+probe_time_p1_12.json
+summary.json
+---
+{"id": 15244, "title": "CASE-DG-KOVASZNAY-NS\uff1a\u5b9a\u5e38 NS \u7684 DG \u79bb\u6563\u9a8c\u8bc1\uff08\u901f\u5ea6 L2 0.0088 % < 1 %\uff09", "summary": "Kovasznay (1948) \u5b9a\u5e38\u7cbe\u786e\u89e3\u9a71\u52a8 TensorDG \u53ef\u538b NS DG \u6c42\u89e3\u5668\uff08P3/24x24, Re=40\uff09\uff1a\u901f\u5ea6\u76f8\u5bf9 L2 \u8bef\u5dee 0.0088 %\uff08\u5bb9\u5dee 1%\uff09\uff0c\u89e3\u6790\u89e3\u81ea\u6b8b\u5dee 1e-15 \u91cf\u7ea7\uff0c\u5e76\u7ed9\u51fa\u7f51\u683c/\u9636\u6570\u3001\u9a6c\u8d6b
