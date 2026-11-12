@@ -51,6 +51,17 @@ PKG = ROOT / "tensordg"
 PACKAGE = "tensordg"
 #: CLI hooks are not API: every ``main``/``__main__`` entry is excluded.
 EXCLUDED_NAMES = {"main"}
+
+# Modules that are deliberately outside the public contract because they are
+# unvalidated prototypes.  Two merged missions had pulled in opposite
+# directions -- the API-coverage sweep re-exported ``poisson_2d_ldg`` while
+# ``tests/test_ldg_closure_rank.py`` forbade it -- which left the suite red on
+# ``main``.  The prototype is not a capability: it is excluded from the coverage
+# denominator *and* required to carry its status marker (see
+# ``prototype_report``), so neither silent export nor silent deletion is possible.
+PROTOTYPE_MODULES = {
+    "tensordg.poisson_2d_ldg": "STATUS: PROTOTYPE",
+}
 DOC_GLOBS = ("docs/**/*.md", "README.md", "AGENTS.md", "TASK_COMPLETION_SUMMARY.md")
 
 
@@ -76,11 +87,13 @@ def module_inventory() -> list[dict]:
             and not node.name.startswith("_")
             and node.name not in EXCLUDED_NAMES
         ]
+        module = _module_path(file)
         records.append({
-            "module": _module_path(file),
+            "module": module,
             "file": str(file.relative_to(ROOT)),
             "public": [name for name, _kind in symbols],
             "kinds": {name: kind for name, kind in symbols},
+            "prototype": module in PROTOTYPE_MODULES,
         })
     return records
 
@@ -106,12 +119,44 @@ def export_registry() -> dict[str, dict]:
 # --------------------------------------------------------------------------- #
 # the three questions
 # --------------------------------------------------------------------------- #
+def prototype_report(inventory: list[dict], registry: dict[str, dict]) -> dict:
+    """Prototype modules: status marker present, and no symbol exported.
+
+    Encodes the policy that a coverage sweep may not promote an unvalidated
+    prototype into the public contract.
+    """
+    exported = {(entry["module"], entry["name"]) for entry in registry.values()}
+    records = []
+    for record in inventory:
+        if not record.get("prototype"):
+            continue
+        marker = PROTOTYPE_MODULES[record["module"]]
+        text = (ROOT / record["file"]).read_text()
+        leaked = [n for n in record["public"]
+                  if (record["module"], n) in exported]
+        records.append({
+            "module": record["module"],
+            "marker": marker,
+            "marker_present": marker in text,
+            "leaked_exports": leaked,
+            "ok": (marker in text) and not leaked,
+        })
+    return {"prototypes": records,
+            "all_ok": all(r["ok"] for r in records) and bool(records)}
+
+
 def coverage_report(inventory: list[dict], registry: dict[str, dict]) -> dict:
     exported_pairs = {(entry["module"], entry["name"]) for entry in registry.values()}
     per_module = []
     total_public = 0
     total_exported = 0
     for record in inventory:
+        if record.get("prototype"):
+            per_module.append({
+                "module": record["module"], "public": len(record["public"]),
+                "exported": 0, "missing": [], "aliases": {}, "prototype": True,
+            })
+            continue
         covered = [n for n in record["public"] if (record["module"], n) in exported_pairs]
         missing = [n for n in record["public"] if (record["module"], n) not in exported_pairs]
         aliases = {
@@ -134,7 +179,10 @@ def coverage_report(inventory: list[dict], registry: dict[str, dict]) -> dict:
         "exported_symbols": total_exported,
         "ratio": (total_exported / total_public) if total_public else 1.0,
         "modules": per_module,
-        "modules_with_zero_exports": [m["module"] for m in per_module if m["exported"] == 0],
+        # prototypes are excluded by design (see PROTOTYPE_MODULES); they are
+        # reported separately by prototype_report(), not as a coverage failure
+        "modules_with_zero_exports": [m["module"] for m in per_module
+                                      if m["exported"] == 0 and not m.get("prototype")],
     }
 
 
@@ -254,6 +302,7 @@ def audit() -> dict:
     identity = identity_report(package, registry)
     dunder = dunder_all_report(package, registry)
     docs = docs_report()
+    prototypes = prototype_report(inventory, registry)
     gates = {
         "coverage_100pct": coverage["ratio"] == 1.0,
         "identity_clean": not identity["violations"],
@@ -264,6 +313,7 @@ def audit() -> dict:
                                       or dunder["in_all_not_in_registry"]),
         "docs_snippets_resolve": not docs["snippets_unresolved"],
         "no_unregistered_module_claims": not docs["unregistered_claims"],
+        "prototypes_excluded_and_marked": prototypes["all_ok"],
     }
     return {
         "package": PACKAGE,
@@ -272,6 +322,7 @@ def audit() -> dict:
         "identity": identity,
         "dunder_all": dunder,
         "docs": docs,
+        "prototypes": prototypes,
         "gates": gates,
         "all_gates_green": all(gates.values()),
     }
