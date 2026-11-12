@@ -110,8 +110,10 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
 
     ``limiter`` enables the Cockburn-Shu shock-capturing path: ``None`` (the
     historical behaviour) leaves the scheme unlimited, ``"tvb"`` applies the
-    TVB/minmod limiter (M = ``tvb_constant``, M=0 is the strict TVD variant)
-    and ``"weno"`` the WENO limiter, both after every Runge-Kutta stage.
+    TVB/minmod limiter (M = ``tvb_constant``, M=0 is the strict TVD variant),
+    ``"weno"`` the WENO limiter and ``"ao"`` the high-order WENO limiter of
+    :mod:`tensordg.limiter_ao` (design order preserved in the limited cells), all
+    after every Runge-Kutta stage.
     ``time_integrator`` selects classical ``"rk4"`` (default, 4th-order but
     *not* strong-stability-preserving) or ``"ssp_rk3"`` (the TVD-RK scheme of
     Cockburn & Shu 1998, required for the TVD property when limiting).
