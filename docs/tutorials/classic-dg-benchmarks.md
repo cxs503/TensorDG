@@ -12,7 +12,7 @@
 |---|---|---|---|
 | 线性双曲 | 一维/二维周期线性对流 | 高阶精度、周期边界、色散与耗散 | 已实现，本文算例 1、2 |
 | 非线性标量守恒律 | Burgers 光滑解、激波、稀疏波 | 非线性通量、熵解、限制器 | 光滑解已实现，见续篇 |
-| 椭圆 | 二维 Poisson 制造解 | SIPG/LDG、Dirichlet 边界、线性系统 | 已实现，本文算例 4 |
+| 椭圆 | 二维 Poisson 制造解 | SIPG、Dirichlet 边界、线性系统 | SIPG 已实现，本文算例 4；LDG 未实现（缺口、秩亏证据与下一步见 `docs/ldg_poisson_status.md`） |
 | 抛物 | 热方程、黏性 Burgers | 扩散项、时间步限制、精度 | 热方程已实现，见续篇 |
 | 可压缩 Euler | Sod、Lax、Shu–Osher | 激波/接触/稀疏波、保正性 | Sod/Lax/Shu–Osher 均已实现（Shu–Osher 验证与限制器取舍量化见 `docs/shu_osher_verification.md`） |
 | 可压缩光滑流 | 等熵涡输运 | 高阶精度、长时间输运 | P0 基线已实现，见续篇 |
