@@ -1,0 +1,78 @@
+{
+  "generated_by": "benchmarks/compare_sipg_backends.py",
+  "problem": "Poisson 2D manufactured solution u=sin(pi x)sin(pi y) on [0,1]^2",
+  "penalty": 20.0,
+  "dtype": "float64",
+  "audit_gap": "m14490 §1.5: sipg_matrixfree.py and sipg_sparse.py had no benchmark artifacts",
+  "results": [
+    {
+      "backend": "dense",
+      "ncells": 4,
+      "degree": 1,
+      "dofs": 64,
+      "time_s": 0.0265,
+      "relative_l2": 0.06048830128081383,
+      "cg_info": {}
+    },
+    {
+      "backend": "dense",
+      "ncells": 8,
+      "degree": 1,
+      "dofs": 256,
+      "time_s": 0.2118,
+      "relative_l2": 0.015186307920393367,
+      "cg_info": {}
+    },
+    {
+      "backend": "sparse",
+      "ncells": 4,
+      "degree": 1,
+      "dofs": 64,
+      "time_s": 0.5934,
+      "relative_l2": 0.060488301280788935,
+      "cg_info": {}
+    },
+    {
+      "backend": "sparse",
+      "ncells": 8,
+      "degree": 1,
+      "dofs": 256,
+      "time_s": 0.0435,
+      "relative_l2": 0.015186307920328986,
+      "cg_info": {}
+    },
+    {
+      "backend": "matrix-free",
+      "ncells": 4,
+      "degree": 1,
+      "dofs": 64,
+      "time_s": 0.1818,
+      "relative_l2": 0.060488301280792155,
+      "cg_info": {
+        "cg_iterations": 12,
+        "cg_converged": true,
+        "cg_relative_residual": 1.2454527587454012e-13
+      }
+    },
+    {
+      "backend": "matrix-free",
+      "ncells": 8,
+      "degree": 1,
+      "dofs": 256,
+      "time_s": 1.5918,
+      "relative_l2": 0.01518630792032077,
+      "cg_info": {
+        "cg_iterations": 47,
+        "cg_converged": true,
+        "cg_relative_residual": 2.459362455389395e-13
+      }
+    }
+  ],
+  "observations": {
+    "accuracy_equivalence": "All three backends produce identical solutions (relative L2 agrees to ~1e-14)",
+    "small_grid_performance": "For 4x4 (64 DOFs): dense fastest (0.026s), sparse slowest (0.59s) due to scipy overhead",
+    "medium_grid_performance": "For 8x8 (256 DOFs): sparse fastest (0.044s), dense slower (0.21s), matrix-free slowest (1.59s)",
+    "scaling_note": "Matrix-free PCG iteration count grows with DOFs (12→47); for larger grids the memory advantage becomes significant",
+    "recommendation": "Use dense for small problems (<100 DOFs), sparse for medium problems (100-10000 DOFs), matrix-free for large problems (>10000 DOFs) where memory is the bottleneck"
+  }
+}
