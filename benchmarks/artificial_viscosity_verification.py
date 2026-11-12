@@ -45,6 +45,70 @@ S0, KAPPA, ALPHA_MAX = -2.0, 0.5, 20.0
 AV = {"s0": S0, "kappa": KAPPA, "alpha_max": ALPHA_MAX, "order": 2.0, "smooth": 1}
 
 
+def _conserved_mean(state):
+    """Cell-mean conserved state ``(rho, rho u, E)`` of a primitive state."""
+    rho, u, p = state
+    return np.array([rho, rho * u, p / (GAMMA - 1.0) + 0.5 * rho * u * u])
+
+
+def _physical_flux(state):
+    """Physical Euler flux of a primitive state ``(rho, u, p)``."""
+    rho, u, p = state
+    energy = p / (GAMMA - 1.0) + 0.5 * rho * u * u
+    return np.array([rho * u, rho * u * u + p, u * (energy + p)])
+
+
+def expected_state_mean(left, right, final_time, length=1.0) -> np.ndarray:
+    """Domain mean of the conserved state at ``final_time``, flux accounted.
+
+    The Sod domain is *open*: with ``p_L != p_R`` the pressure imbalance drives a
+    constant momentum flux through the boundaries, so the mean momentum changes
+    by ``(p_L - p_R) * t / L`` even for an exactly conservative scheme.  The
+    initial mean is therefore **not** the right conservation reference (using it
+    is what made the old metric report ``inf`` for momentum, audit m16938 F2).
+    The boundary states are the initial ones as long as no wave has reached a
+    boundary; that is checked by the caller (``t = 0.2``, waves at
+    ``0.5 +- 0.35``, domain ``[0, 1]``).
+    """
+    mean0 = 0.5 * (_conserved_mean(left) + _conserved_mean(right))
+    return mean0 + (_physical_flux(left) - _physical_flux(right)) * final_time / length
+
+
+def conservation_drift(numeric_mean, initial_mean) -> dict:
+    """Conservation drift of the cell-mean state, with the zero-mean branch defined.
+
+    Returns ``{"relative", "absolute", "zero_mean_components"}``.
+
+    ``relative`` is the max of ``|numeric - initial| / |initial|`` over the
+    components whose initial mean is *numerically non-zero* (mass and energy for
+    a shock tube); ``absolute`` is the max ``|numeric - initial|`` normalised by
+    the largest component mean (a state scale), and is the only meaningful
+    figure for a component whose mean is exactly zero.
+
+    Rationale (audit m16938): the previous single metric divided by
+    ``|initial_mean|`` component-wise, so the momentum component of any
+    symmetric Riemann problem (mean exactly 0) produced ``inf`` for *every*
+    run -- including the exactly conservative ones.  An ``inf`` column cannot
+    distinguish a conservative scheme from a broken one, which is the only thing
+    the metric exists for.
+    """
+    numeric = np.asarray(numeric_mean, dtype=float)
+    initial = np.asarray(initial_mean, dtype=float)
+    if numeric.shape != initial.shape:
+        raise ValueError("numeric_mean and initial_mean must have the same shape")
+    abs_drift = np.abs(numeric - initial)
+    scale = np.abs(initial)
+    state_scale = float(scale.max()) if scale.size else 0.0
+    defined = scale > 1e-12 * max(state_scale, 1e-300)
+    relative = float(np.max(abs_drift[defined] / scale[defined])) if defined.any() else 0.0
+    absolute = float(np.max(abs_drift) / state_scale) if state_scale > 0.0 else float(np.max(abs_drift))
+    return {
+        "relative": relative,
+        "absolute": absolute,
+        "zero_mean_components": int((~defined).sum()),
+    }
+
+
 def project(field, ncells, degree, nodes_per_cell=24):
     """Modal Legendre coefficients of *field* (a projection, not a solve)."""
     nodes, weights = np.polynomial.legendre.leggauss(nodes_per_cell)
@@ -93,14 +157,11 @@ def sod(ncells, degree, limiter, kwargs=None, cfl=0.12):
     rho_ref = np.asarray(reference["density"])
     l1 = float(np.sum(np.abs(rho - rho_ref)) / np.sum(np.abs(rho_ref)))
     tv = lambda a: float(np.sum(np.abs(np.diff(a))))
-    # Conservation: mean over cells of the conservative state vs the exact
-    # initial mean ( = 0.5 * left + 0.5 * right ), relative.
-    initial_mean = 0.5 * np.array([
-        1.0 + 0.125,
-        0.0,
-        (1.0 + 0.1) / (GAMMA - 1.0),
-    ])
-    drift = float(np.max(np.abs(avg.mean(axis=0) - initial_mean) / np.abs(initial_mean)))
+    # Conservation: mean over cells of the conservative state vs the *flux
+    # accounted* expected mean (open domain, p_L != p_R; see
+    # :func:`expected_state_mean` and :func:`conservation_drift`).
+    expected_mean = expected_state_mean(LEFT, RIGHT, FINAL_TIME)
+    drift = conservation_drift(avg.mean(axis=0), expected_mean)
     sensor = av_sensor(coeff, smooth=1).numpy()
     return {
         "ncells": ncells, "degree": degree, "limiter": limiter or "none",
@@ -109,7 +170,9 @@ def sod(ncells, degree, limiter, kwargs=None, cfl=0.12):
         "tv_excess": tv(rho) - tv(rho_ref),
         "tv_numeric": tv(rho), "tv_reference": tv(rho_ref),
         "min_pressure": float(pressure.min()),
-        "conservation_drift": drift,
+        "conservation_drift": drift["relative"],
+        "conservation_drift_absolute": drift["absolute"],
+        "conservation_zero_mean_components": drift["zero_mean_components"],
         "sensor_max": float(sensor.max()),
         "flagged_fraction": float((sensor > S0 - KAPPA).mean()),
         "profile": {"x": x.numpy().tolist(), "density": rho.tolist(),
@@ -215,11 +278,12 @@ def main() -> int:
         lines.append(f"| {d['degree']} | {d['normalisation']} | {d['smooth_slope']:.3f} | "
                      f"{d['theory_smooth_slope']} | {d['jump_slope']:.3f} |")
     lines += ["", "## B. Sod shock tube", "",
-              "| N | limiter | L1(rho) % | TV excess | min p | conservation drift | flagged |",
-              "|---|---|---|---|---|---|---|"]
+              "| N | limiter | L1(rho) % | TV excess | min p | drift rel | drift abs | flagged |",
+              "|---|---|---|---|---|---|---|---|"]
     for r in runs:
         lines.append(f"| {r['ncells']} | {r['limiter']} | {r['relative_l1_density']*100:.3f} | "
-                     f"{r['tv_excess']:.3f} | {r['min_pressure']:.3e} | {r['conservation_drift']:.2e} | "
+                     f"{r['tv_excess']:.3f} | {r['min_pressure']:.3e} | "
+                     f"{r['conservation_drift']:.2e} | {r['conservation_drift_absolute']:.2e} | "
                      f"{r['flagged_fraction']*100:.1f}% |")
     (out / "summary.md").write_text("\n".join(lines) + "\n")
     print("artifacts ->", out.resolve())
