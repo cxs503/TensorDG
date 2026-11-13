@@ -1,0 +1,2475 @@
+{
+  "tool": "tools/audit_gate_vacuity.py",
+  "repo_root": "/root/tp-agent/work/m18575",
+  "n_test_modules": 172,
+  "verdicts": {
+    "VACUOUS": 0,
+    "LATENT": 8,
+    "HARDENED": 19,
+    "UNRESOLVED": 13,
+    "PLAIN": 132
+  },
+  "skip_sites": {
+    "artifact_missing": 36,
+    "environment": 5
+  },
+  "n_always_on_modules": 159,
+  "vacuous_modules": [],
+  "missing_artifacts": [],
+  "cwd_dependent_artifacts": [
+    "tests/test_ns_heat_conduction.py::WALL_ROW_LAW",
+    "tests/test_ns_wall_flux_extrapolation.py::EVIDENCE",
+    "tests/test_ns_wall_flux_stencil.py::EVIDENCE",
+    "tests/test_ns_wall_heat_flux_order.py::EVIDENCE",
+    "tests/test_oblique_shock_theta_beta.py::ANCHOR_FILE",
+    "tests/test_shu_osher_1d.py::PAIR_PATH",
+    "tests/test_shu_osher_1d.py::REFERENCE_PATH"
+  ],
+  "modules": [
+    {
+      "file": "tests/test_acoustic_pulse.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_advection_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_advection_1d_highorder.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_advection_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_advection_2d_var.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_advection_3d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_advection_diffusion_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_advection_diffusion_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_artificial_viscosity.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [
+        "metrics.exists()",
+        "digest.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_benchmark_smoke.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_burgers_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_burgers_shock_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_case_dg_solid_body_rotation_2d.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 31,
+          "kind": "artifact_missing",
+          "reason": "f'Artifact not found: {path}'",
+          "guard": "not path.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L31: not path.exists()"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_case_euler_vortex.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_case_lax_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_case_prefinement_exponential.py",
+      "verdict": "LATENT",
+      "skip_sites": [
+        {
+          "line": 190,
+          "kind": "artifact_missing",
+          "reason": "case_pool_entry.json not generated",
+          "guard": "not ARTIFACT.exists()",
+          "artifact": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/case_pool_entry.json",
+          "artifact_exists": true
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/case_pool_entry.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_certified_reference.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 64,
+          "kind": "artifact_missing",
+          "reason": "committed raw profiles of CASE-SHU-OSHER not present",
+          "guard": "not (RAW / 'fv_cfl0p3_n3200.npz').exists()",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L64: not (RAW / 'fv_cfl0p3_n3200.npz').exists()"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_cfl_stability_limit.py",
+      "verdict": "PLAIN",
+      "skip_sites": [
+        {
+          "line": 36,
+          "kind": "environment",
+          "reason": "run: python -m benchmarks.cfl_stability_limit",
+          "guard": "not ARTIFACT.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/validation/cfl_stability/results.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_cfl_stability_multid.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ci_workflow_contract.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_cks1998_tensorbench.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "SPEC_FILE",
+          "path": "/root/tp-agent/work/m18575/tensorbench/REPRO-DG-CKS1998.spec.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "SPEC_FILE.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_conservation.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_conservation_2d_system.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_curved_geometry.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_dg_advection_bench.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/validation/dg_advection_bench/dg_advection_bench.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()",
+        "(ROOT / 'docs' / 'figures' / fig['name']).exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_dg_basis_nodes.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_dg_unified_verification.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "RUN_JSON",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/dg-unified-verification/dg_unified_verification.json",
+          "anchored": true,
+          "exists": true
+        },
+        {
+          "expr": "EVIDENCE_JSON",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/dg-unified-verification/evidence.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_differentiability.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_diffusive_differentiability.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_dispersion.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_dispersion_analysis.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/validation/dispersion_analysis/results.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_dispersion_time_domain.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/validation/dispersion_time_domain/results.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_dispersive_waves.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_elastic_1d_crosscheck.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_elastic_1d_dalembert.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_elastic_1d_driven.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_elastic_1d_layered.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_elastic_1d_reflections.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_elastic_1d_seam_crosscheck.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_elastic_2d_flux_scaling_m17172.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_elastic_2d_psv.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_elastic_dispersion.py",
+      "verdict": "LATENT",
+      "skip_sites": [
+        {
+          "line": 205,
+          "kind": "artifact_missing",
+          "reason": "run python -m benchmarks.elastic_dispersion",
+          "guard": "not art.exists()",
+          "artifact": "/root/tp-agent/work/m18575/docs/benchmarks/results/elastic-dispersion/elastic_dispersion.json",
+          "artifact_exists": true
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_elastic_rod_case.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_entropy.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_entropy_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_entropy_budget_gate.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_entropy_budget_general.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_1d_wave_speeds.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_2d_p0_verification.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_dg_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_dg_2d_anisotropic.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_dg_2d_design_order.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_dg_2d_limiter.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_dg_2d_limiter_stage.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_dg_2d_temporal_order.py",
+      "verdict": "LATENT",
+      "skip_sites": [
+        {
+          "line": 77,
+          "kind": "artifact_missing",
+          "reason": "run benchmarks.temporal_asymptotics_euler_dg_2d",
+          "guard": "not EVIDENCE.exists()",
+          "artifact": "/root/tp-agent/work/m18575/validation/euler_dg_2d/temporal_asymptotics.json",
+          "artifact_exists": true
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "EVIDENCE",
+          "path": "/root/tp-agent/work/m18575/validation/euler_dg_2d/temporal_asymptotics.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_dg_2d_time_split.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_dg_2d_velocity.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_dg_2d_velocity_frame.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_dg_2d_wall_bc.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_fluxes.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_sod_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_euler_verification_chain.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_evidence_integrity.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 79,
+          "kind": "artifact_missing",
+          "reason": "run tools/audit_evidence_integrity.py --write",
+          "guard": "not os.path.exists(report)",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L79: not os.path.exists(report)"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_gate_power.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_gate_vacuity_policy.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [
+        "CENSUS.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_heat_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_hllc_wave_speeds.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_in31_hp_ladder.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 43,
+          "kind": "artifact_missing",
+          "reason": "set TENSORDG_IN31_SLOW=1 to re-run the Sod block (several minutes)",
+          "guard": "not os.environ.get('TENSORDG_IN31_SLOW')",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 51,
+          "kind": "artifact_missing",
+          "reason": "gates_verified.json missing; run python -m benchmarks.in31_hp_ladder",
+          "guard": "not ARTIFACT.exists()",
+          "artifact": "/root/tp-agent/work/m18575/docs/benchmarks/results/in31-hp-ladder/gates_verified.json",
+          "artifact_exists": true
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/in31-hp-ladder/gates_verified.json",
+          "anchored": true,
+          "exists": true
+        },
+        {
+          "expr": "PREVIOUS_ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/verification_ladder/gates_verified.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L43: not os.environ.get('TENSORDG_IN31_SLOW')"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_kovasznay_dg_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_lax_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_lax_asymptotic_probe.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 163,
+          "kind": "artifact_missing",
+          "reason": "probe artifact not generated yet",
+          "guard": "not METRICS.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 181,
+          "kind": "artifact_missing",
+          "reason": "probe artifact not generated yet",
+          "guard": "not METRICS.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 194,
+          "kind": "artifact_missing",
+          "reason": "probe artifact not generated yet",
+          "guard": "not METRICS.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 203,
+          "kind": "artifact_missing",
+          "reason": "probe artifact not generated yet",
+          "guard": "not METRICS.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 215,
+          "kind": "artifact_missing",
+          "reason": "probe artifact not generated yet",
+          "guard": "not METRICS.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 224,
+          "kind": "artifact_missing",
+          "reason": "probe artifact not generated yet",
+          "guard": "not METRICS.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [
+        "doc.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L163: not METRICS.exists()",
+        "L181: not METRICS.exists()",
+        "L194: not METRICS.exists()",
+        "L203: not METRICS.exists()",
+        "L215: not METRICS.exists()",
+        "L224: not METRICS.exists()"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_lax_case_pool.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [
+        "ARTIFACT.exists()",
+        "PROFILES.exists()",
+        "ARTIFACT.exists()",
+        "ARTIFACT.exists()",
+        "ARTIFACT.exists()",
+        "DOC.exists()",
+        "ARTIFACT.exists()",
+        "summary_path.exists()",
+        "ARTIFACT.exists()",
+        "REPORT.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_lax_case_pool_limiter_arms.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [
+        "ARTIFACT.exists()",
+        "POOL_RECORD.exists()",
+        "PROFILES.exists()",
+        "DOC.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_lax_limiter_study.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_lax_reference_crosscheck.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [
+        "ARTIFACT.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_lax_region_band.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/lax_region_band/metrics.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()",
+        "path.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ldg_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ldg_closure_probe.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ldg_closure_rank.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ldg_dirichlet_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ldg_probe_basis_convention.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_limiter_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_limiter_2d_order.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_limiter_ao.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_limiter_design_order_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_limiter_kernel_budget.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_limiter_policy.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_limiter_units.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_limiter_validation.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_limiters.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_matrixfree_verification.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_mms_ns_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_couette_poiseuille.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_dg_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_dg_2d_wall.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_dg_2d_wall_scope.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_dg_2d_wall_spectrum.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_dg_2d_wall_stability_envelope.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_heat_conduction.py",
+      "verdict": "LATENT",
+      "skip_sites": [
+        {
+          "line": 186,
+          "kind": "artifact_missing",
+          "reason": "run scratch/diag_wall_row_law.py",
+          "guard": "not WALL_ROW_LAW.exists()",
+          "artifact": "/root/tp-agent/work/m18575/validation/ns_heat_conduction/wall_row_law.json",
+          "artifact_exists": true
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "WALL_ROW_LAW",
+          "path": "/root/tp-agent/work/m18575/validation/ns_heat_conduction/wall_row_law.json",
+          "anchored": false,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [
+        "WALL_ROW_LAW"
+      ]
+    },
+    {
+      "file": "tests/test_ns_heat_wall_closure.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_hydrostatic_conduction.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_mms_order.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_stokes_first.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_wall_diag_binding.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_wall_energy_scaling.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_wall_flux_extrapolation.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "EVIDENCE",
+          "path": "/root/tp-agent/work/m18575/validation/ns_heat_conduction/wall_flux_extrapolation.json",
+          "anchored": false,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [
+        "EVIDENCE"
+      ]
+    },
+    {
+      "file": "tests/test_ns_wall_flux_stencil.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "EVIDENCE",
+          "path": "/root/tp-agent/work/m18575/validation/ns_heat_conduction/wall_flux_stencil.json",
+          "anchored": false,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [
+        "EVIDENCE"
+      ]
+    },
+    {
+      "file": "tests/test_ns_wall_heat_flux_api.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_ns_wall_heat_flux_order.py",
+      "verdict": "LATENT",
+      "skip_sites": [
+        {
+          "line": 130,
+          "kind": "artifact_missing",
+          "reason": "run benchmarks.verify_ns_wall_heat_flux",
+          "guard": "not EVIDENCE.exists()",
+          "artifact": "/root/tp-agent/work/m18575/validation/ns_heat_conduction/wall_flux_order.json",
+          "artifact_exists": true
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "EVIDENCE",
+          "path": "/root/tp-agent/work/m18575/validation/ns_heat_conduction/wall_flux_order.json",
+          "anchored": false,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [
+        "EVIDENCE"
+      ]
+    },
+    {
+      "file": "tests/test_ns_wall_penalty_scaling.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_oblique_shock.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_oblique_shock_theta_beta.py",
+      "verdict": "LATENT",
+      "skip_sites": [
+        {
+          "line": 140,
+          "kind": "artifact_missing",
+          "reason": "anchor artifact not generated yet",
+          "guard": "not ANCHOR_FILE.exists()",
+          "artifact": "/root/tp-agent/work/m18575/benchmarks/oblique_shock/theta_beta_anchors.json",
+          "artifact_exists": true
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "ANCHOR_FILE",
+          "path": "/root/tp-agent/work/m18575/benchmarks/oblique_shock/theta_beta_anchors.json",
+          "anchored": false,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [
+        "ANCHOR_FILE"
+      ]
+    },
+    {
+      "file": "tests/test_oss_inventory_dg_registry.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [
+        "REG_PATH.exists()",
+        "RAW_PATH.exists()",
+        "doc.exists()",
+        "(ROOT / 'docs' / 'figs' / fig).exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_p_refinement_criterion.py",
+      "verdict": "LATENT",
+      "skip_sites": [
+        {
+          "line": 172,
+          "kind": "artifact_missing",
+          "reason": "run python -m benchmarks.p_refinement_exponential",
+          "guard": "not ARTIFACT.exists()",
+          "artifact": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "artifact_exists": true
+        },
+        {
+          "line": 254,
+          "kind": "artifact_missing",
+          "reason": "run python -m benchmarks.p_refinement_floor --degrees 5 6",
+          "guard": "not FLOOR_ARTIFACT.exists()",
+          "artifact": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/measurement_floor.json",
+          "artifact_exists": true
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "anchored": true,
+          "exists": true
+        },
+        {
+          "expr": "FLOOR_ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/measurement_floor.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_p_refinement_exact_time.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 42,
+          "kind": "artifact_missing",
+          "reason": "f'artifact missing: {ARTIFACT}'",
+          "guard": "not ARTIFACT.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L42: not ARTIFACT.exists()"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_p_refinement_exponential.py",
+      "verdict": "LATENT",
+      "skip_sites": [
+        {
+          "line": 22,
+          "kind": "artifact_missing",
+          "reason": "p_refinement_results.json missing; run python -m benchmarks.p_refinement_exponential",
+          "guard": "not ARTIFACT.exists()",
+          "artifact": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "artifact_exists": true
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()",
+        "(outdir / 'p_refinement_semilog.png').exists()",
+        "(outdir / 'p_refinement_log10.png').exists()",
+        "(outdir / 'p_refinement_table.csv').exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_p_refinement_exponential_live.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 123,
+          "kind": "artifact_missing",
+          "reason": "p_refinement_results.json missing",
+          "guard": "not ARTIFACT.exists()",
+          "artifact": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "artifact_exists": true
+        },
+        {
+          "line": 135,
+          "kind": "artifact_missing",
+          "reason": "p_refinement_results.json missing",
+          "guard": "not ARTIFACT.exists()",
+          "artifact": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "artifact_exists": true
+        },
+        {
+          "line": 146,
+          "kind": "artifact_missing",
+          "reason": "p_refinement_results.json missing",
+          "guard": "not ARTIFACT.exists()",
+          "artifact": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "artifact_exists": true
+        },
+        {
+          "line": 194,
+          "kind": "artifact_missing",
+          "reason": "independent_check.json not generated",
+          "guard": "not INDEPENDENT.exists() or not ARTIFACT.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L194: not INDEPENDENT.exists() or not ARTIFACT.exists()"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_p_refinement_floor_high_degree.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 49,
+          "kind": "artifact_missing",
+          "reason": "run python -m benchmarks.p_refinement_floor --degrees ... 7",
+          "guard": "not FLOOR_ARTIFACT.exists()",
+          "artifact": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/measurement_floor.json",
+          "artifact_exists": true
+        },
+        {
+          "line": 53,
+          "kind": "artifact_missing",
+          "reason": "measurement_floor.json has no degree above p=6; re-run with p=7",
+          "guard": "max(degrees, default=0) <= CERTIFIED_MAX_DEGREE",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 55,
+          "kind": "environment",
+          "reason": "measurement_floor.json predates the temporal-certification protocol",
+          "guard": "'temporal' not in art['levels'][0]",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "FLOOR_ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/measurement_floor.json",
+          "anchored": true,
+          "exists": true
+        },
+        {
+          "expr": "PRIMARY_ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L53: max(degrees, default=0) <= CERTIFIED_MAX_DEGREE"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_patrol_upstream_diff.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_poisson_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_poisson_2d_bc.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_poisson_2d_ldg.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_positivity_scaling_limiter.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/positivity_limiter/metrics.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_public_api_contract.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_repro_cks1998.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 174,
+          "kind": "artifact_missing",
+          "reason": "run artifacts not present",
+          "guard": "not metrics_path.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L174: not metrics_path.exists()"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_riemann_vacuum_1d.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 108,
+          "kind": "artifact_missing",
+          "reason": "sweep artifact not generated",
+          "guard": "not os.path.exists(ARTIFACT)",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L108: not os.path.exists(ARTIFACT)"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_shock_entropy_case.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_shock_entropy_case_api.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_shu_osher_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "REFERENCE_PATH",
+          "path": "/root/tp-agent/work/m18575/benchmarks/data/shu_osher_reference.npz",
+          "anchored": false,
+          "exists": true
+        },
+        {
+          "expr": "PAIR_PATH",
+          "path": "/root/tp-agent/work/m18575/benchmarks/data/shu_osher_coarse_pair.npz",
+          "anchored": false,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [
+        "PAIR_PATH",
+        "REFERENCE_PATH"
+      ]
+    },
+    {
+      "file": "tests/test_shu_osher_case_pool.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "COMMITTED_REFERENCE",
+          "path": "/root/tp-agent/work/m18575/benchmarks/data/shu_osher_reference.npz",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "COMMITTED_REFERENCE.exists()",
+        "metrics_path.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_shu_osher_certified_ref.py",
+      "verdict": "PLAIN",
+      "skip_sites": [
+        {
+          "line": 144,
+          "kind": "environment",
+          "reason": "shipped bundle not present in this checkout",
+          "guard": "not shipped_json.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_sipg_backend_comparison.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/validation/sipg_backend_comparison/backend_comparison.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_sipg_explicit_stability.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_sipg_sparse.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_sod_l1_ladder.py",
+      "verdict": "PLAIN",
+      "skip_sites": [
+        {
+          "line": 44,
+          "kind": "environment",
+          "reason": "f'{path} absent (ladder not run in this checkout)'",
+          "guard": "not path.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_solid_body_rotation_case_pool.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/validation/solid_body_rotation_2d/results.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_2d_dynamics.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_2d_symmetry.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_2d_well_balanced.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_bed_slope_consistency.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_dam_break.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_exact.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_hydrostatic_reconstruction.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_hydrostatic_results_artifact.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_manning_friction.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [
+        "os.path.exists(METRICS)"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_shoreline_rest_artifact.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_steady_bump.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_steady_bump_shock.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_wb_drift_law_artifact.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/validation/swe_thacker/hydrostatic_wb_drift.json",
+          "anchored": true,
+          "exists": true
+        },
+        {
+          "expr": "TABLE",
+          "path": "/root/tp-agent/work/m18575/validation/swe_thacker/hydrostatic_wb_drift_table.md",
+          "anchored": true,
+          "exists": true
+        },
+        {
+          "expr": "FIGURE",
+          "path": "/root/tp-agent/work/m18575/docs/figures/swe_wb_drift_law.png",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()",
+        "TABLE.exists()",
+        "FIGURE.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_wb_drift_law_time_scaling.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/validation/swe_thacker/hydrostatic_wb_drift_time.json",
+          "anchored": true,
+          "exists": true
+        },
+        {
+          "expr": "TABLE",
+          "path": "/root/tp-agent/work/m18575/validation/swe_thacker/hydrostatic_wb_drift_time_table.md",
+          "anchored": true,
+          "exists": true
+        },
+        {
+          "expr": "FIGURE",
+          "path": "/root/tp-agent/work/m18575/docs/figures/swe_wb_drift_time_law.png",
+          "anchored": true,
+          "exists": true
+        },
+        {
+          "expr": "MESH_ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/validation/swe_thacker/hydrostatic_wb_drift.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()",
+        "MESH_ARTIFACT.exists()",
+        "TABLE.exists()",
+        "FIGURE.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_well_balanced_exact.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_wellbalanced.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_swe_wellbalanced_hydrostatic.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_taylor_green.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_thacker_benchmark.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_thacker_exact_config.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_thacker_longtime_p2.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_thacker_radial_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_transmissive_boundary.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_tutorial_inverse_problem.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_tvb.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_tvb_constant_adjudication.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_upstream_delta.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 200,
+          "kind": "artifact_missing",
+          "reason": "artifact not generated",
+          "guard": "not os.path.exists(art)",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 205,
+          "kind": "environment",
+          "reason": "no origin/main in this checkout",
+          "guard": "subprocess.run(['git', '-C', ROOT, 'rev-parse', '--verify', '--quiet', 'origin/main'], stdout=subprocess.DEVNULL).returncode != 0",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 216,
+          "kind": "artifact_missing",
+          "reason": "artifact not generated",
+          "guard": "not os.path.exists(art)",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 228,
+          "kind": "artifact_missing",
+          "reason": "report artifacts not generated",
+          "guard": "not (os.path.exists(art) and os.path.exists(doc))",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 240,
+          "kind": "artifact_missing",
+          "reason": "artifact not generated",
+          "guard": "not os.path.exists(art)",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L200: not os.path.exists(art)",
+        "L216: not os.path.exists(art)",
+        "L228: not (os.path.exists(art) and os.path.exists(doc))",
+        "L240: not os.path.exists(art)"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_verification.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_verification_ladder.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 37,
+          "kind": "artifact_missing",
+          "reason": "set TENSORDG_LADDER_SLOW=1 to run the Sod ladder (several minutes)",
+          "guard": "not os.environ.get('TENSORDG_LADDER_SLOW')",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/docs/benchmarks/results/verification_ladder/gates_verified.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L37: not os.environ.get('TENSORDG_LADDER_SLOW')"
+      ],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_viscous_burgers_1d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_vortex_2d.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_weno_limiter_2d_modes.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_weno_limiter_policy.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "/root/tp-agent/work/m18575/validation/weno_limiter_policy/results.json",
+          "anchored": true,
+          "exists": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_weno_z_weights.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": []
+    },
+    {
+      "file": "tests/test_xval_oss_shu_osher.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 70,
+          "kind": "artifact_missing",
+          "reason": "f'clawpack tree not present at {OSS_ROOT}'",
+          "guard": "not HAS_OSS",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 85,
+          "kind": "artifact_missing",
+          "reason": "f'clawpack tree not present at {OSS_ROOT}'",
+          "guard": "not HAS_OSS",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L70: not HAS_OSS",
+        "L85: not HAS_OSS"
+      ],
+      "cwd_dependent": []
+    }
+  ]
+}
