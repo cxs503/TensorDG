@@ -7,6 +7,13 @@
 > 属**改口径前的历史记录**，工件也从 `runs/`（合并门禁不携带）迁到 `docs/benchmarks/results/lax_case_pool/`。
 > 现行数字与新增的时间误差分离见 `docs/CASE-LAX-DG-R3-nested-band-and-dt-split.md`（由
 > `scripts/render_lax_case_pool_doc.py` 从 `metrics.json` 注入）。
+>
+> **参考解独立仲裁（m17119）**：本算例的参考值是同仓闭式代数（`benchmarks/riemann_exact.py`），
+> 存在自证风险。已用**不含 Riemann 求解器**的 Rusanov 有限体积族（一阶/二阶，N=400…6400）与
+> **纯二分**星区解独立复核：波位置最坏 0.098 %、星区平台最坏 2.9e-07、两种求根相对差 1.8e-16，
+> 独立族以实测阶 0.51/0.61 收敛到闭式解（=`dx→0` 极限的独立见证）。见
+> `docs/CASE-LAX-DG-reference-crosscheck.md`，工件 `docs/benchmarks/results/lax_reference_crosscheck/`。
+> 本文的 C3/R3 honest-FAIL 不受影响（方法属性），该复核只证明参考值可信。
 
 ## ① 案例介绍
 
