@@ -256,7 +256,13 @@ def solve_euler_dg_1d(
     limiter_name = limiter if limiter else "local positivity fallback"
     metadata = {
         "ncells": ncells, "degree": degree, "final_time": final_time, "steps": steps,
-        "dt": dt, "diaphragm": diaphragm, "domain": (lower, upper), "cfl": cfl,
+        # ``dt`` is the *last* (time-truncated) step; it is not representative of
+        # the run and must not be read as "the" step size.  ``dt_last`` repeats it
+        # under an honest name and ``dt_mean`` is the actual mean step
+        # (final_time / steps), which is the quantity a CFL study can trust.
+        "dt": dt, "dt_last": dt,
+        "dt_mean": (final_time / steps) if steps else 0.0,
+        "diaphragm": diaphragm, "domain": (lower, upper), "cfl": cfl,
         "left_state": tuple(left_state), "right_state": tuple(right_state),
         "flux": "hllc", "limiter": limiter_name, "device": str(dev),
         "limiter_stage": limiter_stage,
@@ -378,7 +384,9 @@ def solve_periodic_euler_dg_1d(
     }
     metadata = {
         "ncells": ncells, "degree": degree, "final_time": final_time, "steps": steps,
-        "dt": dt, "domain": (lower, upper), "cfl": cfl,
+        "dt": dt, "dt_last": dt,
+        "dt_mean": (final_time / steps) if steps else 0.0,
+        "domain": (lower, upper), "cfl": cfl,
         "flux": "hllc", "limiter": limiter if limiter else "local positivity fallback",
         "limiter_stage": limiter_stage, "device": str(dev),
         "boundary": boundary, "initial_projection": "l2-all-modes",

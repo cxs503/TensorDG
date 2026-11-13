@@ -402,11 +402,10 @@ def production_errors_from_profiles(path, quadrature_order=10):
     checkable offline: no number in the acceptance verdict has to be trusted.
     """
     data = np.load(path)
-    points = data["points"]
-    centres = points[:, 0] - (points[:, 1] - points[:, 0]) * 0.0
-    nodes, weights = np.polynomial.legendre.leggauss(quadrature_order)
+    points = data["points"]                 # (ncells, n_nodes) physical abscissae
+    _, weights = np.polynomial.legendre.leggauss(quadrature_order)
     centres = 0.5 * (points[:, 0] + points[:, -1])
-    dx = float(np.mean(np.diff(centres)))
+    dx = float(np.mean(np.diff(centres)))   # uniform grid, Jacobian = dx/2
     fields = ("density", "velocity", "pressure")
     out = {"l1": {}, "l2": {}}
     for field in fields:
@@ -660,7 +659,13 @@ def run_time_refinement(legs=TIME_LEGS, divisors=TIME_CFL_DIVISORS):
             errors = {field: _weighted_l1(points, primitive[field], exact[field],
                                           weights, dx)
                       for field in ("density", "velocity", "pressure")}
-            levels.append({"cfl": float(cfl), "dt": float(meta["dt"]),
+            # ``meta["dt"]`` is the time-truncated *last* step, which is not the
+            # step a CFL study refines (it is not monotone in ``cfl``).  The
+            # quantity that actually shrinks with the CFL divisor is the mean
+            # step ``final_time / steps``; the remnant is kept for traceability.
+            levels.append({"cfl": float(cfl),
+                           "dt": float(meta.get("dt_mean", FINAL_TIME / max(meta["steps"], 1))),
+                           "dt_last_step": float(meta["dt"]),
                            "steps": int(meta["steps"]), "relative_l1": errors})
             print(f"[lax-time] N={cells:4d} p={degree} cfl={cfl:.4f} "
                   f"L1(rho)={errors['density']:.6e}", flush=True)
@@ -739,7 +744,9 @@ def run_ladder(ladder=LADDER):
             for field in ("density", "velocity", "pressure")}
         entries.append({
             "cells": cells, "degree": degree,
-            "steps": int(meta["steps"]), "dt": float(meta["dt"]),
+            "steps": int(meta["steps"]),
+            "dt": float(meta.get("dt_mean", FINAL_TIME / max(meta["steps"], 1))),
+            "dt_last_step": float(meta["dt"]),
             "wall_seconds": float(time.time() - started),
             "analytic_fraction": float(mask.mean()),
             "analytic_fraction_legacy": float(mask_legacy.mean()),
