@@ -38,6 +38,7 @@ from __future__ import annotations
 import numpy as np
 import torch
 
+from .stepping import step_metadata
 from .euler_1d import GAMMA
 from .euler_2d import vortex_primitive
 from .limiters import _weno_weights
@@ -900,7 +901,7 @@ def solve_euler_dg_2d(
         "degree": degree,
         "final_time": final_time,
         "steps": steps,
-        "dt": dt,
+        **step_metadata(final_time, steps, dt),
         "cfl": cfl,
         "dt_mode": "cfl" if prescribed_dt is None else "fixed",
         "prescribed_dt": prescribed_dt,
