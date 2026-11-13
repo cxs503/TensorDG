@@ -1,0 +1,27 @@
+{
+  "git_rev": "ce5d555140dd468a57220b2895e58ced39011489",
+  "command": "python -m benchmarks.elastic_1d_driven --output-dir validation/elastic_1d_driven",
+  "wall_seconds": 1406.1832826137543,
+  "files": {
+    "benchmark_ref_vs_got.json": {
+      "sha256": "0d07bb49bcb15511c2417709825db060ba7e63651eff943cb68531b448e06936",
+      "bytes": 2611
+    },
+    "driven_energy_history.json": {
+      "sha256": "64c96cd8065085b46a8a66b60d5ee14bf4ddbc5034844ec845f94bfeeb945647",
+      "bytes": 6457
+    },
+    "driven_profiles.csv": {
+      "sha256": "565fcbfaa2b04bd78daa0057caf64c0b21f35da2986854de5fd196bac0e876a5",
+      "bytes": 344277
+    },
+    "elastic_1d_driven.json": {
+      "sha256": "d17f5ed109de474488ae9c9158441b5fb8840c07da391bf28a069fa15bcd49ee",
+      "bytes": 643554
+    },
+    "elastic_1d_driven.png": {
+      "sha256": "3494fcd69024cc5262b3424211dfb1a7d917015cf508fed243ae027f34171298",
+      "bytes": 186255
+    }
+  }
+}

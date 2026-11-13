@@ -80,9 +80,16 @@ __all__ = [
     "relative_error",
     "elastic_energy",
     "peak_stress",
+    "driven_simple_wave",
+    "driven_injected_work",
+    "gaussian_drive",
 ]
 
-SUPPORTED_BC = ("periodic", "fixed-free", "free-fixed")
+SUPPORTED_BC = ("periodic", "fixed-free", "free-fixed",
+                "driven-free", "driven-fixed")
+
+#: Boundary sets whose *left* end is a prescribed-velocity source.
+DRIVEN_BC = ("driven-free", "driven-fixed")
 
 
 # ---------------------------------------------------------------------------
@@ -229,6 +236,86 @@ def standing_wave(x: torch.Tensor, t: float, length: float = 1.0,
     return v, sigma, u
 
 
+def _drive_value(drive, t: float) -> float:
+    """Evaluate a boundary-drive callable at time ``t`` (scalar in/out)."""
+    if drive is None:
+        raise ValueError("a driven boundary condition needs a drive callable")
+    if callable(drive):
+        return float(drive(t))
+    return float(drive)
+
+
+def gaussian_drive(t, center: float = 0.35, width: float = 0.05,
+                   amplitude: float = 1.0) -> float:
+    """Smooth (C-infty) boundary velocity pulse ``A exp(-((t-tc)/w)**2)``."""
+    tt = float(t)
+    return amplitude * math.exp(-((tt - center) / width) ** 2)
+
+
+def driven_simple_wave(x: torch.Tensor, t: float, drive: Callable[[float], float],
+                       length: float = 1.0, rho: float = 1.0,
+                       young: float = 1.0, end: str = "free"):
+    """Exact solution of the bar driven at ``x=0`` by ``v(0,t) = drive(t)``.
+
+    The left end is an *absorbing source*: the entering characteristic is fixed
+    by the drive, ``w^+_{ext} = -2 Z g(t)``, while the outgoing one ``w^-`` is
+    transported out untouched (a returning wave is not reflected).  Hence, with
+    ``g`` zero for ``t <= 0`` and initial rest, the exact state is the
+    right-going simple wave plus its single image reflected at ``x = L``:
+
+    .. math::
+
+       v = g(t - x/c) + s\, g(t + (x-2L)/c), \qquad
+       \sigma = -Z\,[g(t - x/c) - s\, g(t + (x-2L)/c)],
+
+    with ``Z = rho c`` and ``s = +1`` for a free end (``sigma = 0``, velocity
+    doubles) or ``s = -1`` for a fixed end (``v = 0``, stress doubles).  The
+    formula is valid for **all** times because the reflected packet leaves
+    through the absorbing source instead of bouncing again.
+
+    ``end`` must be ``"free"`` or ``"fixed"``.  Returns ``(v, sigma)``.
+    """
+    if end not in ("free", "fixed"):
+        raise ValueError("end must be 'free' or 'fixed'")
+    c = elastic_wave_speed(rho, young)
+    Z = rho * c
+    sign = 1.0 if end == "free" else -1.0
+    g_out = torch.as_tensor(
+        [_drive_value(drive, tt) for tt in (t - x / c).reshape(-1).tolist()],
+        dtype=x.dtype).reshape(x.shape)
+    g_ref = torch.as_tensor(
+        [_drive_value(drive, tt)
+         for tt in (t + (x - 2.0 * length) / c).reshape(-1).tolist()],
+        dtype=x.dtype).reshape(x.shape)
+    v = g_out + sign * g_ref
+    sigma = -Z * (g_out - sign * g_ref)
+    return v, sigma
+
+
+def driven_injected_work(final_time: float, drive: Callable[[float], float],
+                         rho: float = 1.0, young: float = 1.0,
+                         npanels: int = 4000, nquad: int = 4) -> float:
+    """Work fed into the bar by the source, ``W = Z \int_0^T g(t)^2 dt``.
+
+    For a right-going simple wave the energy density is ``rho v^2``, so the
+    boundary power is ``-sigma(0,t) v(0,t) = Z g(t)^2``; this integral is the
+    exact energy the rod must hold while the packet is still inside it.
+    """
+    if final_time <= 0:
+        return 0.0
+    c = elastic_wave_speed(rho, young)
+    Z = rho * c
+    xi, w = np.polynomial.legendre.leggauss(nquad)
+    edges = np.linspace(0.0, final_time, npanels + 1)
+    total = 0.0
+    for a, b in zip(edges[:-1], edges[1:]):
+        half = 0.5 * (b - a)
+        ts = 0.5 * (a + b) + half * xi
+        total += half * float(np.sum(w * np.array(
+            [_drive_value(drive, tt) ** 2 for tt in ts])))
+    return Z * total
+
+
 def initial_standing_velocity(x: torch.Tensor, **kwargs) -> torch.Tensor:
     """``v(x,0) = 0`` for the eigenmode release test."""
     return torch.zeros_like(x)
@@ -262,7 +349,9 @@ def upwind_flux(v_l: torch.Tensor, s_l: torch.Tensor, v_r: torch.Tensor,
 
 
 def _boundary_flux(v_int: torch.Tensor, s_int: torch.Tensor, side: str,
-                   rho: float, young: float, bc: str) -> torch.Tensor:
+                   rho: float, young: float, bc: str,
+                   drive: Optional[Callable[[float], float]] = None,
+                   t: float = 0.0) -> torch.Tensor:
     """Characteristic boundary flux built from the interior trace.
 
     At ``x=0`` the entering characteristic is ``w+`` (from the exterior) and
@@ -274,6 +363,16 @@ def _boundary_flux(v_int: torch.Tensor, s_int: torch.Tensor, side: str,
     w_plus = s_int - rho * c * v_int
     w_minus = s_int + rho * c * v_int
     zero = torch.zeros_like(v_int)
+    if bc in DRIVEN_BC and side == "left":
+        # Absorbing source: the entering characteristic w+ is set by the
+        # prescribed boundary velocity g(t).  A right-going simple wave has
+        # w^- = 0, i.e. sigma = -rho c v, so w+_ext = -2 rho c g(t); the
+        # outgoing w- is taken from the interior trace (no spurious reflection).
+        g = _drive_value(drive, t)
+        w_plus_ext = -2.0 * rho * c * g
+        sigma_star = 0.5 * (w_minus + w_plus_ext)
+        v_star = (w_minus - w_plus_ext) / (2.0 * rho * c)
+        return torch.stack((-sigma_star / rho, -young * v_star), dim=-1)
     if side == "left":
         # x = 0: the characteristic entering the domain is w+ (lambda = +c);
         # w- is the outgoing one taken from the interior trace.
@@ -283,7 +382,7 @@ def _boundary_flux(v_int: torch.Tensor, s_int: torch.Tensor, side: str,
             sigma_star, v_star = zero, w_minus / (rho * c)
     else:
         # x = L: w- enters the domain, w+ leaves through the interior trace.
-        if bc == "free-fixed":          # v = 0  ->  w-_ext = w+_int
+        if bc in ("free-fixed", "driven-fixed"):   # v = 0 -> w-_ext = w+_int
             sigma_star, v_star = w_plus, zero
         else:                           # sigma = 0  ->  w-_ext = -w+_int
             sigma_star, v_star = zero, -w_plus / (rho * c)
@@ -315,7 +414,8 @@ def solve_elastic_1d(ncells: int = 100, degree: int = 2,
                      initial_velocity: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
                      initial_stress: Optional[Callable[[torch.Tensor], torch.Tensor]] = None,
                      device: str = "cpu", dtype: torch.dtype = torch.float64,
-                     time_integrator: str = "ssp_rk3"):
+                     time_integrator: str = "ssp_rk3",
+                     drive: Optional[Callable[[float], float]] = None):
     """Solve the 1-D velocity--stress elastodynamics system with DG.
 
     ``initial_velocity`` / ``initial_stress`` are callables ``f(x) -> tensor``
@@ -336,6 +436,10 @@ def solve_elastic_1d(ncells: int = 100, degree: int = 2,
         raise ValueError(f"bc must be one of {SUPPORTED_BC}")
     if time_integrator not in ("ssp_rk3", "rk4"):
         raise ValueError("time_integrator must be 'ssp_rk3' or 'rk4'")
+    if bc in DRIVEN_BC and drive is None:
+        # A driven boundary without a source is a vacuum gate: the run would
+        # silently degenerate to an absorbing end.  Refuse instead.
+        raise ValueError(f"bc={bc!r} requires a drive callable")
     if length <= 0:
         raise ValueError("length must be positive")
     c = elastic_wave_speed(rho, young)
@@ -353,6 +457,15 @@ def solve_elastic_1d(ncells: int = 100, degree: int = 2,
         for k in range(degree + 1)
     ], dim=1)
 
+    end_kind = "fixed" if bc == "driven-fixed" else "free"
+    if bc in DRIVEN_BC and initial_velocity is None:
+        initial_velocity = lambda y: driven_simple_wave(  # noqa: E731
+            y, 0.0, drive, length=length, rho=rho, young=young,
+            end=end_kind)[0]
+    if bc in DRIVEN_BC and initial_stress is None:
+        initial_stress = lambda y: driven_simple_wave(  # noqa: E731
+            y, 0.0, drive, length=length, rho=rho, young=young,
+            end=end_kind)[1]
     if initial_velocity is None:
         if bc == "periodic":
             initial_velocity = initial_pulse_velocity
@@ -375,21 +488,32 @@ def solve_elastic_1d(ncells: int = 100, degree: int = 2,
         steps = max(1, math.ceil(final_time / dt_nominal))
         dt = final_time / steps
 
-    for _ in range(steps):
-        k1 = _rhs(coeff, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq)
+    for n in range(steps):
+        # boundary data must be sampled at the *stage* time, otherwise the
+        # source is applied with an O(dt) lag (first-order boundary error).
+        tn = n * dt
+        k1 = _rhs(coeff, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq,
+                  drive=drive, t=tn)
         if time_integrator == "ssp_rk3":
+            # Shu-Osher SSP-RK3: stage times t, t+dt, t+dt/2
             u1 = coeff + dt * k1
-            k2 = _rhs(u1, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq)
+            k2 = _rhs(u1, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq,
+                      drive=drive, t=tn + dt)
             u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
-            k3 = _rhs(u2, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq)
+            k3 = _rhs(u2, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq,
+                      drive=drive, t=tn + 0.5 * dt)
             coeff = (1.0 / 3.0) * coeff + (2.0 / 3.0) * (u2 + dt * k3)
             continue
+        # classical RK4: stage times t, t+dt/2, t+dt/2, t+dt
         u2 = coeff + 0.5 * dt * k1
-        k2 = _rhs(u2, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq)
+        k2 = _rhs(u2, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq,
+                  drive=drive, t=tn + 0.5 * dt)
         u3 = coeff + 0.5 * dt * k2
-        k3 = _rhs(u3, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq)
+        k3 = _rhs(u3, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq,
+                  drive=drive, t=tn + 0.5 * dt)
         u4 = coeff + dt * k3
-        k4 = _rhs(u4, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq)
+        k4 = _rhs(u4, h, rho, young, c, phi, dphi, phi_l, phi_r, bc, wq,
+                  drive=drive, t=tn + dt)
         coeff = coeff + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
 
     meta = {
@@ -397,13 +521,17 @@ def solve_elastic_1d(ncells: int = 100, degree: int = 2,
         "length": length, "rho": rho, "young": young, "c": c,
         "cfl": cfl, "bc": bc, "dt": dt, "steps": steps,
         "device": str(dev), "time_integrator": time_integrator,
+        "driven": bc in DRIVEN_BC, "drive": drive,
+        "end": end_kind if bc in DRIVEN_BC else bc,
     }
     return centers, coeff, meta
 
 
 def _rhs(coeff: torch.Tensor, h: float, rho: float, young: float, c: float,
          phi: torch.Tensor, dphi: torch.Tensor, phi_l: torch.Tensor,
-         phi_r: torch.Tensor, bc: str, wq: torch.Tensor) -> torch.Tensor:
+         phi_r: torch.Tensor, bc: str, wq: torch.Tensor,
+         drive: Optional[Callable[[float], float]] = None,
+         t: float = 0.0) -> torch.Tensor:
     """Semi-discrete DG residual ``U_t`` for ``[ncells, nmodes, 2]`` modes."""
     ncells, nmodes, _ = coeff.shape
     # physical flux at the quadrature nodes
@@ -424,8 +552,10 @@ def _rhs(coeff: torch.Tensor, h: float, rho: float, young: float, c: float,
         flux_r = torch.roll(flux_at, -1, dims=0)
     else:
         interior = upwind_flux(v_r[:-1], s_r[:-1], v_l[1:], s_l[1:], rho, young)
-        b_left = _boundary_flux(v_l[0], s_l[0], "left", rho, young, bc)
-        b_right = _boundary_flux(v_r[-1], s_r[-1], "right", rho, young, bc)
+        b_left = _boundary_flux(v_l[0], s_l[0], "left", rho, young, bc,
+                                drive=drive, t=t)
+        b_right = _boundary_flux(v_r[-1], s_r[-1], "right", rho, young, bc,
+                                 drive=drive, t=t)
         flux_at = torch.cat((b_left[None, :], interior, b_right[None, :]), dim=0)
         flux_l = flux_at[:-1]
         flux_r = flux_at[1:]
