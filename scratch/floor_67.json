@@ -1,0 +1,205 @@
+{
+  "schema": "tensordg-p-refinement-measurement-floor/1",
+  "case": "CASE-DG-PREFINEMENT-EXPONENTIAL",
+  "question": "At which degree does the float64 L2-error measurement stop resolving the discretisation error (audit m16499 F5)?",
+  "config": {
+    "ncells": 16,
+    "final_time": 1.0,
+    "speed": 1.0,
+    "snr_min": 10.0,
+    "float64_eps": 2.220446049250313e-16,
+    "cfl_source": "published artifact levels"
+  },
+  "levels": [
+    {
+      "degree": 6,
+      "ncells": 16,
+      "dofs": 112,
+      "cfl": 0.02,
+      "dt": 9.615384615384615e-05,
+      "steps": 10400,
+      "temporal": {
+        "refinements": [
+          {
+            "cfl": 0.04,
+            "dt": 0.0001923076923076923,
+            "steps": 5200,
+            "l2_production_float64": 2.228252443658065e-11,
+            "l2_extended_longdouble": 2.2282543200298652e-11,
+            "roundoff_rel_uncertainty": 7.046289306252663e-06
+          },
+          {
+            "cfl": 0.02,
+            "dt": 9.615384615384615e-05,
+            "steps": 10400,
+            "l2_production_float64": 2.228239520275804e-11,
+            "l2_extended_longdouble": 2.2282411239350683e-11,
+            "roundoff_rel_uncertainty": 7.046331035803674e-06
+          }
+        ],
+        "temporal_change_rel": 5.922202339361125e-06,
+        "noise_floor_rel": 7.046331035803674e-06,
+        "threshold": 0.01,
+        "temporal_converged": true,
+        "stop_reason": "converged",
+        "total_steps": 15600,
+        "step_budget": 20000,
+        "final_cfl": 0.02
+      },
+      "l2_production_float64": 2.228239520275804e-11,
+      "l2_numpy_float64": 2.2282395202608067e-11,
+      "l2_numpy_float64_hiorder": 2.228239147868995e-11,
+      "l2_extended_longdouble": 2.2282411239350683e-11,
+      "l2_extended_longdouble_hiorder": 2.2282411239350806e-11,
+      "path_spread_abs": 1.976066073290703e-17,
+      "path_spread_rel": 8.86827754889011e-07,
+      "solution_norm_l2": 0.7071067811865467,
+      "roundoff_floor": 1.5700924586837732e-16,
+      "snr_measured_over_floor": 141917.7264340065,
+      "resolved": true
+    },
+    {
+      "degree": 7,
+      "ncells": 16,
+      "dofs": 128,
+      "cfl": 0.04,
+      "dt": 0.00016666666666666666,
+      "steps": 6000,
+      "temporal": {
+        "refinements": [
+          {
+            "cfl": 0.08,
+            "dt": 0.0003333333333333333,
+            "steps": 3000,
+            "l2_production_float64": 7.627515804509351e-13,
+            "l2_extended_longdouble": 7.627531949637154e-13,
+            "roundoff_rel_uncertainty": 0.00020584541225795365
+          },
+          {
+            "cfl": 0.04,
+            "dt": 0.00016666666666666666,
+            "steps": 6000,
+            "l2_production_float64": 2.7506387205576643e-13,
+            "l2_extended_longdouble": 2.750516164976133e-13,
+            "roundoff_rel_uncertainty": 0.0005708355684931589
+          }
+        ],
+        "temporal_change_rel": 1.773127475767204,
+        "noise_floor_rel": 0.0005708355684931589,
+        "threshold": 0.01,
+        "temporal_converged": false,
+        "stop_reason": "refinement_budget_exhausted",
+        "total_steps": 9000,
+        "step_budget": 20000,
+        "final_cfl": 0.04
+      },
+      "l2_production_float64": 2.7506387205576643e-13,
+      "l2_numpy_float64": 2.7506387150901827e-13,
+      "l2_numpy_float64_hiorder": 2.750655528377199e-13,
+      "l2_extended_longdouble": 2.750516164976133e-13,
+      "l2_extended_longdouble_hiorder": 2.750516164976152e-13,
+      "path_spread_abs": 1.393634010660297e-17,
+      "path_spread_rel": 5.066809017180926e-05,
+      "solution_norm_l2": 0.7071067811865471,
+      "roundoff_floor": 1.5700924586837742e-16,
+      "snr_measured_over_floor": 1751.8960143681952,
+      "resolved": true
+    }
+  ],
+  "floor": {
+    "value": 1.5700924586837742e-16,
+    "definition": "max over levels of eps64 * ||u_h||_L2",
+    "snr_min": 10.0,
+    "resolved_degrees": [
+      6,
+      7
+    ],
+    "floor_limited_degrees": [],
+    "max_resolvable_reduction": 14191.782857189362,
+    "published_series": {
+      "floor": 1.5700924586837742e-16,
+      "snr_min": 10.0,
+      "snr": [
+        47538686818663.36,
+        1330711018252.1147,
+        32111055928.72605,
+        619818187.975355,
+        10143938.475322224,
+        141918.54953090046
+      ],
+      "resolved_degrees": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "floor_limited_degrees": [],
+      "max_resolvable_reduction": 4753868681866.336
+    },
+    "note": "max_resolvable_reduction is quoted for the degrees measured here; published_series repeats the test over the full published p ladder"
+  },
+  "projection": {
+    "sigma": 3.9270958355627648,
+    "anchor_degree": 7,
+    "anchor_error": 2.750516164976133e-13,
+    "predicted": {
+      "8": {
+        "predicted_error": 5.4187379665914004e-15,
+        "predicted_snr": 34.512222109097884
+      },
+      "9": {
+        "predicted_error": 1.0675349421490817e-16,
+        "predicted_snr": 0.6799185208774317
+      },
+      "10": {
+        "predicted_error": 2.1031296581150546e-18,
+        "predicted_snr": 0.013394941466556252
+      }
+    },
+    "first_floor_limited_degree_projection": 9
+  },
+  "extrapolation_check": {
+    "reference_degree": 6,
+    "reference_error": 2.228252443658065e-11,
+    "sigma": 3.9270958355627648,
+    "law": "error(p) = error(p_ref) * exp(-sigma * (p - p_ref))",
+    "rows": {
+      "7": {
+        "measured": 2.750516164976133e-13,
+        "predicted_from_p6": 4.389836449372329e-13,
+        "measured_over_predicted": 0.6265646104809689,
+        "log_ratio_to_prediction": -0.4675033807041427
+      }
+    },
+    "within_factor_2": true,
+    "ratio_range": [
+      0.6265646104809689,
+      0.6265646104809689
+    ]
+  },
+  "temporal_protocol": {
+    "max_refinements_per_degree": 1,
+    "step_budget_per_degree": 20000,
+    "tol": 0.01,
+    "rule": "a level is quoted as a spatial measurement only if the error change under cfl -> cfl/2 is <= tol; otherwise it is temporal-limited",
+    "converged_degrees": [
+      6
+    ],
+    "all_converged": false,
+    "uncertified_degrees": [
+      7
+    ]
+  },
+  "artifact_provenance": {
+    "primary_artifact": "p_refinement_results.json",
+    "primary_sha256": "a1c11ddd5f95d72a790a743637090a126a6274fbe23b4ff2943bbdacfb1d8932",
+    "generated_at_utc": "2026-11-13T08:09:01Z",
+    "python": "3.11.6",
+    "numpy": "2.4.6",
+    "torch": "2.7.1",
+    "git_commit": "e6ff6fe02df1fa50551c3fe48071785f2ec213bc"
+  },
+  "runtime_seconds": 169.11399054527283
+}
