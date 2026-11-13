@@ -55,6 +55,8 @@ jobs:
       - run: python -m benchmarks.heat_1d --cells 16 --degree 2 --output-dir /tmp/heat
       - run: python -m benchmarks.lax_1d --cells 400 --degree 3 --cfl 0.35 --output-dir /tmp/lax
       - run: python -m benchmarks.isentropic_vortex_2d --cells 192 --output-dir /tmp/vortex
+      # 2-D linear acoustics: DG order p+1 against the exact Hankel-integral pulse
+      - run: python -m benchmarks.acoustic_pulse_2d --quick
       # Unified advection-diffusion + dispersive surface (campaign P165W3-N05):
       # the same registry the report uses, in its CI configuration.
       - run: python -m benchmarks.dg --quick --outdir /tmp/dg-surface

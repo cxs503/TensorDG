@@ -19,6 +19,9 @@ dependencies = [
 dev = [
     "matplotlib>=3.6",
     "pytest>=7",
+    # Bessel functions for the exact 2-D acoustic pulse (Hankel integral) and
+    # for the independent Poisson-disk cross-check in tests/test_acoustic_pulse.py
+    "scipy>=1.10",
 ]
 
 [tool.setuptools.packages.find]
