@@ -1,0 +1,223 @@
+{
+  "t_ref": 0.30000000000000004,
+  "committed_estimator_sampling_convergence": [
+    {
+      "nt": 11,
+      "t_got": 0.2981935275282207,
+      "rel_error_pct": -0.6021574905931136,
+      "probe_snap_x": 0.7989821582468551
+    },
+    {
+      "nt": 21,
+      "t_got": 0.29815832351946125,
+      "rel_error_pct": -0.6138921601795965,
+      "probe_snap_x": 0.7989821582468551
+    },
+    {
+      "nt": 41,
+      "t_got": 0.2981562928123126,
+      "rel_error_pct": -0.6145690625624829,
+      "probe_snap_x": 0.7989821582468551
+    }
+  ],
+  "dense_subsample_convergence": [
+    {
+      "nt": 11,
+      "t_got": 0.2983968315059631,
+      "rel_error_pct": -0.5343894980123219,
+      "note": "same N=25 mesh, exact probe abscissa, dense series subsampled"
+    },
+    {
+      "nt": 21,
+      "t_got": 0.2986970036134044,
+      "rel_error_pct": -0.434332128865215,
+      "note": "same N=25 mesh, exact probe abscissa, dense series subsampled"
+    },
+    {
+      "nt": 41,
+      "t_got": 0.29868793435600605,
+      "rel_error_pct": -0.43735521466466604,
+      "note": "same N=25 mesh, exact probe abscissa, dense series subsampled"
+    },
+    {
+      "nt": 161,
+      "t_got": 0.30085616438356166,
+      "rel_error_pct": 0.28538812785387313,
+      "note": "same N=25 mesh, exact probe abscissa, dense series subsampled"
+    },
+    {
+      "nt": 641,
+      "t_got": 0.30085616438356166,
+      "rel_error_pct": 0.28538812785387313,
+      "note": "same N=25 mesh, exact probe abscissa, dense series subsampled"
+    }
+  ],
+  "improved_estimator_grid": [
+    {
+      "t_got": 0.2994530623172786,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": -0.1823125609071533,
+      "ncells": 25,
+      "degree": 1,
+      "cfl": 0.3,
+      "dt": 0.003977272727272728,
+      "n_samples": 26
+    },
+    {
+      "t_got": 0.2999724640726098,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": -0.009178642463414375,
+      "ncells": 50,
+      "degree": 1,
+      "cfl": 0.3,
+      "dt": 0.002,
+      "n_samples": 50
+    },
+    {
+      "t_got": 0.30005263149266814,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": 0.01754383088936606,
+      "ncells": 100,
+      "degree": 1,
+      "cfl": 0.3,
+      "dt": 0.001,
+      "n_samples": 100
+    },
+    {
+      "t_got": 0.3000135717048398,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": 0.004523901613244044,
+      "ncells": 200,
+      "degree": 1,
+      "cfl": 0.3,
+      "dt": 0.0005,
+      "n_samples": 200
+    },
+    {
+      "t_got": 0.29868793435600605,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": -0.43735521466466604,
+      "ncells": 25,
+      "degree": 2,
+      "cfl": 0.3,
+      "dt": 0.002397260273972603,
+      "n_samples": 42
+    },
+    {
+      "t_got": 0.29974397077210524,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": -0.08534307596493503,
+      "ncells": 50,
+      "degree": 2,
+      "cfl": 0.3,
+      "dt": 0.0011986301369863014,
+      "n_samples": 84
+    },
+    {
+      "t_got": 0.29996240116960926,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": -0.012532943463594567,
+      "ncells": 100,
+      "degree": 2,
+      "cfl": 0.3,
+      "dt": 0.0005993150684931507,
+      "n_samples": 167
+    },
+    {
+      "t_got": 0.2999950778132182,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": -0.0016407289272768462,
+      "ncells": 200,
+      "degree": 2,
+      "cfl": 0.3,
+      "dt": 0.0002999143101970866,
+      "n_samples": 334
+    },
+    {
+      "t_got": 0.2995967334367082,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": -0.13442218776395692,
+      "ncells": 25,
+      "degree": 3,
+      "cfl": 0.3,
+      "dt": 0.001707317073170732,
+      "n_samples": 59
+    },
+    {
+      "t_got": 0.29998230590531927,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": -0.005898031560258587,
+      "ncells": 50,
+      "degree": 3,
+      "cfl": 0.3,
+      "dt": 0.0008557457212713937,
+      "n_samples": 117
+    },
+    {
+      "t_got": 0.2999993550519821,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": -0.00021498267264534002,
+      "ncells": 100,
+      "degree": 3,
+      "cfl": 0.3,
+      "dt": 0.00042839657282741744,
+      "n_samples": 234
+    },
+    {
+      "t_got": 0.29999997882254015,
+      "t_ref": 0.30000000000000004,
+      "rel_error_pct": -7.059153298942059e-06,
+      "ncells": 200,
+      "degree": 3,
+      "cfl": 0.3,
+      "dt": 0.00021419828641370872,
+      "n_samples": 467
+    }
+  ],
+  "improved_p2_orders": [
+    {
+      "ncells": 25,
+      "rel_error_pct": -0.43735521466466604,
+      "observed_order": -2.3574594807379614
+    },
+    {
+      "ncells": 50,
+      "rel_error_pct": -0.08534307596493503,
+      "observed_order": -2.7675488264887242
+    },
+    {
+      "ncells": 100,
+      "rel_error_pct": -0.012532943463594567,
+      "observed_order": -2.933316474045328
+    }
+  ],
+  "fault_injection": {
+    "t_got": 0.2941128225054474,
+    "t_ref": 0.30000000000000004,
+    "rel_error_pct": -1.9623924981842136,
+    "ncells": 200,
+    "degree": 2,
+    "cfl": 0.3,
+    "dt": 0.00029411764705882356,
+    "n_samples": 340,
+    "note": "young scaled by 1.02^2 -> c_true = 1.02 c; reference still c=1",
+    "shift_expected_pct": -2.0,
+    "detected": true
+  },
+  "best": {
+    "t_got": 0.29999997882254015,
+    "t_ref": 0.30000000000000004,
+    "rel_error_pct": -7.059153298942059e-06,
+    "ncells": 200,
+    "degree": 3,
+    "cfl": 0.3,
+    "dt": 0.00021419828641370872,
+    "n_samples": 467
+  },
+  "conclusion": {
+    "committed_value": 0.298194,
+    "committed_error_pct": -0.6020000000000099,
+    "snapshot_refinement_saturates": true,
+    "diagnosis": "the 0.602 % of the committed row is mesh-limited numerical dispersion at N=25 plus an O(h) probe-location bias, NOT a time-sampling artefact: refining snapshots at fixed N=25 leaves the error at the same level, while the exact-abscissa dense estimator on a refined mesh reaches the sub-0.01 % level"
+  }
+}
