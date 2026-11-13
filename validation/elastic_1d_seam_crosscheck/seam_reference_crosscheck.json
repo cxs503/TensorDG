@@ -1,0 +1,96 @@
+{
+  "x_range": [
+    0.002,
+    0.998
+  ],
+  "npts": 801,
+  "nmode_R1": 2048,
+  "yee_cells": 1024,
+  "seam_limit_t": 0.5,
+  "rows": [
+    {
+      "t": 0.55,
+      "c_t": 0.55,
+      "past_seam": true,
+      "R0_vs_R1_spectral": {
+        "rel_linf_pct": 4.5465478038266667e-13,
+        "rel_l2_pct": 1.8512103185328196e-13,
+        "abs_linf": 2.2343238370581275e-15
+      },
+      "R0_vs_R2_numpy_images": {
+        "rel_linf_pct": 0.0,
+        "rel_l2_pct": 0.0,
+        "abs_linf": 0.0
+      },
+      "R3_yee_vs_R1_spectral": {
+        "rel_linf_pct": 0.003542538953107941,
+        "rel_l2_pct": 0.0015283210776071137,
+        "abs_linf": 1.7409207091090284e-05
+      },
+      "peak_sigma_R0": 0.49143304622852024
+    },
+    {
+      "t": 0.7,
+      "c_t": 0.7,
+      "past_seam": true,
+      "R0_vs_R1_spectral": {
+        "rel_linf_pct": 2.9976045945466595e-13,
+        "rel_l2_pct": 1.5528691617560138e-13,
+        "abs_linf": 1.4988010832439613e-15
+      },
+      "R0_vs_R2_numpy_images": {
+        "rel_linf_pct": 0.0,
+        "rel_l2_pct": 0.0,
+        "abs_linf": 0.0
+      },
+      "R3_yee_vs_R1_spectral": {
+        "rel_linf_pct": 0.002848792784604749,
+        "rel_l2_pct": 0.0012856236584062244,
+        "abs_linf": 1.4243952385417646e-05
+      },
+      "peak_sigma_R0": 0.499999595000164
+    },
+    {
+      "t": 0.9,
+      "c_t": 0.9,
+      "past_seam": true,
+      "R0_vs_R1_spectral": {
+        "rel_linf_pct": 3.71948561816539e-13,
+        "rel_l2_pct": 1.884695134942786e-13,
+        "abs_linf": 1.8596235662471372e-15
+      },
+      "R0_vs_R2_numpy_images": {
+        "rel_linf_pct": 0.0,
+        "rel_l2_pct": 0.0,
+        "abs_linf": 0.0
+      },
+      "R3_yee_vs_R1_spectral": {
+        "rel_linf_pct": 0.0025266899488670573,
+        "rel_l2_pct": 0.0012636262079947403,
+        "abs_linf": 1.263263971384987e-05
+      },
+      "peak_sigma_R0": 0.49996794104137
+    },
+    {
+      "t": 1.3,
+      "c_t": 1.3,
+      "past_seam": true,
+      "R0_vs_R1_spectral": {
+        "rel_linf_pct": 2.7755598097654257e-13,
+        "rel_l2_pct": 1.6970091909049905e-13,
+        "abs_linf": 1.3877787807814457e-15
+      },
+      "R0_vs_R2_numpy_images": {
+        "rel_linf_pct": 0.0,
+        "rel_l2_pct": 0.0,
+        "abs_linf": 0.0
+      },
+      "R3_yee_vs_R1_spectral": {
+        "rel_linf_pct": 0.0027469755232447813,
+        "rel_l2_pct": 0.001291065358236867,
+        "abs_linf": 1.3734866490977549e-05
+      },
+      "peak_sigma_R0": 0.499999595000164
+    }
+  ]
+}
