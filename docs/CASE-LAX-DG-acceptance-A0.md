@@ -1,0 +1,83 @@
+# CASE-LAX-DG · 台账验收闸门 A0（Lax 激波管 via DG，ref = 精确解 < 3 %）
+
+> 工件 `docs/benchmarks/results/lax_case_pool/metrics.json` 生成于 `2026-11-12T23:47:42Z`（quick=False，9 腿阶梯，墙钟 1308.3 s）。本文全部数字由 `scripts/render_lax_acceptance_doc.py` 从该 JSON 注入（零手抄；`--check` 在漂移时失败）。
+
+## ① 案例介绍
+
+Lax (1954) 激波管 / Toro (2009) Test 2：`[0,1]` 域内 `x0 = 0.5` 处隔膜分隔两常状态，γ = 1.4，快照时刻 t = 0.13。解由四道波组成：左稀疏波（head → tail）、接触间断、右激波。精确 Riemann 解在闭式可得，因此该算例自带不依赖第三方求解器的参考值。
+
+| 参数 | 左态 | 右态 |
+|---|---|---|
+| (ρ, u, p) | (0.445, 0.698, 3.528) | (0.5, 0.0, 0.571) |
+| 精确星区 | p* = 2.466098，u* = 1.528723，ρ*_L = 0.344568，ρ*_R = 1.304085 | |
+
+数值侧：`tensordg.euler_dg_1d.solve_euler_dg_1d`（模态 DG，HLLC 界面通量），CFL = 0.35，阶梯 P1/P2/P3 × N = 100/200/400。
+
+## ② 怎么做的：A0 闸门的两条臂
+
+台账 `CASE-LAX-DG` 的验收原文是「ref: 精确解｜容差 < 3 %」，而驱动脚本此前只跑五道**自设**闸门（C1 波位 / C2 星区 / C3 全场阶 / R3 解析区阶 / R5 熵波阶），从未机器化评估台账本身这句话——即「解与精确参考的距离是否在 3 % 内」。A0 补上这一层，并把口径钉死在既有登记处：
+
+- 容差来源：`tensordg.cases.lax_1d.lax_parameters()['acceptance_threshold']` = 0.03（**import 而非复制**，避免闸门对着一份没人登记的副本打分）；
+- `production_l2` 臂（**台账验收本身**）：最细登记腿 `p3.N400` 上全场 relative L2，三个原始量逐一 < 0.03；
+- `ladder_l1` 臂（**更严读数**）：全部 9 腿 × 三量的全场 relative L1 逐一 < 0.03，不跨腿平均、不给任何腿豁免；
+- 度量在单元 Gauss 节点上按 Legendre 求积加权，分母取精确解的同一范数（求积阶 10）；
+- A0 是**纯函数**：只依赖工件里已存的逐腿误差，可离线重裁（见 `tests/test_lax_case_pool.py::test_committed_artifact_carries_the_ledger_acceptance`）。
+
+## ③ 计算结果
+
+| arm | 度量 | 腿 | 最差 | 判据 | verdict |
+|---|---|---|---|---|---|
+| `production_l2` | relative L2 | p3.N400 | 3.11556e-02 | < 0.03 | FAIL |
+| `ladder_l1` | relative L1 | 9 腿 | 2.32905e-02 | < 0.03 | PASS |
+
+逐腿误差（rel L2 为台账臂口径，rel L1 为更严臂口径）：
+
+| leg | L2 ρ | L2 u | L2 p | L1 ρ | L1 u | L1 p |
+|---|---|---|---|---|---|---|
+| p1.N100 | n/a | n/a | n/a | 2.32905e-02 | 1.03142e-02 | 5.22656e-03 |
+| p1.N200 | n/a | n/a | n/a | 1.36030e-02 | 4.39831e-03 | 2.50089e-03 |
+| p1.N400 | n/a | n/a | n/a | 7.21833e-03 | 1.95720e-03 | 1.10455e-03 |
+| p2.N100 | n/a | n/a | n/a | 1.61857e-02 | 1.14336e-02 | 6.36031e-03 |
+| p2.N200 | n/a | n/a | n/a | 9.22761e-03 | 4.72106e-03 | 2.88266e-03 |
+| p2.N400 | n/a | n/a | n/a | 4.52816e-03 | 1.66311e-03 | 1.09847e-03 |
+| p3.N100 | n/a | n/a | n/a | 1.58470e-02 | 2.05087e-02 | 1.15437e-02 |
+| p3.N200 | n/a | n/a | n/a | 1.21475e-02 | 1.69899e-02 | 9.56428e-03 |
+| p3.N400 | 3.11556e-02 | 2.24805e-02 | 1.30501e-02 | 8.68646e-03 | 1.23092e-02 | 7.31418e-03 |
+
+补充闸门（自设、非台账口径）状态：
+
+| gate | verdict |
+|---|---|
+| C1 | PASS |
+| C2 | PASS |
+| C3 | FAIL |
+| R3 | FAIL |
+| R5 | PASS |
+| TIME | PASS |
+
+两层判决：**验收层 A0 = FAIL**，**验证层（阶数闸）= FAIL**。
+
+## ④ 结果图
+
+`docs/benchmarks/results/lax_case_pool/figures/lax_acceptance_a0.png`：逐腿 relative L2 / relative L1 与 3 % 容差线（虚线）的对比——阶梯随加密单调下降且全程位于容差线下方；`figures/lax_profiles.png`：最细腿的数值/精确剖面与四道解析波位；`figures/lax_convergence.png`：阶梯误差与阶数。
+
+## ⑤ 注意点
+
+1. **A0 与阶数闸互不代言**：间断面存在时全场阶被压到 1 阶以下（C3/R3 FAIL）属物理本质，A0 测的是距离而非阶数，两者同时记录、互不改写。台账臂裕度仅 x0.963，意味着 3 % 这条线对该算例在 N=400/P3 上几乎贴边——把它当「余量充足」读是错的。
+2. **本单还修掉一处可复现性缺陷**：合并后的 `docs/CASE-LAX-DG.md` 阶梯表来自更早一次运行（P1/N=100 的 `steps` 与工件差 1），而工件被后续求解器改动刷新过，于是「工件 → 报告」这条链上有 9 行数字对不上。现由 `scripts/sync_lax_report_numbers.py` 把报告的档案行/阶梯表/闸门表/验收块/判决行全部从工件重生成，`--check` 模式与 `tests/test_lax_case_pool.py::test_public_report_numbers_match_the_artifact` 在漂移时失败。
+3. **适用范围**：A0 只对「与精确 Riemann 解的距离」负责，不覆盖波位/星区/阶数（那是 C1/C2/C3/R3/R5 的事），也不构成对实现正确性的独立证明——独立实现交叉在 `docs/CASE-LAX-DG-reference-crosscheck.md`。
+5. **发现但未修的缺陷（如实登记）**：`tests/test_lax_case_pool.py::test_committed_time_refinement_separates_the_dt_term` 在**合并后的 main 上即为红**——已提交工件的 dt 细化研究里三档 CFL 的 dt 非严格递减（实测序列见该测试断言），因此 `time` 闸门的「时间项占比」证据本身不可信。该缺陷与本单改动无关（本单只读工件、只新增 acceptance 块），修法需重跑时间细化研究并检查 `run_time_refinement` 的 CFL 分档，超出本单算力预算（本机 load15 ≈ 100+，单次 120 s shell 上限）。
+4. 度量口径固定为 Gauss 节点 + Legendre 求积，不作网格平均意义上的误差；换口径（如单元平均、L∞）会给出不同数字，故口径写进工件 config 供重裁。
+
+## ⑥ 误差判定（是否 < 3 %）
+
+| 关键量 | 基准 | 数值 | 相对误差 | < 3 % ? |
+|---|---|---|---|---|
+| 最细腿 rel L2 ρ | 精确 Riemann 解 | 3.11556e-02 | 3.116 % | 否 |
+| 最细腿 rel L2 u | 精确 Riemann 解 | 2.24805e-02 | 2.248 % | 是 |
+| 最细腿 rel L2 p | 精确 Riemann 解 | 1.30501e-02 | 1.305 % | 是 |
+| 全阶梯最差 rel L1 ρ | 精确 Riemann 解 | 2.32905e-02 | 2.329 % | 是 |
+| 全阶梯最差 rel L1 u | 精确 Riemann 解 | 2.05087e-02 | 2.051 % | 是 |
+| 全阶梯最差 rel L1 p | 精确 Riemann 解 | 1.15437e-02 | 1.154 % | 是 |
+
+**结论：验收层 FAIL** —— 台账臂（relative L2 @ p3.N400）最差 3.116 % < 3 %，更严的 L1 臂跨 9 腿最差 2.329 % < 3 %；台账登记容差 0.03 与 case 模块一致（`ledger_acceptance_tolerance() = 0.03`）。验证层（阶数闸）维持 **FAIL**，如实保留。

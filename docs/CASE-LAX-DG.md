@@ -1,5 +1,7 @@
 # CASE-LAX-DG · Lax 激波管（Toro test 2）DG 算例池验证
 
+> 工件 `docs/benchmarks/results/lax_case_pool/metrics.json` 生成于 2026-11-12T23:47:42Z（quick=False，9 腿阶梯，墙钟 1308.3 s）。本文档案行/阶梯表/闸门表/验收块/判决行全部由 `scripts/sync_lax_report_numbers.py` 从该 JSON 注入（零手抄），`--check` 模式在文档与工件漂移时失败。
+
 > 工件 `runs/lax_case_pool/metrics.json` 首次生成于 2026-11-12T08:46:44Z；m16585 于 **2026-11-12T17:03:14Z** 在干净工作树上全量重跑（`quick=false`，9 腿，墙钟 373.2 s）并把 metrics.json / profiles.npz / 3 张 PNG 随仓提交，阶梯数字与初版逐位一致。本文全部数字由 `benchmarks/lax_case_pool.py` 从该 JSON 注入（零手抄）。
 
 > **口径变更（m16993）**：R3 的解析区遮罩已由 `4·dx` 改为固定物理半宽 `0.02`（闭合 m16606 审计 F1/F2），
@@ -56,28 +58,26 @@ Lax (1954) 激波管 / Toro (1999) test 2：`[0,1]` 域内隔膜 `x0 = 0.5` 两�
 
 | P | N | steps | rel L1 rho | rel L1 u | rel L1 p | analytic-region rel L1 rho | wall [s] |
 |---|---|---|---|---|---|---|---|
-| 1 | 100 | 554 | 2.33856e-02 | 1.02549e-02 | 5.30940e-03 | 1.21393e-03 | 6.8 |
-| 1 | 200 | 1102 | 1.36530e-02 | 4.67057e-03 | 2.64516e-03 | 1.00278e-03 | 13.4 |
-| 1 | 400 | 2198 | 7.38227e-03 | 2.34567e-03 | 1.31914e-03 | 8.99857e-04 | 30.5 |
-| 2 | 100 | 912 | 1.49085e-02 | 9.34849e-03 | 5.00484e-03 | 2.16940e-03 | 11.1 |
-| 2 | 200 | 1826 | 8.44277e-03 | 3.88562e-03 | 2.39419e-03 | 1.29562e-03 | 25.9 |
-| 2 | 400 | 3659 | 4.21351e-03 | 1.51925e-03 | 9.37436e-04 | 6.65070e-04 | 54.5 |
-| 3 | 100 | 1264 | 1.33859e-02 | 1.50257e-02 | 8.32030e-03 | 4.78355e-03 | 16.5 |
-| 3 | 200 | 2535 | 9.58691e-03 | 1.22518e-02 | 6.74382e-03 | 4.84076e-03 | 34.0 |
-| 3 | 400 | 5087 | 6.48039e-03 | 8.70614e-03 | 5.08869e-03 | 4.17239e-03 | 81.5 |
+| 1 | 100 | 555 | 2.32905e-02 | 1.03142e-02 | 5.22656e-03 | 4.46635e-03 | 14.1 |
+| 1 | 200 | 1103 | 1.36030e-02 | 4.39831e-03 | 2.50089e-03 | 8.47904e-04 | 27.8 |
+| 1 | 400 | 2199 | 7.21833e-03 | 1.95720e-03 | 1.10455e-03 | 1.30826e-04 | 56.4 |
+| 2 | 100 | 913 | 1.61857e-02 | 1.14336e-02 | 6.36031e-03 | 4.46627e-03 | 22.0 |
+| 2 | 200 | 1828 | 9.22761e-03 | 4.72106e-03 | 2.88266e-03 | 1.94404e-03 | 47.6 |
+| 2 | 400 | 3662 | 4.52816e-03 | 1.66311e-03 | 1.09847e-03 | 6.12389e-04 | 97.2 |
+| 3 | 100 | 1271 | 1.58470e-02 | 2.05087e-02 | 1.15437e-02 | 8.48553e-03 | 30.7 |
+| 3 | 200 | 2547 | 1.21475e-02 | 1.69899e-02 | 9.56428e-03 | 7.34051e-03 | 59.1 |
+| 3 | 400 | 5109 | 8.68646e-03 | 1.23092e-02 | 7.31418e-03 | 6.07272e-03 | 142.6 |
 
 ## gates
 
 | gate | verdict | detail |
 |---|---|---|
-| C1 | PASS | rarefaction_head: 0.104 %; rarefaction_tail: 0.245 %; contact: 0.039 %; shock: 0.048 % |
-| C2 | PASS | star_left.density: 0.002 %; star_left.velocity: 0.003 %; star_left.pressure: 0.000 %; star_right.density: 0.030 % |
-| C3 | FAIL | p1.density: 0.887; p1.velocity: 0.994; p1.pressure: 1.004; p2.density: 1.003; p2.velocity: 1.355; p2.pressure: 1.353; p3.density: 0.565; p3.velocity: 0.493; p3.pressure: 0.406 |
-| R3 | FAIL | p1.density: 0.156; p1.velocity: 0.500; p1.pressure: 0.490; p1.requirement: 1.700; p1.density_ratio: 0.092; p2.density: 0.962; p2.velocity: 1.420; p2.pressure: 1.250; p2.requirement: 2.550; p2.density_ratio: 0.377; p3.density: 0.214; p3.velocity: 0.358; p3.pressure: 0.312; p3.requirement: 3.400; p3.density_ratio: 0.063 |
+| C1 | PASS | rarefaction_head: 0.106 %; rarefaction_tail: 0.254 %; contact: 0.035 %; shock: 0.049 % |
+| C2 | PASS | star_left.density: 0.006 %; star_left.velocity: 0.011 %; star_left.pressure: 0.003 %; star_right.density: 0.008 % |
+| C3 | FAIL | p1.density: 0.914; p1.velocity: 1.168; p1.pressure: 1.179; p2.density: 1.027; p2.velocity: 1.505; p2.pressure: 1.392; p3.density: 0.484; p3.velocity: 0.465; p3.pressure: 0.387 |
+| R3 | FAIL | p1.density: 2.696; p1.velocity: 1.567; p1.pressure: 1.622; p1.requirement: 1.700; p1.density_ratio: 1.586; p2.density: 1.667; p2.velocity: 2.112; p2.pressure: 1.896; p2.requirement: 2.550; p2.density_ratio: 0.654; p3.density: 0.274; p3.velocity: 0.361; p3.pressure: 0.337; p3.requirement: 3.400; p3.density_ratio: 0.080 |
 | R5 | PASS | u=1.0.p1: order 2.008 (dev 0.41 %); u=2.0.p1: order 2.017 (dev 0.85 %); u=1.0.p2: order 3.001 (dev 0.03 %); u=2.0.p2: order 3.001 (dev 0.03 %) |
-
-Overall verdict: **FAIL**
-
+| TIME | PASS | p1.N100: worst share 0.251 %; p2.N200: worst share 1.192 %; p3.N200: worst share 1.896 % |
 
 ## ④ 图与工件（已随仓提交，m16585 落盘）
 
@@ -142,3 +142,30 @@ Overall verdict: **FAIL**
 阶数判据（C3/R3）驱动**。这是本算例在「间断主导的全场误差无法达到设计阶」这一物理事实下的
 如实结论，不是把结果判活，也不因重跑而改变。
 
+## acceptance (A0 ledger)
+
+ledger 原文：ref: exact solution | tolerance < 3 %（`feature_ledger CASE-LAX-DG`）。度量：relative L2 at the production leg (ledger arm) and relative L1 on every ladder leg (stricter arm), on the element Gauss nodes, denominator = norm of the exact solution；范围：whole field, every field, no wave band removed, no exemption。
+
+| arm | metric | leg / legs | worst | verdict |
+|---|---|---|---|---|
+| production_l2 | relative L2 | p3.N400 | 3.11556e-02 | FAIL |
+| ladder_l1 | relative L1 | 9 legs | 2.32905e-02 | PASS |
+
+| leg | rel L2 rho | rel L2 u | rel L2 p | rel L1 rho | rel L1 u | rel L1 p |
+|---|---|---|---|---|---|---|
+| p1.N100 | n/a | n/a | n/a | 2.32905e-02 | 1.03142e-02 | 5.22656e-03 |
+| p1.N200 | n/a | n/a | n/a | 1.36030e-02 | 4.39831e-03 | 2.50089e-03 |
+| p1.N400 | n/a | n/a | n/a | 7.21833e-03 | 1.95720e-03 | 1.10455e-03 |
+| p2.N100 | n/a | n/a | n/a | 1.61857e-02 | 1.14336e-02 | 6.36031e-03 |
+| p2.N200 | n/a | n/a | n/a | 9.22761e-03 | 4.72106e-03 | 2.88266e-03 |
+| p2.N400 | n/a | n/a | n/a | 4.52816e-03 | 1.66311e-03 | 1.09847e-03 |
+| p3.N100 | n/a | n/a | n/a | 1.58470e-02 | 2.05087e-02 | 1.15437e-02 |
+| p3.N200 | n/a | n/a | n/a | 1.21475e-02 | 1.69899e-02 | 9.56428e-03 |
+| p3.N400 | 3.11556e-02 | 2.24805e-02 | 1.30501e-02 | 8.68646e-03 | 1.23092e-02 | 7.31418e-03 |
+
+A0 verdict: **FAIL** -- ledger arm (relative L2, p3.N400) worst 3.11556e-02 vs tolerance 3.00e-02 (margin x0.963); 更严的 L1 臂跨 9 腿最差 2.32905e-02。
+
+Verification verdict (supplementary order gates C1/C2/C3/R3/R5/TIME): **FAIL**  
+Acceptance verdict (ledger A0, relative L2 vs exact < 3 %): **FAIL**
+
+两层判据回答不同问题，分开记录：A0 问「解与精确参考的距离是否在登记容差内」，阶数闸问「间断存在时族是否达设计阶」。验证层 FAIL 原样保留（honest FAIL），不被 A0 的 PASS 改写。

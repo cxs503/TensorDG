@@ -52,7 +52,8 @@
       "r5_order_fraction": 0.03,
       "r3_band_width": 0.02,
       "r3_band_cells_legacy": 4.0,
-      "time_error_share": 0.05
+      "time_error_share": 0.05,
+      "a0_acceptance": 0.03
     },
     "time_study": {
       "legs": [
@@ -977,5 +978,185 @@
     }
   },
   "verdict": "FAIL",
-  "wall_seconds": 1308.3169252872467
+  "wall_seconds": 1308.3169252872467,
+  "acceptance": {
+    "gate": "A0",
+    "source": "feature_ledger CASE-LAX-DG",
+    "wording": "ref: exact solution | tolerance < 3 %",
+    "metric": "relative L2 at the production leg (ledger arm) and relative L1 on every ladder leg (stricter arm), on the element Gauss nodes, denominator = norm of the exact solution",
+    "regions": "whole field, every field, no wave band removed, no exemption",
+    "tolerance": 0.03,
+    "production_leg": "p3.N400",
+    "per_leg": {
+      "p1.N100": {
+        "l1": {
+          "density": 0.023290512645678555,
+          "velocity": 0.010314207424547932,
+          "pressure": 0.005226556555600215
+        },
+        "l2": {
+          "density": null,
+          "velocity": null,
+          "pressure": null
+        },
+        "status": "n/a"
+      },
+      "p1.N200": {
+        "l1": {
+          "density": 0.013602985607298416,
+          "velocity": 0.004398309033240089,
+          "pressure": 0.0025008938646224653
+        },
+        "l2": {
+          "density": null,
+          "velocity": null,
+          "pressure": null
+        },
+        "status": "n/a"
+      },
+      "p1.N400": {
+        "l1": {
+          "density": 0.0072183346661303036,
+          "velocity": 0.00195719944801882,
+          "pressure": 0.001104549721066206
+        },
+        "l2": {
+          "density": null,
+          "velocity": null,
+          "pressure": null
+        },
+        "status": "n/a"
+      },
+      "p2.N100": {
+        "l1": {
+          "density": 0.016185711537447633,
+          "velocity": 0.01143360136496088,
+          "pressure": 0.00636030616755112
+        },
+        "l2": {
+          "density": null,
+          "velocity": null,
+          "pressure": null
+        },
+        "status": "n/a"
+      },
+      "p2.N200": {
+        "l1": {
+          "density": 0.00922761042336109,
+          "velocity": 0.004721058016263252,
+          "pressure": 0.0028826614642114053
+        },
+        "l2": {
+          "density": null,
+          "velocity": null,
+          "pressure": null
+        },
+        "status": "n/a"
+      },
+      "p2.N400": {
+        "l1": {
+          "density": 0.004528163040625704,
+          "velocity": 0.0016631083827524469,
+          "pressure": 0.001098465075950289
+        },
+        "l2": {
+          "density": null,
+          "velocity": null,
+          "pressure": null
+        },
+        "status": "n/a"
+      },
+      "p3.N100": {
+        "l1": {
+          "density": 0.015847006857723764,
+          "velocity": 0.0205087036447169,
+          "pressure": 0.011543731006080084
+        },
+        "l2": {
+          "density": null,
+          "velocity": null,
+          "pressure": null
+        },
+        "status": "n/a"
+      },
+      "p3.N200": {
+        "l1": {
+          "density": 0.01214747011549904,
+          "velocity": 0.016989928406710906,
+          "pressure": 0.009564283253848274
+        },
+        "l2": {
+          "density": null,
+          "velocity": null,
+          "pressure": null
+        },
+        "status": "n/a"
+      },
+      "p3.N400": {
+        "l1": {
+          "density": 0.008686464624843512,
+          "velocity": 0.012309200656242785,
+          "pressure": 0.007314181334501461
+        },
+        "l2": {
+          "density": 0.03115561985348536,
+          "velocity": 0.022480536543055322,
+          "pressure": 0.013050132375520466
+        },
+        "status": "n/a"
+      }
+    },
+    "arms": {
+      "production_l2": {
+        "leg": "p3.N400",
+        "metric": "relative L2",
+        "worst": 0.03115561985348536,
+        "source": "profiles",
+        "status": "FAIL"
+      },
+      "ladder_l1": {
+        "legs": 9,
+        "metric": "relative L1",
+        "worst": 0.023290512645678555,
+        "status": "PASS"
+      }
+    },
+    "worst": null,
+    "worst_l1": {
+      "leg": "p1.N100",
+      "field": "density",
+      "relative_l1": 0.023290512645678555
+    },
+    "status": "FAIL"
+  },
+  "verdicts": {
+    "acceptance": "FAIL",
+    "verification": "FAIL",
+    "reading": "acceptance = ledger CASE-LAX-DG, relative L2 vs exact < registered tolerance; verification = supplementary order gates C1/C2/C3/R3/R5/TIME"
+  },
+  "acceptance_provenance": {
+    "attached_at_utc": "2026-11-13T09:21:48Z",
+    "method": "A0 recomputed from the committed artifact only: ladder L1 arm from metrics.json, production L2 arm from profiles.npz; no solver re-run, no transcribed number",
+    "profile_consistency": {
+      "worst_relative_mismatch": 0.0,
+      "tolerance": 1e-06,
+      "per_field": {
+        "density": 0.0,
+        "velocity": 0.0,
+        "pressure": 0.0
+      }
+    },
+    "production_errors": {
+      "l1": {
+        "density": 0.008686464624843512,
+        "velocity": 0.012309200656242785,
+        "pressure": 0.007314181334501461
+      },
+      "l2": {
+        "density": 0.03115561985348536,
+        "velocity": 0.022480536543055322,
+        "pressure": 0.013050132375520466
+      }
+    }
+  }
 }
