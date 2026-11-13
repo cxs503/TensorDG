@@ -23,15 +23,22 @@ import pytest
 import torch
 
 from benchmarks.lax_case_pool import (
-    CFL, DIAPHRAGM, FINAL_TIME, GAMMA, LEFT, MIN_C3_ORDER, OUT, R3_ORDER_FRACTION,
-    RIGHT, TOL_C1, TOL_C2, exact_positions, exact_reference, exact_waves,
-    entropy_wave_exact, gate_c1, gate_c2, modal_fields, plateau_values,
-    convergence_order, wave_positions, _weighted_l1, ENTROPY_AMPLITUDE,
-    ENTROPY_TIME, RAREFACTION_LEVEL_FRACTION,
+    CFL, DIAPHRAGM, FINAL_TIME, GAMMA, LEFT, MIN_C3_ORDER, OUT, R3_BAND_WIDTH,
+    R3_LEGACY_BAND_CELLS, R3_ORDER_FRACTION, RIGHT, TIME_CFL_DIVISORS, TIME_LEGS,
+    TOL_C1, TOL_C2, TOL_TIME_ERROR_SHARE, exact_positions, exact_reference,
+    exact_waves, entropy_wave_exact, gate_c1, gate_c2, modal_fields,
+    plateau_values, convergence_order, temporal_order, temporal_share,
+    wave_positions, _weighted_l1, ENTROPY_AMPLITUDE, ENTROPY_TIME,
+    RAREFACTION_LEVEL_FRACTION,
 )
 from tensordg.euler_dg_1d import solve_euler_dg_1d, solve_periodic_euler_dg_1d
 
-METRICS = Path(OUT) / "metrics.json"
+# A gate pinned to ``runs/`` never fires on ``main``: the merge gate drops that
+# tree (0 tracked files), so the module skipped forever instead of asserting.
+# Resolve from ``__file__`` and keep the record on the tracked ``docs/`` path.
+ROOT = Path(__file__).resolve().parents[1]
+ARTIFACT = ROOT / OUT / "metrics.json"
+PROFILES = ARTIFACT.parent / "profiles.npz"
 
 
 # --------------------------------------------------------------- analytic layer
@@ -245,6 +252,10 @@ def _recheck_gate(name, gate):
         ok = all(rows[f"p{degree}.density"] >= rows[f"p{degree}.requirement"]
                  for degree in (1, 2, 3) if f"p{degree}.density" in rows)
         return "PASS" if ok else "FAIL"
+    if name == "time":
+        shares = [v["worst_share"] for v in gate["per_leg"].values()]
+        ok = all(s is not None and s < gate["tolerance"] for s in shares)
+        return "PASS" if ok else "FAIL"
     if name == "r5":
         ok = all((1.0 - gate["fraction"]) * v["design_order"] <= v["observed_order"]
                  <= (1.0 + gate["fraction"]) * v["design_order"]
@@ -253,10 +264,11 @@ def _recheck_gate(name, gate):
     raise AssertionError(name)
 
 
-@pytest.mark.skipif(not METRICS.exists(),
-                    reason="case-pool artifact not generated in this worktree")
 def test_committed_artifact_is_self_consistent():
-    metrics = json.loads(METRICS.read_text())
+    assert ARTIFACT.exists(), (
+        f"missing committed record {ARTIFACT.relative_to(ROOT)}; regenerate with "
+        "`python -m benchmarks.lax_case_pool`")
+    metrics = json.loads(ARTIFACT.read_text())
     assert metrics["anchor"] == "CASE-LAX-DG"
     statuses = {name: _recheck_gate(name, gate)
                 for name, gate in metrics["gates"].items()}
@@ -270,7 +282,10 @@ def test_committed_artifact_is_self_consistent():
     assert tolerances["c2"] == TOL_C2
     assert tolerances["c3_min_order"] == MIN_C3_ORDER
     assert tolerances["r3_order_fraction"] == R3_ORDER_FRACTION
-    assert tolerances["r3_band_cells"] == pytest.approx(4.0)
+    assert tolerances["r3_band_width"] == pytest.approx(R3_BAND_WIDTH)
+    assert tolerances["r3_band_cells_legacy"] == pytest.approx(R3_LEGACY_BAND_CELLS)
+    assert tolerances["time_error_share"] == pytest.approx(TOL_TIME_ERROR_SHARE)
+    assert metrics["gates"]["r3"]["band"]["width"] == pytest.approx(R3_BAND_WIDTH)
     assert metrics["config"]["tolerances"]["r5_order_fraction"] == pytest.approx(0.03)
     # ladder monotonicity: every degree must improve as the mesh is refined
     for degree in (1, 2, 3):
@@ -284,11 +299,12 @@ def test_committed_artifact_is_self_consistent():
     assert metrics["figures"], "figures must be recorded"
 
 
-@pytest.mark.skipif(not METRICS.exists(),
-                    reason="case-pool artifact not generated in this worktree")
 def test_committed_artifact_profiles_agree_with_the_exact_solution():
-    metrics = json.loads(METRICS.read_text())
-    profiles = np.load(Path(OUT) / "profiles.npz")
+    assert PROFILES.exists(), (
+        f"missing committed record {PROFILES.relative_to(ROOT)}; regenerate with "
+        "`python -m benchmarks.lax_case_pool`")
+    metrics = json.loads(ARTIFACT.read_text())
+    profiles = np.load(PROFILES)
     points = profiles["points"]
     for field in ("density", "velocity", "pressure"):
         numerical = profiles[f"numerical_{field}"]
@@ -298,3 +314,115 @@ def test_committed_artifact_profiles_agree_with_the_exact_solution():
     finest = metrics["ladder"][-1]
     assert (finest["cells"], finest["degree"]) == (400, 3)
     assert points.shape[0] == finest["cells"]
+
+# ------------------------------------------- region-rule invariant (m16606 F1)
+def test_r3_region_rule_is_nested_across_the_ladder():
+    """The R3 band must not move with the mesh, or the measured order is bogus.
+
+    A ``4 dx`` band shrinks as the mesh is refined, so the retained measure
+    *grows* with N (m16606 measured 0.680 -> 0.920, +35 %) and the analytic-region
+    error then rises with refinement.  The fixed physical band is nested: the
+    retained measure is the same region at every resolution.
+    """
+    assert ARTIFACT.exists(), f"missing committed record {ARTIFACT}"
+    metrics = json.loads(ARTIFACT.read_text())
+    nesting = metrics["diagnostics"]["r3_nesting"]
+    for degree, data in nesting.items():
+        assert data["nested_spread"] < 2e-3, (degree, data["nested_fractions"])
+        # the retired rule is kept as the counter-example, and must stay one:
+        # if a future edit made it nested again, this test flags the stale claim
+        assert data["legacy_grows_with_refinement"] is True, (degree, data)
+        assert data["legacy_spread"] > 0.1, (degree, data["legacy_fractions"])
+
+
+def test_stored_nested_errors_reproduce_the_r3_verdict():
+    """Recompute R3 from the stored nested-band errors, never from the verdict."""
+    metrics = json.loads(ARTIFACT.read_text())
+    rows = metrics["gates"]["r3"]["per_leg"]
+    for degree in (1, 2, 3):
+        legs = sorted([e for e in metrics["ladder"] if e["degree"] == degree],
+                      key=lambda e: e["cells"])
+        coarse, fine = legs[-2], legs[-1]
+        order = convergence_order(
+            coarse["cells"], coarse["analytic_errors"]["density"],
+            fine["cells"], fine["analytic_errors"]["density"])
+        assert order == pytest.approx(rows[f"p{degree}.density"], rel=1e-9)
+    # the retired rule is adjudicated side by side and is *not* allowed to pass
+    # silently: it is recorded, and it disagrees with the published rule
+    assert "r3_legacy_band" in metrics["diagnostics"]
+    assert metrics["diagnostics"]["r3_legacy_band"]["status"] in ("PASS", "FAIL")
+
+
+# --------------------------------------------- temporal-error separation (F5)
+def test_temporal_order_is_exact_for_a_known_dt_decay():
+    """E(dt) = E0 + C dt**q with exact halvings -> q recovered in closed form."""
+    for e0, c, q in ((0.0, 0.4, 2.0), (0.01, 0.3, 3.0), (0.05, 0.2, 1.5)):
+        dts = (0.04, 0.02, 0.01)
+        errors = [e0 + c * dt ** q for dt in dts]
+        assert temporal_order(errors) == pytest.approx(q, rel=1e-9)
+        if e0 == 0.0:
+            # pure temporal error: the share of the coarse error is all of it
+            assert temporal_share(errors, temporal_order(errors)) == pytest.approx(1.0)
+
+
+def test_temporal_order_refuses_a_plateau_or_a_reversal():
+    assert temporal_order([1e-3, 1e-3, 1e-3]) is None      # nothing to split
+    assert temporal_order([1e-3, 2e-3, 4e-3]) is None      # error grows with dt->0
+    assert temporal_share([1e-3, 1e-3, 1e-3], None) is None
+
+
+def test_temporal_share_never_exceeds_the_total_error():
+    errors = [2.0e-2, 1.4e-2, 1.1e-2]
+    share = temporal_share(errors, temporal_order(errors))
+    assert share is not None
+    assert 0.0 < share < 1.0
+
+
+def test_committed_time_refinement_separates_the_dt_term():
+    """The ladder order is only meaningful if ``dt`` is not doing the work."""
+    assert ARTIFACT.exists(), f"missing committed record {ARTIFACT}"
+    metrics = json.loads(ARTIFACT.read_text())
+    assert metrics["config"]["quick"] is False
+    rows = metrics["time_refinement"]
+    assert rows, "the dt-refinement study must be part of the committed record"
+    assert [tuple(leg) for leg in metrics["config"]["time_study"]["legs"]] == list(TIME_LEGS)
+    assert tuple(metrics["config"]["time_study"]["cfl_divisors"]) == TIME_CFL_DIVISORS
+    for row in rows:
+        levels = row["levels"]
+        assert len(levels) == len(TIME_CFL_DIVISORS)
+        # only dt moves: the mesh is held fixed for the whole leg
+        assert len({row["cells"] for _ in levels}) == 1
+        dts = [level["dt"] for level in levels]
+        assert all(a > b for a, b in zip(dts, dts[1:])), dts  # strictly refined
+        for field in ("density", "velocity", "pressure"):
+            series = row["fields"][field]["relative_l1"]
+            assert [level["relative_l1"][field] for level in levels] == series
+            assert all(math.isfinite(v) and v > 0.0 for v in series)
+            order = temporal_order(series)
+            assert row["fields"][field]["temporal_order"] == order
+            share = row["fields"][field]["temporal_share"]
+            bound = row["fields"][field]["temporal_bound"]
+            assert row["fields"][field]["temporal_bound"] == bound
+            assert share is not None or bound is not None
+            if order is not None:
+                assert share is not None and 0.0 < share < 1.0
+            else:
+                # order not identifiable (flat / non-monotone): the 4x-dt
+                # sensitivity is the honest upper bound on the temporal term
+                assert share is None and bound is not None
+    gate = metrics["gates"]["time"]
+    assert _recheck_gate("time", gate) == gate["status"]
+    assert gate["tolerance"] == pytest.approx(TOL_TIME_ERROR_SHARE)
+
+
+def test_rendered_followup_doc_matches_the_artifact():
+    """The follow-up note must be a pure function of the committed metrics."""
+    from scripts.render_lax_case_pool_doc import DOC, render
+
+    assert ARTIFACT.exists(), f"missing committed record {ARTIFACT}"
+    assert DOC.exists(), (
+        f"missing {DOC.relative_to(ROOT)}; regenerate with "
+        "`python scripts/render_lax_case_pool_doc.py`")
+    assert DOC.read_text() == render(json.loads(ARTIFACT.read_text())), (
+        f"{DOC.name} drifted from the artifact; re-run "
+        "`python scripts/render_lax_case_pool_doc.py`")
