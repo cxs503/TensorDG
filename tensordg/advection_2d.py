@@ -11,6 +11,11 @@ import math
 import numpy as np
 import torch
 
+# The tensor-product operators are built from Legendre values/derivatives at
+# Gauss nodes, so they are degree-generic; the bound only keeps the Python-side
+# basis assembly sane (see ``tensordg.advection_1d.MAX_DEGREE``).
+MAX_DEGREE = 8
+
 
 def _operators(degree: int, device: torch.device, dtype: torch.dtype):
     """Return one-dimensional reference operators reused in both directions."""
@@ -116,8 +121,10 @@ def solve_advection_2d(
     mode is the cell average.
     """
     nx, ny = (ncells, ncells) if isinstance(ncells, int) else ncells
-    if nx < 2 or ny < 2 or degree not in (0, 1, 2, 3):
-        raise ValueError("ncells must be >= 2 and degree must be in [0, 3]")
+    if nx < 2 or ny < 2 or not 0 <= degree <= MAX_DEGREE:
+        raise ValueError(
+            f"ncells must be >= 2 and degree must be in [0, {MAX_DEGREE}]"
+        )
     if final_time < 0.0 or cfl <= 0.0:
         raise ValueError("final_time must be >= 0 and cfl must be > 0")
     if len(velocity) != 2:

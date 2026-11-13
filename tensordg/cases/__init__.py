@@ -8,6 +8,7 @@ callers read the case from a single place instead of copying constants.
 from . import elastic_rod_1d
 from . import lax_1d
 from . import prefinement_exponential
+from . import prefinement_exponential_2d
 from . import viscous_burgers_1d
 from .elastic_rod_1d import (
     CASE_KEY as ELASTIC_ROD_CASE_KEY,
@@ -36,6 +37,13 @@ from .prefinement_exponential import (
     prefinement_parameters,
     solve_level as solve_prefinement_level,
     solve_prefinement_case,
+)
+from .prefinement_exponential_2d import (
+    CASE_KEY as PREFINEMENT_2D_CASE_KEY,
+    p_ladder as prefinement_2d_p_ladder,
+    prefinement_parameters as prefinement_2d_parameters,
+    solve_level as solve_prefinement_2d_level,
+    solve_prefinement_2d_case,
 )
 from .shock_entropy import (
     CASE_KEY,
@@ -90,6 +98,11 @@ __all__ = [
     "prefinement_parameters",
     "solve_prefinement_level",
     "solve_prefinement_case",
+    "PREFINEMENT_2D_CASE_KEY",
+    "prefinement_2d_p_ladder",
+    "prefinement_2d_parameters",
+    "solve_prefinement_2d_level",
+    "solve_prefinement_2d_case",
     "ELASTIC_ROD_CASE_KEY",
     "elastic_rod_anchor_table",
     "elastic_rod_parameters",
@@ -104,4 +117,5 @@ CASES = {
     "viscous_burgers_1d": VISCOUS_BURGERS_CASE_KEY,
     "lax_1d": LAX_CASE_KEY,
     "prefinement_exponential": PREFINEMENT_CASE_KEY,
+    "prefinement_exponential_2d": PREFINEMENT_2D_CASE_KEY,
 }
