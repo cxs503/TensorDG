@@ -198,6 +198,33 @@ from .cases.viscous_burgers_1d import (
     total_mass,
     total_energy,
 )
+# ---- certified_reference
+# The reusable round-2 certified-reference engine (Roache GCI band + gate-validity
+# rule).  ``certify``/``judge``/``classify``/``audit_ladder``/``band_coverage_study``/
+# ``digest_levels``/``rel_l1``/``gci`` are unambiguous at the root.  ``coarsen``,
+# ``observed_order`` and ``richardson_extrapolate`` are *also* defined by other
+# modules (``cases.shock_entropy``, ``convergence``, ``ice_edge_bench``), so the
+# less general owner is prefixed with its module name, per the name discipline
+# above -- nothing is hidden, both spellings resolve to the same object.
+from .certified_reference import (
+    rel_l1,
+    gci,
+    classify,
+    digest_levels,
+    certify,
+    judge,
+    audit_ladder,
+    band_coverage_study,
+    FS_GCI,
+    U_SHARE_MAX,
+    P_MIN,
+    P_MAX,
+    ROUNDOFF_FLOOR,
+    coarsen as certified_reference_coarsen,
+    observed_order as certified_reference_observed_order,
+    richardson_extrapolate as certified_reference_richardson_extrapolate,
+)
+
 # ---- convergence
 from .convergence import (
     pairwise_orders,
@@ -214,6 +241,10 @@ from .convergence import (
     roundoff_floor,
     signal_to_noise,
     resolved_levels,
+    semidiscrete_operator,
+    operator_linearity_residual,
+    expm_scaled_squaring,
+    exact_time_solution,
 )
 
 # ---- curved_geometry
@@ -707,6 +738,26 @@ __all__ = [
     "circle_contract",
     "clamped_free_frequency",
     "coarsen",
+    "certified_reference_coarsen",
+    "certified_reference_observed_order",
+    "certified_reference_richardson_extrapolate",
+    "certify",
+    "classify",
+    "digest_levels",
+    "gci",
+    "judge",
+    "rel_l1",
+    "audit_ladder",
+    "band_coverage_study",
+    "FS_GCI",
+    "U_SHARE_MAX",
+    "P_MIN",
+    "P_MAX",
+    "ROUNDOFF_FLOOR",
+    "semidiscrete_operator",
+    "operator_linearity_residual",
+    "expm_scaled_squaring",
+    "exact_time_solution",
     "compute_hydrostatic_pressure_force",
     "cone_profile",
     "conservative_state",
