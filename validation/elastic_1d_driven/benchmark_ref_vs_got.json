@@ -1,0 +1,108 @@
+{
+  "tolerance_pct": 2.0,
+  "rows": [
+    {
+      "anchor": "single-wave  energy-norm error (p=3, N=400)",
+      "ref": 0.0,
+      "got": 2.559252287341701e-05,
+      "err_pct": 2.559252287341701e-05,
+      "tol_pct": 2.0,
+      "pass": true,
+      "kind": "rel"
+    },
+    {
+      "anchor": "single-wave  rel L2 error of v",
+      "ref": 0.0,
+      "got": 2.559252288624878e-05,
+      "err_pct": 2.559252288624878e-05,
+      "tol_pct": 2.0,
+      "pass": true,
+      "kind": "rel"
+    },
+    {
+      "anchor": "single-wave  rel L2 error of sigma",
+      "ref": 0.0,
+      "got": 2.5592522860585227e-05,
+      "err_pct": 2.5592522860585227e-05,
+      "tol_pct": 2.0,
+      "pass": true,
+      "kind": "rel"
+    },
+    {
+      "anchor": "work/energy identity  E(t)/W(t)-1",
+      "ref": 0.0,
+      "got": 0.007936566534961527,
+      "err_pct": 0.007936566534961527,
+      "tol_pct": 2.0,
+      "pass": true,
+      "kind": "rel"
+    },
+    {
+      "anchor": "free end  v(L,t)/(2 g)",
+      "ref": 2.0,
+      "got": 1.999993350964045,
+      "err_pct": 0.0003324517977465469,
+      "tol_pct": 2.0,
+      "pass": true,
+      "kind": "rel"
+    },
+    {
+      "anchor": "free end  sigma(L,t)/(Z g)  (must vanish)",
+      "ref": 0.0,
+      "got": -5.608097893899891e-06,
+      "err_pct": 5.608097893899891e-06,
+      "tol_pct": 2.0,
+      "pass": true,
+      "kind": "rel"
+    },
+    {
+      "anchor": "fixed end  sigma(L,t)/(-2 Z g)",
+      "ref": -2.0,
+      "got": -1.999993350964045,
+      "err_pct": 0.0003324517977465469,
+      "tol_pct": 2.0,
+      "pass": true,
+      "kind": "rel"
+    },
+    {
+      "anchor": "fixed end  v(L,t)/(g)  (must vanish)",
+      "ref": 0.0,
+      "got": 5.608097893899891e-06,
+      "err_pct": 5.608097893899891e-06,
+      "tol_pct": 2.0,
+      "pass": true,
+      "kind": "rel"
+    },
+    {
+      "anchor": "absorbing source  residual energy / injected work",
+      "ref": 0.0,
+      "got": 7.527493632004821e-22,
+      "err_pct": 7.527493632004821e-22,
+      "tol_pct": 2.0,
+      "pass": true,
+      "kind": "rel"
+    },
+    {
+      "anchor": "observed order, degree 3 (theory p+1)",
+      "ref": 4.0,
+      "got": 3.0197694645165334,
+      "err_pct": 24.505763387086667,
+      "tol_pct": 5.0,
+      "pass": false,
+      "kind": "rel"
+    },
+    {
+      "anchor": "fault: wrong source sign is rejected (err must exceed 2%)",
+      "ref": 0.0,
+      "got": 199.99982422790396,
+      "tol_pct": 2.0,
+      "pass": true,
+      "kind": "must exceed"
+    },
+    {
+      "anchor": "fault: driven bc without drive raises ValueError",
+      "pass": true,
+      "kind": "raise"
+    }
+  ]
+}
