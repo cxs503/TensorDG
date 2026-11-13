@@ -1,0 +1,43 @@
+{
+  "schema": "tensordg-run-manifest/1",
+  "command": "python -m benchmarks.elastic_1d_layered --output-dir validation/elastic_1d_layered",
+  "git_commit": "e6ff6fe02df1fa50551c3fe48071785f2ec213bc",
+  "artifacts": [
+    {
+      "path": "validation/elastic_1d_layered/elastic_1d_layered.json",
+      "sha256": "e1e05319cb053d8cbe07f246b56bb6e9fb38a6077cf975f8cc4413979a8f09f8",
+      "bytes": 8582
+    },
+    {
+      "path": "validation/elastic_1d_layered/benchmark_ref_vs_got.json",
+      "sha256": "a63a9b6ffcabf3c80c433e9c3b01ecd6f57978b0e2133a36b37ec805f0217e1e",
+      "bytes": 3253
+    },
+    {
+      "path": "validation/elastic_1d_layered/scattering_profiles.csv",
+      "sha256": "b120dda49e622cfb7c6193e23f4ec50801419c4bfa5b8f1f5843b463da086dac",
+      "bytes": 973466
+    },
+    {
+      "path": "validation/elastic_1d_layered/cases.json",
+      "sha256": "1cdebaf77609a9608f1f5f7a28356e15efc5a26c34d67a9cbec7684f1f486bf3",
+      "bytes": 3410
+    },
+    {
+      "path": "validation/elastic_1d_layered/elastic_1d_layered_coefficients.png",
+      "sha256": "17b461af68dcf940289d107c64ec793a9200d87967669d2bd1ad4e858fc25581",
+      "bytes": 46920
+    },
+    {
+      "path": "validation/elastic_1d_layered/elastic_1d_layered_convergence.png",
+      "sha256": "ec0b16547a8a51598e669688a9cd30bba37ff2d16ab7a879a05dc32b46f0be4a",
+      "bytes": 66566
+    },
+    {
+      "path": "validation/elastic_1d_layered/elastic_1d_layered_profiles.png",
+      "sha256": "a2110ef62a53de17e3abe238e8c3f0a9094730c26d7f4c770784070ca3a3a680",
+      "bytes": 151860
+    }
+  ],
+  "all_passed": true
+}
