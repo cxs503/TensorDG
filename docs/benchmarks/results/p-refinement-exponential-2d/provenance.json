@@ -1,0 +1,64 @@
+{
+  "case": "DG-PREFINEMENT-EXPONENTIAL-2D",
+  "ledger_anchor": "CASE-DG-PREFINEMENT-EXPONENTIAL",
+  "artifact": "p_refinement_2d_results.json",
+  "artifact_sha256": "431219d0154fb5c15a0b6a3e3225809a03657153f9e99293cebd683f17886405",
+  "schema": "tensordg-p-refinement-exponential-2d/1",
+  "generated_at_utc": "2026-11-13T09:22:28Z",
+  "python": "3.11.6",
+  "numpy": "2.4.6",
+  "torch": "2.7.1",
+  "degrees": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "ncells": 8,
+  "cfl_base": 0.1,
+  "temporal_tolerance": 0.01,
+  "git_commit": "692b60fe70a9325b9c4e26e41a164d3d98e9f563",
+  "runtime_seconds": 199.43101906776428,
+  "parameters": {
+    "case_key": "DG-PREFINEMENT-EXPONENTIAL-2D",
+    "ledger_anchor": "CASE-DG-PREFINEMENT-EXPONENTIAL",
+    "reference": {
+      "authors": "I. Babuska, M. Suri",
+      "title": "The p- and h-p versions of the finite element method, basic principles and properties",
+      "journal": "SIAM Review 36(4), 578-632 (1994)",
+      "doi": "10.21236/ada260237",
+      "statement": "for analytic solutions the p-version error decays exponentially in the polynomial degree, e(p) <= C exp(-sigma p)"
+    },
+    "domain": [
+      0.0,
+      1.0
+    ],
+    "periodic": true,
+    "pde": "u_t + ax*u_x + ay*u_y = 0",
+    "initial_condition": "1 + sin(2*pi*x)*sin(2*pi*y)",
+    "exact_solution": "1 + sin(2*pi*(x-ax*t))*sin(2*pi*(y-ay*t))",
+    "velocity": [
+      1.0,
+      0.5
+    ],
+    "ncells": 8,
+    "final_time": 1.0,
+    "degrees": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "cfl_base": 0.1,
+    "temporal_tolerance": 0.01,
+    "legacy_slope_threshold": 0.5,
+    "sigma_min_discriminating": 1.0,
+    "error_ratio_min": 1000.0,
+    "max_degree": 8,
+    "metric": "relative L2 error vs the analytic travelling wave"
+  }
+}
