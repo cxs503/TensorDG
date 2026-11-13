@@ -56,6 +56,7 @@ from __future__ import annotations
 import numpy as np
 import torch
 
+from .stepping import step_metadata
 from .euler_1d import GAMMA
 from .euler_dg_2d import (
     _conservative,
@@ -1271,7 +1272,7 @@ def solve_navier_stokes_dg_2d(
         "has_source": source is not None,
         "steps": steps,
         "diffusive_steps": diffusive_steps,
-        "dt": dt,
+        **step_metadata(final_time, steps, dt),
         "cfl": cfl,
         "cfl_viscous": cfl_viscous,
         "domain": domain,

@@ -47,6 +47,7 @@ import math
 import numpy as np
 import torch
 
+from .stepping import step_metadata
 from .limiters import apply_limiter
 
 __all__ = [
@@ -612,7 +613,8 @@ def solve_burgers_shock(
     coeff2 = coeff[:, :, 0]
     metadata = {
         "ncells": ncells, "degree": degree, "final_time": final_time,
-        "cfl": cfl, "steps": steps, "dt": dt, "flux": _canonical_flux(flux),
+        "cfl": cfl, "steps": steps, **step_metadata(final_time, steps, dt),
+        "flux": _canonical_flux(flux),
         "limiter": limiter, "tvb_constant": tvb_constant, "periodic": periodic,
         "limiter_stage": limiter_stage if limiter else None,
         "dx": dx, "domain": (lower, upper), "device": str(dev),
@@ -683,7 +685,8 @@ def solve_burgers_tracer(
                                      periodic, "every", 0.0, ops, bc_left, bc_right)
     metadata = {
         "ncells": ncells, "degree": degree, "final_time": final_time, "cfl": cfl,
-        "steps": steps, "dt": dt, "flux": _canonical_flux(flux), "limiter": limiter,
+        "steps": steps, **step_metadata(final_time, steps, dt),
+        "flux": _canonical_flux(flux), "limiter": limiter,
         "tvb_constant": tvb_constant, "periodic": periodic, "dx": dx,
         "density_mass_initial": float(density_avg.sum().item() * dx),
         "density_mass_final": float(coeff_d[:, 0, 0].sum().item() * dx),

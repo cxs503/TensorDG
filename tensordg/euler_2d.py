@@ -24,6 +24,7 @@ import math
 import numpy as np
 import torch
 
+from .stepping import step_metadata
 from .euler_1d import GAMMA
 
 __all__ = [
@@ -229,7 +230,8 @@ def solve_euler_2d(
     }
     metadata = {
         "ncells": (nx, ny), "degree": 0, "final_time": final_time,
-        "steps": steps, "dt": dt, "cfl": cfl, "domain": domain,
+        "steps": steps, **step_metadata(final_time, steps, dt),
+        "cfl": cfl, "domain": domain,
         "periodic": periodic_flags, "quadrature": quadrature,
         "flux": "rusanov", "device": str(dev),
     }
