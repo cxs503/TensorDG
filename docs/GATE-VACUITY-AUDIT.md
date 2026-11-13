@@ -16,18 +16,20 @@
 
 ## 统计
 
-- 扫描测试模块 **151**：VACUOUS **0** · LATENT **7** · HARDENED **11** · RED-ON-CLEAN **1** · UNRESOLVED **8** · PLAIN **124**
-- skip 位点：工件类 **22** · 环境类 **4**
+- 扫描测试模块 **165**：VACUOUS **0** · LATENT **8** · HARDENED **17** · RED-ON-CLEAN **0** · UNRESOLVED **10** · PLAIN **130**
+- skip 位点：工件类 **27** · 环境类 **4**
 - 缺失工件（skip 会真的触发）：**0**
 - cwd 依赖（相对路径）工件常量：**8**
-- 干净检出上必红的模块（RED-ON-CLEAN）：**1**
+- 干净检出上必红的模块（RED-ON-CLEAN）：**0**
 - 钉在 git 不携带工件上的 skip 门：**0**
 
 ## 逐模块清单（非 PLAIN）
 
 | 模块 | 判级 | 工件类 skip | 硬断言 | cwd 依赖 |
 |---|---|---|---|---|
+| `tests/test_artificial_viscosity.py` | HARDENED | 0 | 2 | — |
 | `tests/test_case_dg_solid_body_rotation_2d.py` | UNRESOLVED | 1 | 0 | — |
+| `tests/test_cks1998_tensorbench.py` | HARDENED | 0 | 1 | — |
 | `tests/test_dg_advection_bench.py` | HARDENED | 0 | 2 | — |
 | `tests/test_dispersion_analysis.py` | HARDENED | 0 | 1 | — |
 | `tests/test_dispersion_time_domain.py` | HARDENED | 0 | 1 | — |
@@ -36,14 +38,18 @@
 | `tests/test_evidence_integrity.py` | UNRESOLVED | 1 | 0 | — |
 | `tests/test_in31_hp_ladder.py` | UNRESOLVED | 2 | 0 | — |
 | `tests/test_lax_case_pool.py` | HARDENED | 0 | 6 | — |
+| `tests/test_lax_case_pool_limiter_arms.py` | HARDENED | 0 | 4 | — |
+| `tests/test_lax_reference_crosscheck.py` | HARDENED | 0 | 1 | — |
 | `tests/test_lax_region_band.py` | HARDENED | 0 | 2 | — |
 | `tests/test_ns_heat_conduction.py` | LATENT | 1 | 0 | WALL_ROW_LAW |
 | `tests/test_ns_wall_heat_flux_order.py` | LATENT | 1 | 0 | EVIDENCE |
 | `tests/test_oblique_shock_theta_beta.py` | LATENT | 1 | 0 | ANCHOR_FILE |
 | `tests/test_oss_inventory_dg_registry.py` | HARDENED | 0 | 4 | — |
+| `tests/test_p_refinement_criterion.py` | LATENT | 2 | 0 | — |
+| `tests/test_p_refinement_exact_time.py` | UNRESOLVED | 1 | 0 | — |
 | `tests/test_p_refinement_exponential.py` | LATENT | 1 | 4 | — |
 | `tests/test_p_refinement_exponential_live.py` | UNRESOLVED | 4 | 0 | — |
-| `tests/test_positivity_scaling_limiter.py` | RED-ON-CLEAN | 0 | 1 | — |
+| `tests/test_positivity_scaling_limiter.py` | HARDENED | 0 | 1 | — |
 | `tests/test_repro_cks1998.py` | UNRESOLVED | 1 | 0 | — |
 | `tests/test_riemann_vacuum_1d.py` | UNRESOLVED | 1 | 0 | — |
 | `tests/test_shu_osher_case_pool.py` | LATENT | 1 | 1 | COMMITTED_REFERENCE |
@@ -51,9 +57,11 @@
 | `tests/test_solid_body_rotation_case_pool.py` | HARDENED | 0 | 1 | — |
 | `tests/test_swe_manning_friction.py` | HARDENED | 0 | 1 | — |
 | `tests/test_swe_wb_drift_law_artifact.py` | HARDENED | 0 | 3 | — |
+| `tests/test_swe_wb_drift_law_time_scaling.py` | HARDENED | 0 | 4 | — |
 | `tests/test_upstream_delta.py` | UNRESOLVED | 4 | 0 | — |
 | `tests/test_verification_ladder.py` | UNRESOLVED | 1 | 0 | — |
 | `tests/test_weno_limiter_policy.py` | HARDENED | 0 | 1 | — |
+| `tests/test_xval_oss_shu_osher.py` | UNRESOLVED | 2 | 0 | — |
 
 ## VACUOUS 明细（当下零验证）
 

@@ -20,6 +20,7 @@ the classifier itself has teeth on synthetic modules.
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -60,6 +61,82 @@ def test_committed_census_matches_a_fresh_scan():
         "`python tools/audit_gate_vacuity.py --write`")
     assert committed["verdicts"] == fresh["verdicts"]
     assert committed["n_test_modules"] == len(fresh["modules"])
+
+
+def _absolute_strings(obj, where: str = "") -> list[str]:
+    """Every string in the payload that is an absolute filesystem path."""
+    out: list[str] = []
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            out += _absolute_strings(value, f"{where}.{key}")
+    elif isinstance(obj, list):
+        for i, value in enumerate(obj):
+            out += _absolute_strings(value, f"{where}[{i}]")
+    elif isinstance(obj, str) and obj.startswith("/"):
+        out.append(f"{where}={obj}")
+    return out
+
+
+def test_census_carries_no_checkout_specific_path():
+    """Regression: schema 1 stored the *generator's* absolute worktree root.
+
+    ``--check`` then compared absolute paths, which can only agree on the machine
+    that wrote the file: on ``main`` and in CI the drift guard was red (and
+    ``test_committed_census_matches_a_fresh_scan`` failed) while the tree was
+    consistent -- a drift guard that cannot pass outside one worktree, i.e. the
+    very vacuity this census exists to count.  Every path must be repo-relative.
+    """
+    data = json.loads(CENSUS.read_text())
+    offenders = _absolute_strings(data)
+    assert not offenders, (
+        "census records absolute paths, so --check can only pass on the machine "
+        f"that generated it: {offenders[:5]}")
+    assert data.get("schema", 0) >= 2, "census schema 1 embedded an absolute repo_root"
+
+
+def test_drift_guard_passes_in_a_foreign_checkout(tmp_path):
+    """The census must reproduce from a *clean checkout at another path*.
+
+    ``--check`` is the guard that the committed census is not hand-edited; it is
+    only worth having if it can pass somewhere other than the author's worktree.
+    This builds a faithful stand-in for another checkout -- the files git carries
+    that the census reads (``tests/``, the tool, the committed census, and every
+    *tracked* artifact it resolves) at a different absolute path -- and requires
+    ``--check`` to be green there.
+    """
+    data = json.loads(CENSUS.read_text())
+    tracked = set(gv._tracked_files() or ())
+    wanted = [Path("tools/audit_gate_vacuity.py"), Path("docs/gate_vacuity/gate_vacuity.json"),
+              Path("docs/GATE-VACUITY-AUDIT.md")]
+    wanted += [Path("tests") / p.name for p in (ROOT / "tests").glob("*.py")]
+    for module in data["modules"]:
+        for record in module["artifacts"] + module["skip_sites"]:
+            rel = record.get("path") or record.get("artifact")
+            if rel and rel in tracked:  # untracked artifacts are absent from a clean checkout
+                wanted.append(Path(rel))
+    checkout = tmp_path / "another_checkout"
+    for rel in wanted:
+        src = ROOT / rel
+        if not src.is_file():
+            continue
+        dst = checkout / rel
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            dst.hardlink_to(src)
+        except OSError:  # different filesystem
+            dst.write_bytes(src.read_bytes())
+
+    def git(*args: str) -> None:
+        subprocess.run(["git", *args], cwd=checkout, check=True, capture_output=True)
+
+    git("init", "-q")
+    git("add", "-A")
+    assert str(checkout) != str(ROOT)
+    run = subprocess.run([sys.executable, "tools/audit_gate_vacuity.py", "--check"],
+                         cwd=checkout, capture_output=True, text=True)
+    assert run.returncode == 0, (
+        "the drift guard is red in a checkout other than the author's:\n"
+        f"{run.stdout}{run.stderr}")
 
 
 def test_report_is_rendered_from_the_census():
