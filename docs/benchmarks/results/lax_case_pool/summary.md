@@ -29,6 +29,29 @@ Case: Lax tube, gamma=1.4, t=0.13, x0=0.5, CFL=0.35
 | 3 | 200 | 2547 | 1.21475e-02 | 1.69899e-02 | 9.56428e-03 | 7.34051e-03 | 59.1 |
 | 3 | 400 | 5109 | 8.68646e-03 | 1.23092e-02 | 7.31418e-03 | 6.07272e-03 | 142.6 |
 
+## acceptance (ledger CASE-LAX-DG: ref = exact solution, tolerance < 3 %)
+
+Gate A0 -- relative L2 at the production leg (ledger arm) and relative L1 on every ladder leg (stricter arm), on the element Gauss nodes, denominator = norm of the exact solution; regions: whole field, every field, no wave band removed, no exemption.
+
+| arm | metric | leg / legs | worst | verdict |
+|---|---|---|---|---|
+| production_l2 | relative L2 | p3.N400 | 3.11556e-02 | FAIL |
+| ladder_l1 | relative L1 | 9 legs | 2.32905e-02 | PASS |
+
+| leg | rel L2 rho | rel L2 u | rel L2 p | rel L1 rho | rel L1 u | rel L1 p |
+|---|---|---|---|---|---|---|
+| p1.N100 | n/a | n/a | n/a | 2.32905e-02 | 1.03142e-02 | 5.22656e-03 |
+| p1.N200 | n/a | n/a | n/a | 1.36030e-02 | 4.39831e-03 | 2.50089e-03 |
+| p1.N400 | n/a | n/a | n/a | 7.21833e-03 | 1.95720e-03 | 1.10455e-03 |
+| p2.N100 | n/a | n/a | n/a | 1.61857e-02 | 1.14336e-02 | 6.36031e-03 |
+| p2.N200 | n/a | n/a | n/a | 9.22761e-03 | 4.72106e-03 | 2.88266e-03 |
+| p2.N400 | n/a | n/a | n/a | 4.52816e-03 | 1.66311e-03 | 1.09847e-03 |
+| p3.N100 | n/a | n/a | n/a | 1.58470e-02 | 2.05087e-02 | 1.15437e-02 |
+| p3.N200 | n/a | n/a | n/a | 1.21475e-02 | 1.69899e-02 | 9.56428e-03 |
+| p3.N400 | 0.03116 | 0.02248 | 0.01305 | 8.68646e-03 | 1.23092e-02 | 7.31418e-03 |
+
+A0 verdict: **FAIL** -- ledger arm (relative L2, p3.N400) worst 3.11556e-02 vs tolerance 3.00e-02 (margin x0.963); stricter L1 arm over 9 legs worst 2.32905e-02.
+
 ## gates
 
 | gate | verdict | detail |
@@ -63,5 +86,10 @@ Case: Lax tube, gamma=1.4, t=0.13, x0=0.5, CFL=0.35
 | p3 | 0.00e+00 | 2.40e-01 | True |
 
 Retired-rule R3 (4-cell band) status for the record: **FAIL**
+
+Verification verdict (supplementary order gates): **FAIL**
+Acceptance verdict (ledger A0, < 3 % vs exact solution): **FAIL**
+
+The two layers answer different questions and are reported separately: A0 asks whether the solution sits within the registered distance of the exact reference, the order gates ask whether the family converges at design order in the presence of discontinuities. The verification FAIL is kept as-is (honest FAIL), it is not re-labelled by an A0 PASS.
 
 Overall verdict: **FAIL**
