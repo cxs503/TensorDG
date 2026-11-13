@@ -57,6 +57,17 @@ WAVE_NUMBER = 5.0
 RIGHT_STATE = (1.0, 0.0, 1.0)
 #: Mach number of the incident shock (into the ``rho = p = 1`` still gas)
 SHOCK_MACH = 3.0
+#: margin past the diaphragm whose left side is still the uniform left state.
+#: Every signal the sine sheds is *right-going* in the lab frame
+#: (``u_L - c_L = 0.69 > 0``), so this window is only a buffer for the shock
+#: ramp, not a physics cut-off.
+PLATEAU_MARGIN = 1.0
+#: margin ahead of the analytic shock front that is still undisturbed initial
+#: data; the sine there has not been reached by any wave yet.
+UNDISTURBED_MARGIN = 0.2
+#: density level used to locate the transmitted shock: half way between the
+#: post-shock plateau and the largest pre-shock density (``1 + amplitude``)
+SHOCK_LEVEL = 0.5 * (LEFT_STATE[0] + RIGHT_STATE[0] + WAVE_AMPLITUDE)
 
 
 def initial_state(x):
@@ -147,31 +158,48 @@ def rankine_hugoniot_anchor() -> dict:
         # x = -4 + (u_L - c_L) t; everything to the left stays at the left state
         "quiet_zone_head_analytic": DIAPHRAGM + (
             u_l - math.sqrt(GAMMA * p_l / rho_l)) * FINAL_TIME,
-        "post_shock_plateau": {"rho": rho_l, "window": [DOMAIN[0], -3.0]},
+        "post_shock_plateau": {"rho": rho_l,
+                               "window": [DOMAIN[0], DIAPHRAGM + PLATEAU_MARGIN]},
+        # the undisturbed window is anchored to the *analytic* front, never to a
+        # hand-picked abscissa: if the final time or the Mach number changes the
+        # window follows the physics instead of silently measuring the shock.
+        "undisturbed_window": [DIAPHRAGM + shock_speed * FINAL_TIME + UNDISTURBED_MARGIN,
+                               DOMAIN[1]],
     }
 
 
-def exact_mass_budget(samples: int = 2_000_000) -> dict:
-    """Exact mass in the domain at ``t = 1.8`` (analytic, no discretisation).
+def exact_mass_budget(samples: int | None = None) -> dict:
+    """Exact mass in the domain at ``t = 1.8`` (closed form, no discretisation).
 
     No wave ever reaches ``x = -5`` (everything moves right), so the boundary
     flux is the constant ``rho_L u_L`` and ``M(t) = M(0) + rho_L u_L t`` with the
-    inflow counted positive.
+    inflow counted positive.  ``M(0)`` is integrated in closed form,
+
+        M(0) = rho_L (x_d - x_0) + rho_R (x_1 - x_d)
+               + A [cos(k x_d) - cos(k x_1)] / k,
+
+    so the budget carries no quadrature error at all: the closure residual of a
+    run is then a statement about the solver, not about the reference value.
+    ``samples`` is accepted for call-site compatibility and ignored.
     """
     rho_l, u_l, _ = LEFT_STATE
-    length = DOMAIN[1] - DOMAIN[0]
-    x = np.linspace(DOMAIN[0], DOMAIN[1], samples, endpoint=False) + 0.5 * length / samples
-    rho0 = np.where(x < DIAPHRAGM, rho_l,
-                    RIGHT_STATE[0] + WAVE_AMPLITUDE * np.sin(WAVE_NUMBER * x))
-    mass0 = float(np.sum(rho0) * length / samples)
+    x0, x1 = DOMAIN
+    amplitude, wavenumber = WAVE_AMPLITUDE, WAVE_NUMBER
+    mass_left = rho_l * (DIAPHRAGM - x0)
+    mass_right = RIGHT_STATE[0] * (x1 - DIAPHRAGM) + amplitude * (
+        math.cos(wavenumber * DIAPHRAGM) - math.cos(wavenumber * x1)) / wavenumber
+    mass0 = mass_left + mass_right
     flux = rho_l * u_l
     return {
         "mass_initial": mass0,
+        "mass_initial_left_of_diaphragm": mass_left,
+        "mass_initial_right_of_diaphragm": mass_right,
         "left_boundary_mass_flux": flux,
         "mass_inflow": flux * FINAL_TIME,
         "mass_final_predicted": mass0 + flux * FINAL_TIME,
         "mass_inflow_relative_to_initial": flux * FINAL_TIME / mass0,
         "closure": "inflow through x=-5 only; no wave reaches the boundary",
+        "quadrature": "closed form (sin integral), no numerical integration",
     }
 
 
@@ -190,38 +218,136 @@ def coarsen(values, factor: int):
     return values.reshape(values.shape[0] // factor, factor).mean(axis=1)
 
 
-def relative_l1_error(candidate, reference, factor: int = 1) -> dict:
-    """Relative L1/L2/Linf of ``candidate`` against ``reference`` (same grid after coarsening).
+def resample_cell_averages(values, target_ncells: int, domain=DOMAIN):
+    """Volume-average a uniform-grid cell-average profile onto another uniform grid.
 
-    ``factor`` is the refinement ratio of the *reference* grid to the candidate
-    grid (``reference.size // candidate.size``); it is applied to the reference,
-    never to the candidate.
+    Both grids cover the same ``domain``.  A cell average is, by definition, the
+    mean of a piecewise-constant field over the cell, so the mass integral of the
+    source profile is known exactly and the target average is
+
+        <u>_j = (1/h_j) int_{cell j} u
+
+    with the fractional overlap taken into account.  Mass is therefore preserved to
+    round-off for *any* resolution ratio, integer or not - which is what lets a
+    400-cell solution be compared with the committed 300-cell reference (neither
+    grid divides the other).
     """
     import numpy as _np
 
-    cand = _np.asarray(candidate, dtype=float)
-    ref = coarsen(reference, factor) if factor > 1 else _np.asarray(reference, dtype=float)
+    values = _np.asarray(values, dtype=float).ravel()
+    n_src = values.size
+    if target_ncells < 1:
+        raise ValueError(f"target_ncells must be positive, got {target_ncells}")
+    if target_ncells == n_src:
+        return values.copy()
+    x0, x1 = domain
+    h_src = (x1 - x0) / n_src
+    edges_src = x0 + h_src * _np.arange(n_src + 1)
+    cumulative = _np.concatenate(([0.0], _np.cumsum(values * h_src)))
+
+    def antiderivative(edge):
+        """``int_{x0}^{edge} u``  for the piecewise-constant profile."""
+        index = _np.clip(_np.searchsorted(edges_src, edge, side="right") - 1, 0, n_src - 1)
+        return cumulative[index] + (edge - edges_src[index]) * values[index]
+
+    edges_tgt = x0 + (x1 - x0) / target_ncells * _np.arange(target_ncells + 1)
+    mass_tgt = antiderivative(edges_tgt[1:]) - antiderivative(edges_tgt[:-1])
+    return mass_tgt * (target_ncells / (x1 - x0))
+
+
+def relative_l1_error(candidate, reference, factor: int = 1, domain=None) -> dict:
+    """Relative L1/L2/Linf of ``candidate`` against ``reference``.
+
+    Three comparison modes, in order of preference:
+
+    * ``factor > 1``: ``reference`` lives on a grid ``factor`` times finer and is
+      volume-averaged down with :func:`coarsen` (the fast, exactly conservative
+      path when one resolution divides the other);
+    * equal shapes: compared cell by cell;
+    * otherwise, if ``domain`` is given, both profiles are conservatively
+      re-averaged onto the coarser of the two grids (see
+      :func:`resample_cell_averages`); without ``domain`` a shape mismatch is an
+      error rather than a silent broadcast.
+
+    The chosen mode is echoed under ``comparison`` so a reported number always
+    says which grids were actually compared.
+    """
+    import numpy as _np
+
+    cand = _np.asarray(candidate, dtype=float).ravel()
+    ref = _np.asarray(reference, dtype=float).ravel()
+    comparison = {"method": "direct", "candidate_cells": int(cand.size),
+                  "reference_cells": int(ref.size), "common_grid_cells": int(cand.size)}
+    if factor > 1:
+        ref = coarsen(ref, factor)
+        comparison.update(method="coarsen", coarsen_factor=int(factor),
+                          common_grid_cells=int(ref.size))
     if cand.shape != ref.shape:
-        raise ValueError(f"profile shapes differ: {cand.shape} vs {ref.shape}")
+        if domain is None:
+            raise ValueError(
+                f"profile shapes differ: {cand.shape} vs {ref.shape}; pass "
+                "domain=(x0, x1) to compare two uniform profiles that do not "
+                "share a refinement ratio")
+        common = min(cand.size, ref.size)
+        cand = resample_cell_averages(cand, common, domain)
+        ref = resample_cell_averages(ref, common, domain)
+        comparison.update(method="remap", common_grid_cells=int(common))
     diff = cand - ref
     l1 = float(_np.sum(_np.abs(diff)) / _np.sum(_np.abs(ref)))
     l2 = float(_np.sqrt(_np.sum(diff ** 2) / _np.sum(ref ** 2)))
     linf = float(_np.max(_np.abs(diff)) / _np.max(_np.abs(ref)))
     return {"rel_l1": l1, "rel_l1_percent": 100.0 * l1,
-            "rel_l2_percent": 100.0 * l2, "linf_percent": 100.0 * linf}
+            "rel_l2_percent": 100.0 * l2, "linf_percent": 100.0 * linf,
+            "comparison": comparison}
+
+
+def shock_position(x, rho, level: float | None = None):
+    """Interpolated ``x`` of the transmitted shock (rightmost downward crossing).
+
+    ``rho`` falls through ``level`` from the post-shock plateau to the pre-shock
+    wave, so the shock is the *last* crossing when scanned from the right; the
+    crossing is linearly interpolated between the two straddling cell centres,
+    which removes the ``O(dx)`` quantisation of a nearest-cell pick.
+    ``level`` defaults to :data:`SHOCK_LEVEL`.
+    """
+    import numpy as _np
+
+    x = _np.asarray(x, dtype=float).ravel()
+    rho = _np.asarray(rho, dtype=float).ravel()
+    if x.shape != rho.shape:
+        raise ValueError(f"x and rho differ in shape: {x.shape} vs {rho.shape}")
+    level = SHOCK_LEVEL if level is None else float(level)
+    for i in range(rho.size - 1, 0, -1):
+        if rho[i - 1] > level >= rho[i]:
+            r0, r1 = rho[i - 1], rho[i]
+            if r1 == r0:
+                return float(x[i])
+            return float(x[i - 1] + (level - r0) * (x[i] - x[i - 1]) / (r1 - r0))
+    return None
 
 
 def gate_report(ncells: int, degree: int = 2, limiter: str = "weno", cfl: float = 0.4,
                 reference=None, reference_cells: int | None = None,
-                tolerance_percent: float = 5.0) -> dict:
+                tolerance_percent: float = 5.0, reference_meta: dict | None = None,
+                include_profile: bool = False) -> dict:
     """Solve the case and report the analytic anchors (library-side acceptance).
 
-    ``reference`` is an optional ``(x, rho)`` reference profile (e.g. the
-    converged FV-WENO5 solution shipped in ``benchmarks/data``); when given, the
-    relative L1 error against it is added and compared with ``tolerance_percent``.
+    ``reference`` is an optional ``(x, rho)`` reference profile (e.g. the 300-cell
+    DG profile shipped in ``benchmarks/data/shu_osher_reference.npz``); when given,
+    the relative L1 error against it is added and compared with
+    ``tolerance_percent``.  The reference does **not** have to share a refinement
+    ratio with ``ncells``: profiles are conservatively re-averaged onto the
+    coarser grid (see :func:`relative_l1_error`) and the grid pair actually
+    compared is echoed under ``report["reference"]["comparison"]``.
+
     Without a reference the report still carries the closed-form anchors, which
     need no external data: the post-shock plateau, the exact unshocked sine, the
     global mass budget and the Rankine--Hugoniot shock position.
+
+    ``include_profile=True`` adds the solved cell averages under ``"profile"``
+    (``x``, ``rho``, ``rho_u``, ``rho_e``) so that a caller can measure the *same*
+    field another way without paying for a second solve.  ``main`` strips it before
+    printing, so the CLI record stays plain JSON.
     """
     import numpy as _np
 
@@ -229,17 +355,24 @@ def gate_report(ncells: int, degree: int = 2, limiter: str = "weno", cfl: float 
     x, rho = out["x"], out["rho"]
     anchors = rankine_hugoniot_anchor()
     budget = exact_mass_budget()
-    plateau = rho[(x >= DOMAIN[0]) & (x <= -3.0)]
-    unshocked = x >= 2.6
-    sine = 1.0 + WAVE_AMPLITUDE * _np.sin(WAVE_NUMBER * x[unshocked])
+    # every measurement window is derived from the analytic wave skeleton, so the
+    # report keeps measuring the plateau / the undisturbed sine if the case
+    # parameters (Mach number, final time) are ever changed.
+    plateau_lo, plateau_hi = anchors["post_shock_plateau"]["window"]
+    undisturbed_lo, undisturbed_hi = anchors["undisturbed_window"]
+    plateau = rho[(x >= plateau_lo) & (x <= plateau_hi)]
+    unshocked = (x >= undisturbed_lo) & (x <= undisturbed_hi)
+    n_unshocked = int(_np.count_nonzero(unshocked))
+    if n_unshocked:
+        sine = 1.0 + WAVE_AMPLITUDE * _np.sin(WAVE_NUMBER * x[unshocked])
+        sine_error_percent = 100.0 * float(
+            _np.sum(_np.abs(rho[unshocked] - sine)) / _np.sum(_np.abs(sine)))
+    else:
+        # a grid too coarse to put a cell in the undisturbed window: report the
+        # absence explicitly instead of a silent 0 %
+        sine_error_percent = None
     mass = float(_np.sum(rho) * (DOMAIN[1] - DOMAIN[0]) / rho.size)
-    # rightmost upward crossing of rho = 2.0 is the transmitted shock
-    level = 2.0
-    xs = None
-    for i in range(rho.size - 1, 0, -1):
-        if rho[i - 1] > level >= rho[i]:
-            xs = x[i]
-            break
+    xs = shock_position(x, rho)
     report = {
         "case": CASE_KEY,
         "configuration": {"ncells": ncells, "degree": degree, "limiter": limiter, "cfl": cfl},
@@ -251,25 +384,39 @@ def gate_report(ncells: int, degree: int = 2, limiter: str = "weno", cfl: float 
         "plateau_rho_mean": float(plateau.mean()),
         "plateau_target": LEFT_STATE[0],
         "plateau_dev_percent": 100.0 * abs(float(plateau.mean()) - LEFT_STATE[0]) / LEFT_STATE[0],
-        "preshock_sine_rel_l1_percent": 100.0 * float(
-            _np.sum(_np.abs(rho[unshocked] - sine)) / _np.sum(_np.abs(sine))),
+        "preshock_sine_rel_l1_percent": sine_error_percent,
+        "preshock_sine_cells": n_unshocked,
         "mass_t1p8": mass,
         "mass_analytic": budget["mass_final_predicted"],
         "mass_error_percent_of_initial": 100.0 * abs(
             mass - budget["mass_final_predicted"]) / budget["mass_initial"],
         "shock_position": xs,
         "shock_position_analytic": anchors["shock_position_analytic"],
+        "shock_level": SHOCK_LEVEL,
+        "shock_position_cell_step": float((DOMAIN[1] - DOMAIN[0]) / rho.size),
+        "windows": {"plateau": [plateau_lo, plateau_hi],
+                    "undisturbed": [undisturbed_lo, undisturbed_hi]},
         "tolerance_percent": tolerance_percent,
     }
     if xs is not None:
         report["shock_position_percent_error"] = 100.0 * abs(
             xs - anchors["shock_position_analytic"]) / abs(anchors["shock_position_analytic"])
+    if include_profile:
+        report["profile"] = {"x": x, "rho": rho, "rho_u": out["rho_u"],
+                             "rho_e": out["rho_e"]}
     if reference is not None:
         ref_x, ref_rho = reference
-        factor = len(ref_rho) // ncells
-        err = relative_l1_error(rho, ref_rho, factor)
-        report["reference"] = {"ncells": int(len(ref_rho)), "coarsen_factor": int(factor),
-                               "reference_cells": reference_cells or int(len(ref_rho))}
+        ref_ncells = int(_np.asarray(ref_rho).size)
+        factor = ref_ncells // int(ncells)
+        if factor < 1 or ref_ncells % int(ncells):
+            factor = 1  # no integer refinement ratio: let the remap path do the work
+        err = relative_l1_error(rho, ref_rho, factor, domain=DOMAIN)
+        comparison = err.pop("comparison")
+        report["reference"] = {"ncells": ref_ncells,
+                               "reference_cells": reference_cells or ref_ncells,
+                               "coarsen_factor": int(comparison.get("coarsen_factor", 1)),
+                               "comparison": comparison,
+                               "meta": reference_meta}
         report.update(err)
         report["passes_gate"] = bool(err["rel_l1_percent"] < tolerance_percent)
     else:
@@ -281,9 +428,13 @@ def main(argv=None) -> int:
     """``python -m tensordg.cases.shock_entropy`` - run the case from the library.
 
     Prints the acceptance report as JSON; exit code 0 iff every check passes.
-    With ``--reference`` an ``.npz`` holding ``x`` and ``rho`` (a converged
-    reference profile, e.g. ``benchmarks/data/shu_osher_reference.npz``) the
-    relative error against it is evaluated too.
+    With ``--reference`` an ``.npz`` holding ``x`` and ``rho`` the relative error
+    against it is evaluated too.  The grids need not share a refinement ratio:
+    ``benchmarks/data/shu_osher_reference.npz`` is a *300-cell DG P3* profile, so
+    the comparison is done on the coarser grid after conservative re-averaging.
+    Whatever the file says about itself (its ``meta``) is echoed under
+    ``report["reference"]["meta"]`` so a published number always states which
+    reference it was measured against.
     """
     import argparse
     import json as _json
@@ -301,21 +452,30 @@ def main(argv=None) -> int:
 
     reference = None
     reference_cells = None
+    reference_meta = None
     if args.reference:
         loaded = np.load(args.reference, allow_pickle=True)
         reference = (loaded["x"], loaded["rho"])
         reference_cells = int(reference[0].size)
+        if "meta" in loaded.files:
+            try:
+                reference_meta = _json.loads(str(loaded["meta"]))
+            except ValueError:  # a non-JSON meta must not take the gate down
+                reference_meta = {"raw": str(loaded["meta"])}
     report = gate_report(args.ncells, args.degree, args.limiter, args.cfl,
                          reference=reference, reference_cells=reference_cells,
-                         tolerance_percent=args.tolerance_percent)
+                         tolerance_percent=args.tolerance_percent,
+                         reference_meta=reference_meta)
     text = _json.dumps(report, indent=2)
     print(text)
     if args.json_out:
         from pathlib import Path as _Path
         _Path(args.json_out).write_text(text + "\n")
+    sine_ok = (report["preshock_sine_rel_l1_percent"] is not None
+               and report["preshock_sine_rel_l1_percent"] < 0.5)
     ok = (report["rho_positive"]
           and report["plateau_dev_percent"] < 1.0
-          and report["preshock_sine_rel_l1_percent"] < 0.5
+          and sine_ok
           and report["mass_error_percent_of_initial"] < 0.1
           and (report["passes_gate"] is not False))
     return 0 if ok else 1
