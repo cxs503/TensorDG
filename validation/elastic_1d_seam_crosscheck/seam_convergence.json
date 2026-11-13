@@ -1,0 +1,26 @@
+{
+  "t": 0.7,
+  "degree": 2,
+  "theory_order": 3,
+  "sweep": [
+    {
+      "ncells": 100,
+      "degree": 2,
+      "rel_linf_pct": 0.04040772720070656,
+      "observed_order": null
+    },
+    {
+      "ncells": 200,
+      "degree": 2,
+      "rel_linf_pct": 0.005115393933618911,
+      "observed_order": 2.9817139565425896
+    },
+    {
+      "ncells": 400,
+      "degree": 2,
+      "rel_linf_pct": 0.0006368894355473018,
+      "observed_order": 3.00573049892485
+    }
+  ],
+  "min_observed_order": 2.9817139565425896
+}
