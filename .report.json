@@ -1,9 +1,9 @@
 {
-  "title": "TensorDG SWE Hydrostatic Well-Balanced Implementation (PR#223 Re-open)",
-  "summary": "Re-introduces hydrostatic well-balanced property for 1-D SWE solver with nodal LGL bed representation. All 13 tests pass at machine precision. CI test optimization reduces execution time from ~160s to ~60s.",
-  "scenario_key": "tensordg_swe_hydrostatic_wb",
-  "mission_id": 8740,
-  "tags": ["TensorDG", "SWE", "well-balanced", "hydrostatic", "verification"],
-  "markdown": "# TensorDG SWE Hydrostatic Well-Balanced Implementation\n\n## ① 案例介绍\n\n**物理背景**: 浅水方程(SWE)的静水平衡(lake-at-rest)状态是指自由面η=h+z_b=常数、流速u=0的平衡态。数值格式必须在此状态下保持精确平衡，不产生虚假流速。\n\n**几何与参数**:\n- 平底: z_b=0, η=2.0m\n- 斜坡: z_b=0.5x, η=3.0m\n- 曲底: z_b=0.4sin(πx), η=2.5m\n- Thacker抛物线盆: z_b=-2.0+2.0x², η=1.0m\n\n**关键参数**: DG(P1/P2), HLL通量, CFL=0.3, well_balanced=True\n\n## ② 方法\n\n**核心算法**: 当`well_balanced=True`时，采用LGL节点多项式床面表示：\n1. 床面在LGL节点插值→模态系数\n2. 初始条件在同一LGL节点插值\n3. 床面导数用多项式精确导数\n4. 源项与通量在同一求积点离散\n\n**验证流程**: 13项测试覆盖平底/斜坡/曲底平衡、网格收敛、小扰动演化、wb vs standard对比、元数据验证、长时间稳定性。\n\n## ③ 计算结果\n\n| 测试场景 | Degree | η误差(max) | u_max | 判定 |\n|---------|--------|-----------|-------|------|\n| 平底 | P1 | 1.1e-12 m | 1.8e-12 m/s | ✓ <1e-10 |\n| 平底 | P2 | 1.8e-11 m | 2.5e-11 m/s | ✓ <1e-10 |\n| 斜坡 | P1 | 3.2e-10 m | 4.1e-10 m/s | ✓ <1e-9 |\n| 斜坡 | P2 | 5.8e-09 m | 7.2e-09 m/s | ✓ <1e-8 |\n| 曲底 | P1 | 2.3e-10 m | 3.1e-10 m/s | ✓ <1e-8 |\n| 曲底 | P2 | 1.5e-09 m | 2.2e-09 m/s | ✓ <1e-8 |\n| Thacker盆 | P1 | 5.8e-13 m | 2.4e-12 m/s | ✓ <1e-8 |\n| wb vs std | P1 | 2.3e-10 vs 1.5e-2 | - | ✓ wb优8个量级 |\n\n## ④ 结果图\n\n纯算法/后端任务，无数值场云图需求。验证通过13项机器裁断测试完成。\n\n## ⑤ 注意点\n\n1. **曲底后处理**: `reconstruct_fields`默认用梯形面均值作为单元中心床面高程，对曲底会引入O(dx²)虚假漂移。需传`zb_center=meta[\"zb_modes\"][:, 0]`消除。\n2. **P2舍入残差**: DG弱形式的1/dx前缀放大舍入误差，P2路径的虚假速度地板(~1e-9 m/s)略高于P1，仍远低于物理流速。\n3. **干湿前沿**: well_balanced=True不改变干湿处理，仍需positivity filter。\n4. **CI优化**: long_time测试从final_time=5.0/ncells=50降至2.0/32，全套件从~160s降至~60s。\n\n## ⑥ 误差判定\n\n所有测试η误差均<1e-7 m（判定阈值），u_max均<1e-6 m/s。well_balanced=True相比standard L2投影误差降低8个量级。关键量误差均远低于3%判定标准（实际为机器精度级别1e-10~1e-12）。\n\n**测试执行**: `pytest tests/test_swe_wellbalanced_hydrostatic.py -v -n 4` → 13 passed, 62s",
+  "title": "CASE-LAX-DG: 算例模块自包含化与契约测试",
+  "summary": "将 tensordg/cases/lax_1d.py 从依赖 benchmarks.riemann_exact 改为自包含实现（Newton 迭代 + 解析导数），新增 13 条契约测试全部 PASS。解决案例模块对基准测试套件的跨包依赖问题，使案例模块可独立导入。",
+  "scenario_key": "CASE-LAX-DG",
+  "mission_id": 18714,
+  "tags": ["tensordg", "lax", "case-module", "self-contained", "contract-tests", "verification"],
+  "markdown": "# CASE-LAX-DG · 算例模块自包含化与契约测试\n\n## 实质增量\n- `tensordg/cases/lax_1d.py` 自包含化：内联 `_f_and_derivative` 和 `star_state`，消除对 `benchmarks.riemann_exact` 的跨包依赖\n- 新增 `tests/test_case_lax_1d.py`：13 条契约测试全部 PASS\n\n## 验证结果\n- 星区值 p* = 2.466097919207356, u* = 1.528723026632884（与 Toro 文献值 < 1e-12）\n- Riemann 残差 < 1e-12\n- 13/13 测试 PASS（79.4 s）\n\n## 注意\n- A0 验收状态维持 FAIL（密度 rel L2 = 3.116% > 3%），属求解器精度问题，非本单范围\n- 时间细化测试已知红测未修复，见既有文档",
   "figures": []
 }
