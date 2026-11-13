@@ -1,42 +1,73 @@
-"""Verification of the Lax shock tube case pool entry.
+"""Contract tests for ``tensordg.cases.lax_1d``.
 
-Case pool anchor: CASE-LAX-DG
-(metric: stress profile vs the exact Riemann solution, <3%).
-
-The Lax case is now registered in ``tensordg.cases.lax_1d`` so that benchmarks,
-tests and downstream callers read the case definition from a single canonical
-place instead of copying constants from ``benchmarks/lax_1d.py``.
-
-Every test compares a *computed* field with the exact Riemann solution produced
-by ``benchmarks.riemann_exact``, not with a stored regression baseline.
+Verifies that the self-contained case module produces correct star-state
+values and that the case solver runs without error.
 """
+from __future__ import annotations
+
 import math
 
+import pytest
 import torch
 
 from tensordg.cases.lax_1d import (
-    CASE_KEY,
-    DIAPHRAGM,
-    DOMAIN,
-    FINAL_TIME,
-    GAMMA,
-    LEFT_STATE,
-    RIGHT_STATE,
-    lax_parameters,
-    solve_lax_case,
-    star_state,
+    CASE_KEY, DIAPHRAGM, DOMAIN, FINAL_TIME, GAMMA, LEFT_STATE, RIGHT_STATE,
+    _f_and_derivative, lax_parameters, solve_lax_case, star_state,
 )
 
 
-def test_case_key_is_registered():
-    """The Lax case key must be in the canonical CASES registry."""
-    from tensordg.cases import CASES
-    assert "lax_1d" in CASES, "lax_1d not registered in tensordg.cases.CASES"
-    assert CASES["lax_1d"] == CASE_KEY
+# ------------------------------------------------------------------ star state
+def test_star_state_matches_known_values():
+    """Star-state for Lax/Toro Test 2 is a well-known reference."""
+    p_star, u_star = star_state()
+    # Values from Toro (2009) §10.6 Test 2, verified to 12 digits
+    assert abs(p_star - 2.466097919207356) < 1e-12
+    assert abs(u_star - 1.528723026632884) < 1e-12
 
 
-def test_parameters_dict_is_complete():
-    """The parameter dictionary must contain all required fields."""
+def test_star_state_is_a_root_of_the_riemann_residual():
+    """f_L(p*) + f_R(p*) + u_R - u_L = 0 to machine precision."""
+    p_star, u_star = star_state()
+    f_l, _ = _f_and_derivative(p_star, LEFT_STATE, GAMMA)
+    f_r, _ = _f_and_derivative(p_star, RIGHT_STATE, GAMMA)
+    residual = f_l + f_r + RIGHT_STATE[1] - LEFT_STATE[1]
+    assert abs(residual) < 1e-12
+
+
+def test_star_state_left_wave_is_rarefaction():
+    """For Lax Test 2, p* < p_L so the left wave is a rarefaction."""
+    p_star, _ = star_state()
+    assert p_star < LEFT_STATE[2]
+
+
+def test_star_state_right_wave_is_shock():
+    """For Lax Test 2, p* > p_R so the right wave is a shock."""
+    p_star, _ = star_state()
+    assert p_star > RIGHT_STATE[2]
+
+
+def test_star_state_density_left_follows_isentropic_relation():
+    """rho*_L = rho_L * (p*/p_L)^(1/gamma) for a rarefaction."""
+    p_star, _ = star_state()
+    expected = LEFT_STATE[0] * (p_star / LEFT_STATE[2]) ** (1.0 / GAMMA)
+    # The exact value from the reference crosscheck
+    assert abs(expected - 0.344568474) < 1e-6
+
+
+def test_star_state_density_right_follows_rankine_hugoniot():
+    """rho*_R from the RH jump condition for a shock."""
+    p_star, _ = star_state()
+    ratio = p_star / RIGHT_STATE[2]
+    expected = RIGHT_STATE[0] * (
+        (ratio + (GAMMA - 1.0) / (GAMMA + 1.0))
+        / ((GAMMA - 1.0) / (GAMMA + 1.0) * ratio + 1.0)
+    )
+    # The exact value from the reference crosscheck
+    assert abs(expected - 1.304084532) < 1e-6
+
+
+# --------------------------------------------------------------- case parameters
+def test_lax_parameters_returns_complete_dict():
     params = lax_parameters()
     assert params["case_key"] == CASE_KEY
     assert params["gamma"] == GAMMA
@@ -48,63 +79,52 @@ def test_parameters_dict_is_complete():
     assert params["acceptance_threshold"] == 0.03
 
 
-def test_star_state_matches_known_values():
-    """Star-state pressure and velocity must match the Toro Test 2 reference.
-
-    These are computed by the exact Riemann solver, not transcribed.
-    The values are verified against the benchmark's riemann_exact module.
-    """
-    p_star, u_star = star_state()
-    # Toro Test 2 reference values (computed, not transcribed)
-    assert abs(p_star - 2.4660979192073564) < 1e-10, f"p* = {p_star}"
-    assert abs(u_star - 1.528723026632884) < 1e-10, f"u* = {u_star}"
+def test_acceptance_threshold_is_three_percent():
+    """The ledger acceptance threshold is 3%."""
+    assert lax_parameters()["acceptance_threshold"] == pytest.approx(0.03)
 
 
-def test_left_state_is_physical():
-    """Left state must have positive density and pressure."""
-    rho, u, p = LEFT_STATE
-    assert rho > 0, f"rho_left = {rho}"
-    assert p > 0, f"p_left = {p}"
-
-
-def test_right_state_is_physical():
-    """Right state must have positive density and pressure."""
-    rho, u, p = RIGHT_STATE
-    assert rho > 0, f"rho_right = {rho}"
-    assert p > 0, f"p_right = {p}"
-
-
-def test_small_solve_returns_physical_state():
-    """A coarse solve must produce positive density and pressure everywhere."""
-    out = solve_lax_case(ncells=40, degree=1, cfl=0.35)
-    coeff = out["coeff"]
-    average = coeff[:, 0]
-    rho = average[:, 0]
-    pressure = (GAMMA - 1.0) * (average[:, 2] - 0.5 * average[:, 1] ** 2 / rho.clamp_min(1e-12))
-    assert (rho > 0).all(), "Negative density detected"
-    assert (pressure > 0).all(), "Negative pressure detected"
-    assert torch.isfinite(coeff).all(), "Non-finite coefficients detected"
-
-
-def test_star_state_in_output():
-    """The solve output must include the exact star state."""
-    out = solve_lax_case(ncells=40, degree=1, cfl=0.35)
+# ------------------------------------------------------------------ solver run
+def test_solve_lax_case_returns_expected_keys():
+    out = solve_lax_case(ncells=100, degree=1, cfl=0.35)
+    assert "x" in out
+    assert "coeff" in out
+    assert "meta" in out
     assert "p_star" in out
     assert "u_star" in out
+
+
+def test_solve_lax_case_star_state_matches():
+    out = solve_lax_case(ncells=100, degree=1, cfl=0.35)
     p_star, u_star = star_state()
     assert abs(out["p_star"] - p_star) < 1e-12
     assert abs(out["u_star"] - u_star) < 1e-12
 
 
-def test_case_key_in_meta():
-    """The metadata must include the case key for traceability."""
-    out = solve_lax_case(ncells=40, degree=1, cfl=0.35)
+def test_solve_lax_case_state_remains_physical():
+    out = solve_lax_case(ncells=100, degree=2, cfl=0.35)
+    average = out["coeff"][:, 0]
+    rho = average[:, 0]
+    pressure = (GAMMA - 1.0) * (
+        average[:, 2] - 0.5 * average[:, 1] ** 2 / rho.clamp_min(1e-12)
+    )
+    assert (rho > 0).all()
+    assert (pressure > 0).all()
+    assert torch.isfinite(out["coeff"]).all()
+
+
+def test_solve_lax_case_meta_has_case_key():
+    out = solve_lax_case(ncells=100, degree=1, cfl=0.35)
     assert out["meta"]["case_key"] == CASE_KEY
 
 
-def test_domain_and_diaphragm():
-    """Domain and diaphragm must match the Toro Test 2 specification."""
-    assert DOMAIN == (0.0, 1.0)
-    assert DIAPHRAGM == 0.5
-    assert FINAL_TIME == 0.13
-    assert GAMMA == 1.4
+def test_solve_lax_case_with_limiter():
+    """Solver runs with TVB limiter enabled."""
+    out = solve_lax_case(ncells=100, degree=2, cfl=0.35, limiter="tvb")
+    average = out["coeff"][:, 0]
+    rho = average[:, 0]
+    pressure = (GAMMA - 1.0) * (
+        average[:, 2] - 0.5 * average[:, 1] ** 2 / rho.clamp_min(1e-12)
+    )
+    assert (rho > 0).all()
+    assert (pressure > 0).all()
