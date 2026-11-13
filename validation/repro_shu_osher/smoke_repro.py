@@ -3,8 +3,11 @@
 The full ladder in ``run_all.sh`` takes ~30 min.  This script re-runs *one*
 configuration from scratch (default: DG P1 N=200, ~25 s), rebuilds every derived
 number from that fresh run, and compares it against the numbers tabulated in
-``runs/shu_osher_case_pool/metrics.json``.  It is the cheap proof that the
-committed artifacts are still produced by the committed code, not only stored.
+``runs/shu_osher_case_pool/metrics.json`` -- or, on a clean checkout where the
+study has not been re-run, the git-tracked copy in
+``validation/repro_shu_osher/artifacts/metrics.json`` (see :mod:`bundle`).  It is
+the cheap proof that the committed artifacts are still produced by the committed
+code, not only stored.
 
 It also re-checks the closed-form anchors the benchmark leans on:
 
@@ -18,6 +21,7 @@ Usage::
     python validation/repro_shu_osher/smoke_repro.py              # P1 / N=200
     python validation/repro_shu_osher/smoke_repro.py --degree 2 --ncells 400
     python validation/repro_shu_osher/smoke_repro.py --tol-percent 1e-3
+    python validation/repro_shu_osher/smoke_repro.py --dry-run   # resolve + plan only
 
 Exit code 0 iff the fresh run reproduces the tabulated entry (within
 ``--tol-percent``, relative) and every analytic anchor holds.  The JSON record
@@ -36,12 +40,19 @@ import numpy as np
 if __package__ in (None, ""):  # allow ``python validation/repro_shu_osher/smoke_repro.py``
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+try:  # both ``python validation/.../smoke_repro.py`` and ``-m`` must work
+    from . import bundle
+except ImportError:  # pragma: no cover - plain-script invocation
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import bundle
+
 from benchmarks.shu_osher_case_pool import coarsen, profile_metrics, rankine_hugoniot_anchor
 from benchmarks.shu_osher_1d import solve_case
 from tensordg.cases.shock_entropy import DOMAIN, GAMMA, LEFT_STATE, exact_mass_budget
 
-RUN = Path("runs/shu_osher_case_pool")
-OUT = Path("validation/repro_shu_osher/artifacts")
+# fresh study output if present, else the git-tracked curated copy
+RUN, RUN_SOURCE = bundle.resolve_run_dir()
+OUT = bundle.CURATED
 TOLERANCE_PERCENT = 5.0
 
 
@@ -62,6 +73,8 @@ def main(argv=None) -> int:
     ap.add_argument("--reference-cells", type=int, default=3200)
     ap.add_argument("--tol-percent", type=float, default=1e-3,
                     help="allowed relative drift of rel_L1 vs the tabulated value, in percent")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="resolve the artifacts and print the plan, do not solve")
     args = ap.parse_args(argv)
 
     tab = {(r["ncells"], r["degree"], r["limiter"], round(float(r["cfl"]), 6)): r
@@ -70,6 +83,16 @@ def main(argv=None) -> int:
     if key not in tab:
         raise SystemExit(f"configuration {key} is not in metrics.json (have {sorted(tab)})")
     expected = tab[key]
+
+    if args.dry_run:
+        print(json.dumps({"configuration": {"ncells": args.ncells, "degree": args.degree,
+                                           "limiter": args.limiter, "cfl": args.cfl},
+                          "run_dir": str(RUN), "artifact_source": RUN_SOURCE,
+                          "tabulated": {k: expected[k] for k in
+                                        ("rel_l1_percent", "rel_l2_percent", "steps")},
+                          "tolerance_percent": TOLERANCE_PERCENT},
+                         indent=2))
+        return 0
 
     start = time.perf_counter()
     x, state, meta = solve_case(args.ncells, args.degree, args.limiter, cfl=args.cfl)
@@ -117,6 +140,8 @@ def main(argv=None) -> int:
                 "linf_percent": round(linf, 6), "rho_min": round(float(rho.min()), 6),
                 "rho_max": round(float(rho.max()), 6),
                 "shock_position": round(float(m["shock_position"]), 6)},
+        "artifact_source": RUN_SOURCE,
+        "run_dir": str(RUN),
         "tabulated": {"rel_l1_percent": expected["rel_l1_percent"],
                       "rel_l2_percent": expected["rel_l2_percent"],
                       "steps": expected["steps"],

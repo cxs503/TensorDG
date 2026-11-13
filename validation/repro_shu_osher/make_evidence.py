@@ -1,6 +1,8 @@
 """Publish the Shu--Osher case-pool evidence bundle from the run artifacts.
 
-Reads ``runs/shu_osher_case_pool/metrics.json`` + ``profiles.npz`` and writes,
+Reads ``runs/shu_osher_case_pool/metrics.json`` + ``profiles.npz`` (or, on a
+clean checkout, the git-tracked copy under ``validation/repro_shu_osher/artifacts``
+- see :mod:`bundle`) and writes,
 with every number injected from the artifacts (nothing hand-copied):
 
     validation/repro_shu_osher/benchmark_ref_vs_got.json   machine-readable table
@@ -23,10 +25,18 @@ import json
 import shutil
 from pathlib import Path
 
-RUN = Path("runs/shu_osher_case_pool")
-OUT = Path("validation/repro_shu_osher")
-ART = OUT / "artifacts"
-FIGDIR = Path("docs/figures")
+try:  # both ``python validation/.../make_evidence.py`` and ``-m`` must work
+    from . import bundle
+except ImportError:  # pragma: no cover - plain-script invocation
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import bundle
+
+# fresh study output if present, else the git-tracked curated copy
+RUN, RUN_SOURCE = bundle.resolve_run_dir()
+OUT = bundle.BUNDLE
+ART = bundle.CURATED
+FIGDIR = bundle.REPO / "docs" / "figures"
 TOLERANCE_PERCENT = 5.0
 CASE = "CASE-SHU-OSHER-DG"
 
@@ -152,27 +162,27 @@ def main(argv=None) -> int:
 
     # --------------------------------------------------- curated artifact copy
     ART.mkdir(parents=True, exist_ok=True)
-    copied = []
-    for name in ("metrics.json", "profiles.npz"):
-        shutil.copy2(RUN / name, ART / name)
-        copied.append(ART / name)
-    (ART / "raw").mkdir(exist_ok=True)
-    for raw in sorted((RUN / "raw").glob("*.npz")):
-        shutil.copy2(raw, ART / "raw" / raw.name)
-        copied.append(ART / "raw" / raw.name)
-    figs = []
-    for fig in sorted(FIGDIR.glob("shu_osher_case_pool_*.png")):
-        shutil.copy2(fig, ART / fig.name)
-        copied.append(FIGDIR / fig.name)
-        figs.append(fig)
+    copied: list[Path] = []
+    if RUN.resolve() == ART.resolve():
+        # fresh checkout (no runs/): the curated copy *is* the source, so only the
+        # derived tables above are refreshed - re-copying would be a no-op
+        copied += [ART / "metrics.json", ART / "profiles.npz"]
+        copied += sorted((ART / "raw").glob("*.npz"))
+    else:
+        for name in ("metrics.json", "profiles.npz"):
+            shutil.copy2(RUN / name, ART / name)
+            copied.append(ART / name)
+        (ART / "raw").mkdir(exist_ok=True)
+        for raw in sorted((RUN / "raw").glob("*.npz")):
+            shutil.copy2(raw, ART / "raw" / raw.name)
+            copied.append(ART / "raw" / raw.name)
+    # figures are tracked under docs/figures: hash them, do not duplicate the PNGs
+    copied += sorted(FIGDIR.glob("shu_osher_case_pool_*.png"))
     log = Path("/tmp/run_all.log")
     if log.exists():
         shutil.copy2(log, ART / "run_all.log")
-        copied.append(Path("/tmp/run_all.log").rename(ART / "run_all.log"))
-    checks = {}
-    for p in copied:
-        target = ART / p.name if p.parent == FIGDIR else p
-        checks[target.name] = sha256(target)
+        copied.append(ART / "run_all.log")
+    checks = {bundle.repo_relative(path): sha256(path) for path in copied}
     (OUT / "artifacts.sha256.json").write_text(json.dumps(checks, indent=2) + "\n")
 
     # ------------------------------------------------------------- evidence.md
@@ -185,6 +195,7 @@ def main(argv=None) -> int:
         "| entry | `python -m benchmarks.shu_osher_case_pool merge` |",
         "| repro | `bash validation/repro_shu_osher/run_all.sh` |",
         "| run artifacts | `validation/repro_shu_osher/artifacts/{metrics.json,profiles.npz,raw/*.npz}` |",
+        "| artifact source | `" + RUN_SOURCE + "` (`" + str(RUN) + "`) |",
         "| benchmark ref vs got | `validation/repro_shu_osher/benchmark_ref_vs_got.json` |",
         "| report | `docs/reports/shu-osher-dg-case-pool.md` |",
         "| tests | `tests/test_shu_osher_case_pool.py`, `tests/test_shock_entropy_case.py` |",
