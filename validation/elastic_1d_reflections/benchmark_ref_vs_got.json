@@ -1,0 +1,145 @@
+{
+  "all_rows_pass": true,
+  "case": "dalembert-elastic-rod-1d",
+  "config": {
+    "c": 1.0,
+    "center": 0.5,
+    "cfl": 0.3,
+    "degree": 2,
+    "length": 1.0,
+    "rho": 1.0,
+    "sweep_cells": 200,
+    "transit_unit": "c t / L",
+    "width": 0.05,
+    "young": 1.0
+  },
+  "git_sha": "95dc7f8",
+  "kind": "benchmark_ref_vs_got",
+  "reference": {
+    "clamped-free": "4L-periodic continuation, odd about x=0, even about x=L",
+    "literature": "K. F. Graff, Wave Motion in Elastic Solids (1975), ch. 1: reflection sign at clamped (v=0) and free (sigma=0) ends",
+    "periodic": "sum_n V(x -/+ c t - n L)"
+  },
+  "repro_cmd": "python -m benchmarks.elastic_1d_reflections --output-dir validation/elastic_1d_reflections",
+  "rows": [
+    {
+      "got": 0.0024262813515306446,
+      "note": "graded value is a percentage error, ref = 0",
+      "quantity": "periodic bar, energy-norm error of (v, sigma) vs image-series exact solution after 2 transits (N=200, P2)",
+      "ref": 0.0,
+      "rel_error_pct": 0.24262813515306447,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": 0.0028762521085835503,
+      "note": "graded value is a percentage error, ref = 0",
+      "quantity": "periodic bar, energy-norm error of (v, sigma) vs image-series exact solution after 4 transits (N=200, P2)",
+      "ref": 0.0,
+      "rel_error_pct": 0.287625210858355,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": 0.0027424763931445475,
+      "note": "graded value is a percentage error, ref = 0",
+      "quantity": "clamped-free bar, energy-norm error of (v, sigma) vs image-series exact solution after 3.5 transits (N=200, P2)",
+      "ref": 0.0,
+      "rel_error_pct": 0.2742476393144547,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": 0.9999926642800351,
+      "note": "",
+      "quantity": "periodic reassembly peak velocity at t = L/c (exact 1.0)",
+      "ref": 1.0,
+      "rel_error_pct": 0.0007335719964918219,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": 0.9999790046613143,
+      "note": "",
+      "quantity": "clamped-free peak velocity at 3.5 transits",
+      "ref": 0.9999935250094976,
+      "rel_error_pct": 0.001452044220300321,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": 0.0007637166555139443,
+      "note": "graded value is a percentage drift, ref = 0",
+      "quantity": "periodic elastic energy drift over 4 transits",
+      "ref": 0.0,
+      "rel_error_pct": 0.07637166555139444,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": 0.0005165172998061135,
+      "note": "graded value is a percentage leak, ref = 0",
+      "quantity": "clamped end velocity leakage |v(0)| / max|v|",
+      "ref": 0.0,
+      "rel_error_pct": 0.05165172998061135,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": 0.0005165172998059914,
+      "note": "graded value is a percentage leak, ref = 0",
+      "quantity": "free end stress leakage max|sigma(L)| / max|sigma|",
+      "ref": 0.0,
+      "rel_error_pct": 0.051651729980599144,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": 9.11935794042572e-15,
+      "note": "graded value is a percentage of the unit pulse, ref = 0",
+      "quantity": "image sum vs single-image closed form at t=0.2 (max deviation)",
+      "ref": 0.0,
+      "rel_error_pct": 9.11935794042572e-13,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": 0.0,
+      "note": "graded value is a percentage of the unit pulse, ref = 0",
+      "quantity": "image sum: |v(0)| and |sigma(L)| for t up to 7.5 (max)",
+      "ref": 0.0,
+      "rel_error_pct": 0.0,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": "ValueError",
+      "note": "seam limit c*t <= 0.5",
+      "quantity": "dalembert_pulse(c*t=0.6) raises instead of returning a wrapped-away field",
+      "ref": "ValueError",
+      "rel_error_pct": 0.0,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": 1.0,
+      "note": "wrong-reference error 100.00%",
+      "quantity": "fault injection: same solution graded against a wrong-sign reflection series must be rejected",
+      "ref": 1.0,
+      "rel_error_pct": 0.0,
+      "tolerance_pct": 2.0,
+      "verdict": "PASS"
+    },
+    {
+      "got": 0.9999956336918441,
+      "note": "got must exceed the acceptance threshold",
+      "quantity": "fault injection: wrong reference must not be accepted by the graded metric",
+      "ref": 0.02,
+      "rel_error_pct": 0.0,
+      "tolerance_pct": 1.0,
+      "verdict": "PASS"
+    }
+  ],
+  "tolerance_pct": 2.0,
+  "worst_rel_error_pct": 0.287625210858355
+}

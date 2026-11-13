@@ -112,21 +112,103 @@ def initial_pulse_stress(x: torch.Tensor) -> torch.Tensor:
     return torch.zeros_like(x)
 
 
+def _seam_limit(length: float = 1.0, center: float = 0.5) -> float:
+    """Largest ``c t`` for which :func:`dalembert_pulse` is still exact."""
+    return min(center, length - center)
+
+
 def dalembert_pulse(x: torch.Tensor, t: float, rho: float = 1.0,
                     young: float = 1.0, center: float = 0.5,
-                    width: float = 0.05):
+                    width: float = 0.05, length: float = 1.0,
+                    strict: bool = True):
     """Exact two-wave (d'Alembert) solution of the periodic pulse case.
 
     Returns ``(v, sigma)``.  Valid while the two pulses do not meet again
-    through the periodic seam, i.e. for ``c t < min(center, 1-center)`` used
-    in the benchmarks with a pulse narrower than the domain half-width.
+    through the periodic seam, i.e. for ``c t <= min(center, length-center)``.
+
+    The local form below is a *single* image: it silently degenerates to
+    ``v ~ 0`` once the packets wrap around the seam, so past that limit it is a
+    wrong reference rather than an approximate one.  ``strict`` therefore
+    raises ``ValueError`` instead of returning a plausible-looking field; use
+    :func:`_dalembert_periodic_images` for any ``t`` (it sums the images) or
+    pass ``strict=False`` to reproduce the old, unguarded behaviour.
     """
     c = elastic_wave_speed(rho, young)
+    limit = _seam_limit(length, center)
+    if strict and c * t > limit * (1.0 + 1e-12):
+        raise ValueError(
+            f"dalembert_pulse is only exact for c*t <= {limit:g} "
+            f"(got c*t = {c * t:g}); the packets have wrapped through the "
+            "periodic seam. Use _dalembert_periodic_images(x, t, ...) for the "
+            "image-summed exact solution, or strict=False for the bare "
+            "single-image form.")
     g_minus = gaussian_pulse(x - c * t, center, width)
     g_plus = gaussian_pulse(x + c * t, center, width)
     v = 0.5 * (g_minus + g_plus)
     sigma = 0.5 * rho * c * (g_plus - g_minus)
     return v, sigma
+
+
+# ---------------------------------------------------------------------------
+# exact solutions past the first seam crossing: image (reflection) series
+# ---------------------------------------------------------------------------
+def _periodic_image_sum(y: torch.Tensor, length: float = 1.0,
+                        center: float = 0.5, width: float = 0.05,
+                        n_images: int = 6) -> torch.Tensor:
+    r"""``length``-periodic continuation ``\tilde V(y) = sum_n V(y - n L)``."""
+    total = torch.zeros_like(y)
+    for n in range(-n_images, n_images + 1):
+        total = total + gaussian_pulse(y - n * length, center, width)
+    return total
+
+
+def _fixed_free_image_sum(y: torch.Tensor, length: float = 1.0,
+                          center: float = 0.5, width: float = 0.05
+                          ) -> torch.Tensor:
+    r"""Image sum for a bar clamped at ``x=0`` and free at ``x=L``.
+
+    ``v=0`` at the clamped end needs the potential continued *oddly* about
+    ``x=0``; ``sigma=0`` at the free end needs it continued *evenly* about
+    ``x=L``.  Together the two symmetries give ``V(y+2L) = -V(y)``, i.e. a
+    ``4L``-periodic continuation -- each transit adds one reflection of the
+    correct sign, which is exactly what the mixed clamped/free ends do.
+    """
+    period = 4.0 * length
+    r = torch.remainder(y, period)
+    flip = r > 2.0 * length
+    r = torch.where(flip, period - r, r)
+    sign = torch.where(flip, -torch.ones_like(r), torch.ones_like(r))
+    folded = torch.where(r > length, 2.0 * length - r, r)
+    return sign * gaussian_pulse(folded, center, width)
+
+
+def _dalembert_from_potential(potential, x: torch.Tensor, t: float,
+                              rho: float, young: float):
+    """``v = (V(x-ct)+V(x+ct))/2``, ``sigma = rho c (V(x+ct)-V(x-ct))/2``."""
+    c = elastic_wave_speed(rho, young)
+    g_plus = potential(x + c * t)
+    g_minus = potential(x - c * t)
+    return 0.5 * (g_minus + g_plus), 0.5 * rho * c * (g_plus - g_minus)
+
+
+def _dalembert_periodic_images(x: torch.Tensor, t: float, length: float = 1.0,
+                               rho: float = 1.0, young: float = 1.0,
+                               center: float = 0.5, width: float = 0.05,
+                               n_images: int = 6):
+    """Exact d'Alembert solution of the periodic bar for *any* ``t``."""
+    return _dalembert_from_potential(
+        lambda y: _periodic_image_sum(y, length, center, width, n_images),
+        x, t, rho, young)
+
+
+def _dalembert_fixed_free_images(x: torch.Tensor, t: float,
+                                 length: float = 1.0, rho: float = 1.0,
+                                 young: float = 1.0, center: float = 0.5,
+                                 width: float = 0.05):
+    """Exact solution of the clamped-free bar for *any* ``t`` (image series)."""
+    return _dalembert_from_potential(
+        lambda y: _fixed_free_image_sum(y, length, center, width),
+        x, t, rho, young)
 
 
 def standing_wave(x: torch.Tensor, t: float, length: float = 1.0,
