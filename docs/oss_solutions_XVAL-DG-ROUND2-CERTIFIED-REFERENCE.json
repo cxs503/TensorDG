@@ -1,0 +1,35 @@
+{
+ "feature_slug": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+ "rows": [
+  {
+   "repo": "TensorDG",
+   "feature_slug": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+   "tag": "oss_survey",
+   "method": "平台 oss_inventory 33 行 DG/WENO/Galerkin 检索 0 命中；集群 ~/oss-cache 扫描未执行（queued）；文献 Shu & Osher JCP 77/83 无表格值，PDF 不可达 → WITHHELD",
+   "files": "docs/XVAL-DG-ROUND2-CERTIFIED-REFERENCE.md#§1",
+   "conventions": "无闭式解的激波算例必须用独立离散化+网格收敛指数(GCI)认证参考解，不可单点细网格冒充参考",
+   "transfer": "同类无解析解算例通用：先查平台库存→外部调研→方法谱系→选型沉淀",
+   "evidence": "psql oss_inventory 33 rows / Shu pub page 200 / ScienceDirect 付费墙实测"
+  },
+  {
+   "repo": "TensorDG",
+   "feature_slug": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+   "tag": "method_selection",
+   "method": "Richardson 外推 + Roache GCI (ASME V&V 20 口径, Fs=1.25)：三级嵌套网格(FV-WENO5/HLLC/SSP-RK3, N=800/1600/3200, r=2)→观测阶 p=log_r(d_coarse/d_fine)→外推 u*=u_f+(u_f-u_c)/(r^p-1)→GCI=Fs·d_fine/(r^p-1) 作为参考解不确定度",
+   "files": "benchmarks/shu_osher_certified_ref.py;tests/test_shu_osher_certified_ref.py",
+   "conventions": "①至少三级嵌套网格(r=2)；②观测阶从实测差值计算而非假设形式阶；③GCI 必须远小于判据门(本例 0.083% << 5%)；④外推剖面与 raw 剖面同存(npz)供下游复用",
+   "transfer": "可迁移至任何无闭式解的 CFD 验证算例：替换 FV 求解器+网格序列+DG 腿配置即可",
+   "evidence": "artifacts/m17487/certified_reference.json;artifacts/m17487/certified_reference.npz;tests/test_shu_osher_certified_ref.py (9 passed)"
+  },
+  {
+   "repo": "TensorDG",
+   "feature_slug": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+   "tag": "verification_results",
+   "method": "11 条 DG 腿(P1/P2/P3 × N=200/400/800 + CFL 敏感性)对认证参考解的 rel L1 误差全部 <5% 门，最差 2.456%(P1 N=200)，最好 0.567%(P2 N=800)；参考解 GCI=0.083%，比最差腿小 29.7 倍",
+   "files": "artifacts/m17487/certified_reference.json;artifacts/m17487/benchmark_ref_vs_got.md;docs/XVAL-DG-ROUND2-CERTIFIED-REFERENCE.md",
+   "conventions": "误差按窗口分解(全域/平台/熵波/未扰正弦)以区分激波抹平与熵波耗散；CFL 敏感性证明时间步长不支配结论",
+   "transfer": "阶梯 N×p + CFL 扫 + 窗口分解 + GCI 不确定度 = 激波-熵波类算例标准验证面",
+   "evidence": "artifacts/m17487/certified_reference.json (all_legs_pass=true, missing_legs=[])"
+  }
+ ]
+}
