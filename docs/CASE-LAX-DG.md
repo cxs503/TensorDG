@@ -2,6 +2,12 @@
 
 > 工件 `runs/lax_case_pool/metrics.json` 首次生成于 2026-11-12T08:46:44Z；m16585 于 **2026-11-12T17:03:14Z** 在干净工作树上全量重跑（`quick=false`，9 腿，墙钟 373.2 s）并把 metrics.json / profiles.npz / 3 张 PNG 随仓提交，阶梯数字与初版逐位一致。本文全部数字由 `benchmarks/lax_case_pool.py` 从该 JSON 注入（零手抄）。
 
+> **口径变更（m16993）**：R3 的解析区遮罩已由 `4·dx` 改为固定物理半宽 `0.02`（闭合 m16606 审计 F1/F2），
+> 同一批解上旧规则的测量保留为 `diagnostics.r3_legacy_band`。因此本文下表的「解析区 rel L1」列
+> 属**改口径前的历史记录**，工件也从 `runs/`（合并门禁不携带）迁到 `docs/benchmarks/results/lax_case_pool/`。
+> 现行数字与新增的时间误差分离见 `docs/CASE-LAX-DG-R3-nested-band-and-dt-split.md`（由
+> `scripts/render_lax_case_pool_doc.py` 从 `metrics.json` 注入）。
+
 ## ① 案例介绍
 
 Lax (1954) 激波管 / Toro (1999) test 2：`[0,1]` 域内隔膜 `x0 = 0.5` 两侧常状态，γ = 1.4，快照时刻 t = 0.13。精确解含四道波：左稀疏波（head → tail）、接触间断、右激波。四道波的位置与星区状态全部有闭式表达，因此该算例自带不需第三方求解器产生的参考值。
