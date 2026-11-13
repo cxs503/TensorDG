@@ -1,6 +1,6 @@
 # 算例池：激波–熵波干扰（Shu–Osher）DG 基准
 
-> 仓库 `TensorDG` · 分支 `agent/m15390` · 生成脚本 `benchmarks/report_shu_osher_case_pool.py`
+> 仓库 `TensorDG` · 生成脚本 `benchmarks/report_shu_osher_case_pool.py`
 > 驱动脚本 `benchmarks/shu_osher_case_pool.py`（DG 阶梯 + 参考解 + CFL 敏感性）
 > 独立参考求解器 `benchmarks/fv_weno5_1d.py`（FV-WENO5/HLLC/SSP-RK3）
 > 工件 `runs/shu_osher_case_pool/{raw/,metrics.json,profiles.npz}`
@@ -47,11 +47,23 @@ non-oscillatory shock-capturing schemes*, **J. Comput. Phys. 77, 439–471** 中
 
 上一版驱动 `run_dg` 把求解器返回的**整个守恒态** `(ncells, 3) = (rho, rho u, rho E)`
 当成密度存进 `rho` 字段。后果是静默的：算例照跑、数字看似合理，但
-$ho E$ 在激波后平台约 39，于是「密度峰值」被高估、与参考解的剖面误差全部作废。
+$\rho E$ 在激波后平台约 40（约十倍于密度），于是「密度峰值」被高估、与参考解的
+剖面比较全部作废。
 本轮由 `tensordg/cases/shock_entropy.py: solve_dg_case` 固定状态列语义（密度=第 0 列），
 并在工件上把旧口径可测地还原出来：
 
-_（未采集：先跑 ladder 再 merge）_
+* 探针工件 `runs/shu_osher_case_pool/raw/dg_cfl0p4_limweno_n200_p1.npz`（N=200, P1, CFL=0.4）。旧口径的剖面按「每单元取三列守恒量的最大值」还原（平台区由 $\rho E$ 主导），两项解析锚同一套判据重算：
+
+| 量 | 正确口径（第 0 列 $\rho$） | 旧口径（三列混充 $\rho$） | 后果 |
+|---|---|---|---|
+| $\max$ | 4.1314 | 40.8742 | 峰值高估 9.89× |
+| 安静区平台偏差 | 0.0007% | 915.43% | 解析锚 ✗ |
+| 激波位置 $x_s$ | 2.4064（误差 0.714%） | 4.9750（误差 108.2%） | 解析锚 ✗ |
+| $\min$ | 0.8009 | -2.07e-04 | 仅 18 个单元的 $\rho u$ 数值零，naive 正性门会误判为不可采纳 |
+
+*读数*：真正的毁伤不是「$ρ$ 变负」（负值只有 2.1e-04 量级，是 $\rho u$ 的数值零），而是**峰值高估约 9.9×** 与**解析锚全破**——安静区平台偏差从 0.0007% 涨到 915%，激波位置误差从 0.71% 涨到 108%。换言之：本算例的**解析锚本来就能抓到这个 bug**，上一版之所以「静默」，是因为报告里没有把锚点施加在最外层输出上。
+
+> **为什么这一节此前是占位符（诚实交代）**：采集该回归项的代码在 m15390 版里把探针路径写成 `dg_cfl0p4_limweno_n200_p1`（漏 `.npz` 后缀），`Path.exists()` 恒 False，整段 exhibit 从未执行，`metrics.json` 里也就没有该键——报告只能落 `未采集` 占位符。本轮补后缀并把它升级为「峰值 + 两项解析锚」的三重可测量项；`tests/test_shu_osher_case_pool.py::test_state_column_regression_is_rederived_from_the_tracked_artifact` 先从 raw npz 独立重算再与 `metrics.json` 对表，钉死这条契约。
 
 回归测试 `tests/test_shock_entropy_case.py::test_solve_dg_case_keeps_the_state_columns_separate`
 锁死该契约（`rho` 必须是密度、`rho_e` 必须另列）。

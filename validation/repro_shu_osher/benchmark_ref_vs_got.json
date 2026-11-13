@@ -236,7 +236,44 @@
     "admissible": true
   },
   "all_configs_pass": true,
-  "state_column_regression": null,
+  "state_column_regression": {
+    "artifact": "runs/shu_osher_case_pool/raw/dg_cfl0p4_limweno_n200_p1.npz",
+    "ncells": 200,
+    "degree": 1,
+    "cfl": 0.4,
+    "density_max_correct": 4.131403521676252,
+    "density_max_if_whole_state_used": 40.87424529295187,
+    "overstatement_factor": 9.893549511321467,
+    "density_min_correct": 0.8009168551548311,
+    "density_min_if_whole_state_used": -0.0002072499892058834,
+    "negative_cells_if_whole_state_used": 18,
+    "column_extrema": {
+      "rho": [
+        0.8009168551548311,
+        4.131403521676252
+      ],
+      "rho_u": [
+        -0.0002072499892058834,
+        10.580578779709608
+      ],
+      "rho_e": [
+        2.4994117459300735,
+        40.87424529295187
+      ]
+    },
+    "plateau_dev_percent_correct": 0.0006965661657315687,
+    "plateau_dev_percent_if_whole_state_used": 915.4320891808499,
+    "shock_position_correct": 2.406424678804941,
+    "shock_position_if_whole_state_used": 4.975000000000001,
+    "shock_position_rel_error_percent_correct": 0.7139168900084896,
+    "shock_position_rel_error_percent_if_whole_state_used": 108.21417804633744,
+    "columns": [
+      "rho",
+      "rho_u",
+      "rho_e"
+    ],
+    "note": "rho E is ~40 on the post-shock plateau, so using it as density inflates the reported peak ~10x; the quiet-zone plateau anchor and the shock position then both miss by orders of magnitude, i.e. the corruption is caught by the analytic anchors, not by the positivity check"
+  },
   "cfl_sweep": [
     {
       "cfl": 0.1,

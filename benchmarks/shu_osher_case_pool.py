@@ -146,6 +146,68 @@ def run_fv(ncells: int, cfl: float = 0.3, tag: str = "fv") -> Path:
     return path
 
 
+def state_column_regression(path: Path) -> dict:
+    """Quantify the state-column mix-up that once corrupted this driver.
+
+    An earlier revision of :func:`run_dg` persisted the *whole* conserved state
+    ``(ncells, 3) = (rho, rho u, rho E)`` under the name ``rho``, so the reported
+    "density peak" was really the largest of the three components (``rho E``
+    reaches ~40 on the post-shock plateau, i.e. ~10x the density).  Given one
+    (correct) raw artifact, this reproduces what the old convention would have
+    reported: the extrema, and the *same* analytic anchors (quiet-zone plateau,
+    shock position) recomputed on the per-cell maximum over the three columns.
+
+    Keeping it a plain function (rather than a block inside :func:`merge`) is
+    what makes the defect testable without the full ladder: any raw artifact
+    suffices, and the exhibit cannot silently lose its input path again.
+    """
+    path = Path(path)
+    blob = np.load(path, allow_pickle=False)
+    for column in ("rho", "rho_u", "rho_e"):
+        if column not in blob.files:
+            raise ValueError(f"{path} does not store the conserved state columns")
+    rho, rho_u, rho_e = blob["rho"], blob["rho_u"], blob["rho_e"]
+    state = np.stack((rho, rho_u, rho_e))
+    whole_max, whole_min = float(state.max()), float(state.min())
+    good = profile_metrics(blob["x"], rho)
+    bad = profile_metrics(blob["x"], state.max(axis=0))
+    analytic = rankine_hugoniot_anchor()
+    anchor = abs(analytic["shock_position_analytic"])
+
+    def shock_err(position: float) -> float:
+        return 100.0 * abs(position - analytic["shock_position_analytic"]) / anchor
+
+    return {
+        "artifact": str(path),
+        "ncells": int(rho.size),
+        "degree": int(json.loads(str(blob["meta"]))["degree"]) if "meta" in blob.files else -1,
+        "cfl": float(json.loads(str(blob["meta"]))["cfl"]) if "meta" in blob.files else float("nan"),
+        "density_max_correct": float(rho.max()),
+        "density_max_if_whole_state_used": whole_max,
+        "overstatement_factor": float(whole_max / rho.max()),
+        "density_min_correct": float(rho.min()),
+        "density_min_if_whole_state_used": whole_min,
+        "negative_cells_if_whole_state_used": int((state < 0.0).any(axis=0).sum()),
+        "column_extrema": {
+            "rho": [float(rho.min()), float(rho.max())],
+            "rho_u": [float(rho_u.min()), float(rho_u.max())],
+            "rho_e": [float(rho_e.min()), float(rho_e.max())],
+        },
+        "plateau_dev_percent_correct": good["plateau_rho_dev_percent"],
+        "plateau_dev_percent_if_whole_state_used": bad["plateau_rho_dev_percent"],
+        "shock_position_correct": good["shock_position"],
+        "shock_position_if_whole_state_used": bad["shock_position"],
+        "shock_position_rel_error_percent_correct": shock_err(good["shock_position"]),
+        "shock_position_rel_error_percent_if_whole_state_used":
+            shock_err(bad["shock_position"]),
+        "columns": ["rho", "rho_u", "rho_e"],
+        "note": "rho E is ~40 on the post-shock plateau, so using it as density inflates "
+                "the reported peak ~10x; the quiet-zone plateau anchor and the shock "
+                "position then both miss by orders of magnitude, i.e. the corruption is "
+                "caught by the analytic anchors, not by the positivity check",
+    }
+
+
 # --------------------------------------------------------------------- metrics
 def coarsen(values: np.ndarray, factor: int) -> np.ndarray:
     if factor < 1 or values.shape[0] % factor:
@@ -301,26 +363,12 @@ def merge(reference_cells: int = 25600) -> dict:
         out["cfl_sweep_spread_percent_points"] = float(spread)
     # ---- regression exhibit: the state-column mix-up that broke this driver ----
     # ``run_dg`` used to persist the whole conserved state (ncells, 3) under the
-    # name ``rho``.  Re-deriving "what the old driver would have reported" from
-    # the (correct) artifact makes the defect measurable instead of anecdotal.
+    # name ``rho``; recomputing the extrema and the analytic anchors on that
+    # (wrong) quantity makes the defect measurable instead of anecdotal.
     probe_n, probe_p = LADDER[0]
-    probe = RAW / _key("dg", n=probe_n, p=probe_p, lim="weno", cfl=0.4)
+    probe = RAW / f"{_key('dg', n=probe_n, p=probe_p, lim='weno', cfl=0.4)}.npz"
     if probe.exists():
-        blob = np.load(probe, allow_pickle=False)
-        whole = np.max(np.stack((blob["rho"], blob["rho_u"], blob["rho_e"])))
-        out["state_column_regression"] = {
-            "artifact": str(probe),
-            "ncells": int(blob["rho"].size),
-            "degree": int(probe_p),
-            "cfl": 0.4,
-            "density_max_correct": float(blob["rho"].max()),
-            "density_max_if_whole_state_used": float(whole),
-            "overstatement_factor": float(whole / blob["rho"].max()),
-            "columns": ["rho", "rho_u", "rho_e"],
-            "note": "the third column rho E is ~39 on the post-shock plateau; "
-                    "using it as density inflates the reported peak and corrupts "
-                    "every profile error against the reference",
-        }
+        out["state_column_regression"] = state_column_regression(probe)
     # ---- profiles for plotting ---------------------------------------------
     prof = {"x_ref": x_ref, "rho_ref": rho_ref}
     for ncells, degree in LADDER:
