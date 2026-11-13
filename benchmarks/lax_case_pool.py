@@ -100,11 +100,33 @@ TOL_C2 = 0.05
 MIN_C3_ORDER = 1.0
 R3_ORDER_FRACTION = 0.85
 R5_ORDER_FRACTION = 0.03
-R3_BAND_CELLS = 4.0
+#: R3 region rule -- a fixed **physical** half width around every analytic
+#: wave.  A rule scaled by ``dx`` is not nested across the ladder: the
+#: retained measure grows with refinement (m16606 F1: 0.680 -> 0.920,
+#: +35.3 %) and the measured "order" then mixes discretisation error with
+#: region growth (P1 analytic-region error *increases* from N=64 to N=128,
+#: order -0.945).  The width is fixed before the run, never tuned after.
+R3_BAND_WIDTH = 0.02
+#: retired rule, measured side by side so the change stays traceable
+R3_LEGACY_BAND_CELLS = 4.0
+R3_BAND_CELLS = R3_LEGACY_BAND_CELLS  # backward-compatible alias
+
+#: CFL refinement ladder for the temporal-error separation.  m16606 listed
+#: the split of the mixed space-time order as *not run*; the mesh is held
+#: fixed and only ``dt`` is refined, so ``E(dt) = E0 + C dt**q``.
+TIME_LEGS = ((100, 1), (200, 2), (200, 3))
+TIME_CFL_DIVISORS = (1, 2, 4)
+#: pre-registered bound on the temporal share of the measured error at the
+#: production CFL; above it the Lax ladder verdict would be dt-polluted.
+TOL_TIME_ERROR_SHARE = 0.05
 #: fraction of the pressure drop used to place the rarefaction head/tail levels
 RAREFACTION_LEVEL_FRACTION = 0.1
 
-OUT = Path("runs/lax_case_pool")
+# ``runs/`` is never carried into ``main`` by the merge gate (0 tracked
+# files), so a gate pinned there is vacuous on every clean checkout (see
+# tools/audit_gate_vacuity.py).  Keep the case-pool record on the tracked
+# ``docs/`` path, exactly as benchmarks/lax_region_band.py already does.
+OUT = Path("docs/benchmarks/results/lax_case_pool")
 FIG = OUT / "figures"
 
 
@@ -390,10 +412,10 @@ def gate_c3(entries):
             "status": "PASS" if gated >= MIN_C3_ORDER else "FAIL"}
 
 
-def gate_r3(entries):
+def gate_r3(entries, error_key="analytic_errors", band=None):
     """Analytic-region order: same ladder, wave bands masked out."""
     orders = ladder_orders([{"cells": e["cells"], "degree": e["degree"],
-                             "errors": e["analytic_errors"]} for e in entries])
+                             "errors": e[error_key]} for e in entries])
     per_leg, ok = {}, True
     for degree, data in orders.items():
         design = degree + 1
@@ -404,9 +426,31 @@ def gate_r3(entries):
         per_leg[f"p{degree}.requirement"] = requirement
         per_leg[f"p{degree}.density_ratio"] = None if density is None else density / requirement
         ok = ok and density is not None and density >= requirement
-    return {"order_fraction": R3_ORDER_FRACTION, "band_cells": R3_BAND_CELLS,
+    band = dict(band or {})
+    return {"order_fraction": R3_ORDER_FRACTION,
+            "band": band, "band_width": band.get("width"),
+            "band_cells": band.get("legacy_cells"), "error_key": error_key,
             "gated_on": "density, finest ladder pair, every degree",
             "per_leg": per_leg, "status": "PASS" if ok else "FAIL"}
+
+
+def r3_nesting_diagnostic(entries):
+    """Retained-measure spread per degree: a correct region rule is nested."""
+    table = {}
+    for entry in entries:
+        table.setdefault(entry["degree"], {"nested": [], "legacy": []})
+        table[entry["degree"]]["nested"].append(entry["analytic_fraction"])
+        table[entry["degree"]]["legacy"].append(entry["analytic_fraction_legacy"])
+    report = {}
+    for degree, data in table.items():
+        nested, legacy = data["nested"], data["legacy"]
+        report[f"p{degree}"] = {
+            "nested_fractions": nested, "legacy_fractions": legacy,
+            "nested_spread": float(max(nested) - min(nested)),
+            "legacy_spread": float(max(legacy) - min(legacy)),
+            "legacy_grows_with_refinement": bool(legacy[-1] > legacy[0]),
+        }
+    return report
 
 
 def entropy_wave_exact(points, final_time, speed, amplitude=ENTROPY_AMPLITUDE):
@@ -434,6 +478,103 @@ def gate_r5(entries):
             "cases": rows, "status": "PASS" if ok else "FAIL"}
 
 
+def temporal_order(errors):
+    """Observed order in ``dt`` from three exact halvings.
+
+    With ``E(dt) = E0 + C dt**q`` the three errors at ``d``, ``d/2``, ``d/4``
+    give ``(E1 - E2) / (E2 - E3) = 2**q`` exactly, so ``q`` follows in closed
+    form -- no least-squares fit and no assumed spatial-error model.
+    """
+    if len(errors) != 3 or any(e is None or e <= 0.0 for e in errors):
+        return None
+    e1, e2, e3 = errors
+    if not (e1 > e2 > e3):
+        return None
+    return math.log((e1 - e2) / (e2 - e3)) / math.log(2.0)
+
+
+def temporal_bound(errors):
+    """Relative error change under a 4x ``dt`` refinement.
+
+    When the error is dt-insensitive the model order is not identifiable (the
+    series is flat or non-monotone); the *bound* is then the honest reading:
+    a 4x smaller ``dt`` moved the answer by this fraction, so the temporal term
+    cannot be larger than that.
+    """
+    if len(errors) != 3 or any(e is None or e <= 0.0 for e in errors):
+        return None
+    return float(abs(errors[0] - errors[2]) / errors[2])
+
+
+def temporal_share(errors, order):
+    """Fraction of the baseline-CFL error that the ``dt`` term accounts for."""
+    if order is None or errors[0] <= 0.0:
+        return None
+    growth = 1.0 - 4.0 ** (-order)
+    if growth <= 1e-12:
+        return None
+    return float((errors[0] - errors[2]) / growth / errors[0])
+
+
+def run_time_refinement(legs=TIME_LEGS, divisors=TIME_CFL_DIVISORS):
+    """Hold the mesh fixed, refine only ``dt``, split off the temporal error."""
+    rows = []
+    for cells, degree in legs:
+        started = time.time()
+        levels = []
+        for divisor in divisors:
+            cfl = CFL / divisor
+            x, coeff, meta = solve_euler_dg_1d(LEFT, RIGHT, ncells=cells, degree=degree,
+                                               final_time=FINAL_TIME, cfl=cfl)
+            points, primitive, dx, weights = modal_fields(x, coeff)
+            exact = exact_reference(points)
+            errors = {field: _weighted_l1(points, primitive[field], exact[field],
+                                          weights, dx)
+                      for field in ("density", "velocity", "pressure")}
+            levels.append({"cfl": float(cfl), "dt": float(meta["dt"]),
+                           "steps": int(meta["steps"]), "relative_l1": errors})
+            print(f"[lax-time] N={cells:4d} p={degree} cfl={cfl:.4f} "
+                  f"L1(rho)={errors['density']:.6e}", flush=True)
+        fields = {}
+        for field in ("density", "velocity", "pressure"):
+            series = [level["relative_l1"][field] for level in levels]
+            order = temporal_order(series)
+            fields[field] = {"relative_l1": series, "temporal_order": order,
+                             "temporal_share": temporal_share(series, order),
+                             "temporal_bound": temporal_bound(series)}
+        rows.append({"cells": cells, "degree": degree, "levels": levels,
+                     "fields": fields,
+                     "wall_seconds": float(time.time() - started)})
+    return rows
+
+
+def gate_time(rows):
+    """Every leg must have a temporal share below the pre-registered bound."""
+    per_leg, ok = {}, True
+    for row in rows:
+        key = f"p{row['degree']}.N{row['cells']}"
+        shares = {field: data["temporal_share"]
+                  for field, data in row["fields"].items()}
+        orders = {field: data["temporal_order"]
+                  for field, data in row["fields"].items()}
+        bounds = {field: data["temporal_bound"]
+                  for field, data in row["fields"].items()}
+        # identifiable order -> the model share; otherwise the measured 4x-dt
+        # sensitivity is the bound.  Both are compared to the same tolerance.
+        worst = None
+        for field in shares:
+            candidate = shares[field] if shares[field] is not None else bounds[field]
+            if candidate is not None:
+                worst = candidate if worst is None else max(worst, candidate)
+        per_leg[key] = {"temporal_share": shares, "temporal_order": orders,
+                        "temporal_bound": bounds, "worst_share": worst}
+        ok = ok and worst is not None and worst < TOL_TIME_ERROR_SHARE
+    return {"tolerance": TOL_TIME_ERROR_SHARE,
+            "reading": ("temporal share of the baseline-CFL L1 error, from three "
+                        "exact dt halvings on a fixed mesh"),
+            "per_leg": per_leg, "status": "PASS" if ok else "FAIL"}
+
+
 # --------------------------------------------------------------------- runner
 def run_ladder(ladder=LADDER):
     waves = exact_waves()
@@ -448,18 +589,29 @@ def run_ladder(ladder=LADDER):
         errors = {field: _weighted_l1(points, primitive[field], exact[field],
                                       weights, dx)
                   for field in ("density", "velocity", "pressure")}
+        # R3 region rule: fixed *physical* band (nested across the ladder) ...
         mask = np.ones_like(primitive["density"], dtype=bool)
+        # ... and the retired dx-scaled band, measured on the very same fields
+        mask_legacy = np.ones_like(mask, dtype=bool)
         for name in ("rarefaction_head", "rarefaction_tail", "contact", "shock"):
-            mask &= np.abs(points - waves["positions"][name]) > R3_BAND_CELLS * dx
+            distance = np.abs(points - waves["positions"][name])
+            mask &= distance > R3_BAND_WIDTH
+            mask_legacy &= distance > R3_LEGACY_BAND_CELLS * dx
         analytic_errors = {
             field: _weighted_l1(points, primitive[field], exact[field], weights, dx,
                                 mask=mask)
+            for field in ("density", "velocity", "pressure")}
+        analytic_errors_legacy = {
+            field: _weighted_l1(points, primitive[field], exact[field], weights, dx,
+                                mask=mask_legacy)
             for field in ("density", "velocity", "pressure")}
         entries.append({
             "cells": cells, "degree": degree,
             "steps": int(meta["steps"]), "dt": float(meta["dt"]),
             "wall_seconds": float(time.time() - started),
             "analytic_fraction": float(mask.mean()),
+            "analytic_fraction_legacy": float(mask_legacy.mean()),
+            "analytic_errors_legacy_band": analytic_errors_legacy,
             "density_min": float(primitive["density"].min()),
             "errors": errors, "analytic_errors": analytic_errors,
         })
@@ -578,12 +730,44 @@ def render_figures(waves, entries, finest, profiles, entropy_entries, out_dir=FI
     return files
 
 
+def _pct(value, digits=2):
+    return "n/a" if value is None else f"{value * 100:.{digits}f} %"
+
+
 def _fmt(value, digits=3):
     if value is None:
         return "n/a"
     if isinstance(value, str):
         return value
     return f"{value:.{digits}f}"
+
+
+def render_time_figure(rows, out_dir):
+    """L1 error vs dt at a fixed mesh: a flat curve means spatial error dominates."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    fig, axes = plt.subplots(1, 3, figsize=(11.0, 3.4))
+    field_names = ("density", "velocity", "pressure")
+    for ax, field in zip(axes, field_names):
+        for row in rows:
+            dts = [level["dt"] for level in row["levels"]]
+            errors = row["fields"][field]["relative_l1"]
+            ax.loglog(dts, errors, "o-", markersize=3,
+                      label=f"p{row['degree']} N={row['cells']}")
+        ax.set_xlabel(r"$\Delta t$")
+        ax.set_ylabel(f"relative $L_1$ ({field})")
+        ax.grid(True, which="both", alpha=0.3)
+        ax.legend(fontsize=7)
+    fig.suptitle("temporal refinement at fixed mesh (Lax tube, t=0.13)", fontsize=10)
+    fig.tight_layout()
+    path = out_dir / "time_refinement.png"
+    fig.savefig(path, dpi=140)
+    plt.close(fig)
+    return [path]
 
 
 def render_summary(metrics):
@@ -628,6 +812,9 @@ def render_summary(metrics):
                                for k, v in gate["values"].items())
         elif name in ("c3", "r3"):
             detail = "; ".join(f"{k}: {_fmt(v, 3)}" for k, v in gate["per_leg"].items())
+        elif name == "time":
+            detail = "; ".join(f"{k}: worst share {_pct(v['worst_share'])}"
+                               for k, v in gate["per_leg"].items())
         elif name == "r5":
             detail = "; ".join(
                 f"{k}: order {_fmt(v['observed_order'], 3)} (dev "
@@ -637,6 +824,41 @@ def render_summary(metrics):
             detail = ""
         lines.append(f"| {name.upper()} | {gate['status']} | {detail} |")
     lines.append("")
+    time_rows = metrics.get("time_refinement") or []
+    if time_rows:
+        lines.append("## temporal refinement (mesh fixed, dt -> dt/2 -> dt/4)")
+        lines.append("")
+        lines.append("| leg | cfl | dt | steps | rel L1 rho | rel L1 u | "
+                     "temporal order (rho) | temporal share (rho) |")
+        lines.append("|---|---|---|---|---|---|---|---|")
+        for row in time_rows:
+            for level in row["levels"]:
+                rho = row["fields"]["density"]
+                lines.append(
+                    f"| p{row['degree']} N={row['cells']} | {level['cfl']:.4f} | "
+                    f"{level['dt']:.4e} | {level['steps']} | "
+                    f"{level['relative_l1']['density']:.5e} | "
+                    f"{level['relative_l1']['velocity']:.5e} | "
+                    f"{_fmt(rho['temporal_order'], 3)} | "
+                    f"{_pct(rho['temporal_share'])} |")
+        lines.append("")
+    diagnostics = metrics.get("diagnostics") or {}
+    if "r3_nesting" in diagnostics:
+        lines.append("## R3 region-rule nesting (retained measure per leg)")
+        lines.append("")
+        lines.append("| degree | nested spread | legacy spread | "
+                     "legacy grows with refinement |")
+        lines.append("|---|---|---|---|")
+        for key, data in diagnostics["r3_nesting"].items():
+            lines.append(f"| {key} | {data['nested_spread']:.2e} | "
+                         f"{data['legacy_spread']:.2e} | "
+                         f"{data['legacy_grows_with_refinement']} |")
+        lines.append("")
+        legacy = diagnostics.get("r3_legacy_band")
+        if legacy:
+            lines.append(f"Retired-rule R3 (4-cell band) status for the record: "
+                         f"**{legacy['status']}**")
+            lines.append("")
     lines.append(f"Overall verdict: **{metrics['verdict']}**")
     lines.append("")
     return "\n".join(lines)
@@ -648,25 +870,41 @@ def main(argv=None):
                         help="reduced ladder (smoke test, not a verdict run)")
     parser.add_argument("--output-dir", default=str(OUT))
     parser.add_argument("--skip-figures", action="store_true")
+    parser.add_argument("--skip-time-study", action="store_true",
+                        help="skip the dt-refinement study (not a verdict run)")
     args = parser.parse_args(argv)
     ladder = QUICK_LADDER if args.quick else LADDER
     out = Path(args.output_dir)
+    run_time = not (args.skip_time_study or args.quick)
     out.mkdir(parents=True, exist_ok=True)
     fig_dir = out / "figures"
 
     started = time.time()
     waves, exact_pos, entries, finest, profiles = run_ladder(ladder)
     entropy_entries = run_entropy()
+    time_rows = run_time_refinement() if run_time else []
     c1 = gate_c1(finest["positions"], exact_pos)
     c2 = gate_c2(finest["plateaus"], waves)
     c3 = gate_c3(entries)
-    r3 = gate_r3(entries)
+    r3 = gate_r3(entries, "analytic_errors",
+                 {"width": R3_BAND_WIDTH, "rule": "fixed physical band (nested)"})
     r5 = gate_r5(entropy_entries)
     gates = {"c1": c1, "c2": c2, "c3": c3, "r3": r3, "r5": r5}
+    diagnostics = {}
+    if entries and "analytic_errors_legacy_band" in entries[0]:
+        diagnostics["r3_legacy_band"] = gate_r3(
+            entries, "analytic_errors_legacy_band",
+            {"legacy_cells": R3_LEGACY_BAND_CELLS,
+             "rule": "retired 4-cell band (not nested, m16606 F1)"})
+        diagnostics["r3_nesting"] = r3_nesting_diagnostic(entries)
+    if time_rows:
+        gates["time"] = gate_time(time_rows)
     verdict = "PASS" if all(g["status"] == "PASS" for g in gates.values()) else "FAIL"
 
     figures = [] if args.skip_figures else render_figures(
         waves, entries, finest, profiles, entropy_entries, fig_dir)
+    if time_rows and not args.skip_figures:
+        figures.extend(render_time_figure(time_rows, fig_dir))
     np.savez(out / "profiles.npz",
              points=profiles["points"],
              **{f"numerical_{k}": v for k, v in profiles["numerical"].items()},
@@ -681,7 +919,11 @@ def main(argv=None):
                        "c1": TOL_C1, "c2": TOL_C2, "c3_min_order": MIN_C3_ORDER,
                        "r3_order_fraction": R3_ORDER_FRACTION,
                        "r5_order_fraction": R5_ORDER_FRACTION,
-                       "r3_band_cells": R3_BAND_CELLS},
+                       "r3_band_width": R3_BAND_WIDTH,
+                       "r3_band_cells_legacy": R3_LEGACY_BAND_CELLS,
+                       "time_error_share": TOL_TIME_ERROR_SHARE},
+                   "time_study": {"legs": [list(leg) for leg in TIME_LEGS],
+                                  "cfl_divisors": list(TIME_CFL_DIVISORS)},
                    "entropy": {"cells": list(ENTROPY_CELLS),
                                "degrees": list(ENTROPY_DEGREES),
                                "speeds": list(ENTROPY_SPEEDS),
@@ -692,6 +934,8 @@ def main(argv=None):
         "exact_positions": exact_pos,
         "ladder": entries,
         "entropy_wave": entropy_entries,
+        "time_refinement": time_rows,
+        "diagnostics": diagnostics,
         "figures": [str(p) for p in figures],
         "gates": gates,
         "verdict": verdict,
