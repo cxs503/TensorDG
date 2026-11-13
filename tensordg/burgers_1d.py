@@ -9,6 +9,7 @@ import math
 
 import numpy as np
 import torch
+from .stepping import step_metadata
 
 MEAN = 0.2
 AMPLITUDE = 0.8
@@ -140,7 +141,8 @@ def solve_burgers(
         steps += 1
     metadata = {
         "ncells": ncells, "degree": degree, "final_time": final_time,
-        "steps": steps, "dt": dt, "cfl": cfl, "device": str(dev),
+        "steps": steps, **step_metadata(final_time, steps, dt),
+        "cfl": cfl, "device": str(dev),
     }
     return centers, coeff, metadata
 
