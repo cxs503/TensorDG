@@ -442,3 +442,101 @@ def resolved_levels(
             float(e[0] / threshold) if threshold > 0.0 else float("inf")
         ),
     }
+
+# ---------------------------------------------------------------------------
+# Exact-in-time integration of a *linear* semi-discrete operator.
+#
+# A verification study that measures a *spatial* error must not let the time
+# integrator contribute to it.  For a linear semi-discrete system
+# ``du/dt = L u`` the exact solution is ``u(t) = exp(L t) u(0)``, so the spatial
+# error can be isolated completely -- no CFL refinement loop, no temporal error
+# floor.  This matters at high polynomial degree, where the spatial error of a
+# spectral DG scheme can fall below the truncation error of an explicit
+# Runge-Kutta scheme: see docs/CLOSEOUT-m17067-exact-time-floor.md.
+# ---------------------------------------------------------------------------
+
+
+def semidiscrete_operator(apply, ndof: int, dtype=np.float64) -> np.ndarray:
+    """Assemble the dense matrix of a linear operator from its action.
+
+    ``apply`` maps a flat coefficient vector of length ``ndof`` to its time
+    derivative, i.e. it *is* the shipped right-hand side (including its
+    boundary/interface fluxes).  Assembling column by column keeps the measured
+    operator identical to the production path instead of re-deriving it.
+    """
+    if ndof <= 0:
+        raise ValueError("ndof must be positive")
+    operator = np.empty((ndof, ndof), dtype=dtype)
+    for j in range(ndof):
+        e = np.zeros(ndof, dtype=dtype)
+        e[j] = 1.0
+        column = np.asarray(apply(e), dtype=dtype).reshape(-1)
+        if column.size != ndof:
+            raise ValueError(
+                f"apply returned {column.size} entries, expected {ndof}"
+            )
+        operator[:, j] = column
+    return operator
+
+
+def operator_linearity_residual(apply, operator: np.ndarray, seed: int = 0) -> float:
+    """Relative residual of ``apply(a + b) == L a + L b`` for random ``a, b``.
+
+    Returns ``||apply(a+b) - L(a+b)|| / ||apply(a+b)||``; a non-zero value means
+    the assembled matrix does not describe the shipped operator (nonlinearity,
+    state-dependent flux, hidden limiter), and any exact-time study built on it
+    would be measuring something else.
+    """
+    rng = np.random.default_rng(seed)
+    ndof = operator.shape[0]
+    a = rng.standard_normal(ndof)
+    b = rng.standard_normal(ndof)
+    lhs = np.asarray(apply(a + b), dtype=float).reshape(-1)
+    rhs = operator @ (a + b)
+    denominator = float(np.linalg.norm(lhs))
+    if denominator == 0.0:
+        return float("inf")
+    return float(np.linalg.norm(lhs - rhs) / denominator)
+
+
+def expm_scaled_squaring(matrix, t: float = 1.0, taylor_terms: int = 20,
+                         threshold: float = 0.25) -> np.ndarray:
+    """``exp(matrix * t)`` by scaling and squaring with an extended-precision Taylor sum.
+
+    ``np.longdouble`` (80-bit on x86/loong64) accumulation is used because the
+    whole point of an exact-time study is to resolve errors far below the
+    float64 floor of an explicit integrator: ``scipy.linalg.expm`` in float64
+    carries a forward error of order ``eps * ||L t||``, which for a DG operator
+    (``||L t|| ~ 1e2``) is the same size as the errors being measured
+    (``~1e-14``).  ``taylor_terms`` and ``threshold`` control the scaling and
+    squaring schedule; varying them gives a control test of the truncation.
+    """
+    raw = np.asarray(matrix)
+    dtype = np.clongdouble if np.iscomplexobj(raw) else np.longdouble
+    a = raw.astype(dtype) * dtype(t)
+    if a.ndim != 2 or a.shape[0] != a.shape[1]:
+        raise ValueError("matrix must be square")
+    if not 0.0 < threshold < 1.0:
+        raise ValueError("threshold must lie in (0, 1)")
+    norm = float(np.max(np.sum(np.abs(a), axis=1)))
+    squarings = 0
+    while norm > threshold:
+        norm /= 2.0
+        squarings += 1
+    a = a / dtype(2) ** squarings
+    ident = np.eye(a.shape[0], dtype=dtype)
+    term = ident.copy()
+    total = ident.copy()
+    for k in range(1, taylor_terms + 1):
+        term = term @ a / dtype(k)
+        total = total + term
+    for _ in range(squarings):
+        total = total @ total
+    return total
+
+
+def exact_time_solution(apply, u0, t: float) -> np.ndarray:
+    """Solution of ``du/dt = apply(u)`` at time ``t`` for a linear ``apply``."""
+    u0 = np.asarray(u0, dtype=np.longdouble).reshape(-1)
+    operator = semidiscrete_operator(apply, u0.size)
+    return expm_scaled_squaring(operator, t) @ u0
