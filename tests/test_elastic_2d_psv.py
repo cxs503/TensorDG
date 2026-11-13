@@ -109,16 +109,32 @@ def test_riemann_flux_reduces_to_the_physical_flux_for_equal_states():
                           flux_y(state, MEDIUM), atol=1e-14)
 
 
-def test_riemann_flux_passes_a_right_going_wave_unchanged():
-    """A pure +x P wave on the left must leave the right state untouched."""
+def test_godunov_flux_takes_the_upwind_characteristic():
+    """Upwind, not downwind, closure (m17172).
+
+    ``left`` is a right-going P wave (``sigma = -Z_p v``, i.e. the ``-c``
+    Riemann invariant is zero) evaluated *at the left of the interface*, and
+    the right state is the vacuum.  The ``+c`` characteristic comes from the
+    left, so it is the left state that is carried to the interface and the
+    ``-c`` invariant vanishes there: the exact Godunov state is ``U* = 0``.
+
+    The previous version of this gate asserted ``F* == F(right)`` -- i.e. it
+    pinned the *downwind* closure, which is anti-dissipative and is what made
+    the closed box gain energy.  Right-going wave + right state must therefore
+    both be tested: with the state on the upwind side the flux is reproduced.
+    """
     zp = MEDIUM.zp
     amp = 0.3
-    left = torch.zeros(1, 1, 1, 5, dtype=torch.float64)
-    right = torch.zeros(1, 1, 1, 5, dtype=torch.float64)
-    right[..., 0] = amp                 # vx
-    right[..., 2] = -zp * amp           # sxx of a +x travelling P wave
-    star = riemann_flux_x(left, right, MEDIUM)
-    assert torch.allclose(star, flux_x(right, MEDIUM), atol=1e-14)
+    vac = torch.zeros(1, 1, 1, 5, dtype=torch.float64)
+    wave = torch.zeros(1, 1, 1, 5, dtype=torch.float64)
+    wave[..., 0] = amp                  # vx
+    wave[..., 2] = -zp * amp            # sxx of a +x travelling P wave
+    # upwind side carries the wave, downwind side is the vacuum
+    star = riemann_flux_x(wave, vac, MEDIUM)
+    assert torch.allclose(star, flux_x(wave, MEDIUM), atol=1e-12)
+    # mirrored: wave on the downwind side cannot reach the interface
+    star2 = riemann_flux_x(vac, wave, MEDIUM)
+    assert star2.abs().max().item() < 1e-12
 
 
 def test_plane_wave_reference_solves_the_pde_in_the_strong_sense():
@@ -193,7 +209,13 @@ def test_plane_wave_error_is_not_converging_and_is_h_independent():
 
     e16 = run(16, 0.1)
     e64 = run(64, 0.1)
-    assert e64 > 1e-4                      # still far from converged
-    assert abs(math.log(e16 / e64) / math.log(4.0)) < 1.0   # EOC well below p+1
+    # m17172: with the face term fixed the ladder converges (old gate asserted
+    # the opposite, e64 > 1e-4, i.e. it pinned the defect).
+    assert e64 < 1e-4
+    assert math.log(e16 / e64) / math.log(4.0) > 1.8        # EOC ~ p+1 = 3
     e64_small_cfl = run(64, 0.025)
-    assert e64_small_cfl == pytest.approx(e64, rel=1e-6)    # CFL independent
+    # Before m17172 the CFL sweep was bit-identical (rel 1e-12) because the
+    # spatial defect dwarfed everything.  Now the spatial error is small enough
+    # that the RK3 time error is visible, so only a loose agreement is expected.
+    assert e64_small_cfl == pytest.approx(e64, rel=1e-2)    # time error now visible
+    assert e64_small_cfl < e64
