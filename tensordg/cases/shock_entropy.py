@@ -213,7 +213,8 @@ def relative_l1_error(candidate, reference, factor: int = 1) -> dict:
 
 def gate_report(ncells: int, degree: int = 2, limiter: str = "weno", cfl: float = 0.4,
                 reference=None, reference_cells: int | None = None,
-                tolerance_percent: float = 5.0) -> dict:
+                tolerance_percent: float = 5.0, certification: dict | None = None,
+                return_profile: bool = False) -> dict:
     """Solve the case and report the analytic anchors (library-side acceptance).
 
     ``reference`` is an optional ``(x, rho)`` reference profile (e.g. the
@@ -222,7 +223,20 @@ def gate_report(ncells: int, degree: int = 2, limiter: str = "weno", cfl: float 
     Without a reference the report still carries the closed-form anchors, which
     need no external data: the post-shock plateau, the exact unshocked sine, the
     global mass budget and the Rankine--Hugoniot shock position.
+
+    ``certification`` is an optional output of
+    :func:`tensordg.certified_reference.certify`.  When given, the profile is
+    judged by :func:`tensordg.certified_reference.judge` -- i.e. against a
+    reference whose own discretisation band ``U`` is quantified -- and the gate
+    decision becomes ``PASS`` / ``PASS_MARGINAL`` / ``FAIL`` / ``WITHHELD``
+    instead of the bare ``err < tolerance`` comparison, which cannot tell a
+    resolvable pass from a pass inside reference noise.  A bare ``reference``
+    without a certification keeps the old behaviour, and ``passes_gate`` is
+    ``None`` there unless exactly one of the two is supplied.
     """
+    if reference is not None and certification is not None:
+        raise ValueError("pass either reference= (raw profile) or certification= "
+                         "(certified reference), not both")
     import numpy as _np
 
     out = solve_dg_case(ncells, degree=degree, limiter=limiter, cfl=cfl)
@@ -272,8 +286,27 @@ def gate_report(ncells: int, degree: int = 2, limiter: str = "weno", cfl: float 
                                "reference_cells": reference_cells or int(len(ref_rho))}
         report.update(err)
         report["passes_gate"] = bool(err["rel_l1_percent"] < tolerance_percent)
+    elif certification is not None:
+        from tensordg.certified_reference import judge
+        verdict = judge(rho, certification, tolerance_percent=tolerance_percent)
+        report["certified_judgement"] = verdict
+        report["rel_l1_percent"] = verdict["rel_l1_percent"]
+        report["reference"] = {
+            "ncells": int(certification.get("reference_ncells") or 0),
+            "reference_cells": int(certification.get("reference_ncells") or 0),
+            "band_percent": verdict.get("band_percent"),
+            "certificate_verdict": certification.get("verdict"),
+            "tolerance_percent": tolerance_percent,
+        }
+        # margin robustness: PASS needs err + U < tau, otherwise PASS_MARGINAL
+        report["passes_gate"] = verdict["decision"] == "PASS"
     else:
         report["passes_gate"] = None
+    if return_profile:
+        # the caller just paid for this field; hand it back instead of making it
+        # solve the case a second time to measure the same profile again
+        report["x"] = x
+        report["rho"] = rho
     return report
 
 
