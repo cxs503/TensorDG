@@ -7,10 +7,15 @@
     "withheld": "literal cells of the paper's tables \u2014 no PDF in the repo, NOT claimed (see docs/repro_cks1998.md \u00a74)"
   },
   "counts": {
-    "PASS": 43,
-    "FAIL": 0,
-    "informative": 11,
-    "total": 54
+    "gated_pass": 11,
+    "gated_fail": 0,
+    "gated_total": 11,
+    "ungated_pass": 32,
+    "ungated_fail": 7,
+    "unscored": 4,
+    "total": 54,
+    "FAIL": 7,
+    "PASS": 43
   },
   "gate_verdict": {
     "A1_smooth_order": true,
@@ -44,6 +49,7 @@
       "rel_diff": 0.006576067762104287,
       "tolerance": ">= p+0.5 = 1.5",
       "verdict": "PASS",
+      "gated": true,
       "ref_source": "paper_theorem",
       "note": "Cockburn & Shu: DG(P^p) converges at O(h^{p+1}) for smooth data; the mission tolerance is the looser p+0.5"
     },
@@ -57,6 +63,7 @@
       "rel_diff": 7.856307582857862e-05,
       "tolerance": ">= p+0.5 = 2.5",
       "verdict": "PASS",
+      "gated": true,
       "ref_source": "paper_theorem",
       "note": "Cockburn & Shu: DG(P^p) converges at O(h^{p+1}) for smooth data; the mission tolerance is the looser p+0.5"
     },
@@ -70,6 +77,7 @@
       "rel_diff": 0.0005778620665563006,
       "tolerance": ">= p+0.5 = 3.5",
       "verdict": "PASS",
+      "gated": true,
       "ref_source": "paper_theorem",
       "note": "Cockburn & Shu: DG(P^p) converges at O(h^{p+1}) for smooth data; the mission tolerance is the looser p+0.5"
     },
@@ -83,6 +91,7 @@
       "rel_diff": 0.33531212978454406,
       "tolerance": ">= 0.5",
       "verdict": "PASS",
+      "gated": true,
       "ref_source": "paper_theorem",
       "note": "half-order L1 floor for limited schemes at discontinuities"
     },
@@ -96,6 +105,7 @@
       "rel_diff": 0.32893689952642013,
       "tolerance": ">= 0.5",
       "verdict": "PASS",
+      "gated": true,
       "ref_source": "paper_theorem",
       "note": "half-order L1 floor for limited schemes at discontinuities"
     },
@@ -109,6 +119,7 @@
       "rel_diff": 0.3281186310888722,
       "tolerance": ">= 0.5",
       "verdict": "PASS",
+      "gated": true,
       "ref_source": "paper_theorem",
       "note": "half-order L1 floor for limited schemes at discontinuities"
     },
@@ -122,8 +133,9 @@
       "rel_diff": null,
       "tolerance": "< 3%",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "ref = exact Riemann solution (benchmarks.sod_exact)"
+      "note": "ref = exact Riemann solution (benchmarks.sod_exact); grid below the pre-declared gate resolution"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -134,9 +146,10 @@
       "abs_diff": null,
       "rel_diff": null,
       "tolerance": "< 3%",
-      "verdict": "informative",
+      "verdict": "FAIL",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "ref = exact Riemann solution (benchmarks.sod_exact)"
+      "note": "ref = exact Riemann solution (benchmarks.sod_exact); grid below the pre-declared gate resolution"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -148,8 +161,9 @@
       "rel_diff": null,
       "tolerance": "< 3%",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "ref = exact Riemann solution (benchmarks.sod_exact)"
+      "note": "ref = exact Riemann solution (benchmarks.sod_exact); grid below the pre-declared gate resolution"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -161,6 +175,7 @@
       "rel_diff": null,
       "tolerance": "< 3%",
       "verdict": "PASS",
+      "gated": true,
       "ref_source": "analytic",
       "note": "ref = exact Riemann solution (benchmarks.sod_exact)"
     },
@@ -174,6 +189,7 @@
       "rel_diff": null,
       "tolerance": "< 3%",
       "verdict": "PASS",
+      "gated": true,
       "ref_source": "analytic",
       "note": "ref = exact Riemann solution (benchmarks.sod_exact)"
     },
@@ -187,6 +203,7 @@
       "rel_diff": null,
       "tolerance": "< 3%",
       "verdict": "PASS",
+      "gated": true,
       "ref_source": "analytic",
       "note": "ref = exact Riemann solution (benchmarks.sod_exact)"
     },
@@ -200,8 +217,9 @@
       "rel_diff": 0.0,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -212,9 +230,10 @@
       "abs_diff": 5.788031040758278e-16,
       "rel_diff": null,
       "tolerance": "< 3% rel",
-      "verdict": "informative",
+      "verdict": "UNSCORED",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate); zero reference, no relative scale"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -226,8 +245,9 @@
       "rel_diff": 0.0,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -239,8 +259,9 @@
       "rel_diff": 0.008507536063030188,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -251,9 +272,10 @@
       "abs_diff": 0.009803522651015167,
       "rel_diff": 0.06010867680075835,
       "tolerance": "< 3% rel",
-      "verdict": "informative",
+      "verdict": "FAIL",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -265,8 +287,9 @@
       "rel_diff": 0.01192825633765284,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -278,8 +301,9 @@
       "rel_diff": 0.01824453375956268,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -291,8 +315,9 @@
       "rel_diff": 0.02373281879270096,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -304,8 +329,9 @@
       "rel_diff": 0.025618049460902518,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -317,8 +343,9 @@
       "rel_diff": 0.0002830871329514714,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -330,8 +357,9 @@
       "rel_diff": 2.8607183500229913e-05,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -343,8 +371,9 @@
       "rel_diff": 5.0151694042130565e-05,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -355,9 +384,10 @@
       "abs_diff": 0.010128674719309227,
       "rel_diff": 0.03813884534832452,
       "tolerance": "< 3% rel",
-      "verdict": "informative",
+      "verdict": "FAIL",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -369,8 +399,9 @@
       "rel_diff": 0.0002940655016758974,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -382,8 +413,9 @@
       "rel_diff": 0.0003764079724222921,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -395,8 +427,9 @@
       "rel_diff": 1.6789742929290696e-09,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -407,9 +440,10 @@
       "abs_diff": -1.7770357093259444e-09,
       "rel_diff": null,
       "tolerance": "< 3% rel",
-      "verdict": "informative",
+      "verdict": "UNSCORED",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate); zero reference, no relative scale"
     },
     {
       "item": "E2_sod_p2_n200",
@@ -421,8 +455,9 @@
       "rel_diff": 2.350563077513357e-09,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -434,8 +469,9 @@
       "rel_diff": 0.0,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -446,9 +482,10 @@
       "abs_diff": 0.0,
       "rel_diff": null,
       "tolerance": "< 3% rel",
-      "verdict": "PASS",
+      "verdict": "UNSCORED",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate); zero reference, no relative scale"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -460,8 +497,9 @@
       "rel_diff": 0.0,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -473,8 +511,9 @@
       "rel_diff": 0.0047150098813655015,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -485,9 +524,10 @@
       "abs_diff": 0.0053506063511788715,
       "rel_diff": 0.03388855568546752,
       "tolerance": "< 3% rel",
-      "verdict": "informative",
+      "verdict": "FAIL",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -499,8 +539,9 @@
       "rel_diff": 0.0065897655800323356,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -512,8 +553,9 @@
       "rel_diff": 0.009186935486908705,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -525,8 +567,9 @@
       "rel_diff": 0.011978805104480019,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -538,8 +581,9 @@
       "rel_diff": 0.012917720557727866,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -551,8 +595,9 @@
       "rel_diff": 0.00013926040565292704,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -564,8 +609,9 @@
       "rel_diff": 4.1230791716401426e-05,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -577,8 +623,9 @@
       "rel_diff": 4.440291268909427e-05,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -590,8 +637,9 @@
       "rel_diff": 0.015228602445584806,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -603,8 +651,9 @@
       "rel_diff": 4.4478125436957564e-05,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -616,8 +665,9 @@
       "rel_diff": 2.0338891916453845e-05,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -629,8 +679,9 @@
       "rel_diff": 1.8909318555415666e-12,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -641,9 +692,10 @@
       "abs_diff": 1.8844587852804853e-12,
       "rel_diff": null,
       "tolerance": "< 3% rel",
-      "verdict": "informative",
+      "verdict": "UNSCORED",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate); zero reference, no relative scale"
     },
     {
       "item": "E2_sod_p2_n400",
@@ -655,8 +707,9 @@
       "rel_diff": 2.634142903801262e-12,
       "tolerance": "< 3% rel",
       "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "cell-average vs exact Riemann solution"
+      "note": "cell-average vs pointwise exact solution (supplementary, not a gate)"
     },
     {
       "item": "E3_tvd",
@@ -667,9 +720,10 @@
       "abs_diff": 0.06849792122831477,
       "rel_diff": 0.06849792122831477,
       "tolerance": "<= 1% overshoot",
-      "verdict": "informative",
+      "verdict": "FAIL",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "unlimited control / paper-indicator row: reported, not the gated configuration"
+      "note": "not a gate row (unlimited): reported with the same tolerance rule, so a violation still shows as FAIL"
     },
     {
       "item": "E3_tvd",
@@ -680,9 +734,10 @@
       "abs_diff": 0.013885466791003775,
       "rel_diff": 0.013885466791003775,
       "tolerance": "<= 1% overshoot",
-      "verdict": "informative",
+      "verdict": "FAIL",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "unlimited control / paper-indicator row: reported, not the gated configuration"
+      "note": "not a gate row (tvb_M0): reported with the same tolerance rule, so a violation still shows as FAIL"
     },
     {
       "item": "E3_tvd",
@@ -694,6 +749,7 @@
       "rel_diff": -4.3528425096583945e-05,
       "tolerance": "<= 1% overshoot",
       "verdict": "PASS",
+      "gated": true,
       "ref_source": "analytic",
       "note": "strict minmod policy (gate row)"
     },
@@ -706,9 +762,10 @@
       "abs_diff": 0.08520168452273436,
       "rel_diff": 0.08520168452273436,
       "tolerance": "<= 1% overshoot",
-      "verdict": "informative",
+      "verdict": "FAIL",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "unlimited control / paper-indicator row: reported, not the gated configuration"
+      "note": "not a gate row (unlimited): reported with the same tolerance rule, so a violation still shows as FAIL"
     },
     {
       "item": "E3_tvd",
@@ -719,9 +776,10 @@
       "abs_diff": 0.003703788727796642,
       "rel_diff": 0.003703788727796642,
       "tolerance": "<= 1% overshoot",
-      "verdict": "informative",
+      "verdict": "PASS",
+      "gated": false,
       "ref_source": "analytic",
-      "note": "unlimited control / paper-indicator row: reported, not the gated configuration"
+      "note": "not a gate row (tvb_M0): reported with the same tolerance rule, so a violation still shows as FAIL"
     },
     {
       "item": "E3_tvd",
@@ -733,6 +791,7 @@
       "rel_diff": -4.353594471173672e-05,
       "tolerance": "<= 1% overshoot",
       "verdict": "PASS",
+      "gated": true,
       "ref_source": "analytic",
       "note": "strict minmod policy (gate row)"
     }

@@ -175,7 +175,51 @@ def test_benchmark_ref_vs_got_table_from_committed_artifacts():
     metrics = json.loads(metrics_path.read_text())
     table = build_ref_vs_got(metrics, "quick")
     assert table["counts"]["total"] > 20
-    assert table["counts"]["FAIL"] == 0
+    # every pre-declared gate row is inside tolerance ...
+    assert table["counts"]["gated_total"] >= 9
+    assert table["counts"]["gated_fail"] == 0
+    # ... and no row can hide behind a word: verdicts are PASS/FAIL/UNSCORED only
+    assert {r["verdict"] for r in table["rows"]} <= {"PASS", "FAIL", "UNSCORED"}
+    # the previously laundered violation (audit m15345 M2) is now an honest FAIL
+    laundered = [r for r in table["rows"]
+                 if r["quantity"] == "rel L2 error, velocity"
+                 and "n200" in r["item"]]
+    assert laundered and laundered[0]["verdict"] == "FAIL"
+    assert laundered[0]["gated"] is False
     assert any(r["ref_source"] == "analytic" and r["ref"] is not None
                for r in table["rows"])
     assert any(r["ref_source"] == "paper_theorem" for r in table["rows"])
+
+
+def test_ref_vs_got_cannot_launder_an_out_of_tolerance_non_gate_row():
+    """A synthetic out-of-tolerance non-gate row must read FAIL, not `informative`.
+
+    This is the regression test for audit m15345 defect M2: the old builder
+    silently turned such rows into ``informative`` while ``assert n_fail == 0``
+    made a real FAIL structurally impossible.
+    """
+    from benchmarks.cks1998_benchmark import build_ref_vs_got
+
+    metrics = {
+        "anchor": "synthetic", "gates": {"sod_rel_l2": 0.03, "tvd_overshoot": 0.01},
+        "environment": {}, "wall_seconds": 0.0,
+        "verdict": {"all_pass": True},
+        "sod_reference_stations": {},
+        "sections": {
+            "A1_smooth": {"by_degree": {"p1": {"observed_order": 2.0}}},
+            "A2_discontinuous": {"by_degree": {"p1": {"l1_order": 0.6}}},
+            "E2_sod": {"cases": {"p2_n200": {"degree": 2, "ncells": 200,
+                                             "rel_l2": {"density": 0.01,
+                                                        "velocity": 0.10,
+                                                        "pressure": 0.01},
+                                             "gate_case": False}}},
+            "E3_tvd": {"cases": {"p1_strict_all": {"limiter": "strict_all",
+                                                   "pt_max": 1.0,
+                                                   "overshoot_pointwise_pct": 0.0}}},
+        },
+    }
+    table = build_ref_vs_got(metrics, "synthetic")
+    row = [r for r in table["rows"] if r["quantity"] == "rel L2 error, velocity"][0]
+    assert row["verdict"] == "FAIL" and row["gated"] is False
+    assert table["counts"]["gated_fail"] == 0
+    assert table["counts"]["ungated_fail"] == 1
