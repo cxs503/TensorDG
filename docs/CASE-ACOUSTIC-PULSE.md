@@ -9,7 +9,18 @@ API contract (`from tensordg import solve_acoustic_2d, acoustic_pulse_exact_stat
 PYTHONPATH=. python -m benchmarks.acoustic_pulse_2d \
     --output-dir validation/acoustic_pulse --figures-dir docs/figures
 PYTHONPATH=. python -m pytest tests/test_acoustic_pulse.py -q   # 31 tests
+PYTHONPATH=. python -m pytest tests/test_acoustic_pulse_doc_binding.py -q
 ```
+
+**Doc <-> record <-> solver binding.**  The numbers in this file are not
+hand-typed: `tests/test_acoustic_pulse_doc_binding.py` re-derives every table
+cell (design order, `h`, steps, both relative `L2` columns, energy, drift), the
+`< 3%?` verdicts of §4, the field-error claim of §3.2 and the `E0` anchor of §3.1
+from `validation/acoustic_pulse/convergence.json` at the precision printed here,
+and re-runs the two cheapest rungs `(p=1, 16^2)` / `(p=2, 16^2)` from the solver
+to `1e-9` relative.  So a record refresh that this document does not follow, or a
+solver change that moves a recorded number, fails CI instead of shipping a stale
+claim.
 
 ## 1. Case (physics / geometry / parameters)
 
