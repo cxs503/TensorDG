@@ -1,0 +1,571 @@
+{
+  "anchor": "CASE-LAX-DG",
+  "case": "lax-1954-shock-tube",
+  "config": {
+    "cfl": 0.35,
+    "final_time": 0.13,
+    "ladder": [
+      [
+        100,
+        2
+      ],
+      [
+        200,
+        2
+      ],
+      [
+        400,
+        2
+      ],
+      [
+        100,
+        3
+      ],
+      [
+        200,
+        3
+      ],
+      [
+        400,
+        3
+      ]
+    ],
+    "left_state": [
+      0.445,
+      0.698,
+      3.528
+    ],
+    "mechanicsm": {
+      "av-every": {
+        "limiter": "av",
+        "limiter_kwargs": {},
+        "limiter_stage": "every"
+      }
+    },
+    "quick": false,
+    "r3_band_width": 0.02,
+    "residual_windows": {
+      "rarefaction_fan": [
+        0.1776365403721958,
+        0.2672293325269257
+      ],
+      "star_left": [
+        0.30722933252692575,
+        0.6787339934622749
+      ],
+      "star_right": [
+        0.718733993462275,
+        0.8023117925286792
+      ],
+      "undisturbed_right": [
+        0.8423117925286793,
+        0.98
+      ]
+    },
+    "right_state": [
+      0.5,
+      0.0,
+      0.571
+    ]
+  },
+  "environment": {
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+    "python": "3.11.6",
+    "torch": "2.7.1"
+  },
+  "figures": [
+    "validation/lax_limiter_study/parts/av-every/figures/lax_mechanisms_profiles.png",
+    "validation/lax_limiter_study/parts/av-every/figures/lax_mechanisms_convergence.png",
+    "validation/lax_limiter_study/parts/av-every/figures/lax_mechanisms_ripple.png"
+  ],
+  "gates": {
+    "av-every": {
+      "c3": {
+        "gated_on": "density, finest ladder pair, every degree",
+        "gated_order": 0.8588057908692002,
+        "minimum_order": 1.0,
+        "per_leg": {
+          "p2.density": 0.8683320771008411,
+          "p2.pressure": 0.821728657199823,
+          "p2.velocity": 0.8538686177228704,
+          "p3.density": 0.8588057908692002,
+          "p3.pressure": 0.7004075088997511,
+          "p3.velocity": 0.6568824491393426
+        },
+        "status": "FAIL"
+      },
+      "r3": {
+        "band": {
+          "rule": "fixed physical half width",
+          "width": 0.02
+        },
+        "band_cells": null,
+        "band_width": 0.02,
+        "error_key": "analytic_errors",
+        "gated_on": "density, finest ladder pair, every degree",
+        "order_fraction": 0.85,
+        "per_leg": {
+          "p2.density": 0.9239555837283102,
+          "p2.density_ratio": 0.3623355230307099,
+          "p2.pressure": 0.9893653928575941,
+          "p2.requirement": 2.55,
+          "p2.velocity": 1.021771628669549,
+          "p3.density": 0.3323836728791973,
+          "p3.density_ratio": 0.0977599037879992,
+          "p3.pressure": 0.4157125208167349,
+          "p3.requirement": 3.4,
+          "p3.velocity": 0.4392715363324033
+        },
+        "status": "FAIL"
+      },
+      "verdict": "FAIL"
+    }
+  },
+  "ladder": [
+    {
+      "analytic_errors": {
+        "density": 0.0016982792659186931,
+        "pressure": 0.0021119604343536684,
+        "velocity": 0.004029339296438634
+      },
+      "analytic_fraction": 0.84,
+      "cells": 100,
+      "degree": 2,
+      "density_min": 0.3216745737213443,
+      "dt": 4.628401748646427e-05,
+      "errors": {
+        "density": 0.020010931447295634,
+        "pressure": 0.00656574446184393,
+        "velocity": 0.013151079244956081
+      },
+      "limiter_reported": "av",
+      "limiter_stage": "every",
+      "linf": {
+        "density": 0.01246368737398149,
+        "pressure": 0.01695562671872016,
+        "velocity": 0.03625485298894617
+      },
+      "mechanism": "av-every",
+      "oscillation": {
+        "rarefaction_fan": {
+          "bias": 0.0008488946207713097,
+          "max_abs": 0.0025133144890857606,
+          "mean_abs": 0.0012370347106815333,
+          "nodes": 90,
+          "sign_flips": 0.011235955056179775
+        },
+        "star_left": {
+          "bias": -0.0005689963666819324,
+          "max_abs": 0.007003235765975668,
+          "mean_abs": 0.0008216369129212736,
+          "nodes": 371,
+          "sign_flips": 0.06486486486486487
+        },
+        "star_right": {
+          "bias": -0.002512849082233855,
+          "max_abs": 0.016253701916419505,
+          "mean_abs": 0.0031644559584394043,
+          "nodes": 85,
+          "sign_flips": 0.16666666666666666
+        },
+        "undisturbed_right": {
+          "bias": 0.000364500002824787,
+          "max_abs": 0.00998090139800345,
+          "mean_abs": 0.0003645207284613176,
+          "nodes": 137,
+          "sign_flips": 0.14705882352941177
+        }
+      },
+      "positivity_stats": {
+        "cell_stages": 265800,
+        "limited_cells": 0,
+        "min_theta": 1.0
+      },
+      "steps": 886,
+      "wall_seconds": 16.13813042640686
+    },
+    {
+      "analytic_errors": {
+        "density": 0.0006055044941318196,
+        "pressure": 0.0009372596483876772,
+        "velocity": 0.0017112998922726684
+      },
+      "analytic_fraction": 0.84,
+      "cells": 200,
+      "degree": 2,
+      "density_min": 0.3192902866643206,
+      "dt": 4.1938221145454424e-05,
+      "errors": {
+        "density": 0.010342565260072297,
+        "pressure": 0.0033891375375766416,
+        "velocity": 0.006861428737017147
+      },
+      "limiter_reported": "av",
+      "limiter_stage": "every",
+      "linf": {
+        "density": 0.004725073380922575,
+        "pressure": 0.017099996344377005,
+        "velocity": 0.03656696828999455
+      },
+      "mechanism": "av-every",
+      "oscillation": {
+        "rarefaction_fan": {
+          "bias": 0.0004436330645302442,
+          "max_abs": 0.0012882246078882442,
+          "mean_abs": 0.0006392569411024537,
+          "nodes": 180,
+          "sign_flips": 0.00558659217877095
+        },
+        "star_left": {
+          "bias": -0.0001828512023067967,
+          "max_abs": 0.006042172509471311,
+          "mean_abs": 0.00027745405517935165,
+          "nodes": 742,
+          "sign_flips": 0.03508771929824561
+        },
+        "star_right": {
+          "bias": -0.00022969036981334328,
+          "max_abs": 0.006161895108749871,
+          "mean_abs": 0.0012031439423101364,
+          "nodes": 168,
+          "sign_flips": 0.1437125748502994
+        },
+        "undisturbed_right": {
+          "bias": 9.724134735573048e-07,
+          "max_abs": 6.646238429763862e-05,
+          "mean_abs": 9.739277993747742e-07,
+          "nodes": 275,
+          "sign_flips": 0.072992700729927
+        }
+      },
+      "positivity_stats": {
+        "cell_stages": 1066800,
+        "limited_cells": 0,
+        "min_theta": 1.0
+      },
+      "steps": 1778,
+      "wall_seconds": 34.817495346069336
+    },
+    {
+      "analytic_errors": {
+        "density": 0.0003191383721802998,
+        "pressure": 0.00047209702094823684,
+        "velocity": 0.0008428343246681216
+      },
+      "analytic_fraction": 0.84,
+      "cells": 400,
+      "degree": 2,
+      "density_min": 0.31636706239548373,
+      "dt": 3.248301520028529e-05,
+      "errors": {
+        "density": 0.005665448140268463,
+        "pressure": 0.0019174507575963956,
+        "velocity": 0.0037964220819662158
+      },
+      "limiter_reported": "av",
+      "limiter_stage": "every",
+      "linf": {
+        "density": 0.0032039601955921857,
+        "pressure": 0.0029253029862898053,
+        "velocity": 0.005836819554757813
+      },
+      "mechanism": "av-every",
+      "oscillation": {
+        "rarefaction_fan": {
+          "bias": 0.0002230860554219757,
+          "max_abs": 0.0006525321819378371,
+          "mean_abs": 0.000322326254053318,
+          "nodes": 357,
+          "sign_flips": 0.0028089887640449437
+        },
+        "star_left": {
+          "bias": -2.1765785324788885e-05,
+          "max_abs": 0.0009702339341464139,
+          "mean_abs": 0.00012887310927269468,
+          "nodes": 1487,
+          "sign_flips": 0.031628532974428
+        },
+        "star_right": {
+          "bias": 1.2918070550375086e-05,
+          "max_abs": 0.004178234932299407,
+          "mean_abs": 0.0007076723880143642,
+          "nodes": 333,
+          "sign_flips": 0.11144578313253012
+        },
+        "undisturbed_right": {
+          "bias": 2.3341300711888957e-12,
+          "max_abs": 5.273653735926587e-10,
+          "mean_abs": 4.1800991009973005e-12,
+          "nodes": 552,
+          "sign_flips": 0.030852994555353903
+        }
+      },
+      "positivity_stats": {
+        "cell_stages": 4284000,
+        "limited_cells": 0,
+        "min_theta": 1.0
+      },
+      "steps": 3570,
+      "wall_seconds": 76.37202525138855
+    },
+    {
+      "analytic_errors": {
+        "density": 0.0015109656363913612,
+        "pressure": 0.002063696999046022,
+        "velocity": 0.0037486798589938023
+      },
+      "analytic_fraction": 0.84,
+      "cells": 100,
+      "degree": 3,
+      "density_min": 0.3289184417858014,
+      "dt": 1.4873917523666735e-05,
+      "errors": {
+        "density": 0.015891001047107195,
+        "pressure": 0.005395586003967066,
+        "velocity": 0.010333954652269212
+      },
+      "limiter_reported": "av",
+      "limiter_stage": "every",
+      "linf": {
+        "density": 0.00835264514403442,
+        "pressure": 0.013324279204329216,
+        "velocity": 0.028426723874274324
+      },
+      "mechanism": "av-every",
+      "oscillation": {
+        "rarefaction_fan": {
+          "bias": 0.00038938318112479163,
+          "max_abs": 0.0013824542812143625,
+          "mean_abs": 0.0007593636425871359,
+          "nodes": 90,
+          "sign_flips": 0.011235955056179775
+        },
+        "star_left": {
+          "bias": -0.0002997666725332837,
+          "max_abs": 0.004704299073476803,
+          "mean_abs": 0.000743059873344994,
+          "nodes": 371,
+          "sign_flips": 0.0945945945945946
+        },
+        "star_right": {
+          "bias": -0.002132726616247813,
+          "max_abs": 0.010892555333839038,
+          "mean_abs": 0.0037873626155477827,
+          "nodes": 85,
+          "sign_flips": 0.16666666666666666
+        },
+        "undisturbed_right": {
+          "bias": 2.7003683273380592e-05,
+          "max_abs": 0.0008134732068304507,
+          "mean_abs": 2.9797890857990885e-05,
+          "nodes": 137,
+          "sign_flips": 0.09558823529411764
+        }
+      },
+      "positivity_stats": {
+        "cell_stages": 370800,
+        "limited_cells": 0,
+        "min_theta": 1.0
+      },
+      "steps": 1236,
+      "wall_seconds": 25.38852071762085
+    },
+    {
+      "analytic_errors": {
+        "density": 0.0011179956953142039,
+        "pressure": 0.001478361861744722,
+        "velocity": 0.002628524379849942
+      },
+      "analytic_fraction": 0.84,
+      "cells": 200,
+      "degree": 3,
+      "density_min": 0.32426003574138107,
+      "dt": 9.201735643504794e-06,
+      "errors": {
+        "density": 0.008814135001845738,
+        "pressure": 0.0034490621951236257,
+        "velocity": 0.006248887977572315
+      },
+      "limiter_reported": "av",
+      "limiter_stage": "every",
+      "linf": {
+        "density": 0.006568999366641736,
+        "pressure": 0.007589108101908966,
+        "velocity": 0.016132450034483936
+      },
+      "mechanism": "av-every",
+      "oscillation": {
+        "rarefaction_fan": {
+          "bias": 0.00020254743667723403,
+          "max_abs": 0.0007292262805099203,
+          "mean_abs": 0.00038676298835869374,
+          "nodes": 180,
+          "sign_flips": 0.00558659217877095
+        },
+        "star_left": {
+          "bias": -8.314545140535024e-05,
+          "max_abs": 0.002676401977721621,
+          "mean_abs": 0.0005317028239955044,
+          "nodes": 742,
+          "sign_flips": 0.09851551956815115
+        },
+        "star_right": {
+          "bias": 0.00015790006264447608,
+          "max_abs": 0.008566530464927391,
+          "mean_abs": 0.0030662694298313263,
+          "nodes": 168,
+          "sign_flips": 0.19161676646706588
+        },
+        "undisturbed_right": {
+          "bias": 1.0191033953287454e-08,
+          "max_abs": 3.324568570661768e-06,
+          "mean_abs": 5.3561113881479956e-08,
+          "nodes": 275,
+          "sign_flips": 0.051094890510948905
+        }
+      },
+      "positivity_stats": {
+        "cell_stages": 1486800,
+        "limited_cells": 0,
+        "min_theta": 1.0
+      },
+      "steps": 2478,
+      "wall_seconds": 46.0380072593689
+    },
+    {
+      "analytic_errors": {
+        "density": 0.0008879380682889584,
+        "pressure": 0.0011082527354102862,
+        "velocity": 0.0019385548824091621
+      },
+      "analytic_fraction": 0.84,
+      "cells": 400,
+      "degree": 3,
+      "density_min": 0.3211804241527183,
+      "dt": 1.1358378529224833e-05,
+      "errors": {
+        "density": 0.004860191645980402,
+        "pressure": 0.002122547199301941,
+        "velocity": 0.003963340803093258
+      },
+      "limiter_reported": "av",
+      "limiter_stage": "every",
+      "linf": {
+        "density": 0.005609128157388664,
+        "pressure": 0.00550527394556679,
+        "velocity": 0.006756863822992026
+      },
+      "mechanism": "av-every",
+      "oscillation": {
+        "rarefaction_fan": {
+          "bias": 9.822485250355421e-05,
+          "max_abs": 0.00038354414634872436,
+          "mean_abs": 0.0001934927864794308,
+          "nodes": 357,
+          "sign_flips": 0.0028089887640449437
+        },
+        "star_left": {
+          "bias": -1.76295655789523e-05,
+          "max_abs": 0.001124300125692479,
+          "mean_abs": 0.00036938031958813026,
+          "nodes": 1487,
+          "sign_flips": 0.09892328398384927
+        },
+        "star_right": {
+          "bias": 0.00012154526620550626,
+          "max_abs": 0.007314777268203176,
+          "mean_abs": 0.0026141786539032744,
+          "nodes": 333,
+          "sign_flips": 0.1927710843373494
+        },
+        "undisturbed_right": {
+          "bias": -3.773210063417537e-08,
+          "max_abs": 1.786852771301639e-07,
+          "mean_abs": 3.773464802763097e-08,
+          "nodes": 552,
+          "sign_flips": 0.012704174228675136
+        }
+      },
+      "positivity_stats": {
+        "cell_stages": 5964000,
+        "limited_cells": 0,
+        "min_theta": 1.0
+      },
+      "steps": 4970,
+      "wall_seconds": 108.9330883026123
+    }
+  ],
+  "orders": {
+    "av-every": {
+      "p2": {
+        "analytic_density": 0.9239555837283102,
+        "cells": [
+          200,
+          400
+        ],
+        "density": 0.8683320771008411,
+        "ripple_star_right": [
+          0.006161895108749871,
+          0.004178234932299407
+        ]
+      },
+      "p3": {
+        "analytic_density": 0.3323836728791973,
+        "cells": [
+          200,
+          400
+        ],
+        "density": 0.8588057908692002,
+        "ripple_star_right": [
+          0.008566530464927391,
+          0.007314777268203176
+        ]
+      }
+    }
+  },
+  "reference_definition": {
+    "coincident_rows": [
+      "contact",
+      "shock"
+    ],
+    "normalisation": "|x_locator - x_analytic| / |x_analytic - x0|",
+    "reading": "C1 compares numerical and exact fields through the same level locator; fan rows are a level-set measure, not the analytic characteristic edge",
+    "rows": {
+      "contact": {
+        "absolute_offset": 2.4346227489591143e-07,
+        "analytic": 0.6987339934622749,
+        "locator": 0.69873375,
+        "normalised_offset": 1.2250660828295946e-06
+      },
+      "rarefaction_head": {
+        "absolute_offset": 0.01132067981297133,
+        "analytic": 0.15763654037219582,
+        "locator": 0.16895722018516715,
+        "normalised_offset": 0.03306626187642354
+      },
+      "rarefaction_tail": {
+        "absolute_offset": 0.014915017840684552,
+        "analytic": 0.28722933252692573,
+        "locator": 0.2723143146862412,
+        "normalised_offset": 0.07009903206029101
+      },
+      "shock": {
+        "absolute_offset": 5.425286792037909e-07,
+        "analytic": 0.8223117925286793,
+        "locator": 0.82231125,
+        "normalised_offset": 1.683241791891672e-06
+      }
+    },
+    "tolerance_of_gate_c1": 0.02,
+    "worst_normalised_offset": 0.07009903206029101
+  },
+  "verdict": "FAIL",
+  "wall_seconds": 307.8017644882202,
+  "waves": {
+    "contact": 0.6987339934622749,
+    "rarefaction_head": 0.15763654037219582,
+    "rarefaction_tail": 0.28722933252692573,
+    "shock": 0.8223117925286793
+  }
+}
