@@ -11,7 +11,7 @@
     "ncells": 3200
   },
   "steps": 1274,
-  "wall_time_s": 22.061,
+  "wall_time_s": 20.234,
   "got": {
     "rel_l1_percent": 2.46151,
     "rel_l2_percent": 5.276974,
@@ -20,6 +20,8 @@
     "rho_max": 4.131404,
     "shock_position": 2.406425
   },
+  "artifact_source": "curated",
+  "run_dir": "/root/tp-agent/work/m18125/validation/repro_shu_osher/artifacts",
   "tabulated": {
     "rel_l1_percent": 2.461510294775401,
     "rel_l2_percent": 5.276974021976416,
@@ -49,5 +51,5 @@
   },
   "all_checks_pass": true,
   "generated_by": "validation/repro_shu_osher/smoke_repro.py",
-  "timestamp": "2026-11-12T00:33:53Z"
+  "timestamp": "2026-11-13T11:58:17Z"
 }
