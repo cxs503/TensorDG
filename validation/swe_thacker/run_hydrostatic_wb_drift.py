@@ -26,9 +26,11 @@ The drift law has two practical consequences:
    must scale with N, not with a fixed absolute value.  A threshold of
    1e-8 m is safe for N ≤ 100 but will be violated for N ≥ 1000.
 
-2. **Long-time integration**: the drift accumulates linearly with the number
-   of time steps, so a simulation run for 10× longer will have ≈10× larger
-   round-off residuals, even if the physical solution is exactly stationary.
+2. **Long-time integration**: the drift re-accumulates at every step, so a
+   longer run drifts more.  The *scaling* with time is measured separately by
+   ``run_hydrostatic_wb_drift_time.py``: for η it is super-linear in T
+   (γ_η ≈ 2.0-2.7 over ``T ∈ [0.5, 4] s``), for the spurious velocity it is
+   close to linear (γ_u ≈ 1.0-1.2).  Do not assume ε ∝ T for η.
 
 This study runs a mesh refinement sequence on the Thacker parabolic basin
 and fits the drift law to the measured η and u errors.
@@ -295,6 +297,8 @@ def generate_drift_table(drift_results: dict) -> str:
     lines.append("JSON artifact (`slope_*`, `max_rel_residual_*`).  The per-step columns")
     lines.append("show that the residual re-accumulates at every step, which is why test")
     lines.append("thresholds must scale with N rather than being a fixed absolute value.")
+    lines.append("The scaling with integration time is a separate measurement: see")
+    lines.append("`hydrostatic_wb_drift_time_table.md` (measured γ_η > 1, γ_u ≈ 1).")
     lines.append("")
 
     return "\n".join(lines)
