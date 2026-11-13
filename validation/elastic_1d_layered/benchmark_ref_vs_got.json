@@ -1,0 +1,127 @@
+{
+  "schema": "tensordg-benchmark-ref-vs-got/1",
+  "case_key": "dalembert-elastic-rod-1d-layered",
+  "tolerance": 0.02,
+  "anchors": [
+    {
+      "quantity": "R_contrast",
+      "reference": 0.6,
+      "value": 0.5999350651141089,
+      "rel_error": 6.493488589109919e-05,
+      "passed": true
+    },
+    {
+      "quantity": "T_contrast",
+      "reference": 1.6,
+      "value": 1.5998268403042628,
+      "rel_error": 0.00010822480983579963,
+      "passed": true
+    },
+    {
+      "quantity": "field_L2_contrast",
+      "reference": 0.0,
+      "value": 0.00022829957197442497,
+      "rel_error": 0.00022829957197442497,
+      "passed": true
+    },
+    {
+      "quantity": "energy_drift_contrast",
+      "reference": 0.0,
+      "value": 3.133935903469889e-05,
+      "rel_error": 3.133935903469889e-05,
+      "passed": true
+    },
+    {
+      "quantity": "R_impedance_matched",
+      "reference": 0.0,
+      "value": 1.3785739573705925e-29,
+      "rel_error": 1.3785739573705925e-29,
+      "passed": true
+    },
+    {
+      "quantity": "T_impedance_matched",
+      "reference": 1.0,
+      "value": 1.0007788942998361,
+      "rel_error": 0.0007788942998361303,
+      "passed": true
+    },
+    {
+      "quantity": "field_L2_impedance_matched",
+      "reference": 0.0,
+      "value": 0.0017801643545027471,
+      "rel_error": 0.0017801643545027471,
+      "passed": true
+    },
+    {
+      "quantity": "energy_drift_impedance_matched",
+      "reference": 0.0,
+      "value": 0.00033586783590743783,
+      "rel_error": 0.00033586783590743783,
+      "passed": true
+    },
+    {
+      "quantity": "R_soft",
+      "reference": -0.3333333333333333,
+      "value": -0.33329725839672597,
+      "rel_error": 3.607493660734429e-05,
+      "passed": true
+    },
+    {
+      "quantity": "T_soft",
+      "reference": 0.6666666666666666,
+      "value": 0.6671859295332272,
+      "rel_error": 0.0007788942998408488,
+      "passed": true
+    },
+    {
+      "quantity": "field_L2_soft",
+      "reference": 0.0,
+      "value": 0.001459462338516197,
+      "rel_error": 0.001459462338516197,
+      "passed": true
+    },
+    {
+      "quantity": "energy_drift_soft",
+      "reference": 0.0,
+      "value": 0.00030203133847181847,
+      "rel_error": 0.00030203133847181847,
+      "passed": true
+    },
+    {
+      "quantity": "uniform_reduction_max_abs_diff",
+      "reference": 0.0,
+      "value": 0.0,
+      "rel_error": 0.0,
+      "passed": true
+    },
+    {
+      "quantity": "monotone_p_1x400->2x400",
+      "reference": 0.027049360977228085,
+      "value": 0.00022829957197442497,
+      "rel_error": 0.00844010962649441,
+      "passed": true
+    },
+    {
+      "quantity": "monotone_p_2x400->3x400",
+      "reference": 0.00022829957197442497,
+      "value": 1.033897161153197e-05,
+      "rel_error": 0.04528686375588204,
+      "passed": true
+    },
+    {
+      "quantity": "monotone_h_2x200->2x400",
+      "reference": 0.0038431765722095777,
+      "value": 0.00022829957197442497,
+      "rel_error": 0.05940387272999208,
+      "passed": true
+    },
+    {
+      "quantity": "monotone_h_2x400->2x800",
+      "reference": 0.00022829957197442497,
+      "value": 2.379149251367527e-05,
+      "rel_error": 0.10421172632045271,
+      "passed": true
+    }
+  ],
+  "all_passed": true
+}
