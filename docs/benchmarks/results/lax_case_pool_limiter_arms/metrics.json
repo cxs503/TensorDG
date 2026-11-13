@@ -1,0 +1,865 @@
+{
+  "case": "CASE-LAX-DG",
+  "anchor": "CASE-LAX-DG",
+  "study": "limiter arms (single-knob attribution of C3/R3)",
+  "generated_at_utc": "2026-11-13T02:12:55Z",
+  "pre_registration": {
+    "arms": {
+      "none": {},
+      "tvb": {
+        "limiter": "tvb"
+      },
+      "weno": {
+        "limiter": "weno"
+      }
+    },
+    "changed_knob": "limiter (kernel argument), nothing else",
+    "inherited_tolerances": {
+      "c1": 0.02,
+      "c2": 0.05,
+      "c3_min_order": 1.0,
+      "r3_order_fraction": 0.85,
+      "r5_order_fraction": 0.03,
+      "r3_band_width": 0.02
+    },
+    "declared_before_run": true,
+    "not_swept": [
+      "tvb_constant (library default 1.0)",
+      "limiter_stage (library default 'every')",
+      "positivity (library default 'scale')",
+      "cfl (0.35)"
+    ]
+  },
+  "config": {
+    "cfl": 0.35,
+    "ladder": [
+      [
+        200,
+        1
+      ],
+      [
+        400,
+        1
+      ]
+    ],
+    "quick": false,
+    "reduced_ladder": true,
+    "entropy_ladder": [
+      16,
+      32
+    ],
+    "final_time": 0.13
+  },
+  "arms": {
+    "none": {
+      "arm": "none",
+      "arguments": {},
+      "ladder": [
+        {
+          "cells": 200,
+          "degree": 1,
+          "arm": "none",
+          "steps": 1103,
+          "dt": 8.093190388716587e-05,
+          "limiter": "local positivity fallback",
+          "positivity_stats": {
+            "limited_cells": 479,
+            "cell_stages": 661800,
+            "min_theta": 0.9133902638443463
+          },
+          "analytic_fraction": 0.84,
+          "analytic_fraction_legacy": 0.84,
+          "density_min": 0.29441786549882154,
+          "errors": {
+            "density": 0.013602985607298416,
+            "velocity": 0.004398309033240089,
+            "pressure": 0.0025008938646224653
+          },
+          "analytic_errors": {
+            "density": 0.0008479043529517709,
+            "velocity": 0.0008263718872886522,
+            "pressure": 0.0005109399578884059
+          },
+          "analytic_errors_legacy_band": {
+            "density": 0.0008479043529517709,
+            "velocity": 0.0008263718872886522,
+            "pressure": 0.0005109399578884059
+          },
+          "wall_seconds": 33.15944576263428
+        },
+        {
+          "cells": 400,
+          "degree": 1,
+          "arm": "none",
+          "steps": 2199,
+          "dt": 3.0716573045319606e-05,
+          "limiter": "local positivity fallback",
+          "positivity_stats": {
+            "limited_cells": 991,
+            "cell_stages": 2638800,
+            "min_theta": 0.9133902638443463
+          },
+          "analytic_fraction": 0.84,
+          "analytic_fraction_legacy": 0.92,
+          "density_min": 0.2966138038023771,
+          "errors": {
+            "density": 0.0072183346661303036,
+            "velocity": 0.00195719944801882,
+            "pressure": 0.001104549721066206
+          },
+          "analytic_errors": {
+            "density": 0.00013082612545539142,
+            "velocity": 0.0002789209822485669,
+            "pressure": 0.00016601104753185913
+          },
+          "analytic_errors_legacy_band": {
+            "density": 0.0007539864202757854,
+            "velocity": 0.0004938390710994791,
+            "pressure": 0.00030341503957371385
+          },
+          "wall_seconds": 77.80646061897278
+        }
+      ],
+      "finest": {
+        "cells": 400,
+        "degree": 1,
+        "positions": {
+          "rarefaction_head": 0.16776568617823132,
+          "rarefaction_tail": 0.27309270702611627,
+          "contact": 0.6989258451252913,
+          "shock": 0.8224823684362345
+        },
+        "plateaus": {
+          "star_left": {
+            "density": 0.34456850449569637,
+            "velocity": 1.5287191777751634,
+            "pressure": 2.4661019474694355
+          },
+          "star_right": {
+            "density": 1.304100210231454,
+            "velocity": 1.5287194167593252,
+            "pressure": 2.466105506582775
+          }
+        }
+      },
+      "exact_positions": {
+        "rarefaction_head": 0.16895722018516715,
+        "rarefaction_tail": 0.2723143146862412,
+        "contact": 0.69873375,
+        "shock": 0.82231125
+      },
+      "entropy_wave": [
+        {
+          "arm": "none",
+          "degree": 1,
+          "speed": 1.0,
+          "cells": [
+            16,
+            32
+          ],
+          "relative_l1": {
+            "16": 0.0010113368579323114,
+            "32": 0.00024981068355188116
+          },
+          "order": 2.0173565302633905
+        },
+        {
+          "arm": "none",
+          "degree": 1,
+          "speed": 2.0,
+          "cells": [
+            16,
+            32
+          ],
+          "relative_l1": {
+            "16": 0.0010583307953485157,
+            "32": 0.00025588064804476097
+          },
+          "order": 2.0482476841675537
+        },
+        {
+          "arm": "none",
+          "degree": 2,
+          "speed": 1.0,
+          "cells": [
+            16,
+            32
+          ],
+          "relative_l1": {
+            "16": 3.0126131134924042e-05,
+            "32": 3.738935775178288e-06
+          },
+          "order": 3.0103158157912753
+        },
+        {
+          "arm": "none",
+          "degree": 2,
+          "speed": 2.0,
+          "cells": [
+            16,
+            32
+          ],
+          "relative_l1": {
+            "16": 3.0131512610109118e-05,
+            "32": 3.738640381354496e-06
+          },
+          "order": 3.0106874878336995
+        }
+      ],
+      "gates": {
+        "c1": {
+          "tolerance": 0.02,
+          "normalisation": "|dx| / |x_exact - x0|",
+          "worst_relative_error": 0.003599335432122439,
+          "waves": {
+            "rarefaction_head": {
+              "exact": 0.16895722018516715,
+              "numerical": 0.16776568617823132,
+              "absolute_error": 0.0011915340069358349,
+              "relative_error": 0.003599335432122439,
+              "status": "PASS"
+            },
+            "rarefaction_tail": {
+              "exact": 0.2723143146862412,
+              "numerical": 0.27309270702611627,
+              "absolute_error": 0.0007783923398750892,
+              "relative_error": 0.003418714438733543,
+              "status": "PASS"
+            },
+            "contact": {
+              "exact": 0.69873375,
+              "numerical": 0.6989258451252913,
+              "absolute_error": 0.0001920951252912806,
+              "relative_error": 0.0009665953834780481,
+              "status": "PASS"
+            },
+            "shock": {
+              "exact": 0.82231125,
+              "numerical": 0.8224823684362345,
+              "absolute_error": 0.0001711184362344076,
+              "relative_error": 0.0005309105289821797,
+              "status": "PASS"
+            }
+          },
+          "status": "PASS"
+        },
+        "c2": {
+          "tolerance": 0.05,
+          "worst_relative_error": 1.2022384185415678e-05,
+          "values": {
+            "star_left.density": {
+              "exact": 0.34456847418960945,
+              "got": 0.34456850449569637,
+              "relative_error": 8.795374268949916e-08
+            },
+            "star_left.velocity": {
+              "exact": 1.528723026632884,
+              "got": 1.5287191777751634,
+              "relative_error": 2.5176946075127794e-06
+            },
+            "star_left.pressure": {
+              "exact": 2.4660979192073564,
+              "got": 2.4661019474694355,
+              "relative_error": 1.6334558525190917e-06
+            },
+            "star_right.density": {
+              "exact": 1.3040845320261998,
+              "got": 1.304100210231454,
+              "relative_error": 1.2022384185415678e-05
+            }
+          },
+          "status": "PASS"
+        },
+        "c3": {
+          "minimum_order": 1.0,
+          "gated_on": "density, finest ladder pair, every degree",
+          "gated_order": 0.9141853934201224,
+          "per_leg": {
+            "p1.density": 0.9141853934201224,
+            "p1.velocity": 1.1681581931412561,
+            "p1.pressure": 1.1789854695568083
+          },
+          "status": "FAIL"
+        },
+        "r3": {
+          "order_fraction": 0.85,
+          "band": {
+            "width": 0.02,
+            "rule": "fixed physical band (nested), m16606 F1"
+          },
+          "band_width": 0.02,
+          "band_cells": null,
+          "error_key": "analytic_errors",
+          "gated_on": "density, finest ladder pair, every degree",
+          "per_leg": {
+            "p1.density": 2.6962508620669037,
+            "p1.velocity": 1.5669347080126153,
+            "p1.pressure": 1.6218745138849413,
+            "p1.requirement": 1.7,
+            "p1.density_ratio": 1.5860299188628846
+          },
+          "status": "PASS"
+        },
+        "r5": {
+          "fraction": 0.03,
+          "reading": "observed order within 3 % of the design order p+1",
+          "cases": {
+            "u=1.0.p1": {
+              "cells": [
+                16,
+                32
+              ],
+              "design_order": 2,
+              "observed_order": 2.0173565302633905,
+              "relative_deviation": 0.008678265131695229,
+              "relative_l1": {
+                "16": 0.0010113368579323114,
+                "32": 0.00024981068355188116
+              },
+              "status": "PASS"
+            },
+            "u=2.0.p1": {
+              "cells": [
+                16,
+                32
+              ],
+              "design_order": 2,
+              "observed_order": 2.0482476841675537,
+              "relative_deviation": 0.024123842083776825,
+              "relative_l1": {
+                "16": 0.0010583307953485157,
+                "32": 0.00025588064804476097
+              },
+              "status": "PASS"
+            },
+            "u=1.0.p2": {
+              "cells": [
+                16,
+                32
+              ],
+              "design_order": 3,
+              "observed_order": 3.0103158157912753,
+              "relative_deviation": 0.0034386052637584985,
+              "relative_l1": {
+                "16": 3.0126131134924042e-05,
+                "32": 3.738935775178288e-06
+              },
+              "status": "PASS"
+            },
+            "u=2.0.p2": {
+              "cells": [
+                16,
+                32
+              ],
+              "design_order": 3,
+              "observed_order": 3.0106874878336995,
+              "relative_deviation": 0.0035624959445665905,
+              "relative_l1": {
+                "16": 3.0131512610109118e-05,
+                "32": 3.738640381354496e-06
+              },
+              "status": "PASS"
+            }
+          },
+          "status": "PASS"
+        }
+      },
+      "diagnostics": {
+        "r3_legacy_band": {
+          "order_fraction": 0.85,
+          "band": {
+            "legacy_cells": 4.0,
+            "rule": "retired 4-cell band (not nested)"
+          },
+          "band_width": null,
+          "band_cells": 4.0,
+          "error_key": "analytic_errors_legacy_band",
+          "gated_on": "density, finest ladder pair, every degree",
+          "per_leg": {
+            "p1.density": 0.16936299214798287,
+            "p1.velocity": 0.7427501925578309,
+            "p1.pressure": 0.7518611672569028,
+            "p1.requirement": 1.7,
+            "p1.density_ratio": 0.09962528949881345
+          },
+          "status": "FAIL"
+        }
+      },
+      "verdict": "FAIL",
+      "wall_seconds": 138.87776851654053
+    },
+    "tvb": {
+      "arm": "tvb",
+      "arguments": {
+        "limiter": "tvb"
+      },
+      "ladder": [
+        {
+          "cells": 200,
+          "degree": 1,
+          "arm": "tvb",
+          "steps": 1062,
+          "dt": 0.0001126951396168141,
+          "limiter": "tvb",
+          "positivity_stats": {
+            "limited_cells": 0,
+            "cell_stages": 637200,
+            "min_theta": 1.0
+          },
+          "analytic_fraction": 0.84,
+          "analytic_fraction_legacy": 0.84,
+          "density_min": 0.3283600070741538,
+          "errors": {
+            "density": 0.02170941952605508,
+            "velocity": 0.008848791951124306,
+            "pressure": 0.004533817432025547
+          },
+          "analytic_errors": {
+            "density": 0.0017032358537341632,
+            "velocity": 0.002331339393085033,
+            "pressure": 0.001302362872631372
+          },
+          "analytic_errors_legacy_band": {
+            "density": 0.0017032358537341632,
+            "velocity": 0.002331339393085033,
+            "pressure": 0.001302362872631372
+          },
+          "wall_seconds": 69.75320887565613
+        },
+        {
+          "cells": 400,
+          "degree": 1,
+          "arm": "tvb",
+          "steps": 2122,
+          "dt": 2.6874829444190063e-05,
+          "limiter": "tvb",
+          "positivity_stats": {
+            "limited_cells": 0,
+            "cell_stages": 2546400,
+            "min_theta": 1.0
+          },
+          "analytic_fraction": 0.84,
+          "analytic_fraction_legacy": 0.92,
+          "density_min": 0.332125562816625,
+          "errors": {
+            "density": 0.012649979728266692,
+            "velocity": 0.0041079269836422315,
+            "pressure": 0.0020522562273333155
+          },
+          "analytic_errors": {
+            "density": 0.0003972945162228386,
+            "velocity": 0.000976606446845281,
+            "pressure": 0.0005477141020167006
+          },
+          "analytic_errors_legacy_band": {
+            "density": 0.0014275842445101306,
+            "velocity": 0.0013191380432532212,
+            "pressure": 0.0007486650271996697
+          },
+          "wall_seconds": 117.66095733642578
+        }
+      ],
+      "finest": {
+        "cells": 400,
+        "degree": 1,
+        "positions": {
+          "rarefaction_head": 0.1658515240379353,
+          "rarefaction_tail": 0.2747097182938807,
+          "contact": 0.6975890891140496,
+          "shock": 0.8225002931284562
+        },
+        "plateaus": {
+          "star_left": {
+            "density": 0.3445866006965466,
+            "velocity": 1.5284944839060188,
+            "pressure": 2.4663437792021985
+          },
+          "star_right": {
+            "density": 1.303876152009041,
+            "velocity": 1.5287037678051716,
+            "pressure": 2.4660782520899756
+          }
+        }
+      },
+      "exact_positions": {
+        "rarefaction_head": 0.16895722018516715,
+        "rarefaction_tail": 0.2723143146862412,
+        "contact": 0.69873375,
+        "shock": 0.82231125
+      },
+      "entropy_wave": [
+        {
+          "arm": "tvb",
+          "degree": 1,
+          "speed": 1.0,
+          "cells": [
+            16,
+            32
+          ],
+          "relative_l1": {
+            "16": 0.005998092045969586,
+            "32": 0.0015959202846801423
+          },
+          "order": 1.9101150702392642
+        },
+        {
+          "arm": "tvb",
+          "degree": 1,
+          "speed": 2.0,
+          "cells": [
+            16,
+            32
+          ],
+          "relative_l1": {
+            "16": 0.00968529124335629,
+            "32": 0.002857099190387429
+          },
+          "order": 1.7612443088838199
+        },
+        {
+          "arm": "tvb",
+          "degree": 2,
+          "speed": 1.0,
+          "cells": [
+            16,
+            32
+          ],
+          "relative_l1": {
+            "16": 0.005836491262689499,
+            "32": 0.0015263514400142757
+          },
+          "order": 1.935014142618275
+        },
+        {
+          "arm": "tvb",
+          "degree": 2,
+          "speed": 2.0,
+          "cells": [
+            16,
+            32
+          ],
+          "relative_l1": {
+            "16": 0.009566201774084324,
+            "32": 0.002775680245099057
+          },
+          "order": 1.785104840715827
+        }
+      ],
+      "gates": {
+        "c1": {
+          "tolerance": 0.02,
+          "normalisation": "|dx| / |x_exact - x0|",
+          "worst_relative_error": 0.010520659673174282,
+          "waves": {
+            "rarefaction_head": {
+              "exact": 0.16895722018516715,
+              "numerical": 0.1658515240379353,
+              "absolute_error": 0.0031056961472318567,
+              "relative_error": 0.009381555305235814,
+              "status": "PASS"
+            },
+            "rarefaction_tail": {
+              "exact": 0.2723143146862412,
+              "numerical": 0.2747097182938807,
+              "absolute_error": 0.0023954036076395124,
+              "relative_error": 0.010520659673174282,
+              "status": "PASS"
+            },
+            "contact": {
+              "exact": 0.69873375,
+              "numerical": 0.6975890891140496,
+              "absolute_error": 0.0011446608859504437,
+              "relative_error": 0.005759770979767873,
+              "status": "PASS"
+            },
+            "shock": {
+              "exact": 0.82231125,
+              "numerical": 0.8225002931284562,
+              "absolute_error": 0.00018904312845613447,
+              "relative_error": 0.000586523518667544,
+              "status": "PASS"
+            }
+          },
+          "status": "PASS"
+        },
+        "c2": {
+          "tolerance": 0.05,
+          "worst_relative_error": 0.00015979026822369476,
+          "values": {
+            "star_left.density": {
+              "exact": 0.34456847418960945,
+              "got": 0.3445866006965466,
+              "relative_error": 5.260639987392299e-05
+            },
+            "star_left.velocity": {
+              "exact": 1.528723026632884,
+              "got": 1.5284944839060188,
+              "relative_error": 0.0001494991066946265
+            },
+            "star_left.pressure": {
+              "exact": 2.4660979192073564,
+              "got": 2.4663437792021985,
+              "relative_error": 9.969595810740571e-05
+            },
+            "star_right.density": {
+              "exact": 1.3040845320261998,
+              "got": 1.303876152009041,
+              "relative_error": 0.00015979026822369476
+            }
+          },
+          "status": "PASS"
+        },
+        "c3": {
+          "minimum_order": 1.0,
+          "gated_on": "density, finest ladder pair, every degree",
+          "gated_order": 0.7791860782047304,
+          "per_leg": {
+            "p1.density": 0.7791860782047304,
+            "p1.velocity": 1.1070699712907146,
+            "p1.pressure": 1.1435154328605543
+          },
+          "status": "FAIL"
+        },
+        "r3": {
+          "order_fraction": 0.85,
+          "band": {
+            "width": 0.02,
+            "rule": "fixed physical band (nested), m16606 F1"
+          },
+          "band_width": 0.02,
+          "band_cells": null,
+          "error_key": "analytic_errors",
+          "gated_on": "density, finest ladder pair, every degree",
+          "per_leg": {
+            "p1.density": 2.099997439034321,
+            "p1.velocity": 1.2553098385128878,
+            "p1.pressure": 1.2496365463034884,
+            "p1.requirement": 1.7,
+            "p1.density_ratio": 1.2352926111966593
+          },
+          "status": "PASS"
+        },
+        "r5": {
+          "fraction": 0.03,
+          "reading": "observed order within 3 % of the design order p+1",
+          "cases": {
+            "u=1.0.p1": {
+              "cells": [
+                16,
+                32
+              ],
+              "design_order": 2,
+              "observed_order": 1.9101150702392642,
+              "relative_deviation": -0.044942464880367905,
+              "relative_l1": {
+                "16": 0.005998092045969586,
+                "32": 0.0015959202846801423
+              },
+              "status": "FAIL"
+            },
+            "u=2.0.p1": {
+              "cells": [
+                16,
+                32
+              ],
+              "design_order": 2,
+              "observed_order": 1.7612443088838199,
+              "relative_deviation": -0.11937784555809006,
+              "relative_l1": {
+                "16": 0.00968529124335629,
+                "32": 0.002857099190387429
+              },
+              "status": "FAIL"
+            },
+            "u=1.0.p2": {
+              "cells": [
+                16,
+                32
+              ],
+              "design_order": 3,
+              "observed_order": 1.935014142618275,
+              "relative_deviation": -0.3549952857939084,
+              "relative_l1": {
+                "16": 0.005836491262689499,
+                "32": 0.0015263514400142757
+              },
+              "status": "FAIL"
+            },
+            "u=2.0.p2": {
+              "cells": [
+                16,
+                32
+              ],
+              "design_order": 3,
+              "observed_order": 1.785104840715827,
+              "relative_deviation": -0.4049650530947243,
+              "relative_l1": {
+                "16": 0.009566201774084324,
+                "32": 0.002775680245099057
+              },
+              "status": "FAIL"
+            }
+          },
+          "status": "FAIL"
+        }
+      },
+      "diagnostics": {
+        "r3_legacy_band": {
+          "order_fraction": 0.85,
+          "band": {
+            "legacy_cells": 4.0,
+            "rule": "retired 4-cell band (not nested)"
+          },
+          "band_width": null,
+          "band_cells": 4.0,
+          "error_key": "analytic_errors_legacy_band",
+          "gated_on": "density, finest ladder pair, every degree",
+          "per_leg": {
+            "p1.density": 0.25470234015006515,
+            "p1.velocity": 0.8215634996985177,
+            "p1.pressure": 0.7987392096576731,
+            "p1.requirement": 1.7,
+            "p1.density_ratio": 0.14982490597062656
+          },
+          "status": "FAIL"
+        }
+      },
+      "verdict": "FAIL",
+      "wall_seconds": 316.75896310806274
+    }
+  },
+  "analytic_orders": {
+    "none": {
+      "p1": {
+        "cells": [
+          200,
+          400
+        ],
+        "whole_field": [
+          0.013602985607298416,
+          0.0072183346661303036
+        ],
+        "analytic": [
+          0.0008479043529517709,
+          0.00013082612545539142
+        ],
+        "steps": [
+          1103,
+          2199
+        ],
+        "r3_order": 2.6962508620669037,
+        "r3_requirement": 1.7,
+        "c3_order": 0.9141853934201224
+      }
+    },
+    "tvb": {
+      "p1": {
+        "cells": [
+          200,
+          400
+        ],
+        "whole_field": [
+          0.02170941952605508,
+          0.012649979728266692
+        ],
+        "analytic": [
+          0.0017032358537341632,
+          0.0003972945162228386
+        ],
+        "steps": [
+          1062,
+          2122
+        ],
+        "r3_order": 2.099997439034321,
+        "r3_requirement": 1.7,
+        "c3_order": 0.7791860782047304
+      }
+    }
+  },
+  "reproduction": {
+    "status": "PASS",
+    "metric": "max relative difference of every ladder leg and field",
+    "worst_relative_difference": 0.0,
+    "worst_key": null,
+    "record": "docs/benchmarks/results/lax_case_pool/metrics.json",
+    "legs": [
+      {
+        "cells": 200,
+        "degree": 1,
+        "errors.density": {
+          "published": 0.013602985607298416,
+          "measured": 0.013602985607298416,
+          "relative_difference": 0.0
+        },
+        "errors.velocity": {
+          "published": 0.004398309033240089,
+          "measured": 0.004398309033240089,
+          "relative_difference": 0.0
+        },
+        "errors.pressure": {
+          "published": 0.0025008938646224653,
+          "measured": 0.0025008938646224653,
+          "relative_difference": 0.0
+        },
+        "analytic_errors.density": {
+          "published": 0.0008479043529517709,
+          "measured": 0.0008479043529517709,
+          "relative_difference": 0.0
+        },
+        "analytic_errors.velocity": {
+          "published": 0.0008263718872886522,
+          "measured": 0.0008263718872886522,
+          "relative_difference": 0.0
+        },
+        "analytic_errors.pressure": {
+          "published": 0.0005109399578884059,
+          "measured": 0.0005109399578884059,
+          "relative_difference": 0.0
+        }
+      },
+      {
+        "cells": 400,
+        "degree": 1,
+        "errors.density": {
+          "published": 0.0072183346661303036,
+          "measured": 0.0072183346661303036,
+          "relative_difference": 0.0
+        },
+        "errors.velocity": {
+          "published": 0.00195719944801882,
+          "measured": 0.00195719944801882,
+          "relative_difference": 0.0
+        },
+        "errors.pressure": {
+          "published": 0.001104549721066206,
+          "measured": 0.001104549721066206,
+          "relative_difference": 0.0
+        },
+        "analytic_errors.density": {
+          "published": 0.00013082612545539142,
+          "measured": 0.00013082612545539142,
+          "relative_difference": 0.0
+        },
+        "analytic_errors.velocity": {
+          "published": 0.0002789209822485669,
+          "measured": 0.0002789209822485669,
+          "relative_difference": 0.0
+        },
+        "analytic_errors.pressure": {
+          "published": 0.00016601104753185913,
+          "measured": 0.00016601104753185913,
+          "relative_difference": 0.0
+        }
+      }
+    ]
+  },
+  "figures": [
+    "docs/benchmarks/results/lax_case_pool_limiter_arms/figures/lax_limiter_arms_orders.png",
+    "docs/benchmarks/results/lax_case_pool_limiter_arms/figures/lax_limiter_arms_profiles.png"
+  ],
+  "verdicts": {
+    "none": "FAIL",
+    "tvb": "FAIL"
+  },
+  "wall_seconds": 455.6648852825165
+}
