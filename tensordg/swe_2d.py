@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Callable, Optional
 
+from .stepping import step_metadata
+
 import numpy as np
 import torch
 
@@ -560,7 +562,8 @@ def solve_swe_2d(
     zb_faces = {"x": (zb_lx, zb_rx), "y": (zb_ly, zb_ry)}
     metadata = {
         "nx": nx, "ny": ny, "degree": degree, "final_time": final_time,
-        "steps": steps, "dt": dt, "domain": domain, "cfl": cfl,
+        "steps": steps, **step_metadata(final_time, steps, dt),
+        "domain": domain, "cfl": cfl,
         "limiter": limiter, "device": str(dev),
         "well_balanced": well_balanced,
         "bed_representation": ("nodal_lgl_polynomial" if well_balanced

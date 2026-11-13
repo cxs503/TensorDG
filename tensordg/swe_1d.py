@@ -45,6 +45,7 @@ from typing import Callable, Optional
 import numpy as np
 import torch
 
+from .stepping import step_metadata
 from .limiters import apply_limiter
 
 GRAVITY = 9.81  # m/s²
@@ -784,7 +785,8 @@ def solve_swe_1d(
     zb_faces = torch.stack((zb_l, zb_r), dim=1)
     metadata = {
         "ncells": ncells, "degree": degree, "final_time": final_time,
-        "steps": steps, "dt": dt, "domain": (lower, upper), "cfl": cfl,
+        "steps": steps, **step_metadata(final_time, steps, dt),
+        "domain": (lower, upper), "cfl": cfl,
         "flux": flux_kind, "limiter": limiter, "rk_order": rk_order,
         "device": str(dev), "limiter_stage": limiter_stage,
         "exact_boundary_flux": bc_left_flux is not None or bc_right_flux is not None,

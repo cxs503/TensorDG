@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import torch
+from .stepping import step_metadata
 
 GAMMA = 1.4
 
@@ -325,7 +326,8 @@ def solve_riemann(
     fields = primitive_fields(u)
     fields["conservative"] = u
     metadata = {
-        "ncells": ncells, "final_time": final_time, "steps": steps, "dt": dt,
+        "ncells": ncells, "final_time": final_time, "steps": steps,
+        **step_metadata(final_time, steps, dt),
         "diaphragm": diaphragm, "domain": (lower, upper), "cfl": cfl,
         "left_state": tuple(left_state), "right_state": tuple(right_state),
         "flux": flux, "hllc_wave_speed": hllc_wave_speed, "device": str(dev),
