@@ -38,7 +38,7 @@ import numpy as np
 import torch
 
 from tensordg.advection_1d import l2_error, solve_advection
-from tensordg.convergence import p_decay_diagnostics
+from tensordg.convergence import exponential_decay_criterion, p_decay_diagnostics
 
 SCHEMA = "tensordg-p-refinement-exponential/1"
 ARTIFACT_RELPATH = Path("docs") / "benchmarks" / "results" / "p-refinement-exponential"
@@ -236,43 +236,24 @@ FALSIFICATION_EXPECTED = {
 def check_discriminating_criterion(diag: dict) -> dict:
     """Composite predeclared criterion separating spectral from algebraic decay.
 
-    All three conditions must hold (audit m16499 F4):
+    Thin wrapper around :func:`tensordg.convergence.exponential_decay_criterion`
+    (library tier) so that the shipped canonical case
+    ``tensordg.cases.prefinement_exponential`` and this benchmark apply exactly
+    one implementation of the gate.  The local constants
+    (``SIGMA_MIN_DISCRIMINATING`` / ``ERROR_RATIO_MIN`` / ``DECAY_RATE_TOL``)
+    are passed through, keeping the predeclared values auditable here.
+
+    All conditions must hold (audit m16499 F4):
       1. ``sigma > SIGMA_MIN_DISCRIMINATING`` (an algebraic law in p cannot),
       2. pairwise decay rates non-decreasing (they decrease for an algebraic law),
       3. ``e(p_min) / e(p_max) > ERROR_RATIO_MIN`` (at least three decades).
     """
-    rate = float(diag["lsq_decay_rate"])
-    rates = [float(v) for v in diag["decay_rates"]]
-    errors = [float(v) for v in diag["errors"]]
-    ratio = errors[0] / errors[-1]
-    non_decreasing = all(
-        b >= a * (1.0 - DECAY_RATE_TOL) for a, b in zip(rates, rates[1:])
-    ) if len(rates) > 1 else True
-    conditions = {
-        "sigma_above_threshold": {
-            "measured": rate,
-            "threshold": SIGMA_MIN_DISCRIMINATING,
-            "pass": rate > SIGMA_MIN_DISCRIMINATING,
-        },
-        "decay_rates_non_decreasing": {
-            "measured": rates,
-            "tolerance": DECAY_RATE_TOL,
-            "pass": bool(non_decreasing),
-        },
-        "error_ratio_above_threshold": {
-            "measured": ratio,
-            "threshold": ERROR_RATIO_MIN,
-            "pass": ratio > ERROR_RATIO_MIN,
-        },
-        "monotone_decreasing": {
-            "measured": bool(diag["monotone_decreasing"]),
-            "pass": bool(diag["monotone_decreasing"]),
-        },
-    }
-    return {
-        "conditions": conditions,
-        "pass": all(c["pass"] for c in conditions.values()),
-    }
+    return exponential_decay_criterion(
+        diag,
+        sigma_min=SIGMA_MIN_DISCRIMINATING,
+        error_ratio_min=ERROR_RATIO_MIN,
+        rate_tol=DECAY_RATE_TOL,
+    )
 
 
 def falsification_control(degrees: tuple[int, ...] = DEGREES_FULL) -> dict:
