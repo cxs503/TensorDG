@@ -28,6 +28,23 @@ Name discipline
   ``CASES``) are exported at the bottom of this file.
 """
 
+# ---- acoustics
+from .acoustics import (
+    Acoustic2DResult,
+    AcousticMedium,
+    acoustic_energy,
+    acoustic_flux_x,
+    acoustic_flux_y,
+    acoustic_plane_pulse_exact,
+    acoustic_pulse_exact_pressure,
+    acoustic_pulse_exact_state,
+    acoustic_pulse_exact_velocity,
+    acoustic_pulse_initial,
+    acoustic_riemann_flux_x,
+    acoustic_riemann_flux_y,
+    solve_acoustic_2d,
+)
+
 # ---- advection_1d
 from .advection_1d import (
     solve_advection,
@@ -598,6 +615,8 @@ from .swe_1d import GRAVITY as SWE_GRAVITY
 from .cases import CASES, ELASTIC_ROD_CASE_KEY, LAX_CASE_KEY, VISCOUS_BURGERS_CASE_KEY
 
 __all__ = [
+    "Acoustic2DResult",
+    "AcousticMedium",
     "Basis1D",
     "BodyForcePoiseuille",
     "CASES",
@@ -620,6 +639,16 @@ __all__ = [
     "RiemannData",
     "SWE_GRAVITY",
     "VISCOUS_BURGERS_CASE_KEY",
+    "acoustic_energy",
+    "acoustic_flux_x",
+    "acoustic_flux_y",
+    "acoustic_plane_pulse_exact",
+    "acoustic_pulse_exact_pressure",
+    "acoustic_pulse_exact_state",
+    "acoustic_pulse_exact_velocity",
+    "acoustic_pulse_initial",
+    "acoustic_riemann_flux_x",
+    "acoustic_riemann_flux_y",
     "advance_advection_1d",
     "advance_euler_dg_1d",
     "advance_euler_dg_2d",
@@ -875,6 +904,7 @@ __all__ = [
     "smoothness_indicators",
     "solid_body_rotation",
     "solid_body_rotation_velocity",
+    "solve_acoustic_2d",
     "solve_advection",
     "solve_advection_2d",
     "solve_advection_3d",
