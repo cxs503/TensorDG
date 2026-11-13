@@ -337,6 +337,26 @@ from .elastic_1d import (
     relative_error,
     elastic_energy,
     peak_stress,
+    # driven / injected-work helpers (public in the module, missing at the root
+    # until the contract gate counted them)
+    gaussian_drive,
+    driven_simple_wave,
+    driven_injected_work,
+)
+
+# ---- elastic_1d_layered
+from .elastic_1d_layered import (
+    wave_speed as layered_wave_speed,
+    impedance as layered_impedance,
+    scattering_coefficients as layered_scattering_coefficients,
+    interface_state as layered_interface_state,
+    layered_interface_flux,
+    solve_elastic_1d_layered,
+    layered_energy,
+    layered_stress_profile,
+    rightgoing_pulse_initial_state as layered_rightgoing_pulse_initial_state,
+    scattering_valid_time as layered_scattering_valid_time,
+    exact_rightgoing_scattering as layered_exact_rightgoing_scattering,
 )
 
 
@@ -773,6 +793,8 @@ __all__ = [
     "dirichlet_face_operator",
     "dispersion_omega_sq",
     "dominant_theta",
+    "driven_injected_work",
+    "driven_simple_wave",
     "einfeldt_wave_speeds",
     "elastic_2d_energy",
     "elastic_2d_legendre_operators",
@@ -818,6 +840,7 @@ __all__ = [
     "gauss_differentiation_matrix",
     "gauss_nodes_weights",
     "gaussian_bump",
+    "gaussian_drive",
     "gaussian_hill",
     "gaussian_pulse",
     "gci_study",
@@ -852,6 +875,16 @@ __all__ = [
     "lax_friedrichs_flux",
     "lax_parameters",
     "lax_star_state",
+    "layered_energy",
+    "layered_exact_rightgoing_scattering",
+    "layered_impedance",
+    "layered_interface_flux",
+    "layered_interface_state",
+    "layered_rightgoing_pulse_initial_state",
+    "layered_scattering_coefficients",
+    "layered_scattering_valid_time",
+    "layered_stress_profile",
+    "layered_wave_speed",
     "ldg_l2_error_1d",
     "ldg_poisson_2d_manufactured_solution",
     "ldg_poisson_2d_superposition_solution",
@@ -972,6 +1005,7 @@ __all__ = [
     "solve_burgers_tracer",
     "solve_couette_dg_2d",
     "solve_elastic_1d",
+    "solve_elastic_1d_layered",
     "solve_elastic_2d",
     "solve_elastic_rod_case",
     "solve_euler_2d",
