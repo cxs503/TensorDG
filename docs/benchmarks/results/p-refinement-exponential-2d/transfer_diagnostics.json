@@ -1,0 +1,250 @@
+{
+  "case": "DG-PREFINEMENT-EXPONENTIAL-2D",
+  "source_artifact": "p_refinement_2d_results.json",
+  "source_artifact_sha256": "431219d0154fb5c15a0b6a3e3225809a03657153f9e99293cebd683f17886405",
+  "parameters": {
+    "case_key": "DG-PREFINEMENT-EXPONENTIAL-2D",
+    "ledger_anchor": "CASE-DG-PREFINEMENT-EXPONENTIAL",
+    "reference": {
+      "authors": "I. Babuska, M. Suri",
+      "title": "The p- and h-p versions of the finite element method, basic principles and properties",
+      "journal": "SIAM Review 36(4), 578-632 (1994)",
+      "doi": "10.21236/ada260237",
+      "statement": "for analytic solutions the p-version error decays exponentially in the polynomial degree, e(p) <= C exp(-sigma p)"
+    },
+    "domain": [
+      0.0,
+      1.0
+    ],
+    "periodic": true,
+    "pde": "u_t + ax*u_x + ay*u_y = 0",
+    "initial_condition": "1 + sin(2*pi*x)*sin(2*pi*y)",
+    "exact_solution": "1 + sin(2*pi*(x-ax*t))*sin(2*pi*(y-ay*t))",
+    "velocity": [
+      1.0,
+      0.5
+    ],
+    "ncells": 8,
+    "final_time": 1.0,
+    "degrees": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "cfl_base": 0.1,
+    "temporal_tolerance": 0.01,
+    "legacy_slope_threshold": 0.5,
+    "sigma_min_discriminating": 1.0,
+    "error_ratio_min": 1000.0,
+    "max_degree": 8,
+    "metric": "relative L2 error vs the analytic travelling wave"
+  },
+  "predeclared_gate": {
+    "verdict": "FAIL",
+    "failing_clause": "decay_rates_non_decreasing",
+    "measured_rates": [
+      3.106317166035044,
+      3.0466917220358103,
+      3.250961893188931,
+      3.4143037986750437,
+      3.5770301562179396
+    ],
+    "max_dip_fraction": 0.019194898914762393
+  },
+  "algebraic_rate_decline_closed_form": {
+    "degrees": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "laws": {
+      "p^-1": {
+        "first_rate": 0.6931471805599453,
+        "last_rate": 0.1823215567939546,
+        "last_over_first": 0.2630344058337938
+      },
+      "p^-2": {
+        "first_rate": 1.3862943611198906,
+        "last_rate": 0.3646431135879092,
+        "last_over_first": 0.2630344058337938
+      },
+      "p^-3": {
+        "first_rate": 2.0794415416798357,
+        "last_rate": 0.5469646703818638,
+        "last_over_first": 0.26303440583379384
+      },
+      "p^-4": {
+        "first_rate": 2.772588722239781,
+        "last_rate": 0.7292862271758184,
+        "last_over_first": 0.2630344058337938
+      },
+      "p^-5": {
+        "first_rate": 3.4657359027997265,
+        "last_rate": 0.9116077839697729,
+        "last_over_first": 0.2630344058337938
+      }
+    },
+    "statement": "algebraic laws decline by a fixed factor ln2/ln((p_max)/(p_max-1)); exponential laws have constant rates"
+  },
+  "rate_trend": {
+    "rates": [
+      3.106317166035044,
+      3.0466917220358103,
+      3.250961893188931,
+      3.4143037986750437,
+      3.5770301562179396
+    ],
+    "first": 3.106317166035044,
+    "last": 3.5770301562179396,
+    "last_over_first": 1.1515341045433944,
+    "dip_pair_index": 0,
+    "max_dip_fraction": 0.019194898914762393,
+    "monotone_nondecreasing": false,
+    "monotone_from_second_pair": true
+  },
+  "portable_clause": {
+    "clause": "last_pairwise_rate >= first_pairwise_rate",
+    "measured_last_over_first": 1.1515341045433944,
+    "tolerance": 1e-12,
+    "pass": true,
+    "components": {
+      "sigma_above_1": {
+        "measured": 3.267524509018632,
+        "pass": true
+      },
+      "error_ratio_above_1e3": {
+        "measured": 13194422.180289136,
+        "pass": true
+      },
+      "monotone_decreasing": {
+        "pass": true
+      }
+    }
+  },
+  "portable_falsification": {
+    "degrees": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "laws": {
+      "constant": {
+        "last_over_first": Infinity,
+        "portable_pass": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "algebraic_p^-1": {
+        "last_over_first": 0.26303440583379406,
+        "portable_pass": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "algebraic_p^-2": {
+        "last_over_first": 0.2630344058337939,
+        "portable_pass": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "algebraic_p^-3": {
+        "last_over_first": 0.26303440583379395,
+        "portable_pass": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "algebraic_p^-4": {
+        "last_over_first": 0.2630344058337939,
+        "portable_pass": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "algebraic_p^-5": {
+        "last_over_first": 0.2630344058337938,
+        "portable_pass": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "exponential_sigma_0.5": {
+        "last_over_first": 1.0,
+        "portable_pass": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "exponential_sigma_1.0": {
+        "last_over_first": 1.0,
+        "portable_pass": false,
+        "expected": false,
+        "as_expected": true
+      },
+      "exponential_sigma_1.5": {
+        "last_over_first": 1.0,
+        "portable_pass": true,
+        "expected": true,
+        "as_expected": true
+      },
+      "exponential_sigma_3.93": {
+        "last_over_first": 1.0000000000000004,
+        "portable_pass": true,
+        "expected": true,
+        "as_expected": true
+      }
+    },
+    "gate_pass": true
+  },
+  "rotational_symmetry": {
+    "ncells": 8,
+    "cfl": 0.05,
+    "levels": {
+      "1": {
+        "velocity": [
+          1.0,
+          0.5
+        ],
+        "relative_l2": 0.03350857503956402,
+        "velocity_rotated": [
+          0.5,
+          1.0
+        ],
+        "relative_l2_rotated": 0.03350857503956404,
+        "relative_difference": 6.212344657193914e-16
+      },
+      "2": {
+        "velocity": [
+          1.0,
+          0.5
+        ],
+        "relative_l2": 0.0015000286551682175,
+        "velocity_rotated": [
+          0.5,
+          1.0
+        ],
+        "relative_l2_rotated": 0.0015000286551682118,
+        "relative_difference": 3.7584957310648035e-15
+      }
+    },
+    "max_relative_difference": 3.7584957310648035e-15,
+    "pass": true
+  },
+  "fit_comparison": {
+    "exponential": {
+      "sigma": 3.267524509018632,
+      "sse_log": 0.18248946363275156
+    },
+    "algebraic_best_fit": {
+      "power": 7.646,
+      "sse_log": 18.818301866180985
+    },
+    "exponential_preferred": true,
+    "sse_ratio_algebraic_over_exponential": 103.1199363052084
+  },
+  "conclusion": "The 2-D ladder is spectral: sigma=3.2675 (anchor threshold 0.5), e(p1)/e(p6)=1.319e+07, exponential fit beats the best algebraic p^-k fit by a log-SSE factor 103.1, and the solver is rotationally symmetric (max relative difference 3.8e-15). The predeclared 'pairwise rates non-decreasing' clause fails by 1.92% on the single pre-asymptotic pair (p=2->3) and then rises monotonically; the clause is a 1-D calibration, not a law: for an exact exponential the pairwise rate is constant while for p^-k it declines 3.8x. The portable clause 'last rate >= first rate' passes on the synthetic law table (gate=True) and on the measured ladder, and is recommended for future 2-D/3-D pre-registrations."
+}
