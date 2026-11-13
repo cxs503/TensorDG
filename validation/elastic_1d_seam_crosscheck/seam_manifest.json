@@ -1,0 +1,29 @@
+{
+  "case": "dalembert-elastic-rod-1d",
+  "script": "benchmarks/elastic_1d_seam_crosscheck.py",
+  "generated_at": "2026-11-13T06:55:08.334525+00:00",
+  "repro_cmd": "python -m benchmarks.elastic_1d_seam_crosscheck --output-dir validation/elastic_1d_seam_crosscheck",
+  "git_commit": "70bd4c184d547abe0200e3cdc0efb0b87ce4500f",
+  "python": "3.11.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "torch": "2.7.1",
+  "numpy": "2.4.6",
+  "figures": {
+    "fig_seam_profiles.png": "\u03c3(x) \u5728 c t = 0.55/0.7/1.0/1.3 \u56db\u4e2a\u56de\u5377\u65f6\u523b\uff1aDG \u70b9 vs R0 \u955c\u50cf\u7ea7\u6570 vs R1 \u6a21\u6001\u4f20\u64ad\u5b50\uff08\u4e09\u8005\u91cd\u5408\u5230\u4e9a\u5343\u5206\u4f4d\uff09",
+    "fig_seam_probe.png": "\u63a2\u9488 x = 0.8 \u7684 \u03c3(t) \u8f68\u8ff9\uff1a\u51fa\u53d1\u5230\u8fbe\uff08t\u22480.3\uff09\u4e0e\u8fc7\u7f1d\u955c\u50cf\u5230\u8fbe\uff08t\u22480.7\uff09\u53cc\u5cf0\uff0c\u7b26\u53f7\u76f8\u53cd\u3001\u5e45\u503c\u76f8\u540c",
+    "fig_seam_errors.png": "\u5de6\uff1a\u53c2\u8003\u89e3\u4e92\u6821\u504f\u5dee vs c t\uff08\u5468\u671f\u7f1d\u5728 c t = 0.5\uff09\uff1b\u53f3\uff1aDG \u8fc7\u7f1d\u6536\u655b\u9636\u4e0e R3 \u86d9\u8df3\u81ea\u6821\u9a8c"
+  },
+  "artifacts": {
+    "fig_seam_errors.png": "214568914d177a012afa57580fd313ae555599bceb257e8498e095a3d5dc3af1",
+    "fig_seam_probe.png": "3bcd3cc855625a828bc7d91710bbc0be3a8304900f1c47037d8b748ddc7729e8",
+    "fig_seam_profiles.png": "fa6f9c72f3dbd1537ff9660dc4dc4b2957dd7cfbcf0b890684916b5de92c862a",
+    "seam_anchors.json": "958147633c5666bced2fa29c38dffd81d1e70182c057ebe947d170e93838f387",
+    "seam_convergence.json": "7f55c0258e845d75a79006c71ce232dd13c4fef64f43425d95a15bd8755e908e",
+    "seam_dg_vs_independent.json": "3342c9671568da6031caa6a024d9c4ccdb3acd92ae27f9e663db6600dd0a0817",
+    "seam_energy.json": "161ea3194a40b5c5f874175ce6daef970ee6d260ddb4164a07f57a1dedbb169d",
+    "seam_fault_injection.json": "f75e62a3db34114a9e94764f63533b2f88590ffa0f30d583efa54266cceb83df",
+    "seam_probe_mirror.json": "a43445ea185268409330f319874c93ff5d2de4b0de63d1fc79ac782d20a2e170",
+    "seam_reference_crosscheck.json": "8f20551900d97104e64094da3c81e331ce664a6cb3da9b171d14e7fd272fddce",
+    "seam_report.md": "985fd43e815fca799720ffafed2b8e3eb3bfadc1fc23eb36c92cb434376fdf16"
+  }
+}

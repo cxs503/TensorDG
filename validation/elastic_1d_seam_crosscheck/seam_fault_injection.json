@@ -1,0 +1,14 @@
+{
+  "t": 0.7,
+  "c_t": 0.7,
+  "guard_raises": true,
+  "unguarded_ref_vs_R1": {
+    "rel_linf_pct": 100.0,
+    "rel_l2_pct": 100.0000000000006,
+    "abs_linf": 0.4999967625047489
+  },
+  "dg_baseline_error_pct": 0.005115393933618911,
+  "dg_vs_unguarded_ref_pct": 906891122.9702277,
+  "dg_vs_unguarded_ref_true_scale_pct": 100.00059390139447,
+  "detected": true
+}
