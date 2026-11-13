@@ -1,0 +1,24 @@
+{
+  "case": "dalembert-elastic-rod-1d",
+  "script": "benchmarks/elastic_1d_crosscheck.py",
+  "generated_at": "2026-11-13T00:32:12.599697+00:00",
+  "repro_cmd": "python -m benchmarks.elastic_1d_crosscheck --output-dir validation/elastic_1d_crosscheck",
+  "git_commit": "348e767b7f8ddf1a84dda6938e81a666f168bfe5",
+  "python": "3.11.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "torch": "2.7.1",
+  "numpy": "2.4.6",
+  "figures": {
+    "fig_ref_crosscheck.png": "DG solution vs three independent references and pointwise reference disagreement",
+    "fig_probe_estimator.png": "probe trace, old sampling grid, estimator bias convergence",
+    "fig_error_budget.png": "arrival-time error vs dt for p=1,2,3"
+  },
+  "artifacts": {
+    "arrival_time_study.json": "1c25d90307dd7254583077cece17ea99db1056dd595b4814f0a831ce9d8330ca",
+    "fig_error_budget.png": "3fab76b6d446fc36376c2f77cf86888fcf04a0e6f3251b4fc0312eae0d6f6ec9",
+    "fig_probe_estimator.png": "1686854f6c7ba8ab43a7cd5f4f4b3fee84ba8b45b7f5dfdda370a3108cab4404",
+    "fig_ref_crosscheck.png": "73ba547c9c44cfcac6d7f765f6c318684146a728a4705ce21e534d7f80bed7bd",
+    "ref_crosscheck.json": "a584ec680264d026bcb0606a10b9d774daa8a1e0b06252ab22e37b0667e9a6ad",
+    "sigma_profiles_refs.csv": "956f7d2e92cf4c27b7b59617cffd98a8a0fab2883dc3349fbfc08a49b5cb7012"
+  }
+}
