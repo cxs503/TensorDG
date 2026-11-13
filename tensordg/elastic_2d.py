@@ -227,13 +227,13 @@ def riemann_flux_x(left: torch.Tensor, right: torch.Tensor,
     """
     zp, zs = medium.zp, medium.zs
     vx = 0.5 * (left[..., _VX] + right[..., _VX]) + \
-        (left[..., _SXX] - right[..., _SXX]) / (2.0 * zp)
+        (right[..., _SXX] - left[..., _SXX]) / (2.0 * zp)
     sxx = 0.5 * (left[..., _SXX] + right[..., _SXX]) + \
-        0.5 * zp * (left[..., _VX] - right[..., _VX])
+        0.5 * zp * (right[..., _VX] - left[..., _VX])
     vy = 0.5 * (left[..., _VY] + right[..., _VY]) + \
-        (left[..., _SXY] - right[..., _SXY]) / (2.0 * zs)
+        (right[..., _SXY] - left[..., _SXY]) / (2.0 * zs)
     sxy = 0.5 * (left[..., _SXY] + right[..., _SXY]) + \
-        0.5 * zs * (left[..., _VY] - right[..., _VY])
+        0.5 * zs * (right[..., _VY] - left[..., _VY])
 
     lam, two_mu_lam = medium.lam, medium.lam + 2.0 * medium.mu
     out = torch.empty_like(left)
@@ -250,13 +250,13 @@ def riemann_flux_y(left: torch.Tensor, right: torch.Tensor,
     """Upwind flux ``F* . e_y`` between ``left`` (at ``-y``) and ``right``."""
     zp, zs = medium.zp, medium.zs
     vy = 0.5 * (left[..., _VY] + right[..., _VY]) + \
-        (left[..., _SYY] - right[..., _SYY]) / (2.0 * zp)
+        (right[..., _SYY] - left[..., _SYY]) / (2.0 * zp)
     syy = 0.5 * (left[..., _SYY] + right[..., _SYY]) + \
-        0.5 * zp * (left[..., _VY] - right[..., _VY])
+        0.5 * zp * (right[..., _VY] - left[..., _VY])
     vx = 0.5 * (left[..., _VX] + right[..., _VX]) + \
-        (left[..., _SXY] - right[..., _SXY]) / (2.0 * zs)
+        (right[..., _SXY] - left[..., _SXY]) / (2.0 * zs)
     sxy = 0.5 * (left[..., _SXY] + right[..., _SXY]) + \
-        0.5 * zs * (left[..., _VX] - right[..., _VX])
+        0.5 * zs * (right[..., _VX] - left[..., _VX])
 
     lam, two_mu_lam = medium.lam, medium.lam + 2.0 * medium.mu
     out = torch.empty_like(left)
@@ -531,6 +531,12 @@ def _rhs(coeff: torch.Tensor, ops, medium: ElasticMedium, hx: float, hy: float,
     rhs = -(2.0 / hx) * torch.einsum("kn,ijnlm->ijklm", dmat, cfx) \
           -(2.0 / hy) * torch.einsum("ln,ijknm->ijklm", dmat, cfy)
 
+    # Face contributions carry the reference->physical mapping factor 2/h of
+    # the face direction (same factor as the volume term); omitting it leaves
+    # the numerical-flux correction under-weighted by O(h), which destroys
+    # consistency and skew-symmetry (see docs/CASE-DG-ELASTIC-2D-PSV.md).
+    face_x = 2.0 / hx
+    face_y = 2.0 / hy
     mass = mass_inv.view(1, 1, k, k, 1)
     pr = phi_right.view(1, 1, k, 1, 1)
     pl = phi_left.view(1, 1, k, 1, 1)
@@ -544,7 +550,7 @@ def _rhs(coeff: torch.Tensor, ops, medium: ElasticMedium, hx: float, hy: float,
     star_r = riemann_flux_x(right_neighbour_left, u_r, medium)  # F*.e_x at i+1/2
     g_r = star_r - flux_x(u_r, medium)
     proj_r = torch.einsum("lb,ijbm->ijlm", svec, g_r)           # (nx,ny,K_l,5)
-    rhs = rhs - mass * pr * proj_r.view(proj_r.shape[0], proj_r.shape[1], 1,
+    rhs = rhs - face_x * mass * pr * proj_r.view(proj_r.shape[0], proj_r.shape[1], 1,
                                         proj_r.shape[2], proj_r.shape[3])
 
     left_neighbour_right = torch.roll(u_r, shifts=1, dims=0)    # trace of cell i-1
@@ -552,7 +558,7 @@ def _rhs(coeff: torch.Tensor, ops, medium: ElasticMedium, hx: float, hy: float,
     # outward normal is -e_x: F*_n = -star_l, F_n^int = -flux_x(u_l)
     g_l = (-star_l) + flux_x(u_l, medium)
     proj_l = torch.einsum("lb,ijbm->ijlm", svec, g_l)
-    rhs = rhs - mass * pl * proj_l.view(proj_l.shape[0], proj_l.shape[1], 1,
+    rhs = rhs - face_x * mass * pl * proj_l.view(proj_l.shape[0], proj_l.shape[1], 1,
                                         proj_l.shape[2], proj_l.shape[3])
 
     # ---- y faces ----------------------------------------------------------
@@ -576,13 +582,13 @@ def _rhs(coeff: torch.Tensor, ops, medium: ElasticMedium, hx: float, hy: float,
 
     proj_t = torch.einsum("ka,ijam->ijkm", svec, g_t)           # (nx,ny,K_k,5)
     pr_l = phi_right.view(1, 1, 1, k, 1)
-    rhs = rhs - mass * pr_l * proj_t.view(proj_t.shape[0], proj_t.shape[1],
+    rhs = rhs - face_y * mass * pr_l * proj_t.view(proj_t.shape[0], proj_t.shape[1],
                                           proj_t.shape[2], 1, proj_t.shape[3])
 
     g_b = star_b + flux_y(u_b, medium)   # F*_n - F_n^int with F_n^int = -flux_y
     proj_b = torch.einsum("ka,ijam->ijkm", svec, g_b)
     pl_l = phi_left.view(1, 1, 1, k, 1)
-    rhs = rhs - mass * pl_l * proj_b.view(proj_b.shape[0], proj_b.shape[1],
+    rhs = rhs - face_y * mass * pl_l * proj_b.view(proj_b.shape[0], proj_b.shape[1],
                                           proj_b.shape[2], 1, proj_b.shape[3])
     return rhs
 
