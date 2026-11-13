@@ -23,6 +23,10 @@ from tensordg.elastic_1d import (
     standing_wave,
     stress_profile,
     upwind_flux,
+    _dalembert_periodic_images,
+    _dalembert_fixed_free_images,
+    _periodic_image_sum,
+    _fixed_free_image_sum,
 )
 
 RHO = 1.0
@@ -181,6 +185,7 @@ def test_pulse_initial_conditions_are_stress_free():
     assert torch.allclose(initial_pulse_stress(x), torch.zeros_like(x))
     assert torch.allclose(initial_pulse_velocity(x), torch.exp(-((x - 0.5) / 0.05) ** 2))
 
+
 def test_energy_gate_detects_wrong_characteristic_pairing():
     """Fault injection: the accuracy/energy gate must have teeth.
 
@@ -206,3 +211,72 @@ def test_energy_gate_detects_wrong_characteristic_pairing():
     k = math.pi / 2.0
     energy_exact = 0.25 * k ** 2
     assert elastic_energy(centers, coeff) > 100.0 * energy_exact
+
+
+# ---------------------------------------------------------------------------
+# Image-summed d'Alembert solution (past the seam crossing)
+# ---------------------------------------------------------------------------
+def test_periodic_image_sum_reproduces_single_image_before_seam():
+    """Before the seam crossing, the image sum must match the single-image form."""
+    x = torch.linspace(0.0, 1.0, 201)
+    t = 0.15  # c*t = 0.15 < 0.5 = min(center, length-center)
+    v_single, s_single = dalembert_pulse(x, t, strict=False)
+    v_images, s_images = _dalembert_periodic_images(x, t, n_images=6)
+    assert relative_error(x, v_images, v_single) < 1e-10
+    assert relative_error(x, s_images, s_single) < 1e-10
+
+
+def test_periodic_image_sum_is_periodic():
+    """The image-summed solution must be L-periodic in space."""
+    x = torch.linspace(0.0, 1.0, 101)
+    t = 0.8  # well past the seam crossing
+    v, s = _dalembert_periodic_images(x, t, n_images=8)
+    # v(0) should equal v(1) for a periodic solution
+    assert abs(float(v[0]) - float(v[-1])) < 1e-8
+    assert abs(float(s[0]) - float(s[-1])) < 1e-8
+
+
+def test_periodic_image_sum_conserves_energy_past_seam():
+    """Total energy of the image-summed solution should equal the initial energy."""
+    x = torch.linspace(0.0, 1.0, 401)
+    t = 0.6  # past the seam crossing
+    v, s = _dalembert_periodic_images(x, t, n_images=8)
+    # Numerical integration of energy
+    dx = float(x[1] - x[0])
+    energy_num = 0.5 * (RHO * float(torch.sum(v**2)) + float(torch.sum(s**2)) / E) * dx
+    energy_exact = 0.5 * RHO * 0.05 * math.sqrt(math.pi / 2.0)
+    assert abs(energy_num - energy_exact) / energy_exact < 0.02
+
+
+def test_fixed_free_image_sum_respects_boundary_conditions():
+    """The fixed-free image sum must give v=0 at x=0 and sigma=0 at x=L."""
+    x = torch.linspace(0.0, 1.0, 201)
+    t = 0.5
+    v, s = _dalembert_fixed_free_images(x, t)
+    # At x=0 (fixed end), the velocity should be zero by odd symmetry
+    assert abs(float(v[0])) < 1e-10
+    # At x=L (free end), the stress should be zero by even symmetry
+    assert abs(float(s[-1])) < 1e-10
+
+
+def test_dalembert_strict_raises_past_seam():
+    """dalembert_pulse with strict=True must raise ValueError past the seam."""
+    x = torch.linspace(0.0, 1.0, 101)
+    t = 0.6  # c*t = 0.6 > 0.5 = seam limit
+    try:
+        dalembert_pulse(x, t, strict=True)
+        raise AssertionError("expected ValueError for t past seam")
+    except ValueError:
+        pass  # expected
+
+
+def test_periodic_image_sum_matches_numerical_solution_past_seam():
+    """The image-summed exact solution should match the DG solution past the seam."""
+    t = 0.6  # past the seam crossing
+    centers, coeff, meta = solve_elastic_1d(
+        ncells=200, degree=2, final_time=t, cfl=0.3, bc="periodic")
+    x, v, s = stress_profile(centers, coeff, nsample=7)
+    v_ex, s_ex = _dalembert_periodic_images(x, t, n_images=8)
+    # The error should be small (numerical dispersion only)
+    assert relative_error(x, v, v_ex) < 0.02
+    assert relative_error(x, s, s_ex) < 0.02
