@@ -130,3 +130,91 @@ def test_ladder_artifacts_are_admissible_and_report_the_5pct_gate():
     # at least the finest P3 run is expected inside the 5% acceptance line
     finest = max(rows, key=lambda r: (r["degree"], r["ncells"]))
     assert finest["rel_l1_percent"] < 5.0, finest
+
+# ---------------------------------------------------------------------------
+# The state-column regression exhibit (docs/reports/shu-osher-dg-case-pool.md §②b)
+#
+# The exhibit existed in the driver from the start but never fired: the probe
+# path was built without its ``.npz`` suffix, ``Path.exists()`` was therefore
+# always False, ``metrics.json`` never carried the key, and the report could only
+# print an "未采集" placeholder.  These two gates pin the exhibit from both ends:
+# one on synthetic artifacts (so the wiring is checked without the 20-minute
+# ladder), one on the tracked record (so the published numbers are re-derived
+# rather than trusted).
+# ---------------------------------------------------------------------------
+def _synthetic_pool(tmp_path, ncells=200, ref_cells=400):
+    """Minimal artifact set: one DG probe + one coarse FV "reference"."""
+    import benchmarks.shu_osher_case_pool as pool
+
+    raw = tmp_path / "runs" / "raw"
+    raw.mkdir(parents=True)
+    x = (np.arange(ncells) + 0.5) * (10.0 / ncells) - 5.0
+    # constant (quiet zone) where the analytic plateau anchor looks, sine elsewhere;
+    # admissible either way: rho is never <= 0
+    rho = np.where(x <= -3.0, 3.857143, 1.0 + 0.2 * np.sin(5.0 * x))
+    rho_u = 0.05 * np.sin(5.0 * x)             # crosses zero -> negative cells
+    # total energy: ~40 (i.e. ~10x rho) behind the "shock", as in the real case,
+    # so the per-cell maximum really is rho E and the mixed-up profile is wrong
+    rho_e = np.where(x <= -3.0, 39.0, 2.5 + 38.0 * np.clip(x + 1.0, 0.0, 1.0))
+    meta = json.dumps({"steps": 3, "wall_time_s": 0.1, "degree": 1, "cfl": 0.4})
+    np.savez(raw / f"{pool._key('dg', n=ncells, p=1, lim='weno', cfl=0.4)}.npz",
+             x=x, rho=rho, rho_u=rho_u, rho_e=rho_e, meta=meta)
+    xr = (np.arange(ref_cells) + 0.5) * (10.0 / ref_cells) - 5.0
+    np.savez(raw / f"{pool._key('fv', n=ref_cells, cfl=0.3)}.npz",
+             x=xr, rho=1.0 + 0.2 * np.sin(5.0 * xr),
+             rho_u=np.zeros(ref_cells), rho_e=np.full(ref_cells, 2.5),
+             meta=json.dumps({"steps": 1, "wall_time_s": 0.0}))
+    return pool, raw, tmp_path / "runs"
+
+
+def test_merge_emits_the_state_column_regression_from_the_probe(tmp_path, monkeypatch):
+    """``merge`` must actually find the probe artifact and quantify the defect."""
+    pool, raw, out_dir = _synthetic_pool(tmp_path)
+    monkeypatch.setattr(pool, "RAW", raw)
+    monkeypatch.setattr(pool, "OUT", out_dir)
+
+    metrics = pool.merge(reference_cells=400)
+
+    exhibit = metrics["state_column_regression"]
+    assert exhibit["artifact"].endswith(".npz"), exhibit["artifact"]
+    assert exhibit["ncells"] == 200
+    assert exhibit["degree"] == 1 and exhibit["cfl"] == pytest.approx(0.4)
+    # the reported peak under the old convention really is larger ...
+    assert (exhibit["density_max_if_whole_state_used"]
+            > exhibit["density_max_correct"])
+    assert exhibit["overstatement_factor"] == pytest.approx(
+        exhibit["density_max_if_whole_state_used"] / exhibit["density_max_correct"])
+    assert exhibit["overstatement_factor"] > 1.5
+    # ... and the analytic anchors are what expose it: the quiet-zone plateau
+    # anchor (left state is constant there) degrades by orders of magnitude.
+    assert exhibit["plateau_dev_percent_correct"] < 1.0
+    assert (exhibit["plateau_dev_percent_if_whole_state_used"]
+            > 10.0 * exhibit["plateau_dev_percent_correct"])
+
+
+def test_state_column_regression_is_rederived_from_the_tracked_artifact():
+    """The published exhibit must match a fresh recomputation from the raw npz."""
+    from benchmarks.shu_osher_case_pool import state_column_regression
+
+    probe = RUN / "raw" / "dg_cfl0p4_limweno_n200_p1.npz"
+    assert probe.exists(), f"missing tracked probe artifact {probe}"
+    fresh = state_column_regression(probe)
+
+    # physics-level assertions on the real Shu--Osher probe
+    assert fresh["density_min_correct"] > 0.0
+    assert fresh["overstatement_factor"] > 5.0            # rho E is ~10x rho
+    assert fresh["plateau_dev_percent_correct"] < 0.01    # quiet zone is constant
+    assert fresh["plateau_dev_percent_if_whole_state_used"] > 100.0
+    assert fresh["shock_position_rel_error_percent_correct"] < 1.0
+    assert fresh["shock_position_rel_error_percent_if_whole_state_used"] > 50.0
+
+    record = json.loads((RUN / "metrics.json").read_text())
+    assert "state_column_regression" in record, (
+        "the tracked record lost the regression exhibit: regenerate it with "
+        "`python -m benchmarks.shu_osher_case_pool merge --reference-cells 3200`")
+    published = record["state_column_regression"]
+    for key, value in fresh.items():
+        if isinstance(value, float):
+            assert published[key] == pytest.approx(value, rel=1e-9), key
+        elif key != "artifact":
+            assert published[key] == value, key

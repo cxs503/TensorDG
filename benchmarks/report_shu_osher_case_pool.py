@@ -215,16 +215,45 @@ def main():
     defect_txt = "_（未采集：先跑 ladder 再 merge）_"
     if defect:
         defect_txt = (
-            f"* 工件 `{defect['artifact']}`（N={defect['ncells']}, P{defect['degree']}, "
-            f"CFL={defect['cfl']}）：正确口径 $\\max\\rho={defect['density_max_correct']:.4f}$；"
-            f"若把三列一起当密度（旧口径），$\\max={defect['density_max_if_whole_state_used']:.4f}$，"
-            f"高估 {defect['overstatement_factor']:.2f}×。"
-            f"旧口径下该配置的 $\\rho_{{\\min}}$ 为负（$\\rho u$ 列穿过 0），"
-            "这也是「方程组可采纳性」被误判的直接来源。")
+            f"* 探针工件 `{defect['artifact']}`（N={defect['ncells']}, P{defect['degree']}, "
+            f"CFL={defect['cfl']}）。旧口径的剖面按「每单元取三列守恒量的最大值」还原"
+            f"（平台区由 $\\rho E$ 主导），两项解析锚同一套判据重算：\n\n"
+            "| 量 | 正确口径（第 0 列 $\\rho$） | 旧口径（三列混充 $\\rho$） | 后果 |\n"
+            "|---|---|---|---|\n"
+            f"| $\\max$ | {defect['density_max_correct']:.4f} | "
+            f"{defect['density_max_if_whole_state_used']:.4f} | "
+            f"峰值高估 {defect['overstatement_factor']:.2f}× |\n"
+            f"| 安静区平台偏差 | {defect['plateau_dev_percent_correct']:.4f}% | "
+            f"{defect['plateau_dev_percent_if_whole_state_used']:.2f}% | 解析锚 ✗ |\n"
+            f"| 激波位置 $x_s$ | {defect['shock_position_correct']:.4f}"
+            f"（误差 {defect['shock_position_rel_error_percent_correct']:.3f}%） | "
+            f"{defect['shock_position_if_whole_state_used']:.4f}"
+            f"（误差 {defect['shock_position_rel_error_percent_if_whole_state_used']:.1f}%） | "
+            "解析锚 ✗ |\n"
+            f"| $\\min$ | {defect['density_min_correct']:.4f} | "
+            f"{defect['density_min_if_whole_state_used']:.2e} | "
+            f"仅 {defect['negative_cells_if_whole_state_used']} 个单元的 $\\rho u$ 数值零，"
+            "naive 正性门会误判为不可采纳 |\n\n"
+            "*读数*：真正的毁伤不是「$ρ$ 变负」（负值只有 "
+            f"{abs(defect['density_min_if_whole_state_used']):.1e} 量级，是 $\\rho u$ 的数值零），"
+            "而是**峰值高估约 "
+            f"{defect['overstatement_factor']:.1f}×** 与**解析锚全破**——安静区平台偏差从 "
+            f"{defect['plateau_dev_percent_correct']:.4f}% 涨到 "
+            f"{defect['plateau_dev_percent_if_whole_state_used']:.0f}%，激波位置误差从 "
+            f"{defect['shock_position_rel_error_percent_correct']:.2f}% 涨到 "
+            f"{defect['shock_position_rel_error_percent_if_whole_state_used']:.0f}%。"
+            "换言之：本算例的**解析锚本来就能抓到这个 bug**，上一版之所以「静默」，是因为报告里"
+            "没有把锚点施加在最外层输出上。\n\n"
+            "> **为什么这一节此前是占位符（诚实交代）**：采集该回归项的代码在 m15390 版里把探针路径"
+            "写成 `dg_cfl0p4_limweno_n200_p1`（漏 `.npz` 后缀），`Path.exists()` 恒 False，"
+            "整段 exhibit 从未执行，`metrics.json` 里也就没有该键——报告只能落 `未采集` 占位符。"
+            "本轮补后缀并把它升级为「峰值 + 两项解析锚」的三重可测量项；"
+            "`tests/test_shu_osher_case_pool.py::test_state_column_regression_is_rederived_from_the_tracked_artifact` "
+            "先从 raw npz 独立重算再与 `metrics.json` 对表，钉死这条契约。")
 
     md = f"""# 算例池：激波–熵波干扰（Shu–Osher）DG 基准
 
-> 仓库 `TensorDG` · 分支 `agent/m15390` · 生成脚本 `benchmarks/report_shu_osher_case_pool.py`
+> 仓库 `TensorDG` · 生成脚本 `benchmarks/report_shu_osher_case_pool.py`
 > 驱动脚本 `benchmarks/shu_osher_case_pool.py`（DG 阶梯 + 参考解 + CFL 敏感性）
 > 独立参考求解器 `benchmarks/fv_weno5_1d.py`（FV-WENO5/HLLC/SSP-RK3）
 > 工件 `runs/shu_osher_case_pool/{{raw/,metrics.json,profiles.npz}}`
@@ -271,7 +300,8 @@ non-oscillatory shock-capturing schemes*, **J. Comput. Phys. 77, 439–471** 中
 
 上一版驱动 `run_dg` 把求解器返回的**整个守恒态** `(ncells, 3) = (rho, rho u, rho E)`
 当成密度存进 `rho` 字段。后果是静默的：算例照跑、数字看似合理，但
-$\rho E$ 在激波后平台约 39，于是「密度峰值」被高估、与参考解的剖面误差全部作废。
+$\\rho E$ 在激波后平台约 40（约十倍于密度），于是「密度峰值」被高估、与参考解的
+剖面比较全部作废。
 本轮由 `tensordg/cases/shock_entropy.py: solve_dg_case` 固定状态列语义（密度=第 0 列），
 并在工件上把旧口径可测地还原出来：
 
