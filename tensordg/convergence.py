@@ -23,7 +23,7 @@ CFD applications", J. Fluids Eng. 130(7), 078001.
 from __future__ import annotations
 
 import math
-from typing import Iterable, Sequence
+from typing import Iterable, Mapping, Sequence
 
 import numpy as np
 
@@ -288,6 +288,73 @@ def p_decay_diagnostics(
         "lsq_decay_rate": lsq,
         "monotone_decreasing": bool(np.all(reduction > 1.0)),
         "superlinear": superlinear,
+    }
+
+
+#: Default predeclared thresholds of :func:`exponential_decay_criterion`.
+SPECTRAL_SIGMA_MIN = 1.0        # decay rate must exceed any algebraic p**-k law
+SPECTRAL_ERROR_RATIO_MIN = 1.0e3  # at least three decades of error reduction
+SPECTRAL_RATE_TOL = 1.0e-9      # relative slack on "pairwise rates non-decreasing"
+
+
+def exponential_decay_criterion(
+    diag: Mapping[str, object],
+    *,
+    sigma_min: float = SPECTRAL_SIGMA_MIN,
+    error_ratio_min: float = SPECTRAL_ERROR_RATIO_MIN,
+    rate_tol: float = SPECTRAL_RATE_TOL,
+) -> dict:
+    """Composite criterion separating spectral from algebraic p-decay.
+
+    Takes the output of :func:`p_decay_diagnostics` and applies four
+    predeclared conditions, all of which must hold:
+
+    1. ``lsq_decay_rate > sigma_min`` -- an algebraic law ``p**-k`` has a
+       *saturated* slope, so a large slope rules it out as the dominant law;
+    2. pairwise ``decay_rates`` non-decreasing (they decrease monotonically for
+       a pure algebraic law, which is the decisive discriminator);
+    3. ``e(p_min) / e(p_max) > error_ratio_min`` -- at least three decades of
+       measured reduction, so the slope is not fitted through noise;
+    4. ``monotone_decreasing`` -- the error falls at every single level.
+
+    The thresholds are predeclared constants of the library, not tuned per
+    case.  Raise them (never lower them) when a case demands a stricter gate.
+    """
+    rate = float(diag["lsq_decay_rate"])  # type: ignore[arg-type]
+    rates = [float(v) for v in diag["decay_rates"]]  # type: ignore[index]
+    errors = [float(v) for v in diag["errors"]]  # type: ignore[index]
+    if not errors:
+        raise ValueError("diagnostics must contain at least one error level")
+    ratio = errors[0] / errors[-1]
+    non_decreasing = (
+        all(b >= a * (1.0 - rate_tol) for a, b in zip(rates, rates[1:]))
+        if len(rates) > 1
+        else True
+    )
+    conditions = {
+        "sigma_above_threshold": {
+            "measured": rate,
+            "threshold": float(sigma_min),
+            "pass": bool(rate > sigma_min),
+        },
+        "decay_rates_non_decreasing": {
+            "measured": rates,
+            "tolerance": float(rate_tol),
+            "pass": bool(non_decreasing),
+        },
+        "error_ratio_above_threshold": {
+            "measured": ratio,
+            "threshold": float(error_ratio_min),
+            "pass": bool(ratio > error_ratio_min),
+        },
+        "monotone_decreasing": {
+            "measured": bool(diag["monotone_decreasing"]),  # type: ignore[arg-type]
+            "pass": bool(diag["monotone_decreasing"]),  # type: ignore[arg-type]
+        },
+    }
+    return {
+        "conditions": conditions,
+        "pass": all(c["pass"] for c in conditions.values()),
     }
 
 # ---------------------------------------------------------------------------
