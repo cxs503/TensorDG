@@ -1,0 +1,863 @@
+{
+ "accuracy_per_unknown": {
+  "dg_finest": {
+   "cells": 400,
+   "degree": 2,
+   "rel_l1_density": 0.004528163040625704,
+   "unknowns": 1200
+  },
+  "fv_first_order_finest": {
+   "cells": 6400,
+   "rel_l1_density": 0.013370537372444504,
+   "unknowns": 6400
+  },
+  "fv_second_order_bracket_matching_dg_error": {
+   "cells": [
+    3200,
+    6400
+   ],
+   "errors": [
+    0.00503816205697221,
+    0.0030698774095300244
+   ],
+   "order": 2
+  },
+  "fv_second_order_finest": {
+   "cells": 6400,
+   "rel_l1_density": 0.0030698774095300244,
+   "unknowns": 6400
+  }
+ },
+ "analytic_sampling_floor": {
+  "note": "the analytic field is closed form; the only numerical content is the 400001-point sampling used to locate the waves and the root finder, both ~1e-6 relative or better",
+  "star_state_root_agreement": 1.8007768726101519e-16,
+  "wave_position_half_width": 1.25e-06,
+  "wave_position_samples": 400001
+ },
+ "anchor": "CASE-LAX-DG",
+ "case": "CASE-LAX-DG reference cross-check (independent discretisation family)",
+ "comparison_legs": [
+  {
+   "cells": 100,
+   "errors": {
+    "density": 0.12699443188892418,
+    "pressure": 0.03403660351435082,
+    "velocity": 0.06345538902650998
+   },
+   "order": 1,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.3587394003891778,
+     "pressure": 2.464719073376257,
+     "velocity": 1.52932867924126
+    },
+    "star_right": {
+     "density": 1.0882149421001572,
+     "pressure": 2.4313911103811874,
+     "velocity": 1.5161196970633561
+    }
+   },
+   "steps": 149,
+   "wall_seconds": 0.03201419860124588,
+   "wave_positions": {
+    "contact": 0.708436931045888,
+    "rarefaction_head": 0.0961080003832571,
+    "rarefaction_tail": 0.34544956204257493,
+    "shock": 0.8300201242464182
+   }
+  },
+  {
+   "cells": 200,
+   "errors": {
+    "density": 0.08406211777703895,
+    "pressure": 0.019649568254961558,
+    "velocity": 0.036705736124816944
+   },
+   "order": 1,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.3473353052893378,
+     "pressure": 2.4619428279663476,
+     "velocity": 1.5320906853645286
+    },
+    "star_right": {
+     "density": 1.1934515286858725,
+     "pressure": 2.4617247068630475,
+     "velocity": 1.5273993755563744
+    }
+   },
+   "steps": 302,
+   "wall_seconds": 0.076578039675951,
+   "wave_positions": {
+    "contact": 0.7039298672978029,
+    "rarefaction_head": 0.12068996078295721,
+    "rarefaction_tail": 0.32050695784985866,
+    "shock": 0.8269067472728168
+   }
+  },
+  {
+   "cells": 100,
+   "errors": {
+    "density": 0.05757002034888021,
+    "pressure": 0.012646314688311653,
+    "velocity": 0.024734012232844924
+   },
+   "order": 2,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.3445336562445466,
+     "pressure": 2.4596496896880002,
+     "velocity": 1.5345375827026784
+    },
+    "star_right": {
+     "density": 1.242614625630826,
+     "pressure": 2.463358612443597,
+     "velocity": 1.527475407633462
+    }
+   },
+   "steps": 242,
+   "wall_seconds": 0.11267188005149364,
+   "wave_positions": {
+    "contact": 0.7029881885091809,
+    "rarefaction_head": 0.1470854483914694,
+    "rarefaction_tail": 0.29426492521241315,
+    "shock": 0.8267241408873649
+   }
+  },
+  {
+   "cells": 200,
+   "errors": {
+    "density": 0.031673902714063444,
+    "pressure": 0.005455728235493905,
+    "velocity": 0.011071966773867993
+   },
+   "order": 2,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.3444393036572203,
+     "pressure": 2.4650644508136828,
+     "velocity": 1.5296365582679696
+    },
+    "star_right": {
+     "density": 1.2927458549050976,
+     "pressure": 2.465763042139569,
+     "velocity": 1.5286195053044456
+    }
+   },
+   "steps": 487,
+   "wall_seconds": 0.2693382799625397,
+   "wave_positions": {
+    "contact": 0.7013169702106238,
+    "rarefaction_head": 0.15809571099699246,
+    "rarefaction_tail": 0.2828213797022746,
+    "shock": 0.8244202543081426
+   }
+  }
+ ],
+ "config": {
+  "cfl_first": 0.4,
+  "cfl_muscl": 0.25,
+  "final_time": 0.13,
+  "flux": "Rusanov (local Lax-Friedrichs); no Riemann solver evaluated",
+  "gamma": 1.4,
+  "ladder": [
+   400,
+   800,
+   1600,
+   3200,
+   6400
+  ],
+  "left_state": [
+   0.445,
+   0.698,
+   3.528
+  ],
+  "orders": [
+   1,
+   2
+  ],
+  "reconstruction": [
+   "piecewise constant",
+   "MUSCL-Hancock + minmod"
+  ],
+  "right_state": [
+   0.5,
+   0.0,
+   0.571
+  ],
+  "tolerances": {
+   "order_first": 0.4,
+   "order_retired": 0.6,
+   "order_second": 0.6,
+   "position": 0.02,
+   "root": 1e-12,
+   "star": 0.03
+  }
+ },
+ "dg_source_generated_at_utc": "2026-11-12T23:47:42Z",
+ "dg_source_metrics": "docs/benchmarks/results/lax_case_pool/metrics.json",
+ "dg_versus_fv_density": [
+  {
+   "cells": 100,
+   "dg_p1": 0.023290512645678555,
+   "dg_p2": 0.016185711537447633,
+   "dg_p3": 0.015847006857723764,
+   "fv_p1": 0.12699443188892418,
+   "fv_p2": 0.05757002034888021
+  },
+  {
+   "cells": 200,
+   "dg_p1": 0.013602985607298416,
+   "dg_p2": 0.00922761042336109,
+   "dg_p3": 0.01214747011549904,
+   "fv_p1": 0.08406211777703895,
+   "fv_p2": 0.031673902714063444
+  },
+  {
+   "cells": 400,
+   "dg_p1": 0.0072183346661303036,
+   "dg_p2": 0.004528163040625704,
+   "dg_p3": 0.008686464624843512,
+   "fv_p1": 0.058316248440965134,
+   "fv_p2": 0.01996969192530032
+  },
+  {
+   "cells": 800,
+   "fv_p1": 0.04090881693806067,
+   "fv_p2": 0.013132037631963694
+  },
+  {
+   "cells": 1600,
+   "fv_p1": 0.027859805128342723,
+   "fv_p2": 0.0079827924997233
+  },
+  {
+   "cells": 3200,
+   "fv_p1": 0.01936433182960002,
+   "fv_p2": 0.00503816205697221
+  },
+  {
+   "cells": 6400,
+   "fv_p1": 0.013370537372444504,
+   "fv_p2": 0.0030698774095300244
+  }
+ ],
+ "figures": [
+  "docs/benchmarks/results/lax_reference_crosscheck/figures/fv_vs_exact_profiles.png",
+  "docs/benchmarks/results/lax_reference_crosscheck/figures/fv_convergence.png",
+  "docs/benchmarks/results/lax_reference_crosscheck/figures/fv_wave_and_star_convergence.png"
+ ],
+ "gates": {
+  "convergence_first_order": {
+   "errors": [
+    0.058316248440965134,
+    0.04090881693806067,
+    0.027859805128342723,
+    0.01936433182960002,
+    0.013370537372444504
+   ],
+   "field": "density",
+   "minimum_order": 0.4,
+   "monotone": true,
+   "observed_order": 0.511486096397352,
+   "pairs": [
+    {
+     "cells": [
+      400,
+      800
+     ],
+     "order": 0.511486096397352
+    },
+    {
+     "cells": [
+      800,
+      1600
+     ],
+     "order": 0.554226649110555
+    },
+    {
+     "cells": [
+      1600,
+      3200
+     ],
+     "order": 0.5247834449953419
+    },
+    {
+     "cells": [
+      3200,
+      6400
+     ],
+     "order": 0.534344272076717
+    }
+   ],
+   "status": "PASS"
+  },
+  "convergence_first_order_legacy_threshold": {
+   "errors": [
+    0.058316248440965134,
+    0.04090881693806067,
+    0.027859805128342723,
+    0.01936433182960002,
+    0.013370537372444504
+   ],
+   "field": "density",
+   "minimum_order": 0.6,
+   "monotone": true,
+   "observed_order": 0.511486096397352,
+   "pairs": [
+    {
+     "cells": [
+      400,
+      800
+     ],
+     "order": 0.511486096397352
+    },
+    {
+     "cells": [
+      800,
+      1600
+     ],
+     "order": 0.554226649110555
+    },
+    {
+     "cells": [
+      1600,
+      3200
+     ],
+     "order": 0.5247834449953419
+    },
+    {
+     "cells": [
+      3200,
+      6400
+     ],
+     "order": 0.534344272076717
+    }
+   ],
+   "role": "diagnostic (retired single threshold; not part of the verdict)",
+   "status": "FAIL"
+  },
+  "convergence_second_order": {
+   "errors": [
+    0.01996969192530032,
+    0.013132037631963694,
+    0.0079827924997233,
+    0.00503816205697221,
+    0.0030698774095300244
+   ],
+   "field": "density",
+   "minimum_order": 0.6,
+   "monotone": true,
+   "observed_order": 0.6047212870298386,
+   "pairs": [
+    {
+     "cells": [
+      400,
+      800
+     ],
+     "order": 0.6047212870298386
+    },
+    {
+     "cells": [
+      800,
+      1600
+     ],
+     "order": 0.7181253732365824
+    },
+    {
+     "cells": [
+      1600,
+      3200
+     ],
+     "order": 0.6639959825645407
+    },
+    {
+     "cells": [
+      3200,
+      6400
+     ],
+     "order": 0.714716483281434
+    }
+   ],
+   "status": "PASS"
+  },
+  "entropy_condition": {
+   "lower_characteristic": 1.2644366334458994,
+   "shock_speed": 2.4793214809898405,
+   "status": "PASS",
+   "upper_characteristic": 3.1558307418547016
+  },
+  "positions_finest_first_order": {
+   "normalisation": "|dx| / |x_exact - x0|",
+   "status": "PASS",
+   "tolerance": 0.02,
+   "waves": {
+    "contact": {
+     "exact": 0.69873375,
+     "got": 0.6991791101662604,
+     "relative_error": 0.0022409890935002233,
+     "status": "PASS"
+    },
+    "rarefaction_head": {
+     "exact": 0.16895722018516715,
+     "got": 0.1648459549028746,
+     "relative_error": 0.012419135933404647,
+     "status": "PASS"
+    },
+    "rarefaction_tail": {
+     "exact": 0.2723143146862412,
+     "got": 0.2763664684286531,
+     "relative_error": 0.017797138791698315,
+     "status": "PASS"
+    },
+    "shock": {
+     "exact": 0.82231125,
+     "got": 0.8224554908883603,
+     "relative_error": 0.0004475204894656699,
+     "status": "PASS"
+    }
+   },
+   "worst_relative_error": 0.017797138791698315
+  },
+  "positions_finest_second_order": {
+   "normalisation": "|dx| / |x_exact - x0|",
+   "status": "PASS",
+   "tolerance": 0.02,
+   "waves": {
+    "contact": {
+     "exact": 0.69873375,
+     "got": 0.6989281292499009,
+     "relative_error": 0.000978088774054958,
+     "status": "PASS"
+    },
+    "rarefaction_head": {
+     "exact": 0.16895722018516715,
+     "got": 0.16870777947767526,
+     "relative_error": 0.0007534999181417323,
+     "status": "PASS"
+    },
+    "rarefaction_tail": {
+     "exact": 0.2723143146862412,
+     "got": 0.2725378926359883,
+     "relative_error": 0.0009819587447451798,
+     "status": "PASS"
+    },
+    "shock": {
+     "exact": 0.82231125,
+     "got": 0.822372068610258,
+     "relative_error": 0.0001886952759420383,
+     "status": "PASS"
+    }
+   },
+   "worst_relative_error": 0.0009819587447451798
+  },
+  "root_finder": {
+   "status": "PASS",
+   "tolerance": 1e-12,
+   "values": {
+    "pressure": {
+     "bisection": 2.466097919207357,
+     "newton": 2.4660979192073564,
+     "relative_error": 1.8007768726101519e-16
+    },
+    "velocity": {
+     "bisection": 1.528723026632884,
+     "newton": 1.528723026632884,
+     "relative_error": 0.0
+    }
+   },
+   "worst_relative_error": 1.8007768726101519e-16
+  },
+  "star_finest_first_order": {
+   "status": "PASS",
+   "tolerance": 0.03,
+   "values": {
+    "star_left.density": {
+     "exact": 0.34456847418960945,
+     "got": 0.3445384797909356,
+     "relative_error": 8.704916706147643e-05,
+     "status": "PASS"
+    },
+    "star_left.pressure": {
+     "exact": 2.4660979192073564,
+     "got": 2.4660723075765714,
+     "relative_error": 1.0385488177737797e-05,
+     "status": "PASS"
+    },
+    "star_left.velocity": {
+     "exact": 1.528723026632884,
+     "got": 1.528718542750057,
+     "relative_error": 2.9330903956548136e-06,
+     "status": "PASS"
+    },
+    "star_right.density": {
+     "exact": 1.3040845320261998,
+     "got": 1.3040569180645147,
+     "relative_error": 2.1174978313823016e-05,
+     "status": "PASS"
+    },
+    "star_right.pressure": {
+     "exact": 2.4660979192073564,
+     "got": 2.46605975644116,
+     "relative_error": 1.5474959813748802e-05,
+     "status": "PASS"
+    },
+    "star_right.velocity": {
+     "exact": 1.528723026632884,
+     "got": 1.5287023658264187,
+     "relative_error": 1.3515075069380247e-05,
+     "status": "PASS"
+    }
+   },
+   "worst_relative_error": 8.704916706147643e-05
+  },
+  "star_finest_second_order": {
+   "status": "PASS",
+   "tolerance": 0.03,
+   "values": {
+    "star_left.density": {
+     "exact": 0.34456847418960945,
+     "got": 0.3445683747740908,
+     "relative_error": 2.8852180654218265e-07,
+     "status": "PASS"
+    },
+    "star_left.pressure": {
+     "exact": 2.4660979192073564,
+     "got": 2.4660977793262244,
+     "relative_error": 5.67216455280736e-08,
+     "status": "PASS"
+    },
+    "star_left.velocity": {
+     "exact": 1.528723026632884,
+     "got": 1.5287231125521763,
+     "relative_error": 5.620330880781752e-08,
+     "status": "PASS"
+    },
+    "star_right.density": {
+     "exact": 1.3040845320261998,
+     "got": 1.3040848152520486,
+     "relative_error": 2.1718365782153754e-07,
+     "status": "PASS"
+    },
+    "star_right.pressure": {
+     "exact": 2.4660979192073564,
+     "got": 2.4660980416315015,
+     "relative_error": 4.96428564698105e-08,
+     "status": "PASS"
+    },
+    "star_right.velocity": {
+     "exact": 1.528723026632884,
+     "got": 1.528723065320224,
+     "relative_error": 2.5306964914007328e-08,
+     "status": "PASS"
+    }
+   },
+   "worst_relative_error": 2.8852180654218265e-07
+  }
+ },
+ "generated_at_utc": "2026-11-13T01:20:14Z",
+ "legs": [
+  {
+   "cells": 400,
+   "errors": {
+    "density": 0.058316248440965134,
+    "pressure": 0.01232905296647873,
+    "velocity": 0.022238091348800938
+   },
+   "order": 1,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.34469796812882814,
+     "pressure": 2.464038458471171,
+     "velocity": 1.5303353642482775
+    },
+    "star_right": {
+     "density": 1.2447330793507136,
+     "pressure": 2.465910845810467,
+     "velocity": 1.5287048881936243
+    }
+   },
+   "steps": 607,
+   "wall_seconds": 0.19155557826161385,
+   "wave_positions": {
+    "contact": 0.7016706152700666,
+    "rarefaction_head": 0.1376999390541496,
+    "rarefaction_tail": 0.30342368761533045,
+    "shock": 0.8246863960845902
+   }
+  },
+  {
+   "cells": 800,
+   "errors": {
+    "density": 0.04090881693806067,
+    "pressure": 0.007164316210791676,
+    "velocity": 0.012809553408692243
+   },
+   "order": 1,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.3443864213501024,
+     "pressure": 2.4655511088273117,
+     "velocity": 1.5290606763528414
+    },
+    "star_right": {
+     "density": 1.2826703972031683,
+     "pressure": 2.4659136655591793,
+     "velocity": 1.5286352388487496
+    }
+   },
+   "steps": 1218,
+   "wall_seconds": 0.410527341067791,
+   "wave_positions": {
+    "contact": 0.7004737588894978,
+    "rarefaction_head": 0.14923317416245901,
+    "rarefaction_tail": 0.2919118070415643,
+    "shock": 0.823504449169978
+   }
+  },
+  {
+   "cells": 1600,
+   "errors": {
+    "density": 0.027859805128342723,
+    "pressure": 0.004122843098843902,
+    "velocity": 0.00748660603531414
+   },
+   "order": 1,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.34446804062908065,
+     "pressure": 2.465966632883008,
+     "velocity": 1.5287498195999054
+    },
+    "star_right": {
+     "density": 1.2986473054628789,
+     "pressure": 2.4659801094380573,
+     "velocity": 1.5286607685383096
+    }
+   },
+   "steps": 2439,
+   "wall_seconds": 1.1080850400030613,
+   "wave_positions": {
+    "contact": 0.6998063620535875,
+    "rarefaction_head": 0.15686954838013012,
+    "rarefaction_tail": 0.2842999108657511,
+    "shock": 0.822905927907877
+   }
+  },
+  {
+   "cells": 3200,
+   "errors": {
+    "density": 0.01936433182960002,
+    "pressure": 0.002459477592750422,
+    "velocity": 0.004419135877776309
+   },
+   "order": 1,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.3445136211423509,
+     "pressure": 2.466046395069019,
+     "velocity": 1.528718423362416
+    },
+    "star_right": {
+     "density": 1.303360934886576,
+     "pressure": 2.466029358067999,
+     "velocity": 1.5286861692663454
+    }
+   },
+   "steps": 4880,
+   "wall_seconds": 3.3255419488996267,
+   "wave_positions": {
+    "contact": 0.6994161757175539,
+    "rarefaction_head": 0.16178652912861893,
+    "rarefaction_tail": 0.27940460546066254,
+    "shock": 0.8226022712986512
+   }
+  },
+  {
+   "cells": 6400,
+   "errors": {
+    "density": 0.013370537372444504,
+    "pressure": 0.0014088480656179396,
+    "velocity": 0.0024900644564084785
+   },
+   "order": 1,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.3445384797909356,
+     "pressure": 2.4660723075765714,
+     "velocity": 1.528718542750057
+    },
+    "star_right": {
+     "density": 1.3040569180645147,
+     "pressure": 2.46605975644116,
+     "velocity": 1.5287023658264187
+    }
+   },
+   "steps": 9763,
+   "wall_seconds": 11.363489881157875,
+   "wave_positions": {
+    "contact": 0.6991791101662604,
+    "rarefaction_head": 0.1648459549028746,
+    "rarefaction_tail": 0.2763664684286531,
+    "shock": 0.8224554908883603
+   }
+  },
+  {
+   "cells": 400,
+   "errors": {
+    "density": 0.01996969192530032,
+    "pressure": 0.003091386378420489,
+    "velocity": 0.005802054711710576
+   },
+   "order": 2,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.34454617707635293,
+     "pressure": 2.4660349060765583,
+     "velocity": 1.5287714987202579
+    },
+    "star_right": {
+     "density": 1.3019787994549534,
+     "pressure": 2.4661117645003197,
+     "velocity": 1.5287332021221884
+    }
+   },
+   "steps": 976,
+   "wall_seconds": 0.7154284287244081,
+   "wave_positions": {
+    "contact": 0.7002578297043969,
+    "rarefaction_head": 0.16387458619503625,
+    "rarefaction_tail": 0.2769795982976832,
+    "shock": 0.8233012920660923
+   }
+  },
+  {
+   "cells": 800,
+   "errors": {
+    "density": 0.013132037631963694,
+    "pressure": 0.0013887016378874156,
+    "velocity": 0.002616187078228413
+   },
+   "order": 2,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.34456178536906945,
+     "pressure": 2.466076976505181,
+     "velocity": 1.5287397339525284
+    },
+    "star_right": {
+     "density": 1.3040171358873434,
+     "pressure": 2.4660942933155163,
+     "velocity": 1.5287213492853082
+    }
+   },
+   "steps": 1953,
+   "wall_seconds": 1.454716730862856,
+   "wave_positions": {
+    "contact": 0.6996361794790807,
+    "rarefaction_head": 0.16666641111898584,
+    "rarefaction_tail": 0.2743254261413202,
+    "shock": 0.8227967719335469
+   }
+  },
+  {
+   "cells": 1600,
+   "errors": {
+    "density": 0.0079827924997233,
+    "pressure": 0.0006300001953971668,
+    "velocity": 0.0013121887154336456
+   },
+   "order": 2,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.34456703817751716,
+     "pressure": 2.466095930598988,
+     "velocity": 1.5287241871873898
+    },
+    "star_right": {
+     "density": 1.3040846757257132,
+     "pressure": 2.466095700983572,
+     "velocity": 1.5287216198393625
+    }
+   },
+   "steps": 3907,
+   "wall_seconds": 4.005954969674349,
+   "wave_positions": {
+    "contact": 0.6992654301711206,
+    "rarefaction_head": 0.16791255458799273,
+    "rarefaction_tail": 0.2732311870649753,
+    "shock": 0.8225559818012672
+   }
+  },
+  {
+   "cells": 3200,
+   "errors": {
+    "density": 0.00503816205697221,
+    "pressure": 0.0003521901669581934,
+    "velocity": 0.0007016746940213265
+   },
+   "order": 2,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.34456814609973696,
+     "pressure": 2.466097935803696,
+     "velocity": 1.5287228376683115
+    },
+    "star_right": {
+     "density": 1.3040851590339047,
+     "pressure": 2.4660977413414216,
+     "velocity": 1.528722853139993
+    }
+   },
+   "steps": 7814,
+   "wall_seconds": 12.288618549704552,
+   "wave_positions": {
+    "contact": 0.6990530034644584,
+    "rarefaction_head": 0.16845529083018432,
+    "rarefaction_tail": 0.27276259986414986,
+    "shock": 0.8224466008629364
+   }
+  },
+  {
+   "cells": 6400,
+   "errors": {
+    "density": 0.0030698774095300244,
+    "pressure": 0.00016479079064301406,
+    "velocity": 0.00030223673332438467
+   },
+   "order": 2,
+   "star_plateaus": {
+    "star_left": {
+     "density": 0.3445683747740908,
+     "pressure": 2.4660977793262244,
+     "velocity": 1.5287231125521763
+    },
+    "star_right": {
+     "density": 1.3040848152520486,
+     "pressure": 2.4660980416315015,
+     "velocity": 1.528723065320224
+    }
+   },
+   "steps": 15626,
+   "wall_seconds": 44.02446920983493,
+   "wave_positions": {
+    "contact": 0.6989281292499009,
+    "rarefaction_head": 0.16870777947767526,
+    "rarefaction_tail": 0.2725378926359883,
+    "shock": 0.822372068610258
+   }
+  }
+ ],
+ "star_state_independent": {
+  "bisection": {
+   "pressure": 2.466097919207357,
+   "velocity": 1.528723026632884
+  },
+  "newton": {
+   "pressure": 2.4660979192073564,
+   "velocity": 1.528723026632884
+  }
+ },
+ "verdict": "PASS",
+ "wall_seconds": 79.63935399055481
+}
