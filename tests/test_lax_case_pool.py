@@ -26,7 +26,8 @@ from benchmarks.lax_case_pool import (
     CFL, DIAPHRAGM, FINAL_TIME, GAMMA, LEFT, MIN_C3_ORDER, OUT, R3_BAND_WIDTH,
     R3_LEGACY_BAND_CELLS, R3_ORDER_FRACTION, RIGHT, TIME_CFL_DIVISORS, TIME_LEGS,
     TOL_C1, TOL_C2, TOL_TIME_ERROR_SHARE, exact_positions, exact_reference,
-    exact_waves, entropy_wave_exact, gate_c1, gate_c2, modal_fields,
+    exact_waves, entropy_wave_exact, gate_a0, gate_c1, gate_c2, gate_c3,
+    ledger_acceptance_tolerance, modal_fields,
     plateau_values, convergence_order, temporal_order, temporal_share,
     wave_positions, _weighted_l1, ENTROPY_AMPLITUDE, ENTROPY_TIME,
     RAREFACTION_LEVEL_FRACTION,
@@ -426,3 +427,113 @@ def test_rendered_followup_doc_matches_the_artifact():
     assert DOC.read_text() == render(json.loads(ARTIFACT.read_text())), (
         f"{DOC.name} drifted from the artifact; re-run "
         "`python scripts/render_lax_case_pool_doc.py`")
+
+
+# ------------------------------------------------------------------ A0 layer
+def _synthetic_entries(*rows):
+    """``(cells, degree, rel_l1, rel_l2)`` -> run_ladder-shaped entries."""
+    out = []
+    for cells, degree, l1, l2 in rows:
+        out.append({"cells": cells, "degree": degree,
+                    "errors": {f: l1 for f in ("density", "velocity", "pressure")},
+                    "l2_errors": {f: l2 for f in ("density", "velocity", "pressure")}})
+    return out
+
+
+def test_a0_tolerance_is_the_registered_case_threshold():
+    """A0 must grade against the case module's number, not a private copy."""
+    from tensordg.cases.lax_1d import lax_parameters
+
+    registered = lax_parameters()["acceptance_threshold"]
+    gate = gate_a0(_synthetic_entries((400, 3, 1e-3, 1e-3)))
+    assert gate["tolerance"] == pytest.approx(registered)
+    assert gate["tolerance"] == pytest.approx(0.03)
+    assert ledger_acceptance_tolerance() == pytest.approx(registered)
+    # an override is possible (tests), but it must be explicit
+    assert gate_a0(_synthetic_entries((400, 3, 1e-3, 1e-3)),
+                   tolerance=0.5)["tolerance"] == pytest.approx(0.5)
+
+
+def test_a0_ledger_arm_is_the_production_leg():
+    entries = _synthetic_entries((100, 1, 1e-3, 0.20), (400, 3, 1e-3, 0.02))
+    gate = gate_a0(entries)
+    assert gate["production_leg"] == "p3.N400"
+    assert gate["arms"]["production_l2"]["status"] == "PASS"
+    assert gate["arms"]["ladder_l1"]["status"] == "PASS"
+    assert gate["status"] == "PASS"
+
+
+def test_a0_fails_when_the_production_leg_misses_the_bar():
+    gate = gate_a0(_synthetic_entries((100, 1, 1e-3, 0.02), (400, 3, 1e-3, 0.031)))
+    assert gate["arms"]["production_l2"]["status"] == "FAIL"
+    assert gate["status"] == "FAIL"
+
+
+def test_a0_ladder_arm_grants_no_per_leg_exemption():
+    """One coarse leg above the bar is enough: no averaging over the ladder."""
+    gate = gate_a0(_synthetic_entries((100, 1, 0.031, 0.02), (400, 3, 1e-3, 0.02)))
+    assert gate["arms"]["production_l2"]["status"] == "PASS"
+    assert gate["arms"]["ladder_l1"]["status"] == "FAIL"
+    assert gate["status"] == "FAIL"
+
+
+def test_a0_is_independent_of_the_order_gates():
+    """A zero-order family inside the bar: A0 PASS while C3 FAILs."""
+    entries = _synthetic_entries((100, 1, 4e-3, 1e-2), (200, 1, 4e-3, 1e-2),
+                                 (400, 1, 4e-3, 1e-2))
+    assert gate_a0(entries)["status"] == "PASS"
+    assert gate_c3(entries)["status"] == "FAIL"
+
+
+def test_committed_artifact_carries_the_ledger_acceptance():
+    assert ARTIFACT.exists(), (
+        f"missing committed record {ARTIFACT.relative_to(ROOT)}; regenerate with "
+        "`python -m benchmarks.lax_case_pool`")
+    metrics = json.loads(ARTIFACT.read_text())
+    stored = metrics["acceptance"]
+    # re-derive the gate from the stored per-leg numbers only
+    rebuilt = gate_a0(metrics["ladder"], tolerance=stored["tolerance"])
+    assert rebuilt["arms"] == stored["arms"]
+    assert rebuilt["per_leg"] == stored["per_leg"]
+    assert rebuilt["status"] == stored["status"]
+    assert stored["tolerance"] == pytest.approx(ledger_acceptance_tolerance())
+    assert metrics["config"]["tolerances"]["a0_acceptance"] == pytest.approx(
+        stored["tolerance"])
+    # the two layers are recorded separately and neither relabels the other
+    assert metrics["verdicts"]["acceptance"] == stored["status"]
+    assert metrics["verdicts"]["verification"] == metrics["verdict"]
+    # wherever a leg stores both norms the L2 error must dominate the L1 error
+    for entry in metrics["ladder"]:
+        if "l2_errors" not in entry:
+            continue
+        for field in ("density", "velocity", "pressure"):
+            assert entry["l2_errors"][field] > entry["errors"][field]
+    # the ledger arm must state where its L2 numbers came from
+    assert stored["arms"]["production_l2"]["source"] in ("ladder", "profiles")
+    assert metrics["acceptance_provenance"]["profile_consistency"][
+        "worst_relative_mismatch"] <= 1e-6
+
+
+def test_committed_summary_renders_the_acceptance_block():
+    summary_path = ARTIFACT.parent / "summary.md"
+    assert summary_path.exists(), f"missing {summary_path}"
+    summary = summary_path.read_text()
+    metrics = json.loads(ARTIFACT.read_text())
+    assert "## acceptance (ledger CASE-LAX-DG" in summary
+    assert f"A0 verdict: **{metrics['acceptance']['status']}**" in summary
+    assert ("Acceptance verdict (ledger A0, < 3 % vs exact solution): "
+            f"**{metrics['acceptance']['status']}**") in summary
+    assert ("Verification verdict (supplementary order gates): "
+            f"**{metrics['verdict']}**") in summary
+
+
+def test_public_report_numbers_match_the_artifact():
+    """The published ladder/gate/acceptance blocks must be a function of the artifact."""
+    from scripts.sync_lax_report_numbers import REPORT, discrepancies
+
+    assert ARTIFACT.exists(), f"missing committed record {ARTIFACT}"
+    assert REPORT.exists(), f"missing {REPORT.relative_to(ROOT)}"
+    problems = discrepancies(REPORT.read_text(), json.loads(ARTIFACT.read_text()))
+    assert not problems, (
+        "docs/CASE-LAX-DG.md drifted from the artifact: "
+        f"{problems}; re-run `python scripts/sync_lax_report_numbers.py`")
