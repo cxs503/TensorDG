@@ -1,10 +1,10 @@
 {
   "case": "dalembert-elastic-rod-1d",
-  "generated_utc": "2026-11-12T11:51:34+00:00",
-  "git_sha": "e723dd420c0019b3cf7ce8a03e885d96f07fdca4",
+  "generated_utc": "2026-11-13T13:00:34+00:00",
+  "git_sha": "4f56c97933ead6aae4fb0eef9dee44b994f72402",
   "command": "python -m benchmarks.elastic_1d_dalembert --output-dir validation/elastic_1d_dalembert",
-  "quick": false,
-  "elapsed_seconds": 79.0,
+  "quick": true,
+  "elapsed_seconds": 54.36,
   "environment": {
     "python": "3.11.6",
     "numpy": "2.4.6",
@@ -13,20 +13,20 @@
   },
   "artifacts": {
     "elastic_1d_dalembert.json": {
-      "bytes": 6548,
-      "sha256": "daad5203505f4072a231ecfdbe43d4951cb7d52cf5adb99138eb830eedc414e9"
+      "bytes": 4316,
+      "sha256": "07fefd1a5e0d0dde78476071270c55d0e87ba1c76a7c0d85ca17bc209cd841e0"
     },
     "benchmark_ref_vs_got.json": {
-      "bytes": 4277,
-      "sha256": "10af1797a4d548adb24bc797af73b43e003f3b87069c14f2d1e26dee00b4a868"
+      "bytes": 4275,
+      "sha256": "6c9a2a7f2082149e4e59b1fba0bc11b7c899365951bb52dabdc09a8794ac7bc2"
     },
     "sigma_profile_ref_vs_got.csv": {
-      "bytes": 285644,
-      "sha256": "19a0393f8f6e6ac850c537bbae67fd121ce1e24fe1bbe40f63a342ced98ccc72"
+      "bytes": 71444,
+      "sha256": "29d6a0ab4d61af6cbf49dd7015cea8c3ae30c6104104e63b9ae35ecd25c37985"
     },
     "elastic_1d_dalembert.png": {
-      "bytes": 194519,
-      "sha256": "37c4b1168a570870b883607b06ca92d8b1fe441d06f788c1cae804249da13b20"
+      "bytes": 178329,
+      "sha256": "3cb34499217a09fe4e86d8d72ea276871cc59047a3163a88657b15db23fcc3fd"
     }
   }
 }
