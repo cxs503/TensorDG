@@ -143,7 +143,16 @@ def integration_calls(ncells: int = 80, degree: int = 1) -> dict:
 # ---------------------------------------------------------------------------
 # 2. Reference-vs-got table from the reproduction run artifacts
 # ---------------------------------------------------------------------------
-def _row(item, quantity, ref, got, tol, verdict, ref_source, note="", unit=""):
+def _row(item, quantity, ref, got, tol, verdict, ref_source, note="", unit="",
+         gated=False):
+    """One ref-vs-got row.
+
+    ``verdict`` is *only* ever the tolerance rule applied to (ref, got); the
+    separate ``gated`` flag says whether the row is part of the pre-declared
+    anchor gate.  The two used to be conflated: an out-of-tolerance *non-gate*
+    row was printed as ``informative``, which hid a real 4.17 % violation
+    (audit m15345 defect M2).  Laundering is now impossible by construction.
+    """
     ref_f = float(ref) if ref is not None else None
     got_f = float(got) if got is not None else None
     if ref_f is not None and got_f is not None and ref_f != 0:
@@ -153,10 +162,16 @@ def _row(item, quantity, ref, got, tol, verdict, ref_source, note="", unit=""):
         rel, diff = None, got_f - ref_f
     else:
         rel, diff = None, None
+    assert verdict in ("PASS", "FAIL", "UNSCORED"), verdict
     return {"item": item, "quantity": quantity, "ref": ref_f, "got": got_f,
             "unit": unit, "abs_diff": diff, "rel_diff": rel,
-            "tolerance": tol, "verdict": verdict, "ref_source": ref_source,
-            "note": note}
+            "tolerance": tol, "verdict": verdict, "gated": bool(gated),
+            "ref_source": ref_source, "note": note}
+
+
+def _rule(ok: bool) -> str:
+    """A scored row can only be PASS or FAIL — never anything else."""
+    return "PASS" if ok else "FAIL"
 
 
 def build_ref_vs_got(metrics: dict, profile: str) -> dict:
@@ -171,67 +186,86 @@ def build_ref_vs_got(metrics: dict, profile: str) -> dict:
         got_order = block["observed_order"]
         rows.append(_row(
             "A1_smooth_order", f"L2 observed order {key}", p + 1.0, got_order,
-            f">= p+0.5 = {p + 0.5}", "PASS" if got_order >= p + 0.5 else "FAIL",
+            f">= p+0.5 = {p + 0.5}", _rule(got_order >= p + 0.5),
             "paper_theorem",
             "Cockburn & Shu: DG(P^p) converges at O(h^{p+1}) for smooth data; "
-            "the mission tolerance is the looser p+0.5"))
+            "the mission tolerance is the looser p+0.5", gated=True))
 
     # A2 — square wave: ref = O(h^{1/2}) L1 floor proved in the paper
     for key, block in sec["A2_discontinuous"]["by_degree"].items():
         got_order = block["l1_order"]
         rows.append(_row(
             "A2_discont_order", f"L1 observed order {key}", 0.5, got_order,
-            ">= 0.5", "PASS" if got_order >= 0.5 else "FAIL", "paper_theorem",
-            "half-order L1 floor for limited schemes at discontinuities"))
+            ">= 0.5", _rule(got_order >= 0.5), "paper_theorem",
+            "half-order L1 floor for limited schemes at discontinuities",
+            gated=True))
 
     # E2 — Sod: numeric ref vs got at fixed stations + integral rel-L2
     sod_ref = metrics.get("sod_reference_stations", {})
-    p_star = None
     for tag, case in sec["E2_sod"]["cases"].items():
-        p = case["degree"]
-        if p_star is None or case["ncells"] > sec["E2_sod"]["cases"].get(p_star, {}).get("ncells", -1):
-            pass
+        gated = bool(case.get("gate_case", True))
         for comp in ("density", "velocity", "pressure"):
+            err = case["rel_l2"][comp]
             rows.append(_row(
-                f"E2_sod_{tag}", f"rel L2 error, {comp}", None,
-                case["rel_l2"][comp], f"< {gates['sod_rel_l2']:.0%}",
-                ("PASS" if case["rel_l2"][comp] < gates["sod_rel_l2"] else "FAIL")
-                if case.get("gate_case", True) else
-                ("PASS" if case["rel_l2"][comp] < gates["sod_rel_l2"] else "informative"),
-                "analytic", "ref = exact Riemann solution (benchmarks.sod_exact)", unit="-"))
+                f"E2_sod_{tag}", f"rel L2 error, {comp}", None, err,
+                f"< {gates['sod_rel_l2']:.0%}", _rule(err < gates["sod_rel_l2"]),
+                "analytic", "ref = exact Riemann solution (benchmarks.sod_exact)"
+                + ("" if gated else "; grid below the pre-declared gate resolution"),
+                unit="-", gated=gated))
     # the reference (analytic) vs got values themselves, station by station
     for tag, stations in sod_ref.items():
+        # Supplementary evidence, never a gate row: the pre-declared E2 gate is the
+        # *integral* relative L2 on the gate grid.  A station compares a DG cell
+        # average with a point value of the exact solution, so it is scored with
+        # the same 3 % rule (a violation still prints FAIL) but cannot make or
+        # break the anchor.
         for st in stations:
             for comp in ("density", "velocity", "pressure"):
+                ref, got = st["ref"][comp], st["got"][comp]
+                if ref == 0:
+                    # a purely zero reference has no relative scale: report, do not score
+                    verdict = "UNSCORED"
+                else:
+                    verdict = _rule(abs(got - ref) <= gates["sod_rel_l2"] * abs(ref))
                 rows.append(_row(
-                    f"E2_sod_{tag}", f"{comp} at x={st['x']:.3f}", st["ref"][comp],
-                    st["got"][comp], f"< {gates['sod_rel_l2']:.0%} rel",
-                    "PASS" if abs(st["got"][comp] - st["ref"][comp]) <=
-                    gates["sod_rel_l2"] * abs(st["ref"][comp]) else "informative",
-                    "analytic", "cell-average vs exact Riemann solution", unit="-"))
+                    f"E2_sod_{tag}", f"{comp} at x={st['x']:.3f}", ref, got,
+                    f"< {gates['sod_rel_l2']:.0%} rel", verdict, "analytic",
+                    "cell-average vs pointwise exact solution (supplementary, not a gate)"
+                    + ("" if ref != 0 else "; zero reference, no relative scale"),
+                    unit="-", gated=False))
 
     # E3 — TVD/TVB bound: ref = exact bounds [0, 1] of the initial data
     for tag, case in sec["E3_tvd"]["cases"].items():
         tol = f"<= {gates['tvd_overshoot']:.0%} overshoot"
         strict = tag.endswith("strict_all")
+        over = case["overshoot_pointwise_pct"] / 100.0
         rows.append({
             "item": "E3_tvd", "quantity": f"pointwise max, {tag}", "ref": 1.0,
             "got": case["pt_max"], "unit": "-", "abs_diff": case["pt_max"] - 1.0,
             "rel_diff": case["pt_max"] - 1.0, "tolerance": tol,
-            "verdict": ("PASS" if case["overshoot_pointwise_pct"] / 100.0 <= gates["tvd_overshoot"]
-                        else "FAIL") if strict else "informative",
+            "verdict": _rule(over <= gates["tvd_overshoot"]), "gated": strict,
             "ref_source": "analytic",
             "note": ("strict minmod policy (gate row)" if strict
-                     else "unlimited control / paper-indicator row: reported, "
-                          "not the gated configuration"),
+                     else f"not a gate row ({case['limiter']}): reported with the same "
+                          "tolerance rule, so a violation still shows as FAIL"),
         })
 
-    n_pass = sum(r["verdict"] == "PASS" for r in rows)
-    n_fail = sum(r["verdict"] == "FAIL" for r in rows)
-    n_info = sum(r["verdict"] == "informative" for r in rows)
-    assert n_fail == 0, (  # fail loudly if a pre-declared gate regressed
-        f"benchmark table contains {n_fail} FAIL rows: "
-        f"{[r['quantity'] for r in rows if r['verdict'] == 'FAIL']}")
+    gated_rows = [r for r in rows if r["gated"]]
+    counts = {
+        "gated_pass": sum(r["verdict"] == "PASS" for r in gated_rows),
+        "gated_fail": sum(r["verdict"] == "FAIL" for r in gated_rows),
+        "gated_total": len(gated_rows),
+        "ungated_pass": sum(r["verdict"] == "PASS" for r in rows if not r["gated"]),
+        "ungated_fail": sum(r["verdict"] == "FAIL" for r in rows if not r["gated"]),
+        "unscored": sum(r["verdict"] == "UNSCORED" for r in rows),
+        "total": len(rows),
+    }
+    counts["FAIL"] = counts["gated_fail"] + counts["ungated_fail"]
+    counts["PASS"] = counts["gated_pass"] + counts["ungated_pass"]
+    # what the anchor actually claims: every *gated* row inside its tolerance.
+    assert counts["gated_fail"] == 0, (
+        f"pre-declared gate rows out of tolerance: "
+        f"{[r['quantity'] for r in gated_rows if r['verdict'] == 'FAIL']}")
     return {
         "anchor": metrics["anchor"],
         "profile": profile,
@@ -241,8 +275,7 @@ def build_ref_vs_got(metrics: dict, profile: str) -> dict:
             "withheld": "literal cells of the paper's tables — no PDF in the repo, "
                         "NOT claimed (see docs/repro_cks1998.md §4)",
         },
-        "counts": {"PASS": n_pass, "FAIL": n_fail, "informative": n_info,
-                   "total": len(rows)},
+        "counts": counts,
         "gate_verdict": metrics["verdict"],
         "environment": metrics["environment"],
         "wall_seconds": metrics["wall_seconds"],
@@ -250,22 +283,31 @@ def build_ref_vs_got(metrics: dict, profile: str) -> dict:
     }
 
 
+def _counts_line(counts: dict) -> str:
+    return (f"gated PASS {counts['gated_pass']}/{counts['gated_total']} · "
+            f"non-gated out-of-tolerance {counts['ungated_fail']} · "
+            f"unscored {counts['unscored']} · rows {counts['total']}")
+
+
 def render_md(table: dict) -> str:
     lines = [
         "# REPRO-DG-CKS1998 — reference vs got",
         "",
         f"Anchor: {table['anchor']}",
-        f"Profile: `{table['profile']}` · rows: {table['counts']['total']} "
-        f"(PASS {table['counts']['PASS']} / FAIL {table['counts']['FAIL']} / "
-        f"informative {table['counts']['informative']})",
+        f"Profile: `{table['profile']}` · {_counts_line(table['counts'])}",
+        "",
+        "`verdict` is the tolerance rule applied to (ref, got) **and nothing "
+        "else**; `gated` marks the pre-declared anchor rows. A non-gated row "
+        "that leaves its tolerance is printed as `FAIL`, so the table can no "
+        "longer hide a violation behind the word `informative`.",
         "",
         "`ref` provenance: *analytic* = exact solution, *paper_theorem* = proved "
         "order/floor in Cockburn & Shu, *withheld* = paper table cell not "
         "claimed (no PDF). Regenerate with "
         "`python -m benchmarks.cks1998_benchmark`.",
         "",
-        "| item | quantity | ref | got | abs diff | rel diff | tolerance | verdict | ref source |",
-        "|---|---|---:|---:|---:|---:|---|---|---|",
+        "| item | quantity | ref | got | abs diff | rel diff | tolerance | verdict | gated | ref source |",
+        "|---|---|---:|---:|---:|---:|---|---|---|---|",
     ]
     for r in table["rows"]:
         def fmt(v, nd=6):
@@ -273,13 +315,12 @@ def render_md(table: dict) -> str:
         lines.append(
             f"| {r['item']} | {r['quantity']} | {fmt(r['ref'])} | {fmt(r['got'])} | "
             f"{fmt(r['abs_diff'], 3)} | {fmt(r['rel_diff'], 3)} | {r['tolerance']} | "
-            f"{r['verdict']} | {r['ref_source']} |")
+            f"{r['verdict']} | {'yes' if r['gated'] else 'no'} | {r['ref_source']} |")
     lines += ["", "## Gate verdict (from the run artifacts)", "",
               "```json", json.dumps(table["gate_verdict"], indent=2), "```", ""]
     return "\n".join(lines)
 
 
-# ---------------------------------------------------------------------------
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--artifacts", default=str(DEFAULT_ARTIFACTS),
@@ -316,7 +357,9 @@ def main(argv=None) -> int:
     print(json.dumps({"table": str(args.out_json), "profile": profile,
                       "counts": table["counts"], "probe_pass": probe["probe_pass"]},
                      indent=2))
-    return 0 if (probe["probe_pass"] and table["counts"]["FAIL"] == 0) else 1
+    # exit code tracks the *gate* (pre-declared rows); non-gated violations are
+    # reported honestly in the table but must not be able to flip the anchor
+    return 0 if (probe["probe_pass"] and table["counts"]["gated_fail"] == 0) else 1
 
 
 if __name__ == "__main__":
