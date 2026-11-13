@@ -1,0 +1,26 @@
+{
+  "all_rows_pass": true,
+  "artifacts": {
+    "benchmark_ref_vs_got.json": {
+      "bytes": 4725,
+      "sha256": "fdaebaff815c657f3c3bbf479492e91a6b3aa9168d3c933f47259bfd40a7f790"
+    },
+    "elastic_1d_reflections.json": {
+      "bytes": 9465,
+      "sha256": "41f1cbd84477d3f9f408275d35661e522d7bedb6bd68db6443d0d816c053274a"
+    },
+    "elastic_1d_reflections.png": {
+      "bytes": 224691,
+      "sha256": "29c20dc437ff5d2dd0a988327d14762c039cc11058b8a69806bf7af6d5816f01"
+    },
+    "reflection_profiles.csv": {
+      "bytes": 733336,
+      "sha256": "d8bd78d15c17028e63d9b0ed92e04d84578884443e1ed8ee8845413c91d9ae99"
+    }
+  },
+  "case": "dalembert-elastic-rod-1d",
+  "elapsed_note": "wall clock of the producing run",
+  "elapsed_seconds": 194.88,
+  "git_sha": "95dc7f8",
+  "repro_cmd": "python -m benchmarks.elastic_1d_reflections --output-dir validation/elastic_1d_reflections"
+}
