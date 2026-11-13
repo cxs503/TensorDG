@@ -1,7 +1,7 @@
 """Render ``docs/CASE-LAX-DG.md`` and publish the platform report from the artifact.
 
 Every number in the document and in the report body is read out of
-``runs/lax_case_pool/metrics.json`` at render time; nothing is transcribed by
+``docs/benchmarks/results/lax_case_pool/metrics.json`` at render time; nothing is transcribed by
 hand.  Figures are the PNGs listed in that artifact, base64-inlined into the
 report payload.
 """
@@ -13,8 +13,11 @@ import os
 import urllib.request
 from pathlib import Path
 
-METRICS = Path("runs/lax_case_pool/metrics.json")
-SUMMARY = Path("runs/lax_case_pool/summary.md")
+ROOT = Path(__file__).resolve().parents[1]
+# tracked path: ``runs/`` never survives the merge gate
+CASE = ROOT / "docs" / "benchmarks" / "results" / "lax_case_pool"
+METRICS = CASE / "metrics.json"
+SUMMARY = CASE / "summary.md"
 DOC = Path("docs/CASE-LAX-DG.md")
 MISSION_ID = int(os.environ.get("MISSION_ID", "15991"))
 
@@ -41,7 +44,7 @@ def build_markdown(metrics):
     add = lines.append
     add("# CASE-LAX-DG · Lax 激波管（Toro test 2）DG 算例池验证")
     add("")
-    add(f"> 工件 `runs/lax_case_pool/metrics.json` 生成于 {metrics['generated_at_utc']}，"
+    add(f"> 工件 `docs/benchmarks/results/lax_case_pool/metrics.json` 生成于 {metrics['generated_at_utc']}，"
         f"本文全部数字由 `benchmarks/lax_case_pool.py` 从该 JSON 注入（零手抄）。")
     add("")
     add("## ① 案例介绍")
