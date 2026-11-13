@@ -182,6 +182,17 @@ from .cases.lax_1d import (
     solve_lax_case,
 )
 
+# ---- cases.prefinement_exponential
+from .cases.prefinement_exponential import (
+    initial_condition as prefinement_initial_condition,
+    exact_solution as prefinement_exact_solution,
+    prefinement_parameters,
+    solve_level as prefinement_solve_level,
+    p_ladder as prefinement_p_ladder,
+    anchor_table as prefinement_anchor_table,
+    solve_prefinement_case,
+)
+
 # ---- cases.viscous_burgers_1d
 from .cases.viscous_burgers_1d import (
     CASE_KEY as VISCOUS_BURGERS_CASE_KEY,
@@ -200,6 +211,11 @@ from .cases.viscous_burgers_1d import (
 )
 # ---- convergence
 from .convergence import (
+    exponential_decay_criterion,
+    semidiscrete_operator,
+    operator_linearity_residual,
+    expm_scaled_squaring,
+    exact_time_solution,
     pairwise_orders,
     observed_order,
     gci_study,
@@ -214,6 +230,26 @@ from .convergence import (
     roundoff_floor,
     signal_to_noise,
     resolved_levels,
+)
+
+# ---- certified_reference
+# The round-2 certification engine.  Four of its names (``coarsen``,
+# ``observed_order``, ``richardson_extrapolate``, and the Roache index) are also
+# owned by :mod:`tensordg.convergence`; the certification ones are exported
+# under a ``certified_`` prefix so both readings stay reachable and the
+# identity gate can tell them apart.
+from .certified_reference import (
+    coarsen as certified_coarsen,
+    rel_l1 as certified_rel_l1,
+    observed_order as certified_observed_order,
+    richardson_extrapolate as certified_richardson_extrapolate,
+    gci as certified_gci,
+    classify,
+    digest_levels,
+    certify,
+    judge,
+    audit_ladder,
+    band_coverage_study,
 )
 
 # ---- curved_geometry
@@ -684,8 +720,10 @@ __all__ = [
     "assemble_poisson_2d_bc",
     "assemble_poisson_2d_sparse",
     "assemble_sipg_1d",
+    "audit_ladder",
     "av_sensor",
     "av_strength",
+    "band_coverage_study",
     "basis_1d",
     "bernoulli_head",
     "bspline_basis_matrix",
@@ -702,10 +740,17 @@ __all__ = [
     "cell_quadrature",
     "central_difference_directional",
     "central_difference_gradient",
+    "certified_coarsen",
+    "certified_gci",
+    "certified_observed_order",
+    "certified_rel_l1",
+    "certified_richardson_extrapolate",
+    "certify",
     "check_hydrostatic_equilibrium",
     "check_hydrostatic_equilibrium_2d",
     "circle_contract",
     "clamped_free_frequency",
+    "classify",
     "coarsen",
     "compute_hydrostatic_pressure_force",
     "cone_profile",
@@ -723,6 +768,7 @@ __all__ = [
     "decay_rate",
     "default_domain",
     "deformational_flow_velocity",
+    "digest_levels",
     "directional_derivative_ad",
     "dirichlet_face_operator",
     "dispersion_omega_sq",
@@ -757,7 +803,10 @@ __all__ = [
     "exact_solution_fourier",
     "exact_standing",
     "exact_temperature",
+    "exact_time_solution",
+    "expm_scaled_squaring",
     "exponent_details",
+    "exponential_decay_criterion",
     "exponential_filter_factor",
     "extrapolation_weights",
     "fit_exponent",
@@ -788,6 +837,7 @@ __all__ = [
     "initial_standing_stress",
     "initial_standing_velocity",
     "interior_face_operator",
+    "judge",
     "kdv_soliton",
     "kernel_airy",
     "kernel_boussinesq",
@@ -841,6 +891,7 @@ __all__ = [
     "normalise_bcs",
     "nurbs_curve_points",
     "observed_order",
+    "operator_linearity_residual",
     "p0_closed_form",
     "p0_symbol_error",
     "p_decay_diagnostics",
@@ -853,6 +904,12 @@ __all__ = [
     "plane_wave",
     "poisson_error_2d",
     "positivity_filter",
+    "prefinement_anchor_table",
+    "prefinement_exact_solution",
+    "prefinement_initial_condition",
+    "prefinement_p_ladder",
+    "prefinement_parameters",
+    "prefinement_solve_level",
     "primitive_fields",
     "primitive_to_conservative",
     "probe_arrival_time",
@@ -887,6 +944,7 @@ __all__ = [
     "run_soliton_benchmark",
     "run_vortex_peak_check",
     "rusanov_rhs",
+    "semidiscrete_operator",
     "sensor_reference",
     "shear_wave_exact",
     "shock_entropy_anchor",
@@ -939,6 +997,7 @@ __all__ = [
     "solve_poisson_2d_ldg",
     "solve_poisson_2d_matrixfree",
     "solve_poisson_2d_sparse",
+    "solve_prefinement_case",
     "solve_riemann",
     "solve_shear_wave_dg_2d",
     "solve_shock_entropy_dg",
