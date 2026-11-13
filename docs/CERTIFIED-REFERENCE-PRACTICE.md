@@ -177,27 +177,74 @@ lines.
   (`200/400/800`, TVB limiter `M = 1.0`), not about DG in general: on smooth
   solutions the same engine certifies at the design order (see the synthetic
   power-law tests, `p` recovered to 1e-9 ... 2e-3 relative).
-* **Package-root export is deferred, honestly.** `tests/test_public_api_contract.py`
-  is already RED on this branch (4 symbols of `tensordg.convergence` are not
-  re-exported); this module's 11 public names join that list because five of them
-  (`observed_order`, `richardson_extrapolate`, `coarsen`, `rel_l1`, `gci`) are
-  owned by `tensordg.convergence` and the root must resolve the collision through
-  its alias table. Nothing here is silently renamed; the intended import path is
-  `from tensordg.certified_reference import certify, judge`.
+* **Package-root export: closed** (`docs/AUDIT-RESPONSE-XVAL-DG-ROUND2-B1.md`).
+  `from tensordg import certify, judge` works and `tests/test_public_api_contract.py`
+  is green: five names collide with `tensordg.convergence`
+  (`observed_order`, `richardson_extrapolate`, `coarsen`, `rel_l1`, `gci`) and are
+  exported under a `certified_` prefix, following the package's existing
+  `euler_sound_speed` / `swe_sound_speed` convention. The historical fact stays on
+  the record: when the engine first landed it was the *main* contributor to that
+  gate being RED (11 of 15 missing symbols), not a bystander (audit M1).
 * The window-resolved errors of the round-2 report (plateau / entropy zone /
   pre-shock sine) are not recomputed here; they live in
   `artifacts/m15803/benchmark_ref_vs_got.md` and are unchanged.
 
-## 8. Reproduction
+## 8. Cross-validation of the reference against closed-form sources
+
+A certified reference is still an extrapolation of the same family of
+discretisations that the DG legs come from, so §4 alone cannot exclude a shared
+error mode. `benchmarks/xval_dg_round2_certified.py` adds the missing leg: it
+takes the certified profile **as data** and measures it against sources it did
+not come from -- the Mach-3 Hugoniot plateau density, the Hugoniot shock
+position `x_L + W t`, the exact global mass budget `M(0) + rho_L u_L t`, and the
+untouched entropy wave `1 + 0.2 sin(5x)` -- all four re-used from
+`tensordg.cases.shock_entropy` (the case module, not the engine).
+
+Four decisions are predeclared and re-evaluated on every run; the CLI exits
+non-zero (`--require-accepted`) unless all four hold:
+
+| decision | content | threshold |
+|---|---|---|
+| `D1` | reference usable | `CERTIFIED` and `U / gate <= 1/3` |
+| `D2` | every shipped leg | `rel L1 < 3 %` (owner standard, not the 5 % case gate) |
+| `D3` | reference vs closed form | `< 1 %` per oracle quantity |
+| `D4` | no family certifies itself | all three DG ladders `WITHHELD_ORDER_TOO_LOW` |
+
+`D4` is the anti-circularity gate: if a DG family could certify its own ladder,
+`D2`/`D3` would be comparing DG with DG.
+
+Measured (`validation/xval_dg_round2/artifacts/xval_round2_audit.json`):
+plateau `1.2e-10 %`, shock position `0.576 %` (one-cell crossing resolution at
+`N = 1600`), mass `8.4e-7 %`, untouched sine `8.6e-4 %`; worst leg
+`DG P1 N=200 CFL=0.4` at `2.456 %`. All four decisions pass.
+
+The same numbers are wrapped in the TensorBench document shape by
+`validation/xval_dg_round2/post_platform.py`, which validates the `spec` /
+`result` / stdout documents with the platform's **own**
+`tools.tensorbench_eval.contract` before anything is posted (a schema rejection
+must not surface as a production 422), and refuses to post without a `cj<N>`
+cluster job of the same mission. Per-leg relative L1 errors stay repo-side: an
+L1 error is not expressible as `|got-ref|/|ref|`, and encoding it as one would
+be a fabricated metric.
+
+## 9. Reproduction
 
 ```bash
 python -m tensordg.certified_reference \
     --rawdir validation/repro_shu_osher/artifacts/raw --outdir artifacts/m17539
 python -m tools.render_certified_reference          # -> this document + the two figures
 python -m pytest tests/test_certified_reference.py -q
+
+# cross-validation layer (closed-form oracle + four predeclared decisions)
+python -m benchmarks.xval_dg_round2_certified --figures --require-accepted
+python -m pytest tests/test_xval_dg_round2_integration.py -q
+python validation/xval_dg_round2/post_platform.py --mission 18730   # contract check, no network
 ```
 
 Artifacts: `artifacts/m17539/certified_reference_audit.json` (all numbers, with
 `input_sha256` of the ladder it was computed from),
 `certified_reference_audit.md`, `certified_reference_fv.npz` (the certified
-profile), `fig1_certified_reference_vs_dg.png`, `fig2_band_share_and_legs.png`.
+profile), `fig1_certified_reference_vs_dg.png`, `fig2_band_share_and_legs.png`;
+`validation/xval_dg_round2/artifacts/` (`xval_round2_audit.json`,
+`xval_round2_audit.md`, `fig1_xval_profiles.png`,
+`fig2_leg_oracle_deviation.png`) for §8.
