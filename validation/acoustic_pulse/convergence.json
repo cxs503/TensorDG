@@ -1,0 +1,241 @@
+{
+  "benchmark": "acoustic_pulse_2d",
+  "case": "axisymmetric_gaussian_pulse",
+  "governing_system": "linear acoustics (p, u, v)",
+  "medium": {
+    "rho": 1.0,
+    "c": 1.0,
+    "bulk_modulus": 1.0
+  },
+  "sigma": 0.15,
+  "final_time": 0.3,
+  "length": 2.0,
+  "cfl": 0.2,
+  "energy_exact_initial": 0.017671458676442587,
+  "rows": [
+    {
+      "degree": 1,
+      "cells": 16,
+      "h": 0.125,
+      "resource_ls": 256,
+      "steps": 36,
+      "dt": 0.008333333333333333,
+      "wall_time_s": 0.51,
+      "relative_l2_state": 0.13396016314028764,
+      "relative_l2_pressure": 0.1310145562010948,
+      "energy": 0.01588639394973605,
+      "energy0": 0.01768540952147122,
+      "energy_drift": 0.10172315034893879,
+      "p_max_numerical": 0.22785071425643444,
+      "p_max_exact": 0.2059057087988863
+    },
+    {
+      "degree": 1,
+      "cells": 32,
+      "h": 0.0625,
+      "resource_ls": 1024,
+      "steps": 72,
+      "dt": 0.004166666666666667,
+      "wall_time_s": 1.36,
+      "relative_l2_state": 0.030102552395779705,
+      "relative_l2_pressure": 0.02960285260828293,
+      "energy": 0.017346062596304657,
+      "energy0": 0.01767145867645028,
+      "energy_drift": 0.018413651419690542,
+      "p_max_numerical": 0.21240652651482406,
+      "p_max_exact": 0.20592087166347103
+    },
+    {
+      "degree": 1,
+      "cells": 64,
+      "h": 0.03125,
+      "resource_ls": 4096,
+      "steps": 144,
+      "dt": 0.0020833333333333333,
+      "wall_time_s": 6.72,
+      "relative_l2_state": 0.0061584014982710295,
+      "relative_l2_pressure": 0.005888387463198263,
+      "energy": 0.01762542237659316,
+      "energy0": 0.017671458676442587,
+      "energy_drift": 0.002605121664958862,
+      "p_max_numerical": 0.20715710049871672,
+      "p_max_exact": 0.20596573050734884
+    },
+    {
+      "degree": 2,
+      "cells": 16,
+      "h": 0.125,
+      "resource_ls": 256,
+      "steps": 60,
+      "dt": 0.005,
+      "wall_time_s": 1.09,
+      "relative_l2_state": 0.01602259417413283,
+      "relative_l2_pressure": 0.016440476841784537,
+      "energy": 0.017593534618529034,
+      "energy0": 0.017670157082921696,
+      "energy_drift": 0.00433626390716796,
+      "p_max_numerical": 0.20769563887548756,
+      "p_max_exact": 0.20557463024125833
+    },
+    {
+      "degree": 2,
+      "cells": 32,
+      "h": 0.0625,
+      "resource_ls": 1024,
+      "steps": 120,
+      "dt": 0.0025,
+      "wall_time_s": 3.21,
+      "relative_l2_state": 0.0015651413087086885,
+      "relative_l2_pressure": 0.0015522010216181415,
+      "energy": 0.017668245908734972,
+      "energy0": 0.017671458676441865,
+      "energy_drift": 0.00018180546188733965,
+      "p_max_numerical": 0.2064530222153333,
+      "p_max_exact": 0.20596459077868698
+    },
+    {
+      "degree": 2,
+      "cells": 64,
+      "h": 0.03125,
+      "resource_ls": 4096,
+      "steps": 240,
+      "dt": 0.00125,
+      "wall_time_s": 19.58,
+      "relative_l2_state": 0.00018823617571133805,
+      "relative_l2_pressure": 0.0001844598115296377,
+      "energy": 0.017671340494646363,
+      "energy0": 0.017671458676442584,
+      "energy_drift": 6.687721618494583e-06,
+      "p_max_numerical": 0.20598909760363418,
+      "p_max_exact": 0.20596513624658846
+    },
+    {
+      "degree": 3,
+      "cells": 16,
+      "h": 0.125,
+      "resource_ls": 256,
+      "steps": 84,
+      "dt": 0.0035714285714285713,
+      "wall_time_s": 1.57,
+      "relative_l2_state": 0.001697393396021059,
+      "relative_l2_pressure": 0.0017101706511772241,
+      "energy": 0.01766918459487851,
+      "energy0": 0.017671520576408584,
+      "energy_drift": 0.00013218905073701675,
+      "p_max_numerical": 0.20605994779699277,
+      "p_max_exact": 0.20595564940494548
+    },
+    {
+      "degree": 3,
+      "cells": 32,
+      "h": 0.0625,
+      "resource_ls": 1024,
+      "steps": 168,
+      "dt": 0.0017857142857142857,
+      "wall_time_s": 6.15,
+      "relative_l2_state": 9.912122249080692e-05,
+      "relative_l2_pressure": 9.848276433092133e-05,
+      "energy": 0.01767139899860629,
+      "energy0": 0.017671458676442618,
+      "energy_drift": 3.377074718141861e-06,
+      "p_max_numerical": 0.2059637907954192,
+      "p_max_exact": 0.20596307717812185
+    },
+    {
+      "degree": 3,
+      "cells": 64,
+      "h": 0.03125,
+      "resource_ls": 4096,
+      "steps": 336,
+      "dt": 0.0008928571428571428,
+      "wall_time_s": 42.58,
+      "relative_l2_state": 6.1643479346541365e-06,
+      "relative_l2_pressure": 6.083406973309582e-06,
+      "energy": 0.017671453542139448,
+      "energy0": 0.017671458676442584,
+      "energy_drift": 2.9054212385239163e-07,
+      "p_max_numerical": 0.20596497488965926,
+      "p_max_exact": 0.20596481853091547
+    }
+  ],
+  "orders": [
+    {
+      "degree": 1,
+      "from_cells": 16,
+      "to_cells": 32,
+      "refinement_ratio": 2.0,
+      "observed_order": 2.153846314697343,
+      "target_order": 2,
+      "pass": true
+    },
+    {
+      "degree": 1,
+      "from_cells": 32,
+      "to_cells": 64,
+      "refinement_ratio": 2.0,
+      "observed_order": 2.289257985935327,
+      "target_order": 2,
+      "pass": true
+    },
+    {
+      "degree": 2,
+      "from_cells": 16,
+      "to_cells": 32,
+      "refinement_ratio": 2.0,
+      "observed_order": 3.355742927638122,
+      "target_order": 3,
+      "pass": true
+    },
+    {
+      "degree": 2,
+      "from_cells": 32,
+      "to_cells": 64,
+      "refinement_ratio": 2.0,
+      "observed_order": 3.0556770960310917,
+      "target_order": 3,
+      "pass": true
+    },
+    {
+      "degree": 3,
+      "from_cells": 16,
+      "to_cells": 32,
+      "refinement_ratio": 2.0,
+      "observed_order": 4.0979831785541965,
+      "target_order": 4,
+      "pass": true
+    },
+    {
+      "degree": 3,
+      "from_cells": 32,
+      "to_cells": 64,
+      "refinement_ratio": 2.0,
+      "observed_order": 4.0071737813801125,
+      "target_order": 4,
+      "pass": true
+    }
+  ],
+  "gates": {
+    "orders": {
+      "pass": true
+    },
+    "energy": {
+      "pass": true,
+      "tolerance": 0.01,
+      "applied": true
+    },
+    "error": {
+      "pass": true,
+      "tolerance": 0.01,
+      "applied": true
+    }
+  },
+  "figure_metrics": {
+    "field_max_abs_error": 3.541702688181214e-06,
+    "field_scale": 0.20596566497310842
+  },
+  "figures": [
+    "docs/figures/acoustic_pulse_convergence.png",
+    "docs/figures/acoustic_pulse_exact.png"
+  ],
+  "passed": true
+}
