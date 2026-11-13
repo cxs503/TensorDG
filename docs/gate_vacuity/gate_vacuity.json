@@ -1,25 +1,23 @@
 {
   "tool": "tools/audit_gate_vacuity.py",
-  "repo_root": "/root/tp-agent/work/m16993",
-  "n_test_modules": 151,
+  "schema": 2,
+  "n_test_modules": 165,
   "verdicts": {
     "VACUOUS": 0,
-    "LATENT": 7,
-    "HARDENED": 11,
-    "RED-ON-CLEAN": 1,
-    "UNRESOLVED": 8,
-    "PLAIN": 124
+    "LATENT": 8,
+    "HARDENED": 17,
+    "RED-ON-CLEAN": 0,
+    "UNRESOLVED": 10,
+    "PLAIN": 130
   },
   "skip_sites": {
-    "artifact_missing": 22,
+    "artifact_missing": 27,
     "environment": 4
   },
-  "n_always_on_modules": 142,
+  "n_always_on_modules": 155,
   "vacuous_modules": [],
   "missing_artifacts": [],
-  "red_on_clean_modules": [
-    "tests/test_positivity_scaling_limiter.py"
-  ],
+  "red_on_clean_modules": [],
   "untracked_artifacts": [],
   "cwd_dependent_artifacts": [
     "tests/test_ns_heat_conduction.py::WALL_ROW_LAW",
@@ -32,6 +30,18 @@
     "tests/test_shu_osher_case_pool.py::COMMITTED_REFERENCE"
   ],
   "modules": [
+    {
+      "file": "tests/test_acoustic_pulse.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
     {
       "file": "tests/test_advection_1d.py",
       "verdict": "PLAIN",
@@ -118,10 +128,13 @@
     },
     {
       "file": "tests/test_artificial_viscosity.py",
-      "verdict": "PLAIN",
+      "verdict": "HARDENED",
       "skip_sites": [],
       "artifacts": [],
-      "hard_asserts": [],
+      "hard_asserts": [
+        "metrics.exists()",
+        "digest.exists()"
+      ],
       "vacuous_artifacts": [],
       "unresolved_guards": [],
       "cwd_dependent": [],
@@ -227,7 +240,7 @@
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/validation/cfl_stability/results.json",
+          "path": "validation/cfl_stability/results.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -258,6 +271,28 @@
       "skip_sites": [],
       "artifacts": [],
       "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
+      "file": "tests/test_cks1998_tensorbench.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "SPEC_FILE",
+          "path": "tensorbench/REPRO-DG-CKS1998.spec.json",
+          "anchored": true,
+          "exists": true,
+          "tracked": true
+        }
+      ],
+      "hard_asserts": [
+        "SPEC_FILE.exists()"
+      ],
       "vacuous_artifacts": [],
       "unresolved_guards": [],
       "cwd_dependent": [],
@@ -307,7 +342,7 @@
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/docs/benchmarks/results/dg_advection_bench.json",
+          "path": "docs/benchmarks/results/dg_advection_bench.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -342,14 +377,14 @@
       "artifacts": [
         {
           "expr": "RUN_JSON",
-          "path": "/root/tp-agent/work/m16993/docs/benchmarks/results/dg-unified-verification/dg_unified_verification.json",
+          "path": "docs/benchmarks/results/dg-unified-verification/dg_unified_verification.json",
           "anchored": true,
           "exists": true,
           "tracked": true
         },
         {
           "expr": "EVIDENCE_JSON",
-          "path": "/root/tp-agent/work/m16993/docs/benchmarks/results/dg-unified-verification/evidence.json",
+          "path": "docs/benchmarks/results/dg-unified-verification/evidence.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -405,7 +440,7 @@
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/validation/dispersion_analysis/results.json",
+          "path": "validation/dispersion_analysis/results.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -427,7 +462,7 @@
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/validation/dispersion_time_domain/results.json",
+          "path": "validation/dispersion_time_domain/results.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -455,7 +490,55 @@
       "red_artifacts": []
     },
     {
+      "file": "tests/test_elastic_1d_crosscheck.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
       "file": "tests/test_elastic_1d_dalembert.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
+      "file": "tests/test_elastic_1d_reflections.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
+      "file": "tests/test_elastic_2d_flux_scaling_m17172.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
+      "file": "tests/test_elastic_2d_psv.py",
       "verdict": "PLAIN",
       "skip_sites": [],
       "artifacts": [],
@@ -475,7 +558,7 @@
           "kind": "artifact_missing",
           "reason": "run python -m benchmarks.elastic_dispersion",
           "guard": "not art.exists()",
-          "artifact": "/root/tp-agent/work/m16993/docs/benchmarks/results/elastic-dispersion/elastic_dispersion.json",
+          "artifact": "docs/benchmarks/results/elastic-dispersion/elastic_dispersion.json",
           "artifact_exists": true
         }
       ],
@@ -640,14 +723,14 @@
           "kind": "artifact_missing",
           "reason": "run benchmarks.temporal_asymptotics_euler_dg_2d",
           "guard": "not EVIDENCE.exists()",
-          "artifact": "/root/tp-agent/work/m16993/validation/euler_dg_2d/temporal_asymptotics.json",
+          "artifact": "validation/euler_dg_2d/temporal_asymptotics.json",
           "artifact_exists": true
         }
       ],
       "artifacts": [
         {
           "expr": "EVIDENCE",
-          "path": "/root/tp-agent/work/m16993/validation/euler_dg_2d/temporal_asymptotics.json",
+          "path": "validation/euler_dg_2d/temporal_asymptotics.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -832,21 +915,21 @@
           "kind": "artifact_missing",
           "reason": "gates_verified.json missing; run python -m benchmarks.in31_hp_ladder",
           "guard": "not ARTIFACT.exists()",
-          "artifact": "/root/tp-agent/work/m16993/docs/benchmarks/results/in31-hp-ladder/gates_verified.json",
+          "artifact": "docs/benchmarks/results/in31-hp-ladder/gates_verified.json",
           "artifact_exists": true
         }
       ],
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/docs/benchmarks/results/in31-hp-ladder/gates_verified.json",
+          "path": "docs/benchmarks/results/in31-hp-ladder/gates_verified.json",
           "anchored": true,
           "exists": true,
           "tracked": true
         },
         {
           "expr": "PREVIOUS_ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/docs/benchmarks/results/verification_ladder/gates_verified.json",
+          "path": "docs/benchmarks/results/verification_ladder/gates_verified.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -905,13 +988,56 @@
       "red_artifacts": []
     },
     {
+      "file": "tests/test_lax_case_pool_limiter_arms.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [
+        "ARTIFACT.exists()",
+        "POOL_RECORD.exists()",
+        "PROFILES.exists()",
+        "DOC.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
+      "file": "tests/test_lax_limiter_study.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
+      "file": "tests/test_lax_reference_crosscheck.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [
+        "ARTIFACT.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
       "file": "tests/test_lax_region_band.py",
       "verdict": "HARDENED",
       "skip_sites": [],
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/docs/benchmarks/results/lax_region_band/metrics.json",
+          "path": "docs/benchmarks/results/lax_region_band/metrics.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -1200,14 +1326,14 @@
           "kind": "artifact_missing",
           "reason": "run scratch/diag_wall_row_law.py",
           "guard": "not WALL_ROW_LAW.exists()",
-          "artifact": "/root/tp-agent/work/m16993/validation/ns_heat_conduction/wall_row_law.json",
+          "artifact": "validation/ns_heat_conduction/wall_row_law.json",
           "artifact_exists": true
         }
       ],
       "artifacts": [
         {
           "expr": "WALL_ROW_LAW",
-          "path": "/root/tp-agent/work/m16993/validation/ns_heat_conduction/wall_row_law.json",
+          "path": "validation/ns_heat_conduction/wall_row_law.json",
           "anchored": false,
           "exists": true,
           "tracked": true
@@ -1301,7 +1427,7 @@
       "artifacts": [
         {
           "expr": "EVIDENCE",
-          "path": "/root/tp-agent/work/m16993/validation/ns_heat_conduction/wall_flux_extrapolation.json",
+          "path": "validation/ns_heat_conduction/wall_flux_extrapolation.json",
           "anchored": false,
           "exists": true,
           "tracked": true
@@ -1323,7 +1449,7 @@
       "artifacts": [
         {
           "expr": "EVIDENCE",
-          "path": "/root/tp-agent/work/m16993/validation/ns_heat_conduction/wall_flux_stencil.json",
+          "path": "validation/ns_heat_conduction/wall_flux_stencil.json",
           "anchored": false,
           "exists": true,
           "tracked": true
@@ -1359,14 +1485,14 @@
           "kind": "artifact_missing",
           "reason": "run benchmarks.verify_ns_wall_heat_flux",
           "guard": "not EVIDENCE.exists()",
-          "artifact": "/root/tp-agent/work/m16993/validation/ns_heat_conduction/wall_flux_order.json",
+          "artifact": "validation/ns_heat_conduction/wall_flux_order.json",
           "artifact_exists": true
         }
       ],
       "artifacts": [
         {
           "expr": "EVIDENCE",
-          "path": "/root/tp-agent/work/m16993/validation/ns_heat_conduction/wall_flux_order.json",
+          "path": "validation/ns_heat_conduction/wall_flux_order.json",
           "anchored": false,
           "exists": true,
           "tracked": true
@@ -1414,14 +1540,14 @@
           "kind": "artifact_missing",
           "reason": "anchor artifact not generated yet",
           "guard": "not ANCHOR_FILE.exists()",
-          "artifact": "/root/tp-agent/work/m16993/benchmarks/oblique_shock/theta_beta_anchors.json",
+          "artifact": "benchmarks/oblique_shock/theta_beta_anchors.json",
           "artifact_exists": true
         }
       ],
       "artifacts": [
         {
           "expr": "ANCHOR_FILE",
-          "path": "/root/tp-agent/work/m16993/benchmarks/oblique_shock/theta_beta_anchors.json",
+          "path": "benchmarks/oblique_shock/theta_beta_anchors.json",
           "anchored": false,
           "exists": true,
           "tracked": true
@@ -1454,6 +1580,73 @@
       "red_artifacts": []
     },
     {
+      "file": "tests/test_p_refinement_criterion.py",
+      "verdict": "LATENT",
+      "skip_sites": [
+        {
+          "line": 172,
+          "kind": "artifact_missing",
+          "reason": "run python -m benchmarks.p_refinement_exponential",
+          "guard": "not ARTIFACT.exists()",
+          "artifact": "docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "artifact_exists": true
+        },
+        {
+          "line": 254,
+          "kind": "artifact_missing",
+          "reason": "run python -m benchmarks.p_refinement_floor --degrees 5 6",
+          "guard": "not FLOOR_ARTIFACT.exists()",
+          "artifact": "docs/benchmarks/results/p-refinement-exponential/measurement_floor.json",
+          "artifact_exists": true
+        }
+      ],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "anchored": true,
+          "exists": true,
+          "tracked": true
+        },
+        {
+          "expr": "FLOOR_ARTIFACT",
+          "path": "docs/benchmarks/results/p-refinement-exponential/measurement_floor.json",
+          "anchored": true,
+          "exists": true,
+          "tracked": true
+        }
+      ],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
+      "file": "tests/test_p_refinement_exact_time.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 42,
+          "kind": "artifact_missing",
+          "reason": "f'artifact missing: {ARTIFACT}'",
+          "guard": "not ARTIFACT.exists()",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L42: not ARTIFACT.exists()"
+      ],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
       "file": "tests/test_p_refinement_exponential.py",
       "verdict": "LATENT",
       "skip_sites": [
@@ -1462,14 +1655,14 @@
           "kind": "artifact_missing",
           "reason": "p_refinement_results.json missing; run python -m benchmarks.p_refinement_exponential",
           "guard": "not ARTIFACT.exists()",
-          "artifact": "/root/tp-agent/work/m16993/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "artifact": "docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
           "artifact_exists": true
         }
       ],
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "path": "docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -1496,7 +1689,7 @@
           "kind": "artifact_missing",
           "reason": "p_refinement_results.json missing",
           "guard": "not ARTIFACT.exists()",
-          "artifact": "/root/tp-agent/work/m16993/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "artifact": "docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
           "artifact_exists": true
         },
         {
@@ -1504,7 +1697,7 @@
           "kind": "artifact_missing",
           "reason": "p_refinement_results.json missing",
           "guard": "not ARTIFACT.exists()",
-          "artifact": "/root/tp-agent/work/m16993/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "artifact": "docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
           "artifact_exists": true
         },
         {
@@ -1512,7 +1705,7 @@
           "kind": "artifact_missing",
           "reason": "p_refinement_results.json missing",
           "guard": "not ARTIFACT.exists()",
-          "artifact": "/root/tp-agent/work/m16993/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "artifact": "docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
           "artifact_exists": true
         },
         {
@@ -1527,7 +1720,7 @@
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
+          "path": "docs/benchmarks/results/p-refinement-exponential/p_refinement_results.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -1538,6 +1731,18 @@
       "unresolved_guards": [
         "L194: not INDEPENDENT.exists() or not ARTIFACT.exists()"
       ],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
+      "file": "tests/test_patrol_upstream_diff.py",
+      "verdict": "PLAIN",
+      "skip_sites": [],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
       "cwd_dependent": [],
       "untracked_artifacts": [],
       "red_artifacts": []
@@ -1580,15 +1785,15 @@
     },
     {
       "file": "tests/test_positivity_scaling_limiter.py",
-      "verdict": "RED-ON-CLEAN",
+      "verdict": "HARDENED",
       "skip_sites": [],
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/docs/benchmarks/results/positivity_limiter/metrics.json",
+          "path": "docs/benchmarks/results/positivity_limiter/metrics.json",
           "anchored": true,
-          "exists": false,
-          "tracked": false
+          "exists": true,
+          "tracked": true
         }
       ],
       "hard_asserts": [
@@ -1598,9 +1803,7 @@
       "unresolved_guards": [],
       "cwd_dependent": [],
       "untracked_artifacts": [],
-      "red_artifacts": [
-        "/root/tp-agent/work/m16993/docs/benchmarks/results/positivity_limiter/metrics.json (missing)"
-      ]
+      "red_artifacts": []
     },
     {
       "file": "tests/test_public_api_contract.py",
@@ -1691,14 +1894,14 @@
       "artifacts": [
         {
           "expr": "REFERENCE_PATH",
-          "path": "/root/tp-agent/work/m16993/benchmarks/data/shu_osher_reference.npz",
+          "path": "benchmarks/data/shu_osher_reference.npz",
           "anchored": false,
           "exists": true,
           "tracked": true
         },
         {
           "expr": "PAIR_PATH",
-          "path": "/root/tp-agent/work/m16993/benchmarks/data/shu_osher_coarse_pair.npz",
+          "path": "benchmarks/data/shu_osher_coarse_pair.npz",
           "anchored": false,
           "exists": true,
           "tracked": true
@@ -1723,14 +1926,14 @@
           "kind": "artifact_missing",
           "reason": "committed reference missing",
           "guard": "not COMMITTED_REFERENCE.exists()",
-          "artifact": "/root/tp-agent/work/m16993/benchmarks/data/shu_osher_reference.npz",
+          "artifact": "benchmarks/data/shu_osher_reference.npz",
           "artifact_exists": true
         }
       ],
       "artifacts": [
         {
           "expr": "COMMITTED_REFERENCE",
-          "path": "/root/tp-agent/work/m16993/benchmarks/data/shu_osher_reference.npz",
+          "path": "benchmarks/data/shu_osher_reference.npz",
           "anchored": false,
           "exists": true,
           "tracked": true
@@ -1775,7 +1978,7 @@
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/validation/sipg_backend_comparison/backend_comparison.json",
+          "path": "validation/sipg_backend_comparison/backend_comparison.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -1842,7 +2045,7 @@
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/validation/solid_body_rotation_2d/results.json",
+          "path": "validation/solid_body_rotation_2d/results.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -2022,21 +2225,21 @@
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/validation/swe_thacker/hydrostatic_wb_drift.json",
+          "path": "validation/swe_thacker/hydrostatic_wb_drift.json",
           "anchored": true,
           "exists": true,
           "tracked": true
         },
         {
           "expr": "TABLE",
-          "path": "/root/tp-agent/work/m16993/validation/swe_thacker/hydrostatic_wb_drift_table.md",
+          "path": "validation/swe_thacker/hydrostatic_wb_drift_table.md",
           "anchored": true,
           "exists": true,
           "tracked": true
         },
         {
           "expr": "FIGURE",
-          "path": "/root/tp-agent/work/m16993/docs/figures/swe_wb_drift_law.png",
+          "path": "docs/figures/swe_wb_drift_law.png",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -2044,6 +2247,52 @@
       ],
       "hard_asserts": [
         "ARTIFACT.exists()",
+        "TABLE.exists()",
+        "FIGURE.exists()"
+      ],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
+      "file": "tests/test_swe_wb_drift_law_time_scaling.py",
+      "verdict": "HARDENED",
+      "skip_sites": [],
+      "artifacts": [
+        {
+          "expr": "ARTIFACT",
+          "path": "validation/swe_thacker/hydrostatic_wb_drift_time.json",
+          "anchored": true,
+          "exists": true,
+          "tracked": true
+        },
+        {
+          "expr": "TABLE",
+          "path": "validation/swe_thacker/hydrostatic_wb_drift_time_table.md",
+          "anchored": true,
+          "exists": true,
+          "tracked": true
+        },
+        {
+          "expr": "FIGURE",
+          "path": "docs/figures/swe_wb_drift_time_law.png",
+          "anchored": true,
+          "exists": true,
+          "tracked": true
+        },
+        {
+          "expr": "MESH_ARTIFACT",
+          "path": "validation/swe_thacker/hydrostatic_wb_drift.json",
+          "anchored": true,
+          "exists": true,
+          "tracked": true
+        }
+      ],
+      "hard_asserts": [
+        "ARTIFACT.exists()",
+        "MESH_ARTIFACT.exists()",
         "TABLE.exists()",
         "FIGURE.exists()"
       ],
@@ -2283,7 +2532,7 @@
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/docs/benchmarks/results/verification_ladder/gates_verified.json",
+          "path": "docs/benchmarks/results/verification_ladder/gates_verified.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -2341,7 +2590,7 @@
       "artifacts": [
         {
           "expr": "ARTIFACT",
-          "path": "/root/tp-agent/work/m16993/validation/weno_limiter_policy/results.json",
+          "path": "validation/weno_limiter_policy/results.json",
           "anchored": true,
           "exists": true,
           "tracked": true
@@ -2364,6 +2613,38 @@
       "hard_asserts": [],
       "vacuous_artifacts": [],
       "unresolved_guards": [],
+      "cwd_dependent": [],
+      "untracked_artifacts": [],
+      "red_artifacts": []
+    },
+    {
+      "file": "tests/test_xval_oss_shu_osher.py",
+      "verdict": "UNRESOLVED",
+      "skip_sites": [
+        {
+          "line": 70,
+          "kind": "artifact_missing",
+          "reason": "f'clawpack tree not present at {OSS_ROOT}'",
+          "guard": "not HAS_OSS",
+          "artifact": null,
+          "artifact_exists": null
+        },
+        {
+          "line": 85,
+          "kind": "artifact_missing",
+          "reason": "f'clawpack tree not present at {OSS_ROOT}'",
+          "guard": "not HAS_OSS",
+          "artifact": null,
+          "artifact_exists": null
+        }
+      ],
+      "artifacts": [],
+      "hard_asserts": [],
+      "vacuous_artifacts": [],
+      "unresolved_guards": [
+        "L70: not HAS_OSS",
+        "L85: not HAS_OSS"
+      ],
       "cwd_dependent": [],
       "untracked_artifacts": [],
       "red_artifacts": []

@@ -87,16 +87,12 @@ ARTIFACT_HINTS = ("run ", "generate", "generated", "missing", "artifact",
 # that stops being RED-ON-CLEAN makes the policy gate red).  A declared red is a
 # defect report, not a fix.
 ALLOWED_RED_CLEAN: dict[str, str] = {
-    "tests/test_dg_advection_bench.py":
-        "record moved to the tracked path docs/benchmarks/results/dg_advection_bench.json; "
-        "generation pending (full config ~5 min, machine at load1>250 during m16875). "
-        "Regenerate with `python tools/run_dg_advection_bench.py` and drop this entry",
-    "tests/test_positivity_scaling_limiter.py":
-        "RED ON main since it landed: hard-asserted artifacts/positivity_limiter/metrics.json, "
-        "a path the merge gate never carries (3 gates failing on any clean checkout; "
-        "m16875 repointed it to docs/benchmarks/results/positivity_limiter/). "
-        "Regenerate with `python -m benchmarks.positivity_limiter --out "
-        "docs/benchmarks/results/positivity_limiter` and drop this entry",
+    # m17613: the last declared red is CLOSED -- the record now lives at the
+    # tracked path ``docs/benchmarks/results/positivity_limiter/metrics.json``
+    # (``python -m benchmarks.positivity_limiter --mesh 60,120 --degrees 1,2,3``)
+    # and the gate hard-asserts it, so a missing record is red instead of
+    # silently skipped.  Do not re-add an entry without a reason: a declaration
+    # is a defect report, not a fix (see docs/GATE-VACUITY-CLOSURE.md).
 }
 
 ALLOWED_VACUOUS: dict[str, str] = {
@@ -133,6 +129,28 @@ def _tracked_files() -> frozenset[str] | None:
         except Exception:
             return None
     return _TRACKED
+
+
+def _portable(path: str | None) -> str | None:
+    """Repo-relative POSIX path, so the census does not depend on the checkout.
+
+    Schema 1 stored absolute paths (``/root/tp-agent/work/m16993/...``).  The
+    drift guard ``--check`` then compared two *absolute* paths, which can only
+    agree on the machine that generated the file: on every other checkout --
+    i.e. for every agent but the author of the census, and inside CI -- the
+    guard was red while the tree was in fact consistent.  A drift guard that
+    cannot pass anywhere else is vacuous in exactly the sense this tool counts
+    (``docs/AUDIT-m16875-gate-vacuity-tracked-artifacts.md``).  Paths inside the
+    repository are therefore stored relative to ``ROOT``; a path outside it
+    keeps its absolute form, and the policy gate refuses such an entry because
+    it cannot be reproduced from a checkout.
+    """
+    if path is None:
+        return None
+    try:
+        return Path(path).resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path)
 
 
 def _is_tracked(path: str | None, tracked: frozenset[str] | None) -> bool | None:
@@ -257,14 +275,16 @@ class ModuleReport:
         return {
             "file": self.file,
             "verdict": self.verdict,
-            "skip_sites": [s.__dict__ for s in self.skip_sites],
-            "artifacts": [a.__dict__ for a in self.artifacts],
+            "skip_sites": [{**sit.__dict__, "artifact": _portable(sit.artifact)}
+                           for sit in self.skip_sites],
+            "artifacts": [{**a.__dict__, "path": _portable(a.path)}
+                          for a in self.artifacts],
             "hard_asserts": self.hard_asserts,
-            "vacuous_artifacts": self.vacuous_artifacts,
+            "vacuous_artifacts": [_portable(p) for p in self.vacuous_artifacts],
             "unresolved_guards": self.unresolved_guards,
             "cwd_dependent": self.cwd_dependent,
-            "untracked_artifacts": self.untracked_artifacts,
-            "red_artifacts": self.red_artifacts,
+            "untracked_artifacts": [_portable(p) for p in self.untracked_artifacts],
+            "red_artifacts": [_portable(p) for p in self.red_artifacts],
         }
 
 
@@ -476,17 +496,21 @@ def census() -> dict:
                      or (m.verdict == VERDICT_LATENT))
     return {
         "tool": "tools/audit_gate_vacuity.py",
-        "repo_root": str(ROOT),
+        # schema 2: every path below is repo-relative (schema 1 embedded the
+        # generator's absolute worktree root, which made ``--check`` red on any
+        # other checkout).  ``cwd_dependent_artifacts`` stays symbolic: it lists
+        # *expression names*, not files.
+        "schema": 2,
         "n_test_modules": len(modules),
         "verdicts": counts,
         "skip_sites": skip_counts,
         "n_always_on_modules": ever_green,
         "vacuous_modules": sorted(m.file for m in modules
                                   if m.verdict == VERDICT_VACUOUS),
-        "missing_artifacts": missing_artifacts,
+        "missing_artifacts": [_portable(p) for p in missing_artifacts],
         "red_on_clean_modules": sorted(m.file for m in modules
                                        if m.verdict == VERDICT_RED_CLEAN),
-        "untracked_artifacts": sorted(f"{m.file}::{a}" for m in modules
+        "untracked_artifacts": sorted(f"{m.file}::{_portable(a)}" for m in modules
                                       for a in m.untracked_artifacts),
         "cwd_dependent_artifacts": sorted(
             f"{m.file}::{a}" for m in modules for a in m.cwd_dependent),
@@ -565,6 +589,39 @@ def render_markdown(data: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _rel(path: Path) -> str:
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def _drift(committed: dict, fresh: dict) -> list[str]:
+    """Human-actionable difference list between the committed and the fresh scan.
+
+    A bare "drifted, re-run --write" tells an agent nothing about *what* changed,
+    and the usual cause is a single new or re-verdicted test module -- so the
+    names are printed instead of a boolean.
+    """
+    out: list[str] = []
+    for key in sorted(set(committed) | set(fresh)):
+        if key == "modules":
+            continue
+        if committed.get(key) != fresh.get(key):
+            out.append(f"{key}: committed {committed.get(key)!r} != fresh {fresh.get(key)!r}")
+    old = {m["file"]: m for m in committed.get("modules", [])}
+    new = {m["file"]: m for m in fresh["modules"]}
+    for name in sorted(set(new) - set(old)):
+        out.append(f"added module {name} ({new[name]['verdict']})")
+    for name in sorted(set(old) - set(new)):
+        out.append(f"removed module {name}")
+    for name in sorted(set(old) & set(new)):
+        if old[name] != new[name]:
+            out.append(f"changed module {name}: {old[name]['verdict']} -> "
+                       f"{new[name]['verdict']}")
+    return out
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--write", action="store_true", help="write JSON + Markdown")
@@ -583,7 +640,14 @@ def main(argv: list[str] | None = None) -> int:
             print("missing committed census; run --write", file=sys.stderr)
             return 1
         committed = json.loads(JSON_OUT.read_text())
-        if committed["modules"] != data["modules"]:
+        drift = _drift(committed, data)
+        stale_report = MD_OUT.exists() and MD_OUT.read_text() != render_markdown(data)
+        if drift or stale_report:
+            for line in drift:
+                print(line, file=sys.stderr)
+            if stale_report:
+                print(f"{_rel(MD_OUT)} is not the rendering of a fresh scan",
+                      file=sys.stderr)
             print("gate vacuity census drifted; re-run --write", file=sys.stderr)
             return 1
         print("gate vacuity census fresh")
