@@ -145,18 +145,57 @@ tighten below the fitted level: that would turn a correct scheme red.
 
 ### Long-Time Integration
 
-At fixed CFL the number of steps is proportional to the final time, and the
-residual re-accumulates at every step, so the drift is expected to scale
-approximately linearly with T:
+At fixed CFL the step count is proportional to the final time, so a longer run
+performs proportionally more floating-point work.  Earlier versions of this
+document asserted, without measuring it, that the residual therefore grows
+*linearly* in `T` (`ε_η(N, T) ≈ ε_η(N, T=1) · (T / 1 s)`).  That statement has
+now been measured and **it does not hold for η**.
+
+The measurement (`validation/swe_thacker/hydrostatic_wb_drift_time.json`) scans
+`T ∈ {0.5, 1, 2, 4} s` at fixed resolution, three series (P1/N=50, P1/N=100,
+P2/N=50), and fits
 
 ```
-ε_η(N, T) ≈ ε_η(N, T=1) · (T / 1 s)
+ε(T) = C · (T / 1 s)^γ        (γ measured by log-log least squares, never assumed)
 ```
 
-A simulation run 10× longer will have ≈10× larger round-off residuals, even
-though the physical solution is exactly stationary.  (This linear-in-T
-scaling is the model behind the per-step columns in
-`hydrostatic_wb_drift_table.md`; it is not part of the fitted N-law.)
+| Degree | N | γ_η | C_η @ T=1 s (ε_machine) | γ_u | C_u @ T=1 s (ε_machine) | `γ=1` model off by |
+|--------|---|-----|-------------------------|-----|-------------------------|--------------------|
+| P1 |  50 | 2.73 | 6.4e+02 | 1.20 | 3.1e+03 | ×6.0 |
+| P1 | 100 | 2.54 | 3.1e+03 | 1.23 | 9.7e+03 | ×4.6 |
+| P2 |  50 | 2.03 | 5.5e+04 | 0.97 | 1.1e+05 | ×2.9 |
+
+Read the last column as: with a `γ = 1` threshold, the longest run in the scan
+(`T = 4 s`, 8× the steps of the shortest) would be mis-predicted by that
+factor.  Concretely, the η drift grows 68× (P2/N=50) to 232× (P1/N=50) over an
+8× longer integration, i.e. **two orders of magnitude where a linear law
+predicts one order**; the fitted single exponent also under-describes the
+P1/N=50 series (max relative residual 0.55, versus 0.01 for P2/N=50).
+
+The spurious velocity is the exception: `γ_u = 0.97 … 1.23`, and the `γ = 1`
+model is within a factor 1.2 of the measured `T = 4 s` value for every series.
+That matters because rest-state tests usually assert on `max|u|`; for that
+quantity the linear-in-`T` picture survives, for `η` it does not.
+
+Practical rule — scale a long-run threshold with the *measured* exponent, taken
+per series from the artifact:
+
+```python
+fit = artifact["series"][0]["time_fit"]          # pick the matching (degree, N)
+expected = fit["C_eta"] * (T / 1.0) ** fit["gamma_eta"]
+assert eta_error < 10.0 * expected               # same 10× safety factor as above
+```
+
+The mechanism behind `γ_η > 1` is *not* established by these four points per
+series; what is established is that `γ_η ≈ 1` is wrong by a factor 3-6 at
+`T = 4 s` and that thresholds must not assume it.  A per-step mean quote
+(`eta_per_step_mean` in `hydrostatic_wb_drift.json`) is only meaningful as a
+summary when `γ ≈ 1`, i.e. for the velocity, not for `η`.
+
+Cross-check: the `T = 1 s` point of every series was re-solved while producing
+this artifact and compared with `hydrostatic_wb_drift.json` — P1 agrees to
+`4e-5` relative, P2/N=50 to `3.6e-2` (thread-count dependent reduction order in
+the round-off; the artifact records the solver environment in `provenance`).
 
 ### When to Worry
 
@@ -167,8 +206,9 @@ physical accuracy.  They only matter for:
 2. **Conservation checks**: mass conservation is exact to round-off, but the
    round-off level grows with N.
 3. **Regression detection**: a change in the measured exponent (α or β) or in
-   the constant C at fixed N is a signal that the operation ordering of the
-   well-balanced residual changed — e.g. a new flux/source cancellation path.
+   the constant C at fixed N — or in the `T`-exponents γ_η / γ_u — is a signal
+   that the operation ordering of the well-balanced residual changed — e.g. a
+   new flux/source cancellation path.
    `tests/test_swe_wb_drift_law_artifact.py` guards exactly this by re-deriving
    the fits from the committed runs and by reproducing one artifact point with
    a fresh solve.
@@ -184,7 +224,18 @@ PYTHONPATH=. python validation/swe_thacker/run_hydrostatic_wb_drift.py --refit
 
 # Guard: artifact, table and figure must agree with an independent refit
 PYTHONPATH=. python -m pytest tests/test_swe_wb_drift_law_artifact.py
+
+# Time-scaling law: 12 solves (~12 min single core), then the same refit/guard pair
+PYTHONPATH=. python validation/swe_thacker/run_hydrostatic_wb_drift_time.py
+PYTHONPATH=. python validation/swe_thacker/run_hydrostatic_wb_drift_time.py --refit
+PYTHONPATH=. python -m pytest tests/test_swe_wb_drift_law_time_scaling.py
 ```
+
+`tests/test_swe_wb_drift_law_time_scaling.py` re-derives every `γ` from the
+committed runs, checks that the step count tracks `T`, that the drift really
+grows with integration time, that both competing exponents are scored on the
+same points, that the markdown table and the figure agree with the JSON, and
+reproduces one point (`P1`, `N=50`, `T=0.5 s`) with a fresh solve.
 
 Provenance (`generated_at_utc`, command, interpreter/library versions, host)
 is written into the JSON by the script: `runs` records the solve environment,
