@@ -10,6 +10,11 @@ Two platform-side integration actions (no repo writes, no secrets in output):
 Usage::
 
     python validation/repro_shu_osher/platform_bench.py --mission 15480
+    python validation/repro_shu_osher/platform_bench.py --dry-run   # print payload, no network
+
+Reads ``metrics.json`` from ``runs/shu_osher_case_pool/`` when the full study has
+been re-run, otherwise from the git-tracked bundle (see :mod:`bundle`) - so the
+documented command also works on a clean checkout.
 """
 from __future__ import annotations
 
@@ -20,8 +25,16 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+try:  # both ``python validation/.../platform_bench.py`` and ``-m`` must work
+    from . import bundle
+except ImportError:  # pragma: no cover - plain-script invocation
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import bundle
+
 BASE = os.environ.get("TENSOR_API_BASE", "http://127.0.0.1:8010/api/v1").rstrip("/")
-OUT = Path("validation/repro_shu_osher/artifacts")
+OUT = bundle.CURATED
+BENCH = bundle.BUNDLE / "benchmark_ref_vs_got.json"
 
 
 def call(method: str, path: str, payload=None, token=None, timeout=120):
@@ -55,8 +68,8 @@ def main(argv=None) -> int:
     ap.add_argument("--dry-run", action="store_true", help="print the payload only")
     args = ap.parse_args(argv)
 
-    metrics = json.loads((Path("runs/shu_osher_case_pool/metrics.json")).read_text())
-    bench = json.loads(Path("validation/repro_shu_osher/benchmark_ref_vs_got.json").read_text())
+    metrics, metrics_path, metrics_source = bundle.load_metrics()
+    bench = json.loads(BENCH.read_text())
     best = bench["best_configuration"]
     spec = {
         "anchor_slug": "CASE-SHU-OSHER-DG",
@@ -82,6 +95,8 @@ def main(argv=None) -> int:
         "all_configs_pass": bench["all_configs_pass"],
         "ladder_rel_l1_percent_range": [min(r["got_rel_l1_percent"] for r in bench["cfgs"]),
                                         max(r["got_rel_l1_percent"] for r in bench["cfgs"])],
+        # provenance of the submitted numbers: fresh study or tracked bundle
+        "artifact_source": metrics_source,
     }
     if args.dry_run:
         print(json.dumps(spec, indent=2, ensure_ascii=False))
@@ -98,7 +113,9 @@ def main(argv=None) -> int:
         # this case is not in that registry, so the API rejects the spec.  Recorded
         # verbatim rather than dropped - see evidence.md for the friction note.
         status = "not_registered_in_tensorbench"
-    record = {"mission_id": args.mission, "evaluation_status": code, "evaluation_status_note": status,
+    record = {"mission_id": args.mission, "artifact_source": metrics_source,
+              "metrics_path": str(metrics_path),
+              "evaluation_status": code, "evaluation_status_note": status,
               "evaluation": ev,
               "l4_verdict_status": code_v, "l4_verdict": verdict, "spec": spec,
               "tabulated_rel_l1_percent": [r["got_rel_l1_percent"] for r in bench["cfgs"]],
