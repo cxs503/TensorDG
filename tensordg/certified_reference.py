@@ -73,19 +73,21 @@ Usage::
 
 Reachability note
 -----------------
-The package contract in :mod:`tensordg` re-exports every public symbol at the
-root.  This module is imported through its own path
-(``from tensordg.certified_reference import certify, judge``) and is **not** yet
-re-exported, because five of its names (``observed_order``,
-``richardson_extrapolate``, ``coarsen``, ``rel_l1``, ``gci``) are already owned by
-:mod:`tensordg.convergence` and the root must resolve the collision through the
-alias table in ``tensordg/__init__.py``.  ``tests/test_public_api_contract.py``
-is RED on this branch for reasons that predate this module
-(``tensordg.convergence``: ``semidiscrete_operator``,
-``operator_linearity_residual``, ``expm_scaled_squaring``,
-``exact_time_solution`` not exported); this module adds its 11 public names to
-that list rather than silently renaming them.  Fixing the whole surface is a
-separate change, recorded as a follow-up in the mission report.
+Every public name here is exported at the package root, so
+``from tensordg import certify, judge`` works.  Five names collide with
+:mod:`tensordg.convergence` (``observed_order``, ``richardson_extrapolate``,
+``coarsen``, ``rel_l1``, ``gci``) and are therefore exported under the
+``certified_`` prefix (``certified_observed_order``, ...), following the
+disambiguation convention the package already uses for ``euler_sound_speed`` /
+``swe_sound_speed``; the remaining six (``certify``, ``judge``, ``classify``,
+``digest_levels``, ``audit_ladder``, ``band_coverage_study``) are exported
+bare.  History, for the record: when this module first landed it could not be
+reached from the root at all, which left the package contract gate
+(``tests/test_public_api_contract.py``) RED with 11 of its 15 missing symbols
+coming from this module -- i.e. the module was the main contributor to that
+RED, not a bystander (audit ``docs/AUDIT-m17539-XVAL-DG-ROUND2.md`` finding
+B1/M1).  The export block above fixes that; the gate is green as of the
+``XVAL-DG-ROUND2-CERTIFIED-REFERENCE`` closure.
 
 Command line (reproduces the CASE-SHU-OSHER round-2 numbers from the committed
 raw profiles and audits every shipped DG leg)::

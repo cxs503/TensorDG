@@ -166,7 +166,7 @@ def test_case_registry_matches_its_modules(tensordg):
     """``CASES`` is the documented single source of truth for shipped cases."""
     from tensordg.cases import (
         ELASTIC_ROD_CASE_KEY, CASE_KEY,
-        LAX_CASE_KEY, VISCOUS_BURGERS_CASE_KEY,
+        LAX_CASE_KEY, PREFINEMENT_CASE_KEY, VISCOUS_BURGERS_CASE_KEY,
     )
 
     assert tensordg.CASES == {
@@ -174,6 +174,7 @@ def test_case_registry_matches_its_modules(tensordg):
         "elastic_rod_1d": ELASTIC_ROD_CASE_KEY,
         "lax_1d": LAX_CASE_KEY,
         "viscous_burgers_1d": VISCOUS_BURGERS_CASE_KEY,
+        "prefinement_exponential": PREFINEMENT_CASE_KEY,
     }
     assert tensordg.ELASTIC_ROD_CASE_KEY == ELASTIC_ROD_CASE_KEY
     assert tensordg.LAX_CASE_KEY == LAX_CASE_KEY

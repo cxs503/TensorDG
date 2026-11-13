@@ -261,3 +261,26 @@ def test_judge_rejects_non_nesting_candidate():
     cert = cr.certify(_power_law_ladder(order=2.0), tolerance_percent=5.0)
     with pytest.raises(ValueError):
         cr.judge(np.ones(7), cert)
+
+# --------------------------------------------------------------- root reachability
+def test_the_engine_is_reachable_from_the_package_root():
+    """``from tensordg import certify`` -- audit finding B1 (blocking L3).
+
+    ``docs/AUDIT-m17539-XVAL-DG-ROUND2.md`` found the engine unreachable at the
+    root (``ImportError: cannot import name 'certify'``) and the package
+    contract gate RED with 11 of its 15 missing symbols coming from this module.
+    The root export block must stay in place, and the five names shared with
+    :mod:`tensordg.convergence` must stay disambiguated rather than shadowed.
+    """
+    import tensordg as package
+    from tensordg import certified_reference as cr
+    from tensordg import convergence
+
+    for name in ("certify", "judge", "classify", "digest_levels", "audit_ladder",
+                 "band_coverage_study"):
+        assert getattr(package, name) is getattr(cr, name), name
+    for name in ("coarsen", "rel_l1", "observed_order", "richardson_extrapolate", "gci"):
+        assert getattr(package, "certified_" + name) is getattr(cr, name), name
+        if hasattr(convergence, name):
+            assert getattr(package, name) is getattr(convergence, name), name
+    assert "certify" in package.__all__ and "certified_coarsen" in package.__all__
