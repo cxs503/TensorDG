@@ -21,9 +21,10 @@ Why the state values are not free data
 --------------------------------------
 The left and right states are the standard Toro Test 2 values.  The star-state
 pressure ``p* = 2.4660979...`` and velocity ``u* = 1.5287230...`` are computed
-by the exact Riemann solver (``benchmarks.riemann_exact.star_state``), not
-transcribed from a table.  The test gates compare the DG solution against this
-computed reference, keeping the case free of hand-copied numbers.
+by the exact Riemann solver implemented here (Newton iteration with analytical
+derivatives on the two-shock/shock-rarefaction function), not transcribed from
+a table.  The test gates compare the DG solution against this computed
+reference, keeping the case free of hand-copied numbers.
 
 Usage
 -----
@@ -70,17 +71,93 @@ def lax_parameters() -> dict:
     }
 
 
-def star_state() -> tuple[float, float]:
-    """Compute the exact star-state (p*, u*) for the Lax Riemann problem.
+def _f_and_derivative(p: float, state: tuple, gamma: float) -> tuple[float, float]:
+    """f(p) and f'(p) for one side of the Riemann problem.
 
-    Uses the standard two-shock / shock-rarefaction iteration.  The result
-    is computed, not transcribed, so it stays consistent with the exact
-    Riemann solver used in the error measurement.
+    For a shock (p > p_k):
+        f(p) = (p - p_k) * sqrt(2 / ((gamma+1)*rho) / (p + (gamma-1)/(gamma+1)*p_k))
+        f'(p) = sqrt(a/(p+b)) * (1 - 0.5*(p-p_k)/(p+b))
+
+    For a rarefaction (p <= p_k):
+        f(p) = 2*a/(gamma-1) * ((p/p_k)^((gamma-1)/(2*gamma)) - 1)
+        f'(p) = 1/(rho*a) * (p/p_k)^(-(gamma+1)/(2*gamma))
     """
-    # Import here to avoid circular dependency; benchmarks.riemann_exact
-    # is the authoritative source for the star-state iteration.
-    from benchmarks.riemann_exact import star_state as _star_state
-    return _star_state(LEFT_STATE, RIGHT_STATE)
+    rho, _, p_k = state
+    sound = math.sqrt(gamma * p_k / rho)
+    if p > p_k:
+        a_coeff = 2.0 / ((gamma + 1.0) * rho)
+        b_coeff = (gamma - 1.0) / (gamma + 1.0) * p_k
+        root = math.sqrt(a_coeff / (p + b_coeff))
+        value = (p - p_k) * root
+        derivative = root * (1.0 - 0.5 * (p - p_k) / (p + b_coeff))
+    else:
+        ratio = p / p_k
+        value = 2.0 * sound / (gamma - 1.0) * (
+            ratio ** ((gamma - 1.0) / (2.0 * gamma)) - 1.0
+        )
+        derivative = 1.0 / (rho * sound) * ratio ** (-(gamma + 1.0) / (2.0 * gamma))
+    return value, derivative
+
+
+def star_state(left: tuple = LEFT_STATE, right: tuple = RIGHT_STATE,
+               gamma: float = GAMMA) -> tuple[float, float]:
+    """Compute the exact star-state (p*, u*) for a Riemann problem.
+
+    Uses a guarded Newton iteration with analytical derivatives on the
+    two-shock/shock-rarefaction function.  The result is computed, not
+    transcribed, so it stays consistent with the exact Riemann solver
+    used in error measurement.
+
+    This is a self-contained implementation that does not depend on
+    ``benchmarks.riemann_exact``, making the case module importable
+    without pulling in the benchmark suite.
+
+    Parameters
+    ----------
+    left, right : tuple
+        (rho, u, p) of the left and right states.
+    gamma : float
+        Ratio of specific heats.
+
+    Returns
+    -------
+    pressure, velocity : float
+        Star-state pressure and velocity.
+
+    Raises
+    ------
+    RuntimeError
+        If the Newton iteration does not converge.
+    """
+    rho_l, u_l, p_l = left
+    rho_r, u_r, p_r = right
+    a_l = math.sqrt(gamma * p_l / rho_l)
+    a_r = math.sqrt(gamma * p_r / rho_r)
+
+    # Initial guess: acoustic approximation
+    pressure = max(
+        1e-12,
+        0.5 * (p_l + p_r) - 0.125 * (u_r - u_l) * (rho_l + rho_r) * (a_l + a_r),
+    )
+
+    for _ in range(60):
+        f_l, df_l = _f_and_derivative(pressure, left, gamma)
+        f_r, df_r = _f_and_derivative(pressure, right, gamma)
+        updated = pressure - (f_l + f_r + u_r - u_l) / (df_l + df_r)
+        if updated <= 0.0:
+            updated = 0.5 * pressure
+        if abs(updated - pressure) <= 1e-14 * max(1.0, pressure):
+            pressure = updated
+            break
+        pressure = updated
+    else:
+        raise RuntimeError("Riemann star-pressure iteration did not converge")
+
+    f_l, _ = _f_and_derivative(pressure, left, gamma)
+    f_r, _ = _f_and_derivative(pressure, right, gamma)
+    velocity = 0.5 * (u_l + u_r) + 0.5 * (f_r - f_l)
+
+    return float(pressure), float(velocity)
 
 
 def solve_lax_case(
