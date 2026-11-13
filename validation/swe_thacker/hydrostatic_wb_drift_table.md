@@ -36,3 +36,5 @@ the maximum relative residual of the power-law fit are reported in the
 JSON artifact (`slope_*`, `max_rel_residual_*`).  The per-step columns
 show that the residual re-accumulates at every step, which is why test
 thresholds must scale with N rather than being a fixed absolute value.
+The scaling with integration time is a separate measurement: see
+`hydrostatic_wb_drift_time_table.md` (measured γ_η > 1, γ_u ≈ 1).

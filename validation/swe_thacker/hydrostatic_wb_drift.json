@@ -13,7 +13,7 @@
     "machine": "loongarch64",
     "cpu_count": 128,
     "generator": "validation/swe_thacker/run_hydrostatic_wb_drift.py",
-    "fits_recomputed_at_utc": "2026-11-11T11:21:43+00:00",
+    "fits_recomputed_at_utc": "2026-11-13T00:59:35+00:00",
     "fits_recomputed_by": "validation/swe_thacker/run_hydrostatic_wb_drift.py --refit"
   },
   "runs": [
