@@ -391,10 +391,17 @@ def test_committed_time_refinement_separates_the_dt_term():
     for row in rows:
         levels = row["levels"]
         assert len(levels) == len(TIME_CFL_DIVISORS)
-        # only dt moves: the mesh is held fixed for the whole leg
-        assert len({row["cells"] for _ in levels}) == 1
+        # only dt moves: the mesh is held fixed for the whole leg.  The level
+        # records must prove this themselves -- asserting on ``row["cells"]``
+        # alone is vacuous (a one-element set whatever the levels say).
+        assert {level["cells"] for level in levels} == {row["cells"]}
+        assert {level["degree"] for level in levels} == {row["degree"]}
+        assert {level["cfl"] for level in levels} == {
+            CFL / d for d in TIME_CFL_DIVISORS}
         dts = [level["dt"] for level in levels]
         assert all(a > b for a, b in zip(dts, dts[1:])), dts  # strictly refined
+        steps = [level["steps"] for level in levels]
+        assert all(a < b for a, b in zip(steps, steps[1:])), steps  # more steps
         for field in ("density", "velocity", "pressure"):
             series = row["fields"][field]["relative_l1"]
             assert [level["relative_l1"][field] for level in levels] == series
