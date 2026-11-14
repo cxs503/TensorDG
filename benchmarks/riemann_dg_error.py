@@ -1,4 +1,18 @@
-"""Quadrature-based primitive-variable errors for high-order Euler Riemann DG."""
+"""Quadrature-based primitive-variable errors for high-order Euler Riemann DG.
+
+.. warning::
+
+   ``quadrature_order`` is **not** a free knob for a discontinuous exact
+   solution.  The Lax tube's kinks (rarefaction head/tail, contact, shock) fall
+   inside cells, so a fixed Gauss rule is not exact there and the measured
+   relative L2 drifts by several percent with the order chosen.  At ``p3.N400``
+   the density value walks between 2.91e-2 (order 8, this module's default) and
+   3.35e-2 (order 5), while the *converged* value -- refined quadrature that
+   splits every cell at its analytic breakpoints -- is 3.02507e-2, i.e. **above**
+   the 3 % ledger bar.  The default therefore reads low; use
+   ``benchmarks.lax_a0_quadrature_audit`` (aligned rule) when the number is
+   compared against a tolerance.  See ``docs/CASE-LAX-DG-a0-quadrature-audit.md``.
+"""
 from __future__ import annotations
 
 import numpy as np

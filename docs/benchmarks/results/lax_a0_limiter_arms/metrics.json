@@ -1,0 +1,185 @@
+{
+ "acceptance": {
+  "credited_arms": [],
+  "gate": "A0",
+  "passing_but_ineligible": [],
+  "production_leg": "p3.N400",
+  "source": "feature_ledger CASE-LAX-DG",
+  "status": "FAIL",
+  "tolerance": 0.03,
+  "wording": "ref: exact solution | tolerance < 3 %"
+ },
+ "anchor": "CASE-LAX-DG",
+ "arms": {
+  "none": {
+   "l1": {
+    "density": 0.008685539963016797,
+    "pressure": 0.007311961493174053,
+    "velocity": 0.012306385471484233
+   },
+   "l2": {
+    "density": 0.03115561881158076,
+    "pressure": 0.01305011534420177,
+    "velocity": 0.022480528737058383
+   },
+   "margin": 1.038520627052692,
+   "metric": "relative L2 (whole field, Gauss nodes)",
+   "status": "FAIL",
+   "tolerance": 0.03,
+   "values": {
+    "density": 0.03115561881158076,
+    "pressure": 0.01305011534420177,
+    "velocity": 0.022480528737058383
+   },
+   "worst": 0.03115561881158076,
+   "worst_field": "density"
+  },
+  "tvb": {
+   "l1": {
+    "density": 0.012493013549779546,
+    "pressure": 0.002006855812379225,
+    "velocity": 0.004051403636929883
+   },
+   "l2": {
+    "density": 0.07039186918876701,
+    "pressure": 0.014229367195549495,
+    "velocity": 0.029805299282000083
+   },
+   "margin": 2.346395639625567,
+   "metric": "relative L2 (whole field, Gauss nodes)",
+   "status": "FAIL",
+   "tolerance": 0.03,
+   "values": {
+    "density": 0.07039186918876701,
+    "pressure": 0.014229367195549495,
+    "velocity": 0.029805299282000083
+   },
+   "worst": 0.07039186918876701,
+   "worst_field": "density"
+  },
+  "weno": {
+   "l1": {
+    "density": 0.010697023310683946,
+    "pressure": 0.0018399452699609795,
+    "velocity": 0.003751897545308932
+   },
+   "l2": {
+    "density": 0.06443166597277011,
+    "pressure": 0.01414370821915512,
+    "velocity": 0.02939724568055677
+   },
+   "margin": 2.147722199092337,
+   "metric": "relative L2 (whole field, Gauss nodes)",
+   "status": "FAIL",
+   "tolerance": 0.03,
+   "values": {
+    "density": 0.06443166597277011,
+    "pressure": 0.01414370821915512,
+    "velocity": 0.02939724568055677
+   },
+   "worst": 0.06443166597277011,
+   "worst_field": "density"
+  }
+ },
+ "case": "lax-1954-shock-tube",
+ "config": {
+  "arms": [
+   "none",
+   "tvb",
+   "weno"
+  ],
+  "production_leg": "p3.N400",
+  "quadrature_order": 10,
+  "tolerance": 0.03
+ },
+ "diagnostics": {
+  "none_l1_over_l2": {
+   "l1": 0.008685539963016797,
+   "l2": 0.03115561881158076,
+   "ratio": 3.5870675794760034
+  }
+ },
+ "eligibility": {
+  "none": {
+   "arm": "none",
+   "c1_c2": {
+    "c1": "PASS",
+    "c2": "PASS"
+   },
+   "gate": "P3",
+   "status": "PASS"
+  },
+  "tvb": {
+   "arm": "tvb",
+   "c1_c2": {
+    "c1": "PASS",
+    "c2": "PASS"
+   },
+   "gate": "P3",
+   "status": "PASS"
+  },
+  "weno": {
+   "arm": "weno",
+   "c1_c2": {
+    "c1": "PASS",
+    "c2": "PASS"
+   },
+   "gate": "P3",
+   "status": "PASS"
+  }
+ },
+ "figures": [
+  "docs/benchmarks/results/lax_a0_limiter_arms/figures/lax_a0_density_branches.png",
+  "docs/benchmarks/results/lax_a0_limiter_arms/figures/lax_a0_rel_l2_bars.png"
+ ],
+ "generated_at_utc": "2026-11-14T22:56:41Z",
+ "outcome": {
+  "recommendation": "\u5982\u9700\u7ffb\u53f0\u8d26\u72b6\u6001\uff0c\u53ea\u80fd\u7531\u53f0\u8d26\u6301\u6709\u4eba\u663e\u5f0f\u628a\u751f\u4ea7\u817f\u6539\u4e3a `p3.N800`\uff08\u53e3\u5f84\u53d8\u66f4\uff09\uff0c\u6216\u63a5\u53d7\u4ee5\u9650\u5e45\u5668\u5206\u652f\u767b\u8bb0\u751f\u4ea7\u914d\u7f6e\u3002",
+  "statement": "\u6240\u6709\u53ef\u7528\u5206\u652f\u5728\u9489\u624e\u817f `p3.N400` \u4e0a\u5747\u672a\u8fc7 3 %\uff08honest FAIL\uff09\uff0c\u5206\u8fa8\u7387\u8def\u7ebf `p3.N800`\uff082.315 %\uff09\u4ecd\u662f\u552f\u4e00\u5728\u6848\u51fa\u8def\u3002"
+ },
+ "pre_registration": {
+  "P0": "none-branch reproduces committed pool rel L2 to <= 1e-12 relative",
+  "P1": "metric = ledger arm (relative L2, Gauss nodes, whole field, exact denominator)",
+  "P2": "arm PASS iff max_field rel L2 < tolerance",
+  "P3": "arm credited only if the limiter study's C1/C2 for that arm PASS",
+  "P4": "A0 PASS iff an eligible arm PASSes at the pinned leg p3.N400",
+  "P5": "otherwise honest FAIL; production leg and ladder untouched",
+  "not_swept": [
+   "tvb_constant",
+   "limiter_stage",
+   "positivity",
+   "cfl"
+  ]
+ },
+ "provenance": {
+  "arms_metrics": "docs/benchmarks/results/lax_case_pool_limiter_arms/metrics.json",
+  "pool_metrics": "docs/benchmarks/results/lax_case_pool/metrics.json",
+  "profiles_file": "docs/benchmarks/results/lax_case_pool_limiter_arms/profiles.npz",
+  "profiles_sha256": "17e4dae7b725c15f85922cdb71c943098aa201959ce8d404fab90074b9ad4b5a",
+  "solver_rerun": false
+ },
+ "reuse": {
+  "fields": {
+   "density": {
+    "committed": 0.03115561881158076,
+    "offline": 0.03115561881158076,
+    "relative_difference": 0.0
+   },
+   "pressure": {
+    "committed": 0.01305011534420177,
+    "offline": 0.01305011534420177,
+    "relative_difference": 0.0
+   },
+   "velocity": {
+    "committed": 0.022480528737058383,
+    "offline": 0.022480528737058383,
+    "relative_difference": 0.0
+   }
+  },
+  "gate": "P0",
+  "status": "PASS",
+  "tolerance": 1e-12,
+  "worst_relative_difference": 0.0
+ },
+ "study": "ledger arm A0 re-adjudicated across limiter branches (offline, zero solves)"
+}
