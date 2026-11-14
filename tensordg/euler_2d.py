@@ -247,8 +247,13 @@ def solve_isentropic_vortex(
     background_velocity=(1.0, 1.0),
     device="cpu",
     dtype=torch.float64,
+    observer=None,
 ):
-    """Solve the smooth Euler vortex with the periodic P0/Rusanov baseline."""
+    """Solve the smooth Euler vortex with the periodic P0/Rusanov baseline.
+
+    observer is forwarded to :func: for per-step
+    conservation auditing.
+    """
     if isinstance(ncells, int) and ncells < 8:
         raise ValueError("cells >= 8 are required")
     if not isinstance(ncells, int) and min(ncells) < 8:
@@ -265,6 +270,7 @@ def solve_isentropic_vortex(
         periodic=(True, True),
         device=device,
         dtype=dtype,
+        observer=observer,
     )
     metadata["strength"] = strength
     metadata["background_velocity"] = tuple(background_velocity)
