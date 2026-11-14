@@ -48,13 +48,21 @@ CONSISTENCY_TOL = 1e-6
 def attach(metrics: dict, production: dict) -> dict:
     ladder = metrics["ladder"]
     finest = ladder[-1]
-    mismatch = {f: abs(production["l1"][f] - finest["errors"][f])
-                / finest["errors"][f] for f in FIELDS}
-    worst = max(mismatch.values())
+    # Both norms are re-measured from profiles.npz, so both are checked against
+    # the ladder's own numbers for the same leg: the L1 arm and the ledger's L2
+    # arm must come out of one and the same field array.
+    mismatch = {}
+    for f in FIELDS:
+        mismatch[f] = {
+            "l1": abs(production["l1"][f] - finest["errors"][f]) / finest["errors"][f],
+            "l2": (abs(production["l2"][f] - finest["l2_errors"][f])
+                   / finest["l2_errors"][f]),
+        }
+    worst = max(v for row in mismatch.values() for v in row.values())
     if worst > CONSISTENCY_TOL:
         raise SystemExit(
-            f"profiles.npz does not reproduce the ladder's L1 for the finest leg "
-            f"(worst relative mismatch {worst:.3e} > {CONSISTENCY_TOL:g}); "
+            f"profiles.npz does not reproduce the ladder's errors for the finest "
+            f"leg (worst relative mismatch {worst:.3e} > {CONSISTENCY_TOL:g}); "
             "refusing to attach an acceptance verdict")
     acceptance = gate_a0(ladder, tolerance=ledger_acceptance_tolerance(),
                          production_leg=finest, production_l2=production["l2"])
@@ -72,12 +80,21 @@ def attach(metrics: dict, production: dict) -> dict:
     metrics["config"] = config
     metrics["acceptance_provenance"] = {
         "attached_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "production_leg": acceptance["production_leg"],
+        "arm_source": acceptance["arms"]["production_l2"]["source"],
+        "profiles_file": str(PROFILES.relative_to(ROOT)),
         "method": ("A0 recomputed from the committed artifact only: ladder L1 arm "
                    "from metrics.json, production L2 arm from profiles.npz; no "
                    "solver re-run, no transcribed number"),
-        "profile_consistency": {"worst_relative_mismatch": float(worst),
-                                "tolerance": CONSISTENCY_TOL,
-                                "per_field": {f: float(mismatch[f]) for f in FIELDS}},
+        "profile_consistency": {
+            "worst_relative_mismatch": float(worst),
+            "worst_relative_mismatch_l1": float(max(r["l1"] for r in mismatch.values())),
+            "worst_relative_mismatch_l2": float(max(r["l2"] for r in mismatch.values())),
+            "tolerance": CONSISTENCY_TOL,
+            "reading": ("both norms re-measured from profiles.npz vs the ladder's "
+                        "own numbers for the same leg; the ledger arm is refused "
+                        "above the tolerance"),
+            "per_field": mismatch},
         "production_errors": production,
     }
     return metrics
