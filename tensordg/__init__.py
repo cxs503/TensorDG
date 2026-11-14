@@ -163,6 +163,8 @@ from .cases.elastic_rod_1d import (
 
 # ---- cases.shock_entropy
 from .cases.shock_entropy import (
+    resample_cell_averages,
+    shock_position,
     initial_state as shock_entropy_initial_state,
     conserved_state,
     solve_dg_case as solve_shock_entropy_dg,
@@ -191,6 +193,18 @@ from .cases.prefinement_exponential import (
     p_ladder as prefinement_p_ladder,
     anchor_table as prefinement_anchor_table,
     solve_prefinement_case,
+)
+
+# ---- cases.prefinement_exponential_2d
+from .cases.prefinement_exponential_2d import (
+    CASE_KEY as PREFINEMENT_2D_CASE_KEY,
+    initial_condition as prefinement_2d_initial_condition,
+    exact_solution as prefinement_2d_exact_solution,
+    prefinement_parameters as prefinement_2d_parameters,
+    solve_level as prefinement_2d_solve_level,
+    p_ladder as prefinement_2d_p_ladder,
+    anchor_table as prefinement_2d_anchor_table,
+    solve_prefinement_2d_case,
 )
 
 # ---- cases.viscous_burgers_1d
@@ -666,9 +680,12 @@ from .wall_flux_stencil import (
     wall_heat_flux_stencil_summary,
 )
 # ---- shipped constants and case registry
+# ---- stepping
+from .stepping import step_metadata
+
 from .dispersive import DISPERSION_MODELS
 from .swe_1d import GRAVITY as SWE_GRAVITY
-from .cases import CASES, ELASTIC_ROD_CASE_KEY, LAX_CASE_KEY, VISCOUS_BURGERS_CASE_KEY
+from .cases import CASES, ELASTIC_ROD_CASE_KEY, LAX_CASE_KEY, VISCOUS_BURGERS_CASE_KEY, PREFINEMENT_2D_CASE_KEY
 
 __all__ = [
     "Acoustic2DResult",
