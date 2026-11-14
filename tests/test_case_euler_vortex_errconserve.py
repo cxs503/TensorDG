@@ -109,6 +109,35 @@ def _synthetic_record(family, time, error, drift=1e-15, entropy=1e-6):
     }
 
 
+def _ladder_record(config, error, drift=1e-15, entropy=1e-6):
+    """A synthetic record that carries the *declared* task key of ``config``.
+
+    C6 reconciles declared checkpoints with records, so gate tests must speak the
+    ladder's own vocabulary instead of inventing keys the module never declares.
+    """
+    family = (f"dg_d{config['degree']}_n{config['cells']}"
+              if config["task"] == "dg" else f"p0_n{config['cells']}")
+    record = _synthetic_record(family, config["final_time"], error,
+                               drift=drift, entropy=entropy)
+    record["task_key"] = ec.task_key(config)
+    record["config"] = dict(config)
+    return record
+
+
+def _full_ladder_records(dg_error=None, p0_error=None, drop=()):
+    """Synthetic evidence bundle covering every declared checkpoint (C6-complete)."""
+    dg_error = dg_error or (lambda t: 1e-4 * (1.0 + 0.01 * math.log(t)))
+    p0_error = p0_error or (lambda n, t: 0.4 / n * (1.0 + 0.01 * math.log(t)))
+    records = []
+    for config in ec.LADDER:
+        if ec.task_key(config) in drop:
+            continue
+        error = (dg_error(config["final_time"]) if config["task"] == "dg"
+                 else p0_error(config["cells"], config["final_time"]))
+        records.append(_ladder_record(config, error))
+    return records
+
+
 def _p0_ladder(times=(1.0, 5.0)):
     """Synthetic first-order cross-check ladder (n=64/128/256)."""
     return [_synthetic_record(f"p0_n{n}", t, 0.4 / n * (1.0 + 0.01 * math.log(t)))
@@ -151,8 +180,7 @@ def test_c2_gate_is_decidable_only_with_three_checkpoints():
 
 def test_c2_gate_accepts_conserved_error():
     exact = ec.exact_invariants(points=80)
-    conserved = [_synthetic_record(ec.GATE_FAMILY, t, 1e-4 * (1.0 + 0.01 * math.log(t)))
-                 for t in (1.0, 2.0, 5.0, 10.0, 20.0)] + _p0_ladder()
+    conserved = _full_ladder_records()
     gates = ec.evaluate_gates(conserved, exact)["gates"]
     assert gates["C2_error_conservation"]["passed"] is True
     assert gates["C3_discrete_conservation"]["passed"] is True
@@ -204,6 +232,48 @@ def test_c5_crosscheck_order_flags_a_non_converging_second_path():
     gates = ec.evaluate_gates(flat, exact)["gates"]
     assert gates["C5_crosscheck_order"]["status"] == "failed"
     assert gates["verdict"] == "FAIL"
+
+
+def test_c6_gate_flags_a_declared_checkpoint_with_no_result():
+    """The defect C6 exists for: 11 of 12 declared checkpoints graded as PASS."""
+    exact = ec.exact_invariants(points=80)
+    records = _full_ladder_records(drop={"dg_d2_n32_t10_cfl0.2"})
+    gates = ec.evaluate_gates(records, exact)["gates"]
+    c6 = gates["C6_ladder_completeness"]
+    assert c6["declared"] == len(ec.LADDER)
+    assert c6["present"] == len(ec.LADDER) - 1
+    assert c6["missing"] == ["dg_d2_n32_t10_cfl0.2"]
+    assert c6["passed"] is False and c6["status"] == "failed"
+    assert gates["all_passed"] is False and gates["verdict"] == "FAIL"
+
+
+def test_c6_gate_passes_on_a_complete_ladder():
+    exact = ec.exact_invariants(points=80)
+    gates = ec.evaluate_gates(_full_ladder_records(), exact)["gates"]
+    assert gates["C6_ladder_completeness"]["missing"] == []
+    assert gates["C6_ladder_completeness"]["passed"] is True
+    assert gates["all_passed"] is True
+
+
+def test_c6_reports_unexpected_keys_without_failing():
+    exact = ec.exact_invariants(points=80)
+    records = _full_ladder_records() + [_synthetic_record("p0_n512", 1.0, 1e-4)]
+    gates = ec.evaluate_gates(records, exact)["gates"]
+    assert gates["C6_ladder_completeness"]["unexpected"] == ["p0_n512_t1"]
+    assert gates["C6_ladder_completeness"]["passed"] is True
+
+
+def test_committed_evidence_covers_every_declared_checkpoint():
+    """Guards the shipped bundle: every declared checkpoint must be on disk."""
+    import pathlib
+    import json as _json
+    results = pathlib.Path(__file__).resolve().parents[1] / \
+        "case_euler_vortex_errconserve" / "results"
+    records = [_json.loads(p.read_text()) for p in sorted(results.glob("*.json"))]
+    assert records, f"no records under {results}"
+    completeness = ec.ladder_completeness(records)
+    assert completeness["missing"] == []
+    assert completeness["declared"] == len(ec.LADDER)
 
 
 # ---------------------------------------------------------------------------
