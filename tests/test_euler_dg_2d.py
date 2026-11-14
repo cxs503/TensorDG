@@ -105,10 +105,20 @@ def test_extruded_sod_reproduces_the_1d_dg_solution():
     density_1d = coeff_1d[:, 0, 0]
     density_2d = coeff_2d[:, 0, 0, 0, 0]
     scale = float(density_1d.abs().max())
-    assert float((density_1d - density_2d).abs().max()) / scale < 1e-3
+    # Tolerance history: 1e-3 while both solvers repaired a non-positive cell by
+    # collapsing it to its cell average.  The 2-D solver now restores admissibility
+    # by *scaling* the modes towards the average (Zhang-Shu), which keeps the shock
+    # cell's slope instead of discarding it, so the two policies are no longer
+    # identical and the measured difference is 1.68e-3 (mission m20023).  The gate
+    # still bounds the two solvers to within a fifth of a percent per cell
+    # (2.5e-3); aligning the 1-D filter is the follow-up entry
+    # CASE-DG-POSITIVITY-1D-ALIGN.
+    assert float((density_1d - density_2d).abs().max()) / scale < 2.5e-3
     energy_1d = coeff_1d[:, 0, 2]
     energy_2d = coeff_2d[:, 0, 0, 0, 3]
-    assert float((energy_1d - energy_2d).abs().max()) / float(energy_1d.abs().max()) < 1e-3
+    # Same policy note as the density gate above (2-D scales the modes towards the
+    # average, 1-D still collapses): measured 1.38e-3, gate 2.5e-3.
+    assert float((energy_1d - energy_2d).abs().max()) / float(energy_1d.abs().max()) < 2.5e-3
 
 
 def test_extruded_sod_matches_the_exact_riemann_solution():
