@@ -1,0 +1,377 @@
+{
+  "case": "CASE-DG-ADVECT-ORDER",
+  "round": 2,
+  "thresholds": {
+    "RATE_TOL": 0.1,
+    "DT_ORDER_TOL": 0.2
+  },
+  "reference": {
+    "columns": {
+      "1": {
+        "name": "RK2DG1",
+        "degree": 1,
+        "rk_stages": 2
+      },
+      "2": {
+        "name": "RK3DG2",
+        "degree": 2,
+        "rk_stages": 3
+      },
+      "3": {
+        "name": "RK4DG3",
+        "degree": 3,
+        "rk_stages": 4
+      },
+      "4": {
+        "name": "RK5DG4",
+        "degree": 4,
+        "rk_stages": 5
+      }
+    },
+    "citation": {
+      "author": "Zheng Sun",
+      "title": "Reducing polynomial degree by one for inner-stage operators affects neither stability type nor accuracy order of the Runge-Kutta discontinuous Galerkin method",
+      "journal": "Mathematics of Computation (AMS)",
+      "doi": "10.1090/mcom/4037",
+      "date": "2024-10-31",
+      "preprint": "arXiv:2404.15453v2",
+      "table_label": "tab:acc-sin-1d-uni",
+      "experiment": "1-D linear advection u_t + u_x = 0 on the periodic unit interval, u(x,0)=sin(2 pi x), uniform meshes, t^n = 1"
+    },
+    "provenance_hashes": {
+      "eprint_sha256": "992d305b4ab31843fd0b8dd546350760be4690102c08397dd6648a52c857057e",
+      "table_block_sha256": "0518559382ef7f4260de720a60f3c5d8ff46ddb19a7618ccee3ff70badefaaef",
+      "fetched_at": "2026-11-14T07:21:48Z"
+    }
+  },
+  "comparison": [
+    {
+      "degree": 1,
+      "integrator": "rk2",
+      "rk_stages": 2,
+      "rk_order": 2,
+      "order_attainable": 2,
+      "ref_column": "RK2DG1",
+      "ref_stages": 2,
+      "meshes": [
+        20,
+        40,
+        80,
+        160,
+        320
+      ],
+      "got_l2": [
+        0.004619964452519557,
+        0.0010888332736716864,
+        0.0002677517487933767,
+        6.665242449716329e-05,
+        1.6645102016237283e-05
+      ],
+      "ref_l2": [
+        0.0069,
+        0.00173,
+        0.000437,
+        0.00011,
+        2.77e-05
+      ],
+      "ratio_got_over_ref": [
+        0.6695600655825446,
+        0.6293833951859459,
+        0.6127042306484592,
+        0.6059311317923936,
+        0.6009062099724651
+      ],
+      "ref_fitted_order": 1.989632975978156,
+      "got_fitted_order": 2.0263262351626583,
+      "order_gap_vs_ref": 0.03669325918450239,
+      "rate_points_used": 5,
+      "roundoff_meshes_dropped": [],
+      "rate_ok": true,
+      "stages_matched": true,
+      "order_ok": true,
+      "relative_rate_error_pct": 1.8442225087500381
+    },
+    {
+      "degree": 2,
+      "integrator": "rk3",
+      "rk_stages": 3,
+      "rk_order": 3,
+      "order_attainable": 3,
+      "ref_column": "RK3DG2",
+      "ref_stages": 3,
+      "meshes": [
+        20,
+        40,
+        80,
+        160,
+        320
+      ],
+      "got_l2": [
+        0.00010697739435057525,
+        1.3372370058487673e-05,
+        1.671584921125066e-06,
+        2.089495831848092e-07,
+        2.611874584954638e-08
+      ],
+      "ref_l2": [
+        0.000567,
+        7.12e-05,
+        8.91e-06,
+        1.11e-06,
+        1.39e-07
+      ],
+      "ratio_got_over_ref": [
+        0.18867265317561774,
+        0.18781418621471452,
+        0.1876077352553385,
+        0.18824286773406235,
+        0.18790464639961427
+      ],
+      "ref_fitted_order": 2.9991341933265256,
+      "got_fitted_order": 2.999982194335289,
+      "order_gap_vs_ref": 0.000848001008763255,
+      "rate_points_used": 5,
+      "roundoff_meshes_dropped": [],
+      "rate_ok": true,
+      "stages_matched": true,
+      "order_ok": true,
+      "relative_rate_error_pct": 0.02827486047974014
+    },
+    {
+      "degree": 3,
+      "integrator": "rk4",
+      "rk_stages": 4,
+      "rk_order": 4,
+      "order_attainable": 4,
+      "ref_column": "RK4DG3",
+      "ref_stages": 4,
+      "meshes": [
+        20,
+        40,
+        80,
+        160,
+        320
+      ],
+      "got_l2": [
+        2.0649768809379866e-06,
+        1.2911373125964268e-07,
+        8.070617705804999e-09,
+        5.044285216762509e-10,
+        3.1526134293516805e-11
+      ],
+      "ref_l2": [
+        3.46e-05,
+        2.17e-06,
+        1.35e-07,
+        8.46e-09,
+        5.29e-10
+      ],
+      "ratio_got_over_ref": [
+        0.059681412743872446,
+        0.059499415327024276,
+        0.05978235337633332,
+        0.059625120765514295,
+        0.05959571700097694
+      ],
+      "ref_fitted_order": 3.9997111243905628,
+      "got_fitted_order": 3.999821252294095,
+      "order_gap_vs_ref": 0.00011012790353204238,
+      "rate_points_used": 5,
+      "roundoff_meshes_dropped": [],
+      "rate_ok": true,
+      "stages_matched": true,
+      "order_ok": true,
+      "relative_rate_error_pct": 0.0027533964355693965
+    },
+    {
+      "degree": 4,
+      "integrator": "ssp_rk54",
+      "rk_stages": 5,
+      "rk_order": 4,
+      "order_attainable": 4,
+      "ref_column": "RK5DG4",
+      "ref_stages": 5,
+      "meshes": [
+        20,
+        40,
+        80,
+        160
+      ],
+      "got_l2": [
+        3.194065262109772e-08,
+        1.0035817228838184e-09,
+        3.1415357214566995e-11,
+        9.816756032966665e-13
+      ],
+      "ref_l2": [
+        1.71e-06,
+        5.67e-08,
+        1.62e-09,
+        5.07e-11
+      ],
+      "ratio_got_over_ref": [
+        0.018678744222864162,
+        0.017699854019114964,
+        0.019392195811461108,
+        0.019362437934845496
+      ],
+      "ref_fitted_order": 5.025423617390306,
+      "got_fitted_order": 4.994854045333335,
+      "order_gap_vs_ref": -0.03056957205697053,
+      "rate_points_used": 3,
+      "roundoff_meshes_dropped": [
+        160
+      ],
+      "rate_ok": true,
+      "stages_matched": true,
+      "order_ok": true,
+      "relative_rate_error_pct": 0.6082984119226402
+    }
+  ],
+  "dt_order_probes": [
+    {
+      "degree": 1,
+      "ncells": 2,
+      "integrator": "rk2",
+      "design_order": 2,
+      "design_stages": 2,
+      "steps": [
+        15,
+        30,
+        60,
+        120,
+        240,
+        480
+      ],
+      "dt": [
+        0.06666666666666667,
+        0.03333333333333333,
+        0.016666666666666666,
+        0.008333333333333333,
+        0.004166666666666667,
+        0.0020833333333333333
+      ],
+      "E_time": [
+        0.025195899845649974,
+        0.006197788920626472,
+        0.0015146879100515433,
+        0.00037247250943970716,
+        9.221918870735108e-05,
+        2.293457052142112e-05
+      ],
+      "fit_floor": 1e-11,
+      "fit_points": 6,
+      "fitted_time_order": 2.0212197171253345
+    },
+    {
+      "degree": 2,
+      "ncells": 2,
+      "integrator": "rk3",
+      "design_order": 3,
+      "design_stages": 3,
+      "steps": [
+        25,
+        50,
+        100,
+        200,
+        400,
+        800
+      ],
+      "dt": [
+        0.04,
+        0.02,
+        0.01,
+        0.005,
+        0.0025,
+        0.00125
+      ],
+      "E_time": [
+        0.0026449451735744006,
+        0.0003313402641949415,
+        4.143116904787411e-05,
+        5.179156718198365e-06,
+        6.473989455054576e-07,
+        8.092487350733219e-08
+      ],
+      "fit_floor": 1e-11,
+      "fit_points": 6,
+      "fitted_time_order": 2.9994208924644115
+    },
+    {
+      "degree": 3,
+      "ncells": 2,
+      "integrator": "rk4",
+      "design_order": 4,
+      "design_stages": 4,
+      "steps": [
+        35,
+        70,
+        140,
+        280,
+        560,
+        1120
+      ],
+      "dt": [
+        0.02857142857142857,
+        0.014285714285714285,
+        0.007142857142857143,
+        0.0035714285714285713,
+        0.0017857142857142857,
+        0.0008928571428571428
+      ],
+      "E_time": [
+        3.822210327200586e-05,
+        2.3894140653959193e-06,
+        1.4934627423352876e-07,
+        9.334255293552178e-09,
+        5.833929129057644e-10,
+        3.6461389447899984e-11
+      ],
+      "fit_floor": 1e-11,
+      "fit_points": 6,
+      "fitted_time_order": 3.9999347916126933
+    },
+    {
+      "degree": 4,
+      "ncells": 2,
+      "integrator": "ssp_rk54",
+      "design_order": 4,
+      "design_stages": 5,
+      "steps": [
+        45,
+        90,
+        180,
+        360,
+        720,
+        1440
+      ],
+      "dt": [
+        0.022222222222222223,
+        0.011111111111111112,
+        0.005555555555555556,
+        0.002777777777777778,
+        0.001388888888888889,
+        0.0006944444444444445
+      ],
+      "E_time": [
+        6.51949730955534e-06,
+        4.073732735690874e-07,
+        2.5459085370429505e-08,
+        1.5911566292362664e-09,
+        9.944550184661585e-11,
+        6.214810984227045e-12
+      ],
+      "fit_floor": 1e-11,
+      "fit_points": 5,
+      "fitted_time_order": 4.000112183915641
+    }
+  ],
+  "checks": {
+    "M1_rate": true,
+    "M2_stages": true,
+    "M5_dt_order": true
+  },
+  "verdict": "PASS",
+  "failed": [],
+  "note": "per-degree fragments may use different mesh ladders (the run time per degree differs by an order of magnitude); each fragment records its own ladder and every comparison uses the reference row of the same N"
+}

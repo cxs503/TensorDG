@@ -1,0 +1,121 @@
+{
+  "feature_slug": "CASE-DG-ADVECT-ORDER",
+  "title": "级数匹配的 RKDG 一维线性对流收敛率复测（SSP-RK(5,4) 补齐 p=4 档）",
+  "domain": "TensorDG / 高阶 DG 精度验证",
+  "external_anchor": {
+    "author": "Zheng Sun",
+    "title": "Reducing polynomial degree by one for inner-stage operators affects neither stability type nor accuracy order of the Runge-Kutta discontinuous Galerkin method",
+    "journal": "Mathematics of Computation (AMS)",
+    "doi": "10.1090/mcom/4037",
+    "date": "2024-10-31",
+    "preprint": "arXiv:2404.15453v2",
+    "table_label": "tab:acc-sin-1d-uni",
+    "experiment": "1-D linear advection u_t + u_x = 0 on the periodic unit interval, u(x,0)=sin(2 pi x), uniform meshes, t^n = 1"
+  },
+  "anchor_provenance": {
+    "eprint_sha256": "992d305b4ab31843fd0b8dd546350760be4690102c08397dd6648a52c857057e",
+    "table_block_sha256": "0518559382ef7f4260de720a60f3c5d8ff46ddb19a7618ccee3ff70badefaaef",
+    "fetched_at": "2026-11-14T07:21:48Z"
+  },
+  "method": {
+    "statement": "DG(p) 配 (p+1) 级显式 RK，逐阶对齐 ref 表列级数；p=4 用 SSP-RK(5,4)（5 级 4 阶）",
+    "why_not_alternatives": [
+      {
+        "option": "RK4 for every degree (round 1)",
+        "reason": "stage count does not match the reference column; at p=4 the time integrator caps the observed order"
+      },
+      {
+        "option": "6-stage order-5 Butcher RK at p=4 (round 2 default)",
+        "reason": "order matched but the stage count did not; the reference column has 5 stages"
+      },
+      {
+        "option": "claim order = stages = p+1 at p=4",
+        "reason": "impossible: explicit 5-stage methods cannot reach order 5 (Butcher barrier)"
+      }
+    ],
+    "tableau_reference": "Spiteri & Ruuth, SIAM J. Numer. Anal. 40 (2002) 469-491 eq.(3.5); Ketcheson, SISC 30 (2008) 2113-2135",
+    "estimator": "log E - log N 最小二乘斜率（ref/got 同一估计器，舍入 1e-12 双侧剔除）",
+    "time_order_probe": {
+      "floor": 1e-11,
+      "ncells": 2,
+      "cfl_max": 0.4
+    }
+  },
+  "migration": [
+    "tensordg/runge_kutta.py: add SSP_RK54 (derived from the Shu-Osher form) + MAX_ORDER_FOR_STAGES; tableau_for_degree selects by stage count",
+    "tensordg/advection_1d.py: expose time_integrator='ssp_rk54'",
+    "benchmarks/case_dg_advect_order_matched_rk.py: stage-matching M2 criterion + fixed-sign time-order probe (M5) instead of not_run",
+    "tests: tableau order conditions, stage-matched selection, probe sign"
+  ],
+  "evidence": {
+    "verdict": "PASS",
+    "checks": {
+      "M1_rate": true,
+      "M2_stages": true,
+      "M5_dt_order": true
+    },
+    "rates": {
+      "P1": {
+        "ref": 1.989632975978156,
+        "got": 2.0263262351626583,
+        "gap": 0.03669325918450239,
+        "rel_pct": 1.8442225087500381
+      },
+      "P2": {
+        "ref": 2.9991341933265256,
+        "got": 2.999982194335289,
+        "gap": 0.000848001008763255,
+        "rel_pct": 0.02827486047974014
+      },
+      "P3": {
+        "ref": 3.9997111243905628,
+        "got": 3.999821252294095,
+        "gap": 0.00011012790353204238,
+        "rel_pct": 0.0027533964355693965
+      },
+      "P4": {
+        "ref": 5.025423617390306,
+        "got": 4.994854045333335,
+        "gap": -0.03056957205697053,
+        "rel_pct": 0.6082984119226402
+      }
+    },
+    "time_orders": {
+      "P1": {
+        "design": 2,
+        "measured": 2.0212197171253345
+      },
+      "P2": {
+        "design": 3,
+        "measured": 2.9994208924644115
+      },
+      "P3": {
+        "design": 4,
+        "measured": 3.9999347916126933
+      },
+      "P4": {
+        "design": 4,
+        "measured": 4.000112183915641
+      }
+    },
+    "artifacts": [
+      "validation/advection_order_matched_rk/metrics_delta.json",
+      "docs/CASE-DG-ADVECT-ORDER-round2-delta.md",
+      "docs/advorder_round2_delta.md",
+      "docs/advorder_oss_survey.json",
+      "docs/figures/advorder_round2_delta.png"
+    ]
+  },
+  "oss_landscape": {
+    "registry_matches": 2,
+    "cache_same_feature_implementations": 0,
+    "honest_negative": "本地 ~/oss-cache 无 DG+对流+显式RK 阶验证实现；oss_inventory SQL 路由在本环境不存在"
+  },
+  "sink_status": {
+    "oss_solutions": "unreachable",
+    "probe": "/tensor/knowledge/oss_solutions 404；/tensor/oss/solutions 404；27 库无 oss_inventory 关系",
+    "fallback": "本文件"
+  },
+  "written_by": "m20685",
+  "written_at": "2026-11-14T17:34:01.924242Z"
+}

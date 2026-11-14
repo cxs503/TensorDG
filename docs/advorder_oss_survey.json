@@ -1,0 +1,153 @@
+{
+  "feature_slug": "CASE-DG-ADVECT-ORDER",
+  "generated_by": "tools/survey_advorder_oss.py",
+  "environment": {
+    "psql_present": true,
+    "oss_inventory_or_solutions_relations_found": 0,
+    "sql_route_available": false,
+    "note": "no oss_inventory/oss_solutions relation exists in the reachable databases -> the mission's SQL filter is emulated over the in-repo DG registry + the on-disk OSS cache below"
+  },
+  "registry": {
+    "registry_path": "docs/oss_inventory_dg_registry.json",
+    "registry_sha256": "d828535b3628d526fcbb843ffb914ac611eb455fed515528ca798d4d3f797329",
+    "repos_total": 24,
+    "feature_matches": 2,
+    "matches": [
+      {
+        "repo": "mfem/mfem",
+        "tier": 1,
+        "matched_keywords": [
+          "verification"
+        ],
+        "capabilities": [
+          "basis-nodal",
+          "gpu-portability",
+          "h-adaptivity",
+          "matrix-free",
+          "verification-suite"
+        ],
+        "stars": 2291,
+        "tensordg_gaps": [
+          "GAP-DG-HDG-POISSON",
+          "GAP-DG-MATRIXFREE-GPU"
+        ]
+      },
+      {
+        "repo": "trixi-framework/Trixi.jl",
+        "tier": 1,
+        "matched_keywords": [
+          "verification"
+        ],
+        "capabilities": [
+          "h-adaptivity",
+          "p-adaptivity",
+          "shock-limiter",
+          "verification-suite"
+        ],
+        "stars": 737,
+        "tensordg_gaps": [
+          "GAP-DG-3D-EULER",
+          "GAP-DG-AMR"
+        ]
+      }
+    ]
+  },
+  "cache": {
+    "cache_path": "/root/oss-cache",
+    "present": true,
+    "repos": [
+      {
+        "repo": "Maarten-vd-Sande_lbm",
+        "source_files_scanned": 7,
+        "advection_files": 0,
+        "explicit_rk_files": 0,
+        "dg_files": 0,
+        "dg_advection_rk_files": 0,
+        "dg_advection_rk_examples": [],
+        "advection_examples": []
+      },
+      {
+        "repo": "hschwane",
+        "source_files_scanned": 46,
+        "advection_files": 0,
+        "explicit_rk_files": 5,
+        "dg_files": 0,
+        "dg_advection_rk_files": 0,
+        "dg_advection_rk_examples": [],
+        "advection_examples": []
+      },
+      {
+        "repo": "pylbm",
+        "source_files_scanned": 194,
+        "advection_files": 25,
+        "explicit_rk_files": 0,
+        "dg_files": 0,
+        "dg_advection_rk_files": 0,
+        "dg_advection_rk_examples": [],
+        "advection_examples": [
+          "pylbm/demo/1D/advection.py",
+          "pylbm/demo/1D/advection_reaction.py",
+          "pylbm/demo/1D/riemann_problems/advection.py",
+          "pylbm/demo/1D/riemann_problems/exact_solvers/advection_solver.py",
+          "pylbm/demo/2D/advection.py"
+        ]
+      }
+    ],
+    "same_feature_implementations": 0
+  },
+  "literature": [
+    {
+      "item": "RKDG original stability/accuracy theory",
+      "source": "B. Cockburn, C.-W. Shu, Math. Comp. 52 (1989) 411-435",
+      "role": "smooth-solution L2 order p+1 for DG(p) with an order-(p+1) RK"
+    },
+    {
+      "item": "RKDG with TVD/SSP time stepping, limiter theory",
+      "source": "B. Cockburn, C.-W. Shu, J. Comput. Phys. 141 (1998) 199-224",
+      "role": "the (p+1)-stage convention used by every RKDG accuracy table"
+    },
+    {
+      "item": "Stage-reduced inner operators (the reference table used here)",
+      "source": "Z. Sun, Math. Comp. (2024), DOI 10.1090/mcom/4037; arXiv:2404.15453v2, table tab:acc-sin-1d-uni",
+      "role": "external numeric reference: 1D sin(2*pi*x), t=1, N=20..320"
+    },
+    {
+      "item": "Order barrier for explicit RK",
+      "source": "J. C. Butcher (1965); see Hairer-Wanner, Solving ODEs II, Sec. II.5 (order 5 needs at least 6 stages)",
+      "role": "explains why column RK5DG4 is 5-stage/4th-order"
+    },
+    {
+      "item": "5-stage 4th-order SSP scheme (SSP-RK(5,4))",
+      "source": "R. J. Spiteri, S. J. Ruuth, SIAM J. Numer. Anal. 40 (2002) 469-491, eq. (3.5); D. Ketcheson, SIAM J. Sci. Comput. 30 (2008) 2113-2135",
+      "role": "the tableau implemented in tensordg/runge_kutta.py::SSP_RK54"
+    },
+    {
+      "item": "Method of manufactured solutions / exact-solution reference",
+      "source": "P. J. Roache, Verification and Validation in Computational Science and Engineering (2002), Ch. 5",
+      "role": "the acceptance criterion: observed order vs reference column"
+    }
+  ],
+  "selection": {
+    "chosen": "stage-matched RKDG: (p+1)-stage explicit RK per degree; SSP-RK(5,4) at p=4; observed order compared with the reference column using one shared estimator",
+    "rejected": [
+      {
+        "option": "RK4 for every degree (round 1)",
+        "reason": "stage count does not match the reference column; at p=4 the time integrator caps the observed order"
+      },
+      {
+        "option": "6-stage order-5 Butcher RK at p=4 (round 2 default)",
+        "reason": "order matched but the stage count did not; the reference column has 5 stages"
+      },
+      {
+        "option": "claim order = stages = p+1 at p=4",
+        "reason": "impossible: explicit 5-stage methods cannot reach order 5 (Butcher barrier)"
+      }
+    ],
+    "migration": [
+      "tensordg/runge_kutta.py: add SSP_RK54 (derived from the Shu-Osher form) + MAX_ORDER_FOR_STAGES; tableau_for_degree selects by stage count",
+      "tensordg/advection_1d.py: expose time_integrator='ssp_rk54'",
+      "benchmarks/case_dg_advect_order_matched_rk.py: stage-matching M2 criterion + fixed-sign time-order probe (M5) instead of not_run",
+      "tests: tableau order conditions, stage-matched selection, probe sign"
+    ]
+  }
+}
