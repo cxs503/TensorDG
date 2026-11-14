@@ -1,0 +1,163 @@
+{
+  "case": "CKS1998 / Lax-Liu 1998 configuration 3 (four-quadrant Riemann)",
+  "anchor": "REPRO-DG-CKS1998",
+  "degree": 1,
+  "final_time": 0.05,
+  "cfl": 0.1,
+  "limiter": "tvb(M=1.0)",
+  "transmissive": {
+    "8": {
+      "ncells": 8,
+      "degree": 1,
+      "periodic": false,
+      "final_time": 0.05,
+      "cfl": 0.1,
+      "steps": 75,
+      "dt_last": 0.00035285908065685323,
+      "wall_seconds": 8.66,
+      "positivity": {
+        "rho_min": 0.0431097687451283,
+        "p_min": 0.034908800060931944,
+        "rho_min_mean": 0.13777374299509973,
+        "p_min_mean": 0.28897692670138664,
+        "rho_positive": true,
+        "p_positive": true,
+        "rp_finite": true
+      },
+      "conservation": {
+        "mass": {
+          "change": 0.04299964621809915,
+          "boundary_flux": 0.04299964621810119,
+          "residual": -2.040034807748725e-15,
+          "relative_residual": 3.0193662513856664e-15
+        },
+        "x_momentum": {
+          "change": -0.0035506460695639286,
+          "boundary_flux": -0.0035506460695634715,
+          "residual": -4.570996359198887e-16,
+          "relative_residual": 2.2618007279228145e-15
+        },
+        "y_momentum": {
+          "change": -0.003550646069563984,
+          "boundary_flux": -0.003550646069563468,
+          "residual": -5.160802341031001e-16,
+          "relative_residual": 2.553645983138661e-15
+        },
+        "energy": {
+          "change": 0.1749362580367686,
+          "boundary_flux": 0.1749362580367734,
+          "residual": -4.801714581503802e-15,
+          "relative_residual": 2.7537075879199883e-15
+        }
+      }
+    },
+    "16": {
+      "ncells": 16,
+      "degree": 1,
+      "periodic": false,
+      "final_time": 0.05,
+      "cfl": 0.1,
+      "steps": 153,
+      "dt_last": 8.975884344966656e-05,
+      "wall_seconds": 19.84,
+      "positivity": {
+        "rho_min": 0.07623480525170954,
+        "p_min": 0.0690480689921967,
+        "rho_min_mean": 0.1336256348098504,
+        "p_min_mean": 0.2770842986639975,
+        "rho_positive": true,
+        "p_positive": true,
+        "rp_finite": true
+      },
+      "conservation": {
+        "mass": {
+          "change": 0.046260927362020365,
+          "boundary_flux": 0.04626092736202471,
+          "residual": -4.343747583845925e-15,
+          "relative_residual": 6.428990725739549e-15
+        },
+        "x_momentum": {
+          "change": -0.004621916296604384,
+          "boundary_flux": -0.0046219162966035935,
+          "residual": -7.901665433074356e-16,
+          "relative_residual": 3.909868051494658e-15
+        },
+        "y_momentum": {
+          "change": -0.004621916296604522,
+          "boundary_flux": -0.004621916296603591,
+          "residual": -9.315465065995454e-16,
+          "relative_residual": 4.609438295614996e-15
+        },
+        "energy": {
+          "change": 0.18622470413312864,
+          "boundary_flux": 0.1862247041331391,
+          "residual": -1.04638520070921e-14,
+          "relative_residual": 6.000854107779395e-15
+        }
+      }
+    }
+  },
+  "periodic": {
+    "8": {
+      "ncells": 8,
+      "degree": 1,
+      "periodic": true,
+      "final_time": 0.05,
+      "cfl": 0.1,
+      "steps": 80,
+      "dt_last": 0.0004717640323727082,
+      "wall_seconds": 6.27,
+      "positivity": {
+        "rho_min": 0.01131794231310444,
+        "p_min": 0.01670124783192911,
+        "rho_min_mean": 0.12140954057236844,
+        "p_min_mean": 0.16695983259650793,
+        "rho_positive": true,
+        "p_positive": true,
+        "rp_finite": true
+      },
+      "conservation": {
+        "mass": {
+          "change": -1.6653345369377348e-15,
+          "boundary_flux": 0.0,
+          "residual": -1.6653345369377348e-15,
+          "relative_residual": 2.4647887766413606e-15
+        },
+        "x_momentum": {
+          "change": -5.551115123125783e-16,
+          "boundary_flux": 0.0,
+          "residual": -5.551115123125783e-16,
+          "relative_residual": 2.7467788726197367e-15
+        },
+        "y_momentum": {
+          "change": -5.551115123125783e-16,
+          "boundary_flux": 0.0,
+          "residual": -5.551115123125783e-16,
+          "relative_residual": 2.746778872619736e-15
+        },
+        "energy": {
+          "change": -4.440892098500626e-15,
+          "boundary_flux": 0.0,
+          "residual": -4.440892098500626e-15,
+          "relative_residual": 2.5467815842034572e-15
+        }
+      }
+    }
+  },
+  "self_convergence_l1_rho": {
+    "8_vs_16": 0.027417894317694907
+  },
+  "summary": {
+    "max_flux_balance_residual_transmissive": 6.428990725739549e-15,
+    "max_abs_conservation_change_periodic": 4.440892098500626e-15,
+    "mass_change_transmissive": {
+      "8": 0.04299964621809915,
+      "16": 0.046260927362020365
+    },
+    "rho_min_all_meshes": 0.0431097687451283,
+    "p_min_all_meshes": 0.034908800060931944,
+    "self_convergence_l1_rho": {
+      "8_vs_16": 0.027417894317694907
+    }
+  }
+}
