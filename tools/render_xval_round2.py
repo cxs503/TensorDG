@@ -196,7 +196,10 @@ def render(outdir: Path, doc: Path) -> str:
                  "所用 1D 通路文件 sha256 见 ②，未修改。")
     lines.append("* 失败模式 3：纯 Python 核单点 58 s(N=800) → N=3200 单腿约 4 分钟，"
                  "本机单命令 120 s 上限 → 采用 `--warm` 分腿后台缓存 + 汇总渲染；集群队列深度 >500 未派发。")
-    lines.append("* 工件：`artifacts/xval_m17365/{xval.json, certified_refs.npz, oss_raw/*.npz, fig_*.png}`，"
+    lines.append("* 可复现性与溯源补齐（round-2.1）：见 `docs/xval-round2-reproducibility.md`"
+                 "（由 `python -m tools.render_xval_reproducibility` 生成；含 clawpack pin 后的"
+                 "完整 sha256、本仓腿的第二路径复算、仍未闭合项）。")
+    lines.append("* 工件：`artifacts/xval_round2/{xval.json, certified_refs.npz, oss_raw/*.npz, oss_provenance.json, fig_*.png}`，"
                  "本文件由 `python -m tools.render_xval_round2` 程序化注入生成（零手抄）。")
     lines.append("* 适用范围：本 XVAL 是**代码间交叉验证**（two independent discretisations），"
                  "不等于实验 validation；Shu–Osher 原文只给图，文献数值仍 WITHHELD。")
