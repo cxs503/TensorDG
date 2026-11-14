@@ -34,6 +34,19 @@ def _sci(value, digits=5):
     return "n/a" if value is None else f"{value:.{digits}e}"
 
 
+def _field_series(analytic, field):
+    """``analytic`` is stored per leg as a list ordered by ``FIELDS``.
+
+    Older records carried a dict, so both shapes are accepted -- the note must
+    render from either without silently reading the wrong component.
+    """
+    if isinstance(analytic, dict):
+        return analytic[field]
+    if analytic and isinstance(analytic[0], (list, tuple)):
+        return analytic[FIELDS.index(field)]
+    return analytic  # already a single field's series
+
+
 def _num(value, digits=3):
     return "n/a" if value is None else f"{value:.{digits}f}"
 
@@ -148,7 +161,8 @@ def render(metrics: dict) -> str:
         for degree, data in per_degree.items():
             for i, cells in enumerate(data["cells"]):
                 order = "—" if i == 0 else _num(
-                    _pair_order(data["cells"], data["analytic"]["density"], i))
+                    _pair_order(data["cells"],
+                                _field_series(data["analytic"], "density"), i))
                 need = "—" if i == 0 else _num(data["r3_requirement"], 2)
                 out.append(f"| {degree[1:]} | {cells} | {data['steps'][i]} | "
                            f"{_sci(data['whole_field'][i])} | "
