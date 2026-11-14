@@ -27,7 +27,7 @@ from benchmarks.lax_case_pool import (
     R3_LEGACY_BAND_CELLS, R3_ORDER_FRACTION, RIGHT, TIME_CFL_DIVISORS, TIME_LEGS,
     TOL_C1, TOL_C2, TOL_TIME_ERROR_SHARE, exact_positions, exact_reference,
     exact_waves, entropy_wave_exact, gate_a0, gate_c1, gate_c2, gate_c3,
-    ledger_acceptance_tolerance, modal_fields,
+    ledger_acceptance_tolerance, modal_fields, production_errors_from_profiles,
     plateau_values, convergence_order, temporal_order, temporal_share,
     wave_positions, _weighted_l1, ENTROPY_AMPLITUDE, ENTROPY_TIME,
     RAREFACTION_LEVEL_FRACTION,
@@ -498,8 +498,18 @@ def test_committed_artifact_carries_the_ledger_acceptance():
         "`python -m benchmarks.lax_case_pool`")
     metrics = json.loads(ARTIFACT.read_text())
     stored = metrics["acceptance"]
-    # re-derive the gate from the stored per-leg numbers only
-    rebuilt = gate_a0(metrics["ladder"], tolerance=stored["tolerance"])
+    # Re-derive the gate from the stored per-leg numbers only.  The ledger arm
+    # is rebuilt through the *same* source the artifact declares: when the arm
+    # was re-measured out of ``profiles.npz`` (source="profiles") a rebuild that
+    # silently falls back to the ladder numbers can never agree with it -- that
+    # is a test/artifact drift, not a defect of the artifact (m20346 F1).
+    source = stored["arms"]["production_l2"]["source"]
+    production = None
+    if source == "profiles":
+        production = production_errors_from_profiles(PROFILES)["l2"]
+    rebuilt = gate_a0(metrics["ladder"], tolerance=stored["tolerance"],
+                      production_leg=metrics["ladder"][-1],
+                      production_l2=production)
     assert rebuilt["arms"] == stored["arms"]
     assert rebuilt["per_leg"] == stored["per_leg"]
     assert rebuilt["status"] == stored["status"]
@@ -517,6 +527,9 @@ def test_committed_artifact_carries_the_ledger_acceptance():
             assert entry["l2_errors"][field] > entry["errors"][field]
     # the ledger arm must state where its L2 numbers came from
     assert stored["arms"]["production_l2"]["source"] in ("ladder", "profiles")
+    # ... and the provenance block must name the artifact the arm was read from
+    assert metrics["acceptance_provenance"]["production_leg"] == (
+        stored["production_leg"])
     assert metrics["acceptance_provenance"]["profile_consistency"][
         "worst_relative_mismatch"] <= 1e-6
 
