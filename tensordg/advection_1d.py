@@ -22,6 +22,11 @@ import numpy as np
 import torch
 
 from .limiters import apply_limiter
+from .runge_kutta import TABLEAUS, rk_step
+
+# Tableaus driven by the generic stage loop; ``"rk4"`` and ``"ssp_rk3"``
+# keep their original hand-coded branches (bit-for-bit unchanged).
+_GENERIC_TABLEAUS = ("euler", "rk2", "rk3", "rk5")
 
 # The quadrature order is ``max(2*degree + 3, 4)`` and float64 Legendre
 # evaluation is stable far beyond this; the bound only keeps the Python-side
@@ -116,7 +121,11 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
     after every Runge-Kutta stage.
     ``time_integrator`` selects classical ``"rk4"`` (default, 4th-order but
     *not* strong-stability-preserving) or ``"ssp_rk3"`` (the TVD-RK scheme of
-    Cockburn & Shu 1998, required for the TVD property when limiting).
+    Cockburn & Shu 1998, required for the TVD property when limiting).  The
+    minimal-stage explicit tableaus ``"euler"`` (1), ``"rk2"`` (Heun), ``"rk3"``
+    (Kutta) and ``"rk5"`` (Butcher, 6 stages) of :mod:`tensordg.runge_kutta` are
+    also accepted; ``"rk5"`` is what advances a degree-4 rung at the ``p + 1 = 5``
+    spatial order used by the RKDG accuracy tables.
 
     ``weno_variant`` selects the non-linear weights of the WENO limiter
     (``"js"`` Jiang--Shu, the default and historical behaviour, or ``"z"``
@@ -132,8 +141,11 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
         )
     if final_time < 0 or cfl <= 0:
         raise ValueError("final_time must be >= 0 and cfl must be > 0")
-    if time_integrator not in ("rk4", "ssp_rk3"):
-        raise ValueError("time_integrator must be 'rk4' or 'ssp_rk3'")
+    if time_integrator not in ("rk4", "ssp_rk3", *_GENERIC_TABLEAUS):
+        raise ValueError(
+            "time_integrator must be one of "
+            f"{('rk4', 'ssp_rk3') + _GENERIC_TABLEAUS}"
+        )
     if troubled_policy not in ("tvb", "all"):
         raise ValueError("troubled_policy must be 'tvb' (paper indicator) or 'all' (strict)")
     profile = _sine if initial is None else initial
@@ -159,7 +171,15 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
     lim = lambda c: _limit(  # noqa: E731
         c, h, limiter, tvb_constant, troubled_policy, weno_variant
     )
+    tableau = (TABLEAUS[time_integrator]
+               if time_integrator in _GENERIC_TABLEAUS else None)
     for _ in range(steps):
+        if tableau is not None:
+            coeff = rk_step(
+                lambda c: _rhs(c, h, speed, volume, phi_l, phi_r),
+                coeff, dt, tableau, project=lim,
+            )
+            continue
         k1 = _rhs(coeff, h, speed, volume, phi_l, phi_r)
         if time_integrator == "ssp_rk3":
             u1 = lim(coeff + dt * k1)
@@ -178,7 +198,11 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
     meta = {"ncells": ncells, "degree": degree, "final_time": final_time,
             "speed": speed, "dt": dt, "steps": steps, "device": str(dev),
             "limiter": limiter or "none", "tvb_constant": tvb_constant,
-            "time_integrator": time_integrator, "troubled_policy": troubled_policy}
+            "time_integrator": time_integrator, "troubled_policy": troubled_policy,
+            "rk_order": (tableau.order if tableau is not None else
+                         3 if time_integrator == "ssp_rk3" else 4),
+            "rk_stages": (tableau.stages if tableau is not None else
+                          3 if time_integrator == "ssp_rk3" else 4)}
     return centers, coeff, meta
 
 

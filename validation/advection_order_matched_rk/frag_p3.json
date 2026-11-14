@@ -1,0 +1,59 @@
+{
+  "cells": [
+    20,
+    40,
+    80,
+    160
+  ],
+  "l2": [
+    2.0649768809379866e-06,
+    1.2911373125964268e-07,
+    8.070617705804999e-09,
+    5.044285216762509e-10
+  ],
+  "meta": [
+    {
+      "ncells": 20,
+      "steps": 700,
+      "dt": 0.0014285714285714286,
+      "integrator": "rk4",
+      "rk_order": 4,
+      "rk_stages": 4
+    },
+    {
+      "ncells": 40,
+      "steps": 1400,
+      "dt": 0.0007142857142857143,
+      "integrator": "rk4",
+      "rk_order": 4,
+      "rk_stages": 4
+    },
+    {
+      "ncells": 80,
+      "steps": 2800,
+      "dt": 0.00035714285714285714,
+      "integrator": "rk4",
+      "rk_order": 4,
+      "rk_stages": 4
+    },
+    {
+      "ncells": 160,
+      "steps": 5600,
+      "dt": 0.00017857142857142857,
+      "integrator": "rk4",
+      "rk_order": 4,
+      "rk_stages": 4
+    }
+  ],
+  "pairwise_orders": [
+    3.999411284919643,
+    3.9998195311948184,
+    3.99995734141655
+  ],
+  "fitted_order": 3.9997384003787837,
+  "fit_points": 4,
+  "fit_dropped_cells": [],
+  "integrator": "rk4",
+  "rk_order": 4,
+  "rk_stages": 4
+}
