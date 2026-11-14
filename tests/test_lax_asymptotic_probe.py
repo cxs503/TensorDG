@@ -234,3 +234,76 @@ def test_hypothesis_reading_matches_the_stored_escalation():
         assert "H1" in reading
     else:
         assert "H2" in reading
+
+# ------------------------------------------------- cross-artifact / metadata layer
+@pytest.mark.skipif(not METRICS.exists(), reason="probe artifact not generated yet")
+def test_shared_legs_agree_with_the_committed_pool():
+    """Two committed artifacts record the same legs, so they must agree.
+
+    The ``reuse_check`` block inside the probe artifact is sealed at generation
+    time and therefore cannot notice later drift: the pool artifact was
+    regenerated after this artifact was written and the shared legs then
+    disagreed by 1.06e-04 (``p3.N400``) and 7.14e-03 (``p3.N800``) with no test
+    failing.  This gate binds the two records to each other instead.
+    """
+    from benchmarks.lax_asymptotic_probe import REUSE_TOL
+
+    probe = json.loads(METRICS.read_text())
+    pool_path = ROOT / "docs/benchmarks/results/lax_case_pool/metrics.json"
+    pool = json.loads(pool_path.read_text())
+    committed = {(e["cells"], e["degree"]): e for e in pool["ladder"]}
+    shared = 0
+    for leg in probe["ladder"]:
+        key = (leg["cells"], leg["degree"])
+        if key not in committed:
+            continue
+        shared += 1
+        other = committed[key]
+        assert leg["steps"] == other["steps"], key
+        for field, value in leg["errors"].items():
+            rel = abs(value - other["errors"][field]) / abs(other["errors"][field])
+            assert rel < REUSE_TOL, (key, field, rel)
+    assert shared >= 4, f"expected the committed pool legs to be re-used, got {shared}"
+
+
+@pytest.mark.skipif(not METRICS.exists(), reason="probe artifact not generated yet")
+def test_step_size_metadata_is_not_ambiguous():
+    """``dt`` was the time-truncated final step; it must not be read as the step size.
+
+    ``tensordg.euler_dg_1d`` returns ``dt = min(cfl*dx/..., final_time - time)``,
+    i.e. the *last* step, documented there as not representative.  Two artifacts
+    for the same leg consequently carried 2.23e-05 vs 2.54e-05 and a downstream
+    note read that as "the fields are not reproducible" -- a wrong diagnosis
+    built entirely on a quantity that is arbitrary by construction.
+    """
+    payload = json.loads(METRICS.read_text())
+    final_time = payload["config"]["final_time"]
+    for leg in payload["ladder"]:
+        assert "dt" not in leg, "the ambiguous key must not be written again"
+        assert leg["dt_last"] > 0.0
+        assert leg["dt_mean"] == pytest.approx(final_time / leg["steps"], rel=1e-12)
+        assert leg["dt_last"] <= final_time
+        assert "dt_last" in leg["dt_semantics"] and "dt_mean" in leg["dt_semantics"]
+
+
+def test_field_cache_round_trips(tmp_path):
+    """``--no-figures`` on a node and ``--figures-only`` locally must agree."""
+    from benchmarks.lax_asymptotic_probe import load_profiles, save_profiles
+
+    cells, degree, samples = 8, 2, 16
+    points = np.linspace(0.0, 1.0, samples)
+    profile = {
+        "points": points,
+        "numerical": {f: points ** 2 + i for i, f in
+                      enumerate(("density", "velocity", "pressure"))},
+        "exact": {f: points ** 3 for f in ("density", "velocity", "pressure")},
+    }
+    path = save_profiles({(cells, degree): profile}, tmp_path / "profiles.npz")
+    restored = load_profiles(path)
+    assert set(restored) == {(cells, degree)}
+    np.testing.assert_allclose(restored[(cells, degree)]["points"], points)
+    for field in ("density", "velocity", "pressure"):
+        np.testing.assert_allclose(restored[(cells, degree)]["numerical"][field],
+                                   profile["numerical"][field])
+        np.testing.assert_allclose(restored[(cells, degree)]["exact"][field],
+                                   profile["exact"][field])

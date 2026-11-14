@@ -112,6 +112,12 @@ LADDER = [(400, 1), (800, 1), (400, 2), (800, 2), (200, 3), (400, 3), (800, 3)]
 QUICK_LADDER = [(100, 1), (200, 1), (100, 2), (200, 2), (100, 3), (200, 3)]
 #: pre-registered escalation factor for H1
 ESCALATION_FACTOR = 1.5
+#: pre-registered tolerance for the reuse check: the shared legs must reproduce
+#: the committed pool metrics to better than this relative difference, on the
+#: fields.  The recorded step-size metadata is *not* part of the comparison --
+#: the solver returns ``dt_last``, which is truncated at ``final_time`` and is
+#: arbitrary by construction.
+REUSE_TOL = 1e-6
 #: the star-right plateau, pulled in from the analytic waves by the wave band
 PLATEAU = ("contact", "shock")
 
@@ -195,7 +201,17 @@ def measure_leg(cells, degree, waves, exact_positions_cache=None):
     residual = primitive["density"] - exact["density"]
     leg = {
         "cells": cells, "degree": degree,
-        "steps": int(meta["steps"]), "dt": float(meta["dt"]),
+        "steps": int(meta["steps"]),
+        # ``meta["dt"]`` from the solver is the *time-truncated final step*
+        # (``min(cfl*dx/..., final_time - time)``), documented there as "not
+        # representative of the run".  Recording it as "dt" invited a wrong
+        # diagnosis once already (two artifacts for the same leg carry
+        # 2.23e-05 vs 2.54e-05 and the difference means nothing).  Record it
+        # under the honest name and add the quantity a refinement study can
+        # actually trust: final_time / steps.
+        "dt_last": float(meta.get("dt_last", meta["dt"])),
+        "dt_mean": float(meta.get("dt_mean", FINAL_TIME / max(int(meta["steps"]), 1))),
+        "dt_semantics": "dt_last = time-truncated final step; dt_mean = final_time/steps",
         "limiter_reported": meta.get("limiter"),
         "cfl": float(meta.get("cfl", CFL)),
         "wall_seconds": float(time.time() - started),
@@ -345,8 +361,52 @@ def make_figures(entries, profiles, directory):
     return files
 
 
+# ------------------------------------------------------------- profiles cache
+#: Field cache so that measuring and presenting are separable: a compute node
+#: without ``matplotlib`` can write the numbers and the fields, and the figures
+#: are rendered afterwards on a machine that has it (the failure mode that
+#: silently produced an empty fetch in ``cj2647``).
+PROFILES = OUT / "profiles.npz"
+
+
+def save_profiles(profiles, path=None):
+    path = Path(path or PROFILES)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    arrays, index = {}, []
+    for key, profile in profiles.items():
+        if key == "finest":
+            continue
+        cells, degree = key
+        stem = f"N{cells}_p{degree}"
+        index.append((int(cells), int(degree)))
+        arrays[f"{stem}_points"] = np.asarray(profile["points"])
+        arrays[f"{stem}_numerical"] = np.stack(
+            [np.asarray(profile["numerical"][f]) for f in ("density", "velocity", "pressure")])
+        arrays[f"{stem}_exact"] = np.stack(
+            [np.asarray(profile["exact"][f]) for f in ("density", "velocity", "pressure")])
+    arrays["index"] = np.asarray(index, dtype=np.int64)
+    np.savez_compressed(path, **arrays)
+    return path
+
+
+def load_profiles(path=None):
+    path = Path(path or PROFILES)
+    data = np.load(path)
+    profiles = {}
+    for cells, degree in data["index"]:
+        stem = f"N{int(cells)}_p{int(degree)}"
+        profiles[(int(cells), int(degree))] = {
+            "points": data[f"{stem}_points"],
+            "numerical": dict(zip(("density", "velocity", "pressure"),
+                                  data[f"{stem}_numerical"])),
+            "exact": dict(zip(("density", "velocity", "pressure"),
+                              data[f"{stem}_exact"])),
+        }
+    return profiles
+
+
 # --------------------------------------------------------------------- runner
-def run(ladder=LADDER, quick=False):
+def run(ladder=LADDER, quick=False, figures=True):
     started = time.time()
     waves = exact_waves()
     entries, profiles = [], {}
@@ -370,16 +430,18 @@ def run(ladder=LADDER, quick=False):
         "evaluated_on": [f"N={e['cells']},p={e['degree']}" for e in entries],
     }
 
-    reuse = {"compared": False}
+    reuse = {"compared": False, "status": "not_compared"}
     if POOL_METRICS.exists() and not quick:
         pool = json.loads(POOL_METRICS.read_text())
         matches = [e for e in pool["ladder"]
                    if (e["cells"], e["degree"]) in profiles and not isinstance(
                        profiles[(e["cells"], e["degree"])], type(None))]
         rows, worst = [], 0.0
+        steps_agree = True
         for committed in matches:
             key = (committed["cells"], committed["degree"])
             mine = next(e for e in entries if (e["cells"], e["degree"]) == key)
+            steps_agree = steps_agree and int(mine["steps"]) == int(committed["steps"])
             for field, value in committed["errors"].items():
                 rel = abs(mine["errors"][field] - value) / max(abs(value), 1e-30)
                 worst = max(worst, rel)
@@ -387,6 +449,9 @@ def run(ladder=LADDER, quick=False):
                              "committed": value, "rerun": mine["errors"][field],
                              "relative_difference": rel})
         reuse = {"compared": bool(rows), "rows": rows, "worst_relative_difference": worst,
+                 "tolerance": REUSE_TOL, "steps_agree": bool(steps_agree),
+                 "status": ("PASS" if rows and worst < REUSE_TOL and steps_agree
+                            else "FAIL"),
                  "source": str(POOL_METRICS)}
 
     if quick:
@@ -456,10 +521,13 @@ def run(ladder=LADDER, quick=False):
         "figures": [],
         "wall_seconds": float(time.time() - started),
     }
-    figures = make_figures(entries, profiles, OUT / "figures")
-    payload["figures"] = [str(p) for p in figures]
+    if figures:
+        payload["figures"] = [str(p) for p in make_figures(entries, profiles, OUT / "figures")]
     payload["verdict"] = ("PASS" if gates["c3"]["status"] == "PASS" and
                           gates["r3"]["status"] == "PASS" else "FAIL")
+    # field cache for a later ``--figures-only``; popped before the artifact is
+    # written so the metrics file stays plain JSON.
+    payload["_profiles"] = profiles
     return payload
 
 
@@ -621,6 +689,10 @@ def main():
     parser.add_argument("--quick", action="store_true", help="coarse smoke ladder")
     parser.add_argument("--render", action="store_true", help="re-render doc from metrics")
     parser.add_argument("--ladder", default=None, help='e.g. "400,800:1;400,800:2"')
+    parser.add_argument("--no-figures", action="store_true",
+                        help="measure only; cache the fields for a later --figures-only")
+    parser.add_argument("--figures-only", action="store_true",
+                        help="render the figures from the cached fields and re-seal metrics")
     args = parser.parse_args()
 
     if args.render:
@@ -631,6 +703,16 @@ def main():
         print(f"rendered {DOC}")
         return
 
+    if args.figures_only:
+        payload = json.loads((OUT / "metrics.json").read_text())
+        profiles = load_profiles()
+        payload["figures"] = [str(p) for p in
+                              make_figures(payload["ladder"], profiles, OUT / "figures")]
+        target, digest = write(payload)
+        DOC.write_text(render_doc(payload, digest))
+        print(f"rendered {len(payload['figures'])} figures, re-sealed {target}")
+        return
+
     ladder = QUICK_LADDER if args.quick else LADDER
     if args.ladder:
         ladder = []
@@ -639,7 +721,10 @@ def main():
             for value in cells.split(","):
                 ladder.append((int(value), int(degree)))
         ladder.sort(key=lambda leg: (leg[1], leg[0]))
-    payload = run(ladder, quick=args.quick)
+    payload = run(ladder, quick=args.quick, figures=not args.no_figures)
+    profiles = payload.pop("_profiles", None)
+    if args.no_figures and profiles:
+        print(f"cached fields -> {save_profiles(profiles)}")
     target, digest = write(payload)
     DOC.write_text(render_doc(payload, digest))
     print(f"verdict={payload['verdict']} resolution={payload['hypotheses']['resolution']}")
