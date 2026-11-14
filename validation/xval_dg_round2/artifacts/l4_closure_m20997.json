@@ -1,0 +1,164 @@
+{
+ "anchor": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+ "cluster_job_id": "cj3111",
+ "cluster_job_id_int": 3111,
+ "implementation_revision": "0294d508db7d0468531540c8e3d9ef65d50bf635",
+ "ingest": {
+  "http_status": 200,
+  "response": {
+   "benchmark_id": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+   "cluster_job_id": 3111,
+   "delta": {
+    "action": "inserted",
+    "category": "bench_verified",
+    "evidence": {
+     "benchmark_id": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+     "cluster_job_id": 3111,
+     "implementation_revision": "0294d508db7d0468531540c8e3d9ef65d50bf635",
+     "metrics": [
+      {
+       "abs_error": 4.7264414604342164e-12,
+       "got_value": 3.8571430000047267,
+       "metric": "plateau_rho",
+       "passed": true,
+       "ref_value": 3.857143,
+       "rel_error": 1.2253736665802166e-12,
+       "tolerance_rel": 0.01,
+       "unit": "-"
+      },
+      {
+       "abs_error": 0.013758412825120026,
+       "got_value": 2.403125,
+       "metric": "shock_position",
+       "passed": true,
+       "ref_value": 2.38936658717488,
+       "rel_error": 0.00575818415598905,
+       "tolerance_rel": 0.01,
+       "unit": "-"
+      },
+      {
+       "abs_error": 2.595984831543774e-07,
+       "got_value": 31.08915244857708,
+       "metric": "mass_integral",
+       "passed": true,
+       "ref_value": 31.0891521889786,
+       "rel_error": 8.350130668613329e-09,
+       "tolerance_rel": 0.01,
+       "unit": "-"
+      }
+     ],
+     "result_ids": [
+      "tbr-049941b4a7ba4e59881fc35229c934b0",
+      "tbr-9bbc0f8976c948cf89180ae18cadd3b4",
+      "tbr-2757cb396d3040af9dd99cc7ed8bd078"
+     ],
+     "run_id": "xval-dg-round2-xval-dg-round2-certified",
+     "schema": "tensorbench-eval/1"
+    },
+    "existing_category": null,
+    "reason": "benchmark ref/got/error \u7531\u5e73\u53f0\u4fa7\u4ece\u96c6\u7fa4\u4f5c\u4e1a\u539f\u59cb\u8f93\u51fa\u590d\u7b97\uff0c\u89c1 evidence",
+    "summary": "TensorBench \u5b9e\u8bc1\u57fa\u51c6\u901a\u8fc7\uff1aplateau_rho=3.85714 vs ref 3.85714 (rel 0.000% <= tol 1.000%); shock_position=2.40313 vs ref 2.38937 (rel 0.576% <= tol 1.000%); mass_integral=31.0892 vs ref 31.0892 (rel 0.000% <= tol 1.000%)"
+   },
+   "metrics": [
+    {
+     "abs_error": 4.7264414604342164e-12,
+     "got_value": 3.8571430000047267,
+     "metric": "plateau_rho",
+     "passed": true,
+     "ref_value": 3.857143,
+     "rel_error": 1.2253736665802166e-12,
+     "tolerance_rel": 0.01,
+     "unit": "-"
+    },
+    {
+     "abs_error": 0.013758412825120026,
+     "got_value": 2.403125,
+     "metric": "shock_position",
+     "passed": true,
+     "ref_value": 2.38936658717488,
+     "rel_error": 0.00575818415598905,
+     "tolerance_rel": 0.01,
+     "unit": "-"
+    },
+    {
+     "abs_error": 2.595984831543774e-07,
+     "got_value": 31.08915244857708,
+     "metric": "mass_integral",
+     "passed": true,
+     "ref_value": 31.0891521889786,
+     "rel_error": 8.350130668613329e-09,
+     "tolerance_rel": 0.01,
+     "unit": "-"
+    }
+   ],
+   "mission_id": 20997,
+   "recorded_at": "2026-11-14T22:28:54.013921+00:00",
+   "result_ids": [
+    "tbr-049941b4a7ba4e59881fc35229c934b0",
+    "tbr-9bbc0f8976c948cf89180ae18cadd3b4",
+    "tbr-2757cb396d3040af9dd99cc7ed8bd078"
+   ],
+   "run_id": "xval-dg-round2-xval-dg-round2-certified",
+   "spec_sha256": "c95c570f0829e53a6b17eec86e2a2768c76c1d929c43050a884789b19d66e97e",
+   "verified": true
+  }
+ },
+ "l4_verdict": {
+  "best": {
+   "cluster_job_id": 3111,
+   "got": 3.8571430000047267,
+   "metric": "plateau_rho",
+   "ref": 3.857143,
+   "rel_error": 1.2253736665802166e-12,
+   "run_id": "xval-dg-round2-xval-dg-round2-certified",
+   "tolerance_rel": 0.01
+  },
+  "claimed_level": null,
+  "failed_checks": [],
+  "l4_benchmark_pass": true,
+  "reason": "at least one platform-recomputed benchmark row meets tolerance",
+  "rows": 3,
+  "status": "VERIFIED",
+  "verified_metrics": [
+   "mass_integral",
+   "plateau_rho",
+   "shock_position"
+  ]
+ },
+ "mission_id": 20997,
+ "rawdir": "/tmp/cj3111/cj3111/repo/runs/shu_osher_case_pool/raw",
+ "recomputed_rows": [
+  {
+   "abs_error": 4.7264414604342164e-12,
+   "got_value": 3.8571430000047267,
+   "metric": "plateau_rho",
+   "passed": true,
+   "ref_value": 3.857143,
+   "rel_error": 1.2253736665802166e-12,
+   "tolerance_rel": 0.01,
+   "unit": "-"
+  },
+  {
+   "abs_error": 0.013758412825120026,
+   "got_value": 2.403125,
+   "metric": "shock_position",
+   "passed": true,
+   "ref_value": 2.38936658717488,
+   "rel_error": 0.00575818415598905,
+   "tolerance_rel": 0.01,
+   "unit": "-"
+  },
+  {
+   "abs_error": 2.595984831543774e-07,
+   "got_value": 31.08915244857708,
+   "metric": "mass_integral",
+   "passed": true,
+   "ref_value": 31.0891521889786,
+   "rel_error": 8.350130668613329e-09,
+   "tolerance_rel": 0.01,
+   "unit": "-"
+  }
+ ],
+ "validator_mode": "platform_contract",
+ "workload_stdout_sha256": "d5d4f39a6e495fcc8c2f3283a3a411c49fa9d6ca958c3fade21a2ce755cdc92d"
+}

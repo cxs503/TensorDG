@@ -1,0 +1,147 @@
+{
+ "profiles": {
+  "dg_cfl0p1_limweno_n400_p2.npz": {
+   "bytes": 15798,
+   "sha256": "01785eb07a871b9fadfbb60d0e67d76b8a18076c9b991d9426928f7b7d8cdadb"
+  },
+  "dg_cfl0p2_limweno_n400_p2.npz": {
+   "bytes": 15802,
+   "sha256": "9572056e7f105831519319bac3010a0d32d7b1daad025666275bc99f27fa8b6a"
+  },
+  "dg_cfl0p4_limweno_n200_p1.npz": {
+   "bytes": 9386,
+   "sha256": "4306943a539e085094f51a80ba22739d6fd4ed5adb3a2311db82f6b87e337411"
+  },
+  "dg_cfl0p4_limweno_n200_p2.npz": {
+   "bytes": 9394,
+   "sha256": "36cccecf43eeec3a8de82db2f9107cb603e619d603ba03201ec9364b7edf6413"
+  },
+  "dg_cfl0p4_limweno_n200_p3.npz": {
+   "bytes": 9398,
+   "sha256": "b8a79804b090df36a2b6b717be5fc6bdfd070d5df2a82d0ad1311a436bb25b76"
+  },
+  "dg_cfl0p4_limweno_n400_p1.npz": {
+   "bytes": 15798,
+   "sha256": "8412110790a38a96b8b5f6d5d6071d7cfa676e959e3c219abd660811fc05c0a6"
+  },
+  "dg_cfl0p4_limweno_n400_p2.npz": {
+   "bytes": 15802,
+   "sha256": "0e6026fb4c51a9861a3c731c53bc98aeb5d8ef57dd5e050b5e896da57e552080"
+  },
+  "dg_cfl0p4_limweno_n400_p3.npz": {
+   "bytes": 15798,
+   "sha256": "b6b6c73e4a8b0800a6060d7604fcb2bcd1b797d61efc278e9594a12666bf7861"
+  },
+  "dg_cfl0p4_limweno_n800_p1.npz": {
+   "bytes": 28590,
+   "sha256": "1ed9571456f51668c3206f217cc3036e50e371bc3a10c77d079a5767cfcba929"
+  },
+  "dg_cfl0p4_limweno_n800_p2.npz": {
+   "bytes": 28598,
+   "sha256": "7de2522ff1c96eef38cc8644bac04ea2c59893b432c53856b1ee5b978f8c0715"
+  },
+  "dg_cfl0p4_limweno_n800_p3.npz": {
+   "bytes": 28594,
+   "sha256": "c8cea96febff7b53b5be1d9ad2f7f82b74563aa1915f63f2c5c87ca0f8245d02"
+  },
+  "fv_cfl0p3_n1600.npz": {
+   "bytes": 53530,
+   "sha256": "2eabee2bb4b6bd94495ca62a00ff49f44dc5edf6bb7fb723f04d89ed096b1f5f"
+  },
+  "fv_cfl0p3_n3200.npz": {
+   "bytes": 104734,
+   "sha256": "3d3c7acc9c0e0486ecee524931c61d16083ad3fc1574dfe1a778d6f62fab7b39"
+  },
+  "fv_cfl0p3_n800.npz": {
+   "bytes": 27930,
+   "sha256": "16bf817e8fb6e1d21bd96aa264a5127f144f3ecf8c7246b3793f8732460bef7c"
+  }
+ },
+ "rawdir": "/data/test002/jobs/cj3111/repo/runs/shu_osher_case_pool/raw",
+ "runs": [
+  {
+   "cmd": "benchmarks.shu_osher_case_pool reference --ncells 800 --cfl 0.3",
+   "rc": 0,
+   "tag": "fv_cfl0p3_n800",
+   "wall_s": 36.29
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool reference --ncells 1600 --cfl 0.3",
+   "rc": 0,
+   "tag": "fv_cfl0p3_n1600",
+   "wall_s": 85.03
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool reference --ncells 3200 --cfl 0.3",
+   "rc": 0,
+   "tag": "fv_cfl0p3_n3200",
+   "wall_s": 223.95
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool ladder --degree 1 --ncells 200 --cfl 0.4",
+   "rc": 0,
+   "tag": "dg_cfl0p4_limweno_n200_p1",
+   "wall_s": 21.38
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool ladder --degree 1 --ncells 400 --cfl 0.4",
+   "rc": 0,
+   "tag": "dg_cfl0p4_limweno_n400_p1",
+   "wall_s": 42.98
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool ladder --degree 1 --ncells 800 --cfl 0.4",
+   "rc": 0,
+   "tag": "dg_cfl0p4_limweno_n800_p1",
+   "wall_s": 98.1
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool ladder --degree 2 --ncells 200 --cfl 0.4",
+   "rc": 0,
+   "tag": "dg_cfl0p4_limweno_n200_p2",
+   "wall_s": 35.68
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool ladder --degree 2 --ncells 400 --cfl 0.4",
+   "rc": 0,
+   "tag": "dg_cfl0p4_limweno_n400_p2",
+   "wall_s": 73.26
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool ladder --degree 2 --ncells 800 --cfl 0.4",
+   "rc": 0,
+   "tag": "dg_cfl0p4_limweno_n800_p2",
+   "wall_s": 166.09
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool ladder --degree 3 --ncells 200 --cfl 0.4",
+   "rc": 0,
+   "tag": "dg_cfl0p4_limweno_n200_p3",
+   "wall_s": 52.29
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool ladder --degree 3 --ncells 400 --cfl 0.4",
+   "rc": 0,
+   "tag": "dg_cfl0p4_limweno_n400_p3",
+   "wall_s": 108.6
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool ladder --degree 3 --ncells 800 --cfl 0.4",
+   "rc": 0,
+   "tag": "dg_cfl0p4_limweno_n800_p3",
+   "wall_s": 253.22
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool ladder --degree 2 --ncells 400 --cfl 0.1",
+   "rc": 0,
+   "tag": "dg_cfl0p1_limweno_n400_p2",
+   "wall_s": 442.24
+  },
+  {
+   "cmd": "benchmarks.shu_osher_case_pool ladder --degree 2 --ncells 400 --cfl 0.2",
+   "rc": 0,
+   "tag": "dg_cfl0p2_limweno_n400_p2",
+   "wall_s": 158.24
+  }
+ ]
+}
