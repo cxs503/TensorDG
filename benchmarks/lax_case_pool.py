@@ -663,7 +663,11 @@ def run_time_refinement(legs=TIME_LEGS, divisors=TIME_CFL_DIVISORS):
             # step a CFL study refines (it is not monotone in ``cfl``).  The
             # quantity that actually shrinks with the CFL divisor is the mean
             # step ``final_time / steps``; the remnant is kept for traceability.
+            # ``cells``/``degree`` are repeated on every level so the artifact
+            # itself shows that only ``dt`` moved inside a leg (the --``cells``
+            # held fixed'' invariant is otherwise unverifiable from the record).
             levels.append({"cfl": float(cfl),
+                           "cells": int(cells), "degree": int(degree),
                            "dt": float(meta.get("dt_mean", FINAL_TIME / max(meta["steps"], 1))),
                            "dt_last_step": float(meta["dt"]),
                            "steps": int(meta["steps"]), "relative_l1": errors})
