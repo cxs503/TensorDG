@@ -55,8 +55,13 @@ def _primitive(state):
 
 
 def _vortex_error(coeff, basis, nodes, domain, final_time, strength=5.0,
-                  background=(1.0, 1.0)):
-    """Relative L2 error of (rho, u, v, p) against the exact vortex solution."""
+                  background=(1.0, 1.0), period=None):
+    """Relative L2 error of (rho, u, v, p) against the exact vortex solution.
+
+    ``period`` (box length) is forwarded to :func:`vortex_primitive` so the
+    reference is the *periodic* solution; omit it only for runs whose vortex
+    centre stays inside the box for the whole interval.
+    """
     nx, ny = coeff.shape[0], coeff.shape[1]
     (xmin, xmax), (ymin, ymax) = domain
     dx, dy = (xmax - xmin) / nx, (ymax - ymin) / ny
@@ -64,7 +69,8 @@ def _vortex_error(coeff, basis, nodes, domain, final_time, strength=5.0,
     y = ymin + (torch.arange(ny, dtype=coeff.dtype) + 0.5) * dy
     xq = x[:, None, None, None] + 0.5 * dx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * dy * nodes[None, None, None, :]
-    exact = vortex_primitive(xq, yq, final_time, strength, background)
+    exact = vortex_primitive(xq, yq, final_time, strength, background,
+                             period=period)
     state = _reconstruct(coeff, basis)
     rho, u, v, p = _primitive(state)
     weights = torch.as_tensor(
