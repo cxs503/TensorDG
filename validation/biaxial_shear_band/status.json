@@ -1,0 +1,68 @@
+{
+  "case": "CASE-BIAXIAL-SHEAR-BAND",
+  "tolerance": 0.15,
+  "material": {
+    "E": 30000000.0,
+    "nu": 0.3,
+    "rho": 2000.0,
+    "phi_deg": 40.0,
+    "psi_deg": 14.999999999999998,
+    "c0": 350000.0,
+    "c_res": 25000.0,
+    "gp_ref": 0.02,
+    "cp": 142.09964001470127
+  },
+  "localization": {
+    "theta_numeric_deg": 58.39998293859009,
+    "theta_closed_form_deg": 58.75,
+    "theta_coulomb_deg": 65.0,
+    "rel_error_vs_closed_form": 0.005957737215487789,
+    "associative_numeric_deg": 64.9999745352091,
+    "associative_closed_deg": 65.0,
+    "associative_rel_error": 3.9176601376311735e-07,
+    "det_sign_change_roots_deg": [
+      50.49999299718251,
+      67.59997122478629
+    ]
+  },
+  "elastic_verification": {
+    "test": "plane-strain oedometer (rigid lateral walls, eps_xx = 0)",
+    "eps_axial": -0.02834982551386634,
+    "sig3": 50000.0,
+    "sig_xx_numeric": -260158.6767415726,
+    "sig_xx_exact": -490670.0569707635,
+    "sig_xx_rel_error": 0.4697889690931882,
+    "sig_yy_numeric": -744561.3690392687,
+    "sig_yy_exact": -1144896.7995984482,
+    "sig_yy_rel_error": 0.34966944680043643,
+    "sig_yy_field_spread": 1.871984222847358
+  },
+  "biaxial": {
+    "nx": 30,
+    "ny": 60,
+    "n_steps": 9000,
+    "dt": 0.00821020142307163,
+    "axial_strain_rate": -0.001,
+    "damping": 0.1,
+    "eps_final": 0.07348951293791416,
+    "eps_lateral": -0.05624952833249548,
+    "eps_peak": 0.023407284257177217,
+    "q_peak": 201229.46734577304,
+    "q_final_mean": 62378.18084899161,
+    "ke_over_ie_median": 0.00020914303641721366,
+    "nonlocal_radius_cells": 2,
+    "band_angle_post_peak_deg": NaN,
+    "band_points_post_peak": 1800,
+    "contrast_post_peak": 1.0168525030478697,
+    "structure_tensor_angle_deg": NaN,
+    "band_angle_total_deg": NaN,
+    "contrast_total": 1.0149364796465998,
+    "band_angle_measured_deg": NaN,
+    "theta_ref_deg": 58.75,
+    "rel_error_measured_value": NaN,
+    "localized": false,
+    "post_peak_detected": true,
+    "acceptance_pass": false
+  },
+  "figure": "docs/figures/biaxial_shear_band.png"
+}
