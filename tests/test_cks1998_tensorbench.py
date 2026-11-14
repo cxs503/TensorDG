@@ -4,7 +4,7 @@
 
 1. **规格与非零 ref 一致**：spec 的白名单键、metric 指针、容差表与
    ``bench_spec.METRICS`` 逐项相等（容差表冻结在本文件里，改容差必须先改这里 → 留痕）；
-2. **workload 文档能被契约指针取到**：跑 ``--profile smoke``（秒级），验证 8 个 metric
+2. **workload 文档能被契约指针取到**：跑 ``--profile smoke``（约 1 min），验证 13 个 metric
    的 ref/got 指针都能解析、守恒积分落在机器精度、观测阶有限；
 3. **平台会拒收的四种坏文档，本地校验器也会拒**：schema_version 错、benchmark 身份
    不一致、指针缺失、execution.status != success —— 防止"文档坏了但本地自检绿"。
@@ -32,6 +32,9 @@ FROZEN_TOLERANCES = {
     "adv_order_p1": 0.05, "adv_order_p2": 0.05, "adv_order_p3": 0.05,
     "sod_rho_x030": 0.03, "sod_rho_x070": 0.03, "sod_vel_x055": 0.03,
     "sod_mass_integral": 1e-3, "sod_energy_integral": 1e-3,
+    # --- 二维 Euler 光滑熵波（论文 §5.1）与精确解的闭式积分 -------------------
+    "sm2d_order_p1": 0.03, "sm2d_order_p2": 0.03, "sm2d_order_p3": 0.03,
+    "sm2d_mass_integral": 1e-3, "sm2d_energy_integral": 1e-3,
 }
 
 
@@ -90,8 +93,13 @@ def test_smoke_document_resolves_every_pointer_and_conserves_mass_and_energy(smo
         assert by_name[key]["rel_error"] < 1e-6, by_name[key]
         assert by_name[key]["passed"]
     # 观测阶必须有限且在合理区间（粗网格 smoke 档不了精度，只证明算出来了）
-    for key in ("adv_order_p1", "adv_order_p2", "adv_order_p3"):
+    for key in ("adv_order_p1", "adv_order_p2", "adv_order_p3",
+                "sm2d_order_p1", "sm2d_order_p2", "sm2d_order_p3"):
         assert 0.5 < by_name[key]["got_value"] < 6.0, key
+    # 二维守恒积分同理：闭式 ref（4 / 14）对 DG 离散解，机器精度级
+    for key in ("sm2d_mass_integral", "sm2d_energy_integral"):
+        assert by_name[key]["rel_error"] < 1e-6, by_name[key]
+        assert by_name[key]["passed"]
 
 
 def test_validate_documents_accepts_wellformed_bundle(smoke_doc):
