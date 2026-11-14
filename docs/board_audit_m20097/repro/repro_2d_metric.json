@@ -1,0 +1,167 @@
+{
+  "anchor": "CASE-DG-ADVECT-ORDER",
+  "velocity": [
+    1.0,
+    0.5
+  ],
+  "final_time": 1.0,
+  "note": "err_vs_initial reproduces the m20026 tool call; err_vs_exact is the well-posed norm against the transported analytic field",
+  "results": {
+    "p0": {
+      "cells": [
+        8,
+        16,
+        32
+      ],
+      "err_vs_initial": [
+        0.5104325874310439,
+        0.5774670030354573,
+        0.6975634378655376
+      ],
+      "order_vs_initial": -0.22530199344691773,
+      "err_vs_exact": [
+        0.48975281784759095,
+        0.42326047922331506,
+        0.3032194914425771
+      ],
+      "order_vs_exact": 0.3458456489740297,
+      "theoretical_order": 1,
+      "runs": [
+        {
+          "ncells": 8,
+          "steps": 150,
+          "mass_drift_rel": 2.2204460492503136e-16
+        },
+        {
+          "ncells": 16,
+          "steps": 300,
+          "mass_drift_rel": 1.1102230246251568e-16
+        },
+        {
+          "ncells": 32,
+          "steps": 600,
+          "mass_drift_rel": 0.0
+        }
+      ]
+    },
+    "p1": {
+      "cells": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "err_vs_initial": [
+        0.9714387824571739,
+        0.9961559942785777,
+        0.9995095743762726,
+        0.9999383098517274
+      ],
+      "order_vs_initial": -0.012999673096581437,
+      "err_vs_exact": [
+        0.03746372533390468,
+        0.007552346923944197,
+        0.0017225972120974195,
+        0.00041887911578615365
+      ],
+      "order_vs_exact": 2.1580789432673617,
+      "theoretical_order": 2,
+      "runs": [
+        {
+          "ncells": 8,
+          "steps": 450,
+          "mass_drift_rel": 2.2204460492503126e-16
+        },
+        {
+          "ncells": 16,
+          "steps": 900,
+          "mass_drift_rel": 4.440892098500626e-16
+        },
+        {
+          "ncells": 32,
+          "steps": 1800,
+          "mass_drift_rel": 0.0
+        },
+        {
+          "ncells": 64,
+          "steps": 3600,
+          "mass_drift_rel": 0.0
+        }
+      ]
+    },
+    "p2": {
+      "cells": [
+        6,
+        12,
+        24
+      ],
+      "err_vs_initial": [
+        0.9992412455137799,
+        0.9999748660248415,
+        0.9999992015714675
+      ],
+      "order_vs_initial": -0.0005469574705847443,
+      "err_vs_exact": [
+        0.003999899180040964,
+        0.000495460936637663,
+        6.190525948386645e-05
+      ],
+      "order_vs_exact": 3.006878919940953,
+      "theoretical_order": 3,
+      "runs": [
+        {
+          "ncells": 6,
+          "steps": 563,
+          "mass_drift_rel": 2.220446049250313e-16
+        },
+        {
+          "ncells": 12,
+          "steps": 1125,
+          "mass_drift_rel": 0.0
+        },
+        {
+          "ncells": 24,
+          "steps": 2250,
+          "mass_drift_rel": 0.0
+        }
+      ]
+    },
+    "p3": {
+      "cells": [
+        6,
+        12,
+        24
+      ],
+      "err_vs_initial": [
+        0.9999956353300928,
+        0.9999999645581767,
+        0.9999999997200556
+      ],
+      "order_vs_initial": -3.1482487488709904e-06,
+      "err_vs_exact": [
+        0.00025128350489624486,
+        1.585159394292109e-05,
+        9.963581410174355e-07
+      ],
+      "order_vs_exact": 3.989217921604972,
+      "theoretical_order": 4,
+      "runs": [
+        {
+          "ncells": 6,
+          "steps": 788,
+          "mass_drift_rel": 2.2204460492503126e-16
+        },
+        {
+          "ncells": 12,
+          "steps": 1575,
+          "mass_drift_rel": 2.2204460492503126e-16
+        },
+        {
+          "ncells": 24,
+          "steps": 3150,
+          "mass_drift_rel": 0.0
+        }
+      ]
+    }
+  }
+}
