@@ -82,14 +82,17 @@ FV_LEVELS = (800, 1600, 3200)
 DOMAIN = (-5.0, 5.0)
 GAMMA = 1.4
 FINAL_TIME = 1.8
-#: OSS files whose *behaviour* this study relies on; hashes prove non-tampering
-OSS_PROVENANCE = (
-    "clawpack/riemann/euler_1D_py.py",
-    "pyclaw/src/pyclaw/sharpclaw/solver.py",
-    "pyclaw/src/pyclaw/limiters/recon.py",
-    "pyclaw/src/pyclaw/solver.py",
-    "pyclaw/src/pyclaw/state.py",
-)
+#: OSS files whose *behaviour* this study relies on; hashes prove non-tampering.
+#: Keyed by the *installed* layout path, valued by the path inside the released
+#: sdist (the two differ: the sdist is a monorepo, see
+#: :mod:`tools.fetch_oss_clawpack`).  ``None`` means "same path in both".
+OSS_PROVENANCE = {
+    "clawpack/riemann/euler_1D_py.py": "riemann/riemann/euler_1D_py.py",
+    "pyclaw/src/pyclaw/sharpclaw/solver.py": None,
+    "pyclaw/src/pyclaw/limiters/recon.py": None,
+    "pyclaw/src/pyclaw/solver.py": None,
+    "pyclaw/src/pyclaw/state.py": None,
+}
 
 
 # ------------------------------------------------------------------ OSS leg
@@ -104,21 +107,48 @@ def import_oss(root: Path | str):
 
 
 def verify_oss_tree(root: Path | str) -> dict:
-    """sha256 of the OSS files the study leans on (zero-transcription evidence)."""
+    """sha256 of the OSS files the study leans on (zero-transcription evidence).
+
+    Both layouts are resolved: a *pip-installed* tree (``clawpack/riemann/...``)
+    and the released *sdist* (``riemann/riemann/...``).  A file that is absent in
+    both is reported ``missing`` rather than silently skipped, and the version is
+    read from the tree itself (never asserted from memory).
+    """
     root = Path(root)
-    out = {"root": str(root), "files": {}}
-    for rel in OSS_PROVENANCE:
-        path = root / rel
-        if not path.exists():
+    out = {"root": str(root), "layout": None, "files": {}}
+    for rel, sdist_rel in OSS_PROVENANCE.items():
+        for cand in (rel, sdist_rel):
+            if cand is None:
+                continue
+            path = root / cand
+            if path.exists():
+                out["files"][rel] = {
+                    "resolved": cand,
+                    "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                    "bytes": path.stat().st_size,
+                }
+                break
+        else:
             out["files"][rel] = {"missing": True}
-            continue
-        out["files"][rel] = {
-            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-            "bytes": path.stat().st_size,
-        }
+    if any("resolved" in v for v in out["files"].values()):
+        out["layout"] = ("sdist" if (root / "riemann" / "riemann").is_dir()
+                         and not (root / "clawpack" / "riemann").is_dir()
+                         else "installed")
+    # version read off the tree: sdist directory name, else clawpack/__init__.py
+    import re
+    m = re.search(r"clawpack-([0-9]+\.[0-9]+\.[0-9]+)$", root.name)
     init = root / "clawpack" / "__init__.py"
-    if init.exists():
-        out["version"] = "5.14.0" if b"MICRO               = 0" in init.read_bytes() else "unknown"
+    if m:
+        out["version"] = m.group(1)
+    elif init.exists():
+        head = init.read_text(errors="replace")[:4000]
+        nums = {k: re.search(rf"{k}\s*=\s*([0-9]+)", head) for k in ("MAJOR", "MINOR", "MICRO")}
+        if all(nums.values()):
+            out["version"] = ".".join(n.group(1) for n in nums.values())
+        else:
+            out["version"] = "unknown"
+    else:
+        out["version"] = "unknown"
     return out
 
 
