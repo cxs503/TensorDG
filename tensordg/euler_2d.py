@@ -35,10 +35,27 @@ __all__ = [
 ]
 
 
-def vortex_primitive(x, y, time=0.0, strength=5.0, background_velocity=(1.0, 1.0)):
-    """Analytical isentropic vortex with unit far-field density and pressure."""
+def vortex_primitive(x, y, time=0.0, strength=5.0, background_velocity=(1.0, 1.0),
+                     periodic_box=None):
+    """Analytical isentropic vortex with unit far-field density and pressure.
+
+    ``periodic_box=(Lx, Ly)`` returns the exact solution of the *periodic*
+    problem: the displacement is reduced with the minimum-image convention, so
+    a vortex advected across a periodic seam (or through a whole period) is
+    evaluated where it actually is.  The neglected images sit at distance
+    ``>= 2L/... `` -- for the compact support of this profile (``exp(-r^2/2)``,
+    ``L = 10``) the image contribution is below ``2e-11``, i.e. far under the
+    accuracy of any scheme being verified.
+
+    The default ``None`` keeps the historic un-wrapped shift (valid only while
+    ``|u|t, |v|t < L/2``) so existing callers are bit-identical.
+    """
     x_shift = x - background_velocity[0] * time
     y_shift = y - background_velocity[1] * time
+    if periodic_box is not None:
+        length_x, length_y = periodic_box
+        x_shift = torch.remainder(x_shift + 0.5 * length_x, length_x) - 0.5 * length_x
+        y_shift = torch.remainder(y_shift + 0.5 * length_y, length_y) - 0.5 * length_y
     radius2 = x_shift ** 2 + y_shift ** 2
     exponential = torch.exp(0.5 * (1.0 - radius2))
     temperature = 1.0 - (GAMMA - 1.0) * strength ** 2 / (
@@ -277,8 +294,14 @@ def solve_isentropic_vortex(
     return x, y, fields, metadata
 
 
-def vortex_error(x, y, conservative, final_time, strength=5.0, background_velocity=(1.0, 1.0)):
-    """Compare P0 states with four-point-per-direction exact cell averages."""
+def vortex_error(x, y, conservative, final_time, strength=5.0,
+                 background_velocity=(1.0, 1.0), periodic_box=None):
+    """Compare P0 states with four-point-per-direction exact cell averages.
+
+    ``periodic_box`` is forwarded to :func:`vortex_primitive`; pass it whenever
+    ``final_time`` can move the vortex across a seam, otherwise the reference
+    is not the solution of the periodic problem (see that docstring).
+    """
     nx, ny = conservative.shape[:2]
     dx = float((x[-1] - x[0]).item()) / (nx - 1)
     dy = float((y[-1] - y[0]).item()) / (ny - 1)
@@ -287,7 +310,9 @@ def vortex_error(x, y, conservative, final_time, strength=5.0, background_veloci
     weights = torch.as_tensor(weights_np, device=conservative.device, dtype=conservative.dtype)
     xq = x[:, None, None, None] + 0.5 * dx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * dy * nodes[None, None, None, :]
-    exact_q = vortex_primitive(xq, yq, final_time, strength, background_velocity)
+    exact_q = vortex_primitive(
+        xq, yq, final_time, strength, background_velocity, periodic_box=periodic_box
+    )
     reference = tuple(
         0.25 * torch.sum(
             field * weights[None, None, :, None] * weights[None, None, None, :],

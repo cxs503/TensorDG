@@ -55,8 +55,13 @@ def _primitive(state):
 
 
 def _vortex_error(coeff, basis, nodes, domain, final_time, strength=5.0,
-                  background=(1.0, 1.0)):
-    """Relative L2 error of (rho, u, v, p) against the exact vortex solution."""
+                  background=(1.0, 1.0), periodic_box=None):
+    """Relative L2 error of (rho, u, v, p) against the exact vortex solution.
+
+    ``periodic_box`` (``(Lx, Ly)``) selects the exact solution of the *periodic*
+    problem via the minimum-image convention.  Without it, any checkpoint with
+    ``|u|t >= L/2`` compares against a profile that has left the box.
+    """
     nx, ny = coeff.shape[0], coeff.shape[1]
     (xmin, xmax), (ymin, ymax) = domain
     dx, dy = (xmax - xmin) / nx, (ymax - ymin) / ny
@@ -64,7 +69,9 @@ def _vortex_error(coeff, basis, nodes, domain, final_time, strength=5.0,
     y = ymin + (torch.arange(ny, dtype=coeff.dtype) + 0.5) * dy
     xq = x[:, None, None, None] + 0.5 * dx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * dy * nodes[None, None, None, :]
-    exact = vortex_primitive(xq, yq, final_time, strength, background)
+    exact = vortex_primitive(
+        xq, yq, final_time, strength, background, periodic_box=periodic_box
+    )
     state = _reconstruct(coeff, basis)
     rho, u, v, p = _primitive(state)
     weights = torch.as_tensor(
