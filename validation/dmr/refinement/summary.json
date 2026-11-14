@@ -1,0 +1,199 @@
+{
+  "anchor": "REPRO-DG-CKS1998",
+  "case": "double_mach_reflection (Woodward--Colella / CKS1998 Part V)",
+  "protocol": {
+    "solver": "tensordg.euler_dg_2d.solve_euler_dg_2d via benchmarks.double_mach_reflection.solve_double_mach",
+    "boundaries": "standard set: bottom wall, left post-shock inflow, right outflow, top exact moving-front ghost",
+    "limiter": "tvb, M = 100, limiter_stage = final",
+    "cfl": 0.15,
+    "final_time": 0.02,
+    "domain": [
+      [
+        0.0,
+        4.0
+      ],
+      [
+        0.0,
+        1.0
+      ]
+    ],
+    "ladder_P1": [
+      [
+        64,
+        16
+      ],
+      [
+        128,
+        32
+      ],
+      [
+        192,
+        48
+      ],
+      [
+        256,
+        64
+      ],
+      [
+        384,
+        96
+      ]
+    ],
+    "extra_P2": [
+      [
+        128,
+        32
+      ]
+    ],
+    "runner": "scripts/run_dmr_refinement.py --nx NX --ny NY --degree D --time 0.02",
+    "analysis": "scripts/analyze_dmr_refinement.py --dir validation/dmr/refinement"
+  },
+  "pre_registration": "This file was written BEFORE any ladder run was submitted. No number below depends on a ladder result. Only the 64x16 P1 single-run values that were already public in the m20397 report were known at writing time.",
+  "runs": [
+    {
+      "grid": [
+        128,
+        32
+      ],
+      "degree": 1,
+      "steps": 313,
+      "wall_seconds": 68.07989192008972,
+      "dx": 0.03125
+    },
+    {
+      "grid": [
+        64,
+        16
+      ],
+      "degree": 1,
+      "steps": 150,
+      "wall_seconds": 23.49303936958313,
+      "dx": 0.0625
+    }
+  ],
+  "gates": {
+    "G1": {
+      "id": "G1",
+      "claim": "The constant post-shock plateau, sampled at least 0.30 away from every boundary (x in [0.25,0.45], y in [0.55,0.75]), is within the 3% standard at EVERY rung, including 64x16.",
+      "pass_if": "abs(rho_err) <= 0.03 and abs(p_err) <= 0.03 for all P1 rungs",
+      "evidence": {
+        "64": {
+          "rho": -0.01823028593991682,
+          "p": -0.023780359143949232
+        },
+        "128": {
+          "rho": -0.010924677208807408,
+          "p": -0.014764540035265563
+        }
+      },
+      "verdict": "PASS"
+    },
+    "G2": {
+      "id": "G2",
+      "claim": "That interior plateau error is a convergence quantity: the finest rung is closer to the exact state than the coarsest one.",
+      "pass_if": "err(384x96) < err(64x16)",
+      "evidence": {
+        "coarse": {
+          "nx": 64,
+          "abs_rel": 0.01823028593991682
+        },
+        "fine": {
+          "nx": 128,
+          "abs_rel": 0.010924677208807408
+        },
+        "rate": 0.7387465369810239
+      },
+      "verdict": "PASS"
+    },
+    "G3": {
+      "id": "G3",
+      "claim": "The incident front position at interior heights y in {0.50,0.60,0.70,0.80} is captured to a bounded number of cells, and that bound is the same at every rung (a captured discontinuity has a fixed cell-width).",
+      "pass_if": "<= 2.0 cells at every P1 rung",
+      "evidence": {
+        "64": 1.4241193203508526,
+        "128": 1.1108186921336696
+      },
+      "verdict": "PASS"
+    },
+    "G4": {
+      "id": "G4",
+      "claim": "The large front-position error seen at y ~ 0.90 in m20397 is a top-boundary artefact, not a physical front error, so it must shrink in physical units with refinement.",
+      "pass_if": "front_error_phys(384x96) <= 0.5 * front_error_phys(64x16)",
+      "evidence": {
+        "coarse": {
+          "nx": 64,
+          "abs_phys": 0.22735170051988374
+        },
+        "fine": {
+          "nx": 128,
+          "abs_phys": 0.17246042322168365
+        },
+        "ratio": 0.7585622752208119
+      },
+      "verdict": "FAIL"
+    },
+    "G5": {
+      "id": "G5",
+      "claim": "The captured shock has a smearing width of a fixed number of CELLS (i.e. it scales like h) - this is what makes a fixed-PHYSICAL-offset sample improve with refinement.",
+      "pass_if": "0.5 <= smear_width_cells(384x96) / smear_width_cells(64x16) <= 2.0",
+      "evidence": {
+        "64": 5.812920045170102,
+        "128": 6.221540853202207,
+        "ratio_finest_over_coarsest": 1.070295274123308
+      },
+      "verdict": "PASS"
+    },
+    "G6": {
+      "id": "G6",
+      "claim": "The sample-drift mechanism is the explanation of the m20397 numbers: a sample at a fixed PHYSICAL offset (0.10) behind the ANALYTIC front shows an error that falls with h, while a sample at a fixed number of CELLS (5) behind it stays inside the plateau.",
+      "pass_if": "abs(err(384x96)) < abs(err(64x16)) and abs(err(384x96)) <= 0.03",
+      "evidence": {
+        "64": {
+          "rel_error_rho": -0.21622158716413503,
+          "offset_cells": 1.6
+        },
+        "128": {
+          "rel_error_rho": -0.12997067944191218,
+          "offset_cells": 3.2
+        }
+      },
+      "verdict": "FAIL"
+    },
+    "G7": {
+      "id": "G7",
+      "claim": "The relative L1 error of the density, taken where the exact solution is the piecewise-constant two-state solution (>= 6 cells from the front, y > 0.35), converges at first order or better.",
+      "pass_if": "observed rate >= 0.5 (least squares on log-log over all rungs)",
+      "evidence": {
+        "l1_rel": {
+          "64": 0.17607309725032466,
+          "128": 0.15923676929941077
+        },
+        "rate": 0.14500098570807762
+      },
+      "verdict": "FAIL"
+    },
+    "G8": {
+      "id": "G8",
+      "claim": "Shock smearing - not a physical defect - is what the m20397 offset sample measured inside the smeared front: at the SAME physical offset (0.10, i.e. 1.6 cells at 64x16 but 9.6 cells at 384x96) the sample must sit inside the numerical transition at 64x16 and inside the plateau at 384x96.",
+      "pass_if": "offset_cells(64x16) < smear_width_cells(64x16) and offset_cells(384x96) > smear_width_cells(384x96)",
+      "evidence": {
+        "coarse": {
+          "offset_cells": 1.6,
+          "smear_width_cells": 5.812920045170102
+        },
+        "fine": {
+          "offset_cells": 3.2,
+          "smear_width_cells": 6.221540853202207
+        }
+      },
+      "verdict": "FAIL"
+    }
+  },
+  "n_pass": 4,
+  "n_fail": 4,
+  "figures": [
+    "fig1_profile_and_plateau_convergence.png",
+    "fig2_row_error_profile.png",
+    "fig3_front_error_cells.png"
+  ]
+}
