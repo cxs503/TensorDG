@@ -127,12 +127,36 @@ class WallReflection:
             return self.x_zero + self.incident_speed * time
         return self.x_wall + self.reflected_speed * (time - self.wall_time)
 
+    def incident_front(self, time):
+        """Position of the incident shock; it stops when it reaches the wall."""
+        return min(self.x_zero + self.incident_speed * time, self.x_wall)
+
     def state(self, x, time):
-        """Exact primitive ``(rho, u, p)`` at ``x`` (``u`` along ``x``)."""
+        """Exact primitive ``(rho, u, p)`` at ``x`` (``u`` along ``x``).
+
+        Before the reflection the state has two regions -- pre-shock ahead of the
+        incident front, post-shock behind it.  *After* the reflection it still has
+        two regions, but they are post-shock ahead of the **reflected** front and
+        the reflected plateau between that front and the wall (the pre-shock gas
+        has all been swept past the wall).
+
+        The earlier implementation reused ``behind = reflected`` with
+        ``ahead = pre`` for ``t > wall_time``: it put the plateau on the wrong
+        side of the reflected front *and* dropped the post-shock region.  Every
+        norm computed against it (``wall_reflection()["l2_relative"]`` and the
+        matching assertion in ``tests/test_euler_dg_2d_wall_bc.py``) was
+        therefore measuring a reference error, not a solver error.
+
+        ``x`` is assumed to lie in the gas, ``x <= x_wall``; behind the wall the
+        reflected plateau is returned (the solid region has no Euler state).
+        """
         front = self.front(time)
-        behind = self.post if time <= self.wall_time else self.reflected
+        if time <= self.wall_time:
+            behind, ahead = self.post, self.pre
+        else:
+            behind, ahead = self.post, self.reflected
         return tuple(np.where(x < front, value, value0)
-                     for value, value0 in zip(behind, self.pre))
+                     for value, value0 in zip(behind, ahead))
 
 
 # ---------------------------------------------------------------------------
