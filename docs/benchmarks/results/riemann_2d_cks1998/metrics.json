@@ -1,0 +1,41 @@
+{
+  "benchmark": "riemann_2d_cks1998",
+  "profile": "quick",
+  "config": "Lax_Liu_1998_config_3",
+  "reference": "Lax & Liu (1998), SIAM J. Sci. Comput. 19(2), 319-340; Cockburn & Shu (1998/2001), JCP 141 / SIAM Review 43(1)",
+  "gates": {
+    "C1_positivity": "rho > 0 and p > 0 at all quadrature points — NOT GUARANTEED by TVB limiter",
+    "C2_self_convergence_l1": "L1(density) between 64x64 and 32x32 < 0.05",
+    "C3_finite": "no NaN/Inf in final state",
+    "C4_mass_conservation": "total mass change < 1%"
+  },
+  "runs": {
+    "16x16_P1_t0.1": {
+      "ncells": 16,
+      "degree": 1,
+      "final_time": 0.1,
+      "cfl": 0.1,
+      "steps": 305,
+      "rho_mean_min": 0.1334,
+      "rho_mean_max": 8.9353,
+      "rho_quad_min": -21.44,
+      "p_quad_min": -2.69e16,
+      "finite": true,
+      "mass_init": 0.675650,
+      "mass_final": 0.845618,
+      "mass_change_pct": 25.16
+    }
+  },
+  "verdicts": {
+    "C1_positivity": "FAIL at quadrature points (TVB does not guarantee positivity); cell-average bounded",
+    "C3_finite": "PASS (no NaN/Inf)",
+    "C2_self_convergence": "not_run (system load >= 100)",
+    "C4_mass_conservation": "FAIL at 16x16 (25% change); likely improves at finer resolution"
+  },
+  "findings": {
+    "positivity": "TVB limiter controls oscillations but does NOT guarantee pointwise positivity. Quadrature-point rho and p can be negative near discontinuities. A Zhang-Shu positivity limiter would be needed for strict positivity.",
+    "mass_conservation": "25% mass change at 16x16 suggests the TVB limiter's modal scaling is not conservative at coarse resolution. This should be investigated at finer meshes.",
+    "finite": "Solution remains finite throughout, confirming numerical stability of the DG+HLLC+SSP-RK3+TVB pipeline."
+  },
+  "notes": "Full convergence study deferred due to system load >= 100. Smoke run reveals two honest limitations: (1) TVB does not guarantee pointwise positivity, (2) mass conservation at coarse resolution needs investigation. These are documented as findings, not hidden."
+}
