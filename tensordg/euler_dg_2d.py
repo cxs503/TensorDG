@@ -915,6 +915,14 @@ def solve_euler_dg_2d(
         state = _apply_limiter(state)
         return _positivity_filter(state, basis, signs)
 
+    # --- Global conservation tracking (periodic BCs only) ---
+    def _totals_2d(c):
+        """Domain-integral of the four conserved quantities from cell averages."""
+        return (c[..., 0, 0, :].sum(dim=(0, 1)) * dx * dy).clone()
+
+    _is_periodic = periodic_flags[0] and periodic_flags[1]
+    totals_initial = _totals_2d(coeff) if _is_periodic else None
+
     time, steps, dt = 0.0, 0, 0.0
     while time < final_time:
         at_quad = torch.einsum("xyklv,ak,bl->xyabv", coeff, basis, basis)
@@ -956,6 +964,19 @@ def solve_euler_dg_2d(
         time += dt
         steps += 1
 
+    totals_final = _totals_2d(coeff) if _is_periodic else None
+    _cons_names = ("mass", "x_momentum", "y_momentum", "energy")
+    conservation_drift = {}
+    if _is_periodic and totals_initial is not None and totals_final is not None:
+        for i, name in enumerate(_cons_names):
+            denom = max(abs(float(totals_initial[i].item())), 1e-30)
+            conservation_drift[name] = float(
+                abs(float(totals_final[i].item()) - float(totals_initial[i].item())) / denom
+            )
+    else:
+        for name in _cons_names:
+            conservation_drift[name] = float("nan")
+
     metadata = {
         "ncells": (nx, ny),
         "degree": degree,
@@ -979,6 +1000,7 @@ def solve_euler_dg_2d(
         "device": str(dev),
         "dtype": str(dtype).replace("torch.", ""),
         "dofs": nx * ny * (degree + 1) ** 2 * 4,
+        "conservation_drift": conservation_drift,
     }
     return x, y, coeff, metadata
 

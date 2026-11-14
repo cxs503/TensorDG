@@ -56,6 +56,7 @@ DOMAIN = ((-5.0, 5.0), (-5.0, 5.0))
 STRENGTH = 5.0
 BACKGROUND = (1.0, 1.0)
 FIELDS = ("density", "velocity_x", "velocity_y", "pressure")
+CONSERVATION_NAMES = ("mass", "x_momentum", "y_momentum", "energy")
 
 #: Case-pool tolerance: every field must be < 5 % relative L2.
 TOLERANCE = 0.05
@@ -233,9 +234,21 @@ def run_residual():
 
 def run_p0(config: dict):
     started = time.time()
+    # Conservation tracking via observer hook
+    _p0_totals_initial = None
+    _p0_totals_final = None
+    def _p0_observer(t, steps, u):
+        nonlocal _p0_totals_initial, _p0_totals_final
+        # u shape: (nx, ny, 4) - sum over spatial dims, keep 4 components
+        cell_area = (10.0 / config["cells"]) ** 2
+        totals = (u.sum(dim=(0, 1)) * cell_area).clone()
+        if steps == 0:
+            _p0_totals_initial = totals
+        _p0_totals_final = totals
     x, y, fields, metadata = solve_isentropic_vortex(
         ncells=config["cells"], final_time=config["final_time"],
         cfl=config["cfl"], strength=config.get("strength", STRENGTH),
+        observer=_p0_observer,
     )
     errors = vortex_error(x, y, fields["conservative"], config["final_time"],
                           config.get("strength", STRENGTH), BACKGROUND)
@@ -251,6 +264,19 @@ def run_p0(config: dict):
         "metric": "cell-average relative L2 (4x4 exact cell quadrature)",
         "fields_np": (fields["density"].cpu().numpy(), x.cpu().numpy(), y.cpu().numpy()),
     }
+    # Conservation drift
+    if _p0_totals_initial is not None and _p0_totals_final is not None:
+        cons_drift = {}
+        for i, name in enumerate(CONSERVATION_NAMES):
+            init_val = float(_p0_totals_initial[i].item())
+            final_val = float(_p0_totals_final[i].item())
+            denom = max(abs(init_val), 1e-30)
+            cons_drift[name] = abs(final_val - init_val) / denom
+        record["conservation_drift"] = cons_drift
+        record["max_conservation_drift"] = max(cons_drift.values())
+    else:
+        record["conservation_drift"] = {name: float("nan") for name in CONSERVATION_NAMES}
+        record["max_conservation_drift"] = float("nan")
     record["wall_seconds"] = wall
     return record
 
@@ -285,6 +311,13 @@ def run_dg(config: dict):
                                   config["cells"])),
     }
     record["wall_seconds"] = wall
+    # Conservation drift from solver metadata
+    cons_drift = metadata.get("conservation_drift", {})
+    record["conservation_drift"] = {name: cons_drift.get(name, float("nan")) for name in CONSERVATION_NAMES}
+    record["max_conservation_drift"] = max(
+        (v for v in record["conservation_drift"].values() if not isinstance(v, float) or not __import__("math").isnan(v)),
+        default=0.0,
+    )
     return record
 
 
