@@ -30,7 +30,9 @@ import scipy.linalg as sla
 import torch
 
 from tensordg.advection_1d import _operators, _rhs, l2_error, solve_advection
-from tensordg.runge_kutta import TABLEAUS, get_tableau, rk_step, tableau_for_degree
+from tensordg.runge_kutta import (SSP_RK54, TABLEAUS, get_tableau,
+                                  max_order_for_stages, rk_step,
+                                  tableau_for_degree)
 
 METRICS = pathlib.Path("validation/advection_order/metrics.json")
 ORDER_TOL = 0.15
@@ -41,7 +43,8 @@ FIT_LO, FIT_POINTS = 1e-14, 4
 
 #: Design order of every scheme reachable through ``solve_advection``;
 #: SSP-RK3 is not in Butcher form so it is not part of ``TABLEAUS``.
-SCHEME_ORDER = {"euler": 1, "rk2": 2, "rk3": 3, "rk4": 4, "rk5": 5, "ssp_rk3": 3}
+SCHEME_ORDER = {"euler": 1, "rk2": 2, "rk3": 3, "rk4": 4, "rk5": 5,
+                "ssp_rk54": 4, "ssp_rk3": 3}
 
 
 def _slope(dts, errs) -> float:
@@ -96,7 +99,7 @@ def _semi_discrete(degree: int, ncells: int):
 
 @pytest.mark.parametrize("name,degree", [
     ("euler", 1), ("rk2", 1), ("rk3", 2), ("ssp_rk3", 2),
-    ("rk4", 3), ("rk5", 4),
+    ("rk4", 3), ("ssp_rk54", 4), ("rk5", 4),
 ])
 def test_time_order_inside_solver_matches_tableau(name, degree):
     """T2: error against ``expm(L*T)u0`` isolates the *time* discretisation."""
@@ -134,13 +137,55 @@ def test_metadata_reports_order_and_stages():
 
 
 def test_minimal_stage_selection():
-    """Degree p is advanced with order p+1 -- the RKDG accuracy-table convention."""
+    """Degree p is advanced with exactly ``p + 1`` stages (RKDG table convention).
+
+    Order and stage count coincide up to ``p = 3``.  At ``p = 4`` five stages
+    can only buy fourth order (Butcher barrier), which is why the reference
+    column is ``RK5DG4`` -- five stages, degree 4 -- and why the selected
+    tableau is SSP-RK(5,4) rather than a six-stage order-5 scheme.
+    """
     assert tableau_for_degree(0).name == "euler"
     assert tableau_for_degree(1).name == "rk2"
     assert tableau_for_degree(2).name == "rk3"
     assert tableau_for_degree(3).name == "rk4"
-    assert tableau_for_degree(4).name == "rk5"
-    assert tableau_for_degree(7).name == "rk5"  # capped
+    assert tableau_for_degree(4).name == "ssp_rk54"
+    assert tableau_for_degree(5).name == "rk5"   # 6 stages, order 5
+    for p in range(6):
+        tab = tableau_for_degree(p)
+        assert tab.stages == p + 1, (p, tab.name, tab.stages)
+        assert tab.order == min(p + 1, max_order_for_stages(p + 1)), (p, tab.name)
+
+
+def test_butcher_barrier_bound():
+    """No explicit 5-stage scheme has order 5; the helper must encode that."""
+    assert max_order_for_stages(1) == 1
+    assert max_order_for_stages(4) == 4
+    assert max_order_for_stages(5) == 4
+    assert max_order_for_stages(6) == 5
+    assert max_order_for_stages(5) < 5
+
+
+def test_ssp_rk54_structure_and_order_conditions():
+    """SSP-RK(5,4): 5 stages, consistent row sums, and the order-4 conditions.
+
+    The tableau is *derived* from the Shu-Osher form at import time, so these
+    invariants guard the conversion rather than the transcription: consistency
+    (``sum(b) = 1``), ``sum(b*c) = 1/2`` (order >= 2) and the third/fourth-order
+    quadratire conditions for the scalar autonomous ODE.
+    """
+    tab = SSP_RK54
+    assert (tab.stages, tab.order) == (5, 4)
+    assert abs(sum(tab.b) - 1.0) < 1e-14
+    c = tab.c
+    for i, row in enumerate(tab.a):
+        assert abs(sum(row) - c[i]) < 1e-14, i
+    bc = sum(bi * ci for bi, ci in zip(tab.b, c))
+    bc2 = sum(bi * ci * ci for bi, ci in zip(tab.b, c))
+    bAc = sum(tab.b[i] * tab.a[i][j] * c[j]
+              for i in range(5) for j in range(i))
+    assert abs(bc - 0.5) < 1e-12, bc
+    assert abs(bc2 - 1.0 / 3.0) < 1e-12, bc2
+    assert abs(bAc - 1.0 / 6.0) < 1e-12, bAc
 
 
 def test_unknown_integrator_rejected():

@@ -72,3 +72,29 @@ def test_ladder_reproduces_p_plus_one_order():
         rate = fitted_order((8, 16, 32), errors)
         assert math.isfinite(rate)
         assert abs(rate - expected) < 0.2, (degree, errors, rate)
+
+def test_time_order_probe_reports_design_order_with_correct_sign():
+    """Regression for the round-2 instrument defect (M5 reported "not_run").
+
+    The fixed-mesh probe refines the *step count*; handing ``dt`` to the shared
+    estimator (which assumes an increasing resolution variable) negated the
+    slope and made every degree look wrong.  Both the sign and the magnitude
+    are asserted here, so the defect cannot silently return.
+    """
+    from benchmarks.case_dg_advect_order_matched_rk import dt_order_probe
+
+    torch.set_num_threads(2)
+    probe = dt_order_probe(2, levels=4)
+    measured = probe["fitted_time_order"]
+    assert measured is not None, probe
+    assert measured > 0.0, ("sign flipped", measured)
+    assert abs(measured - probe["design_order"]) < 0.2, (measured, probe)
+
+
+def test_matched_rung_uses_reference_stage_count():
+    """Degree ``p`` runs with ``p + 1`` stages, i.e. the reference's column."""
+    from tensordg.runge_kutta import tableau_for_degree
+
+    for degree in (1, 2, 3, 4):
+        tab = tableau_for_degree(degree)
+        assert tab.stages == degree + 1, (degree, tab.name, tab.stages)

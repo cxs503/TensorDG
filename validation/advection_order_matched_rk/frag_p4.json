@@ -6,56 +6,56 @@
     160
   ],
   "l2": [
-    3.194064046910756e-08,
-    1.0035793197172922e-09,
-    3.141496633044682e-11,
-    9.816698905913017e-13
+    3.194065262109772e-08,
+    1.0035817228838184e-09,
+    3.1415357214566995e-11,
+    9.816756032966665e-13
   ],
   "meta": [
     {
       "ncells": 20,
       "steps": 900,
       "dt": 0.0011111111111111111,
-      "integrator": "rk5",
-      "rk_order": 5,
-      "rk_stages": 6
+      "integrator": "ssp_rk54",
+      "rk_order": 4,
+      "rk_stages": 5
     },
     {
       "ncells": 40,
       "steps": 1800,
       "dt": 0.0005555555555555556,
-      "integrator": "rk5",
-      "rk_order": 5,
-      "rk_stages": 6
+      "integrator": "ssp_rk54",
+      "rk_order": 4,
+      "rk_stages": 5
     },
     {
       "ncells": 80,
       "steps": 3600,
       "dt": 0.0002777777777777778,
-      "integrator": "rk5",
-      "rk_order": 5,
-      "rk_stages": 6
+      "integrator": "ssp_rk54",
+      "rk_order": 4,
+      "rk_stages": 5
     },
     {
       "ncells": 160,
       "steps": 7200,
       "dt": 0.0001388888888888889,
-      "integrator": "rk5",
-      "rk_order": 5,
-      "rk_stages": 6
+      "integrator": "ssp_rk54",
+      "rk_order": 4,
+      "rk_stages": 5
     }
   ],
   "pairwise_orders": [
-    4.992166689404983,
-    4.997558803158214,
-    5.000070257407662
+    4.992163783619123,
+    4.997544307047551,
+    5.000079812626009
   ],
-  "fitted_order": 4.994862746281599,
+  "fitted_order": 4.994854045333335,
   "fit_points": 3,
   "fit_dropped_cells": [
     160
   ],
-  "integrator": "rk5",
-  "rk_order": 5,
-  "rk_stages": 6
+  "integrator": "ssp_rk54",
+  "rk_order": 4,
+  "rk_stages": 5
 }
