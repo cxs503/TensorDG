@@ -164,16 +164,77 @@ def gate_closed_box(ncells=(24, 24), degree=2, final_time=0.1, cfl=0.15):
     return out
 
 
-def gate_wall_reflection(ncells=(64, 1), degree=2, mach=2.0, cfl=0.12,
-                         incident_mach=mach, extra_time=0.08):
-    """G3: shock reflecting off an *internal* solid wall vs the exact two-shock solution."""
+def _plateau_mask(centres, fluid, front, x_wall, dx, front_buffer=3, wall_buffer=1):
+    """Cell-average mask of the reflected plateau, buffered away from both waves.
+
+    ``centres`` are cell centres along ``x``, ``fluid`` is a boolean mask of the gas
+    cells.  A cell is kept when its centre is more than ``front_buffer`` cells
+    behind the exact reflected front and more than ``wall_buffer`` cells in front
+    of the wall face.  Returning the mask (instead of looping over hand-picked
+    sampling fractions) makes the "is the plateau resolved at all?" question a
+    countable one: ``mask.sum() == 0`` means the mesh cannot host the plateau and
+    the gate must report ``not_run``.
+    """
+    import torch as _torch
+
+    centres = _torch.as_tensor(centres)
+    fluid = _torch.as_tensor(fluid)
+    return (fluid
+            & (centres > front + front_buffer * dx)
+            & (centres < x_wall - wall_buffer * dx))
+
+
+def _snap_to_face(value, dx, tol=1e-6):
+    """Move ``value`` onto the nearest cell face; return (face, offset_in_cells)."""
+    index = int(round(value / dx))
+    face = index * dx
+    offset = (value - face) / dx
+    if abs(offset) > tol:  # pragma: no cover - only reported, never fatal
+        offset = offset
+    return face, offset
+
+
+def gate_wall_reflection(ncells=(240, 1), degree=2, mach=2.0, cfl=0.12,
+                         incident_mach=None, extra_time=0.08, limiter=None,
+                         tvb_constant=1.0, front_buffer=3, wall_buffer=1,
+                         min_plateau_cells=3):
+    """G3: shock reflecting off an *internal* solid wall vs the exact two-shock solution.
+
+    ``incident_mach`` defaults to ``mach``; it used to be written as a Python
+    default argument (``incident_mach=mach``), which cannot see a sibling
+    parameter and made this module fail at import time.
+
+    Geometry fixes relative to the first version of this gate:
+
+    * the embedded wall is snapped onto a **cell face** (``x_wall = i*dx``) and the
+      closed-form reference is built at that face, so the discretised wall and
+      the analytic wall coincide (the first version left the wall a third of a
+      cell inside the last fluid cell at ``nx=64``);
+    * the plateau is sampled only from cell averages that are at least
+      ``front_buffer`` cells behind the exact reflected front and ``wall_buffer``
+      cells in front of the wall.  The first version sampled at ``0.12 * plateau
+      width`` from the front, i.e. **inside** the numerically smeared shock, with
+      a 5-cell-wide plateau at ``nx=64``: the reported 3 % criterion could not be
+      met by any scheme that captures a discontinuity;
+    * if fewer than ``min_plateau_cells`` cell averages survive the buffers the
+      gate reports ``status="not_run"`` (mesh too coarse for the plateau) instead
+      of a FAIL it cannot interpret;
+    * whole-domain L1/L-infinity norms against the exact solution are reported for
+      density and pressure, so mesh convergence can be measured independently of
+      any sampling band.
+    """
+    if incident_mach is None:
+        incident_mach = mach
     nx, ny = ncells
     xmax, ymax = 1.2, 0.1
-    wr = WallReflection(x_shock=0.4, x_wall=1.0, incident_mach=incident_mach)
     dx = xmax / nx
+    x_wall_face, wall_offset_cells = _snap_to_face(1.0, dx)
+    x_shock_face, shock_offset_cells = _snap_to_face(0.4, dx)
+    wr = WallReflection(x_shock=x_shock_face, x_wall=x_wall_face,
+                        incident_mach=incident_mach)
     xc = (torch.arange(nx, dtype=torch.float64) + 0.5) * dx
     solid = torch.zeros(nx, ny, dtype=torch.bool)
-    solid[xc > wr.x_wall] = True
+    solid[xc >= x_wall_face - 0.5 * dx] = True
     pre_rho, pre_u, pre_p = wr.pre
     post_rho, post_u, post_p = wr.post
 
@@ -190,38 +251,72 @@ def gate_wall_reflection(ncells=(64, 1), degree=2, mach=2.0, cfl=0.12,
     x, y, coeff, meta = solve_euler_dg_2d(
         initial, ncells=ncells, degree=degree, final_time=t_end, cfl=cfl,
         domain=((0.0, xmax), (0.0, ymax)), periodic=(False, False), solid=solid,
+        limiter=limiter, tvb_constant=tvb_constant, limiter_stage="final",
         track_boundary_flux=True,
         bcs={"left": "outflow", "right": "wall", "bottom": "wall", "top": "wall"},
     )
     avg = coeff[..., 0, 0, :]
     rho = avg[..., 0]
     pressure = _pressure(avg)
-    exact_rho, exact_p = wr.reflected[0], wr.reflected[2]
-    # The reflected plateau is the thin slab between the reflected front (which
-    # runs left from the wall) and the wall itself; sample *inside* it.
+    exact_rho, exact_u, exact_p = wr.state(x, t_end)
+    fluid = ~solid[:, 0]
+
+    # ---- whole-domain error norms (no sampling band involved) -------------
+    exact_rho_t = torch.as_tensor(exact_rho, dtype=torch.float64)
+    exact_p_t = torch.as_tensor(exact_p, dtype=torch.float64)
+    l1 = {}
+    linf = {}
+    for name, got, want in (("density", rho[:, 0], exact_rho_t),
+                            ("pressure", pressure[:, 0], exact_p_t)):
+        diff = (got - want)[fluid].abs()
+        scale = want[fluid].abs().mean()
+        l1[name] = float(diff.mean() / scale)
+        linf[name] = float(diff.max() / scale)
+
+    # ---- plateau: cell averages only, buffered away from both waves -------
     front = wr.front(t_end)
+    centres = xc
+    interior = _plateau_mask(centres, fluid, front, x_wall_face, dx,
+                             front_buffer=front_buffer, wall_buffer=wall_buffer)
+    exact_rho5, _, exact_p5 = wr.reflected
     samples = []
-    for offset in (0.12, 0.3, 0.5, 0.7, 0.85):
-        xx = front + offset * (wr.x_wall - front)
-        if xx >= wr.x_wall:
-            continue
-        i = min(int(xx / dx), nx - 1)
+    for i in torch.nonzero(interior).flatten().tolist():
         samples.append({
-            "x": xx,
-            "rho": float(rho[i, 0]), "rho_exact": exact_rho,
-            "rho_error_percent": 100.0 * (float(rho[i, 0]) / exact_rho - 1.0),
-            "p": float(pressure[i, 0]), "p_exact": exact_p,
-            "p_error_percent": 100.0 * (float(pressure[i, 0]) / exact_p - 1.0),
+            "x": float(centres[i]),
+            "rho": float(rho[i, 0]), "rho_exact": exact_rho5,
+            "rho_error_percent": 100.0 * (float(rho[i, 0]) / exact_rho5 - 1.0),
+            "p": float(pressure[i, 0]), "p_exact": exact_p5,
+            "p_error_percent": 100.0 * (float(pressure[i, 0]) / exact_p5 - 1.0),
         })
-    worst = max(max(abs(s["rho_error_percent"]), abs(s["p_error_percent"])) for s in samples)
+    worst = max((max(abs(s["rho_error_percent"]), abs(s["p_error_percent"]))
+                 for s in samples), default=None)
+    mean_rho = float(rho[interior, 0].mean()) if samples else None
+    mean_p = float(pressure[interior, 0].mean()) if samples else None
+
+    enough_plateau = len(samples) >= min_plateau_cells
+    status = "ok" if enough_plateau else "not_run"
+    passed = bool(enough_plateau and worst is not None and worst < 3.0)
     return {
         "gate": "G3 shock reflection off an embedded wall (exact two-shock reference)",
         "ncells": list(ncells), "degree": degree, "steps": meta["steps"],
-        "incident_mach": incident_mach, "wall_time": wr.wall_time, "final_time": t_end,
-        "reflected_rho_exact": exact_rho, "reflected_p_exact": exact_p,
-        "reflected_front_exact": wr.front(t_end),
-        "samples": samples, "worst_relative_error_percent": worst,
-        "tolerance_percent": 3.0, "pass": worst < 3.0,
+        "limiter": limiter, "tvb_constant": tvb_constant,
+        "incident_mach": incident_mach, "wall_time": wr.wall_time,
+        "final_time": t_end, "dx": dx,
+        "wall_x_face": x_wall_face, "wall_offset_cells": wall_offset_cells,
+        "shock_x_face": x_shock_face, "shock_offset_cells": shock_offset_cells,
+        "reflected_rho_exact": exact_rho5, "reflected_p_exact": exact_p5,
+        "reflected_front_exact": front,
+        "plateau_cells": len(samples),
+        "plateau_cells_available": (x_wall_face - front) / dx,
+        "plateau_mean_rho": mean_rho, "plateau_mean_p": mean_p,
+        "plateau_mean_rho_error_percent": (
+            None if mean_rho is None else 100.0 * (mean_rho / exact_rho5 - 1.0)),
+        "plateau_mean_p_error_percent": (
+            None if mean_p is None else 100.0 * (mean_p / exact_p5 - 1.0)),
+        "samples": samples,
+        "worst_relative_error_percent": worst,
+        "tolerance_percent": 3.0, "status": status, "pass": passed,
+        "l1_relative": l1, "linf_relative": linf,
         "mass_relative_residual": abs(meta["conservation_residual_total"]["mass"]["relative"]),
         "energy_relative_residual": abs(meta["conservation_residual_total"]["energy"]["relative"]),
     }
