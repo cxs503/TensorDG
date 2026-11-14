@@ -151,10 +151,25 @@ def free_stream_deviation(ncells=(24, 8), degree=2, final_time=0.2, cfl=0.2):
         periodic=(True, False), bcs={"bottom": "wall", "top": "wall"},
         limiter=None,
     )
-    reference = conservative_state(*initial(x[:, None], y[None, :]))
-    scale = reference.abs().amax().item()
-    deviation = float((coeff - reference[:, :, None, None, :]).abs().amax().item()) / scale
-    return {"max_relative_deviation": deviation, "metadata": meta}
+    # Reference: the free stream in the mean mode, zero in every higher mode.
+    # Subtracting a constant from *every* modal coefficient (the first version of
+    # this gate) makes the "deviation" equal to the reference magnitude itself, so
+    # an exact run reports 1.0 and the gate can never pass.
+    X = x[:, None] + 0.0 * y[None, :]
+    Y = y[None, :] + 0.0 * x[:, None]
+    state = conservative_state(*initial(X, Y))
+    reference = torch.zeros(
+        (*state.shape[:2], degree + 1, degree + 1, 4), dtype=state.dtype
+    )
+    reference[..., 0, 0, :] = state
+    scale = float(reference.abs().amax())
+    deviation = float((coeff - reference).abs().amax()) / scale
+    higher = float(coeff[..., 1:, :, :].abs().amax()) / scale if degree > 0 else 0.0
+    return {
+        "max_relative_deviation": deviation,
+        "max_relative_higher_modes": higher,
+        "metadata": meta,
+    }
 
 
 def wall_reflection(ncells=(200, 4), degree=2, final_time=0.4, cfl=0.12,
