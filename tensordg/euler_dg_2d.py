@@ -392,8 +392,17 @@ def normalise_bcs(bcs):
 
 
 def _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic, geom=None,
-         stage_time=0.0):
-    """DG residual of the 2-D Euler equations on a Cartesian mesh."""
+         stage_time=0.0, ledger=None):
+    """DG residual of the 2-D Euler equations on a Cartesian mesh.
+
+    ``ledger`` (optional dict) receives ``ledger["rate"]``: the 4-vector rate at
+    which the *domain integrals* of the conserved variables change through the
+    non-periodic boundary faces.  Interior interfaces cancel exactly in the sum
+    over cells, so the whole boundary contribution is the two surviving face
+    terms of each axis -- see the derivation in
+    ``docs/CASE-DG-CKS1998-2D-RIEMANN-CONSERVATION.md``.  With ``ledger=None``
+    (every historic caller) the residual is bit-identical.
+    """
     degree = coeff.shape[2] - 1
     modes = torch.arange(degree + 1, device=coeff.device, dtype=coeff.dtype)
     outer = torch.outer(2.0 * modes + 1.0, 2.0 * modes + 1.0)
@@ -414,6 +423,21 @@ def _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic, geom=None,
     right_y, left_y = _axis_fluxes(
         coeff, basis, signs, weights, periodic[1], 1, geom, stage_time
     )
+
+    if ledger is not None:
+        # Sum over cells of the k=l=0 (cell-average) row of the face terms:
+        #   sum_i (flux_right_i - flux_left_i) = flux_right[-1] - flux_left[0]
+        # because flux_left[i] == flux_right[i-1] for every interior interface.
+        rate = torch.zeros(4, device=coeff.device, dtype=coeff.dtype)
+        if not periodic[0]:
+            rate = rate - 0.5 * dy * (
+                right_x[-1, :, 0, :].sum(dim=0) - left_x[0, :, 0, :].sum(dim=0)
+            )
+        if not periodic[1]:
+            rate = rate - 0.5 * dx * (
+                right_y[:, -1, 0, :].sum(dim=0) - left_y[:, 0, 0, :].sum(dim=0)
+            )
+        ledger["rate"] = rate
 
     face_x = (
         right_x.unsqueeze(2)
@@ -789,6 +813,7 @@ def solve_euler_dg_2d(
     initial_projection="l2",
     device="cpu",
     dtype=torch.float64,
+    track_boundary_flux=False,
 ):
     """Advance a 2-D Euler initial condition with modal DG / HLLC / SSP-RK3.
 
@@ -921,7 +946,17 @@ def solve_euler_dg_2d(
         return (c[..., 0, 0, :].sum(dim=(0, 1)) * dx * dy).clone()
 
     _is_periodic = periodic_flags[0] and periodic_flags[1]
-    totals_initial = _totals_2d(coeff) if _is_periodic else None
+    _track = bool(track_boundary_flux) or _is_periodic
+    totals_initial = _totals_2d(coeff) if _track else None
+    # Discrete boundary-flux ledger: with SSP-RK3
+    #   u^{n+1} = u^n + dt * (1/6 k1 + 1/6 k2 + 2/3 k3),
+    # so the boundary contribution to the domain integrals accumulates with those
+    # same weights.  Limiting and the positivity filter only scale the higher
+    # modes of a cell, so they leave the cell averages (hence these integrals)
+    # exactly intact -- the ledger therefore closes to round-off.
+    boundary_balance = (
+        torch.zeros(4, dtype=coeff.dtype, device=coeff.device) if _track else None
+    )
 
     time, steps, dt = 0.0, 0, 0.0
     while time < final_time:
@@ -935,23 +970,37 @@ def solve_euler_dg_2d(
             dt = min(cfl / max(rate, 1e-12), final_time - time)
         else:
             dt = min(prescribed_dt, final_time - time)
-        k1 = _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic, geom, time)
+        ledger = {} if _track else None
+        k1 = _rhs(
+            coeff, basis, derivative, weights, signs, dx, dy, periodic, geom, time,
+            ledger=ledger,
+        )
+        if _track:
+            boundary_balance += (dt / 6.0) * ledger["rate"]
         u1 = coeff + dt * k1
         if limit_each_stage:
             u1 = impose(u1)
         else:
             u1 = _positivity_filter(u1, basis, signs)
+        ledger = {} if _track else None
         k2 = _rhs(
-            u1, basis, derivative, weights, signs, dx, dy, periodic, geom, time + dt
+            u1, basis, derivative, weights, signs, dx, dy, periodic, geom, time + dt,
+            ledger=ledger,
         )
+        if _track:
+            boundary_balance += (dt / 6.0) * ledger["rate"]
         u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
         if limit_each_stage:
             u2 = impose(u2)
         else:
             u2 = _positivity_filter(u2, basis, signs)
+        ledger = {} if _track else None
         k3 = _rhs(
-            u2, basis, derivative, weights, signs, dx, dy, periodic, geom, time + 0.5 * dt
+            u2, basis, derivative, weights, signs, dx, dy, periodic, geom, time + 0.5 * dt,
+            ledger=ledger,
         )
+        if _track:
+            boundary_balance += (2.0 * dt / 3.0) * ledger["rate"]
         coeff = impose(coeff / 3.0 + (2.0 / 3.0) * (u2 + dt * k3))
         if not torch.isfinite(coeff).all():
             raise FloatingPointError("non-finite 2-D DG state; reduce the CFL number")
@@ -964,7 +1013,7 @@ def solve_euler_dg_2d(
         time += dt
         steps += 1
 
-    totals_final = _totals_2d(coeff) if _is_periodic else None
+    totals_final = _totals_2d(coeff) if _track else None
     _cons_names = ("mass", "x_momentum", "y_momentum", "energy")
     conservation_drift = {}
     if _is_periodic and totals_initial is not None and totals_final is not None:
@@ -977,6 +1026,33 @@ def solve_euler_dg_2d(
         for name in _cons_names:
             conservation_drift[name] = float("nan")
 
+    # Flux-balance identity for *non-periodic* domains: the change of a domain
+    # integral must equal the time-integrated boundary flux.  For a periodic run
+    # the ledger is zero by construction and this reduces to the drift above.
+    boundary_flux = {}
+    conservation_residual = {}
+    if _track and totals_initial is not None:
+        for i, name in enumerate(_cons_names):
+            change = float(totals_final[i].item()) - float(totals_initial[i].item())
+            through_boundary = float(boundary_balance[i].item())
+            scale = max(abs(float(totals_initial[i].item())), abs(through_boundary), 1e-30)
+            boundary_flux[name] = through_boundary
+            conservation_residual[name] = {
+                "change": change,
+                "boundary_flux": through_boundary,
+                "residual": change - through_boundary,
+                "relative": abs(change - through_boundary) / scale,
+            }
+    else:
+        for name in _cons_names:
+            boundary_flux[name] = float("nan")
+            conservation_residual[name] = {
+                "change": float("nan"),
+                "boundary_flux": float("nan"),
+                "residual": float("nan"),
+                "relative": float("nan"),
+            }
+
     metadata = {
         "ncells": (nx, ny),
         "degree": degree,
@@ -988,6 +1064,8 @@ def solve_euler_dg_2d(
         "prescribed_dt": prescribed_dt,
         "domain": domain,
         "periodic": tuple(periodic),
+        "boundary_flux": boundary_flux,
+        "conservation_residual": conservation_residual,
         "bcs": {
             face: (value if isinstance(value, str) else getattr(value, "__name__", "callable"))
             for face, value in face_bcs.items()

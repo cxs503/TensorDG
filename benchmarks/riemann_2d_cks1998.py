@@ -15,11 +15,39 @@ Reference:
     Galerkin method for conservation laws V: Multidimensional systems."
     J. Comput. Phys. 141, 199-224; SIAM Review 43(1), 2001.
 
-Quantitative targets (pre-declared, before any run):
-    C1  Positivity: rho > 0 and p > 0 at all quadrature points, all times.
-    C2  Mesh self-convergence: L1(density) between 64x64 and 32x32 < 0.05.
+Gate history (important, do not silently re-baseline)
+-----------------------------------------------------
+The first version of this module declared four gates, two of which were
+**ill-posed** and were therefore reported as honest FAILs in
+``docs/CASE-DG-CKS1998-2D-RIEMANN.md``:
+
+* ``C4 mass conservation < 1 %`` was declared for "periodic BCs", but the case
+  driver runs the physical configuration with *transmissive* boundaries
+  (``periodic=(False, False)`` in ``solve_euler_dg_2d_riemann``), so total mass
+  legitimately changes by the boundary flux (25 % at t=0.1).  Reporting that as
+  a limiter defect -- "the TVB limiter's modal scaling is not conservative" --
+  was wrong: the limiter never touches the cell average.  The well-posed
+  replacement is the **discrete flux-balance identity**
+  ``Q(t) - Q(0) == integral of the boundary flux``, which closes to round-off
+  for a conservative scheme on *any* boundary condition.  The raw (physical)
+  mass change is still reported, it is just no longer scored as "conservation".
+* ``C2 self-convergence`` compared the *total masses* of two meshes, which is a
+  scalar, mesh-independent quantity for a fixed final time -- it measures
+  nothing about convergence.  The replacement is a real relative ``L1`` distance
+  between the coarse mesh and the block-averaged fine mesh.
+
+See ``docs/CASE-DG-CKS1998-2D-RIEMANN-CONSERVATION.md`` and
+``validation/riemann2d_conservation/audit.py`` for the measurements.
+
+Quantitative gates (pre-declared, before any run):
+    C1  Positivity: rho > 0 and p > 0 at all quadrature points and cell averages.
+    C2  Mesh self-convergence: relative L1(density) between 64x64 and the
+        block-averaged 32x32 < 0.05.
     C3  Finite solution: no NaN/Inf in the final state.
-    C4  Conservation: total mass change < 1% (periodic BCs).
+    C4  Discrete flux balance: |Q(t) - Q(0) - boundary flux| / scale < 1e-10
+        for mass, both momenta and energy (transmissive boundaries).
+    C5  Periodic control: on a periodic domain the same data conserves mass,
+        momentum and energy to |change| / scale < 1e-12.
 
 Usage:
     OMP_NUM_THREADS=1 python -m benchmarks.riemann_2d_cks1998 --quick
@@ -29,7 +57,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import sys
 import time
@@ -41,141 +68,325 @@ import torch
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 
+from tensordg.euler_1d import GAMMA
 from tensordg.euler_dg_2d import (
-    solve_euler_dg_2d_riemann,
+    LAX_LIU_CONFIG_3,
     cell_fields,
     legendre_operators,
-    LAX_LIU_CONFIG_3,
+    solve_euler_dg_2d,
 )
-from tensordg.euler_1d import GAMMA
 
 # Pre-declared gates (fixed before any run)
 GATES = {
-    "positivity": "rho > 0, p > 0 at all quadrature points",
-    "self_convergence_l1": 0.05,   # L1(density) between 64x64 and 32x32
-    "finite": "no NaN/Inf",
-    "mass_conservation_rel": 0.01,  # < 1% mass change
+    "C1_positivity": "rho > 0, p > 0 at all volume quadrature points and cell averages",
+    "C2_self_convergence_l1": 0.05,     # relative L1(density), 64x64 vs block-mean 32x32
+    "C3_finite": "no NaN/Inf",
+    "C4_flux_balance_rel": 1e-10,       # |Q(t)-Q(0)-boundary flux| / scale
+    "C5_periodic_drift_rel": 1e-12,     # same data, periodic domain, no boundary at all
 }
+
+CONSERVED = ("mass", "x_momentum", "y_momentum", "energy")
 
 # Lax & Liu 1998 config 3 states (rho, u, v, p)
 # These are the exact initial states; no closed-form solution exists at t > 0.
 CONFIG_3 = LAX_LIU_CONFIG_3
 
 
-def _reconstruct_on_quadrature(coeff, nodes, weights):
-    """Reconstruct conservative state at volume quadrature points."""
-    nx, ny, k, l, _ = coeff.shape
-    q = nodes.numel()
-    # coeff: [nx, ny, k, l, 4]
-    # basis evaluation at quadrature nodes
-    basis = torch.stack([
-        torch.as_tensor(
-            np.polynomial.legendre.legval(nodes.numpy(), np.eye(k)[m]),
-            dtype=coeff.dtype
-        ) for m in range(k)
-    ], dim=1)  # [q, k]
-    # state at quadrature: [nx, ny, q, q, 4]
-    state = torch.einsum("xyklv,aq,bq->xyabqv", coeff, basis, basis)
-    return state
+# ---------------------------------------------------------------------------
+# Initial data / measurement helpers
+# ---------------------------------------------------------------------------
+
+def initial_condition(x, y):
+    """Four-quadrant Lax & Liu config-3 data, ``(rho, u, v, p)`` on any shape."""
+    shape = torch.broadcast_shapes(x.shape, y.shape)
+    lower = torch.broadcast_to(y < 0.5, shape)
+    left = torch.broadcast_to(x < 0.5, shape)
+    rho = torch.zeros(shape, dtype=x.dtype)
+    velocity_x = torch.zeros(shape, dtype=x.dtype)
+    velocity_y = torch.zeros(shape, dtype=x.dtype)
+    pressure = torch.zeros(shape, dtype=x.dtype)
+    quadrants = (
+        ("lower-left", lower & left),
+        ("lower-right", lower & ~left),
+        ("upper-left", ~lower & left),
+        ("upper-right", ~lower & ~left),
+    )
+    for name, mask in quadrants:
+        state = CONFIG_3[name]
+        rho = torch.where(mask, torch.full(shape, state[0], dtype=x.dtype), rho)
+        velocity_x = torch.where(mask, torch.full(shape, state[1], dtype=x.dtype), velocity_x)
+        velocity_y = torch.where(mask, torch.full(shape, state[2], dtype=x.dtype), velocity_y)
+        pressure = torch.where(mask, torch.full(shape, state[3], dtype=x.dtype), pressure)
+    return rho, velocity_x, velocity_y, pressure
 
 
 def _check_positivity(coeff, degree):
-    """Check rho > 0 and p > 0 at all quadrature points."""
-    nodes, weights, basis, _, _ = legendre_operators(
+    """rho/p at the volume quadrature nodes and at the cell averages.
+
+    Measured with an independent quadrature reconstruction (not the solver's own
+    admissibility test) so that a bug in ``_admissible_cells`` cannot hide here.
+    """
+    nodes, _weights, basis, _derivative, _signs = legendre_operators(
         degree, max(degree + 2, 3), device=coeff.device, dtype=coeff.dtype
     )
-    state = _reconstruct_on_quadrature(coeff, nodes, weights)
+    state = torch.einsum("xyklv,ak,bl->xyabv", coeff, basis, basis)
     rho = state[..., 0]
-    # pressure = (gamma-1) * (E - 0.5 * (rho*u^2 + rho*v^2) / rho)
-    momentum_x = state[..., 1]
-    momentum_y = state[..., 2]
-    energy = state[..., 3]
-    rho_safe = rho.clamp_min(1e-14)
-    pressure = (GAMMA - 1.0) * (energy - 0.5 * (momentum_x ** 2 + momentum_y ** 2) / rho_safe)
+    pressure = (GAMMA - 1.0) * (
+        state[..., 3] - 0.5 * (state[..., 1] ** 2 + state[..., 2] ** 2) / rho.clamp_min(1e-30)
+    )
+    mean = coeff[..., 0, 0, :]
+    mean_pressure = (GAMMA - 1.0) * (
+        mean[..., 3]
+        - 0.5 * (mean[..., 1] ** 2 + mean[..., 2] ** 2) / mean[..., 0].clamp_min(1e-30)
+    )
     return {
         "rho_min": float(rho.min()),
         "rho_max": float(rho.max()),
         "p_min": float(pressure.min()),
         "p_max": float(pressure.max()),
-        "rho_positive": bool((rho > 0).all()),
-        "p_positive": bool((pressure > 0).all()),
+        "rho_min_mean": float(mean[..., 0].min()),
+        "p_min_mean": float(mean_pressure.min()),
+        "rho_positive": bool(torch.all(rho > 0.0)),
+        "p_positive": bool(torch.all(pressure > 0.0)),
+        "rho_positive_mean": bool(torch.all(mean[..., 0] > 0.0)),
+        "p_positive_mean": bool(torch.all(mean_pressure > 0.0)),
+        "quadrature_nodes": int(nodes.numel()),
     }
 
 
 def _total_mass(coeff, dx, dy):
-    """Total mass = integral of rho over domain."""
-    # mean density mode (mode 0,0) times cell area
-    rho_mean = coeff[:, :, 0, 0, 0]  # [nx, ny]
-    return float((rho_mean * dx * dy).sum())
+    """Total mass = integral of rho over the domain (from the cell averages)."""
+    return float((coeff[:, :, 0, 0, 0] * dx * dy).sum())
 
+
+def block_average(means, factor):
+    """Average an ``(n, n)`` array of cell means down by an integer ``factor``."""
+    n = int(means.shape[0])
+    if factor < 1 or n % factor:
+        raise ValueError(f"cannot coarsen {n} by {factor}")
+    m = n // factor
+    return means.reshape(m, factor, m, factor).mean(dim=(1, 3))
+
+
+def self_convergence_l1(coarse_means, fine_means):
+    """Relative L1 distance between a coarse mesh and the block-averaged fine mesh."""
+    factor = int(fine_means.shape[0]) // int(coarse_means.shape[0])
+    folded = block_average(fine_means, factor)
+    return float(torch.abs(folded - coarse_means).sum()) / max(
+        float(torch.abs(folded).sum()), 1e-30
+    )
+
+
+# ---------------------------------------------------------------------------
+# Single run
+# ---------------------------------------------------------------------------
 
 def run_riemann_2d(ncells=32, degree=1, final_time=0.25, cfl=0.2,
-                   limiter="tvb", tvb_constant=1.0, device="cpu"):
-    """Run a single 2-D Riemann problem configuration."""
-    t0 = time.time()
-    x, y, coeff, meta = solve_euler_dg_2d_riemann(
-        ncells=ncells, degree=degree, final_time=final_time, cfl=cfl,
-        limiter=limiter, tvb_constant=tvb_constant,
-        initial_projection="l2", device=device,
+                   limiter="tvb", tvb_constant=1.0, device="cpu",
+                   periodic=(False, False)):
+    """Run one 2-D Riemann configuration and measure every gate quantity.
+
+    ``periodic`` defaults to the *physical* configuration of the case
+    (transmissive boundaries); the ``(True, True)`` variant is the
+    conservation control with no boundary at all.
+    """
+    started = time.time()
+    x, y, coeff, meta = solve_euler_dg_2d(
+        initial_condition,
+        ncells=ncells,
+        degree=degree,
+        domain=((0.0, 1.0), (0.0, 1.0)),
+        final_time=final_time,
+        cfl=cfl,
+        limiter=limiter,
+        tvb_constant=tvb_constant,
+        periodic=periodic,
+        initial_projection="l2",
+        device=device,
+        track_boundary_flux=True,
     )
-    wall = time.time() - t0
+    wall = time.time() - started
 
     fields = cell_fields(coeff)
-    rho = fields["density"]
-    p = fields["pressure"]
-
     pos = _check_positivity(coeff, degree)
-    mass = _total_mass(coeff, 1.0 / ncells, 1.0 / ncells)
+    means = coeff[..., 0, 0, 0].detach().cpu().clone()
+
+    conservation = {}
+    for name in CONSERVED:
+        row = meta["conservation_residual"][name]
+        conservation[name] = {
+            "change": row["change"],
+            "boundary_flux": row["boundary_flux"],
+            "residual": row["residual"],
+            "relative_residual": row["relative"],
+        }
 
     return {
-        "ncells": ncells, "degree": degree, "final_time": final_time,
-        "steps": meta["steps"], "dt": meta.get("dt", None),
+        "ncells": ncells,
+        "degree": degree,
+        "final_time": final_time,
+        "cfl": cfl,
+        "periodic": tuple(bool(flag) for flag in periodic),
+        "steps": meta["steps"],
+        "dt": meta.get("dt"),
         "wall_seconds": round(wall, 2),
-        "rho_min": float(rho.min()), "rho_max": float(rho.max()),
-        "p_min": float(p.min()), "p_max": float(p.max()),
+        "rho_min": float(fields["density"].min()),
+        "rho_max": float(fields["density"].max()),
+        "p_min": float(fields["pressure"].min()),
+        "p_max": float(fields["pressure"].max()),
         "positivity": pos,
-        "total_mass": mass,
+        "total_mass": _total_mass(coeff, 1.0 / ncells, 1.0 / ncells),
+        "conservation": conservation,
+        "max_flux_balance_residual": max(
+            conservation[name]["relative_residual"] for name in CONSERVED
+        ),
+        "max_abs_conservation_change": max(
+            abs(conservation[name]["change"]) for name in CONSERVED
+        ),
         "finite": bool(torch.isfinite(coeff).all()),
         "dofs": meta.get("dofs", ncells * ncells * (degree + 1) ** 2 * 4),
+        "cell_means_rho": means,
+        "x": x,
+        "y": y,
+        "coeff": coeff,
     }
+
+
+def _slim(record):
+    return {k: v for k, v in record.items() if k not in ("cell_means_rho", "x", "y", "coeff")}
+
+
+# ---------------------------------------------------------------------------
+# Gate verdicts (pure function so the tests can probe its sensitivity)
+# ---------------------------------------------------------------------------
+
+def judge(rows, convergence=None, gates=None):
+    """Score every gate from measured rows; never returns a hardcoded verdict."""
+    gates = GATES if gates is None else gates
+    verdicts = {}
+
+    verdicts["C1_positivity"] = {
+        "passed": all(
+            r["positivity"]["rho_positive"]
+            and r["positivity"]["p_positive"]
+            and r["positivity"]["rho_positive_mean"]
+            and r["positivity"]["p_positive_mean"]
+            for r in rows
+        ),
+        "worst_rho_min": min(r["positivity"]["rho_min"] for r in rows),
+        "worst_p_min": min(r["positivity"]["p_min"] for r in rows),
+        "detail": "rho > 0 and p > 0 at volume nodes and cell averages",
+    }
+
+    verdicts["C3_finite"] = {
+        "passed": all(r["finite"] for r in rows),
+        "detail": "no NaN/Inf",
+    }
+
+    open_rows = [r for r in rows if not (r["periodic"][0] and r["periodic"][1])]
+    if open_rows:
+        worst = max(r["max_flux_balance_residual"] for r in open_rows)
+        verdicts["C4_flux_balance"] = {
+            "passed": worst < gates["C4_flux_balance_rel"],
+            "worst_relative_residual": worst,
+            "tolerance": gates["C4_flux_balance_rel"],
+            "detail": (
+                "Q(t) - Q(0) equals the time-integrated boundary flux; the "
+                "transmissive mass change itself is physical and is reported "
+                "under 'mass change' rather than being scored as conservation"
+            ),
+        }
+    else:
+        verdicts["C4_flux_balance"] = {
+            "passed": False,
+            "worst_relative_residual": None,
+            "tolerance": gates["C4_flux_balance_rel"],
+            "detail": "NOT_RUN: no non-periodic row in this profile",
+            "check_state": "not_run",
+        }
+
+    periodic_rows = [r for r in rows if r["periodic"][0] and r["periodic"][1]]
+    if periodic_rows:
+        worst_scale = max(
+            abs(r["conservation"][name]["change"])
+            / max(
+                abs(r["conservation"][name]["boundary_flux"]),
+                abs(r["total_mass"]),
+                1e-30,
+            )
+            for r in periodic_rows
+            for name in CONSERVED
+        )
+        verdicts["C5_periodic_drift"] = {
+            "passed": worst_scale < gates["C5_periodic_drift_rel"],
+            "worst_relative_change": worst_scale,
+            "tolerance": gates["C5_periodic_drift_rel"],
+            "detail": "periodic control: no boundary flux is possible",
+        }
+    else:
+        verdicts["C5_periodic_drift"] = {
+            "passed": False,
+            "worst_relative_change": None,
+            "tolerance": gates["C5_periodic_drift_rel"],
+            "detail": "NOT_RUN: no periodic control row in this profile",
+            "check_state": "not_run",
+        }
+
+    if convergence:
+        worst = max(convergence.values())
+        verdicts["C2_self_convergence"] = {
+            "passed": worst < gates["C2_self_convergence_l1"],
+            "worst_relative_l1": worst,
+            "tolerance": gates["C2_self_convergence_l1"],
+            "per_pair": dict(convergence),
+        }
+    else:
+        verdicts["C2_self_convergence"] = {
+            "passed": False,
+            "worst_relative_l1": None,
+            "tolerance": gates["C2_self_convergence_l1"],
+            "detail": "NOT_RUN: quick profile has a single mesh",
+            "check_state": "not_run",
+        }
+
+    return verdicts
 
 
 def run_convergence_study(degrees=(1, 2), meshes=(32, 64), final_time=0.25,
                           cfl=0.2, device="cpu"):
-    """Mesh self-convergence study for the 2-D Riemann problem."""
+    """Mesh self-convergence study: coarse mesh vs block-averaged fine mesh."""
     results = {}
     for degree in degrees:
         rows = []
         for ncells in meshes:
-            r = run_riemann_2d(ncells=ncells, degree=degree,
-                               final_time=final_time, cfl=cfl, device=device)
-            rows.append(r)
-            print(f"  P{degree} {ncells}x{ncells}: {r['steps']} steps, "
-                  f"rho=[{r['rho_min']:.4f}, {r['rho_max']:.4f}], "
-                  f"p_min={r['p_min']:.4e}, {r['wall_seconds']:.1f}s")
+            record = run_riemann_2d(ncells=ncells, degree=degree,
+                                    final_time=final_time, cfl=cfl, device=device)
+            rows.append(record)
+            print(f"  P{degree} {ncells}x{ncells}: {record['steps']} steps, "
+                  f"rho=[{record['positivity']['rho_min']:.4e}, "
+                  f"{record['positivity']['rho_max']:.4f}], "
+                  f"flux-balance resid={record['max_flux_balance_residual']:.2e}, "
+                  f"{record['wall_seconds']:.1f}s", flush=True)
 
-        # L1 self-convergence between finest two meshes
-        if len(rows) >= 2:
-            fine = rows[-1]
-            coarse = rows[-2]
-            # Compare cell-averaged density on the coarse grid
-            # (fine grid averaged down to coarse resolution)
-            n_fine = fine["ncells"]
-            n_coarse = coarse["ncells"]
-            block = n_fine // n_coarse
-            # We need the actual coefficient arrays for proper comparison
-            # For now, use the total mass as a proxy
-            mass_diff = abs(fine["total_mass"] - coarse["total_mass"])
-            mass_avg = 0.5 * (fine["total_mass"] + coarse["total_mass"])
-            l1_rel = mass_diff / mass_avg if mass_avg > 0 else 0.0
-            rows[-1]["self_convergence_l1_rel"] = l1_rel
-
-        results[f"p{degree}"] = {"rows": rows}
+        convergence = {}
+        for coarse, fine in zip(rows, rows[1:]):
+            key = f"{coarse['ncells']}_vs_{fine['ncells']}"
+            convergence[key] = self_convergence_l1(
+                coarse["cell_means_rho"], fine["cell_means_rho"]
+            )
+        results[f"p{degree}"] = {
+            "rows": [_slim(r) for r in rows],
+            "self_convergence_l1": convergence,
+        }
     return results
 
 
+# ---------------------------------------------------------------------------
+# Figures
+# ---------------------------------------------------------------------------
+
 def plot_density_field(x, y, coeff, degree, ncells, output_path):
-    """Generate density contour plot for the 2-D Riemann problem."""
+    """Density contour plot for the 2-D Riemann problem."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -214,11 +425,13 @@ def plot_density_field(x, y, coeff, degree, ncells, output_path):
     plt.close(fig)
 
 
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--quick", action="store_true", help="Quick mode: 32x32 P1 only")
-    parser.add_argument("--degree", type=int, default=1, choices=[1, 2])
-    parser.add_argument("--ncells", type=int, default=32)
+    parser.add_argument("--quick", action="store_true")
     parser.add_argument("--time", type=float, default=0.25)
     parser.add_argument("--cfl", type=float, default=0.2)
     parser.add_argument("--device", default="cpu")
@@ -232,96 +445,70 @@ def main():
     print("=" * 60)
     print("CKS1998 2-D Riemann Problem Benchmark (Lax & Liu 1998, Config 3)")
     print("=" * 60)
-    print(f"  Initial states (rho, u, v, p):")
+    print("  Initial states (rho, u, v, p):")
     for name, state in CONFIG_3.items():
         print(f"    {name}: {state}")
     print(f"  Gates: {GATES}")
     print()
 
-    verdicts = {}
-
     if args.quick:
-        # Quick mode: single run
-        print("[Quick] Running 32x32 P1 ...")
-        r = run_riemann_2d(ncells=32, degree=1, final_time=args.time,
-                           cfl=args.cfl, device=args.device)
-        verdicts["C1_positivity"] = r["positivity"]["rho_positive"] and r["positivity"]["p_positive"]
-        verdicts["C3_finite"] = r["finite"]
-        verdicts["C4_mass_conservation"] = True  # single run, no reference
-
-        # Plot
-        from tensordg.euler_dg_2d import solve_euler_dg_2d_riemann
-        x, y, coeff, _ = solve_euler_dg_2d_riemann(
-            ncells=32, degree=1, final_time=args.time, cfl=args.cfl,
-            limiter="tvb", tvb_constant=1.0, device=args.device,
-        )
-        plot_density_field(x, y, coeff, 1, 32, output / "riemann_2d_density_p1_32.png")
-
-        record = {
-            "benchmark": "riemann_2d_cks1998",
-            "profile": "quick",
-            "config": "Lax_Liu_1998_config_3",
-            "run": r,
-            "verdicts": verdicts,
-            "gates": GATES,
-            "reference": "Lax & Liu (1998), SIAM J. Sci. Comput. 19(2), 319-340",
-        }
+        print("[Quick] 32x32 P1 (physical, transmissive) + periodic control ...")
+        physical = run_riemann_2d(ncells=32, degree=1, final_time=args.time,
+                                  cfl=args.cfl, device=args.device)
+        control = run_riemann_2d(ncells=32, degree=1, final_time=args.time,
+                                 cfl=args.cfl, device=args.device,
+                                 periodic=(True, True))
+        rows = [physical, control]
+        convergence = None
+        profile = "quick"
     else:
-        # Full mode: convergence study
-        print("[Full] Convergence study P1/P2, 32x32 and 64x64 ...")
-        conv = run_convergence_study(
-            degrees=(1, 2), meshes=(32, 64),
-            final_time=args.time, cfl=args.cfl, device=args.device,
-        )
+        print("[Full] convergence study P1/P2, 32x32 and 64x64 ...")
+        conv = run_convergence_study(degrees=(1, 2), meshes=(32, 64),
+                                     final_time=args.time, cfl=args.cfl,
+                                     device=args.device)
+        rows = [dict(r, periodic=(False, False)) for deg in conv.values() for r in deg["rows"]]
+        convergence = {}
+        for deg in conv.values():
+            convergence.update(deg["self_convergence_l1"])
+        profile = "full"
 
-        # Plot finest P1
-        from tensordg.euler_dg_2d import solve_euler_dg_2d_riemann
-        x, y, coeff, _ = solve_euler_dg_2d_riemann(
-            ncells=64, degree=1, final_time=args.time, cfl=args.cfl,
-            limiter="tvb", tvb_constant=1.0, device=args.device,
-        )
-        plot_density_field(x, y, coeff, 1, 64, output / "riemann_2d_density_p1_64.png")
+    positivity = run_riemann_2d(ncells=32, degree=1, final_time=args.time,
+                                cfl=args.cfl, device=args.device)
+    plot_density_field(positivity["x"], positivity["y"], positivity["coeff"], 1, 32,
+                       output / "riemann_2d_density_p1_32.png")
 
-        # Plot finest P2
-        x2, y2, coeff2, _ = solve_euler_dg_2d_riemann(
-            ncells=64, degree=2, final_time=args.time, cfl=args.cfl,
-            limiter="tvb", tvb_constant=1.0, device=args.device,
-        )
-        plot_density_field(x2, y2, coeff2, 2, 64, output / "riemann_2d_density_p2_64.png")
+    verdicts = judge(rows, convergence=convergence)
 
-        verdicts["C1_positivity"] = all(
-            r["positivity"]["rho_positive"] and r["positivity"]["p_positive"]
-            for deg in conv.values() for r in deg["rows"]
-        )
-        verdicts["C3_finite"] = all(r["finite"] for deg in conv.values() for r in deg["rows"])
+    record = {
+        "benchmark": "riemann_2d_cks1998",
+        "profile": profile,
+        "config": "Lax_Liu_1998_config_3",
+        "gates": GATES,
+        "runs": [_slim(r) for r in rows],
+        "verdicts": verdicts,
+        "reference": "Lax & Liu (1998), SIAM J. Sci. Comput. 19(2), 319-340",
+        "notes": (
+            "The transmissive mass change is a physical boundary flux, not a "
+            "conservation error; C4 scores the flux-balance identity instead."
+        ),
+    }
+    with open(output / "metrics.json", "w") as handle:
+        json.dump(record, handle, indent=2, default=str)
 
-        record = {
-            "benchmark": "riemann_2d_cks1998",
-            "profile": "full",
-            "config": "Lax_Liu_1998_config_3",
-            "convergence": conv,
-            "verdicts": verdicts,
-            "gates": GATES,
-            "reference": "Lax & Liu (1998), SIAM J. Sci. Comput. 19(2), 319-340",
-        }
-
-    # Write JSON
-    with open(output / "metrics.json", "w") as f:
-        json.dump(record, f, indent=2, default=str)
-
-    # Summary
     print()
     print("Verdicts:")
     all_pass = True
-    for gate, passed in verdicts.items():
-        status = "PASS" if passed else "FAIL"
-        if not passed:
-            all_pass = False
-        print(f"  {gate}: {status}")
+    for gate, row in verdicts.items():
+        if row.get("check_state") == "not_run":
+            status = "NOT_RUN"
+        else:
+            status = "PASS" if row["passed"] else "FAIL"
+            if not row["passed"]:
+                all_pass = False
+        print(f"  {gate}: {status}  {json.dumps({k: v for k, v in row.items() if k != 'detail'})}")
 
-    print(f"\nAll gates: {'PASS' if all_pass else 'FAIL'}")
+    print(f"\nAll scored gates: {'PASS' if all_pass else 'FAIL'}")
     print(f"Results written to: {output}")
-
     sys.exit(0 if all_pass else 1)
 
 
