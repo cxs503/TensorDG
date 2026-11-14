@@ -302,6 +302,27 @@ def test_free_space_reference_is_the_wrong_solution_once_the_vortex_wraps():
     assert sweep["5"]["velocity_x"] > sweep["5"]["density"]
 
 
+def test_reference_defect_mimics_the_velocity_only_mechanism_signature():
+    """The "u jumps, rho/p stay flat" signature is the *reference*, not a scheme.
+
+    The superseded mechanism module (``benchmarks/case_euler_vortex_err_mechanism``,
+    M1) read that signature as a divergence-free alias mode and planned a
+    Helmholtz split to confirm it.  The defect sweep shows the confound: at the
+    very checkpoint where the jump appears (t = 2) the free-space reference is
+    already wrong by more than the jump itself in velocity, while its density
+    error is three orders smaller -- velocities feel the signed displacement,
+    density and pressure only feel the radial profile.  So M1's evidence cannot
+    discriminate a scheme defect from a reference defect, and no mechanism claim
+    may be built on the pre-fix numbers.
+    """
+    sweep = ec.reference_defect_sweep([2.0])
+    velocity, density = sweep["2"]["velocity_x"], sweep["2"]["density"]
+    # >> the 19.5x u/rho ratio the old numbers were read as
+    assert velocity / density > 100.0
+    # large enough on its own to cover the 0.2467 % "jump" the old metric reported
+    assert velocity > 0.25
+
+
 def test_p0_metric_reports_zero_for_the_exact_periodic_state():
     import torch
     cells = 32
