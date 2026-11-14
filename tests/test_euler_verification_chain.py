@@ -401,14 +401,15 @@ class TestConservation:
 # ---------------------------------------------------------------------------
 
 class TestDoubleMachReflection:
-    """Double Mach reflection: exact initial state only (honest scope).
+    """Double Mach reflection: exact initial state (the full case lives elsewhere).
 
     m13761: without a reflecting wall and the moving post-shock boundary the
     Woodward--Colella *pattern* cannot form, and the strong-shock DG march
-    aborts (``FloatingPointError``) at the shipped limiter settings, so this
-    class verifies the initial state against the exact Rankine--Hugoniot values
-    and documents the missing boundary conditions instead of claiming a
-    reflection that cannot happen.
+    aborts (``FloatingPointError``) at the shipped limiter settings.  Both gaps
+    were closed later: admissibility of the projected initial data (m20023) and
+    the standard boundary set plus the corrected front orientation (m20397,
+    ``tests/test_double_mach_reflection.py``, which carries the quantitative
+    front-tracking gates).  This class keeps the cheap state-level check only.
     """
 
     def test_double_mach_initial_state_and_documented_gap(self):
@@ -425,13 +426,8 @@ class TestDoubleMachReflection:
         assert z["p"] == pytest.approx(exact.downstream.p, rel=1e-12)
         assert math.hypot(z["u"], z["v"]) == pytest.approx(8.25, rel=1e-3)
 
-    @pytest.mark.xfail(strict=False,
-                       reason="m13761: Mach-10 oblique-shock DG march aborts "
-                              "(FloatingPointError) without a solving boundary "
-                              "set; documented gap, see "
-                              "docs/reports/tensordg-oblique-shock-verification.md")
     def test_double_mach_runs(self):
-        """Woodward--Colella class march: currently aborts -- honest gap."""
+        """Woodward--Colella march with the standard boundary set (smoke only)."""
         from benchmarks.double_mach_reflection import solve_double_mach
         x, y, coeff, meta = solve_double_mach(
             ncells=(120, 30), degree=1, final_time=0.1,
