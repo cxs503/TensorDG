@@ -53,6 +53,7 @@ __all__ = [
     "legendre_operators",
     "conservative_state",
     "normalise_bcs",
+    "normalise_solid",
 ]
 
 
@@ -323,7 +324,76 @@ def _boundary_flux(bc, interior, weights, basis, geom, axis, high, time):
     return torch.einsum("xav,a,ak->xkv", flux, weights, basis)
 
 
-def _axis_fluxes(coeff, basis, signs, weights, periodic, axis, geom, stage_time=0.0):
+def _solid_face_sum(interface, solid, axis, periodic, weights):
+    """Signed sum of the wall fluxes on interior solid faces, per cell-average row.
+
+    Returns ``(nx, ny, 4)`` whose sum is the rate at which the obstacle feeds
+    momentum (and nothing else) into the *fluid* cells: a face whose fluid side
+    sits to its right enters with ``+`` (it is that cell's left face), one whose
+    fluid side sits to its left with ``-`` (its right face), exactly like the
+    boundary ledger in ``_rhs``.  The outermost face of a non-periodic axis is
+    excluded -- it is a domain face, already counted by the boundary ledger.
+    """
+    if axis == 0:
+        left_solid = solid
+        right_solid = torch.roll(solid, shifts=-1, dims=0)
+        face_sum = torch.einsum("xybv,b->xyv", interface, weights)
+        valid = torch.ones_like(solid)
+        if not periodic:
+            valid[-1] = False
+    else:
+        left_solid = solid
+        right_solid = torch.roll(solid, shifts=-1, dims=1)
+        face_sum = torch.einsum("xyav,a->xyv", interface, weights)
+        valid = torch.ones_like(solid)
+        if not periodic:
+            valid[:, -1] = False
+    sign = (left_solid & ~right_solid & valid).to(face_sum.dtype) - (
+        right_solid & ~left_solid & valid
+    ).to(face_sum.dtype)
+    return face_sum * sign[..., None]
+
+
+def _solid_interface(interface, trace_right, neighbour, solid, axis):
+    """Replace the HLLC flux of every solid-adjacent interior face by the wall flux.
+
+    ``solid`` is a boolean ``(nx, ny)`` cell mask.  A face whose *fluid* side is
+    the cell with trace ``t`` carries the exact slip-wall flux
+    ``(0, p(t), 0, 0)`` built from that fluid trace, so the obstacle neither
+    leaks mass nor lets tangential momentum or energy through.  A face with
+    solid cells on both sides carries zero flux.
+    """
+    if solid is None:
+        return interface
+    if axis == 0:
+        left_solid = solid
+        right_solid = torch.roll(solid, shifts=-1, dims=0)
+    else:
+        left_solid = solid
+        right_solid = torch.roll(solid, shifts=-1, dims=1)
+    both = (left_solid & right_solid)[..., None, None]
+    only_left = (left_solid & ~right_solid)[..., None, None]
+    only_right = (right_solid & ~left_solid)[..., None, None]
+    out = torch.where(both, torch.zeros_like(interface), interface)
+    # ``only_left``: left cell solid, right cell fluid -> the fluid side is the
+    # *right* trace of the face, i.e. ``neighbour``; ``only_right`` is the mirror
+    # image.  Using the solid trace here would freeze the wall pressure at the
+    # solid cell's initial data and silently under-push the gas.
+    out = torch.where(only_left, _wall_flux(neighbour, axis), out)
+    out = torch.where(only_right, _wall_flux(trace_right, axis), out)
+    return out
+
+
+def _zero_solid_face(flux_row, solid_row):
+    """Zero the boundary-face flux of solid cells (nothing crosses a solid face)."""
+    if solid_row is None:
+        return flux_row
+    mask = (~solid_row)[:, None, None].to(flux_row.dtype)
+    return flux_row * mask
+
+
+def _axis_fluxes(coeff, basis, signs, weights, periodic, axis, geom, stage_time=0.0,
+                 solid=None, wall_rate=None):
     """Integrated interface fluxes ``(F_right, F_left)`` per cell.
 
     ``F_right[x, y, l, v]`` (x direction) is the numerical flux of the face
@@ -342,6 +412,10 @@ def _axis_fluxes(coeff, basis, signs, weights, periodic, axis, geom, stage_time=
         if not periodic:
             neighbour[-1] = trace_right[-1]
         interface = _hllc(trace_right, neighbour, axis)
+        interface = _solid_interface(interface, trace_right, neighbour, solid, axis)
+        if wall_rate is not None and solid is not None:
+            face_sum = _solid_face_sum(interface, solid, 0, periodic, weights)
+            wall_rate += 0.5 * geom["dy"] * face_sum.sum(dim=(0, 1))
         flux_right = torch.einsum("xybv,b,bl->xylv", interface, weights, basis)
         flux_left = torch.roll(flux_right, shifts=1, dims=0)
         if not periodic:
@@ -352,11 +426,21 @@ def _axis_fluxes(coeff, basis, signs, weights, periodic, axis, geom, stage_time=
             flux_right[-1] = _boundary_flux(
                 bcs.get("right"), trace_right[-1], weights, basis, geom, 0, True, stage_time
             )
+        if solid is not None:
+            # A periodic axis wraps, so both end faces are ordinary interfaces and
+            # already carry the wall flux from ``_solid_interface``.
+            if not periodic:
+                flux_left[0] = _zero_solid_face(flux_left[0], solid[0])
+                flux_right[-1] = _zero_solid_face(flux_right[-1], solid[-1])
     else:
         neighbour = torch.roll(trace_left, shifts=-1, dims=1)
         if not periodic:
             neighbour[:, -1] = trace_right[:, -1]
         interface = _hllc(trace_right, neighbour, axis)
+        interface = _solid_interface(interface, trace_right, neighbour, solid, axis)
+        if wall_rate is not None and solid is not None:
+            face_sum = _solid_face_sum(interface, solid, 1, periodic, weights)
+            wall_rate += 0.5 * geom["dx"] * face_sum.sum(dim=(0, 1))
         flux_right = torch.einsum("xyav,a,ak->xykv", interface, weights, basis)
         flux_left = torch.roll(flux_right, shifts=1, dims=1)
         if not periodic:
@@ -367,6 +451,9 @@ def _axis_fluxes(coeff, basis, signs, weights, periodic, axis, geom, stage_time=
             flux_right[:, -1] = _boundary_flux(
                 bcs.get("top"), trace_right[:, -1], weights, basis, geom, 1, True, stage_time
             )
+        if solid is not None and not periodic:
+            flux_left[:, 0] = _zero_solid_face(flux_left[:, 0], solid[:, 0])
+            flux_right[:, -1] = _zero_solid_face(flux_right[:, -1], solid[:, -1])
     return flux_right, flux_left
 
 
@@ -391,8 +478,35 @@ def normalise_bcs(bcs):
 # --- end m16803 boundary conditions ---
 
 
+def normalise_solid(solid, nx, ny, device, dtype=torch.float64):
+    """Validate the optional ``solid`` cell mask of ``solve_euler_dg_2d``.
+
+    Returns a boolean ``(nx, ny)`` tensor on ``device``, or ``None``.  Anything
+    that cannot be read as a full mesh mask is rejected instead of being
+    silently broadcast -- a mis-shaped obstacle mask would block the wrong cells.
+    """
+    if solid is None:
+        return None
+    mask = torch.as_tensor(solid, device=device)
+    if mask.shape != (nx, ny):
+        raise ValueError(
+            f"solid mask must have shape {(nx, ny)} (one entry per cell), got {tuple(mask.shape)}"
+        )
+    mask = mask != 0
+    if not bool(mask.any()):
+        return None
+    if bool(mask.all()):
+        raise ValueError("solid mask covers every cell; at least one fluid cell is required")
+    return mask
+
+
+def _freeze_solid(coeff, solid, reference):
+    """Restore the frozen coefficients of the solid cells."""
+    return torch.where(solid[..., None, None, None], reference, coeff)
+
+
 def _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic, geom=None,
-         stage_time=0.0, ledger=None):
+         stage_time=0.0, ledger=None, solid=None):
     """DG residual of the 2-D Euler equations on a Cartesian mesh.
 
     ``ledger`` (optional dict) receives ``ledger["rate"]``: the 4-vector rate at
@@ -417,11 +531,17 @@ def _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic, geom=None,
         weights, weights, basis, derivative,
     )
 
+    solid_rate = None
+    if ledger is not None and solid is not None:
+        solid_rate = torch.zeros(4, device=coeff.device, dtype=coeff.dtype)
+        ledger["solid_rate"] = solid_rate
     right_x, left_x = _axis_fluxes(
-        coeff, basis, signs, weights, periodic[0], 0, geom, stage_time
+        coeff, basis, signs, weights, periodic[0], 0, geom, stage_time, solid=solid,
+        wall_rate=solid_rate,
     )
     right_y, left_y = _axis_fluxes(
-        coeff, basis, signs, weights, periodic[1], 1, geom, stage_time
+        coeff, basis, signs, weights, periodic[1], 1, geom, stage_time, solid=solid,
+        wall_rate=solid_rate,
     )
 
     if ledger is not None:
@@ -452,7 +572,11 @@ def _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic, geom=None,
     scale = (outer / (2.0 * dx)).view(1, 1, *outer.shape, 1), (
         outer / (2.0 * dy)
     ).view(1, 1, *outer.shape, 1)
-    return -(scale[0] * face_x) - (scale[1] * face_y)
+    residual = -(scale[0] * face_x) - (scale[1] * face_y)
+    if solid is not None:
+        # A solid cell is frozen: no volume update and no face contribution.
+        residual = residual * (~solid)[..., None, None, None].to(residual.dtype)
+    return residual
 
 
 # ---------------------------------------------------------------------------
@@ -814,6 +938,7 @@ def solve_euler_dg_2d(
     device="cpu",
     dtype=torch.float64,
     track_boundary_flux=False,
+    solid=None,
 ):
     """Advance a 2-D Euler initial condition with modal DG / HLLC / SSP-RK3.
 
@@ -858,6 +983,15 @@ def solve_euler_dg_2d(
     initial_projection : str
         ``"l2"`` (default, full modal L2 projection -- preserves design order)
         or ``"cell-average"`` (P0 only, the legacy m2143 behaviour).
+    solid : array-like, bool, shape (nx, ny), optional
+        Cell mask of an internal solid obstacle (grid-aligned).  ``True`` freezes
+        that cell and turns every face between it and a fluid cell into an exact
+        slip wall built from the *fluid* trace (``(0, p, 0, 0)`` normal flux);
+        faces between two solid cells carry no flux, and the domain-face flux of
+        a solid cell is zero.  This is what makes bodies that are not lined up
+        with the outer boundary -- e.g. the forward-facing step of
+        Cockburn & Shu, JCP 141 (1998) -- expressible on a Cartesian mesh.
+        ``None`` (default) reproduces the historic solid-free solver bit for bit.
     """
     nx, ny = (ncells, ncells) if isinstance(ncells, int) else ncells
     if degree not in (0, 1, 2, 3):
@@ -884,6 +1018,7 @@ def solve_euler_dg_2d(
     x = xmin + (torch.arange(nx, device=dev, dtype=dtype) + 0.5) * dx
     y = ymin + (torch.arange(ny, device=dev, dtype=dtype) + 0.5) * dy
 
+    solid_mask = normalise_solid(solid, nx, ny, dev, dtype)
     face_bcs = normalise_bcs(bcs)
     for face, axis in (("left", 0), ("right", 0), ("bottom", 1), ("top", 1)):
         if face in face_bcs and periodic_flags_pre[axis]:
@@ -957,14 +1092,28 @@ def solve_euler_dg_2d(
     boundary_balance = (
         torch.zeros(4, dtype=coeff.dtype, device=coeff.device) if _track else None
     )
+    # Interior solid faces are *not* part of the outer-surface ledger: they hand
+    # the fluid the obstacle force.  Accumulating them with the same RK weights
+    # lets the momentum identity close to round-off as well.
+    solid_balance = (
+        torch.zeros(4, dtype=coeff.dtype, device=coeff.device)
+        if (_track and solid_mask is not None) else None
+    )
 
     time, steps, dt = 0.0, 0, 0.0
+    solid_ref = None if solid_mask is None else coeff.clone()
     while time < final_time:
         at_quad = torch.einsum("xyklv,ak,bl->xyabv", coeff, basis, basis)
         _, velocity_x, velocity_y, pressure = _primitive(at_quad)
         sound = torch.sqrt(GAMMA * pressure.clamp_min(1e-12) / at_quad[..., 0].clamp_min(1e-12))
-        speed_x = float(torch.max(velocity_x.abs() + sound).item())
-        speed_y = float(torch.max(velocity_y.abs() + sound).item())
+        speed_x_t = velocity_x.abs() + sound
+        speed_y_t = velocity_y.abs() + sound
+        if solid_mask is not None:
+            fluid_quad = (~solid_mask)[..., None, None].to(speed_x_t.dtype)
+            speed_x_t = speed_x_t * fluid_quad
+            speed_y_t = speed_y_t * fluid_quad
+        speed_x = float(torch.max(speed_x_t).item())
+        speed_y = float(torch.max(speed_y_t).item())
         rate = (speed_x / dx + speed_y / dy) * (2 * degree + 1)
         if prescribed_dt is None:
             dt = min(cfl / max(rate, 1e-12), final_time - time)
@@ -973,35 +1122,47 @@ def solve_euler_dg_2d(
         ledger = {} if _track else None
         k1 = _rhs(
             coeff, basis, derivative, weights, signs, dx, dy, periodic, geom, time,
-            ledger=ledger,
+            ledger=ledger, solid=solid_mask,
         )
         if _track:
             boundary_balance += (dt / 6.0) * ledger["rate"]
+            if solid_balance is not None:
+                solid_balance += (dt / 6.0) * ledger["solid_rate"]
         u1 = coeff + dt * k1
         if limit_each_stage:
             u1 = impose(u1)
         else:
             u1 = _positivity_filter(u1, basis, signs)
+        if solid_ref is not None:
+            u1 = _freeze_solid(u1, solid_mask, solid_ref)
         ledger = {} if _track else None
         k2 = _rhs(
             u1, basis, derivative, weights, signs, dx, dy, periodic, geom, time + dt,
-            ledger=ledger,
+            ledger=ledger, solid=solid_mask,
         )
         if _track:
             boundary_balance += (dt / 6.0) * ledger["rate"]
+            if solid_balance is not None:
+                solid_balance += (dt / 6.0) * ledger["solid_rate"]
         u2 = 0.75 * coeff + 0.25 * (u1 + dt * k2)
         if limit_each_stage:
             u2 = impose(u2)
         else:
             u2 = _positivity_filter(u2, basis, signs)
+        if solid_ref is not None:
+            u2 = _freeze_solid(u2, solid_mask, solid_ref)
         ledger = {} if _track else None
         k3 = _rhs(
             u2, basis, derivative, weights, signs, dx, dy, periodic, geom, time + 0.5 * dt,
-            ledger=ledger,
+            ledger=ledger, solid=solid_mask,
         )
         if _track:
             boundary_balance += (2.0 * dt / 3.0) * ledger["rate"]
+            if solid_balance is not None:
+                solid_balance += (2.0 * dt / 3.0) * ledger["solid_rate"]
         coeff = impose(coeff / 3.0 + (2.0 / 3.0) * (u2 + dt * k3))
+        if solid_ref is not None:
+            coeff = _freeze_solid(coeff, solid_mask, solid_ref)
         if not torch.isfinite(coeff).all():
             raise FloatingPointError("non-finite 2-D DG state; reduce the CFL number")
         rho_now = coeff[..., 0, 0, 0]
@@ -1025,6 +1186,32 @@ def solve_euler_dg_2d(
     else:
         for name in _cons_names:
             conservation_drift[name] = float("nan")
+
+    obstacle_impulse = {}
+    conservation_residual_total = {}
+    if solid_balance is not None and totals_initial is not None:
+        for i, name in enumerate(_cons_names):
+            impulse = float(solid_balance[i].item())
+            change = float(totals_final[i].item()) - float(totals_initial[i].item())
+            through_boundary = float(boundary_balance[i].item())
+            scale = max(abs(float(totals_initial[i].item())), abs(through_boundary),
+                        abs(impulse), 1e-30)
+            obstacle_impulse[name] = impulse
+            conservation_residual_total[name] = {
+                "change": change,
+                "boundary_flux": through_boundary,
+                "obstacle_impulse": impulse,
+                "residual": change - through_boundary - impulse,
+                "relative": abs(change - through_boundary - impulse) / scale,
+            }
+    else:
+        for name in _cons_names:
+            obstacle_impulse[name] = float("nan")
+            conservation_residual_total[name] = {
+                "change": float("nan"), "boundary_flux": float("nan"),
+                "obstacle_impulse": float("nan"), "residual": float("nan"),
+                "relative": float("nan"),
+            }
 
     # Flux-balance identity for *non-periodic* domains: the change of a domain
     # integral must equal the time-integrated boundary flux.  For a periodic run
@@ -1079,6 +1266,9 @@ def solve_euler_dg_2d(
         "dtype": str(dtype).replace("torch.", ""),
         "dofs": nx * ny * (degree + 1) ** 2 * 4,
         "conservation_drift": conservation_drift,
+        "solid_cells": 0 if solid_mask is None else int(solid_mask.sum().item()),
+        "obstacle_impulse": obstacle_impulse,
+        "conservation_residual_total": conservation_residual_total,
     }
     return x, y, coeff, metadata
 
