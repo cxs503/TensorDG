@@ -67,6 +67,17 @@ from tensordg.euler_2d import _cell_averages, solve_isentropic_vortex, vortex_er
 from benchmarks.verify_euler_dg_2d import _reconstruct, _vortex_error as dg_vortex_error
 
 DOMAIN = ((-5.0, 5.0), (-5.0, 5.0))
+
+#: Period lengths of ``DOMAIN``.  The exact solution is the *periodic* one: the
+#: vortex leaves the box once ``|u|t`` reaches ``L/2`` (= 5 at u = 1), so every
+#: checkpoint at ``t >= 5`` must be compared with the minimum-image profile.
+#: Without it the reference at ``t = 10`` is the uniform free stream (the peak
+#: sits at ``x = 10``, outside the box) and the "error" saturates at the
+#: distance between the vortex and the free stream -- resolution independent.
+BOX = (
+    DOMAIN[0][1] - DOMAIN[0][0],
+    DOMAIN[1][1] - DOMAIN[1][0],
+)
 STRENGTH = 5.0
 BACKGROUND = (1.0, 1.0)
 FIELDS = ("density", "velocity_x", "velocity_y", "pressure")
@@ -298,7 +309,7 @@ def run_dg(config: dict) -> dict:
     )
     nodes, weights, basis, _, _ = _operators(degree)
     errors = dg_vortex_error(coeff, basis, nodes, DOMAIN, final_time, strength,
-                            background)
+                            background, periodic_box=BOX)
     final = _dg_measurements(coeff, basis, nodes, weights)
     coeff0, basis0, nodes0, weights0 = _initial_dg_state(config)
     initial = _dg_measurements(coeff0, basis0, nodes0, weights0)
@@ -336,7 +347,9 @@ def run_p0(config: dict) -> dict:
         background_velocity=background,
     )
     conservative = fields["conservative"] if isinstance(fields, dict) else fields
-    raw = vortex_error(x, y, conservative, final_time, strength, background)
+    raw = vortex_error(
+        x, y, conservative, final_time, strength, background, periodic_box=BOX
+    )
     errors = {name: raw[name]["relative_l2"] for name in FIELDS}
     final = _p0_measurements(conservative)
     initial = _p0_measurements(_initial_p0_state(config))
