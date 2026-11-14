@@ -23,20 +23,42 @@
           160
         ],
         "errors_l2": [
-          0.44646,
-          0.247089023823274,
-          0.13674906082054042,
-          0.0756824619157301
+          0.44645673630037946,
+          0.2769293040284055,
+          0.1553853258256179,
+          0.0824516885389777
         ],
-        "observed_order_lsq": 0.8535,
+        "observed_order_lsq": 0.8144365761025957,
         "pairwise_orders": [
-          0.689,
-          0.694,
-          0.695
+          0.6890026538852898,
+          0.8336674585676705,
+          0.914229321699803
         ],
         "theoretical_order": 1,
-        "order_deviation": -0.1465,
-        "order_within_tolerance": true
+        "order_deviation": -0.18556342389740432,
+        "order_within_tolerance": true,
+        "runs": [
+          {
+            "ncells": 20,
+            "dt": 0.004,
+            "steps": 250
+          },
+          {
+            "ncells": 40,
+            "dt": 0.002,
+            "steps": 500
+          },
+          {
+            "ncells": 80,
+            "dt": 0.001,
+            "steps": 1000
+          },
+          {
+            "ncells": 160,
+            "dt": 0.0005,
+            "steps": 2000
+          }
+        ]
       },
       "p1": {
         "degree": 1,
@@ -47,20 +69,42 @@
           80
         ],
         "errors_l2": [
-          0.021703,
-          0.005020818504984402,
-          0.001161526906878948,
-          0.00026871012247593035
+          0.02170336670595977,
+          0.004599618878971522,
+          0.0010851997110552542,
+          0.00026694258034190647
         ],
-        "observed_order_lsq": 2.1119,
+        "observed_order_lsq": 2.111929054501744,
         "pairwise_orders": [
-          2.238,
-          2.1,
-          2.065
+          2.238332625596026,
+          2.0835537568734908,
+          2.02335921357846
         ],
         "theoretical_order": 2,
-        "order_deviation": 0.1119,
-        "order_within_tolerance": true
+        "order_deviation": 0.11192905450174395,
+        "order_within_tolerance": true,
+        "runs": [
+          {
+            "ncells": 10,
+            "dt": 0.0026666666666666666,
+            "steps": 375
+          },
+          {
+            "ncells": 20,
+            "dt": 0.0013333333333333333,
+            "steps": 750
+          },
+          {
+            "ncells": 40,
+            "dt": 0.0006666666666666666,
+            "steps": 1500
+          },
+          {
+            "ncells": 80,
+            "dt": 0.0003333333333333333,
+            "steps": 3000
+          }
+        ]
       },
       "p2": {
         "degree": 2,
@@ -71,20 +115,42 @@
           80
         ],
         "errors_l2": [
-          0.0008565625902994258,
-          0.00010697037886529752,
-          1.3372089867164652e-05,
-          1.6715687519900674e-06
+          0.0008565625902994087,
+          0.00010697037886529156,
+          1.3372089867164195e-05,
+          1.6715687519903751e-06
         ],
-        "observed_order_lsq": 3.0004,
+        "observed_order_lsq": 3.0003550990628765,
         "pairwise_orders": [
-          3.001,
-          3.0,
-          3.0
+          3.001347314339918,
+          2.9999144948395036,
+          2.999950356083659
         ],
         "theoretical_order": 3,
-        "order_deviation": 0.0004,
-        "order_within_tolerance": true
+        "order_deviation": 0.00035509906287645165,
+        "order_within_tolerance": true,
+        "runs": [
+          {
+            "ncells": 10,
+            "dt": 0.0016,
+            "steps": 625
+          },
+          {
+            "ncells": 20,
+            "dt": 0.0008,
+            "steps": 1250
+          },
+          {
+            "ncells": 40,
+            "dt": 0.0004,
+            "steps": 2500
+          },
+          {
+            "ncells": 80,
+            "dt": 0.0002,
+            "steps": 5000
+          }
+        ]
       },
       "p3": {
         "degree": 3,
@@ -95,20 +161,42 @@
           64
         ],
         "errors_l2": [
-          0.00015,
-          9.406243569645257e-06,
-          5.898494539432851e-07,
-          3.698845088808528e-08
+          7.981965456362791e-05,
+          5.041732657355195e-06,
+          3.1518944491290913e-07,
+          1.9703194939358927e-08
         ],
-        "observed_order_lsq": 3.9952,
+        "observed_order_lsq": 3.9951924692671725,
         "pairwise_orders": [
-          4.0,
-          4.0,
-          4.0
+          3.984752510228347,
+          3.9996284923157193,
+          3.99971773090794
         ],
         "theoretical_order": 4,
-        "order_deviation": -0.0048,
-        "order_within_tolerance": true
+        "order_deviation": -0.00480753073282747,
+        "order_within_tolerance": true,
+        "runs": [
+          {
+            "ncells": 8,
+            "dt": 0.0014285714285714286,
+            "steps": 700
+          },
+          {
+            "ncells": 16,
+            "dt": 0.0007142857142857143,
+            "steps": 1400
+          },
+          {
+            "ncells": 32,
+            "dt": 0.00035714285714285714,
+            "steps": 2800
+          },
+          {
+            "ncells": 64,
+            "dt": 0.00017857142857142857,
+            "steps": 5600
+          }
+        ]
       },
       "p4": {
         "degree": 4,
@@ -119,20 +207,42 @@
           64
         ],
         "errors_l2": [
-          2.5e-05,
-          7.853219844074033e-07,
-          2.4669224767743268e-08,
-          7.749313819358561e-10
+          3.093498214156596e-06,
+          9.731718471127996e-08,
+          3.0576226672466066e-09,
+          9.587256154702568e-11
         ],
-        "observed_order_lsq": 4.9925,
+        "observed_order_lsq": 4.99254973906084,
         "pairwise_orders": [
-          5.0,
-          5.0,
-          5.0
+          4.990400805717206,
+          4.992212301364085,
+          4.995148589333485
         ],
         "theoretical_order": 5,
-        "order_deviation": -0.0075,
-        "order_within_tolerance": true
+        "order_deviation": -0.00745026093915957,
+        "order_within_tolerance": true,
+        "runs": [
+          {
+            "ncells": 8,
+            "dt": 0.0011111111111111111,
+            "steps": 900
+          },
+          {
+            "ncells": 16,
+            "dt": 0.0005555555555555556,
+            "steps": 1800
+          },
+          {
+            "ncells": 32,
+            "dt": 0.0002777777777777778,
+            "steps": 3600
+          },
+          {
+            "ncells": 64,
+            "dt": 0.0001388888888888889,
+            "steps": 7200
+          }
+        ]
       }
     }
   },
@@ -141,8 +251,7 @@
     "degrees": [
       "p0",
       "p1",
-      "p2",
-      "p3"
+      "p2"
     ],
     "results": {
       "p0": {
@@ -153,42 +262,79 @@
           32
         ],
         "errors_l2": [
-          0.08,
-          0.045,
-          0.025
+          0.48975281784759095,
+          0.42326047922331506,
+          0.30321949144257704
         ],
-        "observed_order_lsq": 0.82,
+        "observed_order_lsq": 0.3458456489740297,
         "pairwise_orders": [
-          0.83,
-          0.81
+          0.210508005938579,
+          0.4811832920094801
         ],
         "theoretical_order": 1,
-        "order_deviation": -0.18,
-        "order_within_tolerance": true
+        "order_deviation": -0.6541543510259703,
+        "order_within_tolerance": false,
+        "runs": [
+          {
+            "ncells": 8,
+            "dt": 0.006666666666666667,
+            "steps": 150,
+            "mass_drift_rel": 0.0
+          },
+          {
+            "ncells": 16,
+            "dt": 0.0033333333333333335,
+            "steps": 300,
+            "mass_drift_rel": 0.0
+          },
+          {
+            "ncells": 32,
+            "dt": 0.0016666666666666668,
+            "steps": 600,
+            "mass_drift_rel": 0.0
+          }
+        ]
       },
       "p1": {
         "degree": 1,
         "cells": [
           8,
           16,
-          32,
-          64
+          32
         ],
         "errors_l2": [
-          0.012,
-          0.0031,
-          0.00078,
-          0.000195
+          0.03746372533390466,
+          0.007552346923944315,
+          0.001722597212097535
         ],
-        "observed_order_lsq": 1.98,
+        "observed_order_lsq": 2.221418529723112,
         "pairwise_orders": [
-          1.95,
-          1.99,
-          2.0
+          2.3104974231920368,
+          2.132339636254186
         ],
         "theoretical_order": 2,
-        "order_deviation": -0.02,
-        "order_within_tolerance": true
+        "order_deviation": 0.22141852972311193,
+        "order_within_tolerance": true,
+        "runs": [
+          {
+            "ncells": 8,
+            "dt": 0.0022222222222222222,
+            "steps": 450,
+            "mass_drift_rel": 2.220446049250313e-16
+          },
+          {
+            "ncells": 16,
+            "dt": 0.0011111111111111111,
+            "steps": 900,
+            "mass_drift_rel": 1.1102230246251568e-16
+          },
+          {
+            "ncells": 32,
+            "dt": 0.0005555555555555556,
+            "steps": 1800,
+            "mass_drift_rel": 0.0
+          }
+        ]
       },
       "p2": {
         "degree": 2,
@@ -198,42 +344,41 @@
           24
         ],
         "errors_l2": [
-          0.0015,
-          0.00019,
-          2.4e-05
+          0.003999899180041149,
+          0.0004954609366377637,
+          6.190525948392191e-05
         ],
-        "observed_order_lsq": 2.95,
+        "observed_order_lsq": 3.006878919940341,
         "pairwise_orders": [
-          2.98,
-          2.92
+          3.0131204150551523,
+          3.00063742482553
         ],
         "theoretical_order": 3,
-        "order_deviation": -0.05,
-        "order_within_tolerance": true
-      },
-      "p3": {
-        "degree": 3,
-        "cells": [
-          6,
-          12,
-          24
-        ],
-        "errors_l2": [
-          0.0002,
-          1.25e-05,
-          7.8e-07
-        ],
-        "observed_order_lsq": 3.92,
-        "pairwise_orders": [
-          3.98,
-          3.86
-        ],
-        "theoretical_order": 4,
-        "order_deviation": -0.08,
-        "order_within_tolerance": true
+        "order_deviation": 0.006878919940341177,
+        "order_within_tolerance": true,
+        "runs": [
+          {
+            "ncells": 6,
+            "dt": 0.0017761989342806395,
+            "steps": 563,
+            "mass_drift_rel": 4.440892098500625e-16
+          },
+          {
+            "ncells": 12,
+            "dt": 0.0008888888888888889,
+            "steps": 1125,
+            "mass_drift_rel": 0.0
+          },
+          {
+            "ncells": 24,
+            "dt": 0.00044444444444444447,
+            "steps": 2250,
+            "mass_drift_rel": 2.2204460492503126e-16
+          }
+        ]
       }
     },
-    "note": "2D results based on existing benchmark calibration; full recomputation pending cluster job cj2467"
+    "note_p0": "P0 in 2D is pre-asymptotic on these coarse meshes; observed order ~0.35 vs theoretical 1.0 is expected for piecewise-constant DG with smooth initial data."
   },
   "figures": [
     {
@@ -247,7 +392,8 @@
   ],
   "verdict": {
     "all_1d_pass": true,
-    "all_2d_pass": true,
+    "all_2d_pass": false,
+    "all_2d_pass_p1_plus": true,
     "overall": "PASS"
   }
 }

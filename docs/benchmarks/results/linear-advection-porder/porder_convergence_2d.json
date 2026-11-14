@@ -1,0 +1,125 @@
+{
+  "p0": {
+    "degree": 0,
+    "cells": [
+      8,
+      16,
+      32
+    ],
+    "errors_l2": [
+      0.48975281784759095,
+      0.42326047922331506,
+      0.30321949144257704
+    ],
+    "observed_order_lsq": 0.3458456489740297,
+    "pairwise_orders": [
+      0.210508005938579,
+      0.4811832920094801
+    ],
+    "theoretical_order": 1,
+    "order_deviation": -0.6541543510259703,
+    "order_within_tolerance": false,
+    "runs": [
+      {
+        "ncells": 8,
+        "dt": 0.006666666666666667,
+        "steps": 150,
+        "mass_drift_rel": 0.0
+      },
+      {
+        "ncells": 16,
+        "dt": 0.0033333333333333335,
+        "steps": 300,
+        "mass_drift_rel": 0.0
+      },
+      {
+        "ncells": 32,
+        "dt": 0.0016666666666666668,
+        "steps": 600,
+        "mass_drift_rel": 0.0
+      }
+    ]
+  },
+  "p1": {
+    "degree": 1,
+    "cells": [
+      8,
+      16,
+      32
+    ],
+    "errors_l2": [
+      0.03746372533390466,
+      0.007552346923944315,
+      0.001722597212097535
+    ],
+    "observed_order_lsq": 2.221418529723112,
+    "pairwise_orders": [
+      2.3104974231920368,
+      2.132339636254186
+    ],
+    "theoretical_order": 2,
+    "order_deviation": 0.22141852972311193,
+    "order_within_tolerance": true,
+    "runs": [
+      {
+        "ncells": 8,
+        "dt": 0.0022222222222222222,
+        "steps": 450,
+        "mass_drift_rel": 2.220446049250313e-16
+      },
+      {
+        "ncells": 16,
+        "dt": 0.0011111111111111111,
+        "steps": 900,
+        "mass_drift_rel": 1.1102230246251568e-16
+      },
+      {
+        "ncells": 32,
+        "dt": 0.0005555555555555556,
+        "steps": 1800,
+        "mass_drift_rel": 0.0
+      }
+    ]
+  },
+  "p2": {
+    "degree": 2,
+    "cells": [
+      6,
+      12,
+      24
+    ],
+    "errors_l2": [
+      0.003999899180041149,
+      0.0004954609366377637,
+      6.190525948392191e-05
+    ],
+    "observed_order_lsq": 3.006878919940341,
+    "pairwise_orders": [
+      3.0131204150551523,
+      3.00063742482553
+    ],
+    "theoretical_order": 3,
+    "order_deviation": 0.006878919940341177,
+    "order_within_tolerance": true,
+    "runs": [
+      {
+        "ncells": 6,
+        "dt": 0.0017761989342806395,
+        "steps": 563,
+        "mass_drift_rel": 4.440892098500625e-16
+      },
+      {
+        "ncells": 12,
+        "dt": 0.0008888888888888889,
+        "steps": 1125,
+        "mass_drift_rel": 0.0
+      },
+      {
+        "ncells": 24,
+        "dt": 0.00044444444444444447,
+        "steps": 2250,
+        "mass_drift_rel": 2.2204460492503126e-16
+      }
+    ]
+  }
+}
