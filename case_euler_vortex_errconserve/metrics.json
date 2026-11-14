@@ -115,6 +115,12 @@
       "cfl": 0.4
     }
   ],
+  "ladder_completeness": {
+    "declared": 12,
+    "present": 12,
+    "missing": [],
+    "unexpected": []
+  },
   "exact_invariants": {
     "mass": 98.24174356019108,
     "momentum_x": 98.2417435601911,
@@ -160,6 +166,7 @@
           "p0_n64_t5_cfl0.4": 0.120235164048954
         },
         "10": {
+          "dg_d2_n32_t10_cfl0.2": 0.00015162621307949022,
           "p0_n128_t10_cfl0.4": 0.12084610727586263,
           "p0_n64_t10_cfl0.4": 0.1430474063391442
         }
@@ -167,20 +174,20 @@
       "passed": false
     },
     "C2_error_conservation": {
-      "criterion": "dg_d2_n32: least-squares exponent of e ~ t^alpha over t = 1..5 satisfies alpha <= 1.0 (no super-linear accumulation)",
-      "growth_ratio": 1.1803210255228402,
+      "criterion": "dg_d2_n32: least-squares exponent of e ~ t^alpha over t = 1..10 satisfies alpha <= 1.0 (no super-linear accumulation)",
+      "growth_ratio": 1.6077060888129848,
       "growth_ratio_window": [
         1.0,
-        5.0
+        10.0
       ],
       "strict_target": {
         "alpha_max": 0.5,
         "passed": true
       },
-      "exponent": 0.10554036966030703,
-      "checkpoint_count": 3,
+      "exponent": 0.19871721658331432,
+      "checkpoint_count": 4,
       "exponents_all_families": {
-        "dg_d2_n32": 0.10554036966030703,
+        "dg_d2_n32": 0.19871721658331432,
         "p0_n128": 0.6353940009057978,
         "p0_n256": NaN,
         "p0_n64": 0.4790904891383289
@@ -190,14 +197,14 @@
     },
     "C3_discrete_conservation": {
       "criterion": "relative drift of mass/x-mom/y-mom/energy vs the t=0 discrete state < 1e-10",
-      "worst_drift": 1.0783057358152238e-13,
-      "worst_at": "p0_n128_t10_cfl0.4:energy",
+      "worst_drift": 1.9488644950054955e-13,
+      "worst_at": "dg_d2_n32_t10_cfl0.2:energy",
       "passed": true,
       "status": "passed"
     },
     "C4_entropy_budget": {
       "criterion": "dg_d2_n32: |Delta S|/S(0) < 0.001 (S = int p rho^-gamma)",
-      "measured": 1.4203657383582424e-07,
+      "measured": 2.980259063978252e-07,
       "exact_entropy": 100.0,
       "passed": true,
       "status": "passed"
@@ -213,6 +220,16 @@
       "passed": true,
       "status": "passed"
     },
+    "C6_ladder_completeness": {
+      "criterion": "every checkpoint declared in LADDER has a result record (12 declared)",
+      "declared": 12,
+      "present": 12,
+      "missing": [],
+      "unexpected": [],
+      "note": "unexpected keys are listed for transparency but are not a failure: extra evidence is allowed, missing evidence is not",
+      "passed": true,
+      "status": "passed"
+    },
     "informational": [
       "C1x_crosscheck_raw"
     ],
@@ -222,7 +239,7 @@
     "verdict": "PASS"
   },
   "family_count": {
-    "dg_d2_n32": 3,
+    "dg_d2_n32": 4,
     "p0_n128": 4,
     "p0_n256": 1,
     "p0_n64": 3
@@ -369,6 +386,54 @@
       },
       "gate_pass": true,
       "wall_seconds": 160.13221144676208
+    },
+    {
+      "task_key": "dg_d2_n32_t10_cfl0.2",
+      "family": "dg_d2_n32",
+      "config": {
+        "task": "dg",
+        "cells": 32,
+        "final_time": 10.0,
+        "cfl": 0.2,
+        "strength": 5.0,
+        "degree": 2
+      },
+      "final_time": 10.0,
+      "cfl": 0.2,
+      "steps": 4684,
+      "errors": {
+        "density": 6.12330429513006e-05,
+        "velocity_x": 0.00015162621307949022,
+        "velocity_y": 0.0001508726376872591,
+        "pressure": 8.516345284178145e-05
+      },
+      "max_percent": 0.015162621307949022,
+      "invariant_drift": {
+        "mass": 1.7531810094832313e-13,
+        "momentum_x": 1.7416088576054542e-13,
+        "momentum_y": 1.7445018955748978e-13,
+        "energy": 1.9488644950054955e-13,
+        "entropy": 2.980259064711755e-07
+      },
+      "entropy_drift": 2.980259063978252e-07,
+      "entropy_production": 2.980259063978252e-07,
+      "density_min_relative_error": 0.0002609019032130591,
+      "initial_invariants": {
+        "mass": 98.24174356019094,
+        "momentum_x": 98.24174356019094,
+        "momentum_y": 98.24174356019097,
+        "energy": 344.75932660102984,
+        "entropy": 99.99999980551624
+      },
+      "final_invariants": {
+        "mass": 98.24174356017372,
+        "momentum_x": 98.24174356017383,
+        "momentum_y": 98.24174356017383,
+        "energy": 344.75932660096265,
+        "entropy": 100.00002960810683
+      },
+      "gate_pass": true,
+      "wall_seconds": 474.3131642341614
     },
     {
       "task_key": "p0_n128_t1_cfl0.4",
