@@ -404,8 +404,14 @@ def production_errors_from_profiles(path, quadrature_order=10):
     data = np.load(path)
     points = data["points"]                 # (ncells, n_nodes) physical abscissae
     _, weights = np.polynomial.legendre.leggauss(quadrature_order)
+    # Recover the cell width exactly as ``modal_fields`` computes it: the span
+    # over ``ncells - 1``.  ``np.mean(np.diff(centres))`` averages ``ncells - 1``
+    # rounded differences and lands a few ulp away from the solver's ``dx``, which
+    # then shows up as a spurious last-bit mismatch between the ladder's own L2
+    # and the L2 re-measured here (m20346 F1: 3.1155618811580767e-02 vs
+    # 3.115561881158076e-02).
     centres = 0.5 * (points[:, 0] + points[:, -1])
-    dx = float(np.mean(np.diff(centres)))   # uniform grid, Jacobian = dx/2
+    dx = float((centres[-1] - centres[0]) / (len(centres) - 1))
     fields = ("density", "velocity", "pressure")
     out = {"l1": {}, "l2": {}}
     for field in fields:
