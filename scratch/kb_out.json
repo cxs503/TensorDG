@@ -1,0 +1,44 @@
+{
+ "login_status": 200,
+ "has_token": true,
+ "knowledge_search_vortex": {
+  "status": 200,
+  "data": {
+   "query": "",
+   "domain": null,
+   "limit": 20,
+   "total": 0,
+   "count": 0,
+   "took_ms": 0.016,
+   "items": [],
+   "available": true,
+   "store_dir": "/root/tensor-ecosystem/TensorPlatform/artifacts/knowledge_sediment"
+  }
+ },
+ "knowledge_search_yee": {
+  "status": 200,
+  "data": {
+   "query": "",
+   "domain": null,
+   "limit": 20,
+   "total": 0,
+   "count": 0,
+   "took_ms": 0.017,
+   "items": [],
+   "available": true,
+   "store_dir": "/root/tensor-ecosystem/TensorPlatform/artifacts/knowledge_sediment"
+  }
+ },
+ "negkb_TensorDG": {
+  "status": "ERR",
+  "data": "HTTP Error 422: Unprocessable Entity"
+ },
+ "negkb_vortex": {
+  "status": "ERR",
+  "data": "HTTP Error 422: Unprocessable Entity"
+ },
+ "negkb_yee": {
+  "status": "ERR",
+  "data": "HTTP Error 422: Unprocessable Entity"
+ }
+}
