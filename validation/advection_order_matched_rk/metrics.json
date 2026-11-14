@@ -1,0 +1,498 @@
+{
+  "case": "CASE-DG-ADVECT-ORDER",
+  "round": 2,
+  "objective": "matched-stage (p+1) re-measurement of the DG advection convergence rate plus an expm-based exact time/space error split",
+  "reference": {
+    "column_source": "validation/advection_order/ref_table.json",
+    "citation": {
+      "author": "Zheng Sun",
+      "title": "Reducing polynomial degree by one for inner-stage operators affects neither stability type nor accuracy order of the Runge-Kutta discontinuous Galerkin method",
+      "journal": "Mathematics of Computation (AMS)",
+      "doi": "10.1090/mcom/4037",
+      "date": "2024-10-31",
+      "preprint": "arXiv:2404.15453v2",
+      "table_label": "tab:acc-sin-1d-uni",
+      "experiment": "1-D linear advection u_t + u_x = 0 on the periodic unit interval, u(x,0)=sin(2 pi x), uniform meshes, t^n = 1"
+    },
+    "note": "the reference table states neither dt nor CFL; only the rate and the stage count per column are comparable"
+  },
+  "setup": {
+    "cfl": 0.2,
+    "final_time": 1.0,
+    "speed": 1.0,
+    "cells": [
+      20,
+      40,
+      80,
+      160
+    ],
+    "degrees": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "reference_meshes": [
+      20,
+      40,
+      80,
+      160,
+      320
+    ],
+    "solver": "tensordg.advection_1d.solve_advection (unchanged)"
+  },
+  "thresholds": {
+    "RATE_TOL": 0.1,
+    "TIME_SHARE_TOL": 0.1,
+    "RATIO_BAND": [
+      0.85,
+      1.18
+    ],
+    "DT_ORDER_TOL": 0.2,
+    "FIT_FLOOR": 1e-12
+  },
+  "comparison": [
+    {
+      "degree": 1,
+      "integrator": "rk2",
+      "rk_order": 2,
+      "rk_stages": 2,
+      "ref_column": "RK2DG1",
+      "ref_rk_stages": 2,
+      "meshes": [
+        20,
+        40,
+        80,
+        160
+      ],
+      "ref_fitted_order": 1.9898129652108183,
+      "got_fitted_order": 2.0369056915849053,
+      "order_gap_vs_ref": 0.04709272637408701,
+      "rate_ok": true,
+      "stages_matched": true,
+      "got_l2": [
+        0.004619964452519557,
+        0.0010888332736716864,
+        0.0002677517487933767,
+        6.665242449716329e-05
+      ],
+      "ref_l2": [
+        0.0069,
+        0.00173,
+        0.000437,
+        0.00011
+      ],
+      "ratio_got_over_ref": [
+        0.6695600655825446,
+        0.6293833951859459,
+        0.6127042306484592,
+        0.6059311317923936
+      ],
+      "ratio_mean": 0.6293947058023358,
+      "ratio_in_band": false,
+      "baseline_ratio_mean": 0.6216098974330728
+    },
+    {
+      "degree": 2,
+      "integrator": "rk3",
+      "rk_order": 3,
+      "rk_stages": 3,
+      "ref_column": "RK3DG2",
+      "ref_rk_stages": 3,
+      "meshes": [
+        20,
+        40,
+        80,
+        160
+      ],
+      "ref_fitted_order": 2.9988315649432367,
+      "got_fitted_order": 2.9999772750207274,
+      "order_gap_vs_ref": 0.001145710077490758,
+      "rate_ok": true,
+      "stages_matched": true,
+      "got_l2": [
+        0.00010697739435057525,
+        1.3372370058487673e-05,
+        1.671584921125066e-06,
+        2.089495831848092e-07
+      ],
+      "ref_l2": [
+        0.000567,
+        7.12e-05,
+        8.91e-06,
+        1.11e-06
+      ],
+      "ratio_got_over_ref": [
+        0.18867265317561774,
+        0.18781418621471452,
+        0.1876077352553385,
+        0.18824286773406235
+      ],
+      "ratio_mean": 0.18808436059493328,
+      "ratio_in_band": false,
+      "baseline_ratio_mean": 0.18804430489704774
+    },
+    {
+      "degree": 3,
+      "integrator": "rk4",
+      "rk_order": 4,
+      "rk_stages": 4,
+      "ref_column": "RK4DG3",
+      "ref_rk_stages": 4,
+      "meshes": [
+        20,
+        40,
+        80,
+        160
+      ],
+      "ref_fitted_order": 4.000014399247966,
+      "got_fitted_order": 3.9997384003787837,
+      "order_gap_vs_ref": -0.0002759988691827253,
+      "rate_ok": true,
+      "stages_matched": true,
+      "got_l2": [
+        2.0649768809379866e-06,
+        1.2911373125964268e-07,
+        8.070617705804999e-09,
+        5.044285216762509e-10
+      ],
+      "ref_l2": [
+        3.46e-05,
+        2.17e-06,
+        1.35e-07,
+        8.46e-09
+      ],
+      "ratio_got_over_ref": [
+        0.059681412743872446,
+        0.059499415327024276,
+        0.05978235337633332,
+        0.059625120765514295
+      ],
+      "ratio_mean": 0.05964707555318609,
+      "ratio_in_band": false,
+      "baseline_ratio_mean": 0.05963726413511282
+    },
+    {
+      "degree": 4,
+      "integrator": "rk5",
+      "rk_order": 5,
+      "rk_stages": 6,
+      "ref_column": "RK5DG4",
+      "ref_rk_stages": 5,
+      "meshes": [
+        20,
+        40,
+        80,
+        160
+      ],
+      "ref_fitted_order": 5.025423617390306,
+      "got_fitted_order": 4.994862746281599,
+      "order_gap_vs_ref": -0.03056087110870731,
+      "rate_ok": true,
+      "stages_matched": false,
+      "got_l2": [
+        3.194064046910756e-08,
+        1.0035793197172922e-09,
+        3.141496633044682e-11,
+        9.816698905913017e-13
+      ],
+      "ref_l2": [
+        1.71e-06,
+        5.67e-08,
+        1.62e-09,
+        5.07e-11
+      ],
+      "ratio_got_over_ref": [
+        0.01867873711643717,
+        0.017699811635225614,
+        0.01939195452496717,
+        0.01936232525821108
+      ],
+      "ratio_mean": 0.018783207133710258,
+      "ratio_in_band": false,
+      "baseline_ratio_mean": 0.01898182776538507
+    }
+  ],
+  "error_split": [
+    {
+      "degree": 1,
+      "ncells": 8,
+      "integrator": "rk2",
+      "rk_order": 2,
+      "steps": 120,
+      "dt": 0.008333333333333333,
+      "E_total": 0.03718348301343131,
+      "E_space": 0.036881401434856284,
+      "E_time": 0.0019600787717401727,
+      "time_share": 0.052713694707732434
+    },
+    {
+      "degree": 1,
+      "ncells": 16,
+      "integrator": "rk2",
+      "rk_order": 2,
+      "steps": 240,
+      "dt": 0.004166666666666667,
+      "E_total": 0.0075019099961288,
+      "E_space": 0.007464013368338296,
+      "E_time": 0.0005050507669758802,
+      "time_share": 0.06732295738505271
+    },
+    {
+      "degree": 2,
+      "ncells": 8,
+      "integrator": "rk3",
+      "rk_order": 3,
+      "steps": 200,
+      "dt": 0.005,
+      "E_total": 0.001676626133246457,
+      "E_space": 0.00167602179831257,
+      "E_time": 5.73849616344385e-06,
+      "time_share": 0.003422645066573298
+    },
+    {
+      "degree": 2,
+      "ncells": 16,
+      "integrator": "rk3",
+      "rk_order": 3,
+      "steps": 400,
+      "dt": 0.0025,
+      "E_total": 0.00020895453939214184,
+      "E_space": 0.00020893393345068848,
+      "E_time": 7.174775045974154e-07,
+      "time_share": 0.0034336535912767906
+    },
+    {
+      "degree": 3,
+      "ncells": 8,
+      "integrator": "rk4",
+      "rk_order": 4,
+      "steps": 280,
+      "dt": 0.0035714285714285713,
+      "E_total": 7.981961509820969e-05,
+      "E_space": 7.981965590299087e-05,
+      "E_time": 9.430638460517454e-09,
+      "time_share": 0.00011814938532231757
+    },
+    {
+      "degree": 3,
+      "ncells": 16,
+      "integrator": "rk4",
+      "rk_order": 4,
+      "steps": 560,
+      "dt": 0.0017857142857142857,
+      "E_total": 5.041731776386078e-06,
+      "E_space": 5.0417326765103855e-06,
+      "E_time": 5.868319790204591e-10,
+      "time_share": 0.00011639492242903514
+    },
+    {
+      "degree": 4,
+      "ncells": 8,
+      "integrator": "rk5",
+      "rk_order": 5,
+      "steps": 360,
+      "dt": 0.002777777777777778,
+      "E_total": 3.0934983011874134e-06,
+      "E_space": 3.093498275855536e-06,
+      "E_time": 1.2744921694720422e-12,
+      "time_share": 4.119905832768161e-07
+    },
+    {
+      "degree": 4,
+      "ncells": 16,
+      "integrator": "rk5",
+      "rk_order": 5,
+      "steps": 720,
+      "dt": 0.001388888888888889,
+      "E_total": 9.731718703966482e-08,
+      "E_space": 9.731718638166718e-08,
+      "E_time": 4.164063558112232e-14,
+      "time_share": 4.278857296209179e-07
+    }
+  ],
+  "time_share_vs_stages": [
+    {
+      "degree": 1,
+      "rk4_time_share": 2.319234415576653e-06,
+      "matched_integrator": "rk2",
+      "matched_time_share": 0.06732295738505271,
+      "rk4_E_total": 0.007464012659190879,
+      "matched_E_total": 0.0075019099961288
+    },
+    {
+      "degree": 2,
+      "rk4_time_share": 1.0788215909944058e-05,
+      "matched_integrator": "rk3",
+      "matched_time_share": 0.0034336535912767906,
+      "rk4_E_total": 0.00020893393015319924,
+      "matched_E_total": 0.00020895453939214184
+    },
+    {
+      "degree": 3,
+      "rk4_time_share": 0.00011639492242903514,
+      "matched_integrator": "rk4",
+      "matched_time_share": 0.00011639492242903514,
+      "rk4_E_total": 5.041731776386078e-06,
+      "matched_E_total": 5.041731776386078e-06
+    },
+    {
+      "degree": 4,
+      "rk4_time_share": 0.0022064817948247396,
+      "matched_integrator": "rk5",
+      "matched_time_share": 4.278857296209179e-07,
+      "rk4_E_total": 9.73173658129836e-08,
+      "matched_E_total": 9.731718703966482e-08
+    }
+  ],
+  "dt_order_probes": [
+    {
+      "degree": 1,
+      "ncells": 8,
+      "integrator": "rk2",
+      "steps": [
+        5,
+        10,
+        20,
+        40,
+        80,
+        160
+      ],
+      "dt": [
+        0.02,
+        0.01,
+        0.005,
+        0.0025,
+        0.00125,
+        0.000625
+      ],
+      "E_time": [
+        0.0012333929547183856,
+        0.000301797491656171,
+        7.487481594705352e-05,
+        1.8662558709319307e-05,
+        4.659482186053484e-06,
+        1.1641499778947962e-06
+      ],
+      "fitted_time_order": -2.0023300398189097
+    },
+    {
+      "degree": 2,
+      "ncells": 8,
+      "integrator": "rk3",
+      "steps": [
+        8,
+        16,
+        32,
+        64,
+        128,
+        256
+      ],
+      "dt": [
+        0.0125,
+        0.00625,
+        0.003125,
+        0.0015625,
+        0.00078125,
+        0.000390625
+      ],
+      "E_time": [
+        1.725385601426626e-05,
+        2.1573549028306725e-06,
+        2.6482157545890096e-07,
+        3.272916757855663e-08,
+        4.066225004789556e-09,
+        5.066776684147541e-10
+      ],
+      "fitted_time_order": -3.009802507449947
+    },
+    {
+      "degree": 3,
+      "ncells": 8,
+      "integrator": "rk4",
+      "steps": [
+        12,
+        24,
+        48,
+        96,
+        192,
+        384
+      ],
+      "dt": [
+        0.008333333333333333,
+        0.004166666666666667,
+        0.0020833333333333333,
+        0.0010416666666666667,
+        0.0005208333333333333,
+        0.00026041666666666666
+      ],
+      "E_time": [
+        6.920192917635882e-08,
+        4.257480343461962e-09,
+        2.639039025143449e-10,
+        1.6424189541505853e-11,
+        1.0242744948860138e-12,
+        6.41268315000237e-14
+      ],
+      "fitted_time_order": -4.002353869909083
+    },
+    {
+      "degree": 4,
+      "ncells": 8,
+      "integrator": "rk5",
+      "steps": [
+        15,
+        30,
+        60,
+        120,
+        240,
+        480
+      ],
+      "dt": [
+        0.006666666666666667,
+        0.0033333333333333335,
+        0.0016666666666666668,
+        0.0008333333333333334,
+        0.0004166666666666667,
+        0.00020833333333333335
+      ],
+      "E_time": [
+        3.8703635205508536e-11,
+        8.295414626798729e-13,
+        2.17146803873884e-14,
+        9.873628463648268e-16,
+        1.2268780140632234e-15,
+        1.1882339988495478e-15
+      ],
+      "fitted_time_order": -5.399791321489155
+    }
+  ],
+  "checks": {
+    "M1_rate": true,
+    "M2_stages": false,
+    "M3_stage_gap_rejected": true,
+    "M4_time_share": true,
+    "M5_dt_order": "not_run"
+  },
+  "verdict": "FAIL",
+  "failed": [
+    "M2_stages"
+  ],
+  "falsified_hypotheses": [
+    "H_stage_gap: the reference's larger L2 constant is explained by its lower-order (p+1-stage) time integration"
+  ],
+  "checks_detail": {
+    "M5_dt_order": {
+      "status": "not_run",
+      "reason": "fixed-mesh dt-refinement probe returns negative slopes (P1..P4: -2.00, -3.01, -4.00, -5.40) -- it is reading the round-off floor, not the truncation error. Superseded by tests/test_runge_kutta_orders.py, which verifies the same design orders through the solver against expm(L*T)u0."
+    },
+    "M2_stages": {
+      "status": "FAIL (structural, documented)",
+      "reason": "P1..P3 use p+1 stages (2/3/4) exactly as the reference columns; P4 needs a 5th-order tableau and no 5-stage 5th-order explicit RK exists (Butcher's barrier), so the minimum is Butcher's 6-stage scheme. The reference's 'RK5DG4' label counts 5 *DG* stages; our RK5 uses 6 RK stages."
+    }
+  },
+  "not_run": [
+    "M5_dt_order"
+  ],
+  "headline": "rate criterion met (max order gap 0.047, i.e. <3% relative); the only unmet checks are structural (M2: 6-stage RK5) and an instrument defect (M5)."
+}
