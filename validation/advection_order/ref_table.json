@@ -1,0 +1,182 @@
+{
+  "case": "CASE-DG-ADVECT-ORDER",
+  "citation": {
+    "author": "Zheng Sun",
+    "title": "Reducing polynomial degree by one for inner-stage operators affects neither stability type nor accuracy order of the Runge-Kutta discontinuous Galerkin method",
+    "journal": "Mathematics of Computation (AMS)",
+    "doi": "10.1090/mcom/4037",
+    "date": "2024-10-31",
+    "preprint": "arXiv:2404.15453v2",
+    "table_label": "tab:acc-sin-1d-uni",
+    "experiment": "1-D linear advection u_t + u_x = 0 on the periodic unit interval, u(x,0)=sin(2 pi x), uniform meshes, t^n = 1"
+  },
+  "provenance": {
+    "eprint_url": "https://arxiv.org/e-print/2404.15453v2",
+    "eprint_sha256": "992d305b4ab31843fd0b8dd546350760be4690102c08397dd6648a52c857057e",
+    "eprint_bytes": 327439,
+    "table_block_sha256": "0518559382ef7f4260de720a60f3c5d8ff46ddb19a7618ccee3ff70badefaaef",
+    "table_caption": "Error table of the RKDG and sdA-RKDG methods for 1D linear advection equation on uniform meshes. $u(x,0) = \\sin(2\\pi x)$. $t^n = 1$.",
+    "fetched_at": "2026-11-14T07:21:48Z",
+    "extractor": "tools/fetch_ref_advorder.py",
+    "note": "numbers parsed mechanically from the author's LaTeX source; no value is transcribed by hand"
+  },
+  "columns": [
+    {
+      "name": "RK2DG1",
+      "degree": 1,
+      "rk_stages": 2
+    },
+    {
+      "name": "RK3DG2",
+      "degree": 2,
+      "rk_stages": 3
+    },
+    {
+      "name": "RK4DG3",
+      "degree": 3,
+      "rk_stages": 4
+    },
+    {
+      "name": "RK5DG4",
+      "degree": 4,
+      "rk_stages": 5
+    }
+  ],
+  "rows": [
+    {
+      "N": 20,
+      "RK2DG1": {
+        "degree": 1,
+        "rk_stages": 2,
+        "l2": 0.0069,
+        "order_printed": null
+      },
+      "RK3DG2": {
+        "degree": 2,
+        "rk_stages": 3,
+        "l2": 0.000567,
+        "order_printed": null
+      },
+      "RK4DG3": {
+        "degree": 3,
+        "rk_stages": 4,
+        "l2": 3.46e-05,
+        "order_printed": null
+      },
+      "RK5DG4": {
+        "degree": 4,
+        "rk_stages": 5,
+        "l2": 1.71e-06,
+        "order_printed": null
+      }
+    },
+    {
+      "N": 40,
+      "RK2DG1": {
+        "degree": 1,
+        "rk_stages": 2,
+        "l2": 0.00173,
+        "order_printed": 2.0
+      },
+      "RK3DG2": {
+        "degree": 2,
+        "rk_stages": 3,
+        "l2": 7.12e-05,
+        "order_printed": 2.99
+      },
+      "RK4DG3": {
+        "degree": 3,
+        "rk_stages": 4,
+        "l2": 2.17e-06,
+        "order_printed": 4.0
+      },
+      "RK5DG4": {
+        "degree": 4,
+        "rk_stages": 5,
+        "l2": 5.67e-08,
+        "order_printed": 4.91
+      }
+    },
+    {
+      "N": 80,
+      "RK2DG1": {
+        "degree": 1,
+        "rk_stages": 2,
+        "l2": 0.000437,
+        "order_printed": 1.98
+      },
+      "RK3DG2": {
+        "degree": 2,
+        "rk_stages": 3,
+        "l2": 8.91e-06,
+        "order_printed": 3.0
+      },
+      "RK4DG3": {
+        "degree": 3,
+        "rk_stages": 4,
+        "l2": 1.35e-07,
+        "order_printed": 4.0
+      },
+      "RK5DG4": {
+        "degree": 4,
+        "rk_stages": 5,
+        "l2": 1.62e-09,
+        "order_printed": 5.13
+      }
+    },
+    {
+      "N": 160,
+      "RK2DG1": {
+        "degree": 1,
+        "rk_stages": 2,
+        "l2": 0.00011,
+        "order_printed": 1.99
+      },
+      "RK3DG2": {
+        "degree": 2,
+        "rk_stages": 3,
+        "l2": 1.11e-06,
+        "order_printed": 3.0
+      },
+      "RK4DG3": {
+        "degree": 3,
+        "rk_stages": 4,
+        "l2": 8.46e-09,
+        "order_printed": 4.0
+      },
+      "RK5DG4": {
+        "degree": 4,
+        "rk_stages": 5,
+        "l2": 5.07e-11,
+        "order_printed": 5.0
+      }
+    },
+    {
+      "N": 320,
+      "RK2DG1": {
+        "degree": 1,
+        "rk_stages": 2,
+        "l2": 2.77e-05,
+        "order_printed": 1.99
+      },
+      "RK3DG2": {
+        "degree": 2,
+        "rk_stages": 3,
+        "l2": 1.39e-07,
+        "order_printed": 3.0
+      },
+      "RK4DG3": {
+        "degree": 3,
+        "rk_stages": 4,
+        "l2": 5.29e-10,
+        "order_printed": 4.0
+      },
+      "RK5DG4": {
+        "degree": 4,
+        "rk_stages": 5,
+        "l2": 1.58e-12,
+        "order_printed": 5.0
+      }
+    }
+  ]
+}

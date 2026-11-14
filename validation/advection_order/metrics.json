@@ -1,0 +1,703 @@
+{
+  "case": "CASE-DG-ADVECT-ORDER",
+  "problem": {
+    "pde": "u_t + u_x = 0, periodic x in [0,1), u(x,0)=sin(2*pi*x)",
+    "final_time": 1.0,
+    "speed": 1.0,
+    "cfl": 0.2,
+    "degree_range": [
+      0,
+      4
+    ],
+    "cells": [
+      20,
+      40,
+      80,
+      160,
+      320
+    ],
+    "time_integrator": "classical RK4",
+    "flux": "upwind",
+    "basis": "modal Legendre",
+    "device": "cpu",
+    "dtype": "float64"
+  },
+  "reference": {
+    "author": "Zheng Sun",
+    "title": "Reducing polynomial degree by one for inner-stage operators affects neither stability type nor accuracy order of the Runge-Kutta discontinuous Galerkin method",
+    "journal": "Mathematics of Computation (AMS)",
+    "doi": "10.1090/mcom/4037",
+    "date": "2024-10-31",
+    "preprint": "arXiv:2404.15453v2",
+    "table_label": "tab:acc-sin-1d-uni",
+    "experiment": "1-D linear advection u_t + u_x = 0 on the periodic unit interval, u(x,0)=sin(2 pi x), uniform meshes, t^n = 1",
+    "provenance": {
+      "eprint_url": "https://arxiv.org/e-print/2404.15453v2",
+      "eprint_sha256": "992d305b4ab31843fd0b8dd546350760be4690102c08397dd6648a52c857057e",
+      "eprint_bytes": 327439,
+      "table_block_sha256": "0518559382ef7f4260de720a60f3c5d8ff46ddb19a7618ccee3ff70badefaaef",
+      "table_caption": "Error table of the RKDG and sdA-RKDG methods for 1D linear advection equation on uniform meshes. $u(x,0) = \\sin(2\\pi x)$. $t^n = 1$.",
+      "fetched_at": "2026-11-14T07:21:48Z",
+      "extractor": "tools/fetch_ref_advorder.py",
+      "note": "numbers parsed mechanically from the author's LaTeX source; no value is transcribed by hand"
+    }
+  },
+  "thresholds": {
+    "rate_tol_abs": 0.1,
+    "error_factor_band": 5.0,
+    "ratio_spread_tol": 0.05,
+    "time_tol": 0.02,
+    "repro_tol": 1e-09,
+    "fit_floor": 1e-12
+  },
+  "got": {
+    "0": {
+      "cells": [
+        20,
+        40,
+        80,
+        160,
+        320
+      ],
+      "l2": [
+        0.44645662553683246,
+        0.27692929775233094,
+        0.15538532556481938,
+        0.08245168852961635,
+        0.04248822255889141
+      ],
+      "pairwise_orders": [
+        0.6890023286561942,
+        0.8336674282931558,
+        0.9142293194421857,
+        0.9564860473537147
+      ],
+      "fitted_order": 0.8534666995225839,
+      "fitted_order_all_meshes": 0.8534666995225839,
+      "fit_points": 5,
+      "fit_dropped_cells": [],
+      "steps": [
+        100,
+        200,
+        400,
+        800,
+        1600
+      ],
+      "dt": [
+        0.01,
+        0.005,
+        0.0025,
+        0.00125,
+        0.000625
+      ]
+    },
+    "1": {
+      "cells": [
+        20,
+        40,
+        80,
+        160,
+        320
+      ],
+      "l2": [
+        0.004599618690964219,
+        0.0010851997079213635,
+        0.0002669425802919493,
+        6.645650029920281e-05,
+        1.6596522181217193e-05
+      ],
+      "pairwise_orders": [
+        2.083553702070277,
+        2.0233592096821718,
+        2.0060472240212355,
+        2.001529365535135
+      ],
+      "fitted_order": 2.0258385436321036,
+      "fitted_order_all_meshes": 2.0258385436321036,
+      "fit_points": 5,
+      "fit_dropped_cells": [],
+      "steps": [
+        300,
+        600,
+        1200,
+        2400,
+        4800
+      ],
+      "dt": [
+        0.0033333333333333335,
+        0.0016666666666666668,
+        0.0008333333333333334,
+        0.0004166666666666667,
+        0.00020833333333333335
+      ]
+    },
+    "2": {
+      "cells": [
+        20,
+        40,
+        80,
+        160,
+        320
+      ],
+      "l2": [
+        0.00010697037819226703,
+        1.3372089861930304e-05,
+        1.6715687519355617e-06,
+        2.089481537106563e-07,
+        2.6118585689035793e-08
+      ],
+      "pairwise_orders": [
+        2.9999144863271896,
+        2.9999503555662903,
+        2.999985778478711,
+        2.999996328148469
+      ],
+      "fitted_order": 2.9999630031086313,
+      "fitted_order_all_meshes": 2.9999630031086313,
+      "fit_points": 5,
+      "fit_dropped_cells": [],
+      "steps": [
+        500,
+        1000,
+        2000,
+        4000,
+        8000
+      ],
+      "dt": [
+        0.002,
+        0.001,
+        0.0005,
+        0.00025,
+        0.000125
+      ]
+    },
+    "3": {
+      "cells": [
+        20,
+        40,
+        80,
+        160,
+        320
+      ],
+      "l2": [
+        2.0649768820589682e-06,
+        1.2911373238385993e-07,
+        8.070618843343949e-09,
+        5.044296605102668e-10,
+        3.1527275807385687e-11
+      ],
+      "pairwise_orders": [
+        3.999411273141002,
+        3.9998193404113924,
+        3.9999542876336496,
+        3.9999806878917745
+      ],
+      "fitted_order": 3.999810480620066,
+      "fitted_order_all_meshes": 3.999810480620066,
+      "fit_points": 5,
+      "fit_dropped_cells": [],
+      "steps": [
+        700,
+        1400,
+        2800,
+        5600,
+        11200
+      ],
+      "dt": [
+        0.0014285714285714286,
+        0.0007142857142857143,
+        0.00035714285714285714,
+        0.00017857142857142857,
+        8.928571428571429e-05
+      ]
+    },
+    "4": {
+      "cells": [
+        20,
+        40,
+        80,
+        160,
+        320
+      ],
+      "l2": [
+        3.1940733783710305e-08,
+        1.0035925726114103e-09,
+        3.141677328102034e-11,
+        9.81743519887661e-13,
+        3.124205783994143e-14
+      ],
+      "pairwise_orders": [
+        4.992151852666636,
+        4.997494875051028,
+        5.000045033052611,
+        4.973784781638035
+      ],
+      "fitted_order": 4.994823363858827,
+      "fitted_order_all_meshes": 4.992449299292023,
+      "fit_points": 3,
+      "fit_dropped_cells": [
+        160,
+        320
+      ],
+      "steps": [
+        900,
+        1800,
+        3600,
+        7200,
+        14400
+      ],
+      "dt": [
+        0.0011111111111111111,
+        0.0005555555555555556,
+        0.0002777777777777778,
+        0.0001388888888888889,
+        6.944444444444444e-05
+      ]
+    }
+  },
+  "reference_ladder": {
+    "1": {
+      "column": "RK2DG1",
+      "rk_stages": 2,
+      "l2": [
+        0.0069,
+        0.00173,
+        0.000437,
+        0.00011,
+        2.77e-05
+      ],
+      "orders_printed": [
+        null,
+        2.0,
+        1.98,
+        1.99,
+        1.99
+      ],
+      "fitted_order": 1.989632975978156,
+      "fitted_order_all_meshes": 1.989632975978156,
+      "fit_points": 5,
+      "fit_dropped_cells": [],
+      "pairwise_orders": [
+        1.9958243240288067,
+        1.9850668530234885,
+        1.9901297559759388,
+        1.9895456423628337
+      ]
+    },
+    "2": {
+      "column": "RK3DG2",
+      "rk_stages": 3,
+      "l2": [
+        0.000567,
+        7.12e-05,
+        8.91e-06,
+        1.11e-06,
+        1.39e-07
+      ],
+      "orders_printed": [
+        null,
+        2.99,
+        3.0,
+        3.0,
+        3.0
+      ],
+      "fitted_order": 2.9991341933265256,
+      "fitted_order_all_meshes": 2.9991341933265256,
+      "fit_points": 5,
+      "fit_dropped_cells": [],
+      "pairwise_orders": [
+        2.993399588863194,
+        2.9983799043318378,
+        3.004865755171816,
+        2.9974028885139608
+      ]
+    },
+    "3": {
+      "column": "RK4DG3",
+      "rk_stages": 4,
+      "l2": [
+        3.46e-05,
+        2.17e-06,
+        1.35e-07,
+        8.46e-09,
+        5.29e-10
+      ],
+      "orders_printed": [
+        null,
+        4.0,
+        4.0,
+        4.0,
+        4.0
+      ],
+      "fitted_order": 3.9997111243905628,
+      "fitted_order_all_meshes": 3.9997111243905628,
+      "fit_points": 5,
+      "fit_dropped_cells": [],
+      "pairwise_orders": [
+        3.9950050900796077,
+        4.00666373028101,
+        3.996157933705606,
+        3.9993180358932863
+      ]
+    },
+    "4": {
+      "column": "RK5DG4",
+      "rk_stages": 5,
+      "l2": [
+        1.71e-06,
+        5.67e-08,
+        1.62e-09,
+        5.07e-11,
+        1.58e-12
+      ],
+      "orders_printed": [
+        null,
+        4.91,
+        5.13,
+        5.0,
+        5.0
+      ],
+      "fitted_order": 5.021842794466689,
+      "fitted_order_all_meshes": 5.021842794466689,
+      "fit_points": 5,
+      "fit_dropped_cells": [],
+      "pairwise_orders": [
+        4.914503779718394,
+        5.129283016944966,
+        4.997864255656009,
+        5.0039892837136
+      ]
+    }
+  },
+  "comparison": [
+    {
+      "degree": 1,
+      "ref_column": "RK2DG1",
+      "ref_rk_stages": 2,
+      "ref_fitted_order": 1.989632975978156,
+      "got_fitted_order": 2.0258385436321036,
+      "order_gap_vs_ref": 0.03620556765394767,
+      "order_gap_vs_rk4_target": -1.9741614563678964,
+      "rate_ok_vs_ref": true,
+      "rate_ok_vs_rk4_target": false,
+      "ref_l2": [
+        0.0069,
+        0.00173,
+        0.000437,
+        0.00011,
+        2.77e-05
+      ],
+      "got_l2": [
+        0.004599618690964219,
+        0.0010851997079213635,
+        0.0002669425802919493,
+        6.645650029920281e-05,
+        1.6596522181217193e-05
+      ],
+      "ratio_got_over_ref": [
+        0.666611404487568,
+        0.6272830681626379,
+        0.6108525864804332,
+        0.6041500027200255,
+        0.5991524253147001
+      ],
+      "ratio_spread": 0.1085230133101781,
+      "ratio_in_band": true,
+      "ratio_constant": false
+    },
+    {
+      "degree": 2,
+      "ref_column": "RK3DG2",
+      "ref_rk_stages": 3,
+      "ref_fitted_order": 2.9991341933265256,
+      "got_fitted_order": 2.9999630031086313,
+      "order_gap_vs_ref": 0.0008288097821056439,
+      "order_gap_vs_rk4_target": -1.0000369968913687,
+      "rate_ok_vs_ref": true,
+      "rate_ok_vs_rk4_target": false,
+      "ref_l2": [
+        0.000567,
+        7.12e-05,
+        8.91e-06,
+        1.11e-06,
+        1.39e-07
+      ],
+      "got_l2": [
+        0.00010697037819226703,
+        1.3372089861930304e-05,
+        1.6715687519355617e-06,
+        2.089481537106563e-07,
+        2.6118585689035793e-08
+      ],
+      "ratio_got_over_ref": [
+        0.18866027899870727,
+        0.18781025086980765,
+        0.18760592053148842,
+        0.18824157991951018,
+        0.18790349416572513
+      ],
+      "ratio_spread": 0.005606968356718393,
+      "ratio_in_band": false,
+      "ratio_constant": true
+    },
+    {
+      "degree": 3,
+      "ref_column": "RK4DG3",
+      "ref_rk_stages": 4,
+      "ref_fitted_order": 3.9997111243905628,
+      "got_fitted_order": 3.999810480620066,
+      "order_gap_vs_ref": 9.935622950330014e-05,
+      "order_gap_vs_rk4_target": -0.00018951937993394452,
+      "rate_ok_vs_ref": true,
+      "rate_ok_vs_rk4_target": true,
+      "ref_l2": [
+        3.46e-05,
+        2.17e-06,
+        1.35e-07,
+        8.46e-09,
+        5.29e-10
+      ],
+      "got_l2": [
+        2.0649768820589682e-06,
+        1.2911373238385993e-07,
+        8.070618843343949e-09,
+        5.044296605102668e-10,
+        3.1527275807385687e-11
+      ],
+      "ratio_got_over_ref": [
+        0.05968141277627076,
+        0.05949941584509674,
+        0.05978236180254777,
+        0.05962525537946416,
+        0.05959787487218466
+      ],
+      "ratio_spread": 0.004744448987632833,
+      "ratio_in_band": false,
+      "ratio_constant": true
+    },
+    {
+      "degree": 4,
+      "ref_column": "RK5DG4",
+      "ref_rk_stages": 5,
+      "ref_fitted_order": 5.021842794466689,
+      "got_fitted_order": 4.994823363858827,
+      "order_gap_vs_ref": -0.027019430607862382,
+      "order_gap_vs_rk4_target": 0.9948233638588269,
+      "rate_ok_vs_ref": true,
+      "rate_ok_vs_rk4_target": false,
+      "ref_l2": [
+        1.71e-06,
+        5.67e-08,
+        1.62e-09,
+        5.07e-11,
+        1.58e-12
+      ],
+      "got_l2": [
+        3.1940733783710305e-08,
+        1.0035925726114103e-09,
+        3.141677328102034e-11,
+        9.81743519887661e-13,
+        3.124205783994143e-14
+      ],
+      "ratio_got_over_ref": [
+        0.018678791686380296,
+        0.01770004537233528,
+        0.01939306992655577,
+        0.01936377751257714,
+        0.019773454329076855
+      ],
+      "ratio_spread": 0.10923125962203735,
+      "ratio_in_band": false,
+      "ratio_constant": false
+    }
+  ],
+  "sensitivity": {
+    "cfl_p2_n40": [
+      {
+        "cfl": 0.4,
+        "steps": 500,
+        "dt": 0.002,
+        "l2": 1.3372089832508414e-05
+      },
+      {
+        "cfl": 0.2,
+        "steps": 1000,
+        "dt": 0.001,
+        "l2": 1.3372089861930304e-05
+      },
+      {
+        "cfl": 0.1,
+        "steps": 2000,
+        "dt": 0.0005,
+        "l2": 1.3372089866907911e-05
+      },
+      {
+        "cfl": 0.05,
+        "steps": 4000,
+        "dt": 0.00025,
+        "l2": 1.3372089867265222e-05
+      }
+    ],
+    "cfl_p4_n80": [
+      {
+        "cfl": 0.4,
+        "steps": 1800,
+        "dt": 0.0005555555555555556,
+        "l2": 3.1892063597665446e-11
+      },
+      {
+        "cfl": 0.2,
+        "steps": 3600,
+        "dt": 0.0002777777777777778,
+        "l2": 3.141677328102034e-11
+      },
+      {
+        "cfl": 0.1,
+        "steps": 7200,
+        "dt": 0.0001388888888888889,
+        "l2": 3.1414909376605246e-11
+      },
+      {
+        "cfl": 0.05,
+        "steps": 14400,
+        "dt": 6.944444444444444e-05,
+        "l2": 3.141490142072369e-11
+      }
+    ],
+    "p2_time_relative_change": 3.989592118079042e-10,
+    "p4_time_relative_change_coarse_vs_fine": 0.015189039448234076,
+    "p4_error_vs_cfl_slope": -0.006533078990019608
+  },
+  "reproducibility": {
+    "P1": {
+      "cells": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "new_l2": [
+        0.025736512376988135,
+        0.006586997505335856,
+        0.001656181013418824,
+        0.00041459420805605796
+      ],
+      "stored_l2": [
+        0.025736512376988208,
+        0.00658699750533592,
+        0.001656181013418881,
+        0.00041459420805610203
+      ],
+      "max_relative_diff": 1.0630350703204207e-13,
+      "identical": true
+    },
+    "P2": {
+      "cells": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "new_l2": [
+        0.001655511455670323,
+        0.00020887127058270748,
+        2.6116250887251345e-05,
+        3.264755142195402e-06
+      ],
+      "stored_l2": [
+        0.0016555114556705156,
+        0.00020887127058279826,
+        2.6116250887297566e-05,
+        3.2647551422199937e-06
+      ],
+      "max_relative_diff": 7.532542713421351e-12,
+      "identical": true
+    },
+    "P3": {
+      "cells": [
+        8,
+        16,
+        32,
+        64
+      ],
+      "new_l2": [
+        7.797352931560172e-05,
+        4.951503503352519e-06,
+        3.1536274115279265e-07,
+        1.9705019956963923e-08
+      ],
+      "stored_l2": [
+        7.797352931470376e-05,
+        4.951503502247987e-06,
+        3.153627399865831e-07,
+        1.9705018815762412e-08
+      ],
+      "max_relative_diff": 5.7914256344753296e-08,
+      "identical": false
+    }
+  },
+  "checks_round1_predeclared": {
+    "rate_P1": true,
+    "rate_P2": true,
+    "rate_P3": true,
+    "rk4_cap_P4": false,
+    "magnitude_P1": true,
+    "magnitude_P2": false,
+    "magnitude_P3": false,
+    "magnitude_P4": false,
+    "dt_independence_P2": true,
+    "rk4_cap_slope_P4": false,
+    "reproducibility": false
+  },
+  "checks_revised_posthoc": {
+    "rate_P1": true,
+    "rate_P2": true,
+    "rate_P3": true,
+    "rate_P4": true,
+    "ratio_constant_P1": false,
+    "ratio_constant_P2": true,
+    "ratio_constant_P3": true,
+    "ratio_constant_P4": false,
+    "dt_independence_P2": true,
+    "time_term_negligible_P4": true,
+    "reproducibility": false
+  },
+  "passed_round1": false,
+  "passed_revised": false,
+  "failed_round1": [
+    "rk4_cap_P4",
+    "magnitude_P2",
+    "magnitude_P3",
+    "magnitude_P4",
+    "rk4_cap_slope_P4",
+    "reproducibility"
+  ],
+  "failed_revised": [
+    "ratio_constant_P1",
+    "ratio_constant_P4",
+    "reproducibility"
+  ],
+  "falsified_hypotheses": [
+    {
+      "id": "R2/R6 RK4 temporal cap",
+      "claim": "with classical RK4 the P4 rate is capped at 4",
+      "evidence": "P4 fitted order 4.995 at cfl=0.2; L2 insensitive to CFL (coarse/fine change 1.52e-02), slope -0.007",
+      "verdict": "falsified at this CFL: dt = cfl*h/(2p+1) = 0.2h/9 makes the RK4 temporal term ~2 orders below the O(h^5) space term"
+    },
+    {
+      "id": "R3 cross-code L2 magnitude within factor 5",
+      "claim": "L2_got/L2_ref in [0.2, 5]",
+      "evidence": "ratios P1=0.622, P2=0.188, P3=0.060, P4=0.019",
+      "verdict": "mis-specified: the paper states neither its time step nor its interface flux, so only the leading-order *exponent* is comparable; the ratio being constant over the ladder is used instead (S2)"
+    }
+  ],
+  "verdict": {
+    "basis": "revised post-hoc criteria S1-S5 (case criterion = rate)",
+    "passed": false,
+    "failed": [
+      "ratio_constant_P1",
+      "ratio_constant_P4",
+      "reproducibility"
+    ]
+  }
+}
