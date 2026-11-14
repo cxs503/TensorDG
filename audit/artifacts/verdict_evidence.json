@@ -1,0 +1,133 @@
+{
+  "impl_files": [
+    "audit/refs/TensorLBM_m21003/src/tensorlbm/mass_exchange_selector.py",
+    "audit/refs/TensorLBM_m21003/src/tensorlbm/collision.py",
+    "audit/refs/TensorLBM_m21003/src/tensorlbm/lattice.py",
+    "audit/refs/TensorLBM_m21003/src/tensorlbm/streaming.py"
+  ],
+  "impl_files_map": {
+    "audit/refs/TensorLBM_m21003/src/tensorlbm/mass_exchange_selector.py": ":80 collide, :112 _trt_collision, :146 step, :191 _apply_guo_force (never called by the shipped benchmark), :223 verify_mass_conservation",
+    "audit/refs/TensorLBM_m21003/src/tensorlbm/collision.py": ":7 bgk_collision, :28 mrt_collision, :58-68 M/M_inv (Lallemand-Luo basis, row-verified)",
+    "audit/refs/TensorLBM_m21003/src/tensorlbm/lattice.py": ":1-40 e/w/opp, :44 equilibrium, :72 macroscopic",
+    "audit/refs/TensorLBM_m21003/src/tensorlbm/streaming.py": ":7 stream_periodic",
+    "subject (read-only, byte-identical, sha256 in audit/artifacts/sha256_subject.txt)": "/srv/tensor/agent/work/m21003/TensorLBM/src/tensorlbm/*.py @ head 6000a43 (impl a43d251)"
+  },
+  "entry": "audit/refs/TensorLBM_m21003/benchmarks/poiseuille.py",
+  "entry_map": {
+    "audit/refs/TensorLBM_m21003/benchmarks/poiseuille.py": ":28 run_poiseuille, :79 float32 f_init (repro defect), :123 main, :140-142 results write (never reached)"
+  },
+  "run_artifacts": [
+    "audit/artifacts/poiseuille_convergence.json",
+    "audit/artifacts/pytest_rerun.log",
+    "audit/artifacts/scheme_parity.txt",
+    "audit/artifacts/repro_failure.log",
+    "audit/artifacts/fig_poiseuille_convergence.png"
+  ],
+  "run_artifacts_ownership": {
+    "produced_by": "m21040 auditor, by running the delivered code unmodified (probe_poiseuille_convergence.py / pytest / poiseuille.py)",
+    "shipped_by_mission": "NONE",
+    "detail": "m21003 shipped no run artifact: benchmarks/results/ does not exist in its tree because main() aborts on the MRT branch before the write at benchmarks/poiseuille.py:140-142; report_m21003.json has figures: []"
+  },
+  "tests": [
+    "audit/refs/TensorLBM_m21003/tests/test_mass_exchange_selector.py",
+    "audit/artifacts/pytest_rerun.log"
+  ],
+  "tests_detail": {
+    "audit_rerun": [
+      "8 passed, 1 warning in 4.25s",
+      "exit=0"
+    ],
+    "asserts_invariants": "yes - mass drift < 1e-12, x/y momentum drift < 1e-10, feq->macroscopic round trip 1e-12, periodic streaming mass conservation"
+  },
+  "integration_callers": [],
+  "integration_callers_detail": {
+    "status": "NONE",
+    "detail": "grep -rn 'tensorlbm|MassExchangeSelector|mass_exchange_selector' over the TensorDG worktree excluding TensorLBM/ and audit/refs/ -> 0 hits; not imported by tensordg/ solver package nor by any platform route"
+  },
+  "benchmark": {
+    "tensor_benchmark_cases_rows": 0,
+    "verdict": "no registered case for anchor -> no machine-checkable tolerance (L4 vacuous)",
+    "audit_recompute_delivered_config": {
+      "config": "BGK/TRT, Nx=64, Ny=32, tau=0.8, F=1e-5, n_steps=2000",
+      "bgk_rel_l2": 0.10998512154298358,
+      "trt_rel_l2": 0.109452,
+      "mrt": "RuntimeError dtype double != float (entry aborts)",
+      "mass_drift": 0.0
+    },
+    "audit_convergence_probe": {
+      "rel_l2_vs_node_centred": {
+        "2000": 0.10998512154298358,
+        "5000": 0.027869734542718124,
+        "10000": 0.024491698634531055,
+        "16000": 0.024474536428118
+      },
+      "rel_l2_vs_halfway_bb": {
+        "2000": 0.05428300642807762,
+        "5000": 0.035681160547882354,
+        "10000": 0.03898384973082015,
+        "16000": 0.03900100987781989
+      },
+      "u_max_ratio": {
+        "2000": 0.8524599217736606,
+        "5000": 0.969328049948141,
+        "10000": 0.9744584704213576,
+        "16000": 0.9744848643257348
+      },
+      "finding": "the delivered 11% is dominated by under-convergence (2000 of ~9600 diffusive steps); converged at 16000 steps the same code gives 2.45% on its own node-centred metric but 3.90% on the physically stricter half-way bounce-back reference -> '<3%' is metric-sensitive",
+      "artifact": "audit/artifacts/poiseuille_convergence.json",
+      "script": "audit/probe_poiseuille_convergence.py"
+    },
+    "scheme_parity": {
+      "raw": [
+        "bgk: relL2=2.5648% umax=1.16844e-02 ratio=0.9727",
+        "mrt: relL2=2.5936% umax=1.16810e-02 ratio=0.9724"
+      ],
+      "artifact": "audit/artifacts/scheme_parity.txt"
+    }
+  },
+  "repro_cmd": {
+    "cmd": "cd audit/refs/TensorLBM_m21003 && python3 benchmarks/poiseuille.py",
+    "result": "exit=1",
+    "exit_code": 1,
+    "log": "audit/artifacts/repro_failure.log",
+    "root_cause": "benchmarks/poiseuille.py:79 builds f_init with torch.ones (float32) while collision.py:58 M is float64"
+  },
+  "external_anchor": {
+    "claim": "mass-exchange-selector pattern from Maarten-vd-Sande/lbm",
+    "status": "UNVERIFIED",
+    "detail": "no upstream commit id, no file-by-file mapping, no numerical parity artifact in the delivered tree; upstream API/number comparison not_run"
+  },
+  "sha256": [
+    "3f179f6a4e8a95f674e562129db7bb1859cbebf295acbebc2acab8d1dcfeb1cf  src/tensorlbm/__init__.py",
+    "048d2db4fe9c5737550cbba48d8f30e5dc7226e38dfd31af8f526833e6e0e568  src/tensorlbm/collision.py",
+    "cbfa6cab3983b1b0287ef72dee37f97ac2703aa0a5157592018ca49dcb713dd7  src/tensorlbm/lattice.py",
+    "3d7b0d336b8c122033408a98fe211323309909ebe84e005030b004340f1e0a01  src/tensorlbm/mass_exchange_selector.py",
+    "12b45994bfd4df923b59dc1e863fab12d43d74b47eb1c9e836cd9b71bd9aa057  src/tensorlbm/streaming.py",
+    "35176b16ce1b4f8daf321841e65380bd75a9a2a83dc88bc5fc1884710424cfa4  tests/test_mass_exchange_selector.py",
+    "c18b8aecf5ea8b9c83f395e5da95492112d7a32902ddd92b3f686651177b7629  benchmarks/poiseuille.py",
+    "8bdcc2e91526929f01313a20afa74a994377f2d5c453a8218a91ce18bec732cd  docs/mass_exchange_selector.md"
+  ],
+  "audited_head": "6000a43 (impl a43d251)",
+  "report_six_sections": {
+    "present": true,
+    "defect": "section 4 (结果图) is a placeholder, figures: [] despite a plottable case"
+  },
+  "independence": "auditor did not author m21003; all numbers recomputed in m21040",
+  "checks_not_run": [
+    "upstream Maarten-vd-Sande/lbm API/numerical parity",
+    "Guo forcing _apply_guo_force correctness: defined at mass_exchange_selector.py:191 but no delivered caller passes force=, so that branch is never exercised",
+    "long-time stability >1e5 steps, multi-core/GPU consistency, D3Q19/D3Q27"
+  ],
+  "findings_severity": {
+    "F1_blocking": "no tensor_benchmark_cases row for anchor (0 rows)",
+    "F2_blocking": "repro_cmd exits 1; run artifacts absent",
+    "F3_high": "11% attributed to under-convergence, not to the causes stated in the report",
+    "F4_medium": "accuracy verdict flips across wall-position conventions (2.45% vs 3.90%)",
+    "F5_medium": "no integration callers -> L3 withheld",
+    "F6_medium": "external anchor unestablished",
+    "F7_low": "report ships no figure",
+    "F8_low": "docs claim three usable schemes while MRT crashes on the default path",
+    "F9_low": "package docstring advertises (BGK, MRT, entropic) but Scheme has only BGK/MRT/TRT - entropic unimplemented"
+  },
+  "report": "docs/AUDIT-m21003-XVAL-LBM-MASS-EXCHANGE-SELECTOR.md"
+}
