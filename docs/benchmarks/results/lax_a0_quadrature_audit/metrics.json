@@ -1,0 +1,457 @@
+{
+ "aligned_sweep": {
+  "10": {
+   "l1": {
+    "density": 0.008614634378199523,
+    "pressure": 0.007288174380502483,
+    "velocity": 0.012236354979226087
+   },
+   "l2": {
+    "density": 0.030250736120541185,
+    "pressure": 0.012384437295296119,
+    "velocity": 0.020736318620749924
+   }
+  },
+  "12": {
+   "l1": {
+    "density": 0.0086277851050048,
+    "pressure": 0.007287671866663095,
+    "velocity": 0.012237595551882094
+   },
+   "l2": {
+    "density": 0.03025073612054089,
+    "pressure": 0.01238443729529598,
+    "velocity": 0.020736318620749542
+   }
+  },
+  "16": {
+   "l1": {
+    "density": 0.008635174435630048,
+    "pressure": 0.007290254357758374,
+    "velocity": 0.012237869666395073
+   },
+   "l2": {
+    "density": 0.030250736120541265,
+    "pressure": 0.012384437295296044,
+    "velocity": 0.020736318620749768
+   }
+  },
+  "20": {
+   "l1": {
+    "density": 0.008633922963737863,
+    "pressure": 0.007288391466801141,
+    "velocity": 0.012235598965152531
+   },
+   "l2": {
+    "density": 0.030250736120541084,
+    "pressure": 0.012384437295296086,
+    "velocity": 0.02073631862074982
+   }
+  },
+  "6": {
+   "l1": {
+    "density": 0.00859912747293359,
+    "pressure": 0.007282026876009033,
+    "velocity": 0.012235432262653055
+   },
+   "l2": {
+    "density": 0.03025073612054091,
+    "pressure": 0.012384352265473643,
+    "velocity": 0.020735645541335366
+   }
+  },
+  "8": {
+   "l1": {
+    "density": 0.008633196199075065,
+    "pressure": 0.0072906863630427,
+    "velocity": 0.012238654230305688
+   },
+   "l2": {
+    "density": 0.03025073612054112,
+    "pressure": 0.012384437198208172,
+    "velocity": 0.02073631634926328
+   }
+  }
+ },
+ "anchor": "CASE-LAX-DG",
+ "case": "lax-1954-shock-tube",
+ "config": {
+  "aligned_orders": [
+   6,
+   8,
+   10,
+   12,
+   16,
+   20
+  ],
+  "base_order": 10,
+  "breakpoints": [
+   [
+    "contact",
+    0.6987339934622749
+   ],
+   [
+    "rarefaction_head",
+    0.15763654037219582
+   ],
+   [
+    "rarefaction_tail",
+    0.28722933252692573
+   ],
+   [
+    "shock",
+    0.8223117925286793
+   ]
+  ],
+  "context_leg": "p3.N800",
+  "converged_order": 20,
+  "order_sweep": [
+   4,
+   5,
+   6,
+   8,
+   10,
+   12,
+   16,
+   20
+  ],
+  "production_leg": "p3.N400",
+  "subdivision_sweep": [
+   1,
+   2,
+   4,
+   8,
+   16,
+   32,
+   64
+  ],
+  "tolerance": 0.03
+ },
+ "context": {
+  "convergence": {
+   "status": "PASS",
+   "worst_relative_drift": 4.140284483082949e-14
+  },
+  "fields": {
+   "density": {
+    "converged_aligned": 0.024049827476329437,
+    "spread": 4.140284483082949e-14,
+    "status": "PASS"
+   },
+   "pressure": {
+    "converged_aligned": 0.009507777766312658,
+    "spread": 2.7550417280534072e-14,
+    "status": "PASS"
+   },
+   "velocity": {
+    "converged_aligned": 0.01524502669138459,
+    "spread": 2.1733788376954147e-14,
+    "status": "PASS"
+   }
+  },
+  "gate": "Q2/Q3",
+  "leg": "p3.N800",
+  "margin": 0.801660915877648,
+  "metric": "relative L2, whole field, breakpoint-aligned converged quadrature",
+  "status": "PASS",
+  "tolerance": 0.03,
+  "worst": 0.024049827476329437,
+  "worst_field": "density"
+ },
+ "convergence": {
+  "fields": {
+   "density": {
+    "order16": 0.030250736120541265,
+    "order20": 0.030250736120541084,
+    "relative_drift": 5.963862855525114e-15
+   },
+   "pressure": {
+    "order16": 0.012384437295296044,
+    "order20": 0.012384437295296086,
+    "relative_drift": 3.3617484937532757e-15
+   },
+   "velocity": {
+    "order16": 0.020736318620749768,
+    "order20": 0.02073631862074982,
+    "relative_drift": 2.5096886882915058e-15
+   }
+  },
+  "gate": "Q1",
+  "orders": [
+   16,
+   20
+  ],
+  "status": "PASS",
+  "tolerance": 1e-10,
+  "worst_relative_drift": 5.963862855525114e-15
+ },
+ "figures": [
+  "docs/benchmarks/results/lax_a0_quadrature_audit/figures/lax_a0_quadrature_order_sweep.png",
+  "docs/benchmarks/results/lax_a0_quadrature_audit/figures/lax_a0_subdivision_vs_aligned.png"
+ ],
+ "generated_at_utc": "2026-11-14T23:00:43Z",
+ "ledger": {
+  "fields": {
+   "density": {
+    "committed_uniform_order10": 0.03115561881158076,
+    "converged_aligned": 0.030250736120541084,
+    "spread": 0.02991274947604451,
+    "status": "FAIL"
+   },
+   "pressure": {
+    "committed_uniform_order10": 0.01305011534420177,
+    "converged_aligned": 0.012384437295296086,
+    "spread": 0.053751174400029085,
+    "status": "PASS"
+   },
+   "velocity": {
+    "committed_uniform_order10": 0.022480528737058386,
+    "converged_aligned": 0.02073631862074982,
+    "spread": 0.08411377873810352,
+    "status": "PASS"
+   }
+  },
+  "gate": "Q2/Q3",
+  "leg": "p3.N400",
+  "margin": 1.008357870684703,
+  "metric": "relative L2, whole field, breakpoint-aligned converged quadrature",
+  "status": "FAIL",
+  "tolerance": 0.03,
+  "worst": 0.030250736120541084,
+  "worst_field": "density"
+ },
+ "outcome": {
+  "recommendation": "\u7ef4\u6301 A0 = FAIL\uff1b\u51fa\u8def\u4ecd\u662f\u5206\u8fa8\u7387\uff08`p3.N800`\uff09\u6216\u7531\u53f0\u8d26\u6301\u6709\u4eba\u53d8\u66f4\u751f\u4ea7\u817f\u53e3\u5f84\u3002\u540c\u65f6\u5efa\u8bae\u7edf\u4e00 `riemann_dg_error` \u4e0e\u6c60\u5b50\u7684\u6c42\u79ef\u5b9e\u73b0\uff0c\u6d88\u9664\u540c\u4e00\u4e2a\u91cf\u4e24\u5957\u8bfb\u6570\u3002",
+  "statement": "\u6536\u655b\u6c42\u79ef\u4e0b\u9489\u624e\u817f `p3.N400` \u7684\u6700\u5dee\u91cf `density` = 3.025074e-02\uff083.0251 %\uff09\u4ecd **\u2265 3.00 %**\uff08\u88d5\u5ea6 \u00d71.008\uff09\uff0c\u800c\u4e0e\u5df2\u63d0\u4ea4 10 \u9636\u8bfb\u6570\u7684\u5dee\u4e3a 2.99 %\u2014\u2014FAIL \u4e0d\u662f\u6c42\u79ef\u5047\u8c61\uff0chonest FAIL \u7ad9\u5f97\u4f4f\u3002"
+ },
+ "pre_registration": {
+  "Q0": "uniform/order10 reproduces the committed pool value to <= 1e-12",
+  "Q1": "aligned order16 vs order20 agree to <= 1e-10 per field",
+  "Q2": "ledger PASS iff converged max_field rel L2 < tolerance",
+  "Q3": "spread = |uniform10 - aligned20| / aligned20 per field",
+  "Q4": "pool artifact and production leg untouched; p3.N800 context only",
+  "Q5": "both outcomes recorded as-is"
+ },
+ "provenance": {
+  "context_profiles": "docs/benchmarks/results/lax_resolution_requirement/profiles.npz",
+  "pool_metrics": "docs/benchmarks/results/lax_case_pool/metrics.json",
+  "profiles_file": "docs/benchmarks/results/lax_case_pool/profiles.npz",
+  "profiles_sha256": "7bdcc57cb9a0c212222d0bae409f441b8a29f839e0255b5d2f8962654a0b78a0",
+  "solver_rerun": false
+ },
+ "reuse": {
+  "fields": {
+   "density": {
+    "audit": 0.03115561881158076,
+    "committed": 0.03115561881158076,
+    "cross_difference": 0.0,
+    "pool_reread": 0.03115561881158076,
+    "relative_difference": 0.0
+   },
+   "pressure": {
+    "audit": 0.01305011534420177,
+    "committed": 0.01305011534420177,
+    "cross_difference": 0.0,
+    "pool_reread": 0.01305011534420177,
+    "relative_difference": 0.0
+   },
+   "velocity": {
+    "audit": 0.022480528737058386,
+    "committed": 0.022480528737058383,
+    "cross_difference": 1.5433119890255738e-16,
+    "pool_reread": 0.022480528737058383,
+    "relative_difference": 1.5433119890255738e-16
+   }
+  },
+  "gate": "Q0",
+  "status": "PASS",
+  "tolerance": 1e-12,
+  "worst_cross_difference": 1.5433119890255738e-16,
+  "worst_relative_difference": 1.5433119890255738e-16
+ },
+ "study": "quadrature convergence of the A0 ledger arm (offline, zero solves)",
+ "subdivision_sweep": {
+  "1": {
+   "l1": {
+    "density": 0.008685539963016797,
+    "pressure": 0.007311961493174053,
+    "velocity": 0.012306385471484233
+   },
+   "l2": {
+    "density": 0.03115561881158076,
+    "pressure": 0.01305011534420177,
+    "velocity": 0.022480528737058386
+   }
+  },
+  "16": {
+   "l1": {
+    "density": 0.008632019230200972,
+    "pressure": 0.007289019110413304,
+    "velocity": 0.012239167640826094
+   },
+   "l2": {
+    "density": 0.030278571011511053,
+    "pressure": 0.012399272644256418,
+    "velocity": 0.020779191020960052
+   }
+  },
+  "2": {
+   "l1": {
+    "density": 0.008592784246786452,
+    "pressure": 0.007274819857002294,
+    "velocity": 0.012196609292898931
+   },
+   "l2": {
+    "density": 0.029563481519811707,
+    "pressure": 0.01201692034098145,
+    "velocity": 0.01961410236943513
+   }
+  },
+  "32": {
+   "l1": {
+    "density": 0.00862745159084466,
+    "pressure": 0.007287216212063299,
+    "velocity": 0.012233771531912253
+   },
+   "l2": {
+    "density": 0.030194698489158518,
+    "pressure": 0.012350904873323664,
+    "velocity": 0.020641583557420042
+   }
+  },
+  "4": {
+   "l1": {
+    "density": 0.008653404988998418,
+    "pressure": 0.007297734659405385,
+    "velocity": 0.012264742284250105
+   },
+   "l2": {
+    "density": 0.030691176614879884,
+    "pressure": 0.012633776707769339,
+    "velocity": 0.021416956984465992
+   }
+  },
+  "64": {
+   "l1": {
+    "density": 0.008629266131710476,
+    "pressure": 0.00728804245602487,
+    "velocity": 0.012236259174022688
+   },
+   "l2": {
+    "density": 0.03022701510580988,
+    "pressure": 0.012373835095536202,
+    "velocity": 0.02070651441727041
+   }
+  },
+  "8": {
+   "l1": {
+    "density": 0.00864024224377184,
+    "pressure": 0.007292557467071585,
+    "velocity": 0.012249228783043105
+   },
+   "l2": {
+    "density": 0.03042579284308922,
+    "pressure": 0.012492901143499349,
+    "velocity": 0.021038668476412864
+   }
+  }
+ },
+ "uniform_sweep": {
+  "10": {
+   "l1": {
+    "density": 0.008685539963016797,
+    "pressure": 0.007311961493174053,
+    "velocity": 0.012306385471484233
+   },
+   "l2": {
+    "density": 0.03115561881158076,
+    "pressure": 0.01305011534420177,
+    "velocity": 0.022480528737058386
+   }
+  },
+  "12": {
+   "l1": {
+    "density": 0.008619675240458865,
+    "pressure": 0.007291534772262399,
+    "velocity": 0.012238276490382352
+   },
+   "l2": {
+    "density": 0.030050376957506057,
+    "pressure": 0.012359353311225937,
+    "velocity": 0.020770065915628223
+   }
+  },
+  "16": {
+   "l1": {
+    "density": 0.00866199901085529,
+    "pressure": 0.0073000954435872715,
+    "velocity": 0.012273584827219996
+   },
+   "l2": {
+    "density": 0.030699505696237042,
+    "pressure": 0.012710096806972777,
+    "velocity": 0.02163284545020418
+   }
+  },
+  "20": {
+   "l1": {
+    "density": 0.008603925713294536,
+    "pressure": 0.007278996756043672,
+    "velocity": 0.01220558740079422
+   },
+   "l2": {
+    "density": 0.029690073783567108,
+    "pressure": 0.01211624515042837,
+    "velocity": 0.019946025952461727
+   }
+  },
+  "4": {
+   "l1": {
+    "density": 0.008880169620652762,
+    "pressure": 0.007390449599287144,
+    "velocity": 0.012494175412284123
+   },
+   "l2": {
+    "density": 0.03302458649514109,
+    "pressure": 0.014705045740175218,
+    "velocity": 0.026029970403937976
+   }
+  },
+  "5": {
+   "l1": {
+    "density": 0.008768032156131386,
+    "pressure": 0.007319678753391472,
+    "velocity": 0.012345724607796168
+   },
+   "l2": {
+    "density": 0.0334800688918012,
+    "pressure": 0.01305916907155318,
+    "velocity": 0.022839302058355163
+   }
+  },
+  "6": {
+   "l1": {
+    "density": 0.008583685801227297,
+    "pressure": 0.007288451327466758,
+    "velocity": 0.012249451190327281
+   },
+   "l2": {
+    "density": 0.029695934875060642,
+    "pressure": 0.012353220890343448,
+    "velocity": 0.021055325551327365
+   }
+  },
+  "8": {
+   "l1": {
+    "density": 0.008556654997376893,
+    "pressure": 0.007275396857208337,
+    "velocity": 0.01218863609845387
+   },
+   "l2": {
+    "density": 0.0290581588202127,
+    "pressure": 0.011905272290842782,
+    "velocity": 0.01936333159232958
+   }
+  }
+ }
+}
