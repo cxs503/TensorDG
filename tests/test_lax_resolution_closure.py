@@ -15,6 +15,15 @@ ladder and not asserted next to it:
   ``N*`` never produces a pass (the honest-FAIL rule);
 * the limiter arms differ in exactly one knob (``limiter``);
 * every field's relative L2 decreases monotonically along the ladder.
+
+Resolution-closure vs ledger bar (m20699)
+-----------------------------------------
+The standard case pool ladder (P1/P2/P3 × N=100/200/400) yields an A0
+verdict of **FAIL** because the production leg (p3.N400) has relative L2
+density = 3.116 %, just above the 3 % ledger bar.  The resolution closure
+study extends the P3 ladder to N = [200, 400, 800, 1600] and shows that the
+3 % threshold is met at N = 800 (worst L2 = 2.315 % for density).  The tests
+below machine-verify this finding so it cannot drift from the artifact.
 """
 from __future__ import annotations
 
@@ -27,6 +36,7 @@ METRICS = Path("docs/benchmarks/results/lax_resolution_closure/metrics.json")
 FIELDS = ("density", "velocity", "pressure")
 LADDER = (200, 400, 800, 1600)
 ARMS = ("none", "tvb", "weno")
+LEDGER_TOLERANCE = 0.03  # 3 % relative L2
 
 
 @pytest.fixture(scope="module")
@@ -108,3 +118,108 @@ def test_figures_are_declared_on_disk(metrics):
     for figure in metrics["figures"]:
         assert (base / figure["name"]).exists()
         assert figure["caption"].strip()
+
+
+# --------------------------------------------------------------- m20699: ledger-bar closure
+def _find_leg(metrics: dict, cells: int) -> dict:
+    for leg in metrics["ladder"]:
+        if leg["cells"] == cells and leg.get("limiter") == "none":
+            return leg
+    raise KeyError(f"no unlimited leg with cells={cells}")
+
+
+def test_n800_passes_ledger_bar(metrics):
+    """N = 800 at P3 must have all three fields below the 3 % ledger bar.
+
+    This is the key "验证欠账" finding: the ledger bar *is* achievable under
+    the registered configuration (P3, unlimited, CFL 0.35); it just requires
+    N = 800 rather than N = 400.
+    """
+    leg = _find_leg(metrics, 800)
+    l2 = leg["l2"]
+    for field in FIELDS:
+        assert l2[field] < LEDGER_TOLERANCE, (
+            f"N=800 {field} L2 = {l2[field]:.6f} ({l2[field]*100:.3f}%) "
+            f"≥ {LEDGER_TOLERANCE*100:.1f}% ledger bar"
+        )
+
+
+def test_n800_worst_field_is_density(metrics):
+    """Density is the hardest field; it should be the worst at every resolution."""
+    for cells in LADDER:
+        leg = _find_leg(metrics, cells)
+        l2 = leg["l2"]
+        assert l2["density"] >= l2["velocity"], (
+            f"N={cells}: velocity L2 ({l2['velocity']:.6f}) > density L2 ({l2['density']:.6f})"
+        )
+        assert l2["density"] >= l2["pressure"], (
+            f"N={cells}: pressure L2 ({l2['pressure']:.6f}) > density L2 ({l2['density']:.6f})"
+        )
+
+
+def test_n400_still_fails_ledger_bar(metrics):
+    """N = 400 at P3 must still fail the 3 % bar (honest FAIL, unchanged).
+
+    This confirms the case-pool artifact's A0 FAIL verdict is correct:
+    p3.N400 density L2 = 3.116 % > 3 %.
+    """
+    leg = _find_leg(metrics, 400)
+    l2 = leg["l2"]
+    assert l2["density"] >= LEDGER_TOLERANCE, (
+        f"N=400 density L2 = {l2['density']:.6f} should be ≥ {LEDGER_TOLERANCE}"
+    )
+
+
+def test_unlimited_arm_is_most_accurate_at_n400(metrics):
+    """At N = 400, the unlimited arm must have the lowest L2 density.
+
+    TVB and WENO limiters degrade accuracy because they reduce troubled cells
+    to linear reconstruction, which is over-limiting at P3.
+    """
+    arms = metrics.get("arms", [])
+    if not arms:
+        pytest.skip("limiter arms not present in closure artifact")
+
+    l2_density = {}
+    for arm_data in arms:
+        limiter = arm_data.get("limiter", "unknown")
+        if "l2" in arm_data and "density" in arm_data["l2"]:
+            l2_density[limiter] = arm_data["l2"]["density"]
+
+    if len(l2_density) < 2:
+        pytest.skip("insufficient limiter arms for comparison")
+
+    assert "none" in l2_density, "unlimited arm missing from limiter comparison"
+    none_l2 = l2_density["none"]
+    for arm_name, arm_l2 in l2_density.items():
+        if arm_name != "none":
+            assert arm_l2 >= none_l2, (
+                f"limiter '{arm_name}' L2 ({arm_l2:.6f}) < unlimited ({none_l2:.6f})"
+            )
+
+
+def test_tvb_degrades_accuracy_vs_unlimited(metrics):
+    """TVB limiter must degrade L2 density by at least 2× at N = 400."""
+    arms = metrics.get("arms", [])
+    arm_by_limiter = {a.get("limiter"): a for a in arms}
+    if "none" not in arm_by_limiter or "tvb" not in arm_by_limiter:
+        pytest.skip("tvb or none arm missing from closure artifact")
+
+    none_l2 = arm_by_limiter["none"]["l2"]["density"]
+    tvb_l2 = arm_by_limiter["tvb"]["l2"]["density"]
+    ratio = tvb_l2 / none_l2
+    assert ratio >= 2.0, (
+        f"TVB L2 ({tvb_l2:.6f}) / unlimited L2 ({none_l2:.6f}) = {ratio:.2f} < 2.0"
+    )
+
+
+def test_closure_n800_l2_matches_documentation(metrics):
+    """The N=800 L2 density in the artifact must match the published doc number.
+
+    From docs/CASE-LAX-DG-resolution-closure.md: N=800 ρ L2 = 2.315 %.
+    """
+    leg = _find_leg(metrics, 800)
+    expected = 0.02315
+    assert abs(leg["l2"]["density"] - expected) < 5e-5, (
+        f"N=800 density L2 = {leg['l2']['density']:.6f}, expected ~{expected}"
+    )
