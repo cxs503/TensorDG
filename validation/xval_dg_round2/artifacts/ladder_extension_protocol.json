@@ -1,0 +1,45 @@
+{
+  "case": "Shu-Osher 1988 shock/entropy interaction (1D Euler, gamma=1.4, x in [-5,5], t=1.8, Sod-style Hugoniot left state, transmissive ends)",
+  "cluster_job": {
+    "cmd": "python validation/xval_dg_round2/gen_fv_level.py --ncells 6400 --out validation/repro_shu_osher/artifacts/raw/fv_cfl0p3_n6400.npz",
+    "jid": "cj3139",
+    "state": "queued"
+  },
+  "ladder_extension": 6400,
+  "ladder_three_levels": [
+    800,
+    1600,
+    3200
+  ],
+  "predeclared_criteria": {
+    "L0": "successive differences strictly decrease over four levels",
+    "L1": "extended ladder CERTIFIED by the unchanged engine call",
+    "L2": "|p4-p3|/p3 <= 0.2",
+    "L3": "rel L1(cert3, cert4) on N=1600 <= U3",
+    "L4": "all 11 legs < 3.0 % vs 4-level ref and max |delta| <= 0.5 pp"
+  },
+  "predeclared_prediction": {
+    "predicted_L3": true,
+    "predicted_coverage_ratio": 0.3288639397382699,
+    "predicted_next_difference_percent": 0.03900874111093022,
+    "predicted_shift_percent": 0.027229009553724405
+  },
+  "status": "WITHHELD_PENDING_FOURTH_LEVEL",
+  "three_level_facts": {
+    "band_percent": 0.08279718833081827,
+    "band_share_of_gate": 0.016559437666163655,
+    "differences_percent": [
+      0.23083911384330436,
+      0.09489332553025007
+    ],
+    "observed_order": 1.2825091761164593,
+    "worst_leg": "DG P1 N=200 CFL=0.4",
+    "worst_rel_l1_percent": 2.455700790452218
+  },
+  "thresholds": {
+    "gate_percent": 5.0,
+    "leg_stability_max_pp": 0.5,
+    "order_consistency_max": 0.2,
+    "strict_percent": 3.0
+  }
+}
