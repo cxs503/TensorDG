@@ -1,0 +1,255 @@
+{
+  "case": "CASE-LAX-DG",
+  "anchor": "CASE-LAX-DG",
+  "question": "ledger bar 'ref: exact solution | < 3 %': what whole-field relative L2 does P3 reach at N=800, is the bar met there, and what is the measured order N=400 -> N=800?",
+  "generated_at_utc": "2026-11-14T18:39:16Z",
+  "config": {
+    "cfl": 0.35,
+    "quadrature_order": 10,
+    "legs": [
+      [
+        400,
+        3
+      ],
+      [
+        800,
+        3
+      ]
+    ],
+    "left_state": [
+      0.445,
+      0.698,
+      3.528
+    ],
+    "right_state": [
+      0.5,
+      0.0,
+      0.571
+    ],
+    "gamma": 1.4,
+    "final_time": 0.13,
+    "domain": [
+      0.0,
+      1.0
+    ],
+    "tolerance": 0.03
+  },
+  "pinned": {
+    "leg": "p3.N400",
+    "worst_l2": 0.031155618811580767,
+    "worst_field": "density",
+    "margin_of_tolerance": 1.0385206270526923,
+    "status": "FAIL",
+    "source": "docs/benchmarks/results/lax_case_pool/metrics.json",
+    "note": "A0 production leg pinned before any number was seen; this study does not move it"
+  },
+  "legs": [
+    {
+      "cells": 400,
+      "degree": 3,
+      "steps": 5109,
+      "dt": 2.5445292620865142e-05,
+      "l1_errors": {
+        "density": 0.008685539963016797,
+        "velocity": 0.012306385471484237,
+        "pressure": 0.007311961493174056
+      },
+      "l2_errors": {
+        "density": 0.031155618811580767,
+        "velocity": 0.022480528737058404,
+        "pressure": 0.013050115344201776
+      },
+      "density_min": 0.2971308846053502,
+      "pressure_min": 0.429366279223538,
+      "wall_seconds": 74.59507536888123,
+      "leg": "p3.N400"
+    },
+    {
+      "cells": 800,
+      "degree": 3,
+      "steps": 10250,
+      "dt": 1.2682926829268293e-05,
+      "l1_errors": {
+        "density": 0.006164751775579453,
+        "velocity": 0.008233285360806078,
+        "pressure": 0.0051312181865732845
+      },
+      "l2_errors": {
+        "density": 0.023148994624927942,
+        "velocity": 0.013825704983298062,
+        "pressure": 0.008994023222666417
+      },
+      "density_min": 0.20792989567471107,
+      "pressure_min": 0.24399079623626743,
+      "wall_seconds": 171.57797288894653,
+      "leg": "p3.N800"
+    }
+  ],
+  "orders": {
+    "l1": {
+      "density": 0.49457273572996485,
+      "velocity": 0.5798669527041068,
+      "pressure": 0.5109571005376904
+    },
+    "l2": {
+      "density": 0.42854283422278655,
+      "velocity": 0.701322921363886,
+      "pressure": 0.5370240440165873
+    },
+    "pair": [
+      400,
+      800
+    ]
+  },
+  "requirement": {
+    "rule": "resolution requirement = the smallest leg of the extension ladder whose whole-field relative L2 is below the registered tolerance for every field (no field exemption, no wave band removed, no averaging); a leg is PASS iff max_field rel L2 < tolerance",
+    "tolerance": 0.03,
+    "per_leg": [
+      {
+        "leg": "p3.N400",
+        "cells": 400,
+        "degree": 3,
+        "worst_field": "density",
+        "worst_l2": 0.031155618811580767,
+        "margin_of_tolerance": 1.0385206270526923,
+        "status": "FAIL"
+      },
+      {
+        "leg": "p3.N800",
+        "cells": 800,
+        "degree": 3,
+        "worst_field": "density",
+        "worst_l2": 0.023148994624927942,
+        "margin_of_tolerance": 0.7716331541642648,
+        "status": "PASS"
+      }
+    ],
+    "smallest_leg_meeting_tolerance": "p3.N800",
+    "resolution_factor": 2.0,
+    "status": "PASS"
+  },
+  "reuse_check": {
+    "compared": true,
+    "tolerance": 1e-06,
+    "worst_relative_difference": 0.007138104693408707,
+    "rows": [
+      {
+        "source": "lax_case_pool",
+        "leg": "p3.N400",
+        "norm": "l1",
+        "field": "density",
+        "committed": 0.008685539963016797,
+        "rerun": 0.008685539963016797,
+        "relative_difference": 0.0
+      },
+      {
+        "source": "lax_case_pool",
+        "leg": "p3.N400",
+        "norm": "l2",
+        "field": "density",
+        "committed": 0.031155618811580767,
+        "rerun": 0.031155618811580767,
+        "relative_difference": 0.0
+      },
+      {
+        "source": "lax_case_pool",
+        "leg": "p3.N400",
+        "norm": "l1",
+        "field": "velocity",
+        "committed": 0.012306385471484237,
+        "rerun": 0.012306385471484237,
+        "relative_difference": 0.0
+      },
+      {
+        "source": "lax_case_pool",
+        "leg": "p3.N400",
+        "norm": "l2",
+        "field": "velocity",
+        "committed": 0.022480528737058404,
+        "rerun": 0.022480528737058404,
+        "relative_difference": 0.0
+      },
+      {
+        "source": "lax_case_pool",
+        "leg": "p3.N400",
+        "norm": "l1",
+        "field": "pressure",
+        "committed": 0.007311961493174056,
+        "rerun": 0.007311961493174056,
+        "relative_difference": 0.0
+      },
+      {
+        "source": "lax_case_pool",
+        "leg": "p3.N400",
+        "norm": "l2",
+        "field": "pressure",
+        "committed": 0.013050115344201776,
+        "rerun": 0.013050115344201776,
+        "relative_difference": 0.0
+      },
+      {
+        "source": "lax_asymptotic_probe",
+        "leg": "p3.N400",
+        "norm": "l1",
+        "field": "density",
+        "committed": 0.008686464624843512,
+        "rerun": 0.008685539963016797,
+        "relative_difference": 0.00010644858025090813
+      },
+      {
+        "source": "lax_asymptotic_probe",
+        "leg": "p3.N400",
+        "norm": "l1",
+        "field": "velocity",
+        "committed": 0.012309200656242785,
+        "rerun": 0.012306385471484237,
+        "relative_difference": 0.00022870573298524786
+      },
+      {
+        "source": "lax_asymptotic_probe",
+        "leg": "p3.N400",
+        "norm": "l1",
+        "field": "pressure",
+        "committed": 0.007314181334501461,
+        "rerun": 0.007311961493174056,
+        "relative_difference": 0.00030349826260577716
+      },
+      {
+        "source": "lax_asymptotic_probe",
+        "leg": "p3.N800",
+        "norm": "l1",
+        "field": "density",
+        "committed": 0.006180135570300353,
+        "rerun": 0.006164751775579453,
+        "relative_difference": 0.002489232565516753
+      },
+      {
+        "source": "lax_asymptotic_probe",
+        "leg": "p3.N800",
+        "norm": "l1",
+        "field": "velocity",
+        "committed": 0.008281602249514547,
+        "rerun": 0.008233285360806078,
+        "relative_difference": 0.005834244057217497
+      },
+      {
+        "source": "lax_asymptotic_probe",
+        "leg": "p3.N800",
+        "norm": "l1",
+        "field": "pressure",
+        "committed": 0.005168108687451226,
+        "rerun": 0.0051312181865732845,
+        "relative_difference": 0.007138104693408707
+      }
+    ],
+    "status": "FAIL"
+  },
+  "verdict": "PASS",
+  "wall_seconds": 246.17517805099487,
+  "metrics_sha256": "44dbc878aa762615e662f76f53a796d933455eee4344b0665074c0e58bfad6d4",
+  "figures": [
+    "docs/benchmarks/results/lax_resolution_requirement/figures/lax_resolution_metric.png",
+    "docs/benchmarks/results/lax_resolution_requirement/figures/lax_resolution_profiles.png"
+  ],
+  "figures_note": "rendered from the committed profiles cache"
+}

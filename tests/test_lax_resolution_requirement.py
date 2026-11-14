@@ -78,14 +78,28 @@ def test_pinned_acceptance_leg_is_not_moved():
 
 
 def test_reuse_check_reproduces_the_committed_artifacts():
+    """Pool rows must be bit-identical; the probe rows must be reported honestly.
+
+    The measurement found two sources disagreeing with each other: the case pool
+    reproduces to 0.0, the p3 asymptotic probe no longer does (its stored dt and
+    fields come from an older solver state).  The artifact must carry that FAIL
+    rather than a PASS averaged over the pool rows -- provenance is checked here,
+    a "make it green" tolerance relaxation is not available.
+    """
     metrics = _metrics()
     reuse = metrics["reuse_check"]
     assert reuse["compared"], "the reuse check must actually compare something"
     assert reuse["tolerance"] == pytest.approx(CONSISTENCY_TOL)
-    assert reuse["worst_relative_difference"] <= CONSISTENCY_TOL
-    assert reuse["status"] == "PASS"
-    sources = {row["source"] for row in reuse["rows"]}
-    assert "lax_case_pool" in sources
+    by_source = {}
+    for row in reuse["rows"]:
+        by_source.setdefault(row["source"], []).append(row["relative_difference"])
+    assert set(by_source) == {"lax_case_pool", "lax_asymptotic_probe"}
+    assert max(by_source["lax_case_pool"]) <= CONSISTENCY_TOL
+    probe_worst = max(by_source["lax_asymptotic_probe"])
+    assert probe_worst == pytest.approx(reuse["worst_relative_difference"])
+    assert probe_worst > CONSISTENCY_TOL
+    # the overall verdict is the worst source, never the best one
+    assert reuse["status"] == "FAIL"
 
 
 def test_doc_and_summary_are_rendered_from_the_numbers():
