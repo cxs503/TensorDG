@@ -1,0 +1,292 @@
+{
+  "case": "CASE-DG-ADVECT-ORDER",
+  "row": "P0 (degree 0, DG0 == upwind FV)",
+  "objective": "replace the widened P0 test tolerance by an exact semidiscrete reference: prove the pool-ladder order 0.85 is pre-asymptotic, locate the asymptotic regime, and pin the leading error constant in closed form",
+  "setup": {
+    "speed": 1.0,
+    "final_time": 1.0,
+    "cfl": 0.2,
+    "time_integrator": "rk4 (repo default)",
+    "solver": "tensordg.advection_1d.solve_advection",
+    "pool_ladder": [
+      20,
+      40,
+      80,
+      160,
+      320
+    ],
+    "analytic_ladder": [
+      20,
+      40,
+      80,
+      160,
+      320,
+      640,
+      1280,
+      2560,
+      5120,
+      10240,
+      20480,
+      40960
+    ],
+    "solver_ladder": [
+      20,
+      40,
+      80,
+      160,
+      320,
+      640,
+      1280,
+      2560,
+      5120
+    ]
+  },
+  "closed_form": {
+    "scheme_constant": 13.957728399277759,
+    "projection_constant": 1.282549830161864,
+    "asymptotic_constant": 14.016530103233578,
+    "expression": "E(N) -> pi*sqrt(2*pi^2 + 1/6)/N"
+  },
+  "thresholds": {
+    "order_tol": 0.1,
+    "solver_vs_analytic": 0.002,
+    "constant_rel": 0.001,
+    "time_share": 0.05,
+    "regime_order": 0.99
+  },
+  "analytic": [
+    {
+      "ncells": 20,
+      "h": 0.05,
+      "l2_semidiscrete": 0.4464567393381048,
+      "n_times_l2": 8.929134786762097,
+      "local_order": 0.6890026627991437
+    },
+    {
+      "ncells": 40,
+      "h": 0.025,
+      "l2_semidiscrete": 0.2769293042016145,
+      "n_times_l2": 11.07717216806458,
+      "local_order": 0.8336674594030699
+    },
+    {
+      "ncells": 80,
+      "h": 0.0125,
+      "l2_semidiscrete": 0.15538532583282905,
+      "n_times_l2": 12.430826066626324,
+      "local_order": 0.914229321761887
+    },
+    {
+      "ncells": 160,
+      "h": 0.00625,
+      "l2_semidiscrete": 0.08245168853925597,
+      "n_times_l2": 13.192270166280956,
+      "local_order": 0.9564860475138877
+    },
+    {
+      "ncells": 320,
+      "h": 0.003125,
+      "l2_semidiscrete": 0.04248822255914162,
+      "n_times_l2": 13.596231218925318,
+      "local_order": 0.9780893023132325
+    },
+    {
+      "ncells": 640,
+      "h": 0.0015625,
+      "l2_semidiscrete": 0.021569215268248003,
+      "n_times_l2": 13.804297771678723,
+      "local_order": 0.9890066887272945
+    },
+    {
+      "ncells": 1280,
+      "h": 0.00078125,
+      "l2_semidiscrete": 0.010867100054123323,
+      "n_times_l2": 13.909888069277853,
+      "local_order": 0.9944939138675337
+    },
+    {
+      "ncells": 2560,
+      "h": 0.000390625,
+      "l2_semidiscrete": 0.005454326945934252,
+      "n_times_l2": 13.963076981591684,
+      "local_order": 0.9972446193994988
+    },
+    {
+      "ncells": 5120,
+      "h": 0.0001953125,
+      "l2_semidiscrete": 0.002732377016700851,
+      "n_times_l2": 13.989770325508356,
+      "local_order": 0.99862176804583
+    },
+    {
+      "ncells": 10240,
+      "h": 9.765625e-05,
+      "l2_semidiscrete": 0.0013674942758801073,
+      "n_times_l2": 14.003141385012299,
+      "local_order": 0.9993100213940715
+    },
+    {
+      "ncells": 20480,
+      "h": 4.8828125e-05,
+      "l2_semidiscrete": 0.0006840742228162459,
+      "n_times_l2": 14.009840083276718,
+      "local_order": 0.9996514800859223
+    },
+    {
+      "ncells": 40960,
+      "h": 2.44140625e-05,
+      "l2_semidiscrete": 0.00034211974920833724,
+      "n_times_l2": 14.013224927573493,
+      "local_order": null
+    }
+  ],
+  "analytic_windows": {
+    "N>=20": 0.9582019556441422,
+    "N>=320": 0.9947218468731306,
+    "N>=640": 0.996792589550702,
+    "N>=1280": 0.9980217145293796,
+    "N>=2560": 0.9987587567290546,
+    "N>=5120": 0.9992059829971542
+  },
+  "solver": [
+    {
+      "ncells": 20,
+      "steps": 100,
+      "dt": 0.01,
+      "l2_total": 0.44645662553683235,
+      "l2_time_component": 2.132492504142683e-07,
+      "l2_semidiscrete_exact": 0.4464567393381048
+    },
+    {
+      "ncells": 40,
+      "steps": 200,
+      "dt": 0.005,
+      "l2_total": 0.2769292977523303,
+      "l2_time_component": 2.1949022691049303e-08,
+      "l2_semidiscrete_exact": 0.2769293042016145
+    },
+    {
+      "ncells": 80,
+      "steps": 400,
+      "dt": 0.0025,
+      "l2_total": 0.15538532556482346,
+      "l2_time_component": 1.759590512660889e-09,
+      "l2_semidiscrete_exact": 0.15538532583282905
+    },
+    {
+      "ncells": 160,
+      "steps": 800,
+      "dt": 0.00125,
+      "l2_total": 0.08245168852963129,
+      "l2_time_component": 1.2452011789388136e-10,
+      "l2_semidiscrete_exact": 0.08245168853925597
+    },
+    {
+      "ncells": 320,
+      "steps": 1600,
+      "dt": 0.000625,
+      "l2_total": 0.04248822255881552,
+      "l2_time_component": 8.314400299817297e-12,
+      "l2_semidiscrete_exact": 0.04248822255914162
+    },
+    {
+      "ncells": 640,
+      "steps": 3200,
+      "dt": 0.0003125,
+      "l2_total": 0.021569215268240155,
+      "l2_time_component": 6.972452340838334e-13,
+      "l2_semidiscrete_exact": 0.021569215268248003
+    },
+    {
+      "ncells": 1280,
+      "steps": 6400,
+      "dt": 0.00015625,
+      "l2_total": 0.010867100054126898,
+      "l2_time_component": 6.073241758706932e-14,
+      "l2_semidiscrete_exact": 0.010867100054123323
+    },
+    {
+      "ncells": 2560,
+      "steps": 12800,
+      "dt": 7.8125e-05,
+      "l2_total": 0.0054543269458248445,
+      "l2_time_component": 1.6525625609225446e-13,
+      "l2_semidiscrete_exact": 0.005454326945934252
+    },
+    {
+      "ncells": 5120,
+      "steps": 25600,
+      "dt": 3.90625e-05,
+      "l2_total": 0.0027323770168329055,
+      "l2_time_component": 3.7705655167559594e-13,
+      "l2_semidiscrete_exact": 0.002732377016700851
+    }
+  ],
+  "dt_probe": [
+    {
+      "ncells": 320,
+      "steps": 800,
+      "dt": 0.00125,
+      "l2_total": 0.04248822255441882,
+      "l2_time_component": 1.32483618880485e-10,
+      "l2_semidiscrete_exact": 0.04248822255914162
+    },
+    {
+      "ncells": 320,
+      "steps": 1600,
+      "dt": 0.000625,
+      "l2_total": 0.04248822255881552,
+      "l2_time_component": 8.314400299817297e-12,
+      "l2_semidiscrete_exact": 0.04248822255914162
+    },
+    {
+      "ncells": 320,
+      "steps": 3200,
+      "dt": 0.0003125,
+      "l2_total": 0.04248822255911652,
+      "l2_time_component": 5.542097398704736e-13,
+      "l2_semidiscrete_exact": 0.04248822255914162
+    },
+    {
+      "ncells": 320,
+      "steps": 6400,
+      "dt": 0.00015625,
+      "l2_total": 0.04248822255913613,
+      "l2_time_component": 6.93455544333778e-14,
+      "l2_semidiscrete_exact": 0.04248822255914162
+    }
+  ],
+  "derived": {
+    "order_analytic_pool": 0.853466776412093,
+    "order_solver_pool": 0.8534666995230725,
+    "order_difference": -7.688902048386126e-08,
+    "order_analytic_fine": 0.9992059829971542,
+    "order_solver_fine": 0.9972446193008329,
+    "constant_measured_finest": 14.013224927573493,
+    "constant_rel_error": 0.00023580555499413958,
+    "time_share_max_pool": 4.776483049341047e-07,
+    "solver_vs_exact_max_rel": 2.5489876720463656e-07,
+    "constant_rel_error_scheme_only": 0.003976042999848328,
+    "regime_N_order_1pct": 1280,
+    "regime_N_order_2pct": 640,
+    "regime_N_order_5pct": 160
+  },
+  "checks": {
+    "A1_solver_reproduces_pool_order": true,
+    "A2_pool_order_is_preasymptotic": true,
+    "A3_fine_ladder_recovers_design_order": true,
+    "A4_solver_fine_ladder_recovers_design_order": true,
+    "A10_solver_matches_exact_pointwise": true,
+    "A5_asymptotic_constant_closed_form": true,
+    "A6_two_term_closed_form_identity": true,
+    "A7_time_error_negligible_on_pool": true,
+    "A8_time_error_vanishes_with_cfl": true,
+    "A9_local_order_at_finest": true
+  },
+  "falsified_hypotheses": [
+    "H_P0_defect: 'the 0.85 observed P0 order on N=20..320 means the DG0 operator is below design order'. Falsified: the closed-form semidiscrete error (no time stepping, no solver) gives the same fitted order on the same ladder, and the design order 1.00 is recovered on the extended ladder.",
+    "H_constant: 'N*E(N) -> pi^2*sqrt(2) = 13.9577' (the scheme-damping estimate alone). Falsified: the measured value at N=40960 is 14.01322, i.e. 0.40% above it, while the two-term closed form pi*sqrt(2*pi^2 + 1/6) = 14.01653 is matched to 0.024%. The gap is the O(h^2) piecewise-constant projection floor pi^2*h^2/6, not a solver error.",
+    "H_time_error: 'the DG0 pool-ladder error is contaminated by RK4 time integration'. Falsified at cfl=0.2: time share <= 4.8e-07 on the pool ladder and the fully discrete solver matches the semidiscrete exact error to 2.5e-07 relative over N=20...5120."
+  ],
+  "verdict": "PASS"
+}
