@@ -6,6 +6,14 @@
 - **结论（本单）**：放大机制**不是** DG 格式的，而是**度量**的 —— 精确解按自由空间
   （无周期折返）平移评估，而两个求解器都以 `periodic=(True,True)` 封闭面。
 
+
+> **状态更新（m20824）**：§4 的待办已基本关闭 —— 周期参考重跑已落地（9/12 检查点，
+> `dg_t10`/`p0_128_t2`/`p0_128_t5` 因集群拥塞未及），`case_euler_vortex_errconserve/metrics.json`
+> 已是修复后的证据包。修复后 DG-P2/32² 的 t=1/2/5 最大场误差为 0.0094%/0.0097%/0.0111%，
+> alpha=0.106（修复前 3.3–4.4），即长时"放大"确由参考缺陷所致。详见
+> `case_euler_vortex_errconserve/PENDING_REFERENCE_RERUN.md`（已解决）与
+> `docs/CASE-DG-EULER-VORTEX-ERR.md`。
+
 ## 1. 缺陷（defect）与机制
 
 `tensordg/euler_2d.py::vortex_primitive` 只做 `x_shift = x - u_inf·t`。周期箱

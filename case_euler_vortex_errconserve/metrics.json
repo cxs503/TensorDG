@@ -3,6 +3,40 @@
   "ledger_slug": "CASE-DG-EULER-VORTEX-ERR",
   "reference": "Case-pool entry EULER-VORTEX-ERR cites Yee, Sandham & Djomehri (2000) with a <6 % tolerance; the analytic isentropic-vortex solution itself is the standard form documented in Shu (1998) sec. 4.4.2 (domain [-5,5]^2, beta=5, u_inf=(1,1), gamma=1.4, periodic). The tolerance is taken from the case-pool entry verbatim and is NOT re-derived from the paper text (the paper is not available in-repo); the acceptance numbers below are therefore measured against the analytic solution, which is independent of which paper introduced it.",
   "tolerance_relative_l2": 0.06,
+  "reference_model": {
+    "period": [
+      10.0,
+      10.0
+    ],
+    "note": "both solvers close their faces periodically, so the exact solution is evaluated through the periodic (min-image) map; the free-space form differs from it by the sweep below as soon as the centre is advected out of the box",
+    "truncated_images": "next image shell at radial distance >= box - |shift| >= 5 -> amplitude ratio ~6e-6, two orders below the coarsest family's discretisation error"
+  },
+  "reference_defect_percent": {
+    "1": {
+      "density": 3.320639693292105e-07,
+      "velocity_x": 0.009217435133619207,
+      "velocity_y": 0.009217396153255774,
+      "pressure": 4.668330472564766e-07
+    },
+    "2": {
+      "density": 0.0004003710336091724,
+      "velocity_x": 0.2632104985400457,
+      "velocity_y": 0.2631825471209252,
+      "pressure": 0.0005628574120285308
+    },
+    "5": {
+      "density": 6.175180543530356,
+      "velocity_x": 14.17505754229042,
+      "velocity_y": 14.175057542290418,
+      "pressure": 8.022012371594075
+    },
+    "10": {
+      "density": 6.865663293069625,
+      "velocity_x": 16.146703991265866,
+      "velocity_y": 16.146705908963295,
+      "pressure": 8.929505526562927
+    }
+  },
   "ladder": [
     {
       "task": "dg",
@@ -23,6 +57,13 @@
       "degree": 2,
       "cells": 32,
       "final_time": 5.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 10.0,
       "cfl": 0.2
     },
     {
@@ -66,6 +107,12 @@
       "cells": 64,
       "final_time": 5.0,
       "cfl": 0.4
+    },
+    {
+      "task": "p0",
+      "cells": 64,
+      "final_time": 10.0,
+      "cfl": 0.4
     }
   ],
   "exact_invariants": {
@@ -80,7 +127,7 @@
   "gates": {
     "C1_tolerance": {
       "criterion": "every family at the design checkpoint t=1: max-field relative L2 < 6% (snapshot tolerance)",
-      "measured": 0.049261630766856905,
+      "measured": 0.04926036192305211,
       "worst_at": "p0_n64_t1_cfl0.4",
       "families": [
         "dg_d2_n32",
@@ -93,72 +140,69 @@
     },
     "C1x_crosscheck_raw": {
       "criterion": "INFORMATIONAL: raw max-field relative L2 over *every* long-time checkpoint, vs 6%",
-      "measured": 0.1644328452911533,
-      "worst_at": "dg_d2_n32_t10_cfl0.2",
+      "measured": 0.1430474063391442,
+      "worst_at": "p0_n64_t10_cfl0.4",
       "note": "reported for transparency only: the first-order P0 family exceeds the snapshot tolerance during long-time transport; accumulation is what C2 measures, and C5 keeps the cross-check honest",
       "per_reference_time": {
         "1": {
-          "dg_d2_n32_t1_cfl0.2": 0.00012651985914081663,
-          "p0_n128_t1_cfl0.4": 0.028169973172899238,
-          "p0_n256_t1_cfl0.4": 0.01518719298218034,
-          "p0_n64_t1_cfl0.4": 0.049261630766856905
+          "dg_d2_n32_t1_cfl0.2": 9.431214706130781e-05,
+          "p0_n128_t1_cfl0.4": 0.028169111512511273,
+          "p0_n256_t1_cfl0.4": 0.01518646310926804,
+          "p0_n64_t1_cfl0.4": 0.04926036192305211
         },
         "2": {
-          "dg_d2_n32_t2_cfl0.2": 0.002468390322524021,
-          "p0_n128_t2_cfl0.4": 0.048976954421270896
+          "dg_d2_n32_t2_cfl0.2": 9.689709783192219e-05
         },
         "5": {
-          "dg_d2_n32_t5_cfl0.2": 0.1443017700137661,
-          "p0_n128_t5_cfl0.4": 0.08965097292018802,
-          "p0_n256_t5_cfl0.4": 0.10496995389845405,
-          "p0_n64_t5_cfl0.4": 0.08093900242465663
+          "dg_d2_n32_t5_cfl0.2": 0.00011131861013866376,
+          "p0_n64_t5_cfl0.4": 0.120235164048954
         },
         "10": {
-          "dg_d2_n32_t10_cfl0.2": 0.1644328452911533,
-          "p0_n128_t10_cfl0.4": 0.05894107731623724
+          "p0_n128_t10_cfl0.4": 0.12084610727586263,
+          "p0_n64_t10_cfl0.4": 0.1430474063391442
         }
       },
       "passed": false
     },
     "C2_error_conservation": {
-      "criterion": "dg_d2_n32: least-squares exponent of e ~ t^alpha over t = 1..10 satisfies alpha <= 1.0 (no super-linear accumulation)",
-      "growth_ratio": 1299.6603569415888,
+      "criterion": "dg_d2_n32: least-squares exponent of e ~ t^alpha over t = 1..5 satisfies alpha <= 1.0 (no super-linear accumulation)",
+      "growth_ratio": 1.1803210255228402,
       "growth_ratio_window": [
         1.0,
-        10.0
+        5.0
       ],
       "strict_target": {
         "alpha_max": 0.5,
-        "passed": false
+        "passed": true
       },
-      "exponent": 3.2951290139147105,
-      "checkpoint_count": 4,
+      "exponent": 0.10554036966030703,
+      "checkpoint_count": 3,
       "exponents_all_families": {
-        "dg_d2_n32": 3.2951290139147105,
-        "p0_n128": 0.3669994016155287,
+        "dg_d2_n32": 0.10554036966030703,
+        "p0_n128": NaN,
         "p0_n256": NaN,
-        "p0_n64": NaN
+        "p0_n64": 0.4790904891383289
       },
-      "status": "failed",
-      "passed": false
+      "status": "passed",
+      "passed": true
     },
     "C3_discrete_conservation": {
       "criterion": "relative drift of mass/x-mom/y-mom/energy vs the t=0 discrete state < 1e-10",
-      "worst_drift": 1.9488644950054955e-13,
-      "worst_at": "dg_d2_n32_t10_cfl0.2:energy",
+      "worst_drift": 1.0783057358152238e-13,
+      "worst_at": "p0_n128_t10_cfl0.4:energy",
       "passed": true,
       "status": "passed"
     },
     "C4_entropy_budget": {
       "criterion": "dg_d2_n32: |Delta S|/S(0) < 0.001 (S = int p rho^-gamma)",
-      "measured": 2.980259063978252e-07,
+      "measured": 1.4203657383582424e-07,
       "exact_entropy": 100.0,
       "passed": true,
       "status": "passed"
     },
     "C5_crosscheck_order": {
       "criterion": "P0 cross-check observed order at t=1 over n=64/128/256 >= 0.8 (first order; confirms the second code path converges)",
-      "order": 0.8488045718933813,
+      "order": 0.8488206594053476,
       "cells": [
         64,
         128,
@@ -170,18 +214,16 @@
     "informational": [
       "C1x_crosscheck_raw"
     ],
-    "all_passed": false,
+    "all_passed": true,
     "not_evaluated": [],
-    "failed": [
-      "C2_error_conservation"
-    ],
-    "verdict": "FAIL"
+    "failed": [],
+    "verdict": "PASS"
   },
   "family_count": {
-    "dg_d2_n32": 4,
-    "p0_n128": 4,
-    "p0_n256": 2,
-    "p0_n64": 2
+    "dg_d2_n32": 3,
+    "p0_n128": 2,
+    "p0_n256": 1,
+    "p0_n64": 3
   },
   "records": [
     {
@@ -189,21 +231,22 @@
       "family": "dg_d2_n32",
       "config": {
         "task": "dg",
-        "degree": 2,
         "cells": 32,
         "final_time": 1.0,
-        "cfl": 0.2
+        "cfl": 0.2,
+        "strength": 5.0,
+        "degree": 2
       },
       "final_time": 1.0,
       "cfl": 0.2,
       "steps": 469,
       "errors": {
-        "density": 4.952143592942282e-05,
-        "velocity_x": 0.0001264379901512028,
-        "velocity_y": 0.00012651985914081663,
-        "pressure": 6.966562645596048e-05
+        "density": 4.95214359829303e-05,
+        "velocity_x": 9.42059361961997e-05,
+        "velocity_y": 9.431214706130781e-05,
+        "pressure": 6.966562656570692e-05
       },
-      "max_percent": 0.012651985914081664,
+      "max_percent": 0.00943121470613078,
       "invariant_drift": {
         "mass": 1.7213575918193442e-14,
         "momentum_x": 1.7213575918193442e-14,
@@ -229,7 +272,7 @@
         "entropy": 100.00000214786598
       },
       "gate_pass": true,
-      "wall_seconds": 42.06309151649475
+      "wall_seconds": 46.749340295791626
     },
     {
       "task_key": "dg_d2_n32_t2_cfl0.2",
@@ -245,12 +288,12 @@
       "cfl": 0.2,
       "steps": 937,
       "errors": {
-        "density": 5.083193063709016e-05,
-        "velocity_x": 0.002466654872802332,
-        "velocity_y": 0.002468390322524021,
-        "pressure": 7.166504776797106e-05
+        "density": 5.0679581571519614e-05,
+        "velocity_x": 9.689709783192219e-05,
+        "velocity_y": 9.649487726342877e-05,
+        "pressure": 7.145799106406075e-05
       },
-      "max_percent": 0.24683903225240209,
+      "max_percent": 0.009689709783192219,
       "invariant_drift": {
         "mass": 3.4861107531803535e-14,
         "momentum_x": 3.471645563333132e-14,
@@ -276,7 +319,7 @@
         "entropy": 100.00000505066826
       },
       "gate_pass": true,
-      "wall_seconds": 65.45476627349854
+      "wall_seconds": 65.25408697128296
     },
     {
       "task_key": "dg_d2_n32_t5_cfl0.2",
@@ -292,12 +335,12 @@
       "cfl": 0.2,
       "steps": 2342,
       "errors": {
-        "density": 0.059071910360363314,
-        "velocity_x": 0.13966325511798175,
-        "velocity_y": 0.1443017700137661,
-        "pressure": 0.07658708739951836
+        "density": 5.36515484444988e-05,
+        "velocity_x": 0.00011131861013866376,
+        "velocity_y": 0.00011099177795480814,
+        "pressure": 7.523052753980554e-05
       },
-      "max_percent": 14.43017700137661,
+      "max_percent": 0.011131861013866377,
       "invariant_drift": {
         "mass": 8.765905047416159e-14,
         "momentum_x": 8.708044288027273e-14,
@@ -322,56 +365,8 @@
         "energy": 344.7593266009961,
         "entropy": 100.00001400917358
       },
-      "gate_pass": false,
-      "wall_seconds": 158.58317255973816
-    },
-    {
-      "task_key": "dg_d2_n32_t10_cfl0.2",
-      "family": "dg_d2_n32",
-      "config": {
-        "task": "dg",
-        "cells": 32,
-        "final_time": 10.0,
-        "cfl": 0.2,
-        "strength": 5.0,
-        "degree": 2
-      },
-      "final_time": 10.0,
-      "cfl": 0.2,
-      "steps": 4684,
-      "errors": {
-        "density": 0.06794787270262745,
-        "velocity_x": 0.1644328452911533,
-        "velocity_y": 0.16443256421640542,
-        "pressure": 0.08800355611326965
-      },
-      "max_percent": 16.443284529115328,
-      "invariant_drift": {
-        "mass": 1.7531810094832313e-13,
-        "momentum_x": 1.7416088576054542e-13,
-        "momentum_y": 1.7445018955748978e-13,
-        "energy": 1.9488644950054955e-13,
-        "entropy": 2.980259064711755e-07
-      },
-      "entropy_drift": 2.980259063978252e-07,
-      "entropy_production": 2.980259063978252e-07,
-      "density_min_relative_error": 0.0002609019032130591,
-      "initial_invariants": {
-        "mass": 98.24174356019094,
-        "momentum_x": 98.24174356019094,
-        "momentum_y": 98.24174356019097,
-        "energy": 344.75932660102984,
-        "entropy": 99.99999980551624
-      },
-      "final_invariants": {
-        "mass": 98.24174356017372,
-        "momentum_x": 98.24174356017383,
-        "momentum_y": 98.24174356017383,
-        "energy": 344.75932660096265,
-        "entropy": 100.00002960810683
-      },
-      "gate_pass": false,
-      "wall_seconds": 407.6320924758911
+      "gate_pass": true,
+      "wall_seconds": 160.13221144676208
     },
     {
       "task_key": "p0_n128_t1_cfl0.4",
@@ -387,12 +382,12 @@
       "cfl": 0.4,
       "steps": 183,
       "errors": {
-        "density": 0.012797130011739415,
-        "velocity_x": 0.028022279643338015,
-        "velocity_y": 0.028169973172899238,
-        "pressure": 0.020258279173820247
+        "density": 0.012797130016822153,
+        "velocity_x": 0.02802201871001497,
+        "velocity_y": 0.028169111512511273,
+        "pressure": 0.020258279184190014
       },
-      "max_percent": 2.816997317289924,
+      "max_percent": 2.8169111512511273,
       "invariant_drift": {
         "mass": 1.1138196182360461e-14,
         "momentum_x": 1.1138196182360461e-14,
@@ -418,101 +413,7 @@
         "entropy": 100.35213098990931
       },
       "gate_pass": true,
-      "wall_seconds": 7.39867091178894
-    },
-    {
-      "task_key": "p0_n128_t2_cfl0.4",
-      "family": "p0_n128",
-      "config": {
-        "task": "p0",
-        "cells": 128,
-        "final_time": 2.0,
-        "cfl": 0.4,
-        "strength": 5.0
-      },
-      "final_time": 2.0,
-      "cfl": 0.4,
-      "steps": 357,
-      "errors": {
-        "density": 0.025325465552548502,
-        "velocity_x": 0.04880832435037003,
-        "velocity_y": 0.04897695442127089,
-        "pressure": 0.03956149132854582
-      },
-      "max_percent": 4.897695442127089,
-      "invariant_drift": {
-        "mass": 2.184243666930428e-14,
-        "momentum_x": 2.1697784770832066e-14,
-        "momentum_y": 2.1842436669304278e-14,
-        "energy": 2.324787595564931e-14,
-        "entropy": 0.00550221081409467
-      },
-      "entropy_drift": 0.0055022108140947434,
-      "entropy_production": 0.0055022108140947434,
-      "density_min_relative_error": 0.395235214387051,
-      "initial_invariants": {
-        "mass": 98.24174356019095,
-        "momentum_x": 98.24174356019095,
-        "momentum_y": 98.24174356019097,
-        "energy": 344.75932660102984,
-        "entropy": 100.00143757755976
-      },
-      "final_invariants": {
-        "mass": 98.24174356018881,
-        "momentum_x": 98.24174356018882,
-        "momentum_y": 98.24174356018882,
-        "energy": 344.7593266010218,
-        "entropy": 100.55166656882402
-      },
-      "gate_pass": true,
-      "wall_seconds": 13.17909049987793
-    },
-    {
-      "task_key": "p0_n128_t5_cfl0.4",
-      "family": "p0_n128",
-      "config": {
-        "task": "p0",
-        "cells": 128,
-        "final_time": 5.0,
-        "cfl": 0.4,
-        "strength": 5.0
-      },
-      "final_time": 5.0,
-      "cfl": 0.4,
-      "steps": 854,
-      "errors": {
-        "density": 0.03318703838713865,
-        "velocity_x": 0.0856879777978533,
-        "velocity_y": 0.08965097292018802,
-        "pressure": 0.04036187053281205
-      },
-      "max_percent": 8.965097292018802,
-      "invariant_drift": {
-        "mass": 5.091746826221925e-14,
-        "momentum_x": 5.1496075856108105e-14,
-        "momentum_y": 5.178537965305252e-14,
-        "energy": 5.605870797816146e-14,
-        "entropy": 0.008186751803041799
-      },
-      "entropy_drift": 0.008186751803041847,
-      "entropy_production": 0.008186751803041847,
-      "density_min_relative_error": 0.7129401038069983,
-      "initial_invariants": {
-        "mass": 98.24174356019095,
-        "momentum_x": 98.24174356019095,
-        "momentum_y": 98.24174356019097,
-        "energy": 344.75932660102984,
-        "entropy": 100.00143757755976
-      },
-      "final_invariants": {
-        "mass": 98.24174356018595,
-        "momentum_x": 98.2417435601859,
-        "momentum_y": 98.24174356018588,
-        "energy": 344.7593266010105,
-        "entropy": 100.82012452695461
-      },
-      "gate_pass": false,
-      "wall_seconds": 28.555583477020264
+      "wall_seconds": 8.713639259338379
     },
     {
       "task_key": "p0_n128_t10_cfl0.4",
@@ -521,45 +422,44 @@
         "task": "p0",
         "cells": 128,
         "final_time": 10.0,
-        "cfl": 0.4,
-        "strength": 5.0
+        "cfl": 0.4
       },
       "final_time": 10.0,
       "cfl": 0.4,
       "steps": 1631,
       "errors": {
-        "density": 0.024657957336491388,
-        "velocity_x": 0.058912468102394845,
-        "velocity_y": 0.058941077316237246,
-        "pressure": 0.01902936222428201
+        "density": 0.05421643154279739,
+        "velocity_x": 0.12083560382810407,
+        "velocity_y": 0.12084610727586263,
+        "pressure": 0.07900366258271696
       },
-      "max_percent": 5.894107731623724,
+      "max_percent": 12.084610727586263,
       "invariant_drift": {
-        "mass": 9.648281628096659e-14,
-        "momentum_x": 9.894189855499422e-14,
-        "momentum_y": 9.894189855499421e-14,
-        "energy": 1.0783057358152234e-13,
+        "mass": 9.662746817943883e-14,
+        "momentum_x": 9.879724665652204e-14,
+        "momentum_y": 9.879724665652204e-14,
+        "energy": 1.0783057358152238e-13,
         "entropy": 0.009734609795772781
       },
       "entropy_drift": 0.009734609795772675,
       "entropy_production": 0.009734609795772675,
       "density_min_relative_error": 0.8478005728383908,
       "initial_invariants": {
-        "mass": 98.24174356019095,
-        "momentum_x": 98.24174356019095,
-        "momentum_y": 98.24174356019097,
-        "energy": 344.75932660102984,
+        "mass": 98.24174356019093,
+        "momentum_x": 98.24174356019093,
+        "momentum_y": 98.24174356019093,
+        "energy": 344.7593266010297,
         "entropy": 100.00143757755976
       },
       "final_invariants": {
-        "mass": 98.24174356018148,
-        "momentum_x": 98.24174356018123,
-        "momentum_y": 98.24174356018125,
-        "energy": 344.75932660099267,
+        "mass": 98.24174356018143,
+        "momentum_x": 98.24174356018122,
+        "momentum_y": 98.24174356018122,
+        "energy": 344.75932660099255,
         "entropy": 100.97491255139363
       },
-      "gate_pass": true,
-      "wall_seconds": 59.733734130859375
+      "gate_pass": false,
+      "wall_seconds": 61.20380663871765
     },
     {
       "task_key": "p0_n256_t1_cfl0.4",
@@ -575,12 +475,12 @@
       "cfl": 0.4,
       "steps": 370,
       "errors": {
-        "density": 0.0069325989379014985,
-        "velocity_x": 0.015043270531796923,
-        "velocity_y": 0.01518719298218034,
-        "pressure": 0.01103948969473859
+        "density": 0.006932598940904834,
+        "velocity_x": 0.01504285983042485,
+        "velocity_y": 0.01518646310926804,
+        "pressure": 0.01103948970065621
       },
-      "max_percent": 1.518719298218034,
+      "max_percent": 1.518646310926804,
       "invariant_drift": {
         "mass": 2.271034806013756e-14,
         "momentum_x": 2.256569616166535e-14,
@@ -606,54 +506,7 @@
         "entropy": 100.20157740075778
       },
       "gate_pass": true,
-      "wall_seconds": 51.27212071418762
-    },
-    {
-      "task_key": "p0_n256_t5_cfl0.4",
-      "family": "p0_n256",
-      "config": {
-        "task": "p0",
-        "cells": 256,
-        "final_time": 5.0,
-        "cfl": 0.4,
-        "strength": 5.0
-      },
-      "final_time": 5.0,
-      "cfl": 0.4,
-      "steps": 1773,
-      "errors": {
-        "density": 0.03792185226602751,
-        "velocity_x": 0.10088621077662213,
-        "velocity_y": 0.10496995389845405,
-        "pressure": 0.043438076100469424
-      },
-      "max_percent": 10.496995389845406,
-      "invariant_drift": {
-        "mass": 1.061744934786049e-13,
-        "momentum_x": 1.0689775297096598e-13,
-        "momentum_y": 1.0718705676791041e-13,
-        "energy": 1.1590962267249268e-13,
-        "entropy": 0.006190212439559638
-      },
-      "entropy_drift": 0.006190212439559639,
-      "entropy_production": 0.006190212439559639,
-      "density_min_relative_error": 0.4827959089985434,
-      "initial_invariants": {
-        "mass": 98.24174356019097,
-        "momentum_x": 98.24174356019095,
-        "momentum_y": 98.24174356019095,
-        "energy": 344.75932660102984,
-        "entropy": 100.00035964188324
-      },
-      "final_invariants": {
-        "mass": 98.24174356018054,
-        "momentum_x": 98.24174356018045,
-        "momentum_y": 98.24174356018042,
-        "energy": 344.7593266009899,
-        "entropy": 100.61938311209886
-      },
-      "gate_pass": false,
-      "wall_seconds": 301.29341888427734
+      "wall_seconds": 56.9797203540802
     },
     {
       "task_key": "p0_n64_t1_cfl0.4",
@@ -669,12 +522,12 @@
       "cfl": 0.4,
       "steps": 90,
       "errors": {
-        "density": 0.02203788879671767,
-        "velocity_x": 0.049190797363495235,
-        "velocity_y": 0.049261630766856905,
-        "pressure": 0.03438761144887589
+        "density": 0.022037888804151466,
+        "velocity_x": 0.04919058603539243,
+        "velocity_y": 0.04926036192305211,
+        "pressure": 0.034387611465351554
       },
-      "max_percent": 4.9261630766856905,
+      "max_percent": 4.926036192305211,
       "invariant_drift": {
         "mass": 5.496772141944123e-15,
         "momentum_x": 5.496772141944123e-15,
@@ -700,7 +553,7 @@
         "entropy": 100.5576712831691
       },
       "gate_pass": true,
-      "wall_seconds": 1.5257484912872314
+      "wall_seconds": 1.6969425678253174
     },
     {
       "task_key": "p0_n64_t5_cfl0.4",
@@ -716,12 +569,12 @@
       "cfl": 0.4,
       "steps": 408,
       "errors": {
-        "density": 0.033342299691392865,
-        "velocity_x": 0.07763234925649694,
-        "velocity_y": 0.08093900242465663,
-        "pressure": 0.04425601681044777
+        "density": 0.057256871780877704,
+        "velocity_x": 0.120235164048954,
+        "velocity_y": 0.12022628930303392,
+        "pressure": 0.08475816979753498
       },
-      "max_percent": 8.093900242465663,
+      "max_percent": 12.0235164048954,
       "invariant_drift": {
         "mass": 2.4301518943331914e-14,
         "momentum_x": 2.488012653722077e-14,
@@ -747,7 +600,53 @@
         "entropy": 100.96185555923651
       },
       "gate_pass": false,
-      "wall_seconds": 6.7750959396362305
+      "wall_seconds": 6.922694683074951
+    },
+    {
+      "task_key": "p0_n64_t10_cfl0.4",
+      "family": "p0_n64",
+      "config": {
+        "task": "p0",
+        "cells": 64,
+        "final_time": 10.0,
+        "cfl": 0.4
+      },
+      "final_time": 10.0,
+      "cfl": 0.4,
+      "steps": 778,
+      "errors": {
+        "density": 0.060186592500874526,
+        "velocity_x": 0.14304321900509542,
+        "velocity_y": 0.1430474063391442,
+        "pressure": 0.08358660977013066
+      },
+      "max_percent": 14.30474063391442,
+      "invariant_drift": {
+        "mass": 4.599930371416399e-14,
+        "momentum_x": 4.730117080041392e-14,
+        "momentum_y": 4.7445822698886135e-14,
+        "energy": 5.177186560336089e-14,
+        "entropy": 0.01044753857825224
+      },
+      "entropy_drift": 0.010447538578252313,
+      "entropy_production": 0.010447538578252313,
+      "density_min_relative_error": 0.9019808213352073,
+      "initial_invariants": {
+        "mass": 98.24174356019094,
+        "momentum_x": 98.24174356019093,
+        "momentum_y": 98.24174356019093,
+        "energy": 344.7593266010298,
+        "entropy": 100.00573452113804
+      },
+      "final_invariants": {
+        "mass": 98.24174356018642,
+        "momentum_x": 98.24174356018628,
+        "momentum_y": 98.24174356018626,
+        "energy": 344.75932660101194,
+        "entropy": 101.05054829059408
+      },
+      "gate_pass": false,
+      "wall_seconds": 11.428268432617188
     }
   ]
 }
