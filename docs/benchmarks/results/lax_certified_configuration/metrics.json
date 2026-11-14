@@ -1,0 +1,459 @@
+{
+ "case": "CASE-LAX-DG",
+ "anchor": "CASE-LAX-DG",
+ "question": "which (p, N) configuration certifies the ledger bar 'ref: exact solution | < 3 %' at the smallest degree-of-freedom budget, and what is the certification cost?",
+ "generated_at_utc": "2026-11-14T21:01:31Z",
+ "config": {
+  "cfl": 0.35,
+  "quadrature_order": 10,
+  "legs": [
+   [
+    400,
+    1
+   ],
+   [
+    800,
+    1
+   ],
+   [
+    1600,
+    1
+   ],
+   [
+    400,
+    2
+   ],
+   [
+    800,
+    2
+   ],
+   [
+    1000,
+    2
+   ],
+   [
+    400,
+    3
+   ],
+   [
+    800,
+    3
+   ]
+  ],
+  "dof_cap": 3200,
+  "left_state": [
+   0.445,
+   0.698,
+   3.528
+  ],
+  "right_state": [
+   0.5,
+   0.0,
+   0.571
+  ],
+  "gamma": 1.4,
+  "final_time": 0.13,
+  "domain": [
+   0.0,
+   1.0
+  ],
+  "tolerance": 0.03,
+  "rule": "a configuration is PASS iff max_field rel L2 < tolerance (whole field, every field, no wave band removed, no averaging); the certified configuration is the PASS leg with the smallest (p+1)*N, tie-broken by measured wall clock",
+  "unsupported_degrees": [
+   4
+  ],
+  "unsupported_note": "P4 legs of the first grid draft were rejected by the kernel (ValueError); the grid therefore stops at P3"
+ },
+ "legs": [
+  {
+   "cells": 400,
+   "degree": 1,
+   "steps": 2199,
+   "dt": 5.911778080945885e-05,
+   "l1_errors": {
+    "density": 0.007218334666646664,
+    "velocity": 0.0019571994497084586,
+    "pressure": 0.0011045497222765275
+   },
+   "l2_errors": {
+    "density": 0.04934864082420773,
+    "velocity": 0.017866822803091088,
+    "pressure": 0.010164390961190492
+   },
+   "density_min": 0.29661380380237534,
+   "pressure_min": 0.3838744264159908,
+   "wall_seconds": 29.568403244018555,
+   "leg": "p1.N400"
+  },
+  {
+   "cells": 800,
+   "degree": 1,
+   "steps": 4390,
+   "dt": 2.9612756264236903e-05,
+   "l1_errors": {
+    "density": 0.0042366673590538695,
+    "velocity": 0.0008808367873301405,
+    "pressure": 0.0005406301199153777
+   },
+   "l2_errors": {
+    "density": 0.03771262015879683,
+    "velocity": 0.011418222287686889,
+    "pressure": 0.0073901831782125105
+   },
+   "density_min": 0.2984895013021598,
+   "pressure_min": 0.4704184403771553,
+   "wall_seconds": 67.70367407798767,
+   "leg": "p1.N800"
+  },
+  {
+   "cells": 1600,
+   "degree": 1,
+   "steps": 8773,
+   "dt": 1.4818192180553973e-05,
+   "l1_errors": {
+    "density": 0.00254823508705373,
+    "velocity": 0.0005184117768867333,
+    "pressure": 0.0002925231801092182
+   },
+   "l2_errors": {
+    "density": 0.029540109282639455,
+    "velocity": 0.009898712511540684,
+    "pressure": 0.0054033576303447375
+   },
+   "density_min": 0.2985115884670453,
+   "pressure_min": 0.38316309782581737,
+   "wall_seconds": 169.17153191566467,
+   "leg": "p1.N1600"
+  },
+  {
+   "cells": 400,
+   "degree": 2,
+   "steps": 3662,
+   "dt": 3.54997269251775e-05,
+   "l1_errors": {
+    "density": 0.004528163036034107,
+    "velocity": 0.0016631083834395502,
+    "pressure": 0.0010984650647367018
+   },
+   "l2_errors": {
+    "density": 0.03525871011266807,
+    "velocity": 0.015763822704698702,
+    "pressure": 0.008575576839958242
+   },
+   "density_min": 0.2969272463610521,
+   "pressure_min": 0.536824104782831,
+   "wall_seconds": 50.15139651298523,
+   "leg": "p2.N400"
+  },
+  {
+   "cells": 800,
+   "degree": 2,
+   "steps": 7341,
+   "dt": 1.770875902465604e-05,
+   "l1_errors": {
+    "density": 0.0025481197117722715,
+    "velocity": 0.0007970658715369152,
+    "pressure": 0.0005447903487005192
+   },
+   "l2_errors": {
+    "density": 0.025703283359080602,
+    "velocity": 0.009102869534538238,
+    "pressure": 0.0054986374814092005
+   },
+   "density_min": 0.29216959616843496,
+   "pressure_min": 0.4410471864198975,
+   "wall_seconds": 118.37833666801453,
+   "leg": "p2.N800"
+  },
+  {
+   "cells": 1000,
+   "degree": 2,
+   "steps": 9183,
+   "dt": 1.4156593705760645e-05,
+   "l1_errors": {
+    "density": 0.0022019475394514793,
+    "velocity": 0.0007830471309512695,
+    "pressure": 0.000509418393772768
+   },
+   "l2_errors": {
+    "density": 0.02368268254860656,
+    "velocity": 0.01056445637826066,
+    "pressure": 0.00575613951332848
+   },
+   "density_min": 0.2935979514431498,
+   "pressure_min": 0.30164492763104606,
+   "wall_seconds": 158.24522829055786,
+   "leg": "p2.N1000"
+  },
+  {
+   "cells": 400,
+   "degree": 3,
+   "steps": 5109,
+   "dt": 2.5445292620865142e-05,
+   "l1_errors": {
+    "density": 0.008685539963016797,
+    "velocity": 0.012306385471484237,
+    "pressure": 0.007311961493174056
+   },
+   "l2_errors": {
+    "density": 0.031155618811580767,
+    "velocity": 0.022480528737058404,
+    "pressure": 0.013050115344201776
+   },
+   "density_min": 0.2971308846053502,
+   "pressure_min": 0.429366279223538,
+   "wall_seconds": 73.85039496421814,
+   "leg": "p3.N400"
+  },
+  {
+   "cells": 800,
+   "degree": 3,
+   "steps": 10250,
+   "dt": 1.2682926829268293e-05,
+   "l1_errors": {
+    "density": 0.006164751775579453,
+    "velocity": 0.008233285360806078,
+    "pressure": 0.0051312181865732845
+   },
+   "l2_errors": {
+    "density": 0.023148994624927942,
+    "velocity": 0.013825704983298062,
+    "pressure": 0.008994023222666417
+   },
+   "density_min": 0.20792989567471107,
+   "pressure_min": 0.24399079623626743,
+   "wall_seconds": 176.35498762130737,
+   "leg": "p3.N800"
+  }
+ ],
+ "certification": {
+  "rule": "a configuration is PASS iff max_field rel L2 < tolerance (whole field, every field, no wave band removed, no averaging); the certified configuration is the PASS leg with the smallest (p+1)*N, tie-broken by measured wall clock",
+  "tolerance": 0.03,
+  "per_leg": [
+   {
+    "leg": "p1.N400",
+    "cells": 400,
+    "degree": 1,
+    "dof": 800,
+    "worst_field": "density",
+    "worst_l2": 0.04934864082420773,
+    "margin_of_tolerance": 1.6449546941402577,
+    "wall_seconds": 29.568403244018555,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p1.N800",
+    "cells": 800,
+    "degree": 1,
+    "dof": 1600,
+    "worst_field": "density",
+    "worst_l2": 0.03771262015879683,
+    "margin_of_tolerance": 1.257087338626561,
+    "wall_seconds": 67.70367407798767,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p1.N1600",
+    "cells": 1600,
+    "degree": 1,
+    "dof": 3200,
+    "worst_field": "density",
+    "worst_l2": 0.029540109282639455,
+    "margin_of_tolerance": 0.9846703094213152,
+    "wall_seconds": 169.17153191566467,
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "cells": 400,
+    "degree": 2,
+    "dof": 1200,
+    "worst_field": "density",
+    "worst_l2": 0.03525871011266807,
+    "margin_of_tolerance": 1.1752903370889356,
+    "wall_seconds": 50.15139651298523,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N800",
+    "cells": 800,
+    "degree": 2,
+    "dof": 2400,
+    "worst_field": "density",
+    "worst_l2": 0.025703283359080602,
+    "margin_of_tolerance": 0.8567761119693534,
+    "wall_seconds": 118.37833666801453,
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N1000",
+    "cells": 1000,
+    "degree": 2,
+    "dof": 3000,
+    "worst_field": "density",
+    "worst_l2": 0.02368268254860656,
+    "margin_of_tolerance": 0.7894227516202187,
+    "wall_seconds": 158.24522829055786,
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N400",
+    "cells": 400,
+    "degree": 3,
+    "dof": 1600,
+    "worst_field": "density",
+    "worst_l2": 0.031155618811580767,
+    "margin_of_tolerance": 1.0385206270526923,
+    "wall_seconds": 73.85039496421814,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N800",
+    "cells": 800,
+    "degree": 3,
+    "dof": 3200,
+    "worst_field": "density",
+    "worst_l2": 0.023148994624927942,
+    "margin_of_tolerance": 0.7716331541642648,
+    "wall_seconds": 176.35498762130737,
+    "status": "PASS"
+   }
+  ],
+  "certified": {
+   "leg": "p2.N800",
+   "cells": 800,
+   "degree": 2,
+   "dof": 2400,
+   "worst_field": "density",
+   "worst_l2": 0.025703283359080602,
+   "margin_of_tolerance": 0.8567761119693534,
+   "wall_seconds": 118.37833666801453
+  },
+  "cheapest_by_wall_clock": "p2.N800",
+  "fail_legs": [
+   "p1.N400",
+   "p1.N800",
+   "p2.N400",
+   "p3.N400"
+  ],
+  "minimality": {
+   "claim": "within this grid every leg with smaller DOF than the certified one FAILs",
+   "cheaper_legs": [
+    "p1.N400",
+    "p1.N800",
+    "p2.N400",
+    "p3.N400"
+   ],
+   "cheaper_legs_all_fail": true,
+   "scope": "grid only; no claim about unmeasured (p, N)"
+  },
+  "status": "PASS"
+ },
+ "reuse_check": {
+  "compared": true,
+  "tolerance": 1e-06,
+  "worst_relative_difference": 0.0,
+  "rows": [
+   {
+    "source": "lax_case_pool",
+    "leg": "p3.N400",
+    "norm": "l1",
+    "field": "density",
+    "committed": 0.008685539963016797,
+    "rerun": 0.008685539963016797,
+    "relative_difference": 0.0
+   },
+   {
+    "source": "lax_case_pool",
+    "leg": "p3.N400",
+    "norm": "l2",
+    "field": "density",
+    "committed": 0.031155618811580767,
+    "rerun": 0.031155618811580767,
+    "relative_difference": 0.0
+   },
+   {
+    "source": "lax_case_pool",
+    "leg": "p3.N400",
+    "norm": "l1",
+    "field": "velocity",
+    "committed": 0.012306385471484237,
+    "rerun": 0.012306385471484237,
+    "relative_difference": 0.0
+   },
+   {
+    "source": "lax_case_pool",
+    "leg": "p3.N400",
+    "norm": "l2",
+    "field": "velocity",
+    "committed": 0.022480528737058404,
+    "rerun": 0.022480528737058404,
+    "relative_difference": 0.0
+   },
+   {
+    "source": "lax_case_pool",
+    "leg": "p3.N400",
+    "norm": "l1",
+    "field": "pressure",
+    "committed": 0.007311961493174056,
+    "rerun": 0.007311961493174056,
+    "relative_difference": 0.0
+   },
+   {
+    "source": "lax_case_pool",
+    "leg": "p3.N400",
+    "norm": "l2",
+    "field": "pressure",
+    "committed": 0.013050115344201776,
+    "rerun": 0.013050115344201776,
+    "relative_difference": 0.0
+   },
+   {
+    "source": "lax_resolution_requirement",
+    "leg": "p3.N800",
+    "norm": "l2",
+    "field": "density",
+    "committed": 0.023148994624927942,
+    "rerun": 0.023148994624927942,
+    "relative_difference": 0.0
+   },
+   {
+    "source": "lax_resolution_requirement",
+    "leg": "p3.N800",
+    "norm": "l2",
+    "field": "velocity",
+    "committed": 0.013825704983298062,
+    "rerun": 0.013825704983298062,
+    "relative_difference": 0.0
+   },
+   {
+    "source": "lax_resolution_requirement",
+    "leg": "p3.N800",
+    "norm": "l2",
+    "field": "pressure",
+    "committed": 0.008994023222666417,
+    "rerun": 0.008994023222666417,
+    "relative_difference": 0.0
+   }
+  ],
+  "status": "PASS"
+ },
+ "verdict": "PASS",
+ "figures": [
+  {
+   "name": "lax_certification_dof.png",
+   "caption": "whole-field relative L2 (worst field) against degrees of freedom, per polynomial order; dashed line = registered 3 % tolerance; hollow marker = configuration certifies"
+  },
+  {
+   "name": "lax_certification_cost.png",
+   "caption": "same error measure against measured wall clock; the certified configuration is the cheapest point under the dashed tolerance line"
+  },
+  {
+   "name": "lax_certified_profiles.png",
+   "caption": "density/velocity/pressure at the certified configuration against the closed-form Riemann solution"
+  }
+ ],
+ "wall_seconds": 843.4276196956635,
+ "metrics_sha256": "fb2cf719d93722f7e1415fb4be5359175c0cfdbff5fa8e6d41612494e194c214",
+ "figures_note": "rendered from the committed profiles cache"
+}
