@@ -4,28 +4,28 @@
    "density": [
     {
      "coarse": 400,
-     "coarse_error": 0.00013082612545539142,
+     "coarse_error": 0.00013082612613051118,
      "fine": 800,
-     "fine_error": 3.1062286220089576e-05,
-     "order": 2.0744147472863435
+     "fine_error": 3.106228990182039e-05,
+     "order": 2.0744145837324517
     }
    ],
    "pressure": [
     {
      "coarse": 400,
-     "coarse_error": 0.00016601104753185913,
+     "coarse_error": 0.00016601104907528342,
      "fine": 800,
-     "fine_error": 6.421059187985724e-05,
-     "order": 1.3703960494096041
+     "fine_error": 6.42106005039886e-05,
+     "order": 1.3703958690540001
     }
    ],
    "velocity": [
     {
      "coarse": 400,
-     "coarse_error": 0.0002789209822485669,
+     "coarse_error": 0.0002789209842386933,
      "fine": 800,
-     "fine_error": 0.00010985202831920942,
-     "order": 1.3442949592658813
+     "fine_error": 0.00010985204149980615,
+     "order": 1.344294796457872
     }
    ]
   },
@@ -33,28 +33,28 @@
    "density": [
     {
      "coarse": 400,
-     "coarse_error": 0.0006123889312636005,
+     "coarse_error": 0.0006123889262804776,
      "fine": 800,
-     "fine_error": 0.00015198526322150662,
-     "order": 2.0105167628051697
+     "fine_error": 0.00015198502487113078,
+     "order": 2.0105190135690916
     }
    ],
    "pressure": [
     {
      "coarse": 400,
-     "coarse_error": 0.00041971927909817755,
+     "coarse_error": 0.00041971926746745697,
      "fine": 800,
-     "fine_error": 0.00012137097559343866,
-     "order": 1.79000127281173
+     "fine_error": 0.0001213704185882944,
+     "order": 1.7900078537773791
     }
    ],
    "velocity": [
     {
      "coarse": 400,
-     "coarse_error": 0.0005197987206101499,
+     "coarse_error": 0.0005197987203339758,
      "fine": 800,
-     "fine_error": 0.0001636037339700214,
-     "order": 1.6677474072287701
+     "fine_error": 0.00016360304877835284,
+     "order": 1.6677534486513168
     }
    ]
   },
@@ -62,49 +62,49 @@
    "density": [
     {
      "coarse": 200,
-     "coarse_error": 0.007340505954092445,
+     "coarse_error": 0.0073404465554664225,
      "fine": 400,
-     "fine_error": 0.006072716948083499,
-     "order": 0.2735373800352075
+     "fine_error": 0.006071609158737032,
+     "order": 0.2737889073100254
     },
     {
      "coarse": 400,
-     "coarse_error": 0.006072716948083499,
+     "coarse_error": 0.006071609158737032,
      "fine": 800,
-     "fine_error": 0.004422889080448695,
-     "order": 0.4573530641053428
+     "fine_error": 0.004405212589015103,
+     "order": 0.4628672815180644
     }
    ],
    "pressure": [
     {
      "coarse": 200,
-     "coarse_error": 0.0087243178420281,
+     "coarse_error": 0.0087241801604082,
      "fine": 400,
-     "fine_error": 0.006906603504966072,
-     "order": 0.3370659271829408
+     "fine_error": 0.006904033354645107,
+     "order": 0.33758012848888425
     },
     {
      "coarse": 400,
-     "coarse_error": 0.006906603504966072,
+     "coarse_error": 0.006904033354645107,
      "fine": 800,
-     "fine_error": 0.004835375040683101,
-     "order": 0.514348611482352
+     "fine_error": 0.004794421246451552,
+     "order": 0.5260827621263997
     }
    ],
    "velocity": [
     {
      "coarse": 200,
-     "coarse_error": 0.015228960402502767,
+     "coarse_error": 0.015228778255070947,
      "fine": 400,
-     "fine_error": 0.011855816391845768,
-     "order": 0.3612224500575967
+     "fine_error": 0.011852360131355025,
+     "order": 0.36162583667472403
     },
     {
      "coarse": 400,
-     "coarse_error": 0.011855816391845768,
+     "coarse_error": 0.011852360131355025,
      "fine": 800,
-     "fine_error": 0.008035526825365761,
-     "order": 0.5611304921469952
+     "fine_error": 0.00797875881074817,
+     "order": 0.5709381271218195
     }
    ]
   }
@@ -167,33 +167,32 @@
  },
  "environment": {
   "machine": "loongarch64",
-  "numpy": "2.4.6",
+  "numpy": "2.0.1",
   "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
   "python": "3.11.6",
-  "torch": "2.7.1"
+  "torch": "2.13.0"
  },
  "figures": [
-  "docs/benchmarks/results/lax_asymptotic_probe/figures/lax_asymptotic_convergence.png",
-  "docs/benchmarks/results/lax_asymptotic_probe/figures/lax_asymptotic_residual.png"
+  "docs/benchmarks/results/lax_asymptotic_probe/figures/lax_asymptotic_convergence.png"
  ],
  "finest_leg": {
   "analytic_errors": {
-   "density": 0.004422889080448695,
-   "pressure": 0.004835375040683101,
-   "velocity": 0.008035526825365761
+   "density": 0.004405212589015103,
+   "pressure": 0.004794421246451552,
+   "velocity": 0.00797875881074817
   },
   "cells": 800,
   "degree": 3,
   "errors": {
-   "density": 0.006180135570300353,
-   "pressure": 0.005168108687451226,
-   "velocity": 0.008281602249514547
+   "density": 0.006164751775579453,
+   "pressure": 0.0051312181865732845,
+   "velocity": 0.008233285360806078
   },
   "ripple": {
    "band_cells": 16.0,
-   "max_abs_residual": 0.05294558808528804,
+   "max_abs_residual": 0.052945588085294926,
    "points": 668,
-   "rms_residual": 0.018037838960902816,
+   "rms_residual": 0.018037838960902934,
    "wavelength": 0.0012950902722559715,
    "wavelength_cells": 1.0360722178047772,
    "wavelength_cells_smoothed": 1.0523883157229625,
@@ -210,18 +209,18 @@
  "gates": {
   "c3": {
    "gated_on": "density, finest ladder pair, every degree",
-   "gated_order": 0.49113063616373326,
+   "gated_order": 0.49457273572996485,
    "minimum_order": 1.0,
    "per_leg": {
-    "p1.density": 0.7687361736581824,
-    "p1.pressure": 1.0307445859285451,
-    "p1.velocity": 1.1518441706861826,
-    "p2.density": 0.829492732687072,
-    "p2.pressure": 1.0117146576651201,
-    "p2.velocity": 1.0611103485824875,
-    "p3.density": 0.49113063616373326,
-    "p3.pressure": 0.5010599838571171,
-    "p3.velocity": 0.5717552586602311
+    "p1.density": 0.7687361727699731,
+    "p1.pressure": 1.0307445688088108,
+    "p1.velocity": 1.1518441541602715,
+    "p2.density": 0.8294928455613654,
+    "p2.pressure": 1.011715936987422,
+    "p2.velocity": 1.061111328750124,
+    "p3.density": 0.49457273572996485,
+    "p3.pressure": 0.5109571005376904,
+    "p3.velocity": 0.5798669527041068
    },
    "status": "FAIL"
   },
@@ -245,21 +244,21 @@
    "gated_on": "density, finest ladder pair, every degree",
    "order_fraction": 0.85,
    "per_leg": {
-    "p1.density": 2.0744147472863435,
-    "p1.density_ratio": 1.2202439689919669,
-    "p1.pressure": 1.3703960494096041,
+    "p1.density": 2.0744145837324517,
+    "p1.density_ratio": 1.2202438727837952,
+    "p1.pressure": 1.3703958690540001,
     "p1.requirement": 1.7,
-    "p1.velocity": 1.3442949592658813,
-    "p2.density": 2.0105167628051697,
-    "p2.density_ratio": 0.7884379461981058,
-    "p2.pressure": 1.79000127281173,
+    "p1.velocity": 1.344294796457872,
+    "p2.density": 2.0105190135690916,
+    "p2.density_ratio": 0.7884388288506242,
+    "p2.pressure": 1.7900078537773791,
     "p2.requirement": 2.55,
-    "p2.velocity": 1.6677474072287701,
-    "p3.density": 0.4573530641053428,
-    "p3.density_ratio": 0.13451560708980673,
-    "p3.pressure": 0.514348611482352,
+    "p2.velocity": 1.6677534486513168,
+    "p3.density": 0.4628672815180644,
+    "p3.density_ratio": 0.1361374357406072,
+    "p3.pressure": 0.5260827621263997,
     "p3.requirement": 3.4,
-    "p3.velocity": 0.5611304921469952
+    "p3.velocity": 0.5709381271218195
    },
    "status": "FAIL"
   }
@@ -267,33 +266,35 @@
  "hypotheses": {
   "H1_pre_asymptotic": "finest-pair R3 order >= 1.5x the previous pair (criterion reachable, not yet reached)",
   "H2_intrinsic": "finest-pair R3 order < 1.5x the previous pair (criterion misses for every N in reach)",
-  "resolution": "H1 supported as a trend: order still escalating (x1.67) but 0.457 < 3.40"
+  "resolution": "H1 supported as a trend: order still escalating (x1.69) but 0.463 < 3.40"
  },
  "ladder": [
   {
    "analytic_errors": {
-    "density": 0.00013082612545539142,
-    "pressure": 0.00016601104753185913,
-    "velocity": 0.0002789209822485669
+    "density": 0.00013082612613051118,
+    "pressure": 0.00016601104907528342,
+    "velocity": 0.0002789209842386933
    },
    "analytic_fraction": 0.84,
    "cells": 400,
    "cfl": 0.35,
    "degree": 1,
-   "density_min": 0.2966138038023771,
-   "dt": 3.0716573045319606e-05,
+   "density_min": 0.29661380380237534,
+   "dt_last": 3.0716573045319606e-05,
+   "dt_mean": 5.911778080945885e-05,
+   "dt_semantics": "dt_last = time-truncated final step; dt_mean = final_time/steps",
    "errors": {
-    "density": 0.0072183346661303036,
-    "pressure": 0.001104549721066206,
-    "velocity": 0.00195719944801882
+    "density": 0.007218334666646664,
+    "pressure": 0.0011045497222765275,
+    "velocity": 0.0019571994497084586
    },
    "limiter_reported": "local positivity fallback",
-   "pressure_min": 0.38387442641601055,
+   "pressure_min": 0.3838744264159908,
    "ripple": {
     "band_cells": 8.0,
-    "max_abs_residual": 0.002490421248613206,
+    "max_abs_residual": 0.0024904212486143162,
     "points": 333,
-    "rms_residual": 0.0005573572067042075,
+    "rms_residual": 0.0005573572067050298,
     "wavelength": 0.0050401920628270775,
     "wavelength_cells": 2.0160768251308308,
     "wavelength_cells_smoothed": 2.294156387217842,
@@ -306,32 +307,34 @@
     "zero_crossings_smoothed": 29
    },
    "steps": 2199,
-   "wall_seconds": 42.35081624984741
+   "wall_seconds": 27.931893587112427
   },
   {
    "analytic_errors": {
-    "density": 3.1062286220089576e-05,
-    "pressure": 6.421059187985724e-05,
-    "velocity": 0.00010985202831920942
+    "density": 3.106228990182039e-05,
+    "pressure": 6.42106005039886e-05,
+    "velocity": 0.00010985204149980615
    },
    "analytic_fraction": 0.84,
    "cells": 800,
    "cfl": 0.35,
    "degree": 1,
-   "density_min": 0.298489501302158,
-   "dt": 1.306595229641494e-05,
+   "density_min": 0.2984895013021598,
+   "dt_last": 1.3065952296303918e-05,
+   "dt_mean": 2.9612756264236903e-05,
+   "dt_semantics": "dt_last = time-truncated final step; dt_mean = final_time/steps",
    "errors": {
-    "density": 0.004236667356142455,
-    "pressure": 0.000540630112907592,
-    "velocity": 0.0008808367764798322
+    "density": 0.0042366673590538695,
+    "pressure": 0.0005406301199153777,
+    "velocity": 0.0008808367873301405
    },
    "limiter_reported": "local positivity fallback",
-   "pressure_min": 0.47041844037712877,
+   "pressure_min": 0.4704184403771553,
    "ripple": {
     "band_cells": 16.0,
-    "max_abs_residual": 0.0002647705494380759,
+    "max_abs_residual": 0.00026477054944051837,
     "points": 668,
-    "rms_residual": 3.515125993085221e-05,
+    "rms_residual": 3.5151259930308623e-05,
     "wavelength": 0.0034805551066879234,
     "wavelength_cells": 2.7844440853503385,
     "wavelength_cells_smoothed": 3.1822218118289585,
@@ -344,32 +347,34 @@
     "zero_crossings_smoothed": 42
    },
    "steps": 4390,
-   "wall_seconds": 98.87608671188354
+   "wall_seconds": 63.118613719940186
   },
   {
    "analytic_errors": {
-    "density": 0.0006123889312636005,
-    "pressure": 0.00041971927909817755,
-    "velocity": 0.0005197987206101499
+    "density": 0.0006123889262804776,
+    "pressure": 0.00041971926746745697,
+    "velocity": 0.0005197987203339758
    },
    "analytic_fraction": 0.84,
    "cells": 400,
    "cfl": 0.35,
    "degree": 2,
-   "density_min": 0.2969272463610513,
-   "dt": 2.246575535594375e-05,
+   "density_min": 0.2969272463610521,
+   "dt_last": 2.2465755355777217e-05,
+   "dt_mean": 3.54997269251775e-05,
+   "dt_semantics": "dt_last = time-truncated final step; dt_mean = final_time/steps",
    "errors": {
-    "density": 0.004528163040625704,
-    "pressure": 0.001098465075950289,
-    "velocity": 0.0016631083827524469
+    "density": 0.004528163036034107,
+    "pressure": 0.0010984650647367018,
+    "velocity": 0.0016631083834395502
    },
    "limiter_reported": "local positivity fallback",
-   "pressure_min": 0.5368241047828832,
+   "pressure_min": 0.536824104782831,
    "ripple": {
     "band_cells": 8.0,
-    "max_abs_residual": 0.0351413948654975,
+    "max_abs_residual": 0.03514139486549572,
     "points": 333,
-    "rms_residual": 0.005471272259832758,
+    "rms_residual": 0.005471272259832916,
     "wavelength": 0.002598849032395212,
     "wavelength_cells": 1.0395396129580847,
     "wavelength_cells_smoothed": 1.0730731488599585,
@@ -382,32 +387,34 @@
     "zero_crossings_smoothed": 62
    },
    "steps": 3662,
-   "wall_seconds": 69.68214321136475
+   "wall_seconds": 47.140939235687256
   },
   {
    "analytic_errors": {
-    "density": 0.00015198526322150662,
-    "pressure": 0.00012137097559343866,
-    "velocity": 0.0001636037339700214
+    "density": 0.00015198502487113078,
+    "pressure": 0.0001213704185882944,
+    "velocity": 0.00016360304877835284
    },
    "analytic_fraction": 0.84,
    "cells": 800,
    "cfl": 0.35,
    "degree": 2,
-   "density_min": 0.29216959616843186,
-   "dt": 3.510880673129879e-07,
+   "density_min": 0.29216959616843496,
+   "dt_last": 3.510880671186989e-07,
+   "dt_mean": 1.770875902465604e-05,
+   "dt_semantics": "dt_last = time-truncated final step; dt_mean = final_time/steps",
    "errors": {
-    "density": 0.002548119913717155,
-    "pressure": 0.0005447908373597366,
-    "velocity": 0.0007970664127346948
+    "density": 0.0025481197117722715,
+    "pressure": 0.0005447903487005192,
+    "velocity": 0.0007970658715369152
    },
    "limiter_reported": "local positivity fallback",
-   "pressure_min": 0.4410471864192597,
+   "pressure_min": 0.4410471864198975,
    "ripple": {
     "band_cells": 16.0,
-    "max_abs_residual": 0.010608421488473185,
+    "max_abs_residual": 0.01060842148846719,
     "points": 668,
-    "rms_residual": 0.001600994072322314,
+    "rms_residual": 0.0016009940723222852,
     "wavelength": 0.0016220062633108768,
     "wavelength_cells": 1.2976050106487014,
     "wavelength_cells_smoothed": 1.4218437882640027,
@@ -420,32 +427,34 @@
     "zero_crossings_smoothed": 94
    },
    "steps": 7341,
-   "wall_seconds": 159.97821617126465
+   "wall_seconds": 109.05472540855408
   },
   {
    "analytic_errors": {
-    "density": 0.007340505954092445,
-    "pressure": 0.0087243178420281,
-    "velocity": 0.015228960402502767
+    "density": 0.0073404465554664225,
+    "pressure": 0.0087241801604082,
+    "velocity": 0.015228778255070947
    },
    "analytic_fraction": 0.84,
    "cells": 200,
    "cfl": 0.35,
    "degree": 3,
-   "density_min": 0.29730924583642,
-   "dt": 4.799444239034223e-05,
+   "density_min": 0.297309245836421,
+   "dt_last": 4.799444239023121e-05,
+   "dt_mean": 5.104043973301924e-05,
+   "dt_semantics": "dt_last = time-truncated final step; dt_mean = final_time/steps",
    "errors": {
-    "density": 0.01214747011549904,
-    "pressure": 0.009564283253848274,
-    "velocity": 0.016989928406710906
+    "density": 0.012147420335832907,
+    "pressure": 0.00956416384571963,
+    "velocity": 0.016989783003049697
    },
    "limiter_reported": "local positivity fallback",
-   "pressure_min": 0.0911570921701842,
+   "pressure_min": 0.09115709217018048,
    "ripple": {
     "band_cells": 4.0,
-    "max_abs_residual": 0.056711130385049824,
+    "max_abs_residual": 0.05671113038504094,
     "points": 168,
-    "rms_residual": 0.026620996065534818,
+    "rms_residual": 0.02662099606553575,
     "wavelength": 0.005183080639487393,
     "wavelength_cells": 1.0366161278974786,
     "wavelength_cells_smoothed": 1.0700553578296554,
@@ -458,32 +467,34 @@
     "zero_crossings_smoothed": 31
    },
    "steps": 2547,
-   "wall_seconds": 41.980435609817505
+   "wall_seconds": 31.47716236114502
   },
   {
    "analytic_errors": {
-    "density": 0.006072716948083499,
-    "pressure": 0.006906603504966072,
-    "velocity": 0.011855816391845768
+    "density": 0.006071609158737032,
+    "pressure": 0.006904033354645107,
+    "velocity": 0.011852360131355025
    },
    "analytic_fraction": 0.84,
    "cells": 400,
    "cfl": 0.35,
    "degree": 3,
-   "density_min": 0.29713088460535425,
-   "dt": 2.2296238656793754e-05,
+   "density_min": 0.2971308846053502,
+   "dt_last": 2.2296238657348866e-05,
+   "dt_mean": 2.5445292620865142e-05,
+   "dt_semantics": "dt_last = time-truncated final step; dt_mean = final_time/steps",
    "errors": {
-    "density": 0.008686464624843512,
-    "pressure": 0.007314181334501461,
-    "velocity": 0.012309200656242785
+    "density": 0.008685539963016797,
+    "pressure": 0.007311961493174056,
+    "velocity": 0.012306385471484237
    },
    "limiter_reported": "local positivity fallback",
-   "pressure_min": 0.4293662792237144,
+   "pressure_min": 0.429366279223538,
    "ripple": {
     "band_cells": 8.0,
-    "max_abs_residual": 0.05446486057845723,
+    "max_abs_residual": 0.054464860578469665,
     "points": 333,
-    "rms_residual": 0.02287717194698599,
+    "rms_residual": 0.022877171946985683,
     "wavelength": 0.002598849032395212,
     "wavelength_cells": 1.0395396129580847,
     "wavelength_cells_smoothed": 1.0560402417351973,
@@ -496,32 +507,34 @@
     "zero_crossings_smoothed": 63
    },
    "steps": 5109,
-   "wall_seconds": 95.95195364952087
+   "wall_seconds": 69.71325516700745
   },
   {
    "analytic_errors": {
-    "density": 0.004422889080448695,
-    "pressure": 0.004835375040683101,
-    "velocity": 0.008035526825365761
+    "density": 0.004405212589015103,
+    "pressure": 0.004794421246451552,
+    "velocity": 0.00797875881074817
    },
    "analytic_fraction": 0.84,
    "cells": 800,
    "cfl": 0.35,
    "degree": 3,
-   "density_min": 0.20792989567478792,
-   "dt": 4.411476320936858e-06,
+   "density_min": 0.20792989567471107,
+   "dt_last": 4.411476321131147e-06,
+   "dt_mean": 1.2682926829268293e-05,
+   "dt_semantics": "dt_last = time-truncated final step; dt_mean = final_time/steps",
    "errors": {
-    "density": 0.006180135570300353,
-    "pressure": 0.005168108687451226,
-    "velocity": 0.008281602249514547
+    "density": 0.006164751775579453,
+    "pressure": 0.0051312181865732845,
+    "velocity": 0.008233285360806078
    },
    "limiter_reported": "local positivity fallback",
-   "pressure_min": 0.24399079623633424,
+   "pressure_min": 0.24399079623626743,
    "ripple": {
     "band_cells": 16.0,
-    "max_abs_residual": 0.05294558808528804,
+    "max_abs_residual": 0.052945588085294926,
     "points": 668,
-    "rms_residual": 0.018037838960902816,
+    "rms_residual": 0.018037838960902934,
     "wavelength": 0.0012950902722559715,
     "wavelength_cells": 1.0360722178047772,
     "wavelength_cells_smoothed": 1.0523883157229625,
@@ -534,7 +547,7 @@
     "zero_crossings_smoothed": 127
    },
    "steps": 10250,
-   "wall_seconds": 227.42224097251892
+   "wall_seconds": 161.54777550697327
   }
  ],
  "orders": {
@@ -542,28 +555,28 @@
    "density": [
     {
      "coarse": 400,
-     "coarse_error": 0.0072183346661303036,
+     "coarse_error": 0.007218334666646664,
      "fine": 800,
-     "fine_error": 0.004236667356142455,
-     "order": 0.7687361736581824
+     "fine_error": 0.0042366673590538695,
+     "order": 0.7687361727699731
     }
    ],
    "pressure": [
     {
      "coarse": 400,
-     "coarse_error": 0.001104549721066206,
+     "coarse_error": 0.0011045497222765275,
      "fine": 800,
-     "fine_error": 0.000540630112907592,
-     "order": 1.0307445859285451
+     "fine_error": 0.0005406301199153777,
+     "order": 1.0307445688088108
     }
    ],
    "velocity": [
     {
      "coarse": 400,
-     "coarse_error": 0.00195719944801882,
+     "coarse_error": 0.0019571994497084586,
      "fine": 800,
-     "fine_error": 0.0008808367764798322,
-     "order": 1.1518441706861826
+     "fine_error": 0.0008808367873301405,
+     "order": 1.1518441541602715
     }
    ]
   },
@@ -571,28 +584,28 @@
    "density": [
     {
      "coarse": 400,
-     "coarse_error": 0.004528163040625704,
+     "coarse_error": 0.004528163036034107,
      "fine": 800,
-     "fine_error": 0.002548119913717155,
-     "order": 0.829492732687072
+     "fine_error": 0.0025481197117722715,
+     "order": 0.8294928455613654
     }
    ],
    "pressure": [
     {
      "coarse": 400,
-     "coarse_error": 0.001098465075950289,
+     "coarse_error": 0.0010984650647367018,
      "fine": 800,
-     "fine_error": 0.0005447908373597366,
-     "order": 1.0117146576651201
+     "fine_error": 0.0005447903487005192,
+     "order": 1.011715936987422
     }
    ],
    "velocity": [
     {
      "coarse": 400,
-     "coarse_error": 0.0016631083827524469,
+     "coarse_error": 0.0016631083834395502,
      "fine": 800,
-     "fine_error": 0.0007970664127346948,
-     "order": 1.0611103485824875
+     "fine_error": 0.0007970658715369152,
+     "order": 1.061111328750124
     }
    ]
   },
@@ -600,49 +613,49 @@
    "density": [
     {
      "coarse": 200,
-     "coarse_error": 0.01214747011549904,
+     "coarse_error": 0.012147420335832907,
      "fine": 400,
-     "fine_error": 0.008686464624843512,
-     "order": 0.4838148558489104
+     "fine_error": 0.008685539963016797,
+     "order": 0.48396252476488727
     },
     {
      "coarse": 400,
-     "coarse_error": 0.008686464624843512,
+     "coarse_error": 0.008685539963016797,
      "fine": 800,
-     "fine_error": 0.006180135570300353,
-     "order": 0.49113063616373326
+     "fine_error": 0.006164751775579453,
+     "order": 0.49457273572996485
     }
    ],
    "pressure": [
     {
      "coarse": 200,
-     "coarse_error": 0.009564283253848274,
+     "coarse_error": 0.00956416384571963,
      "fine": 400,
-     "fine_error": 0.007314181334501461,
-     "order": 0.3869604625641807
+     "fine_error": 0.007311961493174056,
+     "order": 0.3873803725939739
     },
     {
      "coarse": 400,
-     "coarse_error": 0.007314181334501461,
+     "coarse_error": 0.007311961493174056,
      "fine": 800,
-     "fine_error": 0.005168108687451226,
-     "order": 0.5010599838571171
+     "fine_error": 0.0051312181865732845,
+     "order": 0.5109571005376904
     }
    ],
    "velocity": [
     {
      "coarse": 200,
-     "coarse_error": 0.016989928406710906,
+     "coarse_error": 0.016989783003049697,
      "fine": 400,
-     "fine_error": 0.012309200656242785,
-     "order": 0.4649426951184693
+     "fine_error": 0.012306385471484237,
+     "order": 0.46526033851780535
     },
     {
      "coarse": 400,
-     "coarse_error": 0.012309200656242785,
+     "coarse_error": 0.012306385471484237,
      "fine": 800,
-     "fine_error": 0.008281602249514547,
-     "order": 0.5717552586602311
+     "fine_error": 0.008233285360806078,
+     "order": 0.5798669527041068
     }
    ]
   }
@@ -651,14 +664,14 @@
   "c3": {
    "available": true,
    "escalates": false,
-   "escalation_factor": 1.0151210328215046,
-   "finest_order": 0.49113063616373326,
+   "escalation_factor": 1.0219236209874558,
+   "finest_order": 0.49457273572996485,
    "finest_pair": [
     400,
     800
    ],
    "meets_requirement": false,
-   "previous_order": 0.4838148558489104,
+   "previous_order": 0.48396252476488727,
    "previous_pair": [
     200,
     400
@@ -668,14 +681,14 @@
   "r3": {
    "available": true,
    "escalates": true,
-   "escalation_factor": 1.6719947527700822,
-   "finest_order": 0.4573530641053428,
+   "escalation_factor": 1.6905991044916064,
+   "finest_order": 0.4628672815180644,
    "finest_pair": [
     400,
     800
    ],
    "meets_requirement": false,
-   "previous_order": 0.2735373800352075,
+   "previous_order": 0.2737889073100254,
    "previous_pair": [
     200,
     400
@@ -694,106 +707,109 @@
   "rows": [
    {
     "cells": 400,
-    "committed": 0.0072183346661303036,
+    "committed": 0.007218334666646664,
     "degree": 1,
     "field": "density",
     "relative_difference": 0.0,
-    "rerun": 0.0072183346661303036
+    "rerun": 0.007218334666646664
    },
    {
     "cells": 400,
-    "committed": 0.00195719944801882,
+    "committed": 0.0019571994497084586,
     "degree": 1,
     "field": "velocity",
     "relative_difference": 0.0,
-    "rerun": 0.00195719944801882
+    "rerun": 0.0019571994497084586
    },
    {
     "cells": 400,
-    "committed": 0.001104549721066206,
+    "committed": 0.0011045497222765275,
     "degree": 1,
     "field": "pressure",
     "relative_difference": 0.0,
-    "rerun": 0.001104549721066206
+    "rerun": 0.0011045497222765275
    },
    {
     "cells": 400,
-    "committed": 0.004528163040625704,
+    "committed": 0.004528163036034107,
     "degree": 2,
     "field": "density",
     "relative_difference": 0.0,
-    "rerun": 0.004528163040625704
+    "rerun": 0.004528163036034107
    },
    {
     "cells": 400,
-    "committed": 0.0016631083827524469,
+    "committed": 0.0016631083834395502,
     "degree": 2,
     "field": "velocity",
     "relative_difference": 0.0,
-    "rerun": 0.0016631083827524469
+    "rerun": 0.0016631083834395502
    },
    {
     "cells": 400,
-    "committed": 0.001098465075950289,
+    "committed": 0.0010984650647367018,
     "degree": 2,
     "field": "pressure",
     "relative_difference": 0.0,
-    "rerun": 0.001098465075950289
+    "rerun": 0.0010984650647367018
    },
    {
     "cells": 200,
-    "committed": 0.01214747011549904,
+    "committed": 0.012147420335832907,
     "degree": 3,
     "field": "density",
     "relative_difference": 0.0,
-    "rerun": 0.01214747011549904
+    "rerun": 0.012147420335832907
    },
    {
     "cells": 200,
-    "committed": 0.016989928406710906,
+    "committed": 0.016989783003049697,
     "degree": 3,
     "field": "velocity",
     "relative_difference": 0.0,
-    "rerun": 0.016989928406710906
+    "rerun": 0.016989783003049697
    },
    {
     "cells": 200,
-    "committed": 0.009564283253848274,
+    "committed": 0.00956416384571963,
     "degree": 3,
     "field": "pressure",
     "relative_difference": 0.0,
-    "rerun": 0.009564283253848274
+    "rerun": 0.00956416384571963
    },
    {
     "cells": 400,
-    "committed": 0.008686464624843512,
+    "committed": 0.008685539963016797,
     "degree": 3,
     "field": "density",
     "relative_difference": 0.0,
-    "rerun": 0.008686464624843512
+    "rerun": 0.008685539963016797
    },
    {
     "cells": 400,
-    "committed": 0.012309200656242785,
+    "committed": 0.012306385471484237,
     "degree": 3,
     "field": "velocity",
     "relative_difference": 0.0,
-    "rerun": 0.012309200656242785
+    "rerun": 0.012306385471484237
    },
    {
     "cells": 400,
-    "committed": 0.007314181334501461,
+    "committed": 0.007311961493174056,
     "degree": 3,
     "field": "pressure",
     "relative_difference": 0.0,
-    "rerun": 0.007314181334501461
+    "rerun": 0.007311961493174056
    }
   ],
   "source": "docs/benchmarks/results/lax_case_pool/metrics.json",
+  "status": "PASS",
+  "steps_agree": true,
+  "tolerance": 1e-06,
   "worst_relative_difference": 0.0
  },
  "verdict": "FAIL",
- "wall_seconds": 736.2540709972382,
+ "wall_seconds": 510.00092339515686,
  "waves": {
   "positions": {
    "contact": 0.6987339934622749,
