@@ -1,0 +1,182 @@
+{
+ "case": "CASE-DG-EULER-VORTEX-ERR",
+ "reference": "Yee, Vinokur & Djomehri, J. Comput. Phys. 162 (2000) 33-81, DOI 10.1006/jcph.2000.6517 (per case-pool brief); numeric target = analytic isentropic vortex, machine-verified",
+ "tolerance": 0.06,
+ "period": 10.0,
+ "growth_limit": 5.0,
+ "gate_config": "dg_d2_n32_t10_cfl0.2",
+ "gate_percent": 16.443284529115328,
+ "gate_pass": false,
+ "growth_factor": 1299.6603569415888,
+ "growth_reference_time": 1.0,
+ "growth_pass": false,
+ "observed_orders": {
+  "1": [
+   {
+    "from_cells": 16,
+    "to_cells": 32,
+    "order": -0.1264233932678909
+   }
+  ],
+  "2": [
+   {
+    "from_cells": 16,
+    "to_cells": 32,
+    "order": -0.0011940830581666302
+   }
+  ],
+  "3": [
+   {
+    "from_cells": 8,
+    "to_cells": 16,
+    "order": 0.0006307521752617236
+   }
+  ]
+ },
+ "configs": {
+  "dg_d1_n16_t10_cfl0.2": {
+   "degree": 1,
+   "cells": 16,
+   "final_time": 10.0,
+   "cfl": 0.2,
+   "steps": 1379,
+   "wall_seconds": 47.62876343727112,
+   "max_percent": 14.831604777465424,
+   "gate_pass": false,
+   "role": "ladder"
+  },
+  "dg_d1_n32_t10_cfl0.2": {
+   "degree": 1,
+   "cells": 32,
+   "final_time": 10.0,
+   "cfl": 0.2,
+   "steps": 2803,
+   "wall_seconds": 178.52132034301758,
+   "max_percent": 16.189945160812837,
+   "gate_pass": false,
+   "role": "ladder"
+  },
+  "dg_d2_n16_t10_cfl0.2": {
+   "degree": 2,
+   "cells": 16,
+   "final_time": 10.0,
+   "cfl": 0.2,
+   "steps": 2337,
+   "wall_seconds": 96.7063639163971,
+   "max_percent": 16.42968045922844,
+   "gate_pass": false,
+   "role": "ladder"
+  },
+  "dg_d2_n32_t10_cfl0.2": {
+   "degree": 2,
+   "cells": 32,
+   "final_time": 10.0,
+   "cfl": 0.2,
+   "steps": 4684,
+   "wall_seconds": 407.65737295150757,
+   "max_percent": 16.443284529115328,
+   "gate_pass": false,
+   "role": "gate"
+  },
+  "dg_d2_n32_t10_cfl0.4": {
+   "degree": 2,
+   "cells": 32,
+   "final_time": 10.0,
+   "cfl": 0.4,
+   "steps": 2342,
+   "wall_seconds": 190.6913983821869,
+   "max_percent": 16.443282602328495,
+   "gate_pass": false,
+   "role": "cfl"
+  },
+  "dg_d2_n32_t1_cfl0.2": {
+   "degree": 2,
+   "cells": 32,
+   "final_time": 1.0,
+   "cfl": 0.2,
+   "steps": 469,
+   "wall_seconds": 46.62582755088806,
+   "max_percent": 0.012651985914081664,
+   "gate_pass": true,
+   "role": "history"
+  },
+  "dg_d2_n32_t2.5_cfl0.2": {
+   "degree": 2,
+   "cells": 32,
+   "final_time": 2.5,
+   "cfl": 0.2,
+   "steps": 1171,
+   "wall_seconds": 96.8988745212555,
+   "max_percent": 0.9089143995741603,
+   "gate_pass": true,
+   "role": "history"
+  },
+  "dg_d2_n32_t5_cfl0.2": {
+   "degree": 2,
+   "cells": 32,
+   "final_time": 5.0,
+   "cfl": 0.2,
+   "steps": 2342,
+   "wall_seconds": 202.1926064491272,
+   "max_percent": 14.4301770013766,
+   "gate_pass": false,
+   "role": "history"
+  },
+  "dg_d3_n16_t10_cfl0.2": {
+   "degree": 3,
+   "cells": 16,
+   "final_time": 10.0,
+   "cfl": 0.2,
+   "steps": 3277,
+   "wall_seconds": 154.50934171676636,
+   "max_percent": 16.443970624146907,
+   "gate_pass": false,
+   "role": "ladder"
+  },
+  "dg_d3_n8_t10_cfl0.2": {
+   "degree": 3,
+   "cells": 8,
+   "final_time": 10.0,
+   "cfl": 0.2,
+   "steps": 1631,
+   "wall_seconds": 48.730836629867554,
+   "max_percent": 16.451161567231434,
+   "gate_pass": false,
+   "role": "ladder"
+  },
+  "exact_solution_residual": {
+   "degree": null,
+   "cells": null,
+   "final_time": null,
+   "cfl": null,
+   "steps": null,
+   "wall_seconds": null,
+   "max_percent": null,
+   "gate_pass": true,
+   "role": "reference"
+  },
+  "p0_n128_t10_cfl0.4": {
+   "degree": 0,
+   "cells": 128,
+   "final_time": 10.0,
+   "cfl": 0.4,
+   "steps": 1631,
+   "wall_seconds": 65.39131045341492,
+   "max_percent": 5.894107731623724,
+   "gate_pass": true,
+   "role": "baseline"
+  },
+  "p0_n64_t10_cfl0.4": {
+   "degree": 0,
+   "cells": 64,
+   "final_time": 10.0,
+   "cfl": 0.4,
+   "steps": 778,
+   "wall_seconds": 12.53278660774231,
+   "max_percent": 3.4645142813738303,
+   "gate_pass": true,
+   "role": "baseline"
+  }
+ },
+ "overall_passed": false
+}
