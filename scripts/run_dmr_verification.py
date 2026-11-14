@@ -43,6 +43,14 @@ def main():
     ap.add_argument("--limiter", default="tvb")
     ap.add_argument("--tvb-constant", type=float, default=100.0)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--sample-reference", choices=("analytic", "measured"),
+                    default="analytic",
+                    help="front position used to place the post-shock sample. "
+                         "'analytic' reproduces the m20397 numbers (a front "
+                         "position error of 1-4 cells then moves the sample into "
+                         "the captured shock); 'measured' offsets from the "
+                         "captured front itself, which is the smearing-only "
+                         "measurement. Recorded in metrics.json either way.")
     args = ap.parse_args()
 
     limiter = None if args.limiter == "none" else args.limiter
@@ -80,6 +88,23 @@ def main():
               "v": float(uy[i, j]), "p": float(p[i, j])}
     state = {"rho": POST_SHOCK[0], "u": POST_SHOCK[1], "v": POST_SHOCK[2],
              "p": POST_SHOCK[3]}
+    if args.sample_reference == "measured" and measured_ref is not None:
+        sample = {k: measured_ref[k] for k in ("x", "y", "rho", "u", "v", "p")}
+    # same physical offset behind the *measured* front at that height: this is
+    # the smearing-only measurement (see validation/dmr/refinement/)
+    row_front = measure_primary_front(rho, x, y, y_levels=(sample["y"],))
+    measured_ref = None
+    if row_front:
+        x_meas = next(iter(row_front.values()))
+        im = int(np.argmin(np.abs(xc - (x_meas - offset))))
+        measured_ref = {"x": float(xc[im]), "y": sample["y"],
+                        "rho": float(rho[im, j]), "u": float(ux[im, j]),
+                        "v": float(uy[im, j]), "p": float(p[im, j])}
+        measured_ref["rel_error"] = {
+            "rho": (measured_ref["rho"] - state["rho"]) / state["rho"],
+            "p": (measured_ref["p"] - state["p"]) / state["p"],
+            "speed": (float(np.hypot(measured_ref["u"], measured_ref["v"])) - speed_e) / speed_e,
+        }
     speed_s = float(np.hypot(sample["u"], sample["v"]))
     speed_e = float(np.hypot(state["u"], state["v"]))
 
@@ -106,6 +131,8 @@ def main():
         "rh_residuals": {k: float(v) for k, v in
                          rh_residuals(PRE_SHOCK, POST_SHOCK).items()},
         "post_shock_sample_offset": offset,
+        "post_shock_sample_reference": args.sample_reference,
+        "post_shock_sample_measured_front": measured_ref,
         "post_shock_exact": state,
         "post_shock_measured": sample,
         "post_shock_rel_error": {

@@ -1,0 +1,70 @@
+{
+  "anchor": "REPRO-DG-CKS1998",
+  "case": "double_mach_reflection (Woodward--Colella / CKS1998 Part V)",
+  "purpose": "Mesh-refinement verification of the quantitative gates that docs/CASE-REPRO-DG-CKS1998-DOUBLE-MACH.md (m20397) reported OUTSIDE the 3% standard at 64x16 P1, t=0.02, and that it attributed to coarse-grid shock smearing / a sample drifted into the reflected structure.",
+  "pre_registration": "This file was written BEFORE any ladder run was submitted. No number below depends on a ladder result. Only the 64x16 P1 single-run values that were already public in the m20397 report were known at writing time.",
+  "protocol": {
+    "solver": "tensordg.euler_dg_2d.solve_euler_dg_2d via benchmarks.double_mach_reflection.solve_double_mach",
+    "boundaries": "standard set: bottom wall, left post-shock inflow, right outflow, top exact moving-front ghost",
+    "limiter": "tvb, M = 100, limiter_stage = final",
+    "cfl": 0.15,
+    "final_time": 0.02,
+    "domain": [[0.0, 4.0], [0.0, 1.0]],
+    "ladder_P1": [[64, 16], [128, 32], [192, 48], [256, 64], [384, 96]],
+    "extra_P2": [[128, 32]],
+    "runner": "scripts/run_dmr_refinement.py --nx NX --ny NY --degree D --time 0.02",
+    "analysis": "scripts/analyze_dmr_refinement.py --dir validation/dmr/refinement"
+  },
+  "reference": "exact Rankine--Hugoniot post-shock state (rho=8, p=116.5, |V|=8.25) and the exact plane-front law x_front(y,t) = 1/6 + y/sqrt3 + (W/sin60) t, W = M a1 = 10 a1",
+  "gates": [
+    {
+      "id": "G1",
+      "claim": "The constant post-shock plateau, sampled at least 0.30 away from every boundary (x in [0.25,0.45], y in [0.55,0.75]), is within the 3% standard at EVERY rung, including 64x16.",
+      "metric": "plateau_rel_error.mid.rho and plateau_rel_error.mid.p",
+      "pass_if": "abs(rho_err) <= 0.03 and abs(p_err) <= 0.03 for all P1 rungs"
+    },
+    {
+      "id": "G2",
+      "claim": "That interior plateau error is a convergence quantity: the finest rung is closer to the exact state than the coarsest one.",
+      "metric": "abs(plateau_rel_error.mid.rho) at 384x96 vs at 64x16",
+      "pass_if": "err(384x96) < err(64x16)"
+    },
+    {
+      "id": "G3",
+      "claim": "The incident front position at interior heights y in {0.50,0.60,0.70,0.80} is captured to a bounded number of cells, and that bound is the same at every rung (a captured discontinuity has a fixed cell-width).",
+      "metric": "max abs(front_error_cells[y]) over y in {0.50,0.60,0.70,0.80}",
+      "pass_if": "<= 2.0 cells at every P1 rung"
+    },
+    {
+      "id": "G4",
+      "claim": "The large front-position error seen at y ~ 0.90 in m20397 is a top-boundary artefact, not a physical front error, so it must shrink in physical units with refinement.",
+      "metric": "abs(front_error[y]) [physical] at the measured row closest to y = 0.90, plus row_profile round-off of the top window",
+      "pass_if": "front_error_phys(384x96) <= 0.5 * front_error_phys(64x16)"
+    },
+    {
+      "id": "G5",
+      "claim": "The captured shock has a smearing width of a fixed number of CELLS (i.e. it scales like h) - this is what makes a fixed-PHYSICAL-offset sample improve with refinement.",
+      "metric": "smear_width_cells at y = 0.70",
+      "pass_if": "0.5 <= smear_width_cells(384x96) / smear_width_cells(64x16) <= 2.0"
+    },
+    {
+      "id": "G6",
+      "claim": "The sample-drift mechanism is the explanation of the m20397 numbers: a sample at a fixed PHYSICAL offset (0.10) behind the ANALYTIC front shows an error that falls with h, while a sample at a fixed number of CELLS (5) behind it stays inside the plateau.",
+      "metric": "samples_behind_front['0.1phys'].rel_error.rho across the ladder",
+      "pass_if": "abs(err(384x96)) < abs(err(64x16)) and abs(err(384x96)) <= 0.03"
+    },
+    {
+      "id": "G7",
+      "claim": "The relative L1 error of the density, taken where the exact solution is the piecewise-constant two-state solution (>= 6 cells from the front, y > 0.35), converges at first order or better.",
+      "metric": "undisturbed_l1.l1_rel on the P1 ladder",
+      "pass_if": "observed rate >= 0.5 (least squares on log-log over all rungs)"
+    },
+    {
+      "id": "G8",
+      "claim": "Shock smearing - not a physical defect - is what the m20397 offset sample measured inside the smeared front: at the SAME physical offset (0.10, i.e. 1.6 cells at 64x16 but 9.6 cells at 384x96) the sample must sit inside the numerical transition at 64x16 and inside the plateau at 384x96.",
+      "metric": "samples_behind_front['0.1phys'].offset_cells",
+      "pass_if": "offset_cells(64x16) < smear_width_cells(64x16) and offset_cells(384x96) > smear_width_cells(384x96)"
+    }
+  ],
+  "honest_fail_policy": "A failed gate is reported as FAIL with the measured number; gates are not relaxed after the fact. If a gate fails, the mechanism is diagnosed and reported as a defect (solver) or as a measurement-design defect (tooling), whichever the evidence supports."
+}
