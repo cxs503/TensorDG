@@ -74,6 +74,9 @@ METRICS = OUT / "metrics.json"
 DOC = ROOT / "docs" / "CASE-LAX-DG-resolution-requirement.md"
 POOL = ROOT / "docs" / "benchmarks" / "results" / "lax_case_pool" / "metrics.json"
 PROBE = ROOT / "docs" / "benchmarks" / "results" / "lax_asymptotic_probe" / "metrics.json"
+#: the finest leg's raw fields, cached so figures can be rendered on a host that
+#: has matplotlib without re-running the solver
+PROFILES = OUT / "profiles.npz"
 
 FIELDS = ("density", "velocity", "pressure")
 #: extension ladder: the pinned A0 leg (re-measured, reuse check) plus one
@@ -149,9 +152,11 @@ def requirements(legs, tolerance):
 def reuse_check(legs, pool, probe):
     """Re-measurements must reproduce the committed artifacts bit for bit."""
     rows = []
-    pinned = next(leg for leg in legs
-                  if (leg["cells"], leg["degree"]) == PINNED_LEG)
-    if pool is not None:
+    # a custom ladder need not contain the pinned leg (smoke ladders, follow-up
+    # studies); the pool comparison is then simply not available, not an error
+    pinned = next((leg for leg in legs
+                   if (leg["cells"], leg["degree"]) == PINNED_LEG), None)
+    if pool is not None and pinned is not None:
         stored = next(e for e in pool["ladder"]
                       if (e["cells"], e["degree"]) == PINNED_LEG)
         for field in FIELDS:
@@ -188,8 +193,46 @@ def reuse_check(legs, pool, probe):
                        else "PASS" if worst <= CONSISTENCY_TOL else "FAIL")}
 
 
+def _rel(path):
+    """Path relative to the worktree when possible, absolute otherwise."""
+    try:
+        return str(Path(path).relative_to(ROOT))
+    except ValueError:
+        return str(path)
+
+
+# -------------------------------------------------------------------- profiles
+def save_profiles(profiles, path=None):
+    path = PROFILES if path is None else Path(path)
+    """Cache the finest leg's fields so figure rendering is a pure post-process.
+
+    The measurement host and the rendering host need not be the same machine:
+    the solver only needs numpy/torch, matplotlib is a presentation dependency.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    arrays = {"points": np.asarray(profiles["points"]),
+              "dx": np.asarray(profiles["dx"]),
+              "weights": np.asarray(profiles["weights"])}
+    for field in FIELDS:
+        arrays[f"numerical_{field}"] = np.asarray(profiles["numerical"][field])
+        arrays[f"exact_{field}"] = np.asarray(profiles["exact"][field])
+    np.savez_compressed(path, **arrays)
+    return path
+
+
+def load_profiles(path=None):
+    path = PROFILES if path is None else Path(path)
+    with np.load(path) as data:
+        return {"points": data["points"], "dx": float(data["dx"][()]),
+                "weights": data["weights"],
+                "numerical": {f: data[f"numerical_{f}"] for f in FIELDS},
+                "exact": {f: data[f"exact_{f}"] for f in FIELDS}}
+
+
 # --------------------------------------------------------------------- figures
-def render_figures(legs, res, profiles, out_dir=FIG):
+def render_figures(legs, res, profiles, out_dir=None):
+    """Render the two figures; ``out_dir`` defaults to :data:`FIG` at call time."""
+    out_dir = Path(out_dir) if out_dir is not None else FIG
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -243,10 +286,15 @@ def render_figures(legs, res, profiles, out_dir=FIG):
     fig.savefig(path, dpi=150)
     plt.close(fig)
     files.append(path)
-    return [str(p.relative_to(ROOT)) for p in files]
+    return [_rel(path) for path in files]
 
 
 # --------------------------------------------------------------------- summary
+def _fmt(value, spec, missing="not_run"):
+    """``format`` that tolerates the not-run case instead of raising."""
+    return missing if value is None else format(value, spec)
+
+
 def render_summary(metrics):
     res = metrics["requirement"]
     rows = "\n".join(
@@ -290,7 +338,7 @@ R2 verdict **{res['status']}**.
 ## Reuse check
 
 Committed artifacts re-measured here: worst relative difference
-`{metrics['reuse_check']['worst_relative_difference']:.3e}` (tolerance
+`{_fmt(metrics['reuse_check']['worst_relative_difference'], '.3e')}` (tolerance
 `{metrics['reuse_check']['tolerance']:.0e}`), status
 **{metrics['reuse_check']['status']}**.
 
@@ -319,12 +367,29 @@ def render_doc(metrics):
     order_rows = "\n".join(
         f"| {field} | {metrics['orders']['l1'][field]:.3f} | "
         f"{metrics['orders']['l2'][field]:.3f} |" for field in FIELDS)
+    src_rows = {}
+    for row in metrics["reuse_check"]["rows"]:
+        entry = src_rows.setdefault(row["source"], {"n": 0, "worst": 0.0})
+        entry["n"] += 1
+        entry["worst"] = max(entry["worst"], row["relative_difference"])
+    sources = "\n".join(
+        f"| {name} | {entry['n']} | {entry['worst']:.3e} | "
+        f"{'PASS' if entry['worst'] <= metrics['reuse_check']['tolerance'] else 'FAIL'} |"
+        for name, entry in sorted(src_rows.items())) or "| — | 0 | — | not_run |"
     reuse_rows = "\n".join(
         f"| {row['source']} | {row['leg']} | {row['norm']} | {row['field']} | "
         f"{row['committed']:.6e} | {row['rerun']:.6e} | "
         f"{row['relative_difference']:.2e} |" for row in metrics["reuse_check"]["rows"]
         if row["relative_difference"] != 0.0) or "| — | — | — | — | — | — | 0 (逐位一致) |"
-    figures = "\n".join(f"* `{f}`" for f in metrics["figures"])
+    if metrics.get("figures"):
+        figures = "\n".join(f"* `{f}`" for f in metrics["figures"])
+        figures += (f"\n\n* `lax_resolution_metric.png`：两腿的 rel L2（台账度量）/ rel L1 与 "
+                    f"{res['tolerance']:.0%} 容差线；"
+                    f"\n* `lax_resolution_profiles.png`：N={legs[1]['cells']} 的 ρ/u/p 剖面 vs 精确解。"
+                    f"\n\n渲染来源：{metrics.get('figures_note', 'n/a')}。")
+    else:
+        figures = ("* 本工件未附图：" + metrics.get("figures_note", "figures missing")
+                   + "。数字与判定不依赖图。")
     return f"""# CASE-LAX-DG · 台账容差需要多细的网格？（rel L2 @ P3, N = 400 → 800）
 
 > 锚点：`feature_ledger` `CASE-LAX-DG`（验收原文「ref: 精确解｜容差 < 3 %」，status 仍 `open`）。
@@ -376,8 +441,20 @@ R2 判定 **{res['status']}**。
 {order_rows}
 
 复用检查（与已提交工件对比，容差 `{metrics['reuse_check']['tolerance']:.0e}`）：
-最差相对差 `{metrics['reuse_check']['worst_relative_difference']:.3e}`，
-状态 **{metrics['reuse_check']['status']}**。
+最差相对差 `{_fmt(metrics['reuse_check']['worst_relative_difference'], '.3e')}`，
+状态 **{metrics['reuse_check']['status']}**。逐来源：
+
+| 来源工件 | 对比行数 | 最差相对差 | verdict |
+|---|---|---|---|
+{sources}
+
+**来源间的分歧要据实读**：本单实测 `lax_case_pool` 的 `p3.N400` 六个读数（L1/L2 × 三量）
+**逐位一致**（相对差 0.0），而 `lax_asymptotic_probe` 的同腿读数差约 1e-4、`p3.N800` 差至
+7.1e-3——即探针工件记录的场不再是当前代码可复现的场（两处腿的步数相同 5109 / 10250，
+但工件里记录的 `dt` 与本次不同：`2.2296e-05` vs `2.5445e-05`（N=400）、
+`4.4115e-06` vs `1.2683e-05`（N=800））。因此**本文给出的 N=800 读数是当前可复现的一组**，
+探针工件需重生成（见 `docs/CASE-LAX-DG-residual-gap.md` 的后续项），overall `reuse_check`
+判 FAIL 如实登记，不用池子那部分的 PASS 覆盖它。
 
 | 来源工件 | leg | 范数 | 量 | 已提交 | 本次 | 相对差 |
 |---|---|---|---|---|---|---|
@@ -386,9 +463,6 @@ R2 判定 **{res['status']}**。
 ## ④ 结果图
 
 {figures}
-
-* `lax_resolution_metric.png`：两腿的 rel L2 / rel L1 与 3 % 容差线；
-* `lax_resolution_profiles.png`：N={legs[1]['cells']} 的 ρ/u/p 剖面 vs 精确解。
 
 ## ⑤ 注意点
 
@@ -422,8 +496,20 @@ R2 判定 **{res['status']}**。
 """
 
 
+def digest(metrics):
+    """sha256 of the artifact body with the digest field itself excluded."""
+    import hashlib
+    payload = json.dumps({k: v for k, v in metrics.items()
+                          if k != "metrics_sha256"}, sort_keys=True)
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
 def write_outputs(metrics):
     OUT.mkdir(parents=True, exist_ok=True)
+    # the artifact itself was never persisted before: the driver rendered the
+    # doc from the in-memory dict and left metrics.json absent, so no reader
+    # (or contract test) could re-adjudicate the run offline.
+    METRICS.write_text(json.dumps(metrics, indent=2) + "\n")
     (OUT / "summary.md").write_text(render_summary(metrics))
     DOC.write_text(render_doc(metrics))
 
@@ -476,14 +562,35 @@ def run(legs=LEGS, tolerance=None, render=True):
         "metrics_sha256": "0" * 64,  # filled after the doc is rendered
     }
     if render:
-        metrics["figures"] = render_figures(measured, res, profiles)
-        # the doc embeds the digest of the numbers, so hash the body without it
-        payload = json.dumps({k: v for k, v in metrics.items()
-                              if k != "metrics_sha256"}, sort_keys=True)
-        import hashlib
-        metrics["metrics_sha256"] = hashlib.sha256(
-            payload.encode()).hexdigest()
+        save_profiles(profiles)
+        try:
+            metrics["figures"] = render_figures(measured, res, profiles)
+            metrics["figures_note"] = "rendered with matplotlib on this host"
+        except ImportError as exc:  # matplotlib is presentation, not physics
+            metrics["figures"] = []
+            metrics["figures_note"] = (
+                f"not rendered on the measurement host ({exc}); the fields are "
+                f"cached in {_rel(PROFILES)} -- run "
+                "`python -m benchmarks.lax_resolution_requirement "
+                "--figures-only` on a host with matplotlib")
+        metrics["metrics_sha256"] = digest(metrics)
         write_outputs(metrics)
+    return metrics
+
+
+def attach_figures():
+    """Re-render figures + doc from a committed artifact (no solver run)."""
+    if not METRICS.exists():
+        raise SystemExit(f"missing {METRICS.relative_to(ROOT)}")
+    if not PROFILES.exists():
+        raise SystemExit(f"missing {PROFILES.relative_to(ROOT)}")
+    metrics = json.loads(METRICS.read_text())
+    profiles = load_profiles()
+    metrics["figures"] = render_figures(metrics["legs"], metrics["requirement"],
+                                        profiles)
+    metrics["figures_note"] = "rendered from the committed profiles cache"
+    metrics["metrics_sha256"] = digest(metrics)
+    write_outputs(metrics)
     return metrics
 
 
@@ -491,7 +598,14 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true",
                         help="re-render the doc from the committed artifact")
+    parser.add_argument("--figures-only", action="store_true",
+                        help="attach figures to a committed artifact from the "
+                             "profiles cache (no solver run)")
     args = parser.parse_args(argv)
+    if args.figures_only:
+        metrics = attach_figures()
+        print(f"[lax-res] figures attached: {metrics['figures']}")
+        return 0
     if args.check:
         if not METRICS.exists():
             print(f"missing {METRICS.relative_to(ROOT)}", file=sys.stderr)
