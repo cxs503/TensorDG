@@ -1,0 +1,104 @@
+{
+  "D1_reference_usable": {
+    "verdict": "WITHHELD_BAND_CONSUMES_GATE",
+    "band_percent": 1.9125123476879353,
+    "band_share_of_gate": 0.38250246953758704,
+    "pass": false
+  },
+  "D2_legs_under_strict_gate": {
+    "n_legs": 9,
+    "strict_percent": 3.0,
+    "all_pass": false,
+    "worst_rel_l1_percent": 22.472371009178264
+  },
+  "D3_reference_vs_exact": {
+    "rel_l1_percent": 0.30357969184108236,
+    "tolerance_percent": 1.0,
+    "pass": true
+  },
+  "D4_no_self_certification": {
+    "ladders": {
+      "dg_p1": "WITHHELD_TOO_FEW_LEVELS",
+      "dg_p2": "WITHHELD_TOO_FEW_LEVELS",
+      "dg_p3": "WITHHELD_TOO_FEW_LEVELS"
+    },
+    "pass": false
+  },
+  "accepted": false,
+  "legs": [
+    {
+      "configuration": "DG P1 N=50 CFL=0.35",
+      "degree": 1,
+      "ncells": 50,
+      "cfl": 0.35,
+      "rel_l1_percent": 22.472371009178264,
+      "verdict": "WITHHELD"
+    },
+    {
+      "configuration": "DG P1 N=100 CFL=0.35",
+      "degree": 1,
+      "ncells": 100,
+      "cfl": 0.35,
+      "rel_l1_percent": 9.545966374639463,
+      "verdict": "WITHHELD"
+    },
+    {
+      "configuration": "DG P1 N=200 CFL=0.35",
+      "degree": 1,
+      "ncells": 200,
+      "cfl": 0.35,
+      "rel_l1_percent": 4.338191163857006,
+      "verdict": "WITHHELD"
+    },
+    {
+      "configuration": "DG P2 N=50 CFL=0.35",
+      "degree": 2,
+      "ncells": 50,
+      "cfl": 0.35,
+      "rel_l1_percent": 16.06028442292484,
+      "verdict": "WITHHELD"
+    },
+    {
+      "configuration": "DG P2 N=100 CFL=0.35",
+      "degree": 2,
+      "ncells": 100,
+      "cfl": 0.35,
+      "rel_l1_percent": 6.809507434387101,
+      "verdict": "WITHHELD"
+    },
+    {
+      "configuration": "DG P2 N=200 CFL=0.35",
+      "degree": 2,
+      "ncells": 200,
+      "cfl": 0.35,
+      "rel_l1_percent": 3.1332649639981143,
+      "verdict": "WITHHELD"
+    },
+    {
+      "configuration": "DG P3 N=50 CFL=0.35",
+      "degree": 3,
+      "ncells": 50,
+      "cfl": 0.35,
+      "rel_l1_percent": 13.216541531691064,
+      "verdict": "WITHHELD"
+    },
+    {
+      "configuration": "DG P3 N=100 CFL=0.35",
+      "degree": 3,
+      "ncells": 100,
+      "cfl": 0.35,
+      "rel_l1_percent": 5.597151464819522,
+      "verdict": "WITHHELD"
+    },
+    {
+      "configuration": "DG P3 N=200 CFL=0.35",
+      "degree": 3,
+      "ncells": 200,
+      "cfl": 0.35,
+      "rel_l1_percent": 2.597838392341062,
+      "verdict": "WITHHELD"
+    }
+  ],
+  "case": "lax_shock_tube_synthetic",
+  "benchmark_id": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE"
+}
