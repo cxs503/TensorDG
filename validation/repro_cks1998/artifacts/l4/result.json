@@ -1,0 +1,70 @@
+{
+ "schema_version": "1.0.0",
+ "run_id": "REPRO-DG-CKS1998-bench-p2_n400",
+ "benchmark": {
+  "benchmark_id": "REPRO-DG-CKS1998",
+  "version": "1998.1"
+ },
+ "implementation": {
+  "project": "TensorDG",
+  "revision": "unknown"
+ },
+ "workload": {
+  "workload_id": "cks1998-dg-ladder",
+  "version": "1"
+ },
+ "execution": {
+  "status": "success",
+  "mission_id": 19918
+ },
+ "metrics": {
+  "adv_order_p1": {
+   "value": 2.0042386064195155,
+   "unit": "-"
+  },
+  "adv_order_p2": {
+   "value": 2.999928988672025,
+   "unit": "-"
+  },
+  "adv_order_p3": {
+   "value": 3.999885700831284,
+   "unit": "-"
+  },
+  "sod_rho_x030": {
+   "value": 0.8693787952006209,
+   "unit": "-"
+  },
+  "sod_rho_x070": {
+   "value": 0.2696180281808661,
+   "unit": "-"
+  },
+  "sod_vel_x055": {
+   "value": 0.9274908596547566,
+   "unit": "-"
+  },
+  "sod_mass_integral": {
+   "value": 0.5624999999995337,
+   "unit": "-"
+  },
+  "sod_energy_integral": {
+   "value": 1.374999999998533,
+   "unit": "-"
+  }
+ },
+ "validation": {
+  "anchor": "Cockburn, B. & Shu, C.-W., The Runge-Kutta discontinuous Galerkin method for conservation laws V: multidimensional systems, JCP 141 (1998) 199-224 / SIAM Review 43(1) (2001)",
+  "sod_rel_l2": {
+   "degree": 2,
+   "ncells": 400,
+   "steps": 7321,
+   "limiter": "tvb",
+   "rel_l2": {
+    "density": 0.011132095754151866,
+    "velocity": 0.0236769532632384,
+    "pressure": 0.005944139752311367
+   },
+   "worst_rel_l2": 0.0236769532632384
+  },
+  "note": "A2/E3 是不等式判据，不进入 ref-vs-got 规格；见 tests/test_repro_cks1998.py 的仓内门"
+ }
+}

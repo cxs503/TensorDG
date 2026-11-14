@@ -1,0 +1,235 @@
+{
+ "schema_version": "1.0.0",
+ "run_id": "REPRO-DG-CKS1998-bench-p2_n400",
+ "benchmark": {
+  "benchmark_id": "REPRO-DG-CKS1998",
+  "version": "1998.1"
+ },
+ "implementation": {
+  "project": "TensorDG",
+  "revision": "unknown"
+ },
+ "workload": {
+  "workload_id": "cks1998-dg-ladder",
+  "version": "1",
+  "profile": "bench",
+  "configuration": {
+   "smooth_cells": [
+    20,
+    40,
+    80,
+    160,
+    320
+   ],
+   "degrees": [
+    1,
+    2,
+    3
+   ],
+   "sod": [
+    2,
+    400
+   ]
+  }
+ },
+ "execution": {
+  "status": "success",
+  "wall_seconds": 128.44,
+  "host": "node330",
+  "machine": "loongarch64",
+  "python": "3.11.6",
+  "torch": "2.13.0",
+  "numpy": "2.0.1",
+  "torch_threads": 1,
+  "loadavg": [
+   42.20703125,
+   42.38232421875,
+   42.74560546875
+  ]
+ },
+ "metrics": {
+  "adv_order_p1": {
+   "value": 2.0042386064195155,
+   "unit": "-"
+  },
+  "adv_order_p2": {
+   "value": 2.999928988672025,
+   "unit": "-"
+  },
+  "adv_order_p3": {
+   "value": 3.999885700831284,
+   "unit": "-"
+  },
+  "sod_rho_x030": {
+   "value": 0.8693787952006209,
+   "unit": "-"
+  },
+  "sod_rho_x070": {
+   "value": 0.2696180281808661,
+   "unit": "-"
+  },
+  "sod_vel_x055": {
+   "value": 0.9274908596547566,
+   "unit": "-"
+  },
+  "sod_mass_integral": {
+   "value": 0.5624999999995337,
+   "unit": "-"
+  },
+  "sod_energy_integral": {
+   "value": 1.374999999998533,
+   "unit": "-"
+  }
+ },
+ "reference": {
+  "adv_order_p1": 2.0,
+  "adv_order_p2": 3.0,
+  "adv_order_p3": 4.0,
+  "sod_rho_x030": 0.8734973438080238,
+  "sod_rho_x070": 0.2655737117053071,
+  "sod_vel_x055": 0.9274526200489498,
+  "sod_mass_integral": 0.5625,
+  "sod_energy_integral": 1.375
+ },
+ "validation": {
+  "anchor": "Cockburn, B. & Shu, C.-W., The Runge-Kutta discontinuous Galerkin method for conservation laws V: multidimensional systems, JCP 141 (1998) 199-224 / SIAM Review 43(1) (2001)",
+  "sod_rel_l2": {
+   "degree": 2,
+   "ncells": 400,
+   "steps": 7321,
+   "limiter": "tvb",
+   "rel_l2": {
+    "density": 0.011132095754151866,
+    "velocity": 0.0236769532632384,
+    "pressure": 0.005944139752311367
+   },
+   "worst_rel_l2": 0.0236769532632384
+  },
+  "note": "A2/E3 是不等式判据，不进入 ref-vs-got 规格；见 tests/test_repro_cks1998.py 的仓内门"
+ },
+ "rows": [
+  {
+   "section": "A1",
+   "degree": 1,
+   "ncells": 20,
+   "l2_error": 0.004303202584394894
+  },
+  {
+   "section": "A1",
+   "degree": 1,
+   "ncells": 40,
+   "l2_error": 0.001065554641304903
+  },
+  {
+   "section": "A1",
+   "degree": 1,
+   "ncells": 80,
+   "l2_error": 0.00026569233665900416
+  },
+  {
+   "section": "A1",
+   "degree": 1,
+   "ncells": 160,
+   "l2_error": 6.637789290367953e-05
+  },
+  {
+   "section": "A1",
+   "degree": 1,
+   "ncells": 320,
+   "l2_error": 1.6591598459306696e-05
+  },
+  {
+   "section": "A1",
+   "degree": 2,
+   "ncells": 20,
+   "l2_error": 0.00010695815407895606
+  },
+  {
+   "section": "A1",
+   "degree": 2,
+   "ncells": 40,
+   "l2_error": 1.3371993074814233e-05
+  },
+  {
+   "section": "A1",
+   "degree": 2,
+   "ncells": 80,
+   "l2_error": 1.6715679920169438e-06
+  },
+  {
+   "section": "A1",
+   "degree": 2,
+   "ncells": 160,
+   "l2_error": 2.089481477641073e-07
+  },
+  {
+   "section": "A1",
+   "degree": 2,
+   "ncells": 320,
+   "l2_error": 2.611858563830872e-08
+  },
+  {
+   "section": "A1",
+   "degree": 3,
+   "ncells": 20,
+   "l2_error": 2.0655234123908873e-06
+  },
+  {
+   "section": "A1",
+   "degree": 3,
+   "ncells": 40,
+   "l2_error": 1.2911276098611552e-07
+  },
+  {
+   "section": "A1",
+   "degree": 3,
+   "ncells": 80,
+   "l2_error": 8.070619105342406e-09
+  },
+  {
+   "section": "A1",
+   "degree": 3,
+   "ncells": 160,
+   "l2_error": 5.044296798219557e-10
+  },
+  {
+   "section": "A1",
+   "degree": 3,
+   "ncells": 320,
+   "l2_error": 3.152728076379234e-11
+  },
+  {
+   "section": "E2_station",
+   "metric": "sod_rho_x030",
+   "x": 0.30125,
+   "got": 0.8693787952006209,
+   "ref": 0.8734973438080238
+  },
+  {
+   "section": "E2_station",
+   "metric": "sod_rho_x070",
+   "x": 0.70125,
+   "got": 0.2696180281808661,
+   "ref": 0.2655737117053071
+  },
+  {
+   "section": "E2_station",
+   "metric": "sod_vel_x055",
+   "x": 0.55125,
+   "got": 0.9274908596547566,
+   "ref": 0.9274526200489498
+  },
+  {
+   "section": "E2_integral",
+   "metric": "sod_mass_integral",
+   "got": 0.5624999999995337,
+   "ref": 0.5625
+  },
+  {
+   "section": "E2_integral",
+   "metric": "sod_energy_integral",
+   "got": 1.374999999998533,
+   "ref": 1.375
+  }
+ ]
+}

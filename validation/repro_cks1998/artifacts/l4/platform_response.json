@@ -1,0 +1,207 @@
+{
+ "mission_id": 19918,
+ "cluster_job_id": 2385,
+ "run_id": "REPRO-DG-CKS1998-bench-p2_n400",
+ "benchmark_id": "REPRO-DG-CKS1998",
+ "result_ids": [
+  "tbr-3d5d2ceabc944e99b62abfde44ff120a",
+  "tbr-04bf3e0b41c04598ae2f4a1e94d7b2fd",
+  "tbr-ae70c3c08bd24318b0cf620ba481fbd1",
+  "tbr-12957cee6d9c446c8cb9ca4214e96c89",
+  "tbr-2e7037f45bdd452794dc20655484a34e",
+  "tbr-a84e210626384135ada8a0a44d5c2105",
+  "tbr-43b157910a614b42a384eec6eb074aba",
+  "tbr-700a28154ec345beb7dd89c2a3080b1c"
+ ],
+ "metrics": [
+  {
+   "metric": "adv_order_p1",
+   "unit": "-",
+   "ref_value": 2.0,
+   "got_value": 2.0042386064195155,
+   "abs_error": 0.004238606419515456,
+   "rel_error": 0.002119303209757728,
+   "tolerance_rel": 0.05,
+   "passed": true
+  },
+  {
+   "metric": "adv_order_p2",
+   "unit": "-",
+   "ref_value": 3.0,
+   "got_value": 2.999928988672025,
+   "abs_error": 7.101132797515675e-05,
+   "rel_error": 2.3670442658385582e-05,
+   "tolerance_rel": 0.05,
+   "passed": true
+  },
+  {
+   "metric": "adv_order_p3",
+   "unit": "-",
+   "ref_value": 4.0,
+   "got_value": 3.999885700831284,
+   "abs_error": 0.00011429916871597001,
+   "rel_error": 2.8574792178992503e-05,
+   "tolerance_rel": 0.05,
+   "passed": true
+  },
+  {
+   "metric": "sod_rho_x030",
+   "unit": "-",
+   "ref_value": 0.8734973438080238,
+   "got_value": 0.8693787952006209,
+   "abs_error": 0.004118548607402905,
+   "rel_error": 0.004715009881367281,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sod_rho_x070",
+   "unit": "-",
+   "ref_value": 0.2655737117053071,
+   "got_value": 0.2696180281808661,
+   "abs_error": 0.004044316475559029,
+   "rel_error": 0.015228602445586896,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sod_vel_x055",
+   "unit": "-",
+   "ref_value": 0.9274526200489498,
+   "got_value": 0.9274908596547566,
+   "abs_error": 3.82396058068446e-05,
+   "rel_error": 4.12307917193941e-05,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sod_mass_integral",
+   "unit": "-",
+   "ref_value": 0.5625,
+   "got_value": 0.5624999999995337,
+   "abs_error": 4.662936703425657e-13,
+   "rel_error": 8.289665250534503e-13,
+   "tolerance_rel": 0.001,
+   "passed": true
+  },
+  {
+   "metric": "sod_energy_integral",
+   "unit": "-",
+   "ref_value": 1.375,
+   "got_value": 1.374999999998533,
+   "abs_error": 1.4670487047396819e-12,
+   "rel_error": 1.0669445125379504e-12,
+   "tolerance_rel": 0.001,
+   "passed": true
+  }
+ ],
+ "verified": true,
+ "delta": {
+  "action": "inserted",
+  "category": "bench_verified",
+  "summary": "TensorBench 实证基准通过：adv_order_p1=2.00424 vs ref 2 (rel 0.212% <= tol 5.000%); adv_order_p2=2.99993 vs ref 3 (rel 0.002% <= tol 5.000%); adv_order_p3=3.99989 vs ref 4 (rel 0.003% <= tol 5.000%); sod_rho_x030=0.869379 vs ref 0.873497 (rel 0.472% <= tol 3.000%); sod_rho_x070=0.269618 vs ref 0.265574 (rel 1.523% <= tol 3.000%); sod_vel_x055=0.927491 vs ref 0.927453 (rel 0.004% <= tol 3.000%); sod_mass_integral=0.5625 vs ref 0.5625 (rel 0.000% <= tol 0.100%); sod_energy_integral=1.375 vs ref 1.375 (rel 0.000% <= tol 0.100%)",
+  "reason": "benchmark ref/got/error 由平台侧从集群作业原始输出复算，见 evidence",
+  "evidence": {
+   "benchmark_id": "REPRO-DG-CKS1998",
+   "run_id": "REPRO-DG-CKS1998-bench-p2_n400",
+   "cluster_job_id": 2385,
+   "implementation_revision": "unknown",
+   "result_ids": [
+    "tbr-3d5d2ceabc944e99b62abfde44ff120a",
+    "tbr-04bf3e0b41c04598ae2f4a1e94d7b2fd",
+    "tbr-ae70c3c08bd24318b0cf620ba481fbd1",
+    "tbr-12957cee6d9c446c8cb9ca4214e96c89",
+    "tbr-2e7037f45bdd452794dc20655484a34e",
+    "tbr-a84e210626384135ada8a0a44d5c2105",
+    "tbr-43b157910a614b42a384eec6eb074aba",
+    "tbr-700a28154ec345beb7dd89c2a3080b1c"
+   ],
+   "metrics": [
+    {
+     "metric": "adv_order_p1",
+     "unit": "-",
+     "ref_value": 2.0,
+     "got_value": 2.0042386064195155,
+     "abs_error": 0.004238606419515456,
+     "rel_error": 0.002119303209757728,
+     "tolerance_rel": 0.05,
+     "passed": true
+    },
+    {
+     "metric": "adv_order_p2",
+     "unit": "-",
+     "ref_value": 3.0,
+     "got_value": 2.999928988672025,
+     "abs_error": 7.101132797515675e-05,
+     "rel_error": 2.3670442658385582e-05,
+     "tolerance_rel": 0.05,
+     "passed": true
+    },
+    {
+     "metric": "adv_order_p3",
+     "unit": "-",
+     "ref_value": 4.0,
+     "got_value": 3.999885700831284,
+     "abs_error": 0.00011429916871597001,
+     "rel_error": 2.8574792178992503e-05,
+     "tolerance_rel": 0.05,
+     "passed": true
+    },
+    {
+     "metric": "sod_rho_x030",
+     "unit": "-",
+     "ref_value": 0.8734973438080238,
+     "got_value": 0.8693787952006209,
+     "abs_error": 0.004118548607402905,
+     "rel_error": 0.004715009881367281,
+     "tolerance_rel": 0.03,
+     "passed": true
+    },
+    {
+     "metric": "sod_rho_x070",
+     "unit": "-",
+     "ref_value": 0.2655737117053071,
+     "got_value": 0.2696180281808661,
+     "abs_error": 0.004044316475559029,
+     "rel_error": 0.015228602445586896,
+     "tolerance_rel": 0.03,
+     "passed": true
+    },
+    {
+     "metric": "sod_vel_x055",
+     "unit": "-",
+     "ref_value": 0.9274526200489498,
+     "got_value": 0.9274908596547566,
+     "abs_error": 3.82396058068446e-05,
+     "rel_error": 4.12307917193941e-05,
+     "tolerance_rel": 0.03,
+     "passed": true
+    },
+    {
+     "metric": "sod_mass_integral",
+     "unit": "-",
+     "ref_value": 0.5625,
+     "got_value": 0.5624999999995337,
+     "abs_error": 4.662936703425657e-13,
+     "rel_error": 8.289665250534503e-13,
+     "tolerance_rel": 0.001,
+     "passed": true
+    },
+    {
+     "metric": "sod_energy_integral",
+     "unit": "-",
+     "ref_value": 1.375,
+     "got_value": 1.374999999998533,
+     "abs_error": 1.4670487047396819e-12,
+     "rel_error": 1.0669445125379504e-12,
+     "tolerance_rel": 0.001,
+     "passed": true
+    }
+   ],
+   "schema": "tensorbench-eval/1"
+  },
+  "existing_category": null
+ },
+ "spec_sha256": "243796f6cc84eba82474a2735f32a4da4ad9e37f79e9cd947dd0900433ae4ea0",
+ "recorded_at": "2026-11-14T07:25:17.853628+00:00"
+}

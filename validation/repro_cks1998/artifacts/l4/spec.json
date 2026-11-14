@@ -1,0 +1,133 @@
+{
+ "benchmark": {
+  "benchmark_id": "REPRO-DG-CKS1998",
+  "version": "1998.1"
+ },
+ "workload": {
+  "workload_id": "cks1998-dg-ladder",
+  "version": "1",
+  "command": [
+   "python",
+   "validation/repro_cks1998/bench_workload.py",
+   "--profile",
+   "bench"
+  ],
+  "cwd": ".",
+  "precision": "float64",
+  "configuration": {
+   "case": "CKS1998 1-D RKDG benchmark set (A1 smooth advection + E2 Sod)",
+   "A1": {
+    "final_time": 0.5,
+    "cfl": 0.3,
+    "cells": [
+     20,
+     40,
+     80,
+     160,
+     320
+    ],
+    "degrees": [
+     1,
+     2,
+     3
+    ],
+    "metric": "L2 order vs theory k+1"
+   },
+   "E2": {
+    "degree": 2,
+    "cells": 400,
+    "final_time": 0.2,
+    "cfl": 0.12,
+    "limiter": "tvb M=1.0",
+    "limiter_stage": "final",
+    "left": [
+     1.0,
+     0.0,
+     1.0
+    ],
+    "right": [
+     0.125,
+     0.0,
+     0.1
+    ],
+    "ref": "exact Riemann solution (Toro), benchmarks.sod_exact"
+   }
+  }
+ },
+ "implementation": {
+  "project": "TensorDG",
+  "revision": "40434bc8579563a6bd3fdef65eb81d41d56a8455"
+ },
+ "execution": {
+  "timeout_seconds": 3600.0,
+  "env": {
+   "OMP_NUM_THREADS": "1",
+   "TORCH_THREADS": "1"
+  }
+ },
+ "evaluation": {
+  "extract": {
+   "format": "json_stdout"
+  },
+  "metrics": [
+   {
+    "name": "adv_order_p1",
+    "got_pointer": "metrics.adv_order_p1.value",
+    "ref_pointer": "reference.adv_order_p1",
+    "tolerance_rel": 0.05,
+    "unit": "-"
+   },
+   {
+    "name": "adv_order_p2",
+    "got_pointer": "metrics.adv_order_p2.value",
+    "ref_pointer": "reference.adv_order_p2",
+    "tolerance_rel": 0.05,
+    "unit": "-"
+   },
+   {
+    "name": "adv_order_p3",
+    "got_pointer": "metrics.adv_order_p3.value",
+    "ref_pointer": "reference.adv_order_p3",
+    "tolerance_rel": 0.05,
+    "unit": "-"
+   },
+   {
+    "name": "sod_rho_x030",
+    "got_pointer": "metrics.sod_rho_x030.value",
+    "ref_pointer": "reference.sod_rho_x030",
+    "tolerance_rel": 0.03,
+    "unit": "-"
+   },
+   {
+    "name": "sod_rho_x070",
+    "got_pointer": "metrics.sod_rho_x070.value",
+    "ref_pointer": "reference.sod_rho_x070",
+    "tolerance_rel": 0.03,
+    "unit": "-"
+   },
+   {
+    "name": "sod_vel_x055",
+    "got_pointer": "metrics.sod_vel_x055.value",
+    "ref_pointer": "reference.sod_vel_x055",
+    "tolerance_rel": 0.03,
+    "unit": "-"
+   },
+   {
+    "name": "sod_mass_integral",
+    "got_pointer": "metrics.sod_mass_integral.value",
+    "ref_pointer": "reference.sod_mass_integral",
+    "tolerance_rel": 0.001,
+    "unit": "-"
+   },
+   {
+    "name": "sod_energy_integral",
+    "got_pointer": "metrics.sod_energy_integral.value",
+    "ref_pointer": "reference.sod_energy_integral",
+    "tolerance_rel": 0.001,
+    "unit": "-"
+   }
+  ],
+  "notes": "theory: L2 order = k+1 = 2 (CKS1998 §2); theory: L2 order = k+1 = 3; theory: L2 order = k+1 = 4; exact Riemann (Toro, benchmarks.sod_exact) cell average; exact Riemann cell average (post-shock plateau); exact Riemann cell average (star region); exact conservation: 0.5*1.0 + 0.5*0.125 = 0.5625; exact conservation: 0.5*2.5 + 0.5*0.25 = 1.375"
+ },
+ "notes": "REPRO-DG-CKS1998 platform evidence loop: ref=theory order / exact Riemann; got=DG measurement."
+}
