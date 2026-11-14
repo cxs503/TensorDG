@@ -71,6 +71,14 @@ STRENGTH = 5.0
 BACKGROUND = (1.0, 1.0)
 FIELDS = ("density", "velocity_x", "velocity_y", "pressure")
 BOX_AREA = (DOMAIN[0][1] - DOMAIN[0][0]) * (DOMAIN[1][1] - DOMAIN[1][0])
+#: Box length handed to the *exact* solution.  Both solvers close their faces
+#: periodically, so the reference must be the periodic solution: the free-space
+#: vortex formula is not periodic and stops being the solution as soon as the
+#: centre is advected out of the box (``t > 5`` for ``u_inf = (1, 1)`` on this
+#: box).  Without this the long-time "error" is a reference defect, not a
+#: discretisation defect -- the numbers of both readings are kept in
+#: ``docs/CASE-DG-EULER-VORTEX-ERR.md``.
+PERIOD = (DOMAIN[0][1] - DOMAIN[0][0], DOMAIN[1][1] - DOMAIN[1][0])
 
 #: C1 -- case-pool tolerance for this entry (ref: Yee et al. 2000).
 TOLERANCE = 0.06
@@ -106,15 +114,15 @@ LADDER = (
     # (the earlier two-point ladder returned ``nan`` and left the whole case at
     # INCOMPLETE -- see docs/AUDIT-m20486-CASE-DG-EULER-VORTEX-ERR.md).
     *({"task": "dg", "degree": 2, "cells": 32, "final_time": t, "cfl": 0.2}
-      for t in (1.0, 2.0, 5.0)),
+      for t in (1.0, 2.0, 5.0, 10.0)),
     *({"task": "p0", "cells": 128, "final_time": t, "cfl": 0.4}
       for t in (1.0, 2.0, 5.0, 10.0)),
     # cross-check resolution ladder at the design checkpoint t = 1:
     # n = 64/128/256 gives three points for an observed convergence order (C5).
     *({"task": "p0", "cells": cells, "final_time": 1.0, "cfl": 0.4}
       for cells in (64, 256)),
-    *({"task": "p0", "cells": 64, "final_time": 5.0, "cfl": 0.4},
-      ),
+    *({"task": "p0", "cells": 64, "final_time": t, "cfl": 0.4}
+      for t in (5.0, 10.0)),
 )
 
 #: Configuration carrying C2/C4 (same pair of meshes as the sibling entry's gate).
@@ -178,6 +186,30 @@ def exact_core_density(points: int = 4001, strength: float = STRENGTH):
     rho, _, _, _ = vortex_primitive(radius, torch.zeros_like(radius), 0.0,
                                    strength, (0.0, 0.0))
     return float(rho.min())
+
+
+def reference_defect_sweep(times, points: int = 200):
+    """Relative L2 distance between the *periodic* and the *free-space* reference.
+
+    A pure function of the analytic solution -- no time stepping, no solver.  It
+    is the quantitative reason this case was re-referenced: the free-space form
+    of :func:`vortex_primitive` stops being the solution of the periodic problem
+    as soon as the centre leaves the box, so any error measured against it is
+    dominated by the reference, not by the scheme.  Reported per checkpoint time
+    so the historical readings stay explainable from a reproducible number.
+    """
+    axis = torch.linspace(DOMAIN[0][0], DOMAIN[0][1], points, dtype=torch.float64)
+    grid_x, grid_y = torch.meshgrid(axis, axis, indexing="ij")
+    sweep = {}
+    for time in times:
+        periodic = vortex_primitive(grid_x, grid_y, time, STRENGTH, BACKGROUND,
+                                    period=PERIOD)
+        free = vortex_primitive(grid_x, grid_y, time, STRENGTH, BACKGROUND)
+        sweep[f"{time:g}"] = {
+            name: 100.0 * float(torch.sqrt(torch.mean((periodic[i] - free[i]) ** 2))
+                                / torch.sqrt(torch.mean(periodic[i] ** 2)))
+            for i, name in enumerate(FIELDS)}
+    return sweep
 
 
 # ---------------------------------------------------------------------------
@@ -298,7 +330,7 @@ def run_dg(config: dict) -> dict:
     )
     nodes, weights, basis, _, _ = _operators(degree)
     errors = dg_vortex_error(coeff, basis, nodes, DOMAIN, final_time, strength,
-                            background)
+                            background, period=PERIOD)
     final = _dg_measurements(coeff, basis, nodes, weights)
     coeff0, basis0, nodes0, weights0 = _initial_dg_state(config)
     initial = _dg_measurements(coeff0, basis0, nodes0, weights0)
@@ -336,7 +368,8 @@ def run_p0(config: dict) -> dict:
         background_velocity=background,
     )
     conservative = fields["conservative"] if isinstance(fields, dict) else fields
-    raw = vortex_error(x, y, conservative, final_time, strength, background)
+    raw = vortex_error(x, y, conservative, final_time, strength, background,
+                       period=PERIOD)
     errors = {name: raw[name]["relative_l2"] for name in FIELDS}
     final = _p0_measurements(conservative)
     initial = _p0_measurements(_initial_p0_state(config))
@@ -594,6 +627,18 @@ def aggregate(records: list, exact: dict, output_dir: Path) -> dict:
             "the acceptance numbers below are therefore measured against the "
             "analytic solution, which is independent of which paper introduced it."),
         "tolerance_relative_l2": TOLERANCE,
+        "reference_model": {
+            "period": list(PERIOD),
+            "note": ("both solvers close their faces periodically, so the exact "
+                     "solution is evaluated through the periodic (min-image) map; "
+                     "the free-space form differs from it by the sweep below as "
+                     "soon as the centre is advected out of the box"),
+            "truncated_images": ("next image shell at radial distance >= box - |shift| "
+                                 ">= 5 -> amplitude ratio ~6e-6, two orders below "
+                                 "the coarsest family's discretisation error"),
+        },
+        "reference_defect_percent": reference_defect_sweep(
+            sorted({r["final_time"] for r in records})),
         "ladder": list(LADDER),
         "exact_invariants": exact,
         "gates": evaluation["gates"],
