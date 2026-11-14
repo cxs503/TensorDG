@@ -5,6 +5,7 @@ domain, final time, analytic anchors) so that benchmarks, tests and downstream
 callers read the case from a single place instead of copying constants.
 """
 
+from . import burgers_steepening
 from . import elastic_rod_1d
 from . import lax_1d
 from . import prefinement_exponential
@@ -58,6 +59,15 @@ from .shock_entropy import (
     solve_dg_case,
 )
 
+from .burgers_steepening import (
+    BREAKING_TIME as BURGERS_STEEPENING_BREAKING_TIME,
+    CASE_KEY as BURGERS_STEEPENING_CASE_KEY,
+    SLOPE_MAX as BURGERS_STEEPENING_INITIAL_PEAK,
+    burgers_steepening_parameters,
+    exact_gradient as burgers_steepening_exact_gradient,
+    exact_peak_gradient as burgers_steepening_exact_peak_gradient,
+    solve_case as solve_burgers_steepening_case,
+)
 from .viscous_burgers_1d import CASE_KEY as VISCOUS_BURGERS_CASE_KEY
 from .viscous_burgers_1d import solve_viscous_burgers_1d
 from .viscous_burgers_1d import viscous_burgers_parameters as parameters
@@ -78,6 +88,13 @@ __all__ = [
     "solve_lax_case",
     "lax_star_state",
     "VISCOUS_BURGERS_CASE_KEY",
+    "BURGERS_STEEPENING_CASE_KEY",
+    "BURGERS_STEEPENING_BREAKING_TIME",
+    "BURGERS_STEEPENING_INITIAL_PEAK",
+    "burgers_steepening_parameters",
+    "burgers_steepening_exact_gradient",
+    "burgers_steepening_exact_peak_gradient",
+    "solve_burgers_steepening_case",
     "viscous_burgers_parameters",
     "solve_viscous_burgers_1d",
     "DIAPHRAGM",
@@ -115,6 +132,7 @@ CASES = {
     "shock_entropy": CASE_KEY,
     "elastic_rod_1d": ELASTIC_ROD_CASE_KEY,
     "viscous_burgers_1d": VISCOUS_BURGERS_CASE_KEY,
+    "burgers_steepening": BURGERS_STEEPENING_CASE_KEY,
     "lax_1d": LAX_CASE_KEY,
     "prefinement_exponential": PREFINEMENT_CASE_KEY,
     "prefinement_exponential_2d": PREFINEMENT_2D_CASE_KEY,
