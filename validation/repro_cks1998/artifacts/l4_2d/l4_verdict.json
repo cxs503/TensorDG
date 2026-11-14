@@ -1,0 +1,32 @@
+{
+ "status": "VERIFIED",
+ "l4_benchmark_pass": true,
+ "rows": 13,
+ "verified_metrics": [
+  "adv_order_p1",
+  "adv_order_p2",
+  "adv_order_p3",
+  "sm2d_energy_integral",
+  "sm2d_mass_integral",
+  "sm2d_order_p1",
+  "sm2d_order_p2",
+  "sm2d_order_p3",
+  "sod_energy_integral",
+  "sod_mass_integral",
+  "sod_rho_x030",
+  "sod_rho_x070",
+  "sod_vel_x055"
+ ],
+ "best": {
+  "metric": "sm2d_mass_integral",
+  "ref": 4.0,
+  "got": 3.999999999999874,
+  "rel_error": 3.1530333899354446e-14,
+  "tolerance_rel": 0.001,
+  "run_id": "REPRO-DG-CKS1998-bench-p2_n400",
+  "cluster_job_id": 3053
+ },
+ "claimed_level": null,
+ "failed_checks": [],
+ "reason": "at least one platform-recomputed benchmark row meets tolerance"
+}

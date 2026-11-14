@@ -23,7 +23,12 @@ ref-vs-got 判据写成平台契约文档，使数字由**平台侧从集群作�
 * ``sod_*``：ref = 由 ``benchmarks.sod_exact``（Toro 精确 Riemann 求解器，**独立于 DG
   求解器**）在固定 x 台站上的单元均值 / 守恒积分，got = DG 解在**同一台站**的单元均值。
 
-因此这两类都不是"自己比自己"：观测阶 vs 理论阶；DG 数值解 vs 精确解。
+* ``sm2d_*``：ref = 论文 §5.1 自己的**二维 Euler 光滑熵波**算例的理论阶 k+1（3 条）
+  与其精确解的**闭式守恒积分**（质量 4、总能量 14，见 ``benchmarks.cks1998_smooth_2d.
+  EXACT_INTEGRALS``）；got = 同一条 RKDG 求解器在 ``[0,2]^2`` 周期盒上的实测密度 L1
+  观测阶与守恒积分。这一组把"多维系统"（论文标题里的 multidimensions）也纳入机器判定。
+
+因此这些度量都不是"自己比自己"：观测阶 vs 理论阶；DG 数值解 vs 精确解。
 ``A2``（限幅方波 L1 阶 ≥1/2）与 ``E3``（超调 ≤1 %）是**不等式**判据，不是 ref-vs-got，
 硬编码成 ``|got-ref|/|ref|`` 会伪造度量（例如把 got=0 % 与 ref=1 % 相减得 100 % 误差），
 故不进入本规格，继续留在仓内门 ``tests/test_repro_cks1998.py`` + 报告表中。
@@ -74,6 +79,25 @@ METRICS: List[Dict[str, Any]] = [
     {"name": "sod_energy_integral", "got_pointer": "metrics.sod_energy_integral.value",
      "ref_pointer": "reference.sod_energy_integral", "tolerance_rel": 1e-3, "unit": "-",
      "ref_source": "exact conservation: 0.5*2.5 + 0.5*0.25 = 1.375"},
+    # --- B1 二维 Euler 光滑熵波（论文 §5.1 自己的算例）：观测阶 vs 理论阶 k+1 -
+    # 精确解 rho = 1 + 0.2 sin(pi (x + y - 2t)), u = v = 1, p = 1（周期盒 [0,2]^2），
+    # got = 密度 L1 误差在 3 级网格上最小二乘拟合出的观测阶（P^k => k+1）。
+    {"name": "sm2d_order_p1", "got_pointer": "metrics.sm2d_order_p1.value",
+     "ref_pointer": "reference.sm2d_order_p1", "tolerance_rel": 0.03, "unit": "-",
+     "ref_source": "theory: 2-D Euler density L1 order = k+1 = 2 (CKS1998 §5.1)"},
+    {"name": "sm2d_order_p2", "got_pointer": "metrics.sm2d_order_p2.value",
+     "ref_pointer": "reference.sm2d_order_p2", "tolerance_rel": 0.03, "unit": "-",
+     "ref_source": "theory: 2-D Euler density L1 order = k+1 = 3 (CKS1998 §5.1)"},
+    {"name": "sm2d_order_p3", "got_pointer": "metrics.sm2d_order_p3.value",
+     "ref_pointer": "reference.sm2d_order_p3", "tolerance_rel": 0.03, "unit": "-",
+     "ref_source": "theory: 2-D Euler density L1 order = k+1 = 4 (CKS1998 §5.1)"},
+    # --- B2 二维守恒量：精确解在 [0,2]^2 上的闭式积分（与 DG 无关） -----------
+    {"name": "sm2d_mass_integral", "got_pointer": "metrics.sm2d_mass_integral.value",
+     "ref_pointer": "reference.sm2d_mass_integral", "tolerance_rel": 1e-3, "unit": "-",
+     "ref_source": "exact conservation: mean(rho)=1 over area 4 => 4"},
+    {"name": "sm2d_energy_integral", "got_pointer": "metrics.sm2d_energy_integral.value",
+     "ref_pointer": "reference.sm2d_energy_integral", "tolerance_rel": 1e-3, "unit": "-",
+     "ref_source": "exact conservation: E = 2.5 + rho with u=v=1 => 2.5*4 + 4 = 14"},
 ]
 
 #: 未进入平台规格的判据（不等式），报告里必须显式说明理由（见模块 docstring）

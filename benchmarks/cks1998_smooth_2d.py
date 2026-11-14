@@ -180,6 +180,42 @@ def error_norms(coeff, x, y, degree, final_time=FINAL_TIME, domain=DOMAIN):
     return out
 
 
+#: Names of the conserved variables, in the order of the DG state vector.
+CONSERVED_NAMES = ("mass", "momentum_x", "momentum_y", "energy")
+
+#: Closed-form conserved integrals of the exact solution over ``DOMAIN`` at
+#: ``FINAL_TIME``.  ``rho`` has mean 1 (the sine averages to zero over one period)
+#: and ``u = v = p = 1``, so ``E = p/(gamma-1) + rho (u^2+v^2)/2 = 2.5 + rho``:
+#:
+#:   ``integral rho = 1 * area = 4``,  ``integral E = 2.5 * 4 + 4 = 14``.
+#:   ``integral rho u = 4``, ``integral rho v = 4``.
+#:
+#: These are properties of the *exact* solution, independent of any DG run, and
+#: the RKDG scheme with periodic boundaries conserves them to round-off -- which
+#: is what makes them usable as a "the workload really integrates the PDE" gate.
+EXACT_INTEGRALS = {"mass": 4.0, "momentum_x": 4.0, "momentum_y": 4.0, "energy": 14.0}
+
+
+def conserved_integrals(coeff: torch.Tensor, degree: int, domain=DOMAIN):
+    """``integral of U dx dy`` over the domain for each conserved variable.
+
+    Evaluated with the same tensor Gauss quadrature as :func:`error_norms`, so a
+    conservative scheme returns the exact closed-form values in
+    :data:`EXACT_INTEGRALS` to round-off.
+    """
+    values, _nodes, weights = gauss_fields(coeff, degree)
+    (xmin, xmax), (ymin, ymax) = domain
+    hx, hy = (xmax - xmin) / coeff.shape[0], (ymax - ymin) / coeff.shape[1]
+    jacobian = (
+        weights[None, None, :, None]
+        * weights[None, None, None, :]
+        * (hx / 2.0)
+        * (hy / 2.0)
+    )
+    totals = (values * jacobian[..., None]).sum(dim=(0, 1, 2, 3))
+    return {name: float(value) for name, value in zip(CONSERVED_NAMES, totals)}
+
+
 # ---------------------------------------------------------------------------
 # One run of the sweep
 # ---------------------------------------------------------------------------
