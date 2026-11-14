@@ -1,0 +1,231 @@
+{
+  "benchmark": "linear_advection_3d_porder",
+  "anchor": "CASE-DG-ADVECT-ORDER",
+  "repo": "TensorDG",
+  "dimension": 3,
+  "problem": "u_t + a\u00b7\u2207u = 0 on [0,1]\u00b3 periodic, a=(1.0, 0.5, 0.25), u(x,y,z,0) = 1 + sin(2\u03c0x)sin(2\u03c0y)sin(2\u03c0z)",
+  "method": "DG modal Legendre + upwind flux + RK4",
+  "criterion": "observed_order within \u00b10.35 of theoretical p+1",
+  "study_3d": {
+    "degrees": [
+      "p0",
+      "p1",
+      "p2"
+    ],
+    "results": {
+      "p0": {
+        "degree": 0,
+        "cells": [
+          4,
+          6,
+          8
+        ],
+        "errors_abs_l2": [
+          0.353592766517047,
+          0.3530171900012136,
+          0.34975605392610587
+        ],
+        "errors_rel_l2": [
+          0.33337045731028736,
+          0.3328277985670373,
+          0.3297531699895963
+        ],
+        "masses": [
+          1.0,
+          1.0000000000000002,
+          1.0
+        ],
+        "observed_order_lsq": 0.014970373068142069,
+        "pairwise_orders": [
+          0.004017907346841681,
+          0.032260717063584105
+        ],
+        "theoretical_order": 1,
+        "order_deviation": -0.9850296269318579,
+        "order_within_tolerance": false,
+        "runs": [
+          {
+            "ncells": [
+              4,
+              4,
+              4
+            ],
+            "dt": 0.008547008547008548,
+            "steps": 117,
+            "mass_drift": 0.0
+          },
+          {
+            "ncells": [
+              6,
+              6,
+              6
+            ],
+            "dt": 0.005714285714285714,
+            "steps": 175,
+            "mass_drift": 2.220446049250313e-16
+          },
+          {
+            "ncells": [
+              8,
+              8,
+              8
+            ],
+            "dt": 0.004273504273504274,
+            "steps": 234,
+            "mass_drift": 0.0
+          }
+        ]
+      },
+      "p1": {
+        "degree": 1,
+        "cells": [
+          4,
+          6,
+          8
+        ],
+        "errors_abs_l2": [
+          0.14958503049879598,
+          0.06123480887415557,
+          0.031243224600279826
+        ],
+        "errors_rel_l2": [
+          0.14103011923959355,
+          0.057732731466103436,
+          0.029456394641322964
+        ],
+        "masses": [
+          1.0,
+          1.0,
+          0.9999999999999999
+        ],
+        "observed_order_lsq": 2.255637345957896,
+        "pairwise_orders": [
+          2.2027769563408355,
+          2.3390865293170906
+        ],
+        "theoretical_order": 2,
+        "order_deviation": 0.2556373459578958,
+        "order_within_tolerance": true,
+        "runs": [
+          {
+            "ncells": [
+              4,
+              4,
+              4
+            ],
+            "dt": 0.002857142857142857,
+            "steps": 350,
+            "mass_drift": 0.0
+          },
+          {
+            "ncells": [
+              6,
+              6,
+              6
+            ],
+            "dt": 0.0019047619047619048,
+            "steps": 525,
+            "mass_drift": 0.0
+          },
+          {
+            "ncells": [
+              8,
+              8,
+              8
+            ],
+            "dt": 0.0014285714285714286,
+            "steps": 700,
+            "mass_drift": 1.1102230246251565e-16
+          }
+        ]
+      },
+      "p2": {
+        "degree": 2,
+        "cells": [
+          3,
+          4,
+          6
+        ],
+        "errors_abs_l2": [
+          0.0302278862559643,
+          0.01183136090515759,
+          0.003490294686418191
+        ],
+        "errors_rel_l2": [
+          0.02849912447003733,
+          0.011154714035603122,
+          0.0032906813881409033
+        ],
+        "masses": [
+          0.9999999999999999,
+          1.0,
+          1.0
+        ],
+        "observed_order_lsq": 3.1076545852650113,
+        "pairwise_orders": [
+          3.2605826509743143,
+          3.0107832102393055
+        ],
+        "theoretical_order": 3,
+        "order_deviation": 0.10765458526501126,
+        "order_within_tolerance": true,
+        "runs": [
+          {
+            "ncells": [
+              3,
+              3,
+              3
+            ],
+            "dt": 0.00228310502283105,
+            "steps": 438,
+            "mass_drift": 1.1102230246251565e-16
+          },
+          {
+            "ncells": [
+              4,
+              4,
+              4
+            ],
+            "dt": 0.0017123287671232876,
+            "steps": 584,
+            "mass_drift": 0.0
+          },
+          {
+            "ncells": [
+              6,
+              6,
+              6
+            ],
+            "dt": 0.001141552511415525,
+            "steps": 876,
+            "mass_drift": 0.0
+          }
+        ]
+      }
+    }
+  },
+  "verdict": {
+    "overall": "PARTIAL",
+    "all_within_tolerance": false,
+    "details": {
+      "p0": {
+        "degree": 0,
+        "observed_order": 0.014970373068142069,
+        "theoretical_order": 1,
+        "within_tolerance": false
+      },
+      "p1": {
+        "degree": 1,
+        "observed_order": 2.255637345957896,
+        "theoretical_order": 2,
+        "within_tolerance": true
+      },
+      "p2": {
+        "degree": 2,
+        "observed_order": 3.1076545852650113,
+        "theoretical_order": 3,
+        "within_tolerance": true
+      }
+    }
+  }
+}
