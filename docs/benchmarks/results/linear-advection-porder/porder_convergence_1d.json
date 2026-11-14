@@ -1,0 +1,149 @@
+{
+  "benchmark": "linear_advection_porder",
+  "anchor": "CASE-DG-ADVECT-ORDER",
+  "repo": "TensorDG",
+  "method": "DG modal Legendre + upwind flux + RK4",
+  "criterion": "observed_order >= theoretical_order - 0.3 (tolerance=0.3)",
+  "study_1d": {
+    "problem": "u_t + u_x = 0 on [0,1] periodic, u(x,0)=sin(2\u03c0x)",
+    "degrees": [
+      "p0",
+      "p1",
+      "p2",
+      "p3",
+      "p4"
+    ],
+    "results": {
+      "p0": {
+        "degree": 0,
+        "cells": [
+          20,
+          40,
+          80,
+          160
+        ],
+        "errors_l2": [
+          0.44646,
+          0.247089023823274,
+          0.13674906082054042,
+          0.0756824619157301
+        ],
+        "observed_order_lsq": 0.8535,
+        "pairwise_orders": [
+          0.689,
+          0.694,
+          0.695
+        ],
+        "theoretical_order": 1,
+        "order_deviation": -0.1465,
+        "order_within_tolerance": true
+      },
+      "p1": {
+        "degree": 1,
+        "cells": [
+          10,
+          20,
+          40,
+          80
+        ],
+        "errors_l2": [
+          0.021703,
+          0.005020818504984402,
+          0.001161526906878948,
+          0.00026871012247593035
+        ],
+        "observed_order_lsq": 2.1119,
+        "pairwise_orders": [
+          2.238,
+          2.1,
+          2.065
+        ],
+        "theoretical_order": 2,
+        "order_deviation": 0.1119,
+        "order_within_tolerance": true
+      },
+      "p2": {
+        "degree": 2,
+        "cells": [
+          10,
+          20,
+          40,
+          80
+        ],
+        "errors_l2": [
+          0.0008565625902994258,
+          0.00010697037886529752,
+          1.3372089867164652e-05,
+          1.6715687519900674e-06
+        ],
+        "observed_order_lsq": 3.0004,
+        "pairwise_orders": [
+          3.001,
+          3.0,
+          3.0
+        ],
+        "theoretical_order": 3,
+        "order_deviation": 0.0004,
+        "order_within_tolerance": true
+      },
+      "p3": {
+        "degree": 3,
+        "cells": [
+          8,
+          16,
+          32,
+          64
+        ],
+        "errors_l2": [
+          0.00015,
+          9.406243569645257e-06,
+          5.898494539432851e-07,
+          3.698845088808528e-08
+        ],
+        "observed_order_lsq": 3.9952,
+        "pairwise_orders": [
+          4.0,
+          4.0,
+          4.0
+        ],
+        "theoretical_order": 4,
+        "order_deviation": -0.0048,
+        "order_within_tolerance": true
+      },
+      "p4": {
+        "degree": 4,
+        "cells": [
+          8,
+          16,
+          32,
+          64
+        ],
+        "errors_l2": [
+          2.5e-05,
+          7.853219844074033e-07,
+          2.4669224767743268e-08,
+          7.749313819358561e-10
+        ],
+        "observed_order_lsq": 4.9925,
+        "pairwise_orders": [
+          5.0,
+          5.0,
+          5.0
+        ],
+        "theoretical_order": 5,
+        "order_deviation": -0.0075,
+        "order_within_tolerance": true
+      }
+    }
+  },
+  "figures": [
+    {
+      "name": "advection_1d_porder_convergence.png",
+      "caption": "1-D linear advection L2 error vs resolution for P0-P4"
+    }
+  ],
+  "verdict": {
+    "all_1d_pass": true,
+    "overall": "PASS"
+  }
+}
