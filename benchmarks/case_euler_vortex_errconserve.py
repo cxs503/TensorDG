@@ -139,6 +139,31 @@ def task_key(config: dict) -> str:
     raise ValueError(f"unknown task {config['task']!r}")
 
 
+def declared_task_keys() -> list:
+    """Task keys of every configuration the module *claims* to have run."""
+    return [task_key(config) for config in LADDER]
+
+
+def ladder_completeness(records: list) -> dict:
+    """Reconcile the declared ladder against the records that actually exist.
+
+    A checkpoint that is declared in ``LADDER`` but has no result file is a hole
+    in the evidence bundle, and holes must be *reported*, never absorbed: the
+    pre-C6 aggregator graded 11 of 12 declared checkpoints as a complete PASS
+    because the missing ``dg_d2_n32_t10`` run simply was not in ``results/``.
+    """
+    declared = declared_task_keys()
+    present = {record["task_key"] for record in records}
+    missing = [key for key in declared if key not in present]
+    unexpected = sorted(present - set(declared))
+    return {
+        "declared": len(declared),
+        "present": len(present),
+        "missing": missing,
+        "unexpected": unexpected,
+    }
+
+
 def family_key(record: dict) -> str:
     if record["task"] == "dg":
         return f"dg_d{record['degree']}_n{record['cells']}"
@@ -598,6 +623,22 @@ def evaluate_gates(records: list, exact: dict) -> dict:
                    ("failed" if np.isfinite(order) else "not_evaluated")),
     }
 
+    # -- C6: ladder completeness (no declared checkpoint may be silently absent).
+    completeness = ladder_completeness(records)
+    c6_ok = not completeness["missing"]
+    gates["C6_ladder_completeness"] = {
+        "criterion": ("every checkpoint declared in LADDER has a result record "
+                      f"({completeness['declared']} declared)"),
+        "declared": completeness["declared"],
+        "present": completeness["present"],
+        "missing": completeness["missing"],
+        "unexpected": completeness["unexpected"],
+        "note": ("unexpected keys are listed for transparency but are not a "
+                 "failure: extra evidence is allowed, missing evidence is not"),
+        "passed": c6_ok,
+        "status": "passed" if c6_ok else "failed",
+    }
+
     gates["informational"] = ["C1x_crosscheck_raw"]
     acceptance = {k: v for k, v in gates.items()
                   if isinstance(v, dict) and k not in gates["informational"]}
@@ -640,6 +681,7 @@ def aggregate(records: list, exact: dict, output_dir: Path) -> dict:
         "reference_defect_percent": reference_defect_sweep(
             sorted({r["final_time"] for r in records})),
         "ladder": list(LADDER),
+        "ladder_completeness": ladder_completeness(records),
         "exact_invariants": exact,
         "gates": evaluation["gates"],
         "family_count": evaluation["families"],
@@ -725,6 +767,10 @@ def _markdown(records: list, metrics: dict, exact: dict) -> str:
         f"| C4 熵预算 | \\|dS\\|/S(0) < {ENTROPY_TOLERANCE:g} | "
         f"{gates['C4_entropy_budget']['measured']:.3e} | "
         f"{flag('C4_entropy_budget')} |",
+        f"| C6 阶梯完整性 | LADDER 声明的 {gates['C6_ladder_completeness']['declared']} "
+        f"个检查点全部有结果文件 | 已有 {gates['C6_ladder_completeness']['present']} 个，"
+        f"缺失 {gates['C6_ladder_completeness']['missing'] or '无'} | "
+        f"{flag('C6_ladder_completeness')} |",
         "",
         "## 误差随时间（族内逐检查点）",
         "",
