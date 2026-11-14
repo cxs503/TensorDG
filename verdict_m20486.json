@@ -1,0 +1,59 @@
+{
+  "repo": "TensorDG",
+  "scope": "m20486 CASE-DG-EULER-VORTEX-ERR",
+  "mission_id": 20486,
+  "level": 4,
+  "evidence": {
+    "impl_files": [
+      "benchmarks/case_euler_vortex_errconserve.py:872 lines (full benchmark with C1-C5 gates, aggregation, figure generation)",
+      "tensordg/euler_dg_2d.py:1156 lines (DG-P2 solver, solve_euler_dg_2d_vortex at L1003)",
+      "tensordg/euler_2d.py:301 lines (P0 FV solver, solve_isentropic_vortex at L241, vortex_error at L274)",
+      "tensordg/euler_1d.py:335 lines (1D Euler, GAMMA constant)",
+      "tensordg/euler_dg_1d.py:416 lines (1D DG Euler)"
+    ],
+    "entry": "benchmarks/case_euler_vortex_errconserve.py --aggregate (CLI with --task/--cells/--degree/--final-time/--cfl/--shard/--aggregate/--figures)",
+    "run_artifacts": [
+      "case_euler_vortex_errconserve/results/*.json (12 result files, one per config)",
+      "case_euler_vortex_errconserve/metrics.json (aggregated gates + records)",
+      "case_euler_vortex_errconserve/summary.md (programmatic markdown table)",
+      "case_euler_vortex_errconserve/error_conservation.csv (machine-readable CSV)",
+      "case_euler_vortex_errconserve/fig_error_vs_time.png (83718 bytes, valid PNG)",
+      "case_euler_vortex_errconserve/fig_invariants_vs_time.png (157366 bytes, valid PNG)"
+    ],
+    "tests": "tests/test_case_euler_vortex_errconserve.py:241 lines, 16 tests all PASS (pytest -v, 8.00s)",
+    "integration_callers": "publish_case_euler_vortex_errconserve_report.py (reads metrics.json, posts to /tensor/reports)",
+    "benchmark": {
+      "case": "EULER-VORTEX-ERR",
+      "ledger_slug": "CASE-DG-EULER-VORTEX-ERR",
+      "reference": "Yee, Sandham & Djomehri (2000) via case-pool entry; analytic isentropic vortex (Shu 1998 sec.4.4.2, domain [-5,5]^2, beta=5, u_inf=(1,1), gamma=1.4, periodic)",
+      "tolerance_relative_l2": 0.06,
+      "gates": {
+        "C1_tolerance": {"measured": 0.04926, "threshold": 0.06, "passed": true},
+        "C2_error_conservation": {"exponent": 4.377, "threshold": 1.0, "passed": false},
+        "C3_discrete_conservation": {"worst_drift": 1.078e-13, "threshold": 1e-10, "passed": true},
+        "C4_entropy_budget": {"measured": 1.42e-07, "threshold": 1e-3, "passed": true},
+        "C5_crosscheck_order": {"order": 0.849, "threshold": 0.8, "passed": true}
+      },
+      "verdict": "FAIL (C2: DG-P2/32^2 error accumulates super-linearly, alpha=4.377 >> 1.0)"
+    },
+    "repro_cmd": "PYTHONPATH=. python3 benchmarks/case_euler_vortex_errconserve.py --aggregate --output-dir case_euler_vortex_errconserve",
+    "external_anchor": "docs/AUDIT-m20486-CASE-DG-EULER-VORTEX-ERR.md (prior audit with F1-F6 findings, all addressed in current code)"
+  },
+  "verdict_by": "board-audit",
+  "audit_notes": {
+    "three_piece_check": {
+      "run_artifacts": "PASS - 12 result JSONs + metrics.json + summary.md + CSV + 2 PNGs all present and valid",
+      "benchmark_ref_vs_got": "PASS - tolerance 6% from case-pool; C1 measured 4.93% < 6% (pass); C2 alpha=4.377 > 1.0 (fail); verdict correctly FAIL",
+      "repro_cmd_executable": "PASS - script has full CLI, PYTHONPATH=. enables import, --aggregate reproduces metrics.json from results/"
+    },
+    "report_six_sections": {
+      "1_case_intro": "PASS - summary.md has physical background (isentropic vortex transport), geometry ([-5,5]^2 periodic), parameters (beta=5, u_inf=(1,1), gamma=1.4)",
+      "2_methodology": "PASS - docstring + code describes DG-P2/HLLC/SSP-RK3 vs P0/Rusanov/SSP-RK3, exact solution reference, 5 gate criteria",
+      "3_results": "PASS - programmatic tables in summary.md and metrics.json, zero hand-copied digits",
+      "4_figures": "PASS - fig_error_vs_time.png + fig_invariants_vs_time.png, both valid PNGs with tolerance lines",
+      "5_notes": "PASS - summary.md notes C1x informational, C2 strict_target, C5 crosscheck purpose",
+      "6_error_assessment": "PASS - explicit gate-by-gate pass/fail with measured vs threshold; honest FAIL declared for C2"
+    },
+    "maturity_rationale": "L4: Full benchmark case with error analysis (5 gates), reproducibility (script+results+tests), and integration (publish script). C2 physics failure does not reduce implementation maturity; the gate correctly identifies the failure. Not L5 because the physics result is FAIL (DG-P2/32^2 shows super-linear error accumulation, alpha=4.377), which requires further investigation before claiming scientific engineering成果."
+  }
+}
