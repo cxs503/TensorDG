@@ -27,6 +27,26 @@ from tensordg.euler_dg_2d import (
 from benchmarks.euler_dg_2d_wall_bc import WallReflection, post_normal_shock, rhs_reflected
 
 
+def free_stream_reference(initial, x, y, degree):
+    """Modal reference of a free stream: mean mode only, higher modes exactly 0.
+
+    The constant state is evaluated on the *cell-centre* grid ``(nx, ny)`` the
+    solver returns, so a gate can compare modal coefficients element-wise.  The
+    first version of the free-stream gate subtracted this constant from *every*
+    modal coefficient, so its "deviation" was the reference magnitude itself: it
+    read 1.0 for a perfectly exact run and could never pass.
+    """
+    X = x[:, None] + 0.0 * y[None, :]
+    Y = y[None, :] + 0.0 * x[:, None]
+    state = conservative_state(*initial(X, Y))  # (nx, ny, 4)
+    reference = torch.zeros(
+        (*state.shape[:2], degree + 1, degree + 1, 4),
+        dtype=state.dtype, device=state.device,
+    )
+    reference[..., 0, 0, :] = state
+    return reference
+
+
 # ---------------------------------------------------------------------------
 # Independent references
 # ---------------------------------------------------------------------------
@@ -124,10 +144,20 @@ def test_free_stream_preservation_with_walls():
         initial, ncells=(10, 6), degree=2, final_time=0.05, cfl=0.2,
         periodic=(True, False), bcs={"bottom": "wall", "top": "wall"},
     )
-    reference = conservative_state(*initial(x[:, None], y[None, :]))
+    reference = free_stream_reference(initial, x, y, coeff.shape[2] - 1)
     # round-off only: the uniform state must be reproduced to machine accuracy
-    deviation = float((coeff - reference[:, :, None, None, :]).abs().max()) / reference.abs().max()
+    deviation = float((coeff - reference).abs().max()) / float(reference.abs().max())
     assert deviation < 1e-12, deviation
+    # ... and the invariants must be checked on *both* halves of the state: the
+    # mean mode carries the free stream, every higher mode must be zero.  The
+    # historic gate compared the constant state with *every* modal coefficient
+    # (a shape broadcast), so its "deviation" was the reference magnitude itself
+    # -- it read 1.0 for a perfectly exact run and could never pass.
+    mean_mode = float((coeff[..., 0, 0, :] - reference[..., 0, 0, :]).abs().max())
+    higher = float(coeff[..., 1:, :, :].abs().max()) if coeff.shape[2] > 1 else 0.0
+    scale = float(reference.abs().max())
+    assert mean_mode / scale < 1e-12, mean_mode / scale
+    assert higher / scale < 1e-12, higher / scale
 
 
 def test_wall_blocks_normal_momentum():

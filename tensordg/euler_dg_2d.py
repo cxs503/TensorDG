@@ -657,28 +657,81 @@ def _all_over_sample_points(mask: torch.Tensor) -> torch.Tensor:
     return mask.reshape(*mask.shape[:2], -1).all(dim=-1)
 
 
-def _positivity_filter(coeff, basis, signs):
-    """Collapse to the cell average wherever the solution is non-positive.
+def _admissible_cells(coeff, basis, signs):
+    """Per-cell admissibility of a modal expansion (any number of leading axes).
 
-    Admissibility is tested on the cell average, on every volume quadrature
-    node and on both traces in each direction, because the interface flux is
-    evaluated from the trace polynomials and would otherwise receive
-    non-positive states.
+    A cell is admissible when density and pressure are positive and the state is
+    finite at the cell average, at every volume quadrature node *and* at both
+    traces in each direction.  The traces matter because the interface flux is
+    evaluated from the trace polynomials: a cell whose mean is fine but whose
+    trace dips to ``rho <= 0`` still hands HLLC a non-physical state and destroys
+    the neighbouring averages within one step.
+
+    ``coeff`` has shape ``(..., k, l, 4)``; the return value has shape ``(...)``.
     """
-    averages = coeff[..., 0, 0, :]
-    bad = ~_all_over_sample_points(_admissible(averages))
-    at_quad = torch.einsum("xyklv,ak,bl->xyabv", coeff, basis, basis)
-    bad = bad | ~_all_over_sample_points(_admissible(at_quad))
-    for axis in (0, 1):
-        trace_right, trace_left = _traces(coeff, basis, signs, axis)
-        bad = bad | ~_all_over_sample_points(_admissible(trace_right))
-        bad = bad | ~_all_over_sample_points(_admissible(trace_left))
-    if bad.any():
-        average_only = torch.zeros_like(coeff)
-        average_only[..., 0, 0, :] = averages
-        mask = bad.view(*bad.shape, *([1] * (coeff.dim() - bad.dim())))
-        coeff = torch.where(mask, average_only, coeff)
-    return coeff
+    ok = _admissible(coeff[..., 0, 0, :])
+    at_quad = torch.einsum("...klv,ak,bl->...abv", coeff, basis, basis)
+    ok = ok & _admissible(at_quad).flatten(start_dim=-2).all(dim=-1)
+    # P_m(+1) = 1, P_m(-1) = (-1)**m; keep the surface quadrature index.
+    right_x = torch.einsum("...klv,bl->...bv", coeff, basis)
+    left_x = torch.einsum("...klv,k,bl->...bv", coeff, signs, basis)
+    right_y = torch.einsum("...klv,ak->...av", coeff, basis)
+    left_y = torch.einsum("...klv,l,ak->...av", coeff, signs, basis)
+    for trace in (right_x, left_x, right_y, left_y):
+        ok = ok & _admissible(trace).all(dim=-1)
+    return ok
+
+
+def _positivity_filter(coeff, basis, signs, iterations=10):
+    """Restore admissibility with a Zhang-Shu scaling towards the cell average.
+
+    For every inadmissible cell the higher modes are scaled by a common factor
+    ``theta in [0, 1]``, ``c <- mean + theta * (c - mean)``.  ``theta`` is the
+    largest value the bisection can certify as admissible, so it is *feasible by
+    construction*: the lower bracket only ever moves to a state the admissibility
+    test accepted, and ``theta = 0`` (the cell average) is feasible whenever the
+    average itself is physical.
+
+    This replaces the historic "collapse the whole cell to its average" fallback,
+    which threw away the entire polynomial as soon as one quadrature node went
+    negative -- on a Mach-10 shock that turns every shock cell into a P0 cell and
+    the reflection pattern never forms.  The scaling form is what
+    Zhang & Shu (JCP 2010) use for positivity-preserving DG; it keeps the cell
+    average (hence conservation) and only clips modes in the offending cell.
+
+    Admissible states -- a free stream, any smooth flow, any already-limited
+    state -- are returned untouched (bit-identical), so the filter is inert
+    outside the cells that need it.  Cells whose *average* is non-physical cannot
+    be repaired by scaling; they fall back to the average (the historic
+    behaviour) and the driver raises ``FloatingPointError`` as before.
+    """
+    ok = _admissible_cells(coeff, basis, signs)
+    if bool(ok.all()):
+        return coeff
+    shape = coeff.shape
+    flat = coeff.reshape(-1, *shape[-3:])
+    bad = ~ok.reshape(-1)
+    sub = flat[bad]
+    means = sub[:, 0, 0, :]
+    delta = sub - means[:, None, None, :]
+    zero = torch.zeros(sub.shape[0], 1, 1, 1, device=coeff.device, dtype=coeff.dtype)
+    lo = torch.zeros(sub.shape[0], device=coeff.device, dtype=coeff.dtype)
+    hi = torch.ones(sub.shape[0], device=coeff.device, dtype=coeff.dtype)
+    for _ in range(iterations):
+        mid = 0.5 * (lo + hi)
+        trial = means[:, None, None, :] + mid.view(-1, *zero.shape[1:]) * delta
+        feasible = _admissible_cells(trial, basis, signs)
+        lo = torch.where(feasible, mid, lo)
+        hi = torch.where(feasible, hi, mid)
+    repaired = means[:, None, None, :] + lo.view(-1, *zero.shape[1:]) * delta
+    still_bad = ~_admissible_cells(repaired, basis, signs)
+    if bool(still_bad.any()):
+        average_only = means[:, None, None, :].expand_as(repaired)
+        repaired = torch.where(still_bad.view(-1, 1, 1, 1), average_only, repaired)
+    out = flat.clone()
+    out[bad] = repaired
+    return out.reshape(shape)
+
 
 
 # ---------------------------------------------------------------------------
@@ -835,6 +888,13 @@ def solve_euler_dg_2d(
         coeff[..., 0, 0, :] = averages
     else:
         raise ValueError("initial_projection must be 'l2' or 'cell-average'")
+
+    # A discontinuous initial condition projects onto a polynomial that leaves the
+    # admissible set at the quadrature nodes / traces (a Mach-10 shock does:
+    # rho < 0 appears inside the shock cells), which poisons the very first
+    # residual and the CFL estimate.  Repair the projection before the first
+    # step; smooth or free-stream data triggers no repair and stays bit-identical.
+    coeff = _positivity_filter(coeff, basis, signs)
 
     limit_each_stage = limiter_stage == "every"
 
