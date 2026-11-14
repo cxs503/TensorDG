@@ -1,0 +1,335 @@
+metric                            ref            got    rel_err      tol  verdict
+adv_order_p1                        2        2.00424    0.2119%    5.00%  PASS
+adv_order_p2                        3        2.99993    0.0024%    5.00%  PASS
+adv_order_p3                        4        3.99989    0.0029%    5.00%  PASS
+sod_rho_x030                 0.873497       0.869379    0.4715%    3.00%  PASS
+sod_rho_x070                 0.265574       0.269618    1.5229%    3.00%  PASS
+sod_vel_x055                 0.927453       0.927491    0.0041%    3.00%  PASS
+sod_mass_integral              0.5625         0.5625    0.0000%    0.10%  PASS
+sod_energy_integral             1.375          1.375    0.0000%    0.10%  PASS
+sm2d_order_p1                       2        1.98601    0.6997%    3.00%  PASS
+sm2d_order_p2                       3        3.01956    0.6521%    3.00%  PASS
+sm2d_order_p3                       4        4.00363    0.0908%    3.00%  PASS
+sm2d_mass_integral                  4              4    0.0000%    0.10%  PASS
+sm2d_energy_integral               14             14    0.0000%    0.10%  PASS
+passed: ['adv_order_p1', 'adv_order_p2', 'adv_order_p3', 'sod_rho_x030', 'sod_rho_x070', 'sod_vel_x055', 'sod_mass_integral', 'sod_energy_integral', 'sm2d_order_p1', 'sm2d_order_p2', 'sm2d_order_p3', 'sm2d_mass_integral', 'sm2d_energy_integral']
+failed: []
+{
+ "mission_id": 20922,
+ "cluster_job_id": 3053,
+ "run_id": "REPRO-DG-CKS1998-bench-p2_n400",
+ "benchmark_id": "REPRO-DG-CKS1998",
+ "result_ids": [
+  "tbr-9f22ee884200492fa6b0d9bbaf666d01",
+  "tbr-28fb5cf204b1468fab19adff34a2668c",
+  "tbr-e996ce468887495cb33887789ac2bafb",
+  "tbr-d01af8636fc94ac99da85fab2a0c5cfc",
+  "tbr-6acb0f6b7411451d9785bdb3990cacb9",
+  "tbr-7c843025cc4944d18671291af3eb215a",
+  "tbr-f2c085502967476bb7ed5530684ff431",
+  "tbr-2bde7be18c384392b5a6bcf25fb85a49",
+  "tbr-e333c71a1a7548e4aa436130e8c38ec9",
+  "tbr-18ca01f54ee642cca0deac48e59c07c2",
+  "tbr-6fd91aa575184aca999950582e797b98",
+  "tbr-edecf8610d4f460ebc7bb8d0b6d3b867",
+  "tbr-01bc589c277e42a6a313f26216f5d901"
+ ],
+ "metrics": [
+  {
+   "metric": "adv_order_p1",
+   "unit": "-",
+   "ref_value": 2.0,
+   "got_value": 2.0042386064195155,
+   "abs_error": 0.004238606419515456,
+   "rel_error": 0.002119303209757728,
+   "tolerance_rel": 0.05,
+   "passed": true
+  },
+  {
+   "metric": "adv_order_p2",
+   "unit": "-",
+   "ref_value": 3.0,
+   "got_value": 2.999928988672025,
+   "abs_error": 7.101132797515675e-05,
+   "rel_error": 2.3670442658385582e-05,
+   "tolerance_rel": 0.05,
+   "passed": true
+  },
+  {
+   "metric": "adv_order_p3",
+   "unit": "-",
+   "ref_value": 4.0,
+   "got_value": 3.999885700831284,
+   "abs_error": 0.00011429916871597001,
+   "rel_error": 2.8574792178992503e-05,
+   "tolerance_rel": 0.05,
+   "passed": true
+  },
+  {
+   "metric": "sod_rho_x030",
+   "unit": "-",
+   "ref_value": 0.8734973438080238,
+   "got_value": 0.8693787952006209,
+   "abs_error": 0.004118548607402905,
+   "rel_error": 0.004715009881367281,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sod_rho_x070",
+   "unit": "-",
+   "ref_value": 0.2655737117053071,
+   "got_value": 0.2696180281808661,
+   "abs_error": 0.004044316475559029,
+   "rel_error": 0.015228602445586896,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sod_vel_x055",
+   "unit": "-",
+   "ref_value": 0.9274526200489498,
+   "got_value": 0.9274908596547566,
+   "abs_error": 3.82396058068446e-05,
+   "rel_error": 4.12307917193941e-05,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sod_mass_integral",
+   "unit": "-",
+   "ref_value": 0.5625,
+   "got_value": 0.5624999999995337,
+   "abs_error": 4.662936703425657e-13,
+   "rel_error": 8.289665250534503e-13,
+   "tolerance_rel": 0.001,
+   "passed": true
+  },
+  {
+   "metric": "sod_energy_integral",
+   "unit": "-",
+   "ref_value": 1.375,
+   "got_value": 1.374999999998533,
+   "abs_error": 1.4670487047396819e-12,
+   "rel_error": 1.0669445125379504e-12,
+   "tolerance_rel": 0.001,
+   "passed": true
+  },
+  {
+   "metric": "sm2d_order_p1",
+   "unit": "-",
+   "ref_value": 2.0,
+   "got_value": 1.9860060979451106,
+   "abs_error": 0.013993902054889373,
+   "rel_error": 0.006996951027444687,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sm2d_order_p2",
+   "unit": "-",
+   "ref_value": 3.0,
+   "got_value": 3.0195620108358137,
+   "abs_error": 0.01956201083581366,
+   "rel_error": 0.006520670278604553,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sm2d_order_p3",
+   "unit": "-",
+   "ref_value": 4.0,
+   "got_value": 4.003630497993001,
+   "abs_error": 0.0036304979930008585,
+   "rel_error": 0.0009076244982502146,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sm2d_mass_integral",
+   "unit": "-",
+   "ref_value": 4.0,
+   "got_value": 3.999999999999874,
+   "abs_error": 1.2612133559741778e-13,
+   "rel_error": 3.1530333899354446e-14,
+   "tolerance_rel": 0.001,
+   "passed": true
+  },
+  {
+   "metric": "sm2d_energy_integral",
+   "unit": "-",
+   "ref_value": 14.0,
+   "got_value": 13.999999999999522,
+   "abs_error": 4.778399897986674e-13,
+   "rel_error": 3.413142784276196e-14,
+   "tolerance_rel": 0.001,
+   "passed": true
+  }
+ ],
+ "verified": true,
+ "delta": {
+  "action": "inserted",
+  "category": "bench_verified",
+  "summary": "TensorBench 实证基准通过：adv_order_p1=2.00424 vs ref 2 (rel 0.212% <= tol 5.000%); adv_order_p2=2.99993 vs ref 3 (rel 0.002% <= tol 5.000%); adv_order_p3=3.99989 vs ref 4 (rel 0.003% <= tol 5.000%); sod_rho_x030=0.869379 vs ref 0.873497 (rel 0.472% <= tol 3.000%); sod_rho_x070=0.269618 vs ref 0.265574 (rel 1.523% <= tol 3.000%); sod_vel_x055=0.927491 vs ref 0.927453 (rel 0.004% <= tol 3.000%); sod_mass_integral=0.5625 vs ref 0.5625 (rel 0.000% <= tol 0.100%); sod_energy_integral=1.375 vs ref 1.375 (rel 0.000% <= tol 0.100%); sm2d_order_p1=1.98601 vs ref 2 (rel 0.700% <= tol 3.000%); sm2d_order_p2=3.01956 vs ref 3 (rel 0.652% <= tol 3.000%); sm2d_order_p3=4.00363 vs ref 4 (rel 0.091% <= tol 3.000%); sm2d_mass_integral=4 vs ref 4 (rel 0.000% <= tol 0.100%); sm2d_energy_integral=14 vs ref 14 (rel 0.000% <= tol 0.100%)",
+  "reason": "benchmark ref/got/error 由平台侧从集群作业原始输出复算，见 evidence",
+  "evidence": {
+   "benchmark_id": "REPRO-DG-CKS1998",
+   "run_id": "REPRO-DG-CKS1998-bench-p2_n400",
+   "cluster_job_id": 3053,
+   "implementation_revision": "unknown",
+   "result_ids": [
+    "tbr-9f22ee884200492fa6b0d9bbaf666d01",
+    "tbr-28fb5cf204b1468fab19adff34a2668c",
+    "tbr-e996ce468887495cb33887789ac2bafb",
+    "tbr-d01af8636fc94ac99da85fab2a0c5cfc",
+    "tbr-6acb0f6b7411451d9785bdb3990cacb9",
+    "tbr-7c843025cc4944d18671291af3eb215a",
+    "tbr-f2c085502967476bb7ed5530684ff431",
+    "tbr-2bde7be18c384392b5a6bcf25fb85a49",
+    "tbr-e333c71a1a7548e4aa436130e8c38ec9",
+    "tbr-18ca01f54ee642cca0deac48e59c07c2",
+    "tbr-6fd91aa575184aca999950582e797b98",
+    "tbr-edecf8610d4f460ebc7bb8d0b6d3b867",
+    "tbr-01bc589c277e42a6a313f26216f5d901"
+   ],
+   "metrics": [
+    {
+     "metric": "adv_order_p1",
+     "unit": "-",
+     "ref_value": 2.0,
+     "got_value": 2.0042386064195155,
+     "abs_error": 0.004238606419515456,
+     "rel_error": 0.002119303209757728,
+     "tolerance_rel": 0.05,
+     "passed": true
+    },
+    {
+     "metric": "adv_order_p2",
+     "unit": "-",
+     "ref_value": 3.0,
+     "got_value": 2.999928988672025,
+     "abs_error": 7.101132797515675e-05,
+     "rel_error": 2.3670442658385582e-05,
+     "tolerance_rel": 0.05,
+     "passed": true
+    },
+    {
+     "metric": "adv_order_p3",
+     "unit": "-",
+     "ref_value": 4.0,
+     "got_value": 3.999885700831284,
+     "abs_error": 0.00011429916871597001,
+     "rel_error": 2.8574792178992503e-05,
+     "tolerance_rel": 0.05,
+     "passed": true
+    },
+    {
+     "metric": "sod_rho_x030",
+     "unit": "-",
+     "ref_value": 0.8734973438080238,
+     "got_value": 0.8693787952006209,
+     "abs_error": 0.004118548607402905,
+     "rel_error": 0.004715009881367281,
+     "tolerance_rel": 0.03,
+     "passed": true
+    },
+    {
+     "metric": "sod_rho_x070",
+     "unit": "-",
+     "ref_value": 0.2655737117053071,
+     "got_value": 0.2696180281808661,
+     "abs_error": 0.004044316475559029,
+     "rel_error": 0.015228602445586896,
+     "tolerance_rel": 0.03,
+     "passed": true
+    },
+    {
+     "metric": "sod_vel_x055",
+     "unit": "-",
+     "ref_value": 0.9274526200489498,
+     "got_value": 0.9274908596547566,
+     "abs_error": 3.82396058068446e-05,
+     "rel_error": 4.12307917193941e-05,
+     "tolerance_rel": 0.03,
+     "passed": true
+    },
+    {
+     "metric": "sod_mass_integral",
+     "unit": "-",
+     "ref_value": 0.5625,
+     "got_value": 0.5624999999995337,
+     "abs_error": 4.662936703425657e-13,
+     "rel_error": 8.289665250534503e-13,
+     "tolerance_rel": 0.001,
+     "passed": true
+    },
+    {
+     "metric": "sod_energy_integral",
+     "unit": "-",
+     "ref_value": 1.375,
+     "got_value": 1.374999999998533,
+     "abs_error": 1.4670487047396819e-12,
+     "rel_error": 1.0669445125379504e-12,
+     "tolerance_rel": 0.001,
+     "passed": true
+    },
+    {
+     "metric": "sm2d_order_p1",
+     "unit": "-",
+     "ref_value": 2.0,
+     "got_value": 1.9860060979451106,
+     "abs_error": 0.013993902054889373,
+     "rel_error": 0.006996951027444687,
+     "tolerance_rel": 0.03,
+     "passed": true
+    },
+    {
+     "metric": "sm2d_order_p2",
+     "unit": "-",
+     "ref_value": 3.0,
+     "got_value": 3.0195620108358137,
+     "abs_error": 0.01956201083581366,
+     "rel_error": 0.006520670278604553,
+     "tolerance_rel": 0.03,
+     "passed": true
+    },
+    {
+     "metric": "sm2d_order_p3",
+     "unit": "-",
+     "ref_value": 4.0,
+     "got_value": 4.003630497993001,
+     "abs_error": 0.0036304979930008585,
+     "rel_error": 0.0009076244982502146,
+     "tolerance_rel": 0.03,
+     "passed": true
+    },
+    {
+     "metric": "sm2d_mass_integral",
+     "unit": "-",
+     "ref_value": 4.0,
+     "got_value": 3.999999999999874,
+     "abs_error": 1.2612133559741778e-13,
+     "rel_error": 3.1530333899354446e-14,
+     "tolerance_rel": 0.001,
+     "passed": true
+    },
+    {
+     "metric": "sm2d_energy_integral",
+     "unit": "-",
+     "ref_value": 14.0,
+     "got_value": 13.999999999999522,
+     "abs_error": 4.778399897986674e-13,
+     "rel_error": 3.413142784276196e-14,
+     "tolerance_rel": 0.001,
+     "passed": true
+    }
+   ],
+   "schema": "tensorbench-eval/1"
+  },
+  "existing_category": null
+ },
+ "spec_sha256": "9256f37ac0f4e7d9ee89eb05880d76ff1ec3d3b285ea13cbb71f9f1c8e0967ca",
+ "recorded_at": "2026-11-14T20:59:10.663154+00:00"
+}
+l4-verdict: {"status": "VERIFIED", "l4_benchmark_pass": true, "rows": 13, "verified_metrics": ["adv_order_p1", "adv_order_p2", "adv_order_p3", "sm2d_energy_integral", "sm2d_mass_integral", "sm2d_order_p1", "sm2d_order_p2", "sm2d_order_p3", "sod_energy_integral", "sod_mass_integral", "sod_rho_x030", "sod_rho_x070", "sod_vel_x055"], "best": {"metric": "sm2d_mass_integral", "ref": 4.0, "got": 3.999999999999874, "rel_error": 3.1530333899354446e-14, "tolerance_rel": 0.001, "run_id": "REPRO-DG-CKS1998-bench-p2_n400", "cluster_job_id": 3053}, "claimed_level": null, "failed_checks": [], "reason": "at least one platform-recomputed benchmark row meets tolerance"}
+

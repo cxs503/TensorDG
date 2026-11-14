@@ -53,10 +53,20 @@ SOD_STATIONS = {"sod_rho_x030": ("density", 0.30),
 #: 精确守恒积分（解析值，非求解器产出）：质量 / 总能量
 EXACT_INTEGRALS = {"sod_mass_integral": 0.5625, "sod_energy_integral": 1.375}
 
+#: 二维 Euler 光滑熵波的网格梯子（论文 §5.1 的 P^k 组合；相邻网格比不假设为 2）
+SMOOTH_2D_LADDERS = {1: [16, 24, 32], 2: [12, 16, 24], 3: [8, 12, 16]}
+SMOOTH_2D_SMOKE = {1: [4, 6], 2: [4, 6], 3: [3, 4]}
+#: 二维守恒积分在哪个运行上测量（**预登记**：P2、p2 梯子中最细网格；smoke 档同比例缩小）
+SMOOTH_2D_INTEGRAL_RUN = (2, SMOOTH_2D_LADDERS[2][-1])
+SMOOTH_2D_INTEGRAL_RUN_SMOKE = (2, SMOOTH_2D_SMOKE[2][-1])
+
 PROFILES = {
-    "smoke": {"smooth_cells": [8, 16], "degrees": [1, 2, 3], "sod": (1, 48)},
+    "smoke": {"smooth_cells": [8, 16], "degrees": [1, 2, 3], "sod": (1, 48),
+              "cells2d": SMOOTH_2D_SMOKE,
+              "integral_run": SMOOTH_2D_INTEGRAL_RUN_SMOKE},
     "bench": {"smooth_cells": [20, 40, 80, 160, 320], "degrees": [1, 2, 3],
-              "sod": (2, 400)},
+              "sod": (2, 400), "cells2d": SMOOTH_2D_LADDERS,
+              "integral_run": SMOOTH_2D_INTEGRAL_RUN},
 }
 
 
@@ -70,6 +80,64 @@ def git_revision() -> str:
                                        text=True).strip()
     except Exception:                                    # pragma: no cover - 集群无 .git 时
         return os.environ.get("TENSORDG_REVISION", "unknown")
+
+
+def _measure_smooth_2d(cells2d: dict, rows: list, metrics: dict, reference: dict,
+                       integral_run: tuple = SMOOTH_2D_INTEGRAL_RUN) -> dict:
+    """B1/B2：二维 Euler 光滑熵波（论文 §5.1）的观测阶与守恒积分。
+
+    got 由同一条 2-D RKDG 求解器（``tensordg.euler_dg_2d``，无限制器、周期边界）
+    实测；ref 是理论阶 ``k+1`` 与精确解的**闭式**守恒积分——两者都与本次运行无关。
+    """
+    from benchmarks.cks1998_smooth_2d import (DOMAIN, FINAL_TIME, conserved_integrals,
+                                              error_norms, initial, run_case,
+                                              EXACT_INTEGRALS)
+    import tensordg.euler_dg_2d as dg2
+
+    detail = {"ladders": {}, "integrals": None}
+    last = {}
+    for degree in sorted(cells2d):
+        meshes, errs = list(cells2d[degree]), []
+        for ncells in meshes:
+            run = run_case(degree, ncells, None, 1.0, False)
+            errs.append(run["norms"]["density"]["L1"])
+            last[degree] = run
+            rows.append({"section": "B1", "degree": degree, "ncells": ncells,
+                         "l1_density": errs[-1],
+                         "linf_density": run["norms"]["density"]["Linf"],
+                         "wall_seconds": run["wall_seconds"]})
+            log(f"B1 p{degree} n{ncells}: |rho|_L1={errs[-1]:.6e} "
+                f"Linf={run['norms']['density']['Linf']:.6e}")
+        order = observed_order(meshes, errs) if len(meshes) >= 2 else float("nan")
+        key = f"sm2d_order_p{degree}"
+        metrics[key] = {"value": float(order), "unit": "-"}
+        reference[key] = float(degree + 1)
+        detail["ladders"][f"p{degree}"] = {"cells": meshes, "l1_density": errs,
+                                           "observed_order": float(order),
+                                           "design_order": degree + 1}
+        log(f"B1 p{degree}: observed order = {order:.4f} (theory {degree + 1})")
+
+    # B2：在预登记的那次运行上测守恒积分（同一求解器、同一末时刻）
+    degree, ncells = integral_run
+    if degree in cells2d and ncells in cells2d[degree]:
+        x, y, coeff, _meta = dg2.solve_euler_dg_2d(
+            initial, ncells=ncells, degree=degree, domain=DOMAIN,
+            final_time=FINAL_TIME, cfl=0.2, limiter=None, periodic=(True, True))
+        totals = conserved_integrals(coeff, degree)
+        got = {"sm2d_mass_integral": totals["mass"],
+               "sm2d_energy_integral": totals["energy"]}
+        ref = {"sm2d_mass_integral": EXACT_INTEGRALS["mass"],
+               "sm2d_energy_integral": EXACT_INTEGRALS["energy"]}
+        for key, value in got.items():
+            metrics[key] = {"value": float(value), "unit": "-"}
+            reference[key] = float(ref[key])
+            rows.append({"section": "B2", "metric": key, "got": metrics[key]["value"],
+                         "ref": reference[key], "degree": degree, "ncells": ncells})
+            log(f"B2 {key}: got={metrics[key]['value']:.12f} ref={reference[key]:.1f}")
+        detail["integrals"] = {"degree": degree, "ncells": ncells, "got": got, "ref": ref}
+    else:
+        log(f"B2 skipped: registered run (p{degree}, n{ncells}) not in this profile")
+    return detail
 
 
 def measure(profile: dict) -> dict:
@@ -132,6 +200,13 @@ def measure(profile: dict) -> dict:
                       "limiter": meta["limiter"], "rel_l2": rel_l2,
                       "worst_rel_l2": max(rel_l2.values())}}
     log(f"E2 Sod p{degree} n{ncells}: worst rel L2 = {detail['sod']['worst_rel_l2']:.4%}")
+
+    # ---- B1/B2：二维 Euler 光滑熵波（论文 §5.1）-------------------------
+    if profile.get("cells2d"):
+        detail["smooth_2d"] = _measure_smooth_2d(
+            profile["cells2d"], rows, metrics, reference,
+            profile.get("integral_run", SMOOTH_2D_INTEGRAL_RUN))
+
     return {"metrics": metrics, "reference": reference, "rows": rows, "detail": detail}
 
 
@@ -155,6 +230,7 @@ def build_doc(result: dict, profile_name: str, profile: dict, wall: float) -> di
         "reference": result["reference"],
         "validation": {"anchor": ANCHOR,
                        "sod_rel_l2": result["detail"]["sod"],
+                       "smooth_2d": result["detail"].get("smooth_2d"),
                        "note": ("A2/E3 是不等式判据，不进入 ref-vs-got 规格；"
                                 "见 tests/test_repro_cks1998.py 的仓内门")},
         "rows": result["rows"],

@@ -50,14 +50,24 @@ def test_receipt_is_bound_to_the_exact_stdout_bytes():
 
 
 def test_spec_metric_table_is_the_preregistered_one():
+    """This 2026-11 receipt covers the 1-D metrics; ``METRICS`` has since grown.
+
+    The receipt is not allowed to be a *snapshot of a different judgement*: every
+    metric it carries must still exist in ``bench_spec.METRICS`` **by name with the
+    identical tolerance and pointers** (a later loosening of a tolerance fails here),
+    and the receipt's metric order must be the registration order.
+    """
     spec = _load("spec.json")
     registered = [m["name"] for m in spec["evaluation"]["metrics"]]
-    assert registered == [m["name"] for m in bench_spec.METRICS]
+    by_name = {m["name"]: m for m in bench_spec.METRICS}
+    assert set(registered) <= set(by_name), set(registered) - set(by_name)
+    assert registered == [m["name"] for m in bench_spec.METRICS if m["name"] in set(registered)]
     assert spec["benchmark"]["benchmark_id"] == bench_spec.BENCH_ID
     assert spec["implementation"]["project"] == "TensorDG"
     assert spec["evaluation"]["extract"]["format"] == "json_stdout"
     # tolerances are frozen in the spec file, not recomputed from the measurement
-    for row, metric in zip(spec["evaluation"]["metrics"], bench_spec.METRICS):
+    for row in spec["evaluation"]["metrics"]:
+        metric = by_name[row["name"]]
         assert row["tolerance_rel"] == metric["tolerance_rel"]
         assert row["ref_pointer"] == metric["ref_pointer"]
         assert row["got_pointer"] == metric["got_pointer"]
@@ -84,8 +94,9 @@ def test_receipt_rows_are_reproducible_from_the_raw_stdout():
 def test_every_platform_row_passed_and_is_bound_to_the_succeeded_cluster_job():
     receipt = _load("receipt.json")
     rows = receipt["rows"]
-    assert len(rows) == len(bench_spec.METRICS)
-    assert [r["metric"] for r in rows] == [m["name"] for m in bench_spec.METRICS]
+    spec_metrics = [m["name"] for m in _load("spec.json")["evaluation"]["metrics"]]
+    assert len(rows) == len(spec_metrics)
+    assert [r["metric"] for r in rows] == spec_metrics
     failed = [r["metric"] for r in rows if not r["passed"]]
     assert not failed, f"platform rows out of tolerance: {failed}"
     for row in rows:
@@ -101,7 +112,7 @@ def test_l4_verdict_is_a_machine_pass_not_a_claim():
     assert verdict["l4_benchmark_pass"] is True, verdict
     assert verdict["status"] in {"PASS", "VERIFIED"}, verdict
     assert verdict["failed_checks"] == [], verdict
-    assert int(verdict.get("rows", 0)) >= len(bench_spec.METRICS)
+    assert int(verdict.get("rows", 0)) >= len(_load("spec.json")["evaluation"]["metrics"])
     # the pre-closure state the platform reported for this mission is recorded too, so a
     # future reader can see the delta rather than having to trust prose
     pre = _load("l4_verdict_before.json")

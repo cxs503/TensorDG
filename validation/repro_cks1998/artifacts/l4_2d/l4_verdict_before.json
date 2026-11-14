@@ -1,0 +1,15 @@
+{
+ "status": "CLAIMED_NOT_PROVEN",
+ "l4_benchmark_pass": false,
+ "rows": 0,
+ "claimed_level": null,
+ "failed_checks": [
+  "execution_success",
+  "source_cluster_job",
+  "cluster_job_bound",
+  "ref_got_error_present",
+  "within_tolerance"
+ ],
+ "reason": "no tensorbench_results row for this mission: the L4 benchmark claim is self-declared, not measured",
+ "rule": "L4 requires >=1 platform-recomputed benchmark row (ref/got/error)"
+}
