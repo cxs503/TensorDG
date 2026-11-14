@@ -1,0 +1,171 @@
+{
+ "anchor": "REPRO-DG-CKS1998",
+ "mission_id": 20922,
+ "cluster_job_id": 3053,
+ "cluster_node": "n315",
+ "workload_command": [
+  "python",
+  "validation/repro_cks1998/bench_workload.py",
+  "--profile",
+  "bench"
+ ],
+ "stdout_sha256": "e9d58149ee1bbbf3272b141da5f2864343afaf26c5a6f7c1f2a1c1c53be6819a",
+ "spec_sha256": "0e176db0e6921c2aaead524f4845ace0a1cbe6e55677e5332f9abe17ebc97026",
+ "result_sha256": "63392439b2127ac2fd8742e9a835a9f27c2a3752b6e2953941cf9a4d0927ed83",
+ "rows": [
+  {
+   "metric": "adv_order_p1",
+   "unit": "-",
+   "ref_value": 2.0,
+   "got_value": 2.0042386064195155,
+   "abs_error": 0.004238606419515456,
+   "rel_error": 0.002119303209757728,
+   "tolerance_rel": 0.05,
+   "passed": true
+  },
+  {
+   "metric": "adv_order_p2",
+   "unit": "-",
+   "ref_value": 3.0,
+   "got_value": 2.999928988672025,
+   "abs_error": 7.101132797515675e-05,
+   "rel_error": 2.3670442658385582e-05,
+   "tolerance_rel": 0.05,
+   "passed": true
+  },
+  {
+   "metric": "adv_order_p3",
+   "unit": "-",
+   "ref_value": 4.0,
+   "got_value": 3.999885700831284,
+   "abs_error": 0.00011429916871597001,
+   "rel_error": 2.8574792178992503e-05,
+   "tolerance_rel": 0.05,
+   "passed": true
+  },
+  {
+   "metric": "sod_rho_x030",
+   "unit": "-",
+   "ref_value": 0.8734973438080238,
+   "got_value": 0.8693787952006209,
+   "abs_error": 0.004118548607402905,
+   "rel_error": 0.004715009881367281,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sod_rho_x070",
+   "unit": "-",
+   "ref_value": 0.2655737117053071,
+   "got_value": 0.2696180281808661,
+   "abs_error": 0.004044316475559029,
+   "rel_error": 0.015228602445586896,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sod_vel_x055",
+   "unit": "-",
+   "ref_value": 0.9274526200489498,
+   "got_value": 0.9274908596547566,
+   "abs_error": 3.82396058068446e-05,
+   "rel_error": 4.12307917193941e-05,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sod_mass_integral",
+   "unit": "-",
+   "ref_value": 0.5625,
+   "got_value": 0.5624999999995337,
+   "abs_error": 4.662936703425657e-13,
+   "rel_error": 8.289665250534503e-13,
+   "tolerance_rel": 0.001,
+   "passed": true
+  },
+  {
+   "metric": "sod_energy_integral",
+   "unit": "-",
+   "ref_value": 1.375,
+   "got_value": 1.374999999998533,
+   "abs_error": 1.4670487047396819e-12,
+   "rel_error": 1.0669445125379504e-12,
+   "tolerance_rel": 0.001,
+   "passed": true
+  },
+  {
+   "metric": "sm2d_order_p1",
+   "unit": "-",
+   "ref_value": 2.0,
+   "got_value": 1.9860060979451106,
+   "abs_error": 0.013993902054889373,
+   "rel_error": 0.006996951027444687,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sm2d_order_p2",
+   "unit": "-",
+   "ref_value": 3.0,
+   "got_value": 3.0195620108358137,
+   "abs_error": 0.01956201083581366,
+   "rel_error": 0.006520670278604553,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sm2d_order_p3",
+   "unit": "-",
+   "ref_value": 4.0,
+   "got_value": 4.003630497993001,
+   "abs_error": 0.0036304979930008585,
+   "rel_error": 0.0009076244982502146,
+   "tolerance_rel": 0.03,
+   "passed": true
+  },
+  {
+   "metric": "sm2d_mass_integral",
+   "unit": "-",
+   "ref_value": 4.0,
+   "got_value": 3.999999999999874,
+   "abs_error": 1.2612133559741778e-13,
+   "rel_error": 3.1530333899354446e-14,
+   "tolerance_rel": 0.001,
+   "passed": true
+  },
+  {
+   "metric": "sm2d_energy_integral",
+   "unit": "-",
+   "ref_value": 14.0,
+   "got_value": 13.999999999999522,
+   "abs_error": 4.778399897986674e-13,
+   "rel_error": 3.413142784276196e-14,
+   "tolerance_rel": 0.001,
+   "passed": true
+  }
+ ],
+ "rows_provenance": "rows recomputed locally with bench_spec.evaluate_metrics(spec.json, stdout.txt); identical set+values to the platform's POST /tensor/bench/results response and to GET /tensor/bench/l4-verdict/20922.verified_metrics (13/13).",
+ "l4_verdict": {
+  "status": "VERIFIED",
+  "l4_benchmark_pass": true,
+  "rows": 13,
+  "verified_metrics": [
+   "adv_order_p1",
+   "adv_order_p2",
+   "adv_order_p3",
+   "sm2d_energy_integral",
+   "sm2d_mass_integral",
+   "sm2d_order_p1",
+   "sm2d_order_p2",
+   "sm2d_order_p3",
+   "sod_energy_integral",
+   "sod_mass_integral",
+   "sod_rho_x030",
+   "sod_rho_x070",
+   "sod_vel_x055"
+  ],
+  "failed_checks": []
+ },
+ "provenance_note": "stdout.txt = the workload's own --out document (byte-identical to its stdout, plus trailing newline); the cluster log retained only a truncated output_tail, so this file is the raw artifact. Job cj3053: rc=0, node n315, wall 325.84 s, 4 cores, OMP=1.",
+ "metric_count": 13
+}
