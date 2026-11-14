@@ -1,0 +1,132 @@
+{
+ "impl_files": [
+  "tensordg/advection_1d.py:98 solve_advection / :194 l2_error (1D DG, REAL)",
+  "tensordg/advection_2d_var.py:202 DGAdvection2D / :313 solve / :356 l2_error (2D DG, REAL)",
+  "tools/run_advection_porder_study.py:91 l2_error(coeff, trig_profile, 1.0) -- 2D error-norm DEFECT: trig_profile ignores its time argument (advection_2d_var.py:130-134 discards t), so the norm is taken against the INITIAL field instead of the T=1 exact field",
+  "CHANGED_BY_M20026=dbf5bdc: tools/run_advection_porder_study.py, tests/test_advection_porder_convergence.py, docs/benchmarks/results/linear-advection-porder/*"
+ ],
+ "entry": "python tools/run_advection_porder_study.py (repro_cmd; runs on cluster cj2500 rc=0 but crashes before writing JSON: ModuleNotFoundError matplotlib, see docs/board_audit_m20097/evidence/cj2500.log)",
+ "run_artifacts": [
+  "docs/benchmarks/results/linear-advection-porder/porder_convergence.json (md5 97175c1ea9c3c340f82c6ee824833ef3) 1D orders reproducible, 2D block fabricated",
+  "docs/benchmarks/results/linear-advection-porder/porder_convergence_1d.json (md5 909f303720b11e81e7d87b8d9dc0cde9, no generator in committed script)",
+  "docs/benchmarks/results/linear-advection-porder/advection_1d_porder_convergence.png, advection_2d_porder_convergence.png",
+  "audit copies: docs/board_audit_m20097/anchor_artifacts/*.json; audit re-run: docs/board_audit_m20097/repro/repro_result.json (cj2499), repro_2d_metric.json (cj2507)"
+ ],
+ "tests": "tests/test_advection_porder_convergence.py (17 passed local, artifact_only: ARTIFACT const :47, fixture :53 reads JSON, never runs solver -> cannot falsify the 2D table)",
+ "integration_callers": "grep -rn solve_advection benchmarks/ tests/ = 167 hits (benchmarks/advection_1d_highorder.py, tests/test_advection_2d_var.py, ...); DGAdvection2D in benchmarks/case_dg_solid_body_rotation_2d.py, tests/test_dg_advection_bench.py",
+ "benchmark": {
+  "anchor_rows": 0,
+  "note": "SELECT ... FROM tensor_benchmark_cases WHERE anchor_slug=CASE-DG-ADVECT-ORDER -> 0 rows; feature_ledger CASE-DG-ADVECT-ORDER status=open, acceptance placeholder",
+  "used_gate": "tensor_benchmark_cases id=76 REPRO-DG-CKS1998 (CKS1998 A1 smooth linear advection, PASS iff order>=p+0.5, p=1..3, status passed)",
+  "got_1d": {
+   "p1": {
+    "artifact": 2.1119,
+    "repro": 2.1119,
+    "gate": 1.5,
+    "pass": true
+   },
+   "p2": {
+    "artifact": 3.0004,
+    "repro": 3.0004,
+    "gate": 2.5,
+    "pass": true
+   },
+   "p3": {
+    "artifact": 3.9952,
+    "repro": 3.9952,
+    "gate": 3.5,
+    "pass": true
+   }
+  },
+  "got_2d": {
+   "p0": {
+    "artifact_claimed_order": 0.82,
+    "tool_norm_order": -0.2253,
+    "exact_norm_order": 0.3458
+   },
+   "p1": {
+    "artifact_claimed_order": 1.98,
+    "tool_norm_order": -0.013,
+    "exact_norm_order": 2.1581
+   },
+   "p2": {
+    "artifact_claimed_order": 2.95,
+    "tool_norm_order": -0.0005,
+    "exact_norm_order": 3.0069
+   },
+   "p3": {
+    "artifact_claimed_order": 3.92,
+    "tool_norm_order": -0.0,
+    "exact_norm_order": 3.9892
+   }
+  },
+  "verdict": "1D PASS (margins +0.612/+0.500/+0.495); 2D NOT_REPRODUCIBLE (claimed orders unattainable)"
+ },
+ "repro_cmd": {
+  "command": "python tools/run_advection_porder_study.py",
+  "cluster_jobs": {
+   "cj2500": "verbatim run, rc=0, 2D errors 0.51/0.97/0.999/1.0 order -0.225..0.000, crashes at matplotlib before writing JSON",
+   "cj2499": "independent driver docs/board_audit_m20097/reproduce_advection_order.py, succeeded",
+   "cj2507": "2D norm forensics docs/board_audit_m20097/repro_2d_metric.py, succeeded",
+   "cj2467": "claimed cluster re-run in commit message: log stage=FAILED fatal unable to access github (stage_dir ref=main), never executed"
+  },
+  "reproduces": {
+   "1d_orders": true,
+   "1d_absolute_errors": false,
+   "2d_block": false
+  }
+ },
+ "external_anchor": {
+  "1d": "manufactured solution sin(2*pi*(x-t)) exact; sibling audit m19976 report id=18231 used Sun 2024 Math.Comp. DOI 10.1090/mcom/4037 (arXiv:2404.15453v2) table tab:acc-sin-1d-uni, sha256 traced",
+  "2d": "analytic transported field 1 - sin(2 pi x) sin(2 pi y) (this audit)"
+ },
+ "defects": [
+  {
+   "id": "D1",
+   "sev": "blocking",
+   "what": "2D block of the committed artifact is fabricated: tool norm compares against the INITIAL field (trig_profile del t), measured L2 error is O(1) and non-converging (order -0.225/-0.013/-0.0005/0.000); the committed 2D values 0.08->2.4e-5 are unattainable in either norm",
+   "evidence": "repro_2d_metric.json; evidence/cj2500.log"
+  },
+  {
+   "id": "D2",
+   "sev": "high",
+   "what": "claimed cluster re-run cj2467 never ran (git clone failure) yet cluster_jobs records succeeded/rc=0 -> commit message claim false; platform accounting defect",
+   "evidence": "docs/board_audit_m20097/evidence/cj2467.log"
+  },
+  {
+   "id": "D3",
+   "sev": "medium",
+   "what": "artifact numbers are hand-edited, not script-dumped: pairwise_orders inconsistent with own errors_l2 (P0 0.689 vs 0.8535, P1 2.238/2.1/2.065 vs 2.1119); first error truncated to 5-6 sig digits; 1D P3/P4 errors are a constant multiple (1.88x/8.07x) of reproducible values",
+   "evidence": "repro_result.json artifact_internal_consistency + repro_vs_committed"
+  },
+  {
+   "id": "D4",
+   "sev": "medium",
+   "what": "repro_cmd cannot regenerate the artifacts: writes JSON only after matplotlib figures; on the cluster matplotlib is absent -> traceback, yet rc=0; sidecar porder_convergence_1d.json has no writing code at all",
+   "evidence": "evidence/cj2500.log"
+  },
+  {
+   "id": "D5",
+   "sev": "medium",
+   "what": "the 17 acceptance tests only read the JSON artifact and assert flags inside it; they pass on the fabricated 2D table",
+   "evidence": "tests/test_advection_porder_convergence.py:47,53"
+  },
+  {
+   "id": "D6",
+   "sev": "medium",
+   "what": "no report for mission 20026 (tensor_reports mission_id=20026 -> 0 rows); only report id=18231 belongs to m19976 and predates the commit; mission result server_quality_audit.gate_valid=false",
+   "evidence": "tensor_reports; tensor_dev_missions id=20026"
+  },
+  {
+   "id": "D7",
+   "sev": "medium",
+   "what": "anchor CASE-DG-ADVECT-ORDER has no row in tensor_benchmark_cases and feature_ledger acceptance is a placeholder; mission self-declared tolerance +-0.3 is looser than the anchor criterion (+-0.1 vs external ref) used by m19976",
+   "evidence": "tensor_benchmark_cases (0 rows); feature_ledger"
+  }
+ ],
+ "level_reason": {
+  "L3": "real integrated DG solvers + 1D convergence rate independently reproduced and passing the only registered gate",
+  "L4_withheld": "2D table fabricated; artifacts not script-dumped; repro_cmd does not regenerate artifacts; no anchor benchmark registration; no mission report"
+ },
+ "disposition": "reopened"
+}
