@@ -1,0 +1,146 @@
+{
+  "case": "EULER-VORTEX-ERR / projection baseline",
+  "ledger_slug": "CASE-DG-EULER-VORTEX-ERR",
+  "definition": "e(0) = error of the exact t=0 state in the discrete space (DG: L2 projection; P0: exact cell averages); A(t) = e(t)/e(0) is the per-box-crossing amplification",
+  "tolerance_relative_l2": 0.06,
+  "box_crossing_time": 10.0,
+  "baselines": [
+    {
+      "task_key": "dg_d2_n32",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 0.0,
+      "metric": "volume-quadrature relative L2 of the L2-projected t=0 state",
+      "errors": {
+        "density": 3.074331633944297e-05,
+        "velocity_x": 5.491765932359521e-05,
+        "velocity_y": 5.4917659323595614e-05,
+        "pressure": 4.473419347752664e-05
+      },
+      "max_relative_l2": 5.4917659323595614e-05,
+      "amplification": [
+        {
+          "task_key": "dg_d2_n32_t1_cfl0.2",
+          "final_time": 1.0,
+          "error": 9.431214706130781e-05,
+          "amplification": 1.7173373414475839
+        },
+        {
+          "task_key": "dg_d2_n32_t2_cfl0.2",
+          "final_time": 2.0,
+          "error": 9.689709783192219e-05,
+          "amplification": 1.7644069143764458
+        },
+        {
+          "task_key": "dg_d2_n32_t5_cfl0.2",
+          "final_time": 5.0,
+          "error": 0.00011131861013866376,
+          "amplification": 2.0270093720260802
+        },
+        {
+          "task_key": "dg_d2_n32_t10_cfl0.2",
+          "final_time": 10.0,
+          "error": 0.00015162621307949022,
+          "amplification": 2.7609737003911845
+        }
+      ]
+    },
+    {
+      "task_key": "p0_n64",
+      "task": "p0",
+      "cells": 64,
+      "final_time": 0.0,
+      "metric": "relative L2 of the exact t=0 cell averages",
+      "errors": {
+        "density": 0.0,
+        "velocity_x": 9.255221306818597e-05,
+        "velocity_y": 9.255221306818167e-05,
+        "pressure": 9.381326619655675e-05
+      },
+      "max_relative_l2": 9.381326619655675e-05,
+      "amplification": [
+        {
+          "task_key": "p0_n64_t1_cfl0.4",
+          "final_time": 1.0,
+          "error": 0.04926036192305211,
+          "amplification": 525.0895094073607
+        },
+        {
+          "task_key": "p0_n64_t5_cfl0.4",
+          "final_time": 5.0,
+          "error": 0.120235164048954,
+          "amplification": 1281.643512944516
+        },
+        {
+          "task_key": "p0_n64_t10_cfl0.4",
+          "final_time": 10.0,
+          "error": 0.1430474063391442,
+          "amplification": 1524.8099990403543
+        }
+      ]
+    },
+    {
+      "task_key": "p0_n128",
+      "task": "p0",
+      "cells": 128,
+      "final_time": 0.0,
+      "metric": "relative L2 of the exact t=0 cell averages",
+      "errors": {
+        "density": 0.0,
+        "velocity_x": 2.3280856913427512e-05,
+        "velocity_y": 2.328085691343027e-05,
+        "pressure": 2.3498525681098333e-05
+      },
+      "max_relative_l2": 2.3498525681098333e-05,
+      "amplification": [
+        {
+          "task_key": "p0_n128_t1_cfl0.4",
+          "final_time": 1.0,
+          "error": 0.028169111512511273,
+          "amplification": 1198.7608029030455
+        },
+        {
+          "task_key": "p0_n128_t2_cfl0.4",
+          "final_time": 2.0,
+          "error": 0.04875468300660123,
+          "amplification": 2074.79752850275
+        },
+        {
+          "task_key": "p0_n128_t5_cfl0.4",
+          "final_time": 5.0,
+          "error": 0.08876448131193004,
+          "amplification": 3777.44895643943
+        },
+        {
+          "task_key": "p0_n128_t10_cfl0.4",
+          "final_time": 10.0,
+          "error": 0.12084610727586263,
+          "amplification": 5142.710181731462
+        }
+      ]
+    },
+    {
+      "task_key": "p0_n256",
+      "task": "p0",
+      "cells": 256,
+      "final_time": 0.0,
+      "metric": "relative L2 of the exact t=0 cell averages",
+      "errors": {
+        "density": 0.0,
+        "velocity_x": 5.829184134625399e-06,
+        "velocity_y": 5.829184134625208e-06,
+        "pressure": 5.87746070316906e-06
+      },
+      "max_relative_l2": 5.87746070316906e-06,
+      "amplification": [
+        {
+          "task_key": "p0_n256_t1_cfl0.4",
+          "final_time": 1.0,
+          "error": 0.01518646310926804,
+          "amplification": 2583.8476641927477
+        }
+      ]
+    }
+  ]
+}
