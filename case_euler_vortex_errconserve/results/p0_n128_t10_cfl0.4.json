@@ -1,0 +1,64 @@
+{
+  "task": "p0",
+  "degree": 0,
+  "cells": 128,
+  "final_time": 10.0,
+  "cfl": 0.4,
+  "steps": 1631,
+  "dt": 0.0007675933906057253,
+  "dofs": 65536,
+  "errors": {
+    "density": 0.024657957336491388,
+    "velocity_x": 0.058912468102394845,
+    "velocity_y": 0.058941077316237246,
+    "pressure": 0.01902936222428201
+  },
+  "metric": "exact cell-average relative L2 (P0 finite volume)",
+  "final": {
+    "invariants": {
+      "mass": 98.24174356018148,
+      "momentum_x": 98.24174356018123,
+      "momentum_y": 98.24174356018125,
+      "energy": 344.75932660099267,
+      "entropy": 100.97491255139363
+    },
+    "entropy_mean": 1.0097491255139364,
+    "density_min": 0.9154799238240151,
+    "pressure_min": 0.943359145235893
+  },
+  "initial": {
+    "invariants": {
+      "mass": 98.24174356019095,
+      "momentum_x": 98.24174356019095,
+      "momentum_y": 98.24174356019097,
+      "energy": 344.75932660102984,
+      "entropy": 100.00143757755976
+    },
+    "entropy_mean": 1.0000143757755975,
+    "density_min": 0.49544303496873265,
+    "pressure_min": 0.37427574548719317
+  },
+  "wall_seconds": 59.733734130859375,
+  "task_key": "p0_n128_t10_cfl0.4",
+  "family": "p0_n128",
+  "config": {
+    "task": "p0",
+    "cells": 128,
+    "final_time": 10.0,
+    "cfl": 0.4,
+    "strength": 5.0
+  },
+  "max_relative_l2": 0.058941077316237246,
+  "max_percent": 5.894107731623724,
+  "invariant_drift": {
+    "mass": 9.648281628096659e-14,
+    "momentum_x": 9.894189855499422e-14,
+    "momentum_y": 9.894189855499421e-14,
+    "energy": 1.0783057358152234e-13,
+    "entropy": 0.009734609795772781
+  },
+  "entropy_production": 0.009734609795772675,
+  "entropy_drift": 0.009734609795772675,
+  "density_min_relative_error": 0.8478005728383908,
+  "gate_pass": true
+}
