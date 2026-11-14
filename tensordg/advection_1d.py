@@ -26,7 +26,7 @@ from .runge_kutta import TABLEAUS, rk_step
 
 # Tableaus driven by the generic stage loop; ``"rk4"`` and ``"ssp_rk3"``
 # keep their original hand-coded branches (bit-for-bit unchanged).
-_GENERIC_TABLEAUS = ("euler", "rk2", "rk3", "rk5")
+_GENERIC_TABLEAUS = ("euler", "rk2", "rk3", "ssp_rk54", "rk5")
 
 # The quadrature order is ``max(2*degree + 3, 4)`` and float64 Legendre
 # evaluation is stable far beyond this; the bound only keeps the Python-side
@@ -123,9 +123,12 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
     *not* strong-stability-preserving) or ``"ssp_rk3"`` (the TVD-RK scheme of
     Cockburn & Shu 1998, required for the TVD property when limiting).  The
     minimal-stage explicit tableaus ``"euler"`` (1), ``"rk2"`` (Heun), ``"rk3"``
-    (Kutta) and ``"rk5"`` (Butcher, 6 stages) of :mod:`tensordg.runge_kutta` are
-    also accepted; ``"rk5"`` is what advances a degree-4 rung at the ``p + 1 = 5``
-    spatial order used by the RKDG accuracy tables.
+    (Kutta), ``"ssp_rk54"`` (Spiteri & Ruuth SSP-RK(5,4), 5 stages / 4th order)
+    and ``"rk5"`` (Butcher, 6 stages / 5th order) of
+    :mod:`tensordg.runge_kutta` are also accepted.  ``"ssp_rk54"`` is what
+    advances a degree-4 rung with the ``p + 1 = 5`` stages used by the RKDG
+    accuracy tables (order 5 with 5 explicit stages is impossible -- Butcher
+    barrier -- so the column ``RK5DG4`` is five-stage/fourth-order).
 
     ``weno_variant`` selects the non-linear weights of the WENO limiter
     (``"js"`` Jiang--Shu, the default and historical behaviour, or ``"z"``

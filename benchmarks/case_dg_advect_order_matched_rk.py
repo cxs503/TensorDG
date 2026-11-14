@@ -34,8 +34,14 @@ Predeclared criteria
 
 ``M1 rate``       for p = 1..4 the matched-stage fitted order must agree with the
                   reference column of the same degree within ``RATE_TOL = 0.10``.
-``M2 stages``     the tableau actually used must have ``order = stages = p + 1``
-                  (recorded per rung; the point of the exercise).
+``M2 stages``     the tableau actually used must have ``stages = p + 1`` (the
+                  reference's own stage count) and the *largest order an
+                  explicit method with that many stages can have*
+                  (:func:`tensordg.runge_kutta.max_order_for_stages`).  The round-2
+                  form of this criterion demanded ``order = stages = 5`` at
+                  ``p = 4``, which no explicit five-stage scheme can attain
+                  (Butcher barrier); the reference column ``RK5DG4`` is
+                  five-stage/fourth-order, i.e. SSP-RK(5,4).
 ``M3 stage gap``  the *hypothesis* "the reference's larger L2 constant is caused by
                   its lower-order (p+1-stage) time integration" is rejected if the
                   matched-stage ratio is still outside ``[0.85, 1.18]`` at
@@ -46,7 +52,12 @@ Predeclared criteria
                   order really is the spatial order.
 ``M5 dt order``   at fixed mesh the measured *time* order of each tableau must
                   match its design order within 0.2 (independent confirmation of
-                  the round-1 unit test, now inside the accuracy case).
+                  the round-1 unit test, now inside the accuracy case).  The
+                  probe refines in *step count* (an increasing resolution
+                  variable, which is what the shared estimator assumes) and
+                  drops points below ``E_TIME_FLOOR``; round 2 passed ``dt``
+                  itself and therefore reported negated slopes, which is why
+                  M5 was recorded as "not_run".
 
 Run: ``PYTHONPATH=. python -m benchmarks.case_dg_advect_order_matched_rk``
 Writes ``validation/advection_order_matched_rk/{metrics.json,tables.md}`` and two
@@ -69,7 +80,7 @@ from benchmarks.case_dg_advect_order import (REF_JSON, REF_MESHES, RATE_TOL,
                                              fitted_order, fit_with_floor,
                                              pairwise_orders)
 from tensordg.advection_1d import (_operators, _rhs, l2_error, solve_advection)
-from tensordg.runge_kutta import tableau_for_degree
+from tensordg.runge_kutta import max_order_for_stages, tableau_for_degree
 
 OUT = pathlib.Path("validation/advection_order_matched_rk")
 FIG = pathlib.Path("docs/figures")
@@ -82,6 +93,15 @@ TIME_SHARE_TOL = 0.10
 RATIO_BAND = (0.85, 1.18)
 DT_ORDER_TOL = 0.20
 FIT_FLOOR = 1e-12
+#: Round-off floor for the time-order probe: errors below this are float64
+#: accumulation noise (~1e-16 * sqrt(steps)), not truncation.
+E_TIME_FLOOR = 1e-11
+#: Probe mesh / CFL: 2 cells keeps the dense ``expm`` cheap and the round-off
+#: floor far below the truncation error, 0.4 stays inside the linear DG
+#: stability limit for every degree in the study.
+PROBE_CELLS = 2
+PROBE_CFL_MAX = 0.4
+PROBE_LEVELS = 6
 DEGREES = (1, 2, 3, 4)
 
 
@@ -155,16 +175,23 @@ def error_split(degree: int, ncells: int, cfl: float = CFL,
             "time_share": e_time / e_total if e_total > 0 else 0.0}
 
 
-def dt_order_probe(degree: int, ncells: int, integrator: str,
-                   final_time: float = FINAL_TIME, cfl_max: float = 0.5,
-                   levels: int = 6) -> dict:
-    """Measured *time* order at fixed mesh, against the exact semi-discrete state.
+def dt_order_probe(degree: int, ncells: int = PROBE_CELLS,
+                   integrator: str | None = None,
+                   final_time: float = FINAL_TIME,
+                   cfl_max: float = PROBE_CFL_MAX,
+                   levels: int = PROBE_LEVELS) -> dict:
+    """Measured *time* order at fixed mesh, against ``expm(L*T) u0``.
 
-    The step counts are chosen so that the *first* (coarsest) rung stays inside
-    the explicit stability limit of the tableau (``cfl <= cfl_max``); a coarser
-    start would make the error grow with refinement and produce a meaningless
-    negative slope (the trap this probe was written to avoid).
+    The ladder is ``steps = base * 2**k``: the resolution variable handed to the
+    shared estimator is therefore the step count (an *increasing* resolution,
+    exactly as the mesh ladder is), not ``dt``.  Round 2 passed ``dt`` and so
+    returned the negated slope, which is why the criterion was reported as
+    "not_run" rather than measured.  Points whose error is below
+    ``E_TIME_FLOOR`` are round-off and are dropped; at least three must remain
+    for a fit, otherwise the result is ``None`` (reported as not run).
     """
+    tab = tableau_for_degree(degree)
+    name = tab.name if integrator is None else integrator
     mat, u0 = semi_discrete_matrix(degree, ncells)
     exact = sla.expm(mat * final_time) @ u0
     base = int(-(-final_time * (2 * degree + 1) * ncells // cfl_max))
@@ -175,13 +202,15 @@ def dt_order_probe(degree: int, ncells: int, integrator: str,
         cfl = (final_time / n) * (2 * degree + 1) * ncells
         _, coeff, info = solve_advection(
             ncells=ncells, degree=degree, final_time=final_time, speed=SPEED,
-            cfl=cfl, time_integrator=integrator)
+            cfl=cfl, time_integrator=name)
         errs.append(l2_of_coeff_difference(degree, ncells, coeff, exact))
         dts.append(info["dt"])
-    keep = [(d, e) for d, e in zip(dts, errs) if e > 1e-14][-4:]
-    fit = fitted_order([d for d, _ in keep], [e for _, e in keep]) if len(keep) >= 3 else None
-    return {"degree": degree, "ncells": ncells, "integrator": integrator,
+    keep = [(n, e) for n, e in zip(steps, errs) if e >= E_TIME_FLOOR]
+    fit = fitted_order([n for n, _ in keep], [e for _, e in keep]) if len(keep) >= 3 else None
+    return {"degree": degree, "ncells": ncells, "integrator": name,
+            "design_order": tab.order, "design_stages": tab.stages,
             "steps": steps, "dt": dts, "E_time": errs,
+            "fit_floor": E_TIME_FLOOR, "fit_points": len(keep),
             "fitted_time_order": fit}
 
 
@@ -253,6 +282,9 @@ def main(argv=None) -> dict:
             "degree": degree,
             "integrator": got["integrator"],
             "rk_order": got["rk_order"], "rk_stages": got["rk_stages"],
+            "order_ok": got["rk_order"] == min(degree + 1,
+                                               max_order_for_stages(degree + 1)),
+            "max_order_for_stages": max_order_for_stages(degree + 1),
             "ref_column": name, "ref_rk_stages": ref_rows[meshes[0]][name]["rk_stages"],
             "meshes": list(meshes),
             "ref_fitted_order": ref_fit, "got_fitted_order": got["fitted_order"],
@@ -297,23 +329,21 @@ def main(argv=None) -> dict:
     # ---- verdicts ---------------------------------------------------------
     checks = {
         "M1_rate": all(r["rate_ok"] for r in rows) and degrees_done == DEGREES,
-        "M2_stages": all(r["stages_matched"] for r in rows) and degrees_done == DEGREES,
+        "M2_stages": (all(r["stages_matched"] and r["order_ok"] for r in rows)
+                      and degrees_done == DEGREES),
         "M3_stage_gap_rejected": (all(not r["ratio_in_band"] for r in rows)
                                    and degrees_done == DEGREES),
         "M4_time_share": all(s["time_share"] <= TIME_SHARE_TOL for s in splits),
-        # NOT RUN, instrument defect: the fixed-mesh probe returns negative
-        # slopes (-2.0, -3.0, -4.0, -5.4 on P1..P4 -- it is measuring the
-        # round-off floor, not the truncation error), so it is reported as
-        # not_run rather than as a (misleading) FAIL.  The design orders of the
-        # same tableaus *are* verified through the solver in
-        # tests/test_runge_kutta_orders.py (T2, error vs expm(L*T)u0).
-        "M5_dt_order": "not_run",
+        "M5_dt_order": (all(p["fitted_time_order"] is not None
+                            and abs(p["fitted_time_order"] - p["design_order"]) <= DT_ORDER_TOL
+                            for p in dt_probes) and len(dt_probes) == len(DEGREES)),
     }
     checks_detail = {"M5_dt_order": {
-        "status": "not_run",
-        "reason": ("probe returns negative slopes (round-off floor); superseded by "
-                   "tests/test_runge_kutta_orders.py::test_time_order_inside_solver_matches_tableau"),
-        "raw_fitted_time_orders": [p["fitted_time_order"] for p in dt_probes],
+        "tol": DT_ORDER_TOL, "fit_floor": E_TIME_FLOOR,
+        "probe": {"ncells": PROBE_CELLS, "cfl_max": PROBE_CFL_MAX,
+                  "levels": PROBE_LEVELS},
+        "measured_vs_design": {f"P{p['degree']}": [p["fitted_time_order"], p["design_order"]]
+                               for p in dt_probes},
     }}
 
     metrics = {
@@ -360,11 +390,12 @@ def main(argv=None) -> dict:
 
     lines = ["# CASE-DG-ADVECT-ORDER round 2 — matched-stage re-measurement\n",
              "## A. Order, like-for-like stage count", "",
-             "| p | integrator | stages | ref column | ref stages | ref 阶 | TensorDG 阶 | 差 | 判定 |",
-             "|--:|---|---:|---|--:|---:|---:|---:|:--:|"]
+             "| p | integrator | stages | 阶 | 该级数可达最大阶 | ref column | ref stages | ref 阶 | TensorDG 阶 | 差 | 判定 |",
+             "|--:|---|---:|---:|---:|---|--:|---:|---:|---:|:--:|"]
     for r in rows:
         lines.append(
-            f"| P{r['degree']} | {r['integrator']} | {r['rk_stages']} | {r['ref_column']} | "
+            f"| P{r['degree']} | {r['integrator']} | {r['rk_stages']} | {r['rk_order']} | "
+            f"{r['max_order_for_stages']} | {r['ref_column']} | "
             f"{r['ref_rk_stages']} | {r['ref_fitted_order']:.3f} | "
             f"{r['got_fitted_order']:.3f} | {r['order_gap_vs_ref']:+.3f} | {mk(r['rate_ok'])} |")
     lines += ["", "## B. L2 magnitude ratio (reference dt unknown)", "",
@@ -382,16 +413,17 @@ def main(argv=None) -> dict:
         lines.append(f"| P{s['degree']} | {s['ncells']} | {s['integrator']} | "
                      f"{s['E_total']:.3e} | {s['E_space']:.3e} | {s['E_time']:.3e} | "
                      f"{100 * s['time_share']:.2f}% |")
-    lines += ["", "## D. 时间阶独立实测（固定网格，dt 细分 vs expm 精确解）", "",
-              "| p | 格式 | 设计阶 | 实测时间阶 | 判定 |", "|--:|---|--:|---:|:--:|"]
+    lines += ["", "## D. 时间阶独立实测（固定网格，步数细分 vs expm 精确解）", "",
+              "| p | 格式 | 级数 | 设计阶 | 实测时间阶 | 拟合点数 | 判定 |",
+              "|--:|---|---:|---:|---:|---:|:--:|"]
     for p in dt_probes:
-        design = tableau_for_degree(p["degree"]).order
+        design = p["design_order"]
         ok = (p["fitted_time_order"] is not None and
               abs(p["fitted_time_order"] - design) <= DT_ORDER_TOL)
         measured = p["fitted_time_order"]
         shown = "n/a" if measured is None else f"{measured:.3f}"
-        lines.append(f"| P{p['degree']} | {p['integrator']} | {design} | "
-                     f"{shown} | {mk(ok)} |")
+        lines.append(f"| P{p['degree']} | {p['integrator']} | {p['design_stages']} | "
+                     f"{design} | {shown} | {p['fit_points']} | {mk(ok)} |")
     lines += ["", "## 判定", ""]
     for k, v in checks.items():
         lines.append(f"- {k}: **{mk(v)}**")
