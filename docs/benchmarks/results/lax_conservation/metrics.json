@@ -1,0 +1,699 @@
+{
+  "case": "CASE-LAX-DG",
+  "anchor": {
+    "slug": "CASE-LAX-DG",
+    "title": "\u7b97\u4f8b\u6c60\u00b7Lax via DG",
+    "acceptance": "ref: \u7cbe\u786e\u89e3 | \u5bb9\u5dee < 3%"
+  },
+  "study": "global conservation budget (boundary-flux bookkeeping) of the Lax shock tube",
+  "generated_at_utc": "2026-11-14T15:03:00Z",
+  "config": {
+    "left_state": [
+      0.445,
+      0.698,
+      3.528
+    ],
+    "right_state": [
+      0.5,
+      0.0,
+      0.571
+    ],
+    "gamma": 1.4,
+    "final_time": 0.13,
+    "diaphragm": 0.5,
+    "domain": [
+      0.0,
+      1.0
+    ],
+    "cfl": 0.35,
+    "ladder": [
+      [
+        50,
+        1
+      ],
+      [
+        100,
+        1
+      ],
+      [
+        200,
+        2
+      ],
+      [
+        400,
+        3
+      ]
+    ],
+    "limiter_arms": [
+      "none",
+      "tvb",
+      "weno"
+    ],
+    "positivity_arms": [
+      "scale",
+      "collapse"
+    ],
+    "positivity_leg": [
+      200,
+      2
+    ]
+  },
+  "exact_reference": {
+    "method": "piecewise Gauss-Legendre (48 pts) on the 5 analytic pieces",
+    "totals": {
+      "mass": 0.5128793,
+      "momentum": 0.5678997514,
+      "energy": 6.308245443238601
+    },
+    "budget": {
+      "mass": 0.5128792999999999,
+      "momentum": 0.5678997514,
+      "energy": 6.308245443238602
+    },
+    "increment": {
+      "mass": 0.0403793,
+      "momentum": 0.41259475140000007,
+      "energy": 1.1302939982386002
+    },
+    "relative_residual": {
+      "mass": 2.1646867491535664e-16,
+      "momentum": 0.0,
+      "energy": 1.4079642710353098e-16
+    },
+    "worst": 2.1646867491535664e-16
+  },
+  "gate": {
+    "tolerance": 1e-05,
+    "bar": "|int U(t) - int U(0) - t*(F_L - F_R)| / |int U(t)| on every field and leg",
+    "verdict": "FAIL",
+    "worst": {
+      "value": 1.9938066548493415e-05,
+      "leg": "p3.N400",
+      "limiter": "none",
+      "positivity": "scale",
+      "field": "momentum"
+    },
+    "naive_worst": 2.656675399721562,
+    "detection_ratio": 265667.53997215617,
+    "rows": [
+      {
+        "leg": "p1.N50",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "mass",
+        "budget_residual": 4.2302364603933264e-07,
+        "naive_residual": 0.0854592951535903,
+        "pass": true
+      },
+      {
+        "leg": "p1.N50",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "momentum",
+        "budget_residual": 1.0099307976800072e-06,
+        "naive_residual": 2.656670280161947,
+        "pass": true
+      },
+      {
+        "leg": "p1.N50",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "energy",
+        "budget_residual": 8.848834169200048e-07,
+        "naive_residual": 0.21829088053574477,
+        "pass": true
+      },
+      {
+        "leg": "p1.N50",
+        "limiter": "tvb",
+        "positivity": "scale",
+        "field": "mass",
+        "budget_residual": 1.5952126870261157e-06,
+        "naive_residual": 0.08546056751654228,
+        "pass": true
+      },
+      {
+        "leg": "p1.N50",
+        "limiter": "tvb",
+        "positivity": "scale",
+        "field": "momentum",
+        "budget_residual": 3.7940079783039298e-06,
+        "naive_residual": 2.6566600996993817,
+        "pass": true
+      },
+      {
+        "leg": "p1.N50",
+        "limiter": "tvb",
+        "positivity": "scale",
+        "field": "energy",
+        "budget_residual": 3.329612018068083e-06,
+        "naive_residual": 0.21829385892366943,
+        "pass": true
+      },
+      {
+        "leg": "p1.N50",
+        "limiter": "weno",
+        "positivity": "scale",
+        "field": "mass",
+        "budget_residual": 1.6460033669076607e-07,
+        "naive_residual": 0.08545865731194602,
+        "pass": true
+      },
+      {
+        "leg": "p1.N50",
+        "limiter": "weno",
+        "positivity": "scale",
+        "field": "momentum",
+        "budget_residual": 3.901282866579621e-07,
+        "naive_residual": 2.656675399721562,
+        "pass": true
+      },
+      {
+        "leg": "p1.N50",
+        "limiter": "weno",
+        "positivity": "scale",
+        "field": "energy",
+        "budget_residual": 3.4272950201536755e-07,
+        "naive_residual": 0.21828938494744424,
+        "pass": true
+      },
+      {
+        "leg": "p1.N100",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "mass",
+        "budget_residual": 1.0417632909024508e-09,
+        "naive_residual": 0.08545883710962705,
+        "pass": true
+      },
+      {
+        "leg": "p1.N100",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "momentum",
+        "budget_residual": 2.4778177100270024e-09,
+        "naive_residual": 2.6566739640890376,
+        "pass": true
+      },
+      {
+        "leg": "p1.N100",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "energy",
+        "budget_residual": 2.1739371022566694e-09,
+        "naive_residual": 0.218289805139787,
+        "pass": true
+      },
+      {
+        "leg": "p1.N100",
+        "limiter": "tvb",
+        "positivity": "scale",
+        "field": "mass",
+        "budget_residual": 3.085573715514607e-09,
+        "naive_residual": 0.08545883262957263,
+        "pass": true
+      },
+      {
+        "leg": "p1.N100",
+        "limiter": "tvb",
+        "positivity": "scale",
+        "field": "momentum",
+        "budget_residual": 7.3387339977970145e-09,
+        "naive_residual": 2.6566739999849664,
+        "pass": true
+      },
+      {
+        "leg": "p1.N100",
+        "limiter": "tvb",
+        "positivity": "scale",
+        "field": "energy",
+        "budget_residual": 6.438837860331491e-09,
+        "naive_residual": 0.2182897946469311,
+        "pass": true
+      },
+      {
+        "leg": "p1.N100",
+        "limiter": "weno",
+        "positivity": "scale",
+        "field": "mass",
+        "budget_residual": 2.5171778453254854e-10,
+        "naive_residual": 0.08545883625206517,
+        "pass": true
+      },
+      {
+        "leg": "p1.N100",
+        "limiter": "weno",
+        "positivity": "scale",
+        "field": "momentum",
+        "budget_residual": 5.987592376354168e-10,
+        "naive_residual": 2.6566739709601417,
+        "pass": true
+      },
+      {
+        "leg": "p1.N100",
+        "limiter": "weno",
+        "positivity": "scale",
+        "field": "energy",
+        "budget_residual": 5.252999242162516e-10,
+        "naive_residual": 0.21828980313126914,
+        "pass": true
+      },
+      {
+        "leg": "p2.N200",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "mass",
+        "budget_residual": 3.2665123044727315e-13,
+        "naive_residual": 0.08545883597848132,
+        "pass": true
+      },
+      {
+        "leg": "p2.N200",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "momentum",
+        "budget_residual": 1.0083699362254302e-12,
+        "naive_residual": 2.6566739731459217,
+        "pass": true
+      },
+      {
+        "leg": "p2.N200",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "energy",
+        "budget_residual": 7.084876211849679e-13,
+        "naive_residual": 0.2182898024904385,
+        "pass": true
+      },
+      {
+        "leg": "p2.N200",
+        "limiter": "tvb",
+        "positivity": "scale",
+        "field": "mass",
+        "budget_residual": 4.65537532272966e-12,
+        "naive_residual": 0.08545883598388909,
+        "pass": true
+      },
+      {
+        "leg": "p2.N200",
+        "limiter": "tvb",
+        "positivity": "scale",
+        "field": "momentum",
+        "budget_residual": 1.712528073738105e-11,
+        "naive_residual": 2.6566739732122304,
+        "pass": true
+      },
+      {
+        "leg": "p2.N200",
+        "limiter": "tvb",
+        "positivity": "scale",
+        "field": "energy",
+        "budget_residual": 1.1578957368567283e-11,
+        "naive_residual": 0.21828980250540816,
+        "pass": true
+      },
+      {
+        "leg": "p3.N400",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "mass",
+        "budget_residual": 5.504848962170639e-06,
+        "naive_residual": 0.08545286069188916,
+        "pass": true
+      },
+      {
+        "leg": "p3.N400",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "momentum",
+        "budget_residual": 1.9938066548493415e-05,
+        "naive_residual": 2.656601066140586,
+        "pass": false
+      },
+      {
+        "leg": "p3.N400",
+        "limiter": "none",
+        "positivity": "scale",
+        "field": "energy",
+        "budget_residual": 1.3525474390070765e-05,
+        "naive_residual": 0.21827332454377835,
+        "pass": false
+      }
+    ]
+  },
+  "sensitivity": {
+    "relative_flux_error": 0.01,
+    "budget_displacement": 0.007265274379551349,
+    "detection_margin": 726.5274379551348,
+    "increment_scale": 0.7265274379551349
+  },
+  "entries": [
+    {
+      "cells": 50,
+      "degree": 1,
+      "limiter": "none",
+      "positivity": "scale",
+      "steps": 279,
+      "wall_seconds": 4.067080460488796,
+      "totals": {
+        "mass": 0.5128795169600714,
+        "momentum": 0.5678991778605511,
+        "energy": 6.308251025300386
+      },
+      "start": {
+        "mass": 0.4725,
+        "momentum": 0.15530499999999997,
+        "energy": 5.177951445000003
+      },
+      "budget": {
+        "mass": 0.5128792999999999,
+        "momentum": 0.5678997514,
+        "energy": 6.3082454432386035
+      },
+      "increment": {
+        "mass": 0.0403793,
+        "momentum": 0.41259475140000007,
+        "energy": 1.1302939982386002
+      },
+      "budget_residual": {
+        "mass": 4.2302364603933264e-07,
+        "momentum": 1.0099307976800072e-06,
+        "energy": 8.848834169200048e-07
+      },
+      "naive_residual": {
+        "mass": 0.0854592951535903,
+        "momentum": 2.656670280161947,
+        "energy": 0.21829088053574477
+      }
+    },
+    {
+      "cells": 50,
+      "degree": 1,
+      "limiter": "tvb",
+      "positivity": "scale",
+      "steps": 264,
+      "wall_seconds": 5.8089621011167765,
+      "totals": {
+        "mass": 0.5128801181515662,
+        "momentum": 0.5678975967838124,
+        "energy": 6.308266447248444
+      },
+      "start": {
+        "mass": 0.4725,
+        "momentum": 0.15530499999999997,
+        "energy": 5.177951445000003
+      },
+      "budget": {
+        "mass": 0.5128792999999999,
+        "momentum": 0.5678997514,
+        "energy": 6.3082454432386035
+      },
+      "increment": {
+        "mass": 0.0403793,
+        "momentum": 0.41259475140000007,
+        "energy": 1.1302939982386002
+      },
+      "budget_residual": {
+        "mass": 1.5952126870261157e-06,
+        "momentum": 3.7940079783039298e-06,
+        "energy": 3.329612018068083e-06
+      },
+      "naive_residual": {
+        "mass": 0.08546056751654228,
+        "momentum": 2.6566600996993817,
+        "energy": 0.21829385892366943
+      }
+    },
+    {
+      "cells": 50,
+      "degree": 1,
+      "limiter": "weno",
+      "positivity": "scale",
+      "steps": 274,
+      "wall_seconds": 8.836314840242267,
+      "totals": {
+        "mass": 0.5128792155798945,
+        "momentum": 0.567899972953757,
+        "energy": 6.308243281216784
+      },
+      "start": {
+        "mass": 0.4725,
+        "momentum": 0.15530499999999997,
+        "energy": 5.177951445000003
+      },
+      "budget": {
+        "mass": 0.5128792999999999,
+        "momentum": 0.5678997514,
+        "energy": 6.3082454432386035
+      },
+      "increment": {
+        "mass": 0.0403793,
+        "momentum": 0.41259475140000007,
+        "energy": 1.1302939982386002
+      },
+      "budget_residual": {
+        "mass": 1.6460033669076607e-07,
+        "momentum": 3.901282866579621e-07,
+        "energy": 3.4272950201536755e-07
+      },
+      "naive_residual": {
+        "mass": 0.08545865731194602,
+        "momentum": 2.656675399721562,
+        "energy": 0.21828938494744424
+      }
+    },
+    {
+      "cells": 100,
+      "degree": 1,
+      "limiter": "none",
+      "positivity": "scale",
+      "steps": 555,
+      "wall_seconds": 8.161870559677482,
+      "totals": {
+        "mass": 0.5128793005342988,
+        "momentum": 0.567899749992848,
+        "energy": 6.308245456952331
+      },
+      "start": {
+        "mass": 0.4725,
+        "momentum": 0.155305,
+        "energy": 5.177951445000002
+      },
+      "budget": {
+        "mass": 0.5128792999999999,
+        "momentum": 0.5678997514,
+        "energy": 6.308245443238603
+      },
+      "increment": {
+        "mass": 0.0403793,
+        "momentum": 0.41259475140000007,
+        "energy": 1.1302939982386002
+      },
+      "budget_residual": {
+        "mass": 1.0417632909024508e-09,
+        "momentum": 2.4778177100270024e-09,
+        "energy": 2.1739371022566694e-09
+      },
+      "naive_residual": {
+        "mass": 0.08545883710962705,
+        "momentum": 2.6566739640890376,
+        "energy": 0.218289805139787
+      }
+    },
+    {
+      "cells": 100,
+      "degree": 1,
+      "limiter": "tvb",
+      "positivity": "scale",
+      "steps": 531,
+      "wall_seconds": 11.72740930877626,
+      "totals": {
+        "mass": 0.512879298417473,
+        "momentum": 0.5678997555676653,
+        "energy": 6.308245402620833
+      },
+      "start": {
+        "mass": 0.4725,
+        "momentum": 0.155305,
+        "energy": 5.177951445000002
+      },
+      "budget": {
+        "mass": 0.5128792999999999,
+        "momentum": 0.5678997514,
+        "energy": 6.308245443238603
+      },
+      "increment": {
+        "mass": 0.0403793,
+        "momentum": 0.41259475140000007,
+        "energy": 1.1302939982386002
+      },
+      "budget_residual": {
+        "mass": 3.085573715514607e-09,
+        "momentum": 7.3387339977970145e-09,
+        "energy": 6.438837860331491e-09
+      },
+      "naive_residual": {
+        "mass": 0.08545883262957263,
+        "momentum": 2.6566739999849664,
+        "energy": 0.2182897946469311
+      }
+    },
+    {
+      "cells": 100,
+      "degree": 1,
+      "limiter": "weno",
+      "positivity": "scale",
+      "steps": 545,
+      "wall_seconds": 17.246665630489588,
+      "totals": {
+        "mass": 0.5128793001291008,
+        "momentum": 0.5678997510599648,
+        "energy": 6.308245446552323
+      },
+      "start": {
+        "mass": 0.4725,
+        "momentum": 0.155305,
+        "energy": 5.177951445000002
+      },
+      "budget": {
+        "mass": 0.5128792999999999,
+        "momentum": 0.5678997514,
+        "energy": 6.308245443238603
+      },
+      "increment": {
+        "mass": 0.0403793,
+        "momentum": 0.41259475140000007,
+        "energy": 1.1302939982386002
+      },
+      "budget_residual": {
+        "mass": 2.5171778453254854e-10,
+        "momentum": 5.987592376354168e-10,
+        "energy": 5.252999242162516e-10
+      },
+      "naive_residual": {
+        "mass": 0.08545883625206517,
+        "momentum": 2.6566739709601417,
+        "energy": 0.21828980313126914
+      }
+    },
+    {
+      "cells": 200,
+      "degree": 2,
+      "limiter": "none",
+      "positivity": "scale",
+      "steps": 1828,
+      "wall_seconds": 31.856240021064878,
+      "totals": {
+        "mass": 0.5128792999998324,
+        "momentum": 0.5678997513994274,
+        "energy": 6.308245443234132
+      },
+      "start": {
+        "mass": 0.4725,
+        "momentum": 0.155305,
+        "energy": 5.1779514450000015
+      },
+      "budget": {
+        "mass": 0.5128792999999999,
+        "momentum": 0.5678997514,
+        "energy": 6.308245443238602
+      },
+      "increment": {
+        "mass": 0.0403793,
+        "momentum": 0.41259475140000007,
+        "energy": 1.1302939982386002
+      },
+      "budget_residual": {
+        "mass": 3.2665123044727315e-13,
+        "momentum": 1.0083699362254302e-12,
+        "energy": 7.084876211849679e-13
+      },
+      "naive_residual": {
+        "mass": 0.08545883597848132,
+        "momentum": 2.6566739731459217,
+        "energy": 0.2182898024904385
+      }
+    },
+    {
+      "cells": 200,
+      "degree": 2,
+      "limiter": "tvb",
+      "positivity": "scale",
+      "steps": 1751,
+      "wall_seconds": 45.83082569018006,
+      "totals": {
+        "mass": 0.5128793000023876,
+        "momentum": 0.5678997514097255,
+        "energy": 6.308245443311645
+      },
+      "start": {
+        "mass": 0.4725,
+        "momentum": 0.155305,
+        "energy": 5.1779514450000015
+      },
+      "budget": {
+        "mass": 0.5128792999999999,
+        "momentum": 0.5678997514,
+        "energy": 6.308245443238602
+      },
+      "increment": {
+        "mass": 0.0403793,
+        "momentum": 0.41259475140000007,
+        "energy": 1.1302939982386002
+      },
+      "budget_residual": {
+        "mass": 4.65537532272966e-12,
+        "momentum": 1.712528073738105e-11,
+        "energy": 1.1578957368567283e-11
+      },
+      "naive_residual": {
+        "mass": 0.08545883598388909,
+        "momentum": 2.6566739732122304,
+        "energy": 0.21828980250540816
+      }
+    },
+    {
+      "cells": 400,
+      "degree": 3,
+      "limiter": "none",
+      "positivity": "scale",
+      "steps": 5109,
+      "wall_seconds": 105.5336887203157,
+      "totals": {
+        "mass": 0.5128764766769176,
+        "momentum": 0.5678884285769638,
+        "energy": 6.308160121226413
+      },
+      "start": {
+        "mass": 0.4725,
+        "momentum": 0.155305,
+        "energy": 5.1779514450000015
+      },
+      "budget": {
+        "mass": 0.5128792999999999,
+        "momentum": 0.5678997514,
+        "energy": 6.308245443238602
+      },
+      "increment": {
+        "mass": 0.0403793,
+        "momentum": 0.41259475140000007,
+        "energy": 1.1302939982386002
+      },
+      "budget_residual": {
+        "mass": 5.504848962170639e-06,
+        "momentum": 1.9938066548493415e-05,
+        "energy": 1.3525474390070765e-05
+      },
+      "naive_residual": {
+        "mass": 0.08545286069188916,
+        "momentum": 2.656601066140586,
+        "energy": 0.21827332454377835
+      }
+    }
+  ],
+  "wall_seconds": 0.008166313171386719,
+  "figures": [
+    "docs/benchmarks/results/lax_conservation/figures/lax_conservation_naive_vs_budget.png",
+    "docs/benchmarks/results/lax_conservation/figures/lax_conservation_residual_vs_resolution.png"
+  ]
+}
