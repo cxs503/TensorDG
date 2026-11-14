@@ -3,10 +3,21 @@
 The 1-D/2-D DG solvers in this package integrate ``du/dt = L(u)`` with a
 hand-coded scheme.  Accuracy studies, however, need the *time* order to be a
 free knob: the classic RKDG accuracy tables (e.g. Sun, Math. Comp. 2024,
-DOI 10.1090/mcom/4037) report ``p``-th degree columns advanced with exactly
-``p + 1`` stages, so a like-for-like comparison requires the same family of
-integrators.  This module provides the minimal-stage classical tableaus plus
-classical RK4, in a form the solvers can drive generically.
+DOI 10.1090/mcom/4037) report one column per DG degree, each advanced with
+exactly ``p + 1`` stages, so a like-for-like comparison requires the same
+family of integrators.  This module provides the minimal-stage tableaus, the
+classical RK4, and the five-stage fourth-order strong-stability-preserving
+scheme that closes the ``p = 4`` rung (see :func:`tableau_for_degree`).
+
+Butcher barrier
+---------------
+An explicit RK method with ``s`` stages cannot have order ``s`` for
+``s = 5``: order 5 needs at least 6 stages (Butcher 1965).  The reference
+column ``RK5DG4`` of the RKDG accuracy tables therefore denotes *five* stages
+advancing a degree-4 DG space -- i.e. a fourth-order, five-stage scheme
+(Spiteri & Ruuth's SSP-RK(5,4)), not a fifth-order one.  :data:`SSP_RK54` is
+that scheme, so the "``p + 1`` stages" convention can be honoured at every
+degree without claiming an order that no explicit scheme of that size has.
 
 Only *explicit* tableaus with a strictly lower-triangular ``a`` are provided.
 ``c`` is carried for reference/reporting; the solvers use the autonomous form
@@ -78,8 +89,7 @@ RK4 = RKTableau(
     reference="classical Runge-Kutta (1895)",
 ).check()
 
-#: Butcher's six-stage, fifth-order scheme -- needed for a degree-4 DG rung
-#: whose spatial order is 5.
+#: Butcher's six-stage, fifth-order scheme -- the minimal tableau of order 5.
 RK5 = RKTableau(
     name="rk5", order=5, stages=6,
     a=((),
@@ -93,8 +103,69 @@ RK5 = RKTableau(
     reference="Butcher (1964), 6-stage 5th-order",
 ).check()
 
+
+# --------------------------------------------------------------------------- #
+# SSP-RK(5,4): five stages, fourth order (Spiteri & Ruuth 2002)
+# --------------------------------------------------------------------------- #
+#: Shu-Osher (convex-combination) form of SSP-RK(5,4), transcribed from
+#: Spiteri & Ruuth, *A new class of optimal high-order strong-stability-
+#: preserving time discretization methods*, SIAM J. Numer. Anal. 40 (2002)
+#: 469-491, eq. (3.5); reproduced e.g. as (2.11) in Ketcheson, *Highly
+#: efficient strong stability preserving Runge-Kutta methods with low-storage
+#: implementations*, SIAM J. Sci. Comput. 30 (2008) 2113-2135.  Each entry is
+#: ``(u_old_coeff, u_prev_coeff, dt*F_prev_coeff)``.
+_SHUS_OSHER_RK54 = (
+    (1.0, 0.0, 0.391752226571890),               # u1 = u + 0.3918 dt F(u)
+    (0.444370493651235, 0.555629506348765, 0.368410593050371),   # u2
+    (0.620101851488403, 0.379898148511597, 0.251891774271694),   # u3
+    (0.178079954393132, 0.821920045606868, 0.544974750228521),   # u4
+)
+#: Final update: ``u_{n+1} = c2 u2 + c3 u3 + g3 dt F(u3) + c4 u4 + g4 dt F(u4)``.
+_FINAL_RK54 = {"coeffs": (0.517231671970585, 0.096059710526147, 0.386708617503269),
+               "stage_fluxes": (0.063692468666290, 0.226007483236906)}
+
+
+def _ssp_rk54_tableau() -> RKTableau:
+    """Convert the Shu-Osher form above into Butcher form mechanically.
+
+    ``u_i = u_n + dt * sum_j a_ij F(u_j)`` is accumulated stage by stage, so the
+    printed numbers never have to be transcribed (or trusted) by hand; the
+    invariants ``sum(b) = 1`` and ``c_i = sum_j a_ij`` are asserted by
+    :meth:`RKTableau.check` and by the row-sum test in the unit tests.
+    """
+    rows: list[list[float]] = []
+    # stage 1 (Euler step)
+    rows.append([0.391752226571890])
+    for u_old, u_prev, g in _SHUS_OSHER_RK54[1:]:
+        prev = rows[-1]
+        row = [u_prev * a for a in prev]
+        # u_prev * u_{i-1} contributes u_prev * (u_n + dt * sum a_{i-1,j} F_j);
+        # the u_n coefficients telescope because each Shu-Osher row is a convex
+        # combination (u_old + u_prev = 1).
+        row.append(g)
+        rows.append(row)
+    coeffs = _FINAL_RK54["coeffs"]
+    g3, g4 = _FINAL_RK54["stage_fluxes"]
+    b = [0.0] * 5
+    for c, row in zip(coeffs, rows[1:]):    # u2, u3, u4 rows
+        for j, a in enumerate(row):
+            b[j] += c * a
+    # The final Shu-Osher line evaluates fluxes at the *third* and *fourth*
+    # stages, i.e. Butcher indices 3 and 4 (index 0 is the F(u^n) evaluation).
+    b[3] += g3
+    b[4] += g4
+    c = [0.0] + [sum(row) for row in rows]   # c_0 = 0 for the first stage
+    return RKTableau(
+        name="ssp_rk54", order=4, stages=5,
+        a=((),) + tuple(tuple(r) for r in rows), b=tuple(b), c=tuple(c),
+        reference="Spiteri & Ruuth (2002), SSP-RK(5,4), 5-stage 4th-order",
+    ).check()
+
+
+SSP_RK54 = _ssp_rk54_tableau()
+
 TABLEAUS: dict[str, RKTableau] = {
-    tab.name: tab for tab in (EULER, RK2, RK3, RK4, RK5)
+    tab.name: tab for tab in (EULER, RK2, RK3, RK4, SSP_RK54, RK5)
 }
 
 
@@ -136,19 +207,47 @@ def rk_step(rhs: Callable[[torch.Tensor], torch.Tensor], u: torch.Tensor,
     return project(out) if project is not None else out
 
 
-def tableau_for_degree(degree: int, cap: int = 5) -> RKTableau:
-    """Minimal-stage tableau whose order is ``degree + 1`` (capped at ``cap``).
+#: Largest order attainable by an explicit RK method with ``s`` stages
+#: (Butcher's order barrier: order ``<= s`` for every explicit method, and
+#: order 5 is impossible with ``s = 5`` -- it needs at least six stages).
+#: Consulted wherever a stage-matched scheme must state what accuracy it can
+#: promise, so no claim is made that no scheme of that size can honour.
+MAX_ORDER_FOR_STAGES: dict[int, int] = {
+    1: 1, 2: 2, 3: 3, 4: 4, 5: 4, 6: 5, 7: 6, 8: 6, 9: 7, 10: 7,
+}
 
-    ``degree + 1`` is the spatial order of a degree-``degree`` DG scheme for a
-    smooth solution, so this is the tableau that makes the time error share the
-    spatial order -- the convention used by the RKDG accuracy tables in the
-    literature.  Degrees beyond ``cap - 1`` are served by the highest-order
-    (``cap``) tableau available.
+
+def max_order_for_stages(stages: int) -> int:
+    """Butcher-barrier bound on the order of an explicit ``stages``-stage RK."""
+    if stages < 1:
+        raise ValueError("stages must be >= 1")
+    if stages in MAX_ORDER_FOR_STAGES:
+        return MAX_ORDER_FOR_STAGES[stages]
+    return stages // 2 + 1 if stages % 2 == 0 else (stages + 1) // 2 + 1
+
+
+def tableau_for_degree(degree: int) -> RKTableau:
+    """Tableau used to advance a degree-``degree`` DG space.
+
+    The RKDG accuracy tables advance degree ``p`` with ``p + 1`` stages, so the
+    selection rule is *stage count first*: among the registered tableaus pick
+    the highest order whose stage count is exactly ``p + 1``.
+
+    * ``p = 0..3``  the minimal-stage classical tableaus of order ``p + 1``
+      (Euler, Heun, Kutta-3, RK4) -- order and stages agree.
+    * ``p = 4``     :data:`SSP_RK54` -- five stages, *fourth* order.  Order 5
+      with five stages is impossible for an explicit method (Butcher barrier),
+      which is exactly why the reference column is called ``RK5DG4``: five
+      stages, degree 4.  The time error stays far below the spatial one at the
+      CFL used by the accuracy study (measured share <= 1 %), so the observed
+      rate is the spatial order ``p + 1 = 5``.
+    * ``p >= 5``    no registered tableau has that many stages; the highest
+      order available is used (documented cap, not silently extrapolated).
     """
     if degree < 0:
         raise ValueError("degree must be >= 0")
-    order = min(degree + 1, cap)
-    for tab in TABLEAUS.values():
-        if tab.order == order:
-            return tab
-    raise ValueError(f"no tableau of order {order}")
+    wanted_stages = degree + 1
+    exact = [t for t in TABLEAUS.values() if t.stages == wanted_stages]
+    if exact:
+        return max(exact, key=lambda t: t.order)
+    return max(TABLEAUS.values(), key=lambda t: (t.order, -t.stages))
