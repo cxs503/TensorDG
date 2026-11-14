@@ -35,10 +35,45 @@ __all__ = [
 ]
 
 
-def vortex_primitive(x, y, time=0.0, strength=5.0, background_velocity=(1.0, 1.0)):
-    """Analytical isentropic vortex with unit far-field density and pressure."""
+def _wrap_shift(shift, period):
+    """Fold a displacement into ``[-L/2, L/2)`` (the periodic min-image map)."""
+    length = float(period)
+    if not length > 0.0:
+        raise ValueError(f"period must be positive, got {period!r}")
+    return shift - length * torch.floor(shift / length + 0.5)
+
+
+def vortex_primitive(x, y, time=0.0, strength=5.0, background_velocity=(1.0, 1.0),
+                     period=None):
+    """Analytical isentropic vortex with unit far-field density and pressure.
+
+    ``period`` (scalar box length, or ``(Lx, Ly)``) makes the solution *periodic*:
+    the displacement is first folded into ``[-L/2, L/2)`` before the radial
+    profile is evaluated.  Without it the returned field is the free-space
+    vortex, which is **not** a solution of the periodic problem once the centre
+    has been advected out of the box: on ``[-5, 5]^2`` with ``u_inf = (1, 1)``
+    the free-space reference at ``t = 5`` has its core at the corner and is
+    essentially undisturbed at the opposite corner, whereas the periodic
+    solution carries a quarter core there.  Comparing a periodic run against the
+    unwrapped reference therefore reports a ``t``-dependent "error" that is a
+    property of the reference, not of the scheme (measured: 14.1 % in velocity
+    at ``t = 5``, 16.2 % at ``t = 10`` -- see
+    ``docs/CASE-DG-EULER-VORTEX-ERR.md``).
+
+    The folding keeps only the nearest image.  The truncated images enter at
+    radial distance ``>= L - |shift| >= 5`` for ``L = 10``, i.e. they are
+    ``exp(0.5 * (1 - 25)) ~ 6e-6`` of the vortex amplitude -- two orders below
+    the discretisation error of the coarsest mesh used here, and exactly zero at
+    ``time = 0`` where the displacement already lies inside the box.
+    """
     x_shift = x - background_velocity[0] * time
     y_shift = y - background_velocity[1] * time
+    if period is not None:
+        period_x, period_y = ((float(period), float(period))
+                              if np.isscalar(period) else (float(period[0]),
+                                                           float(period[1])))
+        x_shift = _wrap_shift(x_shift, period_x)
+        y_shift = _wrap_shift(y_shift, period_y)
     radius2 = x_shift ** 2 + y_shift ** 2
     exponential = torch.exp(0.5 * (1.0 - radius2))
     temperature = 1.0 - (GAMMA - 1.0) * strength ** 2 / (
@@ -277,8 +312,14 @@ def solve_isentropic_vortex(
     return x, y, fields, metadata
 
 
-def vortex_error(x, y, conservative, final_time, strength=5.0, background_velocity=(1.0, 1.0)):
-    """Compare P0 states with four-point-per-direction exact cell averages."""
+def vortex_error(x, y, conservative, final_time, strength=5.0,
+                 background_velocity=(1.0, 1.0), period=None):
+    """Compare P0 states with four-point-per-direction exact cell averages.
+
+    ``period`` is forwarded to :func:`vortex_primitive`; pass the box length for
+    periodic runs, otherwise the long-time reference is the free-space vortex
+    and the reported error is dominated by the reference defect.
+    """
     nx, ny = conservative.shape[:2]
     dx = float((x[-1] - x[0]).item()) / (nx - 1)
     dy = float((y[-1] - y[0]).item()) / (ny - 1)
@@ -287,7 +328,8 @@ def vortex_error(x, y, conservative, final_time, strength=5.0, background_veloci
     weights = torch.as_tensor(weights_np, device=conservative.device, dtype=conservative.dtype)
     xq = x[:, None, None, None] + 0.5 * dx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * dy * nodes[None, None, None, :]
-    exact_q = vortex_primitive(xq, yq, final_time, strength, background_velocity)
+    exact_q = vortex_primitive(xq, yq, final_time, strength, background_velocity,
+                               period=period)
     reference = tuple(
         0.25 * torch.sum(
             field * weights[None, None, :, None] * weights[None, None, None, :],

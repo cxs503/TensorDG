@@ -240,3 +240,109 @@ def test_figures_are_produced(tmp_path):
                                             "fig_invariants_vs_time.png"}
     for figure in figures:
         assert (tmp_path / figure["name"]).stat().st_size > 2000
+
+# ---------------------------------------------------------------------------
+# reference model: the exact solution must be *periodic* on the periodic box
+# ---------------------------------------------------------------------------
+# The m20486 release measured every long-time checkpoint against the free-space
+# vortex.  On a periodic box that reference stops being the solution once the
+# centre leaves the domain, so the reported "super-linear error accumulation"
+# (alpha = 3.3 ... 4.4) was a defect of the *reference*, not of the scheme.  The
+# tests below pin the invariant: the reference must be L-periodic and the metric
+# must return ~0 when it is fed the exact periodic state.
+
+def _grid(lo=ec.DOMAIN[0][0], hi=ec.DOMAIN[0][1], points=37):
+    import torch
+    axis = torch.linspace(lo, hi, points, dtype=torch.float64)
+    return torch.meshgrid(axis, axis, indexing="ij")
+
+
+def test_periodic_reference_is_invariant_under_a_box_translation():
+    import torch
+    grid_x, grid_y = _grid(-4.3, 4.1)
+    shifted_x, shifted_y = _grid(5.7, 14.1)  # same points, +10 in both axes
+    base = ec.vortex_primitive(grid_x, grid_y, 5.0, ec.STRENGTH, ec.BACKGROUND,
+                               period=ec.PERIOD)
+    moved = ec.vortex_primitive(shifted_x, shifted_y, 5.0, ec.STRENGTH,
+                                ec.BACKGROUND, period=ec.PERIOD)
+    for name, a, b in zip(ec.FIELDS, base, moved):
+        assert torch.allclose(a, b, atol=1e-12), f"{name} is not periodic"
+
+
+def test_free_space_reference_still_matches_while_the_centre_is_inside():
+    """The wrap must be a no-op at t=0 and tiny early -- it is not a retune.
+
+    Measured on the open box ``[-4.5, 4.5]^2`` (the closed-box edge is the fold's
+    own discontinuity, where the free-space tail is locally 1e-3 by construction).
+    """
+    import torch
+    grid_x, grid_y = _grid(-4.5, 4.5, points=51)
+    for time, bound in ((0.0, 0.0), (1.0, 1e-3), (2.0, 5e-3)):
+        free = ec.vortex_primitive(grid_x, grid_y, time, ec.STRENGTH,
+                                   ec.BACKGROUND)
+        periodic = ec.vortex_primitive(grid_x, grid_y, time, ec.STRENGTH,
+                                       ec.BACKGROUND, period=ec.PERIOD)
+        for name, a, b in zip(ec.FIELDS, free, periodic):
+            relative = float(torch.sqrt(torch.mean((a - b) ** 2))
+                             / torch.sqrt(torch.mean(b ** 2)))
+            assert relative <= bound, f"{name} at t={time}: {relative:.3e}"
+
+
+def test_free_space_reference_is_the_wrong_solution_once_the_vortex_wraps():
+    """Quantifies the defect the case used to absorb into its error metric."""
+    sweep = ec.reference_defect_sweep([1.0, 2.0, 5.0, 10.0])
+    # early checkpoints: the two references are indistinguishable
+    assert sweep["1"]["velocity_x"] < 0.02
+    # wrapped checkpoints: the free-space reference is off by more than the 6 %
+    # case tolerance all by itself, i.e. it can no longer measure the scheme
+    assert sweep["5"]["velocity_x"] > ec.TOLERANCE * 100.0
+    assert sweep["10"]["velocity_x"] > 15.0
+    # density only feels the image through its radial profile, velocities through
+    # the signed displacement -> the velocity defect must dominate
+    assert sweep["5"]["velocity_x"] > sweep["5"]["density"]
+
+
+def test_p0_metric_reports_zero_for_the_exact_periodic_state():
+    import torch
+    cells = 32
+    x = torch.linspace(ec.DOMAIN[0][0], ec.DOMAIN[0][1], cells + 1, dtype=torch.float64)
+    x = 0.5 * (x[1:] + x[:-1])
+    c = x.clone()
+    dx = (ec.DOMAIN[0][1] - ec.DOMAIN[0][0]) / cells
+    exact_periodic = lambda xx, yy: ec.vortex_primitive(
+        xx, yy, 5.0, ec.STRENGTH, ec.BACKGROUND, period=ec.PERIOD)
+    average = ec._cell_averages(exact_periodic, x, c, dx, dx, ec.P0_QUADRATURE,
+                                torch.device("cpu"), torch.float64)
+    good = ec.vortex_error(x, c, average, 5.0, ec.STRENGTH, ec.BACKGROUND,
+                           period=ec.PERIOD)
+    bad = ec.vortex_error(x, c, average, 5.0, ec.STRENGTH, ec.BACKGROUND)
+    # density: the cell average is reproduced exactly.  velocity/pressure keep an
+    # O(h^2) residual of the primitive-from-averages nonlinearity
+    # (avg(rho u)/avg(rho) != avg(u)), 3.6e-4 here -- four orders below the
+    # reference defect it has to discriminate against.
+    assert good["density"]["relative_l2"] < 1e-12
+    for name in ("velocity_x", "velocity_y", "pressure"):
+        assert good[name]["relative_l2"] < 5e-3, f"{name}: metric is not consistent"
+    # the free-space metric reports the reference defect, not the field error
+    assert bad["velocity_x"]["relative_l2"] > 0.1
+
+
+def test_dg_metric_reports_projection_error_only_for_the_exact_periodic_state():
+    """Same invariant on the DG path: exact state in -> (projection) error out."""
+    import torch
+    degree, cells = 2, 16
+    nodes, weights, basis, _derivative, signs = ec._operators(degree)
+    dx = (ec.DOMAIN[0][1] - ec.DOMAIN[0][0]) / cells
+    centre = ec.DOMAIN[0][0] + (torch.arange(cells, dtype=torch.float64) + 0.5) * dx
+    exact_periodic = lambda xx, yy: ec.vortex_primitive(
+        xx, yy, 5.0, ec.STRENGTH, ec.BACKGROUND, period=ec.PERIOD)
+    coeff = ec.dg2._initial_coefficients(exact_periodic, centre, centre, dx, dx,
+                                         nodes, weights, basis,
+                                         torch.device("cpu"), torch.float64)
+    coeff = ec.dg2._positivity_filter(coeff, basis, signs)
+    good = ec.dg_vortex_error(coeff, basis, nodes, ec.DOMAIN, 5.0, ec.STRENGTH,
+                              ec.BACKGROUND, period=ec.PERIOD)
+    bad = ec.dg_vortex_error(coeff, basis, nodes, ec.DOMAIN, 5.0, ec.STRENGTH,
+                             ec.BACKGROUND)
+    assert max(good[name] for name in ec.FIELDS) < 1e-2   # projection error only
+    assert bad["velocity_x"] > 0.1                        # reference defect
