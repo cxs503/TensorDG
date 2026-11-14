@@ -1,0 +1,397 @@
+{
+ "case": "CASE-LAX-DG",
+ "anchor": "CASE-LAX-DG",
+ "study": "resolution closure of ledger A0 (p3, whole-field relative L2 < 3 %)",
+ "generated_at_utc": "2026-11-14T11:26:01Z",
+ "config": {
+  "degree": 3,
+  "ladder": [
+   200,
+   400,
+   800,
+   1600
+  ],
+  "cfl": 0.35,
+  "final_time": 0.13,
+  "domain": [
+   0.0,
+   1.0
+  ],
+  "r3_band_width": 0.02,
+  "limiter_arms": [
+   "none",
+   "tvb",
+   "weno"
+  ],
+  "arm_cells": 400,
+  "quick": false
+ },
+ "ladder": [
+  {
+   "cells": 200,
+   "l2": {
+    "density": 0.04199979591491615,
+    "velocity": 0.03390223437837867,
+    "pressure": 0.016554124820957365
+   },
+   "l1": {
+    "density": 0.012147420335832907,
+    "velocity": 0.016989783003049697,
+    "pressure": 0.00956416384571963
+   },
+   "band_l1": {
+    "density": 0.0073404465554664225,
+    "velocity": 0.015228778255070947,
+    "pressure": 0.0087241801604082
+   },
+   "max_abs": {
+    "density": 0.4273717723716627,
+    "velocity": 0.8585195364444015,
+    "pressure": 0.6066580945472286
+   },
+   "steps": 2547,
+   "density_min": 0.297309245836421,
+   "band_fraction": 0.84,
+   "wall_seconds": 37.617591857910156,
+   "limiter": "none",
+   "degree": 3
+  },
+  {
+   "cells": 400,
+   "l2": {
+    "density": 0.031155618811580767,
+    "velocity": 0.022480528737058404,
+    "pressure": 0.013050115344201776
+   },
+   "l1": {
+    "density": 0.008685539963016797,
+    "velocity": 0.012306385471484237,
+    "pressure": 0.007311961493174056
+   },
+   "band_l1": {
+    "density": 0.006071609158737032,
+    "velocity": 0.011852360131355025,
+    "pressure": 0.006904033354645107
+   },
+   "max_abs": {
+    "density": 0.5597302669643467,
+    "velocity": 1.1757310693894605,
+    "pressure": 1.22458886363694
+   },
+   "steps": 5109,
+   "density_min": 0.2971308846053502,
+   "band_fraction": 0.84,
+   "wall_seconds": 81.45533633232117,
+   "limiter": "none",
+   "degree": 3
+  },
+  {
+   "cells": 800,
+   "l2": {
+    "density": 0.023148994624927942,
+    "velocity": 0.013825704983298062,
+    "pressure": 0.008994023222666417
+   },
+   "l1": {
+    "density": 0.006164751775579453,
+    "velocity": 0.008233285360806078,
+    "pressure": 0.0051312181865732845
+   },
+   "band_l1": {
+    "density": 0.004405212589015103,
+    "velocity": 0.00797875881074817,
+    "pressure": 0.004794421246451552
+   },
+   "max_abs": {
+    "density": 0.4981455510199454,
+    "velocity": 0.8422552374604553,
+    "pressure": 0.8252782346103216
+   },
+   "steps": 10250,
+   "density_min": 0.20792989567471107,
+   "band_fraction": 0.84,
+   "wall_seconds": 195.22725415229797,
+   "limiter": "none",
+   "degree": 3
+  },
+  {
+   "cells": 1600,
+   "l2": {
+    "density": 0.018750088875749,
+    "velocity": 0.014754490074605699,
+    "pressure": 0.009167454665104489
+   },
+   "l1": {
+    "density": 0.004759088166678996,
+    "velocity": 0.007911026197720415,
+    "pressure": 0.005213540825351241
+   },
+   "band_l1": {
+    "density": 0.00362829308474194,
+    "velocity": 0.007790861019395177,
+    "pressure": 0.005074114253492097
+   },
+   "max_abs": {
+    "density": 0.5553322793887112,
+    "velocity": 1.0838927566717762,
+    "pressure": 1.1759838746562952
+   },
+   "steps": 20562,
+   "density_min": 0.25197202927928014,
+   "band_fraction": 0.84,
+   "wall_seconds": 742.5578496456146,
+   "limiter": "none",
+   "degree": 3
+  }
+ ],
+ "arms": [
+  {
+   "limiter": "none",
+   "l2": {
+    "density": 0.031155618811580767,
+    "velocity": 0.022480528737058404,
+    "pressure": 0.013050115344201776
+   },
+   "l1": {
+    "density": 0.008685539963016797,
+    "velocity": 0.012306385471484237,
+    "pressure": 0.007311961493174056
+   },
+   "band_l1": {
+    "density": 0.006071609158737032,
+    "velocity": 0.011852360131355025,
+    "pressure": 0.006904033354645107
+   },
+   "wall_seconds": 86.14902591705322,
+   "cells": 400,
+   "degree": 3
+  },
+  {
+   "limiter": "tvb",
+   "l2": {
+    "density": 0.07039186918876703,
+    "velocity": 0.029805299282000094,
+    "pressure": 0.014229367195549495
+   },
+   "l1": {
+    "density": 0.012493013549779546,
+    "velocity": 0.004051403636929883,
+    "pressure": 0.002006855812379225
+   },
+   "band_l1": {
+    "density": 0.0004243180571385037,
+    "velocity": 0.0009890769257076017,
+    "pressure": 0.0005564218161945922
+   },
+   "wall_seconds": 99.11756992340088,
+   "cells": 400,
+   "degree": 3
+  },
+  {
+   "limiter": "weno",
+   "l2": {
+    "density": 0.0644316659727701,
+    "velocity": 0.02939724568055678,
+    "pressure": 0.014143708219155124
+   },
+   "l1": {
+    "density": 0.010697023310683942,
+    "velocity": 0.003751897545308932,
+    "pressure": 0.00183994526996098
+   },
+   "band_l1": {
+    "density": 0.0003508762808752972,
+    "velocity": 0.0009133554577215247,
+    "pressure": 0.0005042194736331469
+   },
+   "wall_seconds": 142.51657700538635,
+   "cells": 400,
+   "degree": 3
+  }
+ ],
+ "gate": {
+  "bar": "relative L2 vs exact, whole field, every primitive field",
+  "tolerance": 0.03,
+  "production_leg": "p3.N400",
+  "production_l2": {
+   "density": 0.031155618811580767,
+   "velocity": 0.022480528737058404,
+   "pressure": 0.013050115344201776
+  },
+  "worst_field": "density",
+  "per_field": {
+   "density": {
+    "tolerance": 0.03,
+    "norm": "l2",
+    "field": "density",
+    "series": [
+     {
+      "cells": 200,
+      "error": 0.04199979591491615
+     },
+     {
+      "cells": 400,
+      "error": 0.031155618811580767
+     },
+     {
+      "cells": 800,
+      "error": 0.023148994624927942
+     },
+     {
+      "cells": 1600,
+      "error": 0.018750088875749
+     }
+    ],
+    "closed_at": 800,
+    "model": {
+     "order_finest_pair": 0.30405210368884267,
+     "finest_pair": [
+      800,
+      1600
+     ],
+     "extrapolated_n": 1600
+    }
+   },
+   "velocity": {
+    "tolerance": 0.03,
+    "norm": "l2",
+    "field": "velocity",
+    "series": [
+     {
+      "cells": 200,
+      "error": 0.03390223437837867
+     },
+     {
+      "cells": 400,
+      "error": 0.022480528737058404
+     },
+     {
+      "cells": 800,
+      "error": 0.013825704983298062
+     },
+     {
+      "cells": 1600,
+      "error": 0.014754490074605699
+     }
+    ],
+    "closed_at": 400,
+    "model": {
+     "order_finest_pair": -0.09380101462992,
+     "finest_pair": [
+      800,
+      1600
+     ],
+     "extrapolated_n": 1600
+    }
+   },
+   "pressure": {
+    "tolerance": 0.03,
+    "norm": "l2",
+    "field": "pressure",
+    "series": [
+     {
+      "cells": 200,
+      "error": 0.016554124820957365
+     },
+     {
+      "cells": 400,
+      "error": 0.013050115344201776
+     },
+     {
+      "cells": 800,
+      "error": 0.008994023222666417
+     },
+     {
+      "cells": 1600,
+      "error": 0.009167454665104489
+     }
+    ],
+    "closed_at": 200,
+    "model": {
+     "order_finest_pair": -0.02755461747314371,
+     "finest_pair": [
+      800,
+      1600
+     ],
+     "extrapolated_n": 1600
+    }
+   }
+  },
+  "closure_mesh": 800,
+  "status": "PASS",
+  "reading": "PASS means: at least one *actually run* mesh of the registered p3/unlimited ladder meets the ledger L2 bar for every field.  A model extrapolation of N* is reported but never counted as a pass.",
+  "arms_at_production_mesh": [
+   {
+    "limiter": "none",
+    "l2": {
+     "density": 0.031155618811580767,
+     "velocity": 0.022480528737058404,
+     "pressure": 0.013050115344201776
+    },
+    "l1": {
+     "density": 0.008685539963016797,
+     "velocity": 0.012306385471484237,
+     "pressure": 0.007311961493174056
+    },
+    "band_l1": {
+     "density": 0.006071609158737032,
+     "velocity": 0.011852360131355025,
+     "pressure": 0.006904033354645107
+    }
+   },
+   {
+    "limiter": "tvb",
+    "l2": {
+     "density": 0.07039186918876703,
+     "velocity": 0.029805299282000094,
+     "pressure": 0.014229367195549495
+    },
+    "l1": {
+     "density": 0.012493013549779546,
+     "velocity": 0.004051403636929883,
+     "pressure": 0.002006855812379225
+    },
+    "band_l1": {
+     "density": 0.0004243180571385037,
+     "velocity": 0.0009890769257076017,
+     "pressure": 0.0005564218161945922
+    }
+   },
+   {
+    "limiter": "weno",
+    "l2": {
+     "density": 0.0644316659727701,
+     "velocity": 0.02939724568055678,
+     "pressure": 0.014143708219155124
+    },
+    "l1": {
+     "density": 0.010697023310683942,
+     "velocity": 0.003751897545308932,
+     "pressure": 0.00183994526996098
+    },
+    "band_l1": {
+     "density": 0.0003508762808752972,
+     "velocity": 0.0009133554577215247,
+     "pressure": 0.0005042194736331469
+    }
+   }
+  ]
+ },
+ "wall_seconds": 1384.6534790992737,
+ "source": {
+  "job": "cj2593",
+  "node": "n330",
+  "log": "/root/tp-agent/cluster/jobs/cj2593.log",
+  "note": "driver ran with --skip-figures on the compute node (no matplotlib there); the digest was printed to the job log and ingested here, and the two figures were redrawn locally from these numbers"
+ },
+ "figures": [
+  {
+   "name": "closure_ladder.png",
+   "caption": "Whole-field relative L2 of density/velocity/pressure versus cell count on the registered p3 unlimited arm; dashed line = ledger 3 % bar, green line = the mesh at which it is met."
+  },
+  {
+   "name": "closure_arms.png",
+   "caption": "Limiter arms at the production mesh p3 N=400 with the shock limiter as the only changed knob; both limiters are worse than leaving the discontinuities unlimited (troubled cells are reduced to a linear reconstruction)."
+  }
+ ]
+}
