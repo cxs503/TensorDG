@@ -1,0 +1,208 @@
+[
+  {
+    "task": "dg",
+    "degree": 1,
+    "cells": 8,
+    "dx": 1.25,
+    "steps": 70,
+    "dt": 0.013632253763201763,
+    "dofs": 1024,
+    "errors": {
+      "density": 0.014134235930886252,
+      "velocity_x": 0.030748929862872,
+      "velocity_y": 0.031155412702897636,
+      "pressure": 0.021143921551037677
+    },
+    "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+    "wall_seconds": 2.300712823867798,
+    "conservation_drift": {
+      "mass": 2.6037424447494053e-15,
+      "x_momentum": 2.7483948027910388e-15,
+      "y_momentum": 2.8930471608326723e-15,
+      "energy": 2.6380802656431674e-15
+    },
+    "max_conservation_drift": 2.8930471608326723e-15,
+    "max_relative_l2": 0.031155412702897636,
+    "config_label": "DG P1 8x8"
+  },
+  {
+    "task": "dg",
+    "degree": 1,
+    "cells": 16,
+    "dx": 0.625,
+    "steps": 142,
+    "dt": 7.26736327394395e-05,
+    "dofs": 4096,
+    "errors": {
+      "density": 0.0038091135365159135,
+      "velocity_x": 0.008372785308544036,
+      "velocity_y": 0.008195545377869335,
+      "pressure": 0.005499213353963675
+    },
+    "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+    "wall_seconds": 5.949776887893677,
+    "conservation_drift": {
+      "mass": 5.3521202398279745e-15,
+      "x_momentum": 5.3521202398279745e-15,
+      "y_momentum": 5.3521202398279745e-15,
+      "energy": 5.605870733381418e-15
+    },
+    "max_conservation_drift": 5.605870733381418e-15,
+    "max_relative_l2": 0.008372785308544036,
+    "config_label": "DG P1 16x16"
+  },
+  {
+    "task": "dg",
+    "degree": 2,
+    "cells": 8,
+    "dx": 1.25,
+    "steps": 117,
+    "dt": 0.004237641927159808,
+    "dofs": 2304,
+    "errors": {
+      "density": 0.003275074550264168,
+      "velocity_x": 0.005619999088492312,
+      "velocity_y": 0.005493569107830254,
+      "pressure": 0.004287231014401607
+    },
+    "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+    "wall_seconds": 3.842895984649658,
+    "conservation_drift": {
+      "mass": 4.484208160361187e-15,
+      "x_momentum": 4.3395562842205034e-15,
+      "y_momentum": 4.19490440807982e-15,
+      "energy": 4.946354237934303e-15
+    },
+    "max_conservation_drift": 4.946354237934303e-15,
+    "max_relative_l2": 0.005619999088492312,
+    "config_label": "DG P2 8x8"
+  },
+  {
+    "task": "dg",
+    "degree": 2,
+    "cells": 16,
+    "dx": 0.625,
+    "steps": 234,
+    "dt": 0.004264584341176381,
+    "dofs": 9216,
+    "errors": {
+      "density": 0.00039756161424075504,
+      "velocity_x": 0.000819485914820153,
+      "velocity_y": 0.0008185905141060892,
+      "pressure": 0.0005624651741025578
+    },
+    "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+    "wall_seconds": 11.404750108718872,
+    "conservation_drift": {
+      "mass": 8.679113908613846e-15,
+      "x_momentum": 8.679113908613846e-15,
+      "y_momentum": 8.679113908613846e-15,
+      "energy": 1.0222470283958379e-14
+    },
+    "max_conservation_drift": 1.0222470283958379e-14,
+    "max_relative_l2": 0.000819485914820153,
+    "config_label": "DG P2 16x16"
+  },
+  {
+    "task": "dg",
+    "degree": 3,
+    "cells": 6,
+    "dx": 1.6666666666666667,
+    "steps": 123,
+    "dt": 0.002327231923040962,
+    "dofs": 2304,
+    "errors": {
+      "density": 0.0016570169938132959,
+      "velocity_x": 0.003524005471025961,
+      "velocity_y": 0.003402458895472119,
+      "pressure": 0.002413891529292311
+    },
+    "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+    "wall_seconds": 3.8693008422851562,
+    "conservation_drift": {
+      "mass": 4.339556510997277e-15,
+      "x_momentum": 4.773512162097003e-15,
+      "y_momentum": 4.628860278397094e-15,
+      "energy": 5.4409903814619344e-15
+    },
+    "max_conservation_drift": 5.4409903814619344e-15,
+    "max_relative_l2": 0.003524005471025961,
+    "config_label": "DG P3 6x6"
+  },
+  {
+    "task": "dg",
+    "degree": 3,
+    "cells": 12,
+    "dx": 0.8333333333333334,
+    "steps": 246,
+    "dt": 0.0026043343523515228,
+    "dofs": 9216,
+    "errors": {
+      "density": 0.00011695079824100424,
+      "velocity_x": 0.00034575546941306674,
+      "velocity_y": 0.0003442700852271111,
+      "pressure": 0.00017515818267716419
+    },
+    "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+    "wall_seconds": 10.461581945419312,
+    "conservation_drift": {
+      "mass": 9.691677198836798e-15,
+      "x_momentum": 8.968417706386292e-15,
+      "y_momentum": 8.67911390940609e-15,
+      "energy": 1.0387348835907752e-14
+    },
+    "max_conservation_drift": 1.0387348835907752e-14,
+    "max_relative_l2": 0.00034575546941306674,
+    "config_label": "DG P3 12x12"
+  },
+  {
+    "task": "p0",
+    "cells": 16,
+    "dx": 0.625,
+    "degree": 0,
+    "steps": 21,
+    "dt": 0.027521064054096822,
+    "errors": {
+      "density": 0.04331994506977781,
+      "velocity_x": 0.10593213971725648,
+      "velocity_y": 0.10578355020722503,
+      "pressure": 0.06370980869811857
+    },
+    "metric": "cell-average relative L2 (4x4 exact cell quadrature)",
+    "conservation_drift": {
+      "mass": 1.3018670862920768e-15,
+      "x_momentum": 1.4465189847689743e-15,
+      "y_momentum": 1.446518984768974e-15,
+      "energy": 1.4839069767036357e-15
+    },
+    "max_conservation_drift": 1.4839069767036357e-15,
+    "wall_seconds": 0.26251912117004395,
+    "max_relative_l2": 0.10593213971725648,
+    "config_label": "P0 16x16"
+  },
+  {
+    "task": "p0",
+    "cells": 32,
+    "dx": 0.3125,
+    "degree": 0,
+    "steps": 43,
+    "dt": 0.02400163802535693,
+    "errors": {
+      "density": 0.033629315915173014,
+      "velocity_x": 0.07799898324635561,
+      "velocity_y": 0.07795459218303431,
+      "pressure": 0.05111782510194784
+    },
+    "metric": "cell-average relative L2 (4x4 exact cell quadrature)",
+    "conservation_drift": {
+      "mass": 2.4590822740276344e-15,
+      "x_momentum": 2.603734172499848e-15,
+      "y_momentum": 2.4590822740276344e-15,
+      "energy": 2.802935398908073e-15
+    },
+    "max_conservation_drift": 2.802935398908073e-15,
+    "wall_seconds": 0.5098598003387451,
+    "max_relative_l2": 0.07799898324635561,
+    "config_label": "P0 32x32"
+  }
+]
