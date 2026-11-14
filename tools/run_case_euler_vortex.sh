@@ -8,8 +8,11 @@ mkdir -p "$OUT/results" "$OUT/logs"
 export OMP_NUM_THREADS=1
 
 launch() {
+  # `-m` keeps the repo root on sys.path: a bare
+  # `python3 benchmarks/case_euler_vortex.py` cannot import the tensordg
+  # package from a plain checkout (ModuleNotFoundError).
   local key="$1"; shift
-  setsid --fork python3 -u benchmarks/case_euler_vortex.py --output-dir "$OUT" \
+  setsid --fork python3 -u -m benchmarks.case_euler_vortex --output-dir "$OUT" \
       --threads 1 "$@" > "$OUT/logs/$key.log" 2>&1 < /dev/null
 }
 

@@ -137,3 +137,25 @@ def test_aggregate_builds_tables_and_gate(tmp_path):
     assert payload["gate"][1]["present"]
     # numeric values in the report are injected, never typed
     assert f"{payload['peak_tangential_mach']:.4f}" in markdown
+
+def test_documented_repro_command_is_executable():
+    """The repro command printed in the report must run in a plain checkout.
+
+    ``python3 benchmarks/case_euler_vortex.py`` fails with
+    ``ModuleNotFoundError: tensordg`` because the script directory (not the repo
+    root) lands on ``sys.path``; the documented entry point is therefore the
+    module form, which ``tools/run_case_euler_vortex.sh`` now uses.
+    """
+    import subprocess
+    import sys
+
+    repo_root = Path(__file__).resolve().parents[1]
+    proc = subprocess.run(
+        [sys.executable, "-m", "benchmarks.case_euler_vortex", "--help"],
+        cwd=repo_root, capture_output=True, text=True, timeout=120,
+    )
+    assert proc.returncode == 0, proc.stderr[-800:]
+    assert "--aggregate" in proc.stdout
+
+    launcher = (repo_root / "tools" / "run_case_euler_vortex.sh").read_text()
+    assert "-m benchmarks.case_euler_vortex" in launcher
