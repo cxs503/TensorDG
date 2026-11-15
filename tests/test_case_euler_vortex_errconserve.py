@@ -91,7 +91,8 @@ def _synthetic_record(family, time, error, drift=1e-15, entropy=1e-6):
     return {
         "task_key": f"{family}_t{time:g}",
         "family": family,
-        "config": {},
+        "config": {"reference": ec.REFERENCE_MODEL},
+        "reference_model": ec.REFERENCE_MODEL,
         "final_time": time,
         "cfl": 0.2,
         "steps": 1,
@@ -118,7 +119,11 @@ def _ladder_record(config, error, drift=1e-15, entropy=1e-6):
     record = _synthetic_record("", config["final_time"], error,
                                drift=drift, entropy=entropy)
     record["task_key"] = ec.task_key(config)
-    record["config"] = dict(config)
+    # C11 grades provenance: a synthetic bundle must say which reference it was
+    # measured against, otherwise it is (rightly) read as unknown provenance.
+    record["config"] = dict(config, reference=config.get("reference",
+                                                         ec.REFERENCE_MODEL))
+    record["reference_model"] = record["config"]["reference"]
     # Real result files carry the configuration at top level, and C8/C9/C10 read
     # it there (degree / cells); a synthetic bundle missing it would grade as nan.
     record["task"] = config["task"]
@@ -655,3 +660,99 @@ def test_c9_is_not_evaluated_when_a_degree_has_no_refinement():
     assert c9["status"] == "not_evaluated" and c9["passed"] is False
     assert "C9_design_order" in gates["not_evaluated"]
     assert gates["all_passed"] is False
+
+
+# ---------------------------------------------------------------------------
+# C11: provenance of the evidence bundle
+# ---------------------------------------------------------------------------
+
+def _strip_references(records, keys):
+    """Turn selected records into legacy ones (no recorded reference model)."""
+    out = []
+    for record in records:
+        record = dict(record)
+        if record["task_key"] in keys:
+            record.pop("reference_model", None)
+            record["config"] = {k: v for k, v in record["config"].items()
+                                if k != "reference"}
+        out.append(record)
+    return out
+
+
+def test_c11_does_not_pass_a_legacy_record_without_a_certificate():
+    """The defect: a missing reference model used to be defaulted, not graded."""
+    exact = ec.exact_invariants(points=80)
+    key = "dg_d2_n32_t10_cfl0.2"
+    records = _strip_references(_full_ladder_records(), {key})
+    gates = ec.evaluate_gates(records, exact)["gates"]
+    c11 = gates["C11_provenance_integrity"]
+    assert c11["unverified"] == [key]
+    assert c11["status"] == "not_evaluated" and c11["passed"] is False
+    assert gates["all_passed"] is False
+
+
+def test_c11_accepts_a_replay_certificate_that_reproduces_the_stored_numbers():
+    exact = ec.exact_invariants(points=80)
+    key = "dg_d2_n32_t10_cfl0.2"
+    records = _strip_references(_full_ladder_records(), {key})
+    certificates = {key: {"reference_model": ec.REFERENCE_MODEL,
+                          "replay_delta": 1.2e-16, "wall_seconds": 1.0}}
+    gates = ec.evaluate_gates(records, exact, certificates)["gates"]
+    c11 = gates["C11_provenance_integrity"]
+    assert c11["replayed"] == {key: 1.2e-16}
+    assert c11["status"] == "passed" and c11["passed"] is True
+
+
+def test_c11_rejects_a_certificate_whose_replay_does_not_reproduce():
+    exact = ec.exact_invariants(points=80)
+    key = "dg_d2_n32_t10_cfl0.2"
+    records = _strip_references(_full_ladder_records(), {key})
+    # A replay against another reference changes the long-time numbers far more
+    # than round-off -- that is exactly the round 1-3 reference defect.
+    certificates = {key: {"reference_model": ec.REFERENCE_MODEL,
+                          "replay_delta": 3.3e-3, "wall_seconds": 1.0}}
+    gates = ec.evaluate_gates(records, exact, certificates)["gates"]
+    c11 = gates["C11_provenance_integrity"]
+    assert c11["certificate_rejected"] == [key]
+    assert c11["status"] == "failed" and gates["verdict"] == "FAIL"
+
+
+def test_c11_rejects_a_certificate_replayed_against_another_reference():
+    exact = ec.exact_invariants(points=80)
+    key = "dg_d2_n32_t10_cfl0.2"
+    records = _strip_references(_full_ladder_records(), {key})
+    certificates = {key: {"reference_model": "lattice", "replay_delta": 0.0}}
+    gates = ec.evaluate_gates(records, exact, certificates)["gates"]
+    assert gates["C11_provenance_integrity"]["certificate_rejected"] == [key]
+
+
+def test_c11_flags_a_record_whose_config_contradicts_the_declaration():
+    """A result file that says another CFL is evidence for another problem."""
+    exact = ec.exact_invariants(points=80)
+    records = _full_ladder_records()
+    target = next(r for r in records if r["task_key"] == "dg_d2_n32_t10_cfl0.2")
+    target["config"] = dict(target["config"], cfl=0.4)
+    gates = ec.evaluate_gates(records, exact)["gates"]
+    c11 = gates["C11_provenance_integrity"]
+    assert c11["config_mismatch"] == ["dg_d2_n32_t10_cfl0.2"]
+    assert c11["status"] == "failed"
+
+
+def test_committed_replay_certificates_only_contain_reproductions():
+    """Guards the shipped certificates: none may hide a mismatching replay."""
+    import json as _json
+    import pathlib
+    case_dir = pathlib.Path(__file__).resolve().parents[1] / \
+        "case_euler_vortex_errconserve"
+    path = case_dir / ec.PROVENANCE_CERTIFICATES
+    assert path.exists(), f"no certificates at {path}"
+    bundle = _json.loads(path.read_text())
+    certificates = bundle["certificates"]
+    assert certificates, "certificate file is empty"
+    for key, certificate in certificates.items():
+        assert certificate["reference_model"] == ec.REFERENCE_MODEL, key
+        assert certificate["replay_delta"] <= ec.PROVENANCE_REPLAY_TOLERANCE, \
+            (key, certificate["replay_delta"])
+    # every certified key must still have its record on disk
+    present = {p.stem for p in (case_dir / "results").glob("*.json")}
+    assert set(certificates) <= present
