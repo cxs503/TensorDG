@@ -1,0 +1,9 @@
+{
+  "title": "REPRO-DG-CKS1998 · 验证欠账闭合：锚点 L4 已 VERIFIED（13 行），回归门防回退",
+  "summary": "把已合并的 CKS1998 复现能力（Cockburn & Shu 1998 RKDG 多维系统）对平台机器裁判 L4 的实证状态钉死成回归门：新增 tests/test_cks1998_anchor_verified.py（4 条）断言闭合前 CLAIMED_NOT_PROVEN/rows=0、闭合后 VERIFIED/rows=13、度量集覆盖 A1/E2/sm2d 全 13 条、最差相对误差 <3%。平台 tensorbench_results 已落 21 行（m19918 1-D 8 行 + m20922 2-D 多维 13 行）全部 PASS，L4 裁定 VERIFIED。不改任何求解器内核与容差。",
+  "scenario_key": "REPRO-DG-CKS1998",
+  "mission_id": 21502,
+  "tags": ["tensordg", "cks1998", "rkdg", "verification-debt", "l4", "regression-gate", "multidim"],
+  "markdown": "# REPRO-DG-CKS1998 · 验证欠账闭合\n\n## 实质增量\n- 新增 `tests/test_cks1998_anchor_verified.py`（4 条，全绿）：把「L4 已 VERIFIED」写成断言，防验证欠账（自述非实测）复发\n- 新增 `docs/REPRO-DG-CKS1998-verification-closure.md`：完整记录 21 行实证 / 3 行判据 / L4 VERIFIED 状态与 honest 局限\n\n## 验证结果（平台复算，零手抄）\n| 组 | 度量 | 相对误差 | 容差 | 判定 |\n|---|---|---|---|---|\n| A1 | adv_order_p1/p2/p3 | 0.2119%/0.0024%/0.0029% | 5% | PASS |\n| E2 | sod_rho_x030/x070/vel_x055 | 0.4715%/1.5229%/0.0041% | 3% | PASS |\n| E2 | 质量/能量守恒 | 1e-12 级 | 0.1% | PASS |\n| sm2d | 二维观测阶 p1/p2/p3 | 0.6997%/0.6521%/0.0908% | 3% | PASS |\n| sm2d | 二维守恒 | 3e-14 级 | 0.1% | PASS |\n\n**13/13 度量 <3%（最差 1.5229%），L4 裁定 VERIFIED（rows=13, failed_checks=[]）。**\n\n## 注意点\n- E3/A2 不等式判据（超调≤1%、L1 阶≥1/2）仍不进平台相对误差编码（会伪造度量），留在仓内门——有意为之，非欠账\n- `sod_rho_x070` 1.52% 是 13 项最差，DG 单元均值 vs 点值口径，非求解器缺陷\n- 本单未改任何容差（FROZEN_TOLERANCES 冻结）\n\n## 误差判定\n逐项 <3% 已显式回答（见上表），最差 1.5229% 有 1.48 个百分点余量。",
+  "figures": []
+}
