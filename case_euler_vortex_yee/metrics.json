@@ -1,0 +1,27 @@
+{
+  "case": "CASE-DG-EULER-VORTEX-ERR",
+  "reference": "Yee et al. 2000, JCP 162 (2000) 33-81",
+  "tolerance": 0.06,
+  "period": 10.0,
+  "configs_completed": 2,
+  "configs_pending": 13,
+  "cluster_jobs": [
+    "cj3342",
+    "cj3343"
+  ],
+  "results": {
+    "dg_d3_n8_t10_cfl0.2": {
+      "max_percent": 16.451161567231434,
+      "gate_pass": false,
+      "steps": 1631,
+      "role": "ladder"
+    },
+    "dg_d1_n16_t10_cfl0.2": {
+      "max_percent": 14.831604777465424,
+      "gate_pass": false,
+      "steps": 1379,
+      "role": "ladder"
+    }
+  },
+  "note": "Full 15-config ladder pending cluster execution (cj3342/cj3343). Two configs completed locally: DG-P3/8\u00b2 (16.45%, fails - mesh too coarse) and DG-P1/16\u00b2 (14.83%, fails - mesh too coarse). Primary evidence from case_euler_vortex_errconserve (19/19 checkpoints, all gates PASS)."
+}
