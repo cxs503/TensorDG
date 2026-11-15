@@ -1,6 +1,6 @@
 # CASE-LAX-DG · 钉扎腿 p3.N400：把 3 % 门槛只靠配置能不能拿下
 
-> 锚点 `CASE-LAX-DG`（原文「ref: 精确解｜容差 < 3 %」，status open）。本文全部数字由 `benchmarks/lax_scheme_variants.py` 从 `docs/benchmarks/results/lax_scheme_variants/metrics.json`（生成于 2026-11-15T11:57:00Z）程序化注入，零手抄；`--check` 在漂移时失败。台账容差 = 3.0 %（整场、每场量、不挖波段）。
+> 锚点 `CASE-LAX-DG`（原文「ref: 精确解｜容差 < 3 %」，status open）。本文全部数字由 `benchmarks/lax_scheme_variants.py` 从 `docs/benchmarks/results/lax_scheme_variants/metrics.json`（生成于 2026-11-15T22:15:57Z）程序化注入，零手抄；`--check` 在漂移时失败。台账容差 = 3.0 %（整场、每场量、不挖波段）。
 
 ## ① 案例介绍
 
@@ -25,7 +25,7 @@ Lax (1954) 激波管 / Toro test 2：`[0,1]`，隔膜 `x0=0.5`，γ = 1.4，左�
 | `cfl050` | cfl=0.5 | 3578 | 55.0 | 3.099e-02 | 2.208e-02 | 1.283e-02 | density 3.099e-02 | 1.0331 | 否 |
 | `pos_none` | positivity=none | — | 0.0 | 未跑出 | 未跑出 | 未跑出 | 未跑出 | — | 否（`FloatingPointError: Nonphysical high-order Euler state; reduce CFL`） |
 | `av` | limiter=av | 4970 | 92.6 | 3.959e-02 | 2.988e-02 | 1.463e-02 | density 3.959e-02 | 1.3196 | 否 |
-| `ao` | limiter=ao | — | 0.0 | 未跑出 | 未跑出 | 未跑出 | 未跑出 | — | 否（`not run`） |
+| `ao` | limiter=ao | 4936 | 189.1 | 5.628e-02 | 2.843e-02 | 1.463e-02 | density 5.628e-02 | 1.8759 | 否 |
 
 ### 时间误差 vs 空间误差（CFL 支臂，仅动 `dt`）
 
@@ -75,8 +75,9 @@ Lax (1954) 激波管 / Toro test 2：`[0,1]`，隔膜 `x0=0.5`，γ = 1.4，左�
 | L2 ρ @ `cfl020` (p3.N400) | 精确 Riemann 解 | `3.264e-02` | 3.2644 % | **否** |
 | L2 ρ @ `cfl050` (p3.N400) | 精确 Riemann 解 | `3.099e-02` | 3.0992 % | **否** |
 | L2 ρ @ `av` (p3.N400) | 精确 Riemann 解 | `3.959e-02` | 3.9588 % | **否** |
+| L2 ρ @ `ao` (p3.N400) | 精确 Riemann 解 | `5.628e-02` | 5.6278 % | **否** |
 
 **结论**：FAIL。可用臂 无；控制臂复现 通过。已提交格式的 solver 腿是达标上界的 1.0133 倍，即**距可行性边界仅 1.31 %**——这条 3 % 线在 p3.N400 上本来就贴着数学边界，配置旋钮能否越过见上表；若无一臂可用，则如实登记为「配置空间内不可达」，并把结论交回台账持有人。
 
-> **范围声明（honest）**：本轮的 `ao`, `pos_none` 臂**未跑出结果**，在台账里记作 **unknown，不是 pass**——因此上面的判定只覆盖已测的 4 条臂，未测的旋钮既不算通过也不算失败。
+> **范围声明（honest）**：本轮的 `pos_none` 臂**未跑出结果**，在台账里记作 **unknown，不是 pass**——因此上面的判定只覆盖已测的 5 条臂，未测的旋钮既不算通过也不算失败。
 
