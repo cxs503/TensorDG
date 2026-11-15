@@ -22,20 +22,36 @@ def troubled_from_differences(
     spacing: float,
     tvb_constant: float,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """Scale-consistent TVB troubled-cell test and minmod slope.
+    """Scale-consistent, *two-sided* TVB troubled-cell test and minmod slope.
 
     ``d_left = u_i - u_{i-1}`` and ``d_right = u_{i+1} - u_i`` are cell-average
     differences along one axis, so both are O(dx * u').  The quantity compared
-    against the tolerance ``M dx**2`` is the *deviation of the one-sided
+    against the tolerance ``M dx**2`` is the *deviation of either one-sided
     difference from the minmod slope*,
 
-        |d_left - minmod(d_left, d_right)|,
+        max(|d_left - minmod(d_left, d_right)|, |d_right - minmod(d_left, d_right)|),
 
     which is O(dx * u') at a jump but O(dx**2 * u'') for smooth data (it equals
     ``|d_left - d_right| = |u''| dx**2`` in a smooth stretch and collapses to
     O(dx**2) at a smooth extremum).  Comparing that against ``M dx**2`` is
     dimensionally consistent, so ``M`` keeps its meaning under mesh refinement
     and can be tuned to release smooth extrema.
+
+    Two-sidedness matters (mission m21413).  The one-sided form
+    ``|d_left - minmod|`` is identically zero whenever ``|d_left| <= |d_right|``
+    -- i.e. in *every* cell of a monotone region whose left increment is the
+    smaller one, no matter how steep the increments are.  A right-facing front
+    is therefore never detected: the unlimited polynomial stays in such cells
+    and its point values overshoot the exact data range by ~1.4 % (P1) /
+    ~0.8 % (P2) on the CKS1998 square wave at ``M = 0``, which is a violation of
+    the local maximum principle that the paper's TVB gate is meant to certify.
+    With both sides tested, ``max(|d_left - mm|, |d_right - mm|) = 0`` iff
+    ``d_left == d_right`` (locally affine cell averages, where the minmod slope
+    equals the affine slope and limiting would be a no-op anyway), so no
+    detectable configuration is lost; the square-wave pointwise overshoot drops
+    to the round-off floor at every degree and every resolution while the
+    limited-scheme L1 order stays at the CKS1998 half-order law
+    (docs/CASE-REPRO-DG-CKS1998-TVB-INDICATOR-SYMMETRY.md).
 
     The historic form compared ``max(|d_left|, |d_right|)`` -- an O(dx * u')
     measure -- against ``M dx**2``; every smooth extremum was then flagged as
@@ -60,7 +76,7 @@ def troubled_from_differences(
     a_left = d_left.abs()
     a_right = d_right.abs()
     mm = 0.5 * (torch.sign(d_left) + torch.sign(d_right)) * torch.minimum(a_left, a_right)
-    deviation = (d_left - mm).abs().max(dim=-1).values
+    deviation = torch.maximum((d_left - mm).abs(), (d_right - mm).abs()).max(dim=-1).values
     threshold = tvb_constant * spacing * spacing
     # Round-off floor: for affine data the deviation is a few ulp of the local
     # differences, which must not be mistaken for a resolved feature.

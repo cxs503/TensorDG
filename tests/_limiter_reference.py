@@ -23,7 +23,11 @@ def ref_minmod(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 def ref_troubled_from_differences(d_left, d_right, spacing, tvb_constant):
     mm = ref_minmod(d_left, d_right)
-    deviation = (d_left - mm).abs().max(dim=-1).values
+    # Two-sided deviation (mission m21413): the one-sided form was identically
+    # zero wherever |d_left| <= |d_right|, so right-facing fronts were never
+    # detected -- see tensordg/tvb.py and
+    # docs/CASE-REPRO-DG-CKS1998-TVB-INDICATOR-SYMMETRY.md.
+    deviation = torch.maximum((d_left - mm).abs(), (d_right - mm).abs()).max(dim=-1).values
     threshold = tvb_constant * spacing * spacing
     scale = torch.maximum(d_left.abs(), d_right.abs()).max(dim=-1).values
     troubled = deviation > threshold + 1e-12 * scale.clamp_min(1.0)
