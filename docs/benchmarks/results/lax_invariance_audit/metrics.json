@@ -1,0 +1,403 @@
+{
+ "case": "CASE-LAX-DG",
+ "anchor": "CASE-LAX-DG",
+ "question": "is the ledger number (whole-field relative L2 vs the exact Riemann solution) free of a left/right bias of the DG kernel, and how large can any such bias be?",
+ "design": {
+  "strict_invariants": {
+   "O1": "HLLC consistency H(U,U)=F(U)",
+   "O2": "HLLC reciprocity flip(H(UL,UR)) = H(flip(UR),flip(UL))",
+   "O3": "physical flux Galilean boost identity",
+   "O4": "DG residual parity M(RHS(U)) = RHS(M(U)) (HLLC + outflow BCs)",
+   "O5": "Zhang-Shu admissibility operator parity",
+   "T1": "trajectory parity: mirrored problem reproduces mirrored solution",
+   "T2": "ledger metric frame invariance (whole-field rel L2)",
+   "T3": "step-sequence parity",
+   "T4": "positivity-scaling statistics parity"
+  },
+  "control_arms": {
+   "control_no_uflip": "mirror the end states but keep the velocity signs",
+   "control_half_cell": "mirror the problem, displace the diaphragm by dx/2"
+  },
+  "not_checked": {
+   "hllc_galilean": "no closed-form identity: it needs the Riemann star state, which hllc_flux does not return; the mirror arms are the closure-free substitute",
+   "2d_parity": "needs a 2-D mesh mirror operator; out of scope here"
+  }
+ },
+ "config": {
+  "ladder": [
+   [
+    100,
+    1
+   ],
+   [
+    200,
+    2
+   ]
+  ],
+  "control_legs": [
+   [
+    100,
+    1
+   ]
+  ],
+  "pinned_leg": [
+   400,
+   3
+  ],
+  "cfl": 0.35,
+  "final_time": 0.13,
+  "domain": [
+   0.0,
+   1.0
+  ],
+  "diaphragm": 0.5,
+  "gamma": 1.4,
+  "left_state": [
+   0.445,
+   0.698,
+   3.528
+  ],
+  "right_state": [
+   0.5,
+   0.0,
+   0.571
+  ],
+  "mirror_left_state": [
+   0.5,
+   -0.0,
+   0.571
+  ],
+  "mirror_right_state": [
+   0.445,
+   -0.698,
+   3.528
+  ],
+  "quadrature_order": 10,
+  "operator_degree": 2,
+  "operator_cells": 32,
+  "boost": 0.75,
+  "norm": "max|mirrored - base| / field scale, field scale = max|base field|; never elementwise (the right plateau has u = 0)",
+  "quick": false
+ },
+ "operator": [
+  {
+   "id": "O1",
+   "name": "HLLC consistency H(U,U)=F(U)",
+   "scale": 5.113445387148834,
+   "defect": 3.0396574458026547e-16,
+   "pass": true
+  },
+  {
+   "id": "O2",
+   "name": "HLLC reciprocity under x -> -x",
+   "scale": 5.024833453640556,
+   "defect": 1.767577826995696e-16,
+   "pass": true
+  },
+  {
+   "id": "O3",
+   "name": "physical flux Galilean boost identity",
+   "scale": 11.247535101819354,
+   "defect": 3.158659783356292e-16,
+   "pass": true
+  },
+  {
+   "id": "O4",
+   "name": "DG residual parity M(RHS(U))=RHS(M(U))",
+   "scale": 6.069414640209293e+21,
+   "defect": 8.638197109267211e-17,
+   "pass": true
+  },
+  {
+   "id": "O5",
+   "name": "admissibility parity theta(M(U))=M(theta(U))",
+   "scale": 1.0,
+   "defect": 0.0,
+   "extras": {
+    "theta_min": 0.0,
+    "scaled_cells": 32,
+    "cells": 32
+   },
+   "pass": true
+  }
+ ],
+ "arms": [
+  {
+   "leg": "p1.N100",
+   "cells": 100,
+   "degree": 1,
+   "arm": "base",
+   "deviation": {
+    "density": 0.0,
+    "velocity": 0.0,
+    "pressure": 0.0
+   },
+   "worst_field": "-",
+   "worst_deviation": 0.0,
+   "steps": 555,
+   "dt_mean": 0.00023423423423423424,
+   "dt_last": 1.4796088349700032e-05,
+   "positivity_stats": {
+    "limited_cells": 238,
+    "cell_stages": 166500,
+    "min_theta": 0.9133902638443463
+   },
+   "l2_errors": {
+    "density": 0.08752838063353735,
+    "velocity": 0.04977080702035823,
+    "pressure": 0.024189014832799442
+   },
+   "wall_seconds": 6.7603535652160645
+  },
+  {
+   "leg": "p1.N100",
+   "cells": 100,
+   "degree": 1,
+   "arm": "mirror",
+   "deviation": {
+    "density": 1.6519992699416924e-14,
+    "velocity": 3.504883918417664e-14,
+    "pressure": 1.4867348835187442e-14
+   },
+   "worst_field": "velocity",
+   "worst_deviation": 3.504883918417664e-14,
+   "steps": 555,
+   "dt_mean": 0.00023423423423423424,
+   "dt_last": 1.479608834983881e-05,
+   "positivity_stats": {
+    "limited_cells": 238,
+    "cell_stages": 166500,
+    "min_theta": 0.9133902638443463
+   },
+   "l2_errors": {
+    "density": 0.08752838063353766,
+    "velocity": 0.04977080702035952,
+    "pressure": 0.024189014832799265
+   },
+   "wall_seconds": 6.598208904266357
+  },
+  {
+   "leg": "p1.N100",
+   "cells": 100,
+   "degree": 1,
+   "arm": "control_no_uflip",
+   "deviation": {
+    "density": 0.6585570280869874,
+    "velocity": 1.092316105448952,
+    "pressure": 0.6100527586710702
+   },
+   "worst_field": "velocity",
+   "worst_deviation": 1.092316105448952,
+   "steps": 485,
+   "dt_mean": 0.00026804123711340205,
+   "dt_last": 0.00018615902480775826,
+   "positivity_stats": {
+    "limited_cells": 0,
+    "cell_stages": 145500,
+    "min_theta": 1.0
+   },
+   "l2_errors": {
+    "density": 0.07775099613995155,
+    "velocity": 0.04356514717059378,
+    "pressure": 0.019090472548097308
+   },
+   "wall_seconds": 5.829510927200317
+  },
+  {
+   "leg": "p1.N100",
+   "cells": 100,
+   "degree": 1,
+   "arm": "control_half_cell",
+   "deviation": {
+    "density": 0.6176568275262728,
+    "velocity": 1.3332732079735083,
+    "pressure": 0.6241955560699677
+   },
+   "worst_field": "velocity",
+   "worst_deviation": 1.3332732079735083,
+   "steps": 555,
+   "dt_mean": 0.00023423423423423424,
+   "dt_last": 1.479608834983881e-05,
+   "positivity_stats": {
+    "limited_cells": 238,
+    "cell_stages": 166500,
+    "min_theta": 0.9133902638443463
+   },
+   "l2_errors": {
+    "density": 0.12155886657429296,
+    "velocity": 0.08255697090805202,
+    "pressure": 0.04113210051299693
+   },
+   "wall_seconds": 6.629509449005127
+  },
+  {
+   "leg": "p2.N200",
+   "cells": 200,
+   "degree": 2,
+   "arm": "base",
+   "deviation": {
+    "density": 0.0,
+    "velocity": 0.0,
+    "pressure": 0.0
+   },
+   "worst_field": "-",
+   "worst_deviation": 0.0,
+   "steps": 1828,
+   "dt_mean": 7.111597374179431e-05,
+   "dt_last": 3.168428265223899e-05,
+   "positivity_stats": {
+    "limited_cells": 693,
+    "cell_stages": 1096800,
+    "min_theta": 0.8612998514915733
+   },
+   "l2_errors": {
+    "density": 0.0483435243673496,
+    "velocity": 0.027063665786642592,
+    "pressure": 0.013890524359977936
+   },
+   "wall_seconds": 23.844280004501343
+  },
+  {
+   "leg": "p2.N200",
+   "cells": 200,
+   "degree": 2,
+   "arm": "mirror",
+   "deviation": {
+    "density": 8.336500666319089e-12,
+    "velocity": 4.800127639575654e-11,
+    "pressure": 3.626349789455304e-11
+   },
+   "worst_field": "velocity",
+   "worst_deviation": 4.800127639575654e-11,
+   "steps": 1828,
+   "dt_mean": 7.111597374179431e-05,
+   "dt_last": 3.168428265243328e-05,
+   "positivity_stats": {
+    "limited_cells": 693,
+    "cell_stages": 1096800,
+    "min_theta": 0.8612998514915721
+   },
+   "l2_errors": {
+    "density": 0.048343524367343765,
+    "velocity": 0.02706366578673217,
+    "pressure": 0.013890524359840237
+   },
+   "wall_seconds": 25.509045600891113
+  }
+ ],
+ "verdict": {
+  "rule": "PASS iff every strict invariant (O1-O5, T1-T4) is within INVARIANT_TOL and every control arm deviates by at least CONTROL_FLOOR with a control/invariant ratio of at least DISCRIMINATION_MIN",
+  "invariant_tol": 1e-09,
+  "control_floor": 0.001,
+  "discrimination_min": 1000000.0,
+  "worst_operator_defect": 3.158659783356292e-16,
+  "worst_trajectory_deviation": 4.800127639575654e-11,
+  "worst_metric_rel_diff": 9.913152052980217e-12,
+  "worst_control_deviation": 1.3332732079735083,
+  "discrimination": 27775786564.11257,
+  "invariants_ok": true,
+  "controls_ok": true,
+  "metric_parity": [
+   {
+    "leg": "p1.N100",
+    "field": "density",
+    "base": 0.08752838063353735,
+    "mirror": 0.08752838063353766,
+    "rel_diff": 3.4881409842390598e-15
+   },
+   {
+    "leg": "p1.N100",
+    "field": "velocity",
+    "base": 0.04977080702035823,
+    "mirror": 0.04977080702035952,
+    "rel_diff": 2.5931551915540047e-14
+   },
+   {
+    "leg": "p1.N100",
+    "field": "pressure",
+    "base": 0.024189014832799442,
+    "mirror": 0.024189014832799265,
+    "rel_diff": 7.314964903395221e-15
+   },
+   {
+    "leg": "p2.N200",
+    "field": "density",
+    "base": 0.0483435243673496,
+    "mirror": 0.048343524367343765,
+    "rel_diff": 1.207113020731118e-13
+   },
+   {
+    "leg": "p2.N200",
+    "field": "velocity",
+    "base": 0.027063665786642592,
+    "mirror": 0.02706366578673217,
+    "rel_diff": 3.3098860870762698e-12
+   },
+   {
+    "leg": "p2.N200",
+    "field": "pressure",
+    "base": 0.013890524359977936,
+    "mirror": 0.013890524359840237,
+    "rel_diff": 9.913152052980217e-12
+   }
+  ],
+  "step_parity": [
+   {
+    "leg": "p1.N100",
+    "base_steps": 555,
+    "mirror_steps": 555,
+    "same_steps": true,
+    "dt_mean_rel_diff": 0.0,
+    "positivity_equal": true,
+    "limited_cells": 238,
+    "min_theta_rel_diff": 0.0
+   },
+   {
+    "leg": "p2.N200",
+    "base_steps": 1828,
+    "mirror_steps": 1828,
+    "same_steps": true,
+    "dt_mean_rel_diff": 0.0,
+    "positivity_equal": true,
+    "limited_cells": 693,
+    "min_theta_rel_diff": 1.2212453270876722e-15
+   }
+  ],
+  "status": "PASS"
+ },
+ "reuse_check": {
+  "status": "not_run",
+  "tolerance": 1e-09,
+  "reason": "pinned leg p3.N400 is not in this run's ladder"
+ },
+ "bias_bound": {
+  "tolerance": 0.03,
+  "pinned_leg": "p3.N400",
+  "pinned_source": "committed docs/benchmarks/results/lax_case_pool/metrics.json (not re-measured in this run)",
+  "pinned_density_rel_l2": 0.031155618811580767,
+  "pinned_verdict": "FAIL",
+  "worst_trajectory_deviation": 4.800127639575654e-11,
+  "bias_in_units_of_bar": 1.6000425465252181e-09,
+  "note": "frame deviation of the profiles, relative to the profile scale; the ledger metric is a norm of the same difference, so no directional bias larger than this can hide inside the pinned number"
+ },
+ "wall_seconds": 75.19586443901062,
+ "figures": [
+  {
+   "name": "lax_invariance_deviation.png",
+   "caption": "mirror-parity arms (round-off) vs control arms (O(1)) in one metric"
+  },
+  {
+   "name": "lax_invariance_ledger_metric.png",
+   "caption": "whole-field relative L2 per leg and field: bars = base frame, crosses = mirrored frame, dashed = ledger bar"
+  },
+  {
+   "name": "lax_invariance_profiles.png",
+   "caption": "finest leg: base vs mirrored profiles against the exact solution, plus the absolute frame difference"
+  }
+ ],
+ "figures_provenance": {
+  "profiles": "docs/benchmarks/results/lax_invariance_audit/profiles.npz",
+  "finest_leg": "p2.N200",
+  "note": "figures read only the committed artifact (profiles.npz + metrics.json)"
+ }
+}
