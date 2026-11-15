@@ -1,0 +1,407 @@
+{
+ "anchor": "CASE-LAX-DG",
+ "case": "lax-1954-shock-tube",
+ "catalogue": {
+  "conserved/l1/cell_average": {
+   "fields": {
+    "density": {
+     "dg": 0.0023779831020714613,
+     "discrimination_ratio": 0.9999999999999991,
+     "p0_truncated": 0.0023779831020714634
+    },
+    "energy": {
+     "dg": 0.0028158953221755147,
+     "discrimination_ratio": 1.0000000000000002,
+     "p0_truncated": 0.002815895322175514
+    },
+    "momentum": {
+     "dg": 0.003198950174241625,
+     "discrimination_ratio": 0.9999999999999996,
+     "p0_truncated": 0.0031989501742416262
+    }
+   },
+   "verdict": "PASS",
+   "worst_dg": 0.003198950174241625,
+   "worst_field": "momentum"
+  },
+  "conserved/l1/pointwise": {
+   "fields": {
+    "density": {
+     "dg": 0.008685539963016797,
+     "discrimination_ratio": 1.6920209978315657,
+     "p0_truncated": 0.0051332341467085095
+    },
+    "energy": {
+     "dg": 0.005912653930061923,
+     "discrimination_ratio": 1.6467567481897487,
+     "p0_truncated": 0.0035904841055375064
+    },
+    "momentum": {
+     "dg": 0.00699951907624151,
+     "discrimination_ratio": 0.9041519390194854,
+     "p0_truncated": 0.007741529685632475
+    }
+   },
+   "verdict": "PASS",
+   "worst_dg": 0.008685539963016797,
+   "worst_field": "density"
+  },
+  "conserved/l2/cell_average": {
+   "fields": {
+    "density": {
+     "dg": 0.004954902025529609,
+     "discrimination_ratio": 0.9999999999999997,
+     "p0_truncated": 0.004954902025529611
+    },
+    "energy": {
+     "dg": 0.004039486021860195,
+     "discrimination_ratio": 1.0000000000000033,
+     "p0_truncated": 0.004039486021860182
+    },
+    "momentum": {
+     "dg": 0.005682869984026948,
+     "discrimination_ratio": 1.0000000000000027,
+     "p0_truncated": 0.005682869984026932
+    }
+   },
+   "verdict": "PASS",
+   "worst_dg": 0.005682869984026948,
+   "worst_field": "momentum"
+  },
+  "conserved/l2/pointwise": {
+   "fields": {
+    "density": {
+     "dg": 0.03115561881158076,
+     "discrimination_ratio": 0.6801445435649371,
+     "p0_truncated": 0.04580734949115439
+    },
+    "energy": {
+     "dg": 0.012392359465821814,
+     "discrimination_ratio": 0.7939462971864029,
+     "p0_truncated": 0.01560856132176448
+    },
+    "momentum": {
+     "dg": 0.03762378685914091,
+     "discrimination_ratio": 0.6248592662312022,
+     "p0_truncated": 0.06021161706709787
+    }
+   },
+   "verdict": "FAIL",
+   "worst_dg": 0.03762378685914091,
+   "worst_field": "momentum"
+  },
+  "primitive/l1/cell_average": {
+   "fields": {
+    "density": {
+     "dg": 0.0023779831020714613,
+     "discrimination_ratio": 0.9999999999999991,
+     "p0_truncated": 0.0023779831020714634
+    },
+    "pressure": {
+     "dg": 0.003479920756423227,
+     "discrimination_ratio": 0.9999999999999991,
+     "p0_truncated": 0.00347992075642323
+    },
+    "velocity": {
+     "dg": 0.006965747084507453,
+     "discrimination_ratio": 1.0000000000000013,
+     "p0_truncated": 0.006965747084507443
+    }
+   },
+   "verdict": "PASS",
+   "worst_dg": 0.006965747084507453,
+   "worst_field": "velocity"
+  },
+  "primitive/l1/pointwise": {
+   "fields": {
+    "density": {
+     "dg": 0.008685539963016797,
+     "discrimination_ratio": 1.6920209978315657,
+     "p0_truncated": 0.0051332341467085095
+    },
+    "pressure": {
+     "dg": 0.007311961493174053,
+     "discrimination_ratio": 1.8421744183300752,
+     "p0_truncated": 0.003969201515566762
+    },
+    "velocity": {
+     "dg": 0.012306385471484233,
+     "discrimination_ratio": 1.5884403635030206,
+     "p0_truncated": 0.007747464591207381
+    }
+   },
+   "verdict": "PASS",
+   "worst_dg": 0.012306385471484233,
+   "worst_field": "velocity"
+  },
+  "primitive/l2/cell_average": {
+   "fields": {
+    "density": {
+     "dg": 0.004954902025529609,
+     "discrimination_ratio": 0.9999999999999997,
+     "p0_truncated": 0.004954902025529611
+    },
+    "pressure": {
+     "dg": 0.005002024047530595,
+     "discrimination_ratio": 1.0000000000000018,
+     "p0_truncated": 0.005002024047530586
+    },
+    "velocity": {
+     "dg": 0.009747578930149969,
+     "discrimination_ratio": 0.9999999999999998,
+     "p0_truncated": 0.00974757893014997
+    }
+   },
+   "verdict": "PASS",
+   "worst_dg": 0.009747578930149969,
+   "worst_field": "velocity"
+  },
+  "primitive/l2/pointwise": {
+   "fields": {
+    "density": {
+     "dg": 0.03115561881158076,
+     "discrimination_ratio": 0.6801445435649371,
+     "p0_truncated": 0.04580734949115439
+    },
+    "pressure": {
+     "dg": 0.01305011534420177,
+     "discrimination_ratio": 1.0211497097626718,
+     "p0_truncated": 0.012779825739004307
+    },
+    "velocity": {
+     "dg": 0.022480528737058383,
+     "discrimination_ratio": 1.0144471463062845,
+     "p0_truncated": 0.022160374563536898
+    }
+   },
+   "verdict": "FAIL",
+   "worst_dg": 0.03115561881158076,
+   "worst_field": "density"
+  },
+  "primitive/l2/pointwise_aligned_converged": {
+   "fields": {
+    "density": {
+     "dg": 0.030250736120541084,
+     "discrimination_ratio": 0.6827054414844372,
+     "p0_truncated": 0.044310084968365776
+    },
+    "pressure": {
+     "dg": 0.012384437295296086,
+     "discrimination_ratio": 1.115865126258172,
+     "p0_truncated": 0.011098507340958661
+    },
+    "velocity": {
+     "dg": 0.02073631862074982,
+     "discrimination_ratio": 1.073301034473563,
+     "p0_truncated": 0.01932013289349027
+    }
+   },
+   "verdict": "FAIL",
+   "worst_dg": 0.030250736120541084,
+   "worst_field": "density"
+  },
+  "primitive/l2/pointwise_uniform_order6": {
+   "fields": {
+    "density": {
+     "dg": 0.029695934875060642,
+     "discrimination_ratio": 0.6631655122520029,
+     "p0_truncated": 0.04477906997035785
+    },
+    "pressure": {
+     "dg": 0.012353220890343448,
+     "discrimination_ratio": 1.0597136901430277,
+     "p0_truncated": 0.011657130605414899
+    },
+    "velocity": {
+     "dg": 0.021055325551327365,
+     "discrimination_ratio": 1.03912628767411,
+     "p0_truncated": 0.020262528049844426
+    }
+   },
+   "verdict": "PASS",
+   "worst_dg": 0.029695934875060642,
+   "worst_field": "density"
+  }
+ },
+ "config": {
+  "base_order": 10,
+  "breakpoints": [
+   0.15763654037219582,
+   0.28722933252692573,
+   0.6987339934622749,
+   0.8223117925286793
+  ],
+  "cell_average_exact_subdivisions": 24,
+  "context_leg": "p3.N800",
+  "diaphragm": 0.5,
+  "final_time": 0.13,
+  "gamma": 1.4,
+  "production_leg": "p3.N400",
+  "tolerance": 0.03
+ },
+ "context": {
+  "decomposition": {
+   "density": {
+    "alignment": -5.501760421373566e-05,
+    "alignment_share": -0.5362152834227317,
+    "cell_mean_error": 4.79966121529631e-05,
+    "cell_mean_share": 0.2338934724324717,
+    "dg_sub_cell": 0.00014932337086301836,
+    "dg_sub_cell_in_kink_cells": 5.984381686961309e-05,
+    "dg_sub_cell_outside_kink_cells": 8.947955399340543e-05,
+    "dg_sub_cell_share": 0.7276713951219361,
+    "exact_sub_cell": 0.0001179223722967879,
+    "exact_sub_cell_share": 0.5746504158683141,
+    "kink_cells": 4,
+    "norm2": 0.3547876972193296,
+    "relative_l2": 0.024049827476329583,
+    "residual": 9.9064730652222e-15,
+    "total": 0.00020520714688530007
+   },
+   "pressure": {
+    "alignment": -0.00029596540521187954,
+    "alignment_share": -1.0184518535235143,
+    "cell_mean_error": 6.30870241318968e-05,
+    "cell_mean_share": 0.10854494398494997,
+    "dg_sub_cell": 0.0005347517389508382,
+    "dg_sub_cell_in_kink_cells": 0.0001924679149295662,
+    "dg_sub_cell_outside_kink_cells": 0.000342283824021272,
+    "dg_sub_cell_share": 0.9200718903608258,
+    "exact_sub_cell": 0.0005752985210450755,
+    "exact_sub_cell_share": 0.9898350191777346,
+    "kink_cells": 4,
+    "norm2": 6.429428913548728,
+    "relative_l2": 0.009507777766312748,
+    "residual": 3.730867502475799e-15,
+    "total": 0.0005812064737040536
+   },
+   "velocity": {
+    "alignment": -0.0001607058454326435,
+    "alignment_share": -0.9248136747229313,
+    "cell_mean_error": 5.818655730359074e-05,
+    "cell_mean_share": 0.16742304467687902,
+    "dg_sub_cell": 0.00023645862804484594,
+    "dg_sub_cell_in_kink_cells": 8.903920224682127e-05,
+    "dg_sub_cell_outside_kink_cells": 0.00014741942579802483,
+    "dg_sub_cell_share": 0.6803740465487672,
+    "exact_sub_cell": 0.00037430861010519093,
+    "exact_sub_cell_share": 1.0770165834972776,
+    "kink_cells": 4,
+    "norm2": 1.4953782119256276,
+    "relative_l2": 0.015245026691384991,
+    "residual": 7.487107834163949e-15,
+    "total": 0.0003475421045883432
+   }
+  },
+  "leg": "p3.N800",
+  "norms": {
+   "cell_average": {
+    "density": 0.011633039486667177,
+    "pressure": 0.003063557559854475,
+    "velocity": 0.005690333013553257
+   },
+   "pointwise": {
+    "density": 0.02314899462492793,
+    "pressure": 0.008994023222666415,
+    "velocity": 0.013825704983298057
+   }
+  },
+  "reading": "context only: the pinned leg of A0 is p3.N400"
+ },
+ "decomposition": {
+  "density": {
+   "alignment": -0.000312949668973752,
+   "alignment_share": -1.927809189298515,
+   "cell_mean_error": 8.693523497217e-06,
+   "cell_mean_share": 0.02677659724050253,
+   "dg_sub_cell": 0.000253983699088776,
+   "dg_sub_cell_in_kink_cells": 0.00018859976806988267,
+   "dg_sub_cell_outside_kink_cells": 6.53839310188935e-05,
+   "dg_sub_cell_share": 0.7822857116944868,
+   "exact_sub_cell": 0.0006878908333144808,
+   "exact_sub_cell_share": 2.118746880363524,
+   "kink_cells": 4,
+   "norm2": 0.35478769721933084,
+   "relative_l2": 0.030250736120541168,
+   "residual": 1.669705321968462e-15,
+   "total": 0.00032466871795297037
+  },
+  "pressure": {
+   "alignment": -0.00026551783149750626,
+   "alignment_share": -0.5385161497906426,
+   "cell_mean_error": 0.00016170111695033976,
+   "cell_mean_share": 0.1639789358511713,
+   "dg_sub_cell": 0.0007258269724444551,
+   "dg_sub_cell_in_kink_cells": 0.00017211492833004146,
+   "dg_sub_cell_outside_kink_cells": 0.0005537120441144139,
+   "dg_sub_cell_share": 0.7360514064356876,
+   "exact_sub_cell": 0.0006296166498116881,
+   "exact_sub_cell_share": 0.6384858075037759,
+   "kink_cells": 4,
+   "norm2": 6.42942891354881,
+   "relative_l2": 0.012384437295296138,
+   "residual": 7.696324261162086e-15,
+   "total": 0.000986109076211478
+  },
+  "velocity": {
+   "alignment": -0.0001137509954941364,
+   "alignment_share": -0.35381059877596704,
+   "cell_mean_error": 0.00014676929960480677,
+   "cell_mean_share": 0.2282552937208483,
+   "dg_sub_cell": 0.00031423231489905373,
+   "dg_sub_cell_in_kink_cells": 4.718675442979651e-05,
+   "dg_sub_cell_outside_kink_cells": 0.00026704556046925736,
+   "dg_sub_cell_share": 0.4886934088191054,
+   "exact_sub_cell": 0.0004095053960494842,
+   "exact_sub_cell_share": 0.6368618962360032,
+   "kink_cells": 4,
+   "norm2": 1.4953782119256205,
+   "relative_l2": 0.020736318620749903,
+   "residual": 1.011689308321898e-14,
+   "total": 0.0006430050195650784
+  }
+ },
+ "gates": {
+  "cell_average_invariance_worst_relative_drift": {
+   "per_metric": {
+    "conserved/l1/cell_average": 9.118670116209454e-16,
+    "conserved/l2/cell_average": 3.220812251711844e-15,
+    "primitive/l1/cell_average": 1.369699330469889e-15,
+    "primitive/l2/cell_average": 1.7340215275786284e-15
+   },
+   "reading": "a metric invariant under same-mesh P0 truncation cannot rank schemes on that mesh",
+   "status": "PASS",
+   "tolerance": 1e-12,
+   "value": 3.220812251711844e-15
+  },
+  "decomposition_identity_worst_residual": {
+   "reading": "int(q-q_ex)^2 = dg_sub + cellmean + exact_sub + 2*alignment, per-cell exact",
+   "status": "PASS",
+   "tolerance": 1e-10,
+   "value": 1.011689308321898e-14
+  },
+  "decomposition_total_matches_canonical_a0": {
+   "reading": "the decomposition's total must be the canonical A0 reading itself",
+   "status": "PASS",
+   "tolerance": 1e-12,
+   "value": 4.202185617191581e-15
+  }
+ },
+ "generated_at_utc": "2026-11-15T19:55:37Z",
+ "outcome": {
+  "cell_average_verdict": "PASS",
+  "decomposition": "\u70b9\u503c\u8bef\u5dee\u53ef\u7cbe\u786e\u56db\u5206\uff08`\u222b(q\u2212q_ex)\u00b2 = DG \u6b21\u5355\u5143 + \u5355\u5143\u5747\u503c\u8bef\u5dee + \u7cbe\u786e\u89e3\u6b21\u5355\u5143 + 2\u00d7\u5bf9\u9f50\u9879`\uff0c\u5bc6\u5ea6\u6b8b\u5dee 1.7e-15\uff09\uff1aDG \u6b21\u5355\u5143\u5360 78.2 %\u3001\u5355\u5143\u5747\u503c\u9879\u5360 2.7 %\u3001\u7cbe\u786e\u89e3\u81ea\u8eab\u6b21\u5355\u5143\u5360 211.9 %\u3001\u5bf9\u9f50\u9879 2\u00d7cov \u5360 -192.8 %\u3002DG \u6b21\u5355\u5143\u80fd\u91cf\u6709 74.3 % \u843d\u5728\u542b\u89e3\u6790\u6298\u70b9\u7684 4 \u4e2a\u5355\u5143\uff08\u7f51\u683c\u7684 1.00 %\uff09\u3002\u5bf9\u9f50\u9879\u4e3a\u8d1f\u8bf4\u660e DG \u7684\u6b21\u5355\u5143\u5f62\u72b6\u5728**\u62b5\u6d88**\u7cbe\u786e\u89e3\u7684\u6b21\u5355\u5143\u7ed3\u6784\uff08\u4e0d\u662f\u7eaf\u566a\u58f0\uff09\u3002",
+  "discrimination": "\u5355\u5143\u5e73\u5747\u5ea6\u91cf**\u4e0d\u53ef\u7528\u4e8e\u88c1\u51b3**\uff1a\u5b83\u5728\u540c\u7f51\u683c P0 \u622a\u65ad\uff08\u4fdd\u4f4f\u6bcf\u5355\u5143\u5b88\u6052\u91cf\u5747\u503c\u3001\u4e22\u6389\u9ad8\u9636\u6a21\u6001\uff09\u4e0b\u9010\u4f4d\u4e0d\u53d8\uff08\u6700\u5dee\u76f8\u5bf9\u6f02\u79fb 3.2e-15\uff09\uff0c\u5373\u4e00\u4e2a\u53ea\u643a\u5e26\u5355\u5143\u5747\u503c\u7684\u573a\u4f1a\u8bfb\u5230\u540c\u4e00\u4e2a\u6570\u2014\u2014\u5b83\u65e0\u6cd5\u533a\u5206 P0 \u4e0e P3\uff0c\u56e0\u6b64\u7528\u5b83\u628a A0 \u5224\u6210 PASS \u7b49\u4e8e\u8ba9\u4e00\u9636\u91cd\u6784\u901a\u8fc7\u540c\u4e00\u6761\u5bb9\u5dee\u3002",
+  "pointwise_verdict": "FAIL",
+  "recommendation": "\u7ed3\u8bba\uff1a\u6309\u53f0\u8d26\u5df2\u767b\u8bb0\u53e3\u5f84\uff08\u6574\u573a\u70b9\u503c\u76f8\u5bf9 L2\uff09A0 \u7684 honest FAIL \u7ad9\u5f97\u4f4f\u2014\u2014\u6536\u655b\u6c42\u79ef\u4e0b\u5bc6\u5ea6 3.0251 % \u2265 3.00 %\uff1b\u4e14**\u4e0d\u80fd**\u7528\u300c\u6362\u6210\u5355\u5143\u5e73\u5747\u5ea6\u91cf\u300d\u7ffb\u6848\uff08\u90a3\u4f1a\u8ba9\u540c\u7f51\u683c P0 \u4e5f\u901a\u8fc7\uff09\u3002\u6ce8\u610f\u672a\u6536\u655b\u7684 6 \u9636 Gauss \u8bfb\u6570\u4f1a\u7ed9\u51fa 2.9696 % \u7684 PASS \u5047\u8c61\uff0c\u8fd9\u6b63\u662f `riemann_dg_error` \u9ed8\u8ba4\u503c\u5fc5\u987b\u4e0e\u6c60\u5b50\u7edf\u4e00\u7684\u539f\u56e0\u3002\u771f\u6b63\u7684\u51fa\u8def\u4ecd\u662f\u5206\u8fa8\u7387\uff08`p3.N800` \u70b9\u503c\u5bc6\u5ea6 2.315 %\u3001\u5355\u5143\u5e73\u5747 1.163 %\uff09\u6216\u7531\u53f0\u8d26\u6301\u6709\u4eba\u663e\u5f0f\u6539\u767b\u8bb0\u751f\u4ea7\u817f/\u5ea6\u91cf\u53e3\u5f84\u3002",
+  "statement": "\u9489\u624e\u817f `p3.N400` \u7684\u76f8\u5bf9 L2 \u5bc6\u5ea6\u8bef\u5dee\u53d6\u51b3\u4e8e**\u5ea6\u91cf\u5bf9\u8c61**\uff1a\u70b9\u503c\uff08aligned \u6536\u655b\u6c42\u79ef\uff093.0251 % \u2192 **FAIL**\uff1b\u5355\u5143\u5e73\u5747 0.9748 % \u2192 PASS\u3002\u524d\u8005\u662f\u540e\u8005\u7684 3.10 \u500d\uff0c\u800c\u53f0\u8d26\u539f\u6587\uff08\u300cref: \u7cbe\u786e\u89e3\uff5c\u5bb9\u5dee < 3.00 %\u300d\uff09\u6ca1\u6709\u6307\u5b9a\u662f\u54ea\u4e00\u4e2a\u3002"
+ },
+ "provenance": {
+  "context_profiles": "docs/benchmarks/results/lax_resolution_requirement/profiles.npz",
+  "documented_in": "docs/CASE-LAX-DG-a0-metric-catalogue.md",
+  "profiles_file": "docs/benchmarks/results/lax_case_pool/profiles.npz",
+  "profiles_sha256": "7bdcc57cb9a0c212222d0bae409f441b8a29f839e0255b5d2f8962654a0b78a0",
+  "solver_rerun": false
+ },
+ "study": "which *target* the A0 relative L2 is taken on (pointwise vs cell average), offline, zero solves"
+}
