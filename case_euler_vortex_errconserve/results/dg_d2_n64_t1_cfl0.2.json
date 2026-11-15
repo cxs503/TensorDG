@@ -1,0 +1,66 @@
+{
+  "task": "dg",
+  "degree": 2,
+  "cells": 64,
+  "final_time": 1.0,
+  "cfl": 0.2,
+  "steps": 937,
+  "dt": 0.0009453491794783053,
+  "dt_note": "final (clamped) step; steps*dt is not the elapsed time",
+  "dofs": 147456,
+  "errors": {
+    "density": 5.898946868239216e-06,
+    "velocity_x": 1.1491199259052786e-05,
+    "velocity_y": 1.1487894109436742e-05,
+    "pressure": 8.36133382380212e-06
+  },
+  "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+  "final": {
+    "invariants": {
+      "mass": 98.24174356018754,
+      "momentum_x": 98.2417435601875,
+      "momentum_y": 98.24174356018749,
+      "energy": 344.75932660101626,
+      "entropy": 100.00000003936213
+    },
+    "entropy_mean": 4096.000001612274,
+    "density_min": 0.4939120774957847,
+    "pressure_min": 0.3724822241621256
+  },
+  "initial": {
+    "invariants": {
+      "mass": 98.24174356019091,
+      "momentum_x": 98.24174356019091,
+      "momentum_y": 98.24174356019091,
+      "energy": 344.75932660102967,
+      "entropy": 99.99999999679434
+    },
+    "entropy_mean": 4095.9999998686976,
+    "density_min": 0.4938983102413278,
+    "pressure_min": 0.3724721464663772
+  },
+  "wall_seconds": 186.6368064880371,
+  "task_key": "dg_d2_n64_t1_cfl0.2",
+  "family": "dg_d2_n64_cfl0.2",
+  "config": {
+    "task": "dg",
+    "cells": 64,
+    "final_time": 1.0,
+    "cfl": 0.2,
+    "strength": 5.0,
+    "degree": 2
+  },
+  "max_relative_l2": 1.1491199259052786e-05,
+  "max_percent": 0.0011491199259052785,
+  "invariant_drift": {
+    "mass": 3.428249993791468e-14,
+    "momentum_x": 3.471645563333132e-14,
+    "momentum_y": 3.4861107531803535e-14,
+    "energy": 3.891133847895915e-14,
+    "entropy": 4.2567791071178697e-10
+  },
+  "entropy_production": 4.256779373434938e-10,
+  "entropy_drift": 4.256779373434938e-10,
+  "density_min_relative_error": 2.7874674141263867e-05,
+  "gate_pass": true
+}
