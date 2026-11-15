@@ -1,0 +1,17 @@
+{
+  "record": "docs/benchmarks/results/lax_case_pool_limiter_arms/metrics.json",
+  "record_sha256": "42b449bab0098de7f3f8ad81a4a04401590895558dc91b646420cbcab8d6fe57",
+  "profiles": "docs/benchmarks/results/lax_case_pool_limiter_arms/profiles.npz",
+  "profiles_sha256": "17e4dae7b725c15f85922cdb71c943098aa201959ce8d404fab90074b9ad4b5a",
+  "renderer": "scripts/render_lax_figures.py",
+  "renderer_sha256": "5aaa860b14941e866fcf7dd3dbd064a701dbecfa9a99dc7cc390c790403eb312",
+  "figures_provenance": "scripts/render_lax_figures.py (record + profiles.npz; rendered off-node: the loong64 compute image has no matplotlib)",
+  "figures": [
+    "lax_limiter_arms_orders.png",
+    "lax_limiter_arms_profiles.png"
+  ],
+  "figures_sha256": {
+    "lax_limiter_arms_orders.png": "bdada8ebbbffbe71868817e7de9f9dcda1d384be8adace081ffeedb004e050ed",
+    "lax_limiter_arms_profiles.png": "d85838b51a45a3f86d524b6790f716bf5d3f4b2c8db60794eaad0f8835e8ac28"
+  }
+}

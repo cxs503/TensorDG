@@ -1,0 +1,23 @@
+{
+  "record": "docs/benchmarks/results/lax_case_pool/metrics.json",
+  "record_sha256": "cab44001048395cc663070a2e5b1dbce46eca999aeb5a1a48a99fd3d941988de",
+  "profiles": "docs/benchmarks/results/lax_case_pool/profiles.npz",
+  "profiles_sha256": "7bdcc57cb9a0c212222d0bae409f441b8a29f839e0255b5d2f8962654a0b78a0",
+  "renderer": "scripts/render_lax_figures.py",
+  "renderer_sha256": "5aaa860b14941e866fcf7dd3dbd064a701dbecfa9a99dc7cc390c790403eb312",
+  "figures_provenance": "scripts/render_lax_figures.py (record + profiles.npz; rendered off-node: the loong64 compute image has no matplotlib)",
+  "figures": [
+    "entropy_wave_order.png",
+    "lax_acceptance_a0.png",
+    "lax_convergence.png",
+    "lax_profiles.png",
+    "time_refinement.png"
+  ],
+  "figures_sha256": {
+    "entropy_wave_order.png": "91bd74b53d9a4da548a03bf45bdb2bb1d0a806f14bb0aa236556a0e9424b285e",
+    "lax_acceptance_a0.png": "b18efb3bbc64030261eec3dfe4cf4a3ff015c8b6d0c7f21ae94452332804f516",
+    "lax_convergence.png": "e0d2435c305669ea056486092af84e97f54bcbd1207668a592d09512835f3e2d",
+    "lax_profiles.png": "f78845d66a09ee9adbbc2a59fd1c8316c82d73b64456464a68d26d4e5b6f00ca",
+    "time_refinement.png": "972a3bc56946c56f097eea8771d1c0be42643dfae36575cad349a0d48285c56e"
+  }
+}
