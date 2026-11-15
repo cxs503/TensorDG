@@ -105,3 +105,19 @@ tar 里带着节点上写出的 `metrics.json` / `profiles.npz` / `summary.md` /
 分辨率研究 R1–R3 **已完成**：P3 达到「< 3 %」的分辨率要求为 **N=800**（最差 2.315 %），
 但这是「加密一档 h」的结论，**不是**把 A0 判活——钉扎腿仍 N=400、verdict 仍 FAIL。
 若要按此把台账锚点翻成 done，需台账持有人显式把生产腿改成 `p3.N800`（口径变更，非本单可自裁）。
+
+## ⑦ 复核更正（2026-11-15，agent/m21313）
+
+上文 §"复用检查据实登记为 FAIL" 与本节的「后续项：重生成 `lax_asymptotic_probe` 工件」经跨工件对账复核后**部分被否定**，详见
+`docs/CASE-LAX-DG-ARTIFACT-CONTRACT.md` 与工件 `docs/benchmarks/results/lax_artifact_contract/metrics.json`：
+
+| 上文断言 | 复核结果 | 证据 |
+|---|---|---|
+| 探针工件「已不是当前代码可复现的场」 | 跨工件之间**同定义量全部逐位一致**（C5 最差 0.0）；与当前代码跨平台复现最差 1.248e-05 | `lax_artifact_contract` 的 C5/C6 记录 |
+| 「`dt` 不同：2.2296e-05 vs 2.5445e-05」 | 两个数**同属 p3.N400 一次运行**：分别是 `dt_last` 与 `dt_mean`，不是两次运行之差 | `quoted_dt` 检查（R4，PASS） |
+| 「差至 7.138e-03」 | 只能由**不同定义**的量相减得到（全场 L1 vs 解析区 L1，最差 9.93e-01） | `cross_definition_gap` 诊断（R3） |
+
+因此：**A0 FAIL 与 N=800 分辨率结论原样保留**，但「重生成探针工件」这条后续项不应再按原口径执行——
+重算不会修正任何数字（同机逐位一致），只会产生一份数值相同、格式不同的工件。真正被修掉的是元数据缺陷：
+`lax_case_pool_limiter_arms` 曾把求解器的最后一步写进裸键 `dt`（与其余工件的均值步语义冲突，偏差达 94 %），
+已由 `scripts/attach_lax_dt_semantics.py` 就地改正并留下 `dt_repair` 溯源（未重跑求解器）。

@@ -1,0 +1,3250 @@
+{
+ "case": "CASE-LAX-DG",
+ "anchor": "CASE-LAX-DG",
+ "question": "do the sibling Lax artifacts agree where their definitions coincide, and is the 'probe artifact not reproducible' item real?",
+ "generated_at_utc": "2026-11-15T03:37:29Z",
+ "environment": {
+  "python": "3.11.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "numpy": "2.4.6"
+ },
+ "tolerance": 1e-12,
+ "publishers": [
+  "lax_case_pool",
+  "lax_asymptotic_probe",
+  "lax_resolution_requirement",
+  "lax_certified_configuration",
+  "lax_case_pool_limiter_arms"
+ ],
+ "canonical_metrics": {
+  "whole_field_L1": "relative L1, whole field (Gauss-node Legendre weighting)",
+  "whole_field_L2": "relative L2, whole field (Gauss-node Legendre weighting)",
+  "band_L1": "relative L1, analytic region only (wave band removed)"
+ },
+ "live_legs": [
+  "p3.N200",
+  "p2.N400"
+ ],
+ "quoted_gap_from_residual_gap_doc": 0.007138,
+ "audit": {
+  "publishers": {
+   "lax_case_pool": {
+    "artifact": "docs/benchmarks/results/lax_case_pool/metrics.json",
+    "artifact_present": true,
+    "legs": 9,
+    "dt_semantics_declared": [
+     "None"
+    ],
+    "dt_semantics_resolved_by": "verified (dt == final_time/steps on every leg)",
+    "bare_dt_semantics": "dt_mean",
+    "worst_mean_relative_error": 0.0,
+    "C1_semantics_declared": "PASS",
+    "C2_mean_identity": "PASS",
+    "C3_last_step_bound": "PASS",
+    "note": "the ledger artifact; 9-leg ladder N=100/200/400 x p=1/2/3"
+   },
+   "lax_asymptotic_probe": {
+    "artifact": "docs/benchmarks/results/lax_asymptotic_probe/metrics.json",
+    "artifact_present": true,
+    "legs": 7,
+    "dt_semantics_declared": [
+     "dt_last = time-truncated final step; dt_mean = final_time/steps"
+    ],
+    "dt_semantics_resolved_by": "declared",
+    "bare_dt_semantics": null,
+    "worst_mean_relative_error": 0.0,
+    "C1_semantics_declared": "PASS",
+    "C2_mean_identity": "PASS",
+    "C3_last_step_bound": "PASS",
+    "note": "p3 order attribution; extends the ladder to N=800"
+   },
+   "lax_resolution_requirement": {
+    "artifact": "docs/benchmarks/results/lax_resolution_requirement/metrics.json",
+    "artifact_present": true,
+    "legs": 2,
+    "dt_semantics_declared": [
+     "None"
+    ],
+    "dt_semantics_resolved_by": "verified (dt == final_time/steps on every leg)",
+    "bare_dt_semantics": "dt_mean",
+    "worst_mean_relative_error": 0.0,
+    "C1_semantics_declared": "PASS",
+    "C2_mean_identity": "PASS",
+    "C3_last_step_bound": "PASS",
+    "note": "what resolution the 3 % bar needs (p3.N400 -> p3.N800)"
+   },
+   "lax_certified_configuration": {
+    "artifact": "docs/benchmarks/results/lax_certified_configuration/metrics.json",
+    "artifact_present": true,
+    "legs": 8,
+    "dt_semantics_declared": [
+     "None"
+    ],
+    "dt_semantics_resolved_by": "verified (dt == final_time/steps on every leg)",
+    "bare_dt_semantics": "dt_mean",
+    "worst_mean_relative_error": 0.0,
+    "C1_semantics_declared": "PASS",
+    "C2_mean_identity": "PASS",
+    "C3_last_step_bound": "PASS",
+    "note": "cheapest (p, N) that certifies the 3 % bar (DOF-ordered)"
+   },
+   "lax_case_pool_limiter_arms": {
+    "artifact": "docs/benchmarks/results/lax_case_pool_limiter_arms/metrics.json",
+    "artifact_present": true,
+    "legs": 9,
+    "dt_semantics_declared": [
+     "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
+    ],
+    "dt_semantics_resolved_by": "declared",
+    "bare_dt_semantics": "dt_mean",
+    "worst_mean_relative_error": 0.0,
+    "C1_semantics_declared": "PASS",
+    "C2_mean_identity": "PASS",
+    "C3_last_step_bound": "PASS",
+    "note": "single-knob limiter attribution; dt repaired in place (no re-run)"
+   }
+  },
+  "bare_dt_key_map": {
+   "lax_case_pool": "dt_mean",
+   "lax_resolution_requirement": "dt_mean",
+   "lax_certified_configuration": "dt_mean",
+   "lax_case_pool_limiter_arms": "dt_mean"
+  },
+  "C4_collisions": {},
+  "legacy_dt_drift": {
+   "publisher": "lax_case_pool_limiter_arms",
+   "native_key": "dt",
+   "meant": "dt_last (solver's time-truncated final step)",
+   "expected": "dt_mean (final_time/steps)",
+   "example_leg": "p3.N400",
+   "legacy_value": 2.2296238657348866e-05,
+   "dt_mean_same_run": 2.5445292620865142e-05,
+   "fixed_in": "scripts/attach_lax_dt_semantics.py",
+   "solver_rerun": false
+  },
+  "checks": {
+   "C1": "the meaning of the bare key `dt` is resolved for every publisher: either declared by a dt_semantics string, or verified by C2 to be final_time/steps (so no reader has to guess and no file is rewritten only to carry a label)",
+   "C2": "|dt_mean - final_time/steps| / (final_time/steps) <= 1e-12 on every leg",
+   "C3": "0 < dt_last <= dt_mean (1 + 1e-12) wherever dt_last is recorded",
+   "C4": "the bare key `dt` maps to the same canonical quantity in every publisher",
+   "C5": "legs shared by >= 2 publishers agree on every commonly published canonical metric to <= 1e-12 relative",
+   "C6": "a fresh solve of a shared leg reproduces the committed canonical metrics to <= 1e-12 relative (evaluated by the reconciliation driver)"
+  },
+  "tolerance": 1e-12,
+  "verdict": "PASS"
+ },
+ "reconcile": {
+  "legs_compared": 10,
+  "rows": [
+   {
+    "leg": "p1.N100",
+    "cells": 100,
+    "degree": 1,
+    "metric": "whole_field_L1",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.023290512645684942,
+     "lax_case_pool_limiter_arms": 0.023290512645684942
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N100",
+    "cells": 100,
+    "degree": 1,
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.005226556555613372,
+     "lax_case_pool_limiter_arms": 0.005226556555613372
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N100",
+    "cells": 100,
+    "degree": 1,
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.010314207424514612,
+     "lax_case_pool_limiter_arms": 0.010314207424514612
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N100",
+    "cells": 100,
+    "degree": 1,
+    "metric": "band_L1",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0044663500593034155,
+     "lax_case_pool_limiter_arms": 0.0044663500593034155
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N100",
+    "cells": 100,
+    "degree": 1,
+    "metric": "band_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0014990898196027757,
+     "lax_case_pool_limiter_arms": 0.0014990898196027757
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N100",
+    "cells": 100,
+    "degree": 1,
+    "metric": "band_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.002375087926774556,
+     "lax_case_pool_limiter_arms": 0.002375087926774556
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N100",
+    "cells": 100,
+    "degree": 2,
+    "metric": "whole_field_L1",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.016185711537434977,
+     "lax_case_pool_limiter_arms": 0.016185711537434977
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N100",
+    "cells": 100,
+    "degree": 2,
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.006360306167521006,
+     "lax_case_pool_limiter_arms": 0.006360306167521006
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N100",
+    "cells": 100,
+    "degree": 2,
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.011433601365011986,
+     "lax_case_pool_limiter_arms": 0.011433601365011986
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N100",
+    "cells": 100,
+    "degree": 2,
+    "metric": "band_L1",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.004466267838079752,
+     "lax_case_pool_limiter_arms": 0.004466267838079752
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N100",
+    "cells": 100,
+    "degree": 2,
+    "metric": "band_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.004225197178224542,
+     "lax_case_pool_limiter_arms": 0.004225197178224542
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N100",
+    "cells": 100,
+    "degree": 2,
+    "metric": "band_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.006941265821851973,
+     "lax_case_pool_limiter_arms": 0.006941265821851973
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N100",
+    "cells": 100,
+    "degree": 3,
+    "metric": "whole_field_L1",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.015847005256776892,
+     "lax_case_pool_limiter_arms": 0.015847005256776892
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N100",
+    "cells": 100,
+    "degree": 3,
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.011543727182793067,
+     "lax_case_pool_limiter_arms": 0.011543727182793067
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N100",
+    "cells": 100,
+    "degree": 3,
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.020508699385948632,
+     "lax_case_pool_limiter_arms": 0.020508699385948632
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N100",
+    "cells": 100,
+    "degree": 3,
+    "metric": "band_L1",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.008485532127928519,
+     "lax_case_pool_limiter_arms": 0.008485532127928519
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N100",
+    "cells": 100,
+    "degree": 3,
+    "metric": "band_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.010195670285818187,
+     "lax_case_pool_limiter_arms": 0.010195670285818187
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N100",
+    "cells": 100,
+    "degree": 3,
+    "metric": "band_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.018029561739145075,
+     "lax_case_pool_limiter_arms": 0.018029561739145075
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N200",
+    "cells": 200,
+    "degree": 1,
+    "metric": "whole_field_L1",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.013602985607307055,
+     "lax_case_pool_limiter_arms": 0.013602985607307055
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N200",
+    "cells": 200,
+    "degree": 1,
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0025008938646334665,
+     "lax_case_pool_limiter_arms": 0.0025008938646334665
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N200",
+    "cells": 200,
+    "degree": 1,
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.004398309033188301,
+     "lax_case_pool_limiter_arms": 0.004398309033188301
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N200",
+    "cells": 200,
+    "degree": 1,
+    "metric": "band_L1",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0008479043529682875,
+     "lax_case_pool_limiter_arms": 0.0008479043529682875
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N200",
+    "cells": 200,
+    "degree": 1,
+    "metric": "band_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0005109399579168232,
+     "lax_case_pool_limiter_arms": 0.0005109399579168232
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N200",
+    "cells": 200,
+    "degree": 1,
+    "metric": "band_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0008263718872188344,
+     "lax_case_pool_limiter_arms": 0.0008263718872188344
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N200",
+    "cells": 200,
+    "degree": 2,
+    "metric": "whole_field_L1",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.009227610423687237,
+     "lax_case_pool_limiter_arms": 0.009227610423687237
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N200",
+    "cells": 200,
+    "degree": 2,
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0028826614649977403,
+     "lax_case_pool_limiter_arms": 0.0028826614649977403
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N200",
+    "cells": 200,
+    "degree": 2,
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.004721058019402645,
+     "lax_case_pool_limiter_arms": 0.004721058019402645
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N200",
+    "cells": 200,
+    "degree": 2,
+    "metric": "band_L1",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0019440386501117439,
+     "lax_case_pool_limiter_arms": 0.0019440386501117439
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N200",
+    "cells": 200,
+    "degree": 2,
+    "metric": "band_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.001562281425602629,
+     "lax_case_pool_limiter_arms": 0.001562281425602629
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N200",
+    "cells": 200,
+    "degree": 2,
+    "metric": "band_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0022477788507812976,
+     "lax_case_pool_limiter_arms": 0.0022477788507812976
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "cells": 200,
+    "degree": 3,
+    "metric": "whole_field_L1",
+    "field": "density",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.012147420335832907,
+     "lax_asymptotic_probe": 0.012147420335832907,
+     "lax_case_pool_limiter_arms": 0.012147420335832907
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "cells": 200,
+    "degree": 3,
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.00956416384571963,
+     "lax_asymptotic_probe": 0.00956416384571963,
+     "lax_case_pool_limiter_arms": 0.00956416384571963
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "cells": 200,
+    "degree": 3,
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.016989783003049697,
+     "lax_asymptotic_probe": 0.016989783003049697,
+     "lax_case_pool_limiter_arms": 0.016989783003049697
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "cells": 200,
+    "degree": 3,
+    "metric": "band_L1",
+    "field": "density",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0073404465554664225,
+     "lax_asymptotic_probe": 0.0073404465554664225,
+     "lax_case_pool_limiter_arms": 0.0073404465554664225
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "cells": 200,
+    "degree": 3,
+    "metric": "band_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0087241801604082,
+     "lax_asymptotic_probe": 0.0087241801604082,
+     "lax_case_pool_limiter_arms": 0.0087241801604082
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "cells": 200,
+    "degree": 3,
+    "metric": "band_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.015228778255070947,
+     "lax_asymptotic_probe": 0.015228778255070947,
+     "lax_case_pool_limiter_arms": 0.015228778255070947
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N400",
+    "cells": 400,
+    "degree": 1,
+    "metric": "whole_field_L1",
+    "field": "density",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.007218334666646664,
+     "lax_asymptotic_probe": 0.007218334666646664,
+     "lax_case_pool_limiter_arms": 0.007218334666646664
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N400",
+    "cells": 400,
+    "degree": 1,
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0011045497222765275,
+     "lax_asymptotic_probe": 0.0011045497222765275,
+     "lax_case_pool_limiter_arms": 0.0011045497222765275
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N400",
+    "cells": 400,
+    "degree": 1,
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0019571994497084586,
+     "lax_asymptotic_probe": 0.0019571994497084586,
+     "lax_case_pool_limiter_arms": 0.0019571994497084586
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N400",
+    "cells": 400,
+    "degree": 1,
+    "metric": "whole_field_L2",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "values": {
+     "lax_case_pool": 0.04934864082420773,
+     "lax_certified_configuration": 0.04934864082420773
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N400",
+    "cells": 400,
+    "degree": 1,
+    "metric": "whole_field_L2",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "values": {
+     "lax_case_pool": 0.010164390961190492,
+     "lax_certified_configuration": 0.010164390961190492
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N400",
+    "cells": 400,
+    "degree": 1,
+    "metric": "whole_field_L2",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "values": {
+     "lax_case_pool": 0.017866822803091088,
+     "lax_certified_configuration": 0.017866822803091088
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N400",
+    "cells": 400,
+    "degree": 1,
+    "metric": "band_L1",
+    "field": "density",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.00013082612613051118,
+     "lax_asymptotic_probe": 0.00013082612613051118,
+     "lax_case_pool_limiter_arms": 0.00013082612613051118
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N400",
+    "cells": 400,
+    "degree": 1,
+    "metric": "band_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.00016601104907528342,
+     "lax_asymptotic_probe": 0.00016601104907528342,
+     "lax_case_pool_limiter_arms": 0.00016601104907528342
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p1.N400",
+    "cells": 400,
+    "degree": 1,
+    "metric": "band_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0002789209842386933,
+     "lax_asymptotic_probe": 0.0002789209842386933,
+     "lax_case_pool_limiter_arms": 0.0002789209842386933
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "cells": 400,
+    "degree": 2,
+    "metric": "whole_field_L1",
+    "field": "density",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.004528163036034107,
+     "lax_asymptotic_probe": 0.004528163036034107,
+     "lax_case_pool_limiter_arms": 0.004528163036034107
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "cells": 400,
+    "degree": 2,
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0010984650647367018,
+     "lax_asymptotic_probe": 0.0010984650647367018,
+     "lax_case_pool_limiter_arms": 0.0010984650647367018
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "cells": 400,
+    "degree": 2,
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0016631083834395502,
+     "lax_asymptotic_probe": 0.0016631083834395502,
+     "lax_case_pool_limiter_arms": 0.0016631083834395502
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "cells": 400,
+    "degree": 2,
+    "metric": "whole_field_L2",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "values": {
+     "lax_case_pool": 0.03525871011266807,
+     "lax_certified_configuration": 0.03525871011266807
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "cells": 400,
+    "degree": 2,
+    "metric": "whole_field_L2",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "values": {
+     "lax_case_pool": 0.008575576839958242,
+     "lax_certified_configuration": 0.008575576839958242
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "cells": 400,
+    "degree": 2,
+    "metric": "whole_field_L2",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "values": {
+     "lax_case_pool": 0.015763822704698702,
+     "lax_certified_configuration": 0.015763822704698702
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_certified_configuration"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "cells": 400,
+    "degree": 2,
+    "metric": "band_L1",
+    "field": "density",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0006123889262804776,
+     "lax_asymptotic_probe": 0.0006123889262804776,
+     "lax_case_pool_limiter_arms": 0.0006123889262804776
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "cells": 400,
+    "degree": 2,
+    "metric": "band_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.00041971926746745697,
+     "lax_asymptotic_probe": 0.00041971926746745697,
+     "lax_case_pool_limiter_arms": 0.00041971926746745697
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "cells": 400,
+    "degree": 2,
+    "metric": "band_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.0005197987203339758,
+     "lax_asymptotic_probe": 0.0005197987203339758,
+     "lax_case_pool_limiter_arms": 0.0005197987203339758
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N400",
+    "cells": 400,
+    "degree": 3,
+    "metric": "whole_field_L1",
+    "field": "density",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.008685539963016797,
+     "lax_asymptotic_probe": 0.008685539963016797,
+     "lax_case_pool_limiter_arms": 0.008685539963016797
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N400",
+    "cells": 400,
+    "degree": 3,
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.007311961493174056,
+     "lax_asymptotic_probe": 0.007311961493174056,
+     "lax_case_pool_limiter_arms": 0.007311961493174056
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N400",
+    "cells": 400,
+    "degree": 3,
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.012306385471484237,
+     "lax_asymptotic_probe": 0.012306385471484237,
+     "lax_case_pool_limiter_arms": 0.012306385471484237
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N400",
+    "cells": 400,
+    "degree": 3,
+    "metric": "whole_field_L2",
+    "field": "density",
+    "publishers": [
+     "lax_case_pool",
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "values": {
+     "lax_case_pool": 0.031155618811580767,
+     "lax_resolution_requirement": 0.031155618811580767,
+     "lax_certified_configuration": 0.031155618811580767
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N400",
+    "cells": 400,
+    "degree": 3,
+    "metric": "whole_field_L2",
+    "field": "pressure",
+    "publishers": [
+     "lax_case_pool",
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "values": {
+     "lax_case_pool": 0.013050115344201776,
+     "lax_resolution_requirement": 0.013050115344201776,
+     "lax_certified_configuration": 0.013050115344201776
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N400",
+    "cells": 400,
+    "degree": 3,
+    "metric": "whole_field_L2",
+    "field": "velocity",
+    "publishers": [
+     "lax_case_pool",
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "values": {
+     "lax_case_pool": 0.022480528737058404,
+     "lax_resolution_requirement": 0.022480528737058404,
+     "lax_certified_configuration": 0.022480528737058404
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N400",
+    "cells": 400,
+    "degree": 3,
+    "metric": "band_L1",
+    "field": "density",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.006071609158737032,
+     "lax_asymptotic_probe": 0.006071609158737032,
+     "lax_case_pool_limiter_arms": 0.006071609158737032
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N400",
+    "cells": 400,
+    "degree": 3,
+    "metric": "band_L1",
+    "field": "pressure",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.006904033354645107,
+     "lax_asymptotic_probe": 0.006904033354645107,
+     "lax_case_pool_limiter_arms": 0.006904033354645107
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N400",
+    "cells": 400,
+    "degree": 3,
+    "metric": "band_L1",
+    "field": "velocity",
+    "publishers": [
+     "lax_asymptotic_probe",
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "values": {
+     "lax_case_pool": 0.011852360131355025,
+     "lax_asymptotic_probe": 0.011852360131355025,
+     "lax_case_pool_limiter_arms": 0.011852360131355025
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_case_pool",
+     "lax_case_pool_limiter_arms"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N800",
+    "cells": 800,
+    "degree": 3,
+    "metric": "whole_field_L2",
+    "field": "density",
+    "publishers": [
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "values": {
+     "lax_resolution_requirement": 0.023148994624927942,
+     "lax_certified_configuration": 0.023148994624927942
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N800",
+    "cells": 800,
+    "degree": 3,
+    "metric": "whole_field_L2",
+    "field": "pressure",
+    "publishers": [
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "values": {
+     "lax_resolution_requirement": 0.008994023222666417,
+     "lax_certified_configuration": 0.008994023222666417
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N800",
+    "cells": 800,
+    "degree": 3,
+    "metric": "whole_field_L2",
+    "field": "velocity",
+    "publishers": [
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "values": {
+     "lax_resolution_requirement": 0.013825704983298062,
+     "lax_certified_configuration": 0.013825704983298062
+    },
+    "worst_relative_difference": 0.0,
+    "worst_pair": [
+     "lax_certified_configuration",
+     "lax_resolution_requirement"
+    ],
+    "status": "PASS"
+   }
+  ],
+  "worst_relative_difference": 0.0,
+  "cross_metric_diagnostic": {
+   "note": "differences a reader sees when comparing two *different* error definitions on the same leg; not drift",
+   "rows": [
+    {
+     "leg": "p1.N100",
+     "publisher": "lax_case_pool",
+     "field": "density",
+     "whole_field_L1": 0.023290512645684942,
+     "band_L1": 0.0044663500593034155,
+     "relative_difference": 0.808233072098956
+    },
+    {
+     "leg": "p1.N100",
+     "publisher": "lax_case_pool",
+     "field": "pressure",
+     "whole_field_L1": 0.005226556555613372,
+     "band_L1": 0.0014990898196027757,
+     "relative_difference": 0.7131783032190212
+    },
+    {
+     "leg": "p1.N100",
+     "publisher": "lax_case_pool",
+     "field": "velocity",
+     "whole_field_L1": 0.010314207424514612,
+     "band_L1": 0.002375087926774556,
+     "relative_difference": 0.7697265694764396
+    },
+    {
+     "leg": "p1.N100",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "density",
+     "whole_field_L1": 0.023290512645684942,
+     "band_L1": 0.0044663500593034155,
+     "relative_difference": 0.808233072098956
+    },
+    {
+     "leg": "p1.N100",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "pressure",
+     "whole_field_L1": 0.005226556555613372,
+     "band_L1": 0.0014990898196027757,
+     "relative_difference": 0.7131783032190212
+    },
+    {
+     "leg": "p1.N100",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "velocity",
+     "whole_field_L1": 0.010314207424514612,
+     "band_L1": 0.002375087926774556,
+     "relative_difference": 0.7697265694764396
+    },
+    {
+     "leg": "p2.N100",
+     "publisher": "lax_case_pool",
+     "field": "density",
+     "whole_field_L1": 0.016185711537434977,
+     "band_L1": 0.004466267838079752,
+     "relative_difference": 0.7240610752421984
+    },
+    {
+     "leg": "p2.N100",
+     "publisher": "lax_case_pool",
+     "field": "pressure",
+     "whole_field_L1": 0.006360306167521006,
+     "band_L1": 0.004225197178224542,
+     "relative_difference": 0.3356928004817486
+    },
+    {
+     "leg": "p2.N100",
+     "publisher": "lax_case_pool",
+     "field": "velocity",
+     "whole_field_L1": 0.011433601365011986,
+     "band_L1": 0.006941265821851973,
+     "relative_difference": 0.3929064342672492
+    },
+    {
+     "leg": "p2.N100",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "density",
+     "whole_field_L1": 0.016185711537434977,
+     "band_L1": 0.004466267838079752,
+     "relative_difference": 0.7240610752421984
+    },
+    {
+     "leg": "p2.N100",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "pressure",
+     "whole_field_L1": 0.006360306167521006,
+     "band_L1": 0.004225197178224542,
+     "relative_difference": 0.3356928004817486
+    },
+    {
+     "leg": "p2.N100",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "velocity",
+     "whole_field_L1": 0.011433601365011986,
+     "band_L1": 0.006941265821851973,
+     "relative_difference": 0.3929064342672492
+    },
+    {
+     "leg": "p3.N100",
+     "publisher": "lax_case_pool",
+     "field": "density",
+     "whole_field_L1": 0.015847005256776892,
+     "band_L1": 0.008485532127928519,
+     "relative_difference": 0.464534024540711
+    },
+    {
+     "leg": "p3.N100",
+     "publisher": "lax_case_pool",
+     "field": "pressure",
+     "whole_field_L1": 0.011543727182793067,
+     "band_L1": 0.010195670285818187,
+     "relative_difference": 0.1167783052759837
+    },
+    {
+     "leg": "p3.N100",
+     "publisher": "lax_case_pool",
+     "field": "velocity",
+     "whole_field_L1": 0.020508699385948632,
+     "band_L1": 0.018029561739145075,
+     "relative_difference": 0.12088224612147364
+    },
+    {
+     "leg": "p3.N100",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "density",
+     "whole_field_L1": 0.015847005256776892,
+     "band_L1": 0.008485532127928519,
+     "relative_difference": 0.464534024540711
+    },
+    {
+     "leg": "p3.N100",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "pressure",
+     "whole_field_L1": 0.011543727182793067,
+     "band_L1": 0.010195670285818187,
+     "relative_difference": 0.1167783052759837
+    },
+    {
+     "leg": "p3.N100",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "velocity",
+     "whole_field_L1": 0.020508699385948632,
+     "band_L1": 0.018029561739145075,
+     "relative_difference": 0.12088224612147364
+    },
+    {
+     "leg": "p1.N200",
+     "publisher": "lax_case_pool",
+     "field": "density",
+     "whole_field_L1": 0.013602985607307055,
+     "band_L1": 0.0008479043529682875,
+     "relative_difference": 0.9376677754835804
+    },
+    {
+     "leg": "p1.N200",
+     "publisher": "lax_case_pool",
+     "field": "pressure",
+     "whole_field_L1": 0.0025008938646334665,
+     "band_L1": 0.0005109399579168232,
+     "relative_difference": 0.7956970645006932
+    },
+    {
+     "leg": "p1.N200",
+     "publisher": "lax_case_pool",
+     "field": "velocity",
+     "whole_field_L1": 0.004398309033188301,
+     "band_L1": 0.0008263718872188344,
+     "relative_difference": 0.8121160016307896
+    },
+    {
+     "leg": "p1.N200",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "density",
+     "whole_field_L1": 0.013602985607307055,
+     "band_L1": 0.0008479043529682875,
+     "relative_difference": 0.9376677754835804
+    },
+    {
+     "leg": "p1.N200",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "pressure",
+     "whole_field_L1": 0.0025008938646334665,
+     "band_L1": 0.0005109399579168232,
+     "relative_difference": 0.7956970645006932
+    },
+    {
+     "leg": "p1.N200",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "velocity",
+     "whole_field_L1": 0.004398309033188301,
+     "band_L1": 0.0008263718872188344,
+     "relative_difference": 0.8121160016307896
+    },
+    {
+     "leg": "p2.N200",
+     "publisher": "lax_case_pool",
+     "field": "density",
+     "whole_field_L1": 0.009227610423687237,
+     "band_L1": 0.0019440386501117439,
+     "relative_difference": 0.7893237186171833
+    },
+    {
+     "leg": "p2.N200",
+     "publisher": "lax_case_pool",
+     "field": "pressure",
+     "whole_field_L1": 0.0028826614649977403,
+     "band_L1": 0.001562281425602629,
+     "relative_difference": 0.45804200577404475
+    },
+    {
+     "leg": "p2.N200",
+     "publisher": "lax_case_pool",
+     "field": "velocity",
+     "whole_field_L1": 0.004721058019402645,
+     "band_L1": 0.0022477788507812976,
+     "relative_difference": 0.5238823921368141
+    },
+    {
+     "leg": "p2.N200",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "density",
+     "whole_field_L1": 0.009227610423687237,
+     "band_L1": 0.0019440386501117439,
+     "relative_difference": 0.7893237186171833
+    },
+    {
+     "leg": "p2.N200",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "pressure",
+     "whole_field_L1": 0.0028826614649977403,
+     "band_L1": 0.001562281425602629,
+     "relative_difference": 0.45804200577404475
+    },
+    {
+     "leg": "p2.N200",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "velocity",
+     "whole_field_L1": 0.004721058019402645,
+     "band_L1": 0.0022477788507812976,
+     "relative_difference": 0.5238823921368141
+    },
+    {
+     "leg": "p3.N200",
+     "publisher": "lax_case_pool",
+     "field": "density",
+     "whole_field_L1": 0.012147420335832907,
+     "band_L1": 0.0073404465554664225,
+     "relative_difference": 0.39571972052261145
+    },
+    {
+     "leg": "p3.N200",
+     "publisher": "lax_case_pool",
+     "field": "pressure",
+     "whole_field_L1": 0.00956416384571963,
+     "band_L1": 0.0087241801604082,
+     "relative_difference": 0.08782614966256128
+    },
+    {
+     "leg": "p3.N200",
+     "publisher": "lax_case_pool",
+     "field": "velocity",
+     "whole_field_L1": 0.016989783003049697,
+     "band_L1": 0.015228778255070947,
+     "relative_difference": 0.10365080870442234
+    },
+    {
+     "leg": "p3.N200",
+     "publisher": "lax_asymptotic_probe",
+     "field": "density",
+     "whole_field_L1": 0.012147420335832907,
+     "band_L1": 0.0073404465554664225,
+     "relative_difference": 0.39571972052261145
+    },
+    {
+     "leg": "p3.N200",
+     "publisher": "lax_asymptotic_probe",
+     "field": "pressure",
+     "whole_field_L1": 0.00956416384571963,
+     "band_L1": 0.0087241801604082,
+     "relative_difference": 0.08782614966256128
+    },
+    {
+     "leg": "p3.N200",
+     "publisher": "lax_asymptotic_probe",
+     "field": "velocity",
+     "whole_field_L1": 0.016989783003049697,
+     "band_L1": 0.015228778255070947,
+     "relative_difference": 0.10365080870442234
+    },
+    {
+     "leg": "p3.N200",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "density",
+     "whole_field_L1": 0.012147420335832907,
+     "band_L1": 0.0073404465554664225,
+     "relative_difference": 0.39571972052261145
+    },
+    {
+     "leg": "p3.N200",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "pressure",
+     "whole_field_L1": 0.00956416384571963,
+     "band_L1": 0.0087241801604082,
+     "relative_difference": 0.08782614966256128
+    },
+    {
+     "leg": "p3.N200",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "velocity",
+     "whole_field_L1": 0.016989783003049697,
+     "band_L1": 0.015228778255070947,
+     "relative_difference": 0.10365080870442234
+    },
+    {
+     "leg": "p1.N400",
+     "publisher": "lax_case_pool",
+     "field": "density",
+     "whole_field_L1": 0.007218334666646664,
+     "band_L1": 0.00013082612613051118,
+     "relative_difference": 0.9818758574972962
+    },
+    {
+     "leg": "p1.N400",
+     "publisher": "lax_case_pool",
+     "field": "pressure",
+     "whole_field_L1": 0.0011045497222765275,
+     "band_L1": 0.00016601104907528342,
+     "relative_difference": 0.8497025115961941
+    },
+    {
+     "leg": "p1.N400",
+     "publisher": "lax_case_pool",
+     "field": "velocity",
+     "whole_field_L1": 0.0019571994497084586,
+     "band_L1": 0.0002789209842386933,
+     "relative_difference": 0.8574897493046807
+    },
+    {
+     "leg": "p1.N400",
+     "publisher": "lax_asymptotic_probe",
+     "field": "density",
+     "whole_field_L1": 0.007218334666646664,
+     "band_L1": 0.00013082612613051118,
+     "relative_difference": 0.9818758574972962
+    },
+    {
+     "leg": "p1.N400",
+     "publisher": "lax_asymptotic_probe",
+     "field": "pressure",
+     "whole_field_L1": 0.0011045497222765275,
+     "band_L1": 0.00016601104907528342,
+     "relative_difference": 0.8497025115961941
+    },
+    {
+     "leg": "p1.N400",
+     "publisher": "lax_asymptotic_probe",
+     "field": "velocity",
+     "whole_field_L1": 0.0019571994497084586,
+     "band_L1": 0.0002789209842386933,
+     "relative_difference": 0.8574897493046807
+    },
+    {
+     "leg": "p1.N400",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "density",
+     "whole_field_L1": 0.007218334666646664,
+     "band_L1": 0.00013082612613051118,
+     "relative_difference": 0.9818758574972962
+    },
+    {
+     "leg": "p1.N400",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "pressure",
+     "whole_field_L1": 0.0011045497222765275,
+     "band_L1": 0.00016601104907528342,
+     "relative_difference": 0.8497025115961941
+    },
+    {
+     "leg": "p1.N400",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "velocity",
+     "whole_field_L1": 0.0019571994497084586,
+     "band_L1": 0.0002789209842386933,
+     "relative_difference": 0.8574897493046807
+    },
+    {
+     "leg": "p2.N400",
+     "publisher": "lax_case_pool",
+     "field": "density",
+     "whole_field_L1": 0.004528163036034107,
+     "band_L1": 0.0006123889262804776,
+     "relative_difference": 0.8647599652646727
+    },
+    {
+     "leg": "p2.N400",
+     "publisher": "lax_case_pool",
+     "field": "pressure",
+     "whole_field_L1": 0.0010984650647367018,
+     "band_L1": 0.00041971926746745697,
+     "relative_difference": 0.6179038542586129
+    },
+    {
+     "leg": "p2.N400",
+     "publisher": "lax_case_pool",
+     "field": "velocity",
+     "whole_field_L1": 0.0016631083834395502,
+     "band_L1": 0.0005197987203339758,
+     "relative_difference": 0.687453490397928
+    },
+    {
+     "leg": "p2.N400",
+     "publisher": "lax_asymptotic_probe",
+     "field": "density",
+     "whole_field_L1": 0.004528163036034107,
+     "band_L1": 0.0006123889262804776,
+     "relative_difference": 0.8647599652646727
+    },
+    {
+     "leg": "p2.N400",
+     "publisher": "lax_asymptotic_probe",
+     "field": "pressure",
+     "whole_field_L1": 0.0010984650647367018,
+     "band_L1": 0.00041971926746745697,
+     "relative_difference": 0.6179038542586129
+    },
+    {
+     "leg": "p2.N400",
+     "publisher": "lax_asymptotic_probe",
+     "field": "velocity",
+     "whole_field_L1": 0.0016631083834395502,
+     "band_L1": 0.0005197987203339758,
+     "relative_difference": 0.687453490397928
+    },
+    {
+     "leg": "p2.N400",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "density",
+     "whole_field_L1": 0.004528163036034107,
+     "band_L1": 0.0006123889262804776,
+     "relative_difference": 0.8647599652646727
+    },
+    {
+     "leg": "p2.N400",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "pressure",
+     "whole_field_L1": 0.0010984650647367018,
+     "band_L1": 0.00041971926746745697,
+     "relative_difference": 0.6179038542586129
+    },
+    {
+     "leg": "p2.N400",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "velocity",
+     "whole_field_L1": 0.0016631083834395502,
+     "band_L1": 0.0005197987203339758,
+     "relative_difference": 0.687453490397928
+    },
+    {
+     "leg": "p3.N400",
+     "publisher": "lax_case_pool",
+     "field": "density",
+     "whole_field_L1": 0.008685539963016797,
+     "band_L1": 0.006071609158737032,
+     "relative_difference": 0.30095202087722067
+    },
+    {
+     "leg": "p3.N400",
+     "publisher": "lax_case_pool",
+     "field": "pressure",
+     "whole_field_L1": 0.007311961493174056,
+     "band_L1": 0.006904033354645107,
+     "relative_difference": 0.05578915300767961
+    },
+    {
+     "leg": "p3.N400",
+     "publisher": "lax_case_pool",
+     "field": "velocity",
+     "whole_field_L1": 0.012306385471484237,
+     "band_L1": 0.011852360131355025,
+     "relative_difference": 0.03689347625111022
+    },
+    {
+     "leg": "p3.N400",
+     "publisher": "lax_asymptotic_probe",
+     "field": "density",
+     "whole_field_L1": 0.008685539963016797,
+     "band_L1": 0.006071609158737032,
+     "relative_difference": 0.30095202087722067
+    },
+    {
+     "leg": "p3.N400",
+     "publisher": "lax_asymptotic_probe",
+     "field": "pressure",
+     "whole_field_L1": 0.007311961493174056,
+     "band_L1": 0.006904033354645107,
+     "relative_difference": 0.05578915300767961
+    },
+    {
+     "leg": "p3.N400",
+     "publisher": "lax_asymptotic_probe",
+     "field": "velocity",
+     "whole_field_L1": 0.012306385471484237,
+     "band_L1": 0.011852360131355025,
+     "relative_difference": 0.03689347625111022
+    },
+    {
+     "leg": "p3.N400",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "density",
+     "whole_field_L1": 0.008685539963016797,
+     "band_L1": 0.006071609158737032,
+     "relative_difference": 0.30095202087722067
+    },
+    {
+     "leg": "p3.N400",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "pressure",
+     "whole_field_L1": 0.007311961493174056,
+     "band_L1": 0.006904033354645107,
+     "relative_difference": 0.05578915300767961
+    },
+    {
+     "leg": "p3.N400",
+     "publisher": "lax_case_pool_limiter_arms",
+     "field": "velocity",
+     "whole_field_L1": 0.012306385471484237,
+     "band_L1": 0.011852360131355025,
+     "relative_difference": 0.03689347625111022
+    },
+    {
+     "leg": "p1.N800",
+     "publisher": "lax_asymptotic_probe",
+     "field": "density",
+     "whole_field_L1": 0.0042366673590538695,
+     "band_L1": 3.106228990182039e-05,
+     "relative_difference": 0.9926682254542737
+    },
+    {
+     "leg": "p1.N800",
+     "publisher": "lax_asymptotic_probe",
+     "field": "pressure",
+     "whole_field_L1": 0.0005406301199153777,
+     "band_L1": 6.42106005039886e-05,
+     "relative_difference": 0.8812300718390622
+    },
+    {
+     "leg": "p1.N800",
+     "publisher": "lax_asymptotic_probe",
+     "field": "velocity",
+     "whole_field_L1": 0.0008808367873301405,
+     "band_L1": 0.00010985204149980615,
+     "relative_difference": 0.8752867238517898
+    },
+    {
+     "leg": "p2.N800",
+     "publisher": "lax_asymptotic_probe",
+     "field": "density",
+     "whole_field_L1": 0.0025481197117722715,
+     "band_L1": 0.00015198502487113078,
+     "relative_difference": 0.940354048450329
+    },
+    {
+     "leg": "p2.N800",
+     "publisher": "lax_asymptotic_probe",
+     "field": "pressure",
+     "whole_field_L1": 0.0005447903487005192,
+     "band_L1": 0.0001213704185882944,
+     "relative_difference": 0.7772162835156725
+    },
+    {
+     "leg": "p2.N800",
+     "publisher": "lax_asymptotic_probe",
+     "field": "velocity",
+     "whole_field_L1": 0.0007970658715369152,
+     "band_L1": 0.00016360304877835284,
+     "relative_difference": 0.7947433774038138
+    },
+    {
+     "leg": "p3.N800",
+     "publisher": "lax_asymptotic_probe",
+     "field": "density",
+     "whole_field_L1": 0.006164751775579453,
+     "band_L1": 0.004405212589015103,
+     "relative_difference": 0.2854193081276112
+    },
+    {
+     "leg": "p3.N800",
+     "publisher": "lax_asymptotic_probe",
+     "field": "pressure",
+     "whole_field_L1": 0.0051312181865732845,
+     "band_L1": 0.004794421246451552,
+     "relative_difference": 0.0656368386366847
+    },
+    {
+     "leg": "p3.N800",
+     "publisher": "lax_asymptotic_probe",
+     "field": "velocity",
+     "whole_field_L1": 0.008233285360806078,
+     "band_L1": 0.00797875881074817,
+     "relative_difference": 0.030914336003651836
+    }
+   ],
+   "worst_relative_difference": 0.9926682254542737
+  },
+  "tolerance": 1e-12,
+  "verdict": "PASS"
+ },
+ "payload_live": {
+  "pre_registered_tolerance": 1e-12,
+  "pre_registered_verdict": "FAIL",
+  "floor": 0.001,
+  "floor_reason": "post-hoc cross-platform reproducibility floor: bitwise (1e-12) equality is not achievable between the loong64 artifacts and this x86 host; the floor is 80x the measured worst (1.25e-05), three orders below the 3 % case tolerance and one order below the ~1e-4 discrepancy the residual-gap doc reported",
+  "verdict_at_floor": "PASS",
+  "legs": [
+   "p3.N200",
+   "p2.N400"
+  ],
+  "rows": [
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.012147420335832907,
+    "rerun": 0.01214747011549904,
+    "relative_difference": 4.09794514075143e-06,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.016989783003049697,
+    "rerun": 0.016989928406710906,
+    "relative_difference": 8.558226834622702e-06,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.00956416384571963,
+    "rerun": 0.009564283253848274,
+    "relative_difference": 1.2484796348487144e-05,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "density",
+    "committed": 0.04199979591491615,
+    "rerun": 0.04199979595460771,
+    "relative_difference": 9.45041794478951e-10,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "velocity",
+    "committed": 0.03390223437837867,
+    "rerun": 0.03390223394303045,
+    "relative_difference": 1.284128408441749e-08,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "pressure",
+    "committed": 0.016554124820957365,
+    "rerun": 0.0165541255077031,
+    "relative_difference": 4.148486951769473e-08,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "steps",
+    "field": null,
+    "committed": 2547,
+    "rerun": 2547,
+    "relative_difference": 0.0,
+    "status": "PASS",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.012147420335832907,
+    "rerun": 0.01214747011549904,
+    "relative_difference": 4.09794514075143e-06,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.00956416384571963,
+    "rerun": 0.009564283253848274,
+    "relative_difference": 1.2484796348487144e-05,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.016989783003049697,
+    "rerun": 0.016989928406710906,
+    "relative_difference": 8.558226834622702e-06,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "steps",
+    "field": null,
+    "committed": 2547,
+    "rerun": 2547,
+    "relative_difference": 0.0,
+    "status": "PASS",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.012147420335832907,
+    "rerun": 0.01214747011549904,
+    "relative_difference": 4.09794514075143e-06,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.016989783003049697,
+    "rerun": 0.016989928406710906,
+    "relative_difference": 8.558226834622702e-06,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.00956416384571963,
+    "rerun": 0.009564283253848274,
+    "relative_difference": 1.2484796348487144e-05,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "steps",
+    "field": null,
+    "committed": 2547,
+    "rerun": 2547,
+    "relative_difference": 0.0,
+    "status": "PASS",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.004528163036034107,
+    "rerun": 0.004528163040625704,
+    "relative_difference": 1.0140087772112065e-09,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.0016631083834395502,
+    "rerun": 0.0016631083827524469,
+    "relative_difference": 4.131440715680275e-10,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.0010984650647367018,
+    "rerun": 0.001098465075950289,
+    "relative_difference": 1.020841499275159e-08,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "density",
+    "committed": 0.03525871011266807,
+    "rerun": 0.03525871011269383,
+    "relative_difference": 7.307162679196239e-13,
+    "status": "PASS",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "velocity",
+    "committed": 0.015763822704698702,
+    "rerun": 0.015763822704175624,
+    "relative_difference": 3.31821867324908e-11,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "pressure",
+    "committed": 0.008575576839958242,
+    "rerun": 0.008575576840706735,
+    "relative_difference": 8.728197474612793e-11,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "steps",
+    "field": null,
+    "committed": 3662,
+    "rerun": 3662,
+    "relative_difference": 0.0,
+    "status": "PASS",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.004528163036034107,
+    "rerun": 0.004528163040625704,
+    "relative_difference": 1.0140087772112065e-09,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.0010984650647367018,
+    "rerun": 0.001098465075950289,
+    "relative_difference": 1.020841499275159e-08,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.0016631083834395502,
+    "rerun": 0.0016631083827524469,
+    "relative_difference": 4.131440715680275e-10,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "steps",
+    "field": null,
+    "committed": 3662,
+    "rerun": 3662,
+    "relative_difference": 0.0,
+    "status": "PASS",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_certified_configuration",
+    "metric": "whole_field_L2",
+    "field": "density",
+    "committed": 0.03525871011266807,
+    "rerun": 0.03525871011269383,
+    "relative_difference": 7.307162679196239e-13,
+    "status": "PASS",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_certified_configuration",
+    "metric": "whole_field_L2",
+    "field": "velocity",
+    "committed": 0.015763822704698702,
+    "rerun": 0.015763822704175624,
+    "relative_difference": 3.31821867324908e-11,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_certified_configuration",
+    "metric": "whole_field_L2",
+    "field": "pressure",
+    "committed": 0.008575576839958242,
+    "rerun": 0.008575576840706735,
+    "relative_difference": 8.728197474612793e-11,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_certified_configuration",
+    "metric": "steps",
+    "field": null,
+    "committed": 3662,
+    "rerun": 3662,
+    "relative_difference": 0.0,
+    "status": "PASS",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.004528163036034107,
+    "rerun": 0.004528163040625704,
+    "relative_difference": 1.0140087772112065e-09,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.0016631083834395502,
+    "rerun": 0.0016631083827524469,
+    "relative_difference": 4.131440715680275e-10,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.0010984650647367018,
+    "rerun": 0.001098465075950289,
+    "relative_difference": 1.020841499275159e-08,
+    "status": "FAIL",
+    "status_at_floor": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "steps",
+    "field": null,
+    "committed": 3662,
+    "rerun": 3662,
+    "relative_difference": 0.0,
+    "status": "PASS",
+    "status_at_floor": "PASS"
+   }
+  ],
+  "wall_seconds": 104.79142808914185,
+  "worst_relative_difference": 1.2484796348487144e-05,
+  "verdict": "FAIL",
+  "note": "current code, same measurement path as benchmarks.lax_case_pool (Gauss-node Legendre weighting, exact Riemann denominator); the legs were measured one per process because a single-process run exceeds the local short-test budget -- each row is one fresh solve of the current code against the committed artifact",
+  "split_runs": true
+ },
+ "cross_definition_gap": {
+  "note": "same leg, *different* definition: the size of the discrepancy a reader gets by comparing mismatched keys",
+  "rows": [
+   {
+    "leg": "p1.N100",
+    "publisher": "lax_case_pool",
+    "field": "density",
+    "whole_field_L1": 0.023290512645684942,
+    "band_L1": 0.0044663500593034155,
+    "relative_difference": 0.808233072098956
+   },
+   {
+    "leg": "p1.N100",
+    "publisher": "lax_case_pool",
+    "field": "pressure",
+    "whole_field_L1": 0.005226556555613372,
+    "band_L1": 0.0014990898196027757,
+    "relative_difference": 0.7131783032190212
+   },
+   {
+    "leg": "p1.N100",
+    "publisher": "lax_case_pool",
+    "field": "velocity",
+    "whole_field_L1": 0.010314207424514612,
+    "band_L1": 0.002375087926774556,
+    "relative_difference": 0.7697265694764396
+   },
+   {
+    "leg": "p1.N200",
+    "publisher": "lax_case_pool",
+    "field": "density",
+    "whole_field_L1": 0.013602985607307055,
+    "band_L1": 0.0008479043529682875,
+    "relative_difference": 0.9376677754835804
+   },
+   {
+    "leg": "p1.N200",
+    "publisher": "lax_case_pool",
+    "field": "pressure",
+    "whole_field_L1": 0.0025008938646334665,
+    "band_L1": 0.0005109399579168232,
+    "relative_difference": 0.7956970645006932
+   },
+   {
+    "leg": "p1.N200",
+    "publisher": "lax_case_pool",
+    "field": "velocity",
+    "whole_field_L1": 0.004398309033188301,
+    "band_L1": 0.0008263718872188344,
+    "relative_difference": 0.8121160016307896
+   },
+   {
+    "leg": "p1.N400",
+    "publisher": "lax_case_pool",
+    "field": "density",
+    "whole_field_L1": 0.007218334666646664,
+    "band_L1": 0.00013082612613051118,
+    "relative_difference": 0.9818758574972962
+   },
+   {
+    "leg": "p1.N400",
+    "publisher": "lax_case_pool",
+    "field": "pressure",
+    "whole_field_L1": 0.0011045497222765275,
+    "band_L1": 0.00016601104907528342,
+    "relative_difference": 0.8497025115961941
+   },
+   {
+    "leg": "p1.N400",
+    "publisher": "lax_case_pool",
+    "field": "velocity",
+    "whole_field_L1": 0.0019571994497084586,
+    "band_L1": 0.0002789209842386933,
+    "relative_difference": 0.8574897493046807
+   },
+   {
+    "leg": "p2.N100",
+    "publisher": "lax_case_pool",
+    "field": "density",
+    "whole_field_L1": 0.016185711537434977,
+    "band_L1": 0.004466267838079752,
+    "relative_difference": 0.7240610752421984
+   },
+   {
+    "leg": "p2.N100",
+    "publisher": "lax_case_pool",
+    "field": "pressure",
+    "whole_field_L1": 0.006360306167521006,
+    "band_L1": 0.004225197178224542,
+    "relative_difference": 0.3356928004817486
+   },
+   {
+    "leg": "p2.N100",
+    "publisher": "lax_case_pool",
+    "field": "velocity",
+    "whole_field_L1": 0.011433601365011986,
+    "band_L1": 0.006941265821851973,
+    "relative_difference": 0.3929064342672492
+   },
+   {
+    "leg": "p2.N200",
+    "publisher": "lax_case_pool",
+    "field": "density",
+    "whole_field_L1": 0.009227610423687237,
+    "band_L1": 0.0019440386501117439,
+    "relative_difference": 0.7893237186171833
+   },
+   {
+    "leg": "p2.N200",
+    "publisher": "lax_case_pool",
+    "field": "pressure",
+    "whole_field_L1": 0.0028826614649977403,
+    "band_L1": 0.001562281425602629,
+    "relative_difference": 0.45804200577404475
+   },
+   {
+    "leg": "p2.N200",
+    "publisher": "lax_case_pool",
+    "field": "velocity",
+    "whole_field_L1": 0.004721058019402645,
+    "band_L1": 0.0022477788507812976,
+    "relative_difference": 0.5238823921368141
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "field": "density",
+    "whole_field_L1": 0.004528163036034107,
+    "band_L1": 0.0006123889262804776,
+    "relative_difference": 0.8647599652646727
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "field": "pressure",
+    "whole_field_L1": 0.0010984650647367018,
+    "band_L1": 0.00041971926746745697,
+    "relative_difference": 0.6179038542586129
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "field": "velocity",
+    "whole_field_L1": 0.0016631083834395502,
+    "band_L1": 0.0005197987203339758,
+    "relative_difference": 0.687453490397928
+   },
+   {
+    "leg": "p3.N100",
+    "publisher": "lax_case_pool",
+    "field": "density",
+    "whole_field_L1": 0.015847005256776892,
+    "band_L1": 0.008485532127928519,
+    "relative_difference": 0.464534024540711
+   },
+   {
+    "leg": "p3.N100",
+    "publisher": "lax_case_pool",
+    "field": "pressure",
+    "whole_field_L1": 0.011543727182793067,
+    "band_L1": 0.010195670285818187,
+    "relative_difference": 0.1167783052759837
+   },
+   {
+    "leg": "p3.N100",
+    "publisher": "lax_case_pool",
+    "field": "velocity",
+    "whole_field_L1": 0.020508699385948632,
+    "band_L1": 0.018029561739145075,
+    "relative_difference": 0.12088224612147364
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "field": "density",
+    "whole_field_L1": 0.012147420335832907,
+    "band_L1": 0.0073404465554664225,
+    "relative_difference": 0.39571972052261145
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "field": "pressure",
+    "whole_field_L1": 0.00956416384571963,
+    "band_L1": 0.0087241801604082,
+    "relative_difference": 0.08782614966256128
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "field": "velocity",
+    "whole_field_L1": 0.016989783003049697,
+    "band_L1": 0.015228778255070947,
+    "relative_difference": 0.10365080870442234
+   },
+   {
+    "leg": "p3.N400",
+    "publisher": "lax_case_pool",
+    "field": "density",
+    "whole_field_L1": 0.008685539963016797,
+    "band_L1": 0.006071609158737032,
+    "relative_difference": 0.30095202087722067
+   },
+   {
+    "leg": "p3.N400",
+    "publisher": "lax_case_pool",
+    "field": "pressure",
+    "whole_field_L1": 0.007311961493174056,
+    "band_L1": 0.006904033354645107,
+    "relative_difference": 0.05578915300767961
+   },
+   {
+    "leg": "p3.N400",
+    "publisher": "lax_case_pool",
+    "field": "velocity",
+    "whole_field_L1": 0.012306385471484237,
+    "band_L1": 0.011852360131355025,
+    "relative_difference": 0.03689347625111022
+   },
+   {
+    "leg": "p1.N400",
+    "publisher": "lax_asymptotic_probe",
+    "field": "density",
+    "whole_field_L1": 0.007218334666646664,
+    "band_L1": 0.00013082612613051118,
+    "relative_difference": 0.9818758574972962
+   },
+   {
+    "leg": "p1.N400",
+    "publisher": "lax_asymptotic_probe",
+    "field": "pressure",
+    "whole_field_L1": 0.0011045497222765275,
+    "band_L1": 0.00016601104907528342,
+    "relative_difference": 0.8497025115961941
+   },
+   {
+    "leg": "p1.N400",
+    "publisher": "lax_asymptotic_probe",
+    "field": "velocity",
+    "whole_field_L1": 0.0019571994497084586,
+    "band_L1": 0.0002789209842386933,
+    "relative_difference": 0.8574897493046807
+   },
+   {
+    "leg": "p1.N800",
+    "publisher": "lax_asymptotic_probe",
+    "field": "density",
+    "whole_field_L1": 0.0042366673590538695,
+    "band_L1": 3.106228990182039e-05,
+    "relative_difference": 0.9926682254542737
+   },
+   {
+    "leg": "p1.N800",
+    "publisher": "lax_asymptotic_probe",
+    "field": "pressure",
+    "whole_field_L1": 0.0005406301199153777,
+    "band_L1": 6.42106005039886e-05,
+    "relative_difference": 0.8812300718390622
+   },
+   {
+    "leg": "p1.N800",
+    "publisher": "lax_asymptotic_probe",
+    "field": "velocity",
+    "whole_field_L1": 0.0008808367873301405,
+    "band_L1": 0.00010985204149980615,
+    "relative_difference": 0.8752867238517898
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_asymptotic_probe",
+    "field": "density",
+    "whole_field_L1": 0.004528163036034107,
+    "band_L1": 0.0006123889262804776,
+    "relative_difference": 0.8647599652646727
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_asymptotic_probe",
+    "field": "pressure",
+    "whole_field_L1": 0.0010984650647367018,
+    "band_L1": 0.00041971926746745697,
+    "relative_difference": 0.6179038542586129
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_asymptotic_probe",
+    "field": "velocity",
+    "whole_field_L1": 0.0016631083834395502,
+    "band_L1": 0.0005197987203339758,
+    "relative_difference": 0.687453490397928
+   },
+   {
+    "leg": "p2.N800",
+    "publisher": "lax_asymptotic_probe",
+    "field": "density",
+    "whole_field_L1": 0.0025481197117722715,
+    "band_L1": 0.00015198502487113078,
+    "relative_difference": 0.940354048450329
+   },
+   {
+    "leg": "p2.N800",
+    "publisher": "lax_asymptotic_probe",
+    "field": "pressure",
+    "whole_field_L1": 0.0005447903487005192,
+    "band_L1": 0.0001213704185882944,
+    "relative_difference": 0.7772162835156725
+   },
+   {
+    "leg": "p2.N800",
+    "publisher": "lax_asymptotic_probe",
+    "field": "velocity",
+    "whole_field_L1": 0.0007970658715369152,
+    "band_L1": 0.00016360304877835284,
+    "relative_difference": 0.7947433774038138
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_asymptotic_probe",
+    "field": "density",
+    "whole_field_L1": 0.012147420335832907,
+    "band_L1": 0.0073404465554664225,
+    "relative_difference": 0.39571972052261145
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_asymptotic_probe",
+    "field": "pressure",
+    "whole_field_L1": 0.00956416384571963,
+    "band_L1": 0.0087241801604082,
+    "relative_difference": 0.08782614966256128
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_asymptotic_probe",
+    "field": "velocity",
+    "whole_field_L1": 0.016989783003049697,
+    "band_L1": 0.015228778255070947,
+    "relative_difference": 0.10365080870442234
+   },
+   {
+    "leg": "p3.N400",
+    "publisher": "lax_asymptotic_probe",
+    "field": "density",
+    "whole_field_L1": 0.008685539963016797,
+    "band_L1": 0.006071609158737032,
+    "relative_difference": 0.30095202087722067
+   },
+   {
+    "leg": "p3.N400",
+    "publisher": "lax_asymptotic_probe",
+    "field": "pressure",
+    "whole_field_L1": 0.007311961493174056,
+    "band_L1": 0.006904033354645107,
+    "relative_difference": 0.05578915300767961
+   },
+   {
+    "leg": "p3.N400",
+    "publisher": "lax_asymptotic_probe",
+    "field": "velocity",
+    "whole_field_L1": 0.012306385471484237,
+    "band_L1": 0.011852360131355025,
+    "relative_difference": 0.03689347625111022
+   },
+   {
+    "leg": "p3.N800",
+    "publisher": "lax_asymptotic_probe",
+    "field": "density",
+    "whole_field_L1": 0.006164751775579453,
+    "band_L1": 0.004405212589015103,
+    "relative_difference": 0.2854193081276112
+   },
+   {
+    "leg": "p3.N800",
+    "publisher": "lax_asymptotic_probe",
+    "field": "pressure",
+    "whole_field_L1": 0.0051312181865732845,
+    "band_L1": 0.004794421246451552,
+    "relative_difference": 0.0656368386366847
+   },
+   {
+    "leg": "p3.N800",
+    "publisher": "lax_asymptotic_probe",
+    "field": "velocity",
+    "whole_field_L1": 0.008233285360806078,
+    "band_L1": 0.00797875881074817,
+    "relative_difference": 0.030914336003651836
+   },
+   {
+    "leg": "p1.N100",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "density",
+    "whole_field_L1": 0.023290512645684942,
+    "band_L1": 0.0044663500593034155,
+    "relative_difference": 0.808233072098956
+   },
+   {
+    "leg": "p1.N100",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "pressure",
+    "whole_field_L1": 0.005226556555613372,
+    "band_L1": 0.0014990898196027757,
+    "relative_difference": 0.7131783032190212
+   },
+   {
+    "leg": "p1.N100",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "velocity",
+    "whole_field_L1": 0.010314207424514612,
+    "band_L1": 0.002375087926774556,
+    "relative_difference": 0.7697265694764396
+   },
+   {
+    "leg": "p1.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "density",
+    "whole_field_L1": 0.013602985607307055,
+    "band_L1": 0.0008479043529682875,
+    "relative_difference": 0.9376677754835804
+   },
+   {
+    "leg": "p1.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "pressure",
+    "whole_field_L1": 0.0025008938646334665,
+    "band_L1": 0.0005109399579168232,
+    "relative_difference": 0.7956970645006932
+   },
+   {
+    "leg": "p1.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "velocity",
+    "whole_field_L1": 0.004398309033188301,
+    "band_L1": 0.0008263718872188344,
+    "relative_difference": 0.8121160016307896
+   },
+   {
+    "leg": "p1.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "density",
+    "whole_field_L1": 0.007218334666646664,
+    "band_L1": 0.00013082612613051118,
+    "relative_difference": 0.9818758574972962
+   },
+   {
+    "leg": "p1.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "pressure",
+    "whole_field_L1": 0.0011045497222765275,
+    "band_L1": 0.00016601104907528342,
+    "relative_difference": 0.8497025115961941
+   },
+   {
+    "leg": "p1.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "velocity",
+    "whole_field_L1": 0.0019571994497084586,
+    "band_L1": 0.0002789209842386933,
+    "relative_difference": 0.8574897493046807
+   },
+   {
+    "leg": "p2.N100",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "density",
+    "whole_field_L1": 0.016185711537434977,
+    "band_L1": 0.004466267838079752,
+    "relative_difference": 0.7240610752421984
+   },
+   {
+    "leg": "p2.N100",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "pressure",
+    "whole_field_L1": 0.006360306167521006,
+    "band_L1": 0.004225197178224542,
+    "relative_difference": 0.3356928004817486
+   },
+   {
+    "leg": "p2.N100",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "velocity",
+    "whole_field_L1": 0.011433601365011986,
+    "band_L1": 0.006941265821851973,
+    "relative_difference": 0.3929064342672492
+   },
+   {
+    "leg": "p2.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "density",
+    "whole_field_L1": 0.009227610423687237,
+    "band_L1": 0.0019440386501117439,
+    "relative_difference": 0.7893237186171833
+   },
+   {
+    "leg": "p2.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "pressure",
+    "whole_field_L1": 0.0028826614649977403,
+    "band_L1": 0.001562281425602629,
+    "relative_difference": 0.45804200577404475
+   },
+   {
+    "leg": "p2.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "velocity",
+    "whole_field_L1": 0.004721058019402645,
+    "band_L1": 0.0022477788507812976,
+    "relative_difference": 0.5238823921368141
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "density",
+    "whole_field_L1": 0.004528163036034107,
+    "band_L1": 0.0006123889262804776,
+    "relative_difference": 0.8647599652646727
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "pressure",
+    "whole_field_L1": 0.0010984650647367018,
+    "band_L1": 0.00041971926746745697,
+    "relative_difference": 0.6179038542586129
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "velocity",
+    "whole_field_L1": 0.0016631083834395502,
+    "band_L1": 0.0005197987203339758,
+    "relative_difference": 0.687453490397928
+   },
+   {
+    "leg": "p3.N100",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "density",
+    "whole_field_L1": 0.015847005256776892,
+    "band_L1": 0.008485532127928519,
+    "relative_difference": 0.464534024540711
+   },
+   {
+    "leg": "p3.N100",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "pressure",
+    "whole_field_L1": 0.011543727182793067,
+    "band_L1": 0.010195670285818187,
+    "relative_difference": 0.1167783052759837
+   },
+   {
+    "leg": "p3.N100",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "velocity",
+    "whole_field_L1": 0.020508699385948632,
+    "band_L1": 0.018029561739145075,
+    "relative_difference": 0.12088224612147364
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "density",
+    "whole_field_L1": 0.012147420335832907,
+    "band_L1": 0.0073404465554664225,
+    "relative_difference": 0.39571972052261145
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "pressure",
+    "whole_field_L1": 0.00956416384571963,
+    "band_L1": 0.0087241801604082,
+    "relative_difference": 0.08782614966256128
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "velocity",
+    "whole_field_L1": 0.016989783003049697,
+    "band_L1": 0.015228778255070947,
+    "relative_difference": 0.10365080870442234
+   },
+   {
+    "leg": "p3.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "density",
+    "whole_field_L1": 0.008685539963016797,
+    "band_L1": 0.006071609158737032,
+    "relative_difference": 0.30095202087722067
+   },
+   {
+    "leg": "p3.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "pressure",
+    "whole_field_L1": 0.007311961493174056,
+    "band_L1": 0.006904033354645107,
+    "relative_difference": 0.05578915300767961
+   },
+   {
+    "leg": "p3.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "field": "velocity",
+    "whole_field_L1": 0.012306385471484237,
+    "band_L1": 0.011852360131355025,
+    "relative_difference": 0.03689347625111022
+   }
+  ],
+  "worst_relative_difference": 0.9926682254542737,
+  "verdict": "N/A (diagnostic)"
+ },
+ "quoted_dt": {
+  "leg": "p3.N400",
+  "publisher": "lax_asymptotic_probe",
+  "rows": [
+   {
+    "quantity": "dt_last",
+    "quoted_by_doc": 2.2296238657348866e-05,
+    "artifact": 2.2296238657348866e-05,
+    "relative_difference": 0.0,
+    "status": "PASS"
+   },
+   {
+    "quantity": "dt_mean",
+    "quoted_by_doc": 2.5445292620865142e-05,
+    "artifact": 2.5445292620865142e-05,
+    "relative_difference": 0.0,
+    "status": "PASS"
+   }
+  ],
+  "both_quoted_values_belong_to_the_same_run": true,
+  "conclusion": "the 12 % 'dt difference' is dt_last vs dt_mean of one run; not solver drift",
+  "status": "PASS"
+ },
+ "repair_provenance": {
+  "status": "PASS",
+  "repaired_at_utc": "2026-11-15T03:26:14Z",
+  "solver_rerun": false,
+  "legs": 27,
+  "worst_relative_difference": 0.9368320843533222,
+  "legacy_value_retained_on_every_leg": true
+ },
+ "verdict_breakdown": {
+  "C1-C4": "PASS",
+  "C5": "PASS",
+  "C6@1e-12 (pre-registered)": "FAIL",
+  "C6@1e-03 (cross-platform floor, post-hoc)": "PASS",
+  "R4": "PASS",
+  "R5": "PASS"
+ },
+ "verdict": "FAIL",
+ "wall_seconds": 0.017643451690673828,
+ "metrics_sha256": "aa4244053b11f13e792d889330e04fe31fa7b77468831dd0a102b2baa7255721",
+ "figures": [
+  {
+   "file": "docs/benchmarks/results/lax_artifact_contract/figures/lax_contract_dt_lanes.png",
+   "caption": "Recorded step sizes per leg: circles = dt_mean (final_time/steps), crosses = dt_last; hollow red = the value the bare `dt` key carried in the limiter-arms artifact before the repair. The legacy key sat on the dt_last lane, which is what made a 12-94 % 'difference' look like drift when compared against dt_mean."
+  },
+  {
+   "file": "docs/benchmarks/results/lax_artifact_contract/figures/lax_contract_definitions.png",
+   "caption": "Left: whole-field L1 (filled) against band-limited L1 (hollow) on identical legs -- differences of the same order as the 'discrepancy' the residual-gap doc reports. Right: the same artifacts compared only where the definitions coincide; every pair is at or below the 1e-12 contract tolerance."
+  }
+ ],
+ "summary_file": "docs/benchmarks/results/lax_artifact_contract/summary.md",
+ "publisher_digests": {
+  "lax_case_pool": "cab44001048395cc663070a2e5b1dbce46eca999aeb5a1a48a99fd3d941988de",
+  "lax_asymptotic_probe": "dd9810aa57878b68812b1fe525d2e158326b935f27ebfec4886e46fafbd56243",
+  "lax_resolution_requirement": "cb3ea40a7bd2371b1a31a3bad3189ad1fcb7607611a65ec7536b2018ab81bdb5",
+  "lax_certified_configuration": "81df4f7cb9b4b1b502112ff802127f9fdf3030a42aed94fbd90ced6bce335533",
+  "lax_case_pool_limiter_arms": "42b449bab0098de7f3f8ad81a4a04401590895558dc91b646420cbcab8d6fe57"
+ },
+ "finalised_at_utc": "2026-11-15T03:38:04Z"
+}
