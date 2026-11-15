@@ -369,6 +369,19 @@ def evaluate_metrics(spec: Mapping[str, Any], doc: Mapping[str, Any]) -> List[Di
     return rows
 
 
+def _verify_hinge(doc: Mapping[str, Any]) -> Dict[str, Any]:
+    """hinge 度量的三方一致性核验（rows → raw → hinge → metrics）。
+
+    实现见 ``validation/repro_cks1998/hinge_audit.py``（延迟 import 以避免循环）。
+    没有 hinge 度量时返回空表；有则**不一致即抛 DocError**，本函数因此把
+    "workload 自述的 raw↔hinge" 从"自证"提升为"文档内可交叉重算"。
+    """
+    if not HINGE_RULES:
+        return {}
+    from validation.repro_cks1998.hinge_audit import verify_hinge_consistency
+    return verify_hinge_consistency(doc)
+
+
 def validate_documents(spec: Mapping[str, Any], result: Mapping[str, Any],
                        stdout: str) -> Dict[str, Any]:
     """离线全量自检（不碰数据库）：spec → result → stdout 文档 → 逐度量复算。"""
@@ -389,6 +402,8 @@ def validate_documents(spec: Mapping[str, Any], result: Mapping[str, Any],
     if doc is None:
         raise DocError("workload stdout 里取不到 JSON 文档（平台同样会拒收）")
     rows = evaluate_metrics(parsed, doc)
+    hinge_report = _verify_hinge(doc)
     return {"parsed": parsed, "result_meta": meta, "rows": rows,
+            "hinge": hinge_report,
             "passed": [r["metric"] for r in rows if r["passed"]],
             "failed": [r["metric"] for r in rows if not r["passed"]]}
