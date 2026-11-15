@@ -264,9 +264,13 @@ LADDER = (
 #: archive keeps them visible (a hole that is merely quiet is exactly the defect
 #: C6 was written for).  When a record arrives the entry is ignored automatically.
 PENDING_RUNS = {
-    # round 7 (degree axis + design order + double box crossing) -- four jobs
-    # (cj3605-cj3608, 4 shards; a landed record makes its entry here irrelevant).
-    # Previously submitted as cj3432 (partial: only dg_d1_n64_t1 landed).
+    # round 7 (degree axis + design order + double box crossing).  History, kept
+    # because it is the reason C6 stayed undecided for so long: cj3605-cj3608 all
+    # died in staging (github unreachable / ref lock / wrong checkout path), while
+    # job cj3577 actually ran the whole ladder on n330 and was never landed.  The
+    # artifacts of cj3577 are now in ``results/`` (landed and config-rechecked by
+    # ``tools/land_cluster_artifacts.py``), so these ids are inert; the entry is
+    # kept so the dead jobs are not silently forgotten.
     "dg_d1_n32_t5_cfl0.2": "cj3605",
     "dg_d1_n32_t10_cfl0.2": "cj3606",
     "dg_d3_n32_t1_cfl0.2": "cj3606",
