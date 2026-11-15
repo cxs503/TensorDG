@@ -214,7 +214,7 @@ def gate_wall_reflection(ncells=(240, 1), degree=2, mach=2.0, cfl=0.12,
                          incident_mach=None, extra_time=0.08, limiter=None,
                          tvb_constant=1.0, front_buffer=3, wall_buffer=1,
                          min_plateau_cells=3, x_wall=1.0, x_shock=0.4,
-                         xmax=1.2, wall_mode="solid"):
+                         xmax=1.2, ymax=0.1, wall_mode="solid"):
     """G3: shock reflecting off an *internal* solid wall vs the exact two-shock solution.
 
     ``incident_mach`` defaults to ``mach``; it used to be written as a Python
@@ -248,6 +248,8 @@ def gate_wall_reflection(ncells=(240, 1), degree=2, mach=2.0, cfl=0.12,
     "the embedded-wall flux is wrong" from "DG smears shocks on this mesh".
     ``x_wall``/``x_shock``/``xmax`` are exposed so the ladder can shorten the
     pre-reflection march, which dominates the cost (steps ~ t_end / dx).
+    ``ymax`` is a cost knob only: with ``ny = 1`` the flow is 1-D in ``x`` and
+    ``ymax`` just enters the stable step as ``speed_y/ymax``.
     """
     if incident_mach is None:
         incident_mach = mach
@@ -265,7 +267,6 @@ def gate_wall_reflection(ncells=(240, 1), degree=2, mach=2.0, cfl=0.12,
         # the domain must *end* at the analytic wall, otherwise the wall and the
         # reference disagree by xmax - x_wall at every resolution
         xmax = x_wall
-    ymax = 0.1
     dx = xmax / nx
     x_wall_face, wall_offset_cells = _snap_to_face(x_wall, dx)
     x_shock_face, shock_offset_cells = _snap_to_face(x_shock, dx)
