@@ -35,12 +35,22 @@ shards safe to run concurrently and their outputs mergeable.
 ``--max-seconds`` keeps one invocation inside the local short-test budget: the
 remaining keys are simply left uncertified (and stay ``unverified`` in the gate),
 never silently certified.
+
+``--isolate`` replays each key in its own subprocess.  A replay is a full
+simulation of the solver under test, so it can die for reasons outside this
+tool's control (a numerical blow-up, a segfault at interpreter exit, an OOM
+kill).  In-process, any one of those ends the whole invocation and every
+*unwritten* certificate in the batch is lost -- round 15 lost 3 of 5 replays to
+one such crash while the shard jobs still reported success.  Isolated, a dead
+key is reported ``crashed`` and the remaining keys are still attempted, so the
+gate ends up with as many certificates as the machine could actually produce.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -122,6 +132,48 @@ def replay(record: dict) -> dict:
     }
 
 
+def key_command(key: str, output_dir: Path, threads: int, max_seconds: float) -> list:
+    """Command line that replays exactly one checkpoint in a fresh interpreter."""
+    return [sys.executable, "-m", "tools.provenance_certify",
+            "--keys", key,
+            "--output-dir", str(output_dir),
+            "--threads", str(threads),
+            "--max-seconds", str(max_seconds)]
+
+
+def run_key(key: str, output_dir: Path, threads: int, max_seconds: float):
+    """Run one replay in a subprocess and return its return code (negative = signal)."""
+    env = dict(os.environ)
+    root = str(Path(__file__).resolve().parents[1])
+    env["PYTHONPATH"] = root + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    # One OpenMP pool per process: torch and numpy both spin their own pools and
+    # nested/oversubscribed pools are one of the ways a long replay dies.
+    env.setdefault("OMP_NUM_THREADS", str(max(1, threads)))
+    proc = subprocess.run(key_command(key, output_dir, threads, max_seconds), env=env)
+    return proc.returncode
+
+
+def isolated_status(keys: list, run=None, echo=print) -> dict:
+    """Attempt every key in its own subprocess; one crash never aborts the batch.
+
+    ``run`` is injected so the crash-tolerance itself can be tested (the test
+    segfaults a real child process); it maps a key to a return code, negative
+    when the child was killed by a signal.
+    """
+    results = {}
+    for key in keys:
+        returncode = run(key)
+        if returncode < 0:
+            status = f"crashed (signal {-returncode})"
+        elif returncode > 0:
+            status = f"failed (rc {returncode})"
+        else:
+            status = "ok"
+        results[key] = status
+        echo(f"isolated {key}: {status}", flush=True)
+    return results
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -136,6 +188,9 @@ def main(argv=None) -> int:
     parser.add_argument("--max-seconds", type=float, default=540.0,
                         help="stop starting new replays after this budget")
     parser.add_argument("--threads", type=int, default=1)
+    parser.add_argument("--isolate", action="store_true",
+                        help="replay each key in its own subprocess so one crash "
+                             "cannot discard the rest of the batch")
     args = parser.parse_args(argv)
 
     import torch
@@ -178,6 +233,22 @@ def main(argv=None) -> int:
         raise SystemExit(f"no such record(s): {unknown}")
     if not keys:
         raise SystemExit("nothing to certify: pass --keys ... or --all-legacy")
+
+    if args.isolate and len(keys) > 1:
+        status = isolated_status(
+            keys,
+            run=lambda key: run_key(key, output_dir, args.threads, args.max_seconds))
+        landed = sorted(k for k, v in status.items() if v == "ok")
+        dead = {k: v for k, v in status.items() if v != "ok"}
+        print(f"isolated batch: {len(landed)}/{len(keys)} completed; "
+              f"not reproduced: {dead}", flush=True)
+        # The children wrote the bundle, so re-read it: never report progress
+        # from the stale copy this process loaded before the batch ran.
+        on_disk = (json.loads(certificate_path.read_text()).get("certificates", {})
+                   if certificate_path.exists() else {})
+        remaining = [key for key in legacy if key not in on_disk]
+        print(f"certificates: {len(on_disk)}; legacy still unverified: {remaining}")
+        return 0
 
     started = time.time()
     for key in keys:

@@ -35,13 +35,13 @@
     "10": {
       "density": 6.865663293069625,
       "velocity_x": 16.146703991265866,
-      "velocity_y": 16.1467059089633,
+      "velocity_y": 16.146705908963295,
       "pressure": 8.929505526562927
     },
     "20": {
       "density": 6.865663293069625,
       "velocity_x": 16.146703991265866,
-      "velocity_y": 16.1467059089633,
+      "velocity_y": 16.146705908963295,
       "pressure": 8.929505526562927
     }
   },
@@ -363,8 +363,8 @@
     "replay_tolerance": 1e-09,
     "counts": {
       "recorded": 21,
-      "unverified": 5,
-      "replayed": 14
+      "unverified": 3,
+      "replayed": 16
     },
     "rows": {
       "dg_d1_n32_t10_cfl0.2": {
@@ -437,7 +437,12 @@
         "family": "dg_d2_n32_cfl0.4",
         "recorded_reference_model": null,
         "wall_seconds": 160.94161295890808,
-        "status": "unverified"
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 0.0,
+          "wall_seconds": 173.23134970664978
+        },
+        "status": "replayed"
       },
       "dg_d2_n32_t1_cfl0.2": {
         "family": "dg_d2_n32_cfl0.2",
@@ -517,7 +522,12 @@
         "family": "dg_d2_n32_cfl0.2",
         "recorded_reference_model": null,
         "wall_seconds": 160.13221144676208,
-        "status": "unverified"
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 0.0,
+          "wall_seconds": 169.40606141090393
+        },
+        "status": "replayed"
       },
       "dg_d2_n32_t5_cfl0.2_diraxis0": {
         "family": "dg_d2_n32_cfl0.2_diraxis0",
@@ -682,10 +692,10 @@
   },
   "exact_invariants": {
     "mass": 98.24174356019108,
-    "momentum_x": 98.24174356019108,
+    "momentum_x": 98.2417435601911,
     "momentum_y": 98.24174356019108,
     "energy": 344.75932660103024,
-    "entropy": 99.99999999999999,
+    "entropy": 100.0,
     "density_min": 0.49429067988713943,
     "core_density": 0.49380732389534654
   },
@@ -808,7 +818,7 @@
     "C4_entropy_budget": {
       "criterion": "dg_d2_n32_cfl0.2: |Delta S|/S(0) < 0.001 (S = int p rho^-gamma)",
       "measured": 6.336131836981451e-07,
-      "exact_entropy": 99.99999999999999,
+      "exact_entropy": 100.0,
       "passed": true,
       "status": "passed"
     },
@@ -1143,16 +1153,16 @@
         "dg_d2_n64_cfl0.2": {
           "cells": 64,
           "cfl": 0.2,
-          "e0_percent": 0.0006899000058690322,
+          "e0_percent": 0.0006899000058690318,
           "e_crossing_percent": 0.0012245109983286514,
-          "amplification": 1.7749108391239927
+          "amplification": 1.7749108391239934
         },
         "dg_d3_n32_cfl0.2": {
           "cells": 32,
           "cfl": 0.2,
-          "e0_percent": 0.00035003590187841364,
+          "e0_percent": 0.00035003590187841673,
           "e_crossing_percent": 0.0006195392746390414,
-          "amplification": 1.769930659439159
+          "amplification": 1.7699306594391435
         }
       },
       "supported": true,
@@ -1165,15 +1175,17 @@
       "worst_at": "dg_d2_n32_t5_cfl0.4",
       "counts": {
         "recorded": 21,
-        "unverified": 5,
-        "replayed": 14
+        "unverified": 3,
+        "replayed": 16
       },
       "present": 40,
       "replayed": {
+        "dg_d2_n32_t10_cfl0.4": 0.0,
         "dg_d2_n32_t1_cfl0.2": 0.0,
         "dg_d2_n32_t1_cfl0.4": 1.5124161064817206e-13,
         "dg_d2_n32_t2_cfl0.2": 0.0,
         "dg_d2_n32_t2_cfl0.4": 4.4194977682856375e-13,
+        "dg_d2_n32_t5_cfl0.2": 0.0,
         "dg_d2_n32_t5_cfl0.4": 1.1334673056073137e-12,
         "dg_d2_n64_t1_cfl0.2": 9.753498921567536e-13,
         "p0_n128_t10_cfl0.4": 3.4451555256475413e-16,
@@ -1187,14 +1199,12 @@
       },
       "unverified": [
         "dg_d2_n32_t10_cfl0.2",
-        "dg_d2_n32_t10_cfl0.4",
-        "dg_d2_n32_t5_cfl0.2",
         "dg_d2_n64_t10_cfl0.2",
         "dg_d2_n64_t2_cfl0.2"
       ],
       "config_mismatch": [],
       "certificate_rejected": [],
-      "certificates_on_disk": 14,
+      "certificates_on_disk": 16,
       "passed": false,
       "status": "not_evaluated"
     },
