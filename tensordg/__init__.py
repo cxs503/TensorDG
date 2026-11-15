@@ -264,6 +264,8 @@ from .certified_reference import (
     judge,
     audit_ladder,
     band_coverage_study,
+    order_ceiling,
+    SUPERCONVERGENCE_SLACK,
 )
 
 # ---- curved_geometry
@@ -758,9 +760,11 @@ __all__ = [
     "assemble_poisson_2d_sparse",
     "assemble_sipg_1d",
     "audit_ladder",
+    "order_ceiling",
     "av_sensor",
     "av_strength",
     "band_coverage_study",
+    "SUPERCONVERGENCE_SLACK",
     "basis_1d",
     "bernoulli_head",
     "bspline_basis_matrix",
