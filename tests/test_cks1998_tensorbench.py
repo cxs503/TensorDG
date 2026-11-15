@@ -35,6 +35,11 @@ FROZEN_TOLERANCES = {
     # --- 二维 Euler 光滑熵波（论文 §5.1）与精确解的闭式积分 -------------------
     "sm2d_order_p1": 0.03, "sm2d_order_p2": 0.03, "sm2d_order_p3": 0.03,
     "sm2d_mass_integral": 1e-3, "sm2d_energy_integral": 1e-3,
+    # --- A2/E3 不等式判据的单侧 hinge 编码（m22274）---------------------------
+    # 容差 = HINGE_TOL（1e-9）**不是**判据放宽：hinge 比值在界上逐位等于 1、误差为 0，
+    # 1e-9 只吸收 JSON 往返的 1 ulp（比观测阶有效数字低 6 个量级）。
+    "a2_l1_order_p1": 1e-9, "a2_l1_order_p2": 1e-9, "a2_l1_order_p3": 1e-9,
+    "e3_overshoot_p1": 1e-9, "e3_overshoot_p2": 1e-9,
 }
 
 
@@ -66,9 +71,18 @@ def test_spec_uses_only_contract_keys_and_full_metric_set():
 
 
 def test_tolerances_are_preregistered_and_not_averaged_away():
-    """容差必须是单侧上界比较（|got-ref|/|ref| <= tol），且没有 0 容差的伪度量。"""
+    """容差必须是单侧上界比较（|got-ref|/|ref| <= tol），且没有 0 容差的伪度量。
+
+    hinge 度量（A2/E3 不等式）是**唯一**的例外：它们的容差是 ``HINGE_TOL = 1e-9``
+    的浮点护栏，判据本身由 ``bench_spec.hinge`` 的界决定（等价性由
+    ``tests/test_cks1998_inequality_hinge.py`` 逐点对拍，不是靠容差放水）。
+    """
+    hinge_names = {r["metric"] for r in bench_spec.HINGE_RULES}
     for m in bench_spec.METRICS:
-        assert 0 < m["tolerance_rel"] <= 0.05, m["name"]
+        if m["name"] in hinge_names:
+            assert m["tolerance_rel"] == bench_spec.HINGE_TOL, m["name"]
+        else:
+            assert 0 < m["tolerance_rel"] <= 0.05, m["name"]
         assert m["ref_pointer"].startswith("reference.")
         assert m["got_pointer"].startswith("metrics.")
 
@@ -100,6 +114,11 @@ def test_smoke_document_resolves_every_pointer_and_conserves_mass_and_energy(smo
     for key in ("sm2d_mass_integral", "sm2d_energy_integral"):
         assert by_name[key]["rel_error"] < 1e-6, by_name[key]
         assert by_name[key]["passed"]
+    # hinge 度量：saturating 到 1.0 ⇒ 误差逐位为 0，且必须 PASS
+    for rule in bench_spec.HINGE_RULES:
+        row = by_name[rule["metric"]]
+        assert row["got_value"] == 1.0, (rule["metric"], row)
+        assert row["rel_error"] == 0.0 and row["passed"], (rule["metric"], row)
 
 
 def test_validate_documents_accepts_wellformed_bundle(smoke_doc):

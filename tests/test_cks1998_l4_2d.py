@@ -85,7 +85,8 @@ def test_spec_document_carries_all_thirteen_metrics():
     spec = bench_spec.build_spec(revision="test", command=["python", "x"],
                                  configuration={"case": "test"})
     names = [m["name"] for m in bench_spec.validate_spec(spec)["metrics"]]
-    assert len(names) == 13
+    # 13 条 ref-vs-got 度量 + A2/E3 的 hinge 度量（m22274 起）
+    assert len(names) == 13 + len(bench_spec.HINGE_RULES)
     assert set(FROZEN_2D_TOLERANCES) <= set(names)
 
 
