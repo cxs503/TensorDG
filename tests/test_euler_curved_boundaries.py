@@ -196,27 +196,36 @@ def test_closed_annulus_conserves_mass_and_energy():
 
 
 # -- B6 --------------------------------------------------------------------
-def test_wall_boundary_march_is_unstable_honest():
-    """HONEST NEGATIVE RESULT -- see the module docstring.
+def test_wall_boundary_march_is_still_unstable_honest():
+    """HONEST NEGATIVE RESULT -- updated after the interface-orientation fix.
 
     The state below is an *exact* steady solution (uniform slip flow, wall flux
-    equal to the physical flux), yet the explicit march amplifies round-off
-    exponentially: this pins the known wall-boundary instability so it cannot be
-    silently claimed as a working capability.  Deleting this test is only
-    allowed together with a fix that makes the march stay bounded.
+    equal to the physical flux) and the semi-discrete residual is round-off, yet
+    the explicit march still amplifies round-off exponentially: the reflective
+    wall is *still* linearly unstable as implemented here.  What the interface
+    fix changed is only the rate: it blows up at step ~700 (dt = 4.2e-3) where
+    the pre-fix operator needed a few hundred steps and grew ~6x per 10 steps.
+    This test pins the remaining defect so it cannot be claimed as a working
+    capability; deleting it is only allowed together with a stable two-point /
+    BR1 wall flux (see the module docstring of ``euler_curved``).
     """
     mesh = _channel(8, 6)
     solver = CurvilinearEuler(mesh, 1)
     state = solver.project(_uniform_slip)
     dt = solver.stable_dt(state)
-    history = [float(np.abs(state - solver.project(_uniform_slip)).max())]
+    start = float(np.max(np.abs(solver.rhs(state))))
+    assert start < 1e-10, start          # the exact state *is* steady
+    drift = []
+    state0 = state.copy()
     blew_up = False
-    for step in range(400):
+    for step in range(2000):
         state = solver.ssp_rk3_step(state, dt)
-        history.append(float(np.abs(state).max()))
+        if step % 200 == 0:
+            drift.append(float(np.max(np.abs(state - state0))))
         if not np.all(np.isfinite(state)) or np.abs(state).max() > 1e3:
             blew_up = True
             break
-    assert blew_up, ("the wall-boundary march stayed bounded -- if the boundary "
-                     "was fixed, remove the instability warning from the module "
-                     f"docstring (drift history head={history[:5]})")
+    assert blew_up, ("the wall-boundary march stayed bounded over 2000 steps -- "
+                     f"if the boundary is now stable, remove the instability "
+                     f"warning from the module docstring (drift={drift})")
+    assert len(drift) >= 2 and drift[-1] > 1e3 * max(drift[0], 1e-16), drift
