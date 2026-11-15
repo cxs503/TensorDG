@@ -96,6 +96,7 @@ Lax (1954) 激波管 / Toro (1999) test 2：`[0,1]` 域内隔膜 `x0 = 0.5` 两�
 | `docs/benchmarks/results/lax_case_pool/metrics.json` | 实测值 + 判据 verdict + 全部容差配置 | 34647 | cab44001048395cc |
 | `docs/benchmarks/results/lax_case_pool/profiles.npz` | 最细腿原始量 vs 精确解逐点场 | 225846 | 7bdcc57cb9a0c212 |
 | `docs/benchmarks/results/lax_case_pool/summary.md` | 由 metrics.json 渲染的表（禁手改） | 5672 | 6513f513e500ad04 |
+| `docs/benchmarks/results/lax_case_pool/figures_binding.json` | 图-工件-渲染器溯源绑定（sha256 校验链） | 1253 | e60fe6c39c5f95e5 |
 | `docs/benchmarks/results/lax_case_pool/figures/lax_profiles.png` | 场量对比图（最细腿 vs 精确解） | 88993 | f78845d66a09ee9a |
 | `docs/benchmarks/results/lax_case_pool/figures/lax_convergence.png` | 收敛图（全场与解析区 rel L1 vs N） | 91941 | e0d2435c305669ea |
 | `docs/benchmarks/results/lax_case_pool/figures/time_refinement.png` | dt 细化：固定网格上 L1 误差 vs dt | 50076 | 972a3bc56946c56f |
