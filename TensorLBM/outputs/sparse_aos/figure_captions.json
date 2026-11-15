@@ -1,0 +1,18 @@
+[
+  {
+    "file": "fig_poiseuille_profile.png",
+    "caption": "Poiseuille \u901a\u9053\uff1a\u7a00\u758f AOS \u6570\u503c\u5256\u9762 vs \u534a\u7a0b\u53cd\u5f39\u58c1\u9762\u89e3\u6790\u89e3\uff08ny=18/34/66\uff09"
+  },
+  {
+    "file": "fig_taylor_green_decay.png",
+    "caption": "Taylor-Green \u8870\u51cf\uff1a\u7a00\u758f AOS \u57fa\u9891\u5e45\u503c vs \u89e3\u6790 exp(-\u03bdk\u00b2t)"
+  },
+  {
+    "file": "fig_cost.png",
+    "caption": "\u5b58\u50a8/\u8017\u65f6\uff1adense vs sparse AOS vs SoA\uff08256\u00d7256\uff0c\u6d41\u4f53\u5360\u6bd4 0.44\uff09"
+  },
+  {
+    "file": "fig_channel_ux_field.png",
+    "caption": "\u7a00\u758f AOS \u901a\u9053\u5b9a\u5e38 $u_x$ \u4e91\u56fe\uff08\u5b9e\u5fc3\u533a\u4e3a\u58c1\u9762\uff0cNy=34, Nx=16\uff09"
+  }
+]

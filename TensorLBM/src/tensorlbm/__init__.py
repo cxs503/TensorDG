@@ -7,9 +7,10 @@ Modules:
     - Mass-exchange selector (unified collision interface)
     - MCMP (Multi-Component Multi-Phase) solver with Shan-Chen cross-force
     - Cross-force operator with symbolic verification and spectral analysis
+    - Sparse list-based AOS LBM (lbmpy sparse-list-based-aos-lbm pattern)
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from .lattice import D2Q9
 from .collision import bgk_collision, mrt_collision
@@ -24,6 +25,12 @@ from .cross_force import (
     spectral_analysis_cross_force,
 )
 from .mcmp import MCMPSolver, setup_laplace_test, measure_laplace_pressure
+from .sparse_aos import (
+    SparseAOSLBM,
+    SparseDomain,
+    build_sparse_domain,
+    channel_mask,
+)
 
 __all__ = [
     "D2Q9",
@@ -41,4 +48,8 @@ __all__ = [
     "MCMPSolver",
     "setup_laplace_test",
     "measure_laplace_pressure",
+    "SparseAOSLBM",
+    "SparseDomain",
+    "build_sparse_domain",
+    "channel_mask",
 ]
