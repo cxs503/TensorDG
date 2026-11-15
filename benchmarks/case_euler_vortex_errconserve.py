@@ -151,6 +151,55 @@ P0_QUADRATURE = 4
 #: C4 -- entropy-functional drift at the gate configuration.
 ENTROPY_TOLERANCE = 1e-3
 
+#: C10 -- the advection *direction* axis.  Every family above transports the vortex
+#: along the grid diagonal, ``u_inf = (1, 1)``: the direction in which a structured
+#: DG discretisation is flattered by symmetry (both coordinate fluxes carry the same
+#: sign and the same cell crossing pattern).  A direction-invariant statement about
+#: "the error is a grid property, not a time property" cannot be certified on one
+#: direction, exactly as C7 could not certify it on one mesh or C8 on one degree.
+#:
+#: The three directions carry the *same* speed ``|u_inf| = sqrt(2)``, so the axis
+#: moves the direction alone: a rotated family travels the same distance per unit
+#: time, and any change in the accumulation exponent is a change of direction, not
+#: of transport length.  ``diag45`` is the historical family (its key is unchanged,
+#: so every earlier result file stays in the same family); the two rotated labels
+#: get a ``_dir<label>`` suffix in their task/family keys.
+DIRECTION_SPEED = math.sqrt(2.0)
+DIRECTION_BASELINE = "diag45"
+DIRECTION_AXIS = (
+    ("diag45", (1.0, 1.0)),
+    ("axis0", (DIRECTION_SPEED, 0.0)),
+    ("obl30", (DIRECTION_SPEED * math.cos(math.radians(30.0)),
+               DIRECTION_SPEED * math.sin(math.radians(30.0)))),
+)
+#: C10 requires at least this many directions to be decidable, and at least one of
+#: them to be a *rotated* direction: a criterion whose only decidable family is the
+#: historical ``diag45`` group is a re-reading of C2, not a direction test.
+MIN_DECIDABLE_DIRECTIONS = 2
+
+
+def direction_label(background) -> str:
+    """Label of the declared direction whose background velocity matches."""
+    vector = (float(background[0]), float(background[1]))
+    for label, declared in DIRECTION_AXIS:
+        if (abs(vector[0] - declared[0]) < 1e-12
+                and abs(vector[1] - declared[1]) < 1e-12):
+            return label
+    raise ValueError(f"background velocity {vector!r} is not on the direction axis "
+                     f"{[lab for lab, _ in DIRECTION_AXIS]}")
+
+
+def direction_suffix(label: str) -> str:
+    """Key suffix for a direction; the historical diagonal keeps an empty one."""
+    return "" if label == DIRECTION_BASELINE else f"_dir{label}"
+
+
+def direction_family(label: str, degree: int = 2, cells: int = 32,
+                     cfl: float = 0.2) -> str:
+    """Family key of one direction at the design mesh / CFL."""
+    return f"dg_d{degree}_n{cells}_cfl{cfl:g}{direction_suffix(label)}"
+
+
 #: Long-time transport ladder.  With |u_inf| = sqrt(2) and a period of 10,
 #: ``t = 10`` is one full box crossing per axis; the P0 family and (round 7) the
 #: design DG family ``dg_d2_n32_cfl0.2`` reach ``t = 20`` (two crossings), the
@@ -197,6 +246,16 @@ LADDER = (
     # double box crossing on the design family: extends C2's fit window past the
     # single crossing the previous rounds stopped at.
     {"task": "dg", "degree": 2, "cells": 32, "final_time": 20.0, "cfl": 0.2},
+    # -- direction axis (round 9, C10) ---------------------------------------
+    # Degree, mesh, CFL *and* speed are held fixed; only the advection direction
+    # moves.  ``axis0`` is grid aligned (the direction in which a structured
+    # tensor-product DG operator has no cross-derivative coupling at all) and
+    # ``obl30`` sits between it and the diagonal, so the axis brackets the
+    # historical 45 deg reading instead of extending it in one direction only.
+    *({"task": "dg", "degree": 2, "cells": 32, "final_time": t, "cfl": 0.2,
+       "background_velocity": direction}
+      for label, direction in DIRECTION_AXIS if label != DIRECTION_BASELINE
+      for t in (1.0, 2.0, 5.0, 10.0)),
 )
 
 #: Checkpoints that are declared in ``LADDER`` and whose run has been *submitted*
@@ -221,6 +280,15 @@ PENDING_RUNS = {
     "dg_d1_n64_t5_cfl0.2": "cj3432",
     "dg_d1_n64_t10_cfl0.2": "cj3432",
     "dg_d2_n32_t20_cfl0.2": "cj3432",
+    # round 9 (direction axis, C10) -- two jobs, one per rotated direction
+    "dg_d2_n32_t1_cfl0.2_diraxis0": "cj3486",
+    "dg_d2_n32_t2_cfl0.2_diraxis0": "cj3486",
+    "dg_d2_n32_t5_cfl0.2_diraxis0": "cj3486",
+    "dg_d2_n32_t10_cfl0.2_diraxis0": "cj3486",
+    "dg_d2_n32_t1_cfl0.2_dirobl30": "cj3487",
+    "dg_d2_n32_t2_cfl0.2_dirobl30": "cj3487",
+    "dg_d2_n32_t5_cfl0.2_dirobl30": "cj3487",
+    "dg_d2_n32_t10_cfl0.2_dirobl30": "cj3487",
 }
 
 #: Configuration carrying C2/C4 (same pair of meshes as the sibling entry's gate).
@@ -264,13 +332,16 @@ AMPLIFICATION_PREDICTION = (
 
 
 
+
 def task_key(config: dict) -> str:
+    background = tuple(config.get("background_velocity", BACKGROUND))
+    suffix = direction_suffix(direction_label(background))
     if config["task"] == "dg":
         return (f"dg_d{config['degree']}_n{config['cells']}"
-                f"_t{config['final_time']:g}_cfl{config['cfl']:g}")
+                f"_t{config['final_time']:g}_cfl{config['cfl']:g}{suffix}")
     if config["task"] == "p0":
         return (f"p0_n{config['cells']}_t{config['final_time']:g}"
-                f"_cfl{config['cfl']:g}")
+                f"_cfl{config['cfl']:g}{suffix}")
     raise ValueError(f"unknown task {config['task']!r}")
 
 
@@ -302,10 +373,19 @@ def ladder_completeness(records: list) -> dict:
 
 
 def family_key(record: dict) -> str:
+    """Family identity = scheme x degree x mesh x CFL x transport direction.
+
+    The direction has to be part of the identity: two directions on one mesh are
+    two discretisations of two *different* problems, and a single ``e ~ t^alpha``
+    fit through both would measure the direction mix rather than the accumulation.
+    """
+    config = record.get("config") or {}
+    label = direction_label(tuple(config.get("background_velocity", BACKGROUND)))
+    suffix = direction_suffix(label)
     if record["task"] == "dg":
         return (f"dg_d{record['degree']}_n{record['cells']}"
-                f"_cfl{record['cfl']:g}")
-    return f"p0_n{record['cells']}"
+                f"_cfl{record['cfl']:g}{suffix}")
+    return f"p0_n{record['cells']}{suffix}"
 
 
 # ---------------------------------------------------------------------------
@@ -572,8 +652,10 @@ def run_p0(config: dict) -> dict:
 def run_task(config: dict) -> dict:
     record = (run_dg if config["task"] == "dg" else run_p0)(config)
     record["task_key"] = task_key(config)
-    record["family"] = family_key(record)
+    # the config is the authority for the family key (it carries the direction),
+    # so it has to be attached before the key is derived
     record["config"] = dict(config)
+    record["family"] = family_key(record)
     record["max_relative_l2"] = max(record["errors"].values())
     record["max_percent"] = 100.0 * record["max_relative_l2"]
     drift = {}
@@ -849,17 +931,45 @@ def evaluate_gates(records: list, exact: dict) -> dict:
         "passed": alpha_ok,
     }
 
-    # -- C3: discrete conservation (unchanged). -------------------------------
+    # -- C3: discrete conservation, on a scale that cannot vanish. -----------
+    # A relative drift needs a non-zero reference.  For the *cross-stream*
+    # momentum of a straight transport that reference is exactly zero (the swirl
+    # has no net circulation, so <rho v> = 0 when u_inf is along x), and the
+    # relative drift of a round-off sized integral then reads O(1) -- the
+    # axis-aligned direction added by C10 exposed exactly that: the old metric
+    # reported ``dg_d2_n32_t2_cfl0.2_diraxis0:momentum_y`` as a conservation
+    # failure while the absolute drift was at round-off.  The denominator is
+    # therefore the *transported amount* of the invariant,
+    # ``max(|reference|, mass * |u_inf|)`` for a momentum component and
+    # ``|reference|`` otherwise (mass, energy and entropy cannot cancel).
     worst_drift, worst_at = 0.0, None
     for record in records:
+        config = record.get("config") or {}
+        background = tuple(config.get("background_velocity", BACKGROUND))
+        speed = float(math.hypot(*background))
+        initial_inv = (record.get("initial") or {}).get("invariants")
+        final_inv = (record.get("final") or {}).get("invariants")
+        mass = abs(initial_inv["mass"]) if initial_inv else 0.0
         for name in ("mass", "momentum_x", "momentum_y", "energy"):
-            value = record["invariant_drift"][name]
+            if not initial_inv or not final_inv or name not in initial_inv:
+                # records that only carry the precomputed drift (test bundles)
+                value = record["invariant_drift"][name]
+                if value > worst_drift:
+                    worst_drift, worst_at = value, f"{record['task_key']}:{name}"
+                continue
+            reference = initial_inv[name]
+            scale = abs(reference)
+            if name in ("momentum_x", "momentum_y"):
+                scale = max(scale, mass * speed)
+            value = abs(final_inv[name] - reference)
+            value = value / scale if scale > 0.0 else float("inf")
             if value > worst_drift:
                 worst_drift, worst_at = value, f"{record['task_key']}:{name}"
     c3_ok = bool(worst_drift < INVARIANT_TOLERANCE)
     gates["C3_discrete_conservation"] = {
-        "criterion": ("relative drift of mass/x-mom/y-mom/energy vs the t=0 discrete "
-                      f"state < {INVARIANT_TOLERANCE:g}"),
+        "criterion": ("drift of mass/x-mom/y-mom/energy vs the t=0 discrete state, "
+                      "scaled by the transported amount "
+                      f"max(|reference|, mass*|u_inf|) < {INVARIANT_TOLERANCE:g}"),
         "worst_drift": worst_drift,
         "worst_at": worst_at,
         "passed": c3_ok,
@@ -1010,6 +1120,65 @@ def evaluate_gates(records: list, exact: dict) -> dict:
         "offenders": degree_offenders,
         "passed": c8_status == "passed",
         "status": c8_status,
+    }
+
+    # -- C10: does the bound survive a change of *advection direction*? ------
+    # Every family above is transported along the grid diagonal.  C7 moved the mesh
+    # and the CFL, C8 the degree; the direction was never moved, so "the error is a
+    # grid property" was still a statement about one advection direction.  C10 asks
+    # the same alpha bound of every declared direction and requires that at least
+    # one *rotated* direction (not ``diag45``) be decidable -- otherwise the
+    # criterion would only re-read C2.
+    direction_rows = {}
+    for label, direction in DIRECTION_AXIS:
+        family = direction_family(label)
+        rows_d = families.get(family, [])
+        exponent_d = exponents.get(family, float("nan"))
+        direction_rows[label] = {
+            "family": family,
+            "background_velocity": [float(direction[0]), float(direction[1])],
+            "speed": float(math.hypot(*direction)),
+            "angle_deg": float(math.degrees(math.atan2(direction[1],
+                                                       direction[0]))),
+            "checkpoints": len(rows_d),
+            "final_time_max": max((r["final_time"] for r in rows_d),
+                                  default=None),
+            "exponent": exponent_d,
+            "passed": bool(np.isfinite(exponent_d)
+                           and exponent_d <= MAX_GROWTH_EXPONENT + 1e-9),
+        }
+    directions_evaluated = [label for label, row in direction_rows.items()
+                            if np.isfinite(row["exponent"])]
+    rotated_evaluated = [label for label in directions_evaluated
+                         if label != DIRECTION_BASELINE]
+    direction_offenders = {label: row["exponent"]
+                           for label, row in direction_rows.items()
+                           if np.isfinite(row["exponent"]) and not row["passed"]}
+    if direction_offenders:
+        c10_status = "failed"
+    elif (len(directions_evaluated) < MIN_DECIDABLE_DIRECTIONS
+            or not rotated_evaluated):
+        c10_status = "not_evaluated"
+    else:
+        c10_status = "passed"
+    gates["C10_direction_invariance"] = {
+        "criterion": (f"every declared advection direction at "
+                      f"{direction_family(DIRECTION_BASELINE)} "
+                      f"(mesh x CFL x degree held fixed) satisfies alpha <= "
+                      f"{MAX_GROWTH_EXPONENT}, at least "
+                      f"{MIN_DECIDABLE_DIRECTIONS} directions are decidable and at "
+                      f"least one of them is rotated off the grid diagonal"),
+        "measured": max((row["exponent"] for row in direction_rows.values()
+                         if np.isfinite(row["exponent"])), default=float("nan")),
+        "worst_at": (max(directions_evaluated,
+                         key=lambda label: direction_rows[label]["exponent"])
+                     if directions_evaluated else None),
+        "per_direction": direction_rows,
+        "directions_evaluated": directions_evaluated,
+        "rotated_evaluated": rotated_evaluated,
+        "offenders": direction_offenders,
+        "passed": c10_status == "passed",
+        "status": c10_status,
     }
 
     # -- C9: is the long-time error a *grid* property?  Measure the order. ----
@@ -1203,7 +1372,8 @@ def _markdown(records: list, metrics: dict, exact: dict) -> str:
         f"| C5 交叉校核收敛阶 | P0 在 t=5 的观测阶 >= 0.8（n=64/128/256） | "
         f"{gates['C5_crosscheck_order']['order']:.3f} | "
         f"{flag('C5_crosscheck_order')} |",
-        f"| C3 离散守恒 | 质量/动量/能量漂移 < {INVARIANT_TOLERANCE:g} | "
+        f"| C3 离散守恒 | 质量/动量/能量漂移（分母 = max(\\|参考值\\|, mass*\\|u_inf\\|)，"
+        f"截面动量参考值为零时不失效）< {INVARIANT_TOLERANCE:g} | "
         f"{gates['C3_discrete_conservation']['worst_drift']:.3e} | "
         f"{flag('C3_discrete_conservation')} |",
         f"| C4 熵预算 | \\|dS\\|/S(0) < {ENTROPY_TOLERANCE:g} | "
@@ -1236,6 +1406,14 @@ def _markdown(records: list, metrics: dict, exact: dict) -> str:
         f"t in {list(ORDER_CHECKPOINTS)} 全部成立 | 最差 {gates['C9_design_order']['measured']:.3f}"
         f"（{gates['C9_design_order']['worst_at']}） | "
         f"{flag('C9_design_order')} |",
+        f"| C10 方向不变性 | 网格 x CFL x 阶数固定、只换对流方向（同速 "
+        f"|u_inf|={DIRECTION_SPEED:.4f}），每个可判方向的 alpha <= "
+        f"{MAX_GROWTH_EXPONENT}，且至少 {MIN_DECIDABLE_DIRECTIONS} 个方向可判、"
+        f"其中至少一个是旋转方向 | 可判 "
+        f"{gates['C10_direction_invariance']['directions_evaluated']}，最大 alpha "
+        f"{gates['C10_direction_invariance']['measured']:.3f}"
+        f"（{gates['C10_direction_invariance']['worst_at']}） | "
+        f"{flag('C10_direction_invariance')} |",
         "",
         "## 阶数轴（C8）与设计阶（C9）",
         "",
@@ -1283,6 +1461,23 @@ def _markdown(records: list, metrics: dict, exact: dict) -> str:
         + ("（" + "，".join(f"{k} A={v['amplification']:.3f}"
                             for k, v in sorted(amp["values"].items())) + "）"
            if amp["values"] else ""),
+        "",
+        "## 方向轴（C10）",
+        "",
+        "| 标签 | u_inf | 角度 | 族 | 检查点数 | t_max | alpha | 判定 |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for label, row in gates["C10_direction_invariance"]["per_direction"].items():
+        lines.append(
+            f"| {label} | ({row['background_velocity'][0]:.4f}, "
+            f"{row['background_velocity'][1]:.4f}) | {row['angle_deg']:.1f} deg | "
+            f"`{row['family']}` | {row['checkpoints']} | "
+            f"{row['final_time_max'] if row['final_time_max'] is not None else '-'} | "
+            f"{row['exponent']:.3f} | {'通过' if row['passed'] else '未通过'} |")
+    lines += [
+        "",
+        f"三个方向的速度模相同（|u_inf| = {DIRECTION_SPEED:.4f}），因此该轴只移动方向、"
+        "不移动输运长度：任何 alpha 之差都归因于方向，而不是行程。",
         "",
         "## 误差随时间（族内逐检查点）",
         "",
@@ -1459,6 +1654,10 @@ def main(argv=None) -> int:
     parser.add_argument("--aggregate", action="store_true")
     parser.add_argument("--figures", action="store_true")
     parser.add_argument("--threads", type=int, default=1)
+    parser.add_argument("--direction", choices=[label for label, _ in DIRECTION_AXIS],
+                        default=DIRECTION_BASELINE,
+                        help="advection direction of the C10 axis (speed is held "
+                             "fixed at |u_inf| = sqrt(2) by construction)")
     parser.add_argument("--reference", choices=REFERENCE_MODELS,
                         default=REFERENCE_MODEL,
                         help="periodic reference: min_image fold (published "
@@ -1475,6 +1674,7 @@ def main(argv=None) -> int:
                   "cfl": args.cfl if args.cfl is not None else (0.2 if args.task == "dg" else 0.4),
                   "strength": args.strength}
         config["reference"] = args.reference
+        config["background_velocity"] = dict(DIRECTION_AXIS)[args.direction]
         if args.task == "dg":
             config["degree"] = args.degree if args.degree is not None else 2
         record = run_task(config)
