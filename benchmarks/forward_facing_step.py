@@ -164,6 +164,22 @@ def gate_closed_box(ncells=(24, 24), degree=2, final_time=0.1, cfl=0.15):
     return out
 
 
+def wall_solid_mask(nx, ny, x_wall_face, dx):
+    """Boolean solid mask whose *left face* is exactly ``x_wall_face``.
+
+    The discrete wall must coincide with the analytic wall used by
+    ``WallReflection``; masking ``xc >= x_wall_face - dx/2`` instead puts the
+    solid block one cell early and leaves the discretisation a full ``dx``
+    short of the reference at every resolution.
+    """
+    import torch as _torch
+
+    xc = (_torch.arange(nx, dtype=_torch.float64) + 0.5) * dx
+    mask = _torch.zeros(nx, ny, dtype=_torch.bool)
+    mask[xc >= x_wall_face + 0.5 * dx - 1e-12] = True
+    return mask
+
+
 def _plateau_mask(centres, fluid, front, x_wall, dx, front_buffer=3, wall_buffer=1):
     """Cell-average mask of the reflected plateau, buffered away from both waves.
 
@@ -233,8 +249,16 @@ def gate_wall_reflection(ncells=(240, 1), degree=2, mach=2.0, cfl=0.12,
     wr = WallReflection(x_shock=x_shock_face, x_wall=x_wall_face,
                         incident_mach=incident_mach)
     xc = (torch.arange(nx, dtype=torch.float64) + 0.5) * dx
-    solid = torch.zeros(nx, ny, dtype=torch.bool)
-    solid[xc >= x_wall_face - 0.5 * dx] = True
+    solid = wall_solid_mask(nx, ny, x_wall_face, dx)
+    # The solid block must start at the cell whose *left face* is the analytic
+    # wall, i.e. at ``i_wall`` with ``i_wall * dx == x_wall_face``.  Masking
+    # ``xc >= x_wall_face - dx/2`` starts it one cell earlier and therefore puts
+    # the discrete wall a full ``dx`` short of the analytic wall at *every*
+    # resolution (measured: first solid cell 199 at nx=240, discrete face
+    # 0.995 vs analytic 1.0), which makes the reference geometry and the
+    # discretisation disagree by O(1) cell -- an error no mesh refinement can
+    # remove.
+    solid[xc >= x_wall_face + 0.5 * dx - 1e-12] = True
     pre_rho, pre_u, pre_p = wr.pre
     post_rho, post_u, post_p = wr.post
 
