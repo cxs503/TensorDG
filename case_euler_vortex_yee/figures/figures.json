@@ -1,0 +1,14 @@
+[
+ {
+  "name": "fig_error_history.png",
+  "caption": "等熵涡随输运时间的相对 L2 误差累积（P2 32x32，一个周期 T=10），虚线为 6% 判据。"
+ },
+ {
+  "name": "fig_convergence_period.png",
+  "caption": "一个整周期末（t=T=10）的最大场相对 L2 误差随网格尺度的收敛阶梯，含 P0 基线与 6% 判据线。"
+ },
+ {
+  "name": "fig_cfl_sensitivity.png",
+  "caption": "整周期末误差对 CFL 的敏感性（P2 32x32）。"
+ }
+]
