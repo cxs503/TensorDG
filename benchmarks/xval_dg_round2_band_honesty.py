@@ -258,6 +258,11 @@ def audit(rawdir: Path = RAW, outdir: Path = OUTDIR, gate: float = GATE,
     return report
 
 
+def _fmt(v, spec=".6f"):
+    """Format a value, returning 'N/A' for None."""
+    return f"{v:{spec}}" if v is not None else "N/A"
+
+
 def render_markdown(r: dict) -> str:
     d, c, s = r["distances"], r["coverage"], r["gate_survival"]
     c5, c7 = r["certified_reference_weno5"], r["certified_reference_weno7"]
@@ -272,10 +277,10 @@ def render_markdown(r: dict) -> str:
         f"| ladder | {r['ladder']} (CFL {r['cfl']}) |",
         f"| WENO5 reference: verdict / band U5 | {c5['verdict']} / {c5['band_percent']:.6f} % |",
         f"| WENO7 reference: verdict / band U7 | {c7['verdict']} / {c7['band_percent']:.6f} % |",
-        f"| cross-order distance (4-level) | {d['cross_order_4level_percent']:.6f} % |",
-        f"| cross-order distance (3-level) | {d['cross_order_3level_percent']:.6f} % |",
-        f"| intra-family control (WENO5 3 vs 4 level) | {d['intra_family_weno5_3v4_percent']:.6f} % |",
-        f"| Delta / U5 | {c['ratio_delta_over_band']:.3f} |",
+        f"| cross-order distance (4-level) | {_fmt(d['cross_order_4level_percent'])} % |",
+        f"| cross-order distance (3-level) | {_fmt(d['cross_order_3level_percent'])} % |",
+        f"| intra-family control (WENO5 3 vs 4 level) | {_fmt(d['intra_family_weno5_3v4_percent'])} % |",
+        f"| Delta / U5 | {_fmt(c['ratio_delta_over_band'], '.3f')} |",
         f"| **coverage verdict** | **{c['level']}** |",
         "",
         "## DG legs re-judged against both references",
@@ -294,7 +299,7 @@ def render_markdown(r: dict) -> str:
         f"* verdict flips at the {r['gate_percent']} % gate: "
         f"{r['dg_legs']['verdict_flips'] or 'none'}",
         f"* max |shift| across legs: {r['dg_legs']['max_abs_shift_pp']:.4f} pp",
-        f"* gate survival: worst + Delta = {s['worst_plus_delta_percent']:.4f} % "
+        f"* gate survival: worst + Delta = {_fmt(s['worst_plus_delta_percent'], '.4f')} % "
         f"(gate {s['gate_percent']} %) -> {s['gate_survives_cross_family_shift']}",
         "",
         "## Verdict",
