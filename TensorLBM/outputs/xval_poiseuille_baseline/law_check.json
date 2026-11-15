@@ -1,0 +1,248 @@
+{
+ "description": "rel L2 of the converged profile follows the signed closed form (48 nu^2 - 1) / L^2; tau* = 1/2 + 3/sqrt(48) makes the residual round-off only",
+ "tau_star": 0.9330127018922194,
+ "width_ladder": [
+  {
+   "Ny": 8,
+   "width": 6.0,
+   "nu": 0.1,
+   "residual_tol": 1e-08,
+   "rel_l2": 0.014444444404795392,
+   "rel_l2_shape": 1.799954739519735e-11,
+   "offset_over_force": -0.6499999982157926,
+   "law_signed": -0.014444444444444439,
+   "law_abs": 0.014444444444444439,
+   "ratio_to_law": 0.999999997255066,
+   "steps": 700
+  },
+  {
+   "Ny": 16,
+   "width": 14.0,
+   "nu": 0.1,
+   "residual_tol": 1e-08,
+   "rel_l2": 0.0026530544627613333,
+   "rel_l2_shape": 3.2324271946428836e-09,
+   "offset_over_force": -0.6499983433760442,
+   "law_signed": -0.0026530612244897948,
+   "law_abs": 0.0026530612244897948,
+   "ratio_to_law": 0.999997451348503,
+   "steps": 2500
+  }
+ ],
+ "tau_ladder": [
+  {
+   "tau": 0.6,
+   "nu": 0.033333333333333326,
+   "residual_tol": 1e-07,
+   "rel_l2": 0.004829594966603151,
+   "rel_l2_shape": 1.6110725837195945e-07,
+   "offset_over_force": -3.5497522984782726,
+   "closed_form_offset_over_force": -3.5500000000000007,
+   "law_signed": -0.004829931972789116,
+   "law_abs": 0.004829931972789116,
+   "ratio_to_law": 0.9999302254798074,
+   "steps": 5100
+  },
+  {
+   "tau": 0.8,
+   "nu": 0.1,
+   "residual_tol": 1e-07,
+   "rel_l2": 0.00265297680415997,
+   "rel_l2_shape": 4.0357317253313965e-08,
+   "offset_over_force": -0.6499793169439876,
+   "closed_form_offset_over_force": -0.6499999999999999,
+   "law_signed": -0.0026530612244897948,
+   "law_abs": 0.0026530612244897948,
+   "ratio_to_law": 0.9999681800295276,
+   "steps": 2000
+  },
+  {
+   "tau": 1.0,
+   "nu": 0.16666666666666666,
+   "residual_tol": 1e-08,
+   "rel_l2": 0.0017006849930784429,
+   "rel_l2_shape": 2.2568597319380323e-09,
+   "offset_over_force": 0.250000693982311,
+   "closed_form_offset_over_force": 0.25,
+   "law_signed": 0.0017006802721088433,
+   "law_abs": 0.0017006802721088433,
+   "ratio_to_law": 1.0000027759301247,
+   "steps": 1500
+  },
+  {
+   "tau": 1.5,
+   "nu": 0.3333333333333333,
+   "residual_tol": 1e-08,
+   "rel_l2": 0.022108843241576116,
+   "rel_l2_shape": 1.4144180910013772e-10,
+   "offset_over_force": 1.6249999782558446,
+   "closed_form_offset_over_force": 1.625,
+   "law_signed": 0.022108843537414963,
+   "law_abs": 0.022108843537414963,
+   "ratio_to_law": 0.9999999866189814,
+   "steps": 1000
+  }
+ ],
+ "slip_free": [
+  {
+   "Ny": 8,
+   "tau": 0.9330127018922194,
+   "nu": 0.14433756729740646,
+   "rel_l2": 4.4464722789221105e-13,
+   "rel_linf": 6.995152350369899e-13,
+   "rel_l2_shape": 2.2599562878203207e-13,
+   "rel_u_max": -6.855627177060342e-13,
+   "steps": 700,
+   "final_residual": 1.5562170901270345e-13,
+   "pointwise_abs_diff": [
+    0.0002585640706305198,
+    1.677887172192756e-12,
+    5.8033100623199746e-12,
+    5.905929825050782e-12,
+    5.9059298792608905e-12,
+    5.8033100623199746e-12,
+    1.677887172192756e-12,
+    0.0002585640706305198
+   ]
+  },
+  {
+   "Ny": 16,
+   "tau": 0.9330127018922194,
+   "nu": 0.14433756729740646,
+   "rel_l2": 3.3695460789568843e-13,
+   "rel_linf": 4.33959412577392e-13,
+   "rel_l2_shape": 1.1938624637970535e-13,
+   "rel_u_max": 4.098943406916078e-13,
+   "steps": 3100,
+   "final_residual": 7.707027188929661e-13,
+   "pointwise_abs_diff": [
+    0.0005171281176526598,
+    5.80331003521492e-12,
+    2.0970944165227268e-11,
+    2.2171702624904088e-11,
+    3.64464376647472e-11,
+    3.6005279053369366e-11,
+    6.696209125384156e-12,
+    7.958325838608449e-12,
+    7.958326055448883e-12,
+    6.696209125384156e-12,
+    3.6005279053369366e-11,
+    3.64464376647472e-11,
+    2.2171702624904088e-11,
+    2.0970944165227268e-11,
+    5.80331003521492e-12,
+    0.0005171281176526598
+   ]
+  }
+ ],
+ "slip_free_profile_Ny16": {
+  "profile_u": [
+   0.00026598076211376573,
+   0.00023382685902193393,
+   0.0006495190528386742,
+   0.0009959292143525492,
+   0.0012730573435637395,
+   0.00148090344047212,
+   0.0016194675050776215,
+   0.0016887495373803442,
+   0.001688749537380348,
+   0.0016194675050776317,
+   0.0014809034404721269,
+   0.001273057343563736,
+   0.0009959292143525667,
+   0.0006495190528387402,
+   0.00023382685902196177,
+   0.00026598076211377614
+  ],
+  "reference_u": [
+   -0.00025114736709748724,
+   0.00023382685902179843,
+   0.0006495190528383291,
+   0.0009959292143521044,
+   0.001273057343563125,
+   0.0014809034404713903,
+   0.0016194675050769003,
+   0.0016887495373796553,
+   0.0016887495373796556,
+   0.0016194675050769003,
+   0.0014809034404713903,
+   0.001273057343563125,
+   0.0009959292143521044,
+   0.0006495190528383291,
+   0.00023382685902179843,
+   -0.00025114736709748724
+  ]
+ },
+ "invariants": {
+  "ic_rest_steps": 600,
+  "ic_analytic_steps": 500,
+  "rel_max_profile_diff": 0.0,
+  "mass_drift_rest": -7.034373084024992e-13,
+  "mass_drift_analytic": -6.750155989720952e-13
+ },
+ "gate": {
+  "tolerance": 0.01,
+  "basis": "L2, wall-normal profile on fluid nodes, normalised by u_max_analytic",
+  "checks": {
+   "tau0.6": {
+    "quantity": "rel_l2_profile_vs_analytic",
+    "value": 0.004829594966603151,
+    "tolerance": 0.01,
+    "basis": "L2, wall-normal profile on fluid nodes, normalised by u_max_analytic",
+    "passed": true
+   },
+   "tau0.8": {
+    "quantity": "rel_l2_profile_vs_analytic",
+    "value": 0.00265297680415997,
+    "tolerance": 0.01,
+    "basis": "L2, wall-normal profile on fluid nodes, normalised by u_max_analytic",
+    "passed": true
+   },
+   "tau1.0": {
+    "quantity": "rel_l2_profile_vs_analytic",
+    "value": 0.0017006849930784429,
+    "tolerance": 0.01,
+    "basis": "L2, wall-normal profile on fluid nodes, normalised by u_max_analytic",
+    "passed": true
+   },
+   "tau1.5": {
+    "quantity": "rel_l2_profile_vs_analytic",
+    "value": 0.022108843241576116,
+    "tolerance": 0.01,
+    "basis": "L2, wall-normal profile on fluid nodes, normalised by u_max_analytic",
+    "passed": false
+   },
+   "tau_star_Ny8": {
+    "quantity": "rel_l2_profile_vs_analytic",
+    "value": 4.4464722789221105e-13,
+    "tolerance": 0.01,
+    "basis": "L2, wall-normal profile on fluid nodes, normalised by u_max_analytic",
+    "passed": true
+   },
+   "tau_star_Ny16": {
+    "quantity": "rel_l2_profile_vs_analytic",
+    "value": 3.3695460789568843e-13,
+    "tolerance": 0.01,
+    "basis": "L2, wall-normal profile on fluid nodes, normalised by u_max_analytic",
+    "passed": true
+   },
+   "width_Ny8": {
+    "quantity": "rel_l2_profile_vs_analytic",
+    "value": 0.014444444404795392,
+    "tolerance": 0.01,
+    "basis": "L2, wall-normal profile on fluid nodes, normalised by u_max_analytic",
+    "passed": false
+   },
+   "width_Ny16": {
+    "quantity": "rel_l2_profile_vs_analytic",
+    "value": 0.0026530544627613333,
+    "tolerance": 0.01,
+    "basis": "L2, wall-normal profile on fluid nodes, normalised by u_max_analytic",
+    "passed": true
+   }
+  },
+  "n_pass": 6,
+  "n_total": 8
+ },
+ "elapsed_seconds": 49.0
+}
