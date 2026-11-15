@@ -57,6 +57,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import sys
 import time
@@ -83,7 +84,23 @@ GATES = {
     "C3_finite": "no NaN/Inf",
     "C4_flux_balance_rel": 1e-10,       # |Q(t)-Q(0)-boundary flux| / scale
     "C5_periodic_drift_rel": 1e-12,     # same data, periodic domain, no boundary at all
+    "C6_mass_flux_safety": 5.0,         # |dM| <= factor * rho_max0 * s_max0 * perimeter * t
+    "C6_extremum_factor": 1.5,          # max(rho,p) <= factor * max over the initial data
 }
+
+# Pre-registered C6 constants (written before any C6 run; see
+# docs/CASE-DG-CKS1998-2D-RIEMANN-DIVERGENCE-GATE.md).
+#   * the mass bound is *a priori*: it is built from the four initial Riemann
+#     states and the geometry only, never from a measured run, so it cannot be
+#     fitted to whatever the divergence happened to produce;
+#   * ``MASS_FLUX_SAFETY = 5`` is the slack for the fact that the boundary value
+#     is not exactly an initial state once waves reach the wall;
+#   * ``EXTREMUM_SAFETY = 1.5`` is a *plausibility* factor, not a theorem: for
+#     2-D Euler there is no rigorous maximum principle for an entropy solution
+#     (shock focusing can compress above the initial max), so C6 only claims
+#     "the discrete solution stays within 50 % of the initial extrema".
+MASS_FLUX_SAFETY = 5.0
+EXTREMUM_SAFETY = 1.5
 
 CONSERVED = ("mass", "x_momentum", "y_momentum", "energy")
 
@@ -118,6 +135,47 @@ def initial_condition(x, y):
         velocity_y = torch.where(mask, torch.full(shape, state[2], dtype=x.dtype), velocity_y)
         pressure = torch.where(mask, torch.full(shape, state[3], dtype=x.dtype), pressure)
     return rho, velocity_x, velocity_y, pressure
+
+
+def a_priori_bounds(final_time, states=None, domain=((0.0, 1.0), (0.0, 1.0))):
+    """C6 bounds derived from the *initial data and geometry only*.
+
+    Nothing in here reads a computed solution, so the same numbers are produced
+    before and after any run; that is what makes C6 a gate rather than a
+    post-hoc descriptor.
+
+    Returns a dict with
+
+    ``mass0``            initial total mass (exact, from the quadrant areas),
+    ``rho_max0/p_max0``  initial extrema,
+    ``speed_max0``       bound on the fastest signal speed, ``|u|+|v|+a``,
+    ``perimeter``        length of the domain boundary,
+    ``mass_flux_bound``  ``MASS_FLUX_SAFETY * rho_max0 * speed_max0 * P * t``,
+    ``rho_cap/p_cap``    ``EXTREMUM_SAFETY`` times the initial extrema.
+    """
+    states = CONFIG_3 if states is None else states
+    (x0, x1), (y0, y1) = domain
+    area = (x1 - x0) * (y1 - y0)
+    perimeter = 2.0 * ((x1 - x0) + (y1 - y0))
+    rho_max0 = max(state[0] for state in states.values())
+    p_max0 = max(state[3] for state in states.values())
+    speed_max0 = max(
+        math.hypot(state[1], state[2]) + math.sqrt(GAMMA * state[3] / state[0])
+        for state in states.values()
+    )
+    # Each quadrant covers a quarter of the domain.
+    mass0 = 0.25 * area * sum(state[0] for state in states.values())
+    return {
+        "final_time": float(final_time),
+        "mass0": float(mass0),
+        "rho_max0": float(rho_max0),
+        "p_max0": float(p_max0),
+        "speed_max0": float(speed_max0),
+        "perimeter": float(perimeter),
+        "mass_flux_bound": float(MASS_FLUX_SAFETY * rho_max0 * speed_max0 * perimeter * final_time),
+        "rho_cap": float(EXTREMUM_SAFETY * rho_max0),
+        "p_cap": float(EXTREMUM_SAFETY * p_max0),
+    }
 
 
 def _check_positivity(coeff, degree):
@@ -206,6 +264,7 @@ def run_riemann_2d(ncells=32, degree=1, final_time=0.25, cfl=0.2,
         track_boundary_flux=True,
     )
     wall = time.time() - started
+    bounds = a_priori_bounds(final_time)
 
     fields = cell_fields(coeff)
     pos = _check_positivity(coeff, degree)
@@ -236,6 +295,8 @@ def run_riemann_2d(ncells=32, degree=1, final_time=0.25, cfl=0.2,
         "p_max": float(fields["pressure"].max()),
         "positivity": pos,
         "total_mass": _total_mass(coeff, 1.0 / ncells, 1.0 / ncells),
+        "initial_mass": bounds["mass0"],
+        "c6_bounds": bounds,
         "conservation": conservation,
         "max_flux_balance_residual": max(
             conservation[name]["relative_residual"] for name in CONSERVED
@@ -349,7 +410,86 @@ def judge(rows, convergence=None, gates=None):
             "check_state": "not_run",
         }
 
+    # --- C6: is the solution still physical? ---------------------------------
+    # The C1/C4/C5 trio is blind to divergence: a diverging run keeps rho,p > 0
+    # (C1), keeps closing the flux-balance identity to round-off (C4) and, on a
+    # periodic control, keeps every conserved quantity flat (C5) while the mass
+    # itself runs to 1e+26.  C6 is the missing "is this still a solution of the
+    # PDE" gate and is scored against bounds fixed by the *initial data*.
+    c6_rows = [r for r in rows if c6_row_is_scorable(r)]
+    if c6_rows:
+        worst_mass = None
+        worst_extremum = None
+        per_row = {}
+        for r in c6_rows:
+            ratio = c6_mass_bound_ratio(r)
+            extremum = c6_extremum_factor(r)
+            per_row[f"p{r['degree']}_{r['ncells']}_{'periodic' if all(r['periodic']) else 'open'}"] = {
+                "mass_bound_ratio": ratio,
+                "extremum_factor": extremum,
+            }
+            worst_mass = ratio if worst_mass is None else max(worst_mass, ratio)
+            worst_extremum = extremum if worst_extremum is None else max(worst_extremum, extremum)
+        verdicts["C6_physical_magnitude"] = {
+            "passed": bool(
+                worst_mass <= 1.0 and worst_extremum <= gates["C6_extremum_factor"]
+            ),
+            "worst_mass_bound_ratio": worst_mass,
+            "worst_extremum_factor": worst_extremum,
+            "mass_tolerance": 1.0,
+            "extremum_tolerance": gates["C6_extremum_factor"],
+            "per_row": per_row,
+            "detail": (
+                "|mass(t)-mass(0)| must stay inside an a-priori flux bound "
+                "(MASS_FLUX_SAFETY * rho_max0 * speed_max0 * perimeter * t) and "
+                "max(rho,p) must stay within EXTREMUM_SAFETY x the initial "
+                "extrema; bounds come from the initial data, not from a run"
+            ),
+        }
+    else:
+        verdicts["C6_physical_magnitude"] = {
+            "passed": False,
+            "worst_mass_bound_ratio": None,
+            "worst_extremum_factor": None,
+            "detail": "NOT_RUN: no row carries a complete set of a-priori bounds",
+            "check_state": "not_run",
+        }
+
     return verdicts
+
+
+def c6_row_is_scorable(row):
+    """True when the row carries everything C6 needs (no silent defaults)."""
+    if not row.get("c6_bounds"):
+        return False
+    positivity = row.get("positivity") or {}
+    if "rho_max" not in positivity or "p_max" not in positivity:
+        return False
+    mass = (row.get("conservation") or {}).get("mass")
+    if not mass or mass.get("change") is None:
+        return False
+    return math.isfinite(float(mass["change"]))
+
+
+def c6_mass_bound_ratio(row):
+    """``|mass(t) - mass(0)| / mass_flux_bound`` for one measured row.
+
+    Both operands are pre-existing fields of the row; no fitting is involved.
+    """
+    bounds = row["c6_bounds"]
+    change = row["conservation"]["mass"]["change"]
+    return float(abs(change)) / max(bounds["mass_flux_bound"], 1e-30)
+
+
+def c6_extremum_factor(row):
+    """``max(rho_max/rho_max0, p_max/p_max0)`` for one measured row."""
+    bounds = row["c6_bounds"]
+    return float(
+        max(
+            row["positivity"]["rho_max"] / max(bounds["rho_max0"], 1e-30),
+            row["positivity"]["p_max"] / max(bounds["p_max0"], 1e-30),
+        )
+    )
 
 
 def run_convergence_study(degrees=(1, 2), meshes=(32, 64), final_time=0.25,
