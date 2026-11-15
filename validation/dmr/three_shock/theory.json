@@ -1,0 +1,684 @@
+{
+ "theory": {
+  "case": "double_mach_reflection \u00b7 three-shock (von Neumann) theory",
+  "mach": 10.0,
+  "wall_angle_deg": 60.0,
+  "gamma": 1.4,
+  "n_roots_found": 3,
+  "roots_chi_deg": [
+   7.734945255733087,
+   7.734945255733227,
+   18.240770116673577
+  ],
+  "branch_labels": [
+   "b0_chi07.73deg",
+   "b1_chi07.73deg",
+   "b2_chi18.24deg"
+  ],
+  "branches": {
+   "b0_chi07.73deg": {
+    "label": "b0_chi07.73deg",
+    "chi_deg": 7.734945255733087,
+    "q": 12.644616326609892,
+    "triple_point_speed_lab": [
+     12.52956670442903,
+     1.7018461288944153
+    ],
+    "slip_line_direction_deg": -141.69818303240555,
+    "states_triple_point_frame": {
+     "1_upstream": {
+      "rho": 1.4,
+      "u": -12.52956670442903,
+      "v": -1.7018461288944153,
+      "p": 1.0
+     },
+     "2_post_incident": {
+      "rho": 8.000000000000002,
+      "u": -5.384857123207412,
+      "v": -5.8268461288944176,
+      "p": 116.50000000000001
+     },
+     "3_post_reflected": {
+      "rho": 11.015385846352562,
+      "u": -5.4709317940920625,
+      "v": -4.32096329396995,
+      "p": 182.98838210085802
+     },
+     "3p_post_stem": {
+      "rho": 8.140724802999532,
+      "u": -2.154770467088795,
+      "v": -1.7018461288944153,
+      "p": 182.98838210085933
+     }
+    },
+    "slip_line_properties": {
+     "p_post_reflected": 182.98838210085802,
+     "p_post_stem": 182.98838210085933,
+     "pressure_mismatch_rel": -7.144708416941868e-15,
+     "velocity_cross_norm": -1.1042945801787145e-14,
+     "velocity_dot_sign": 1.0
+    },
+    "shock_angles_deg": {
+     "incident_normal_from_y_axis": 120.0,
+     "reflected_normal_from_x_axis": 273.27140656522806,
+     "stem_normal_from_x_axis": 180.0,
+     "stem_plane_from_wall": 90.0
+    },
+    "mach_numbers": {
+     "M2_post_incident": 1.7571620568509088,
+     "M1n_incident": 10.0,
+     "M1n_stem": 12.52956670442903,
+     "Mn_downstream_reflected": 0.8297946941810667
+    },
+    "rh_flux_residuals": {
+     "incident": {
+      "mass": 2.5376526277146434e-16,
+      "normal_momentum": 2.0301221021717147e-15,
+      "tangential_momentum": 3.045183153257572e-15,
+      "energy": 3.2481953634747435e-14
+     },
+     "reflected": {
+      "mass": 0.0,
+      "normal_momentum": 0.0,
+      "tangential_momentum": -1.2895372850053932e-15,
+      "energy": 0.0
+     },
+     "stem": {
+      "mass": 0.0,
+      "normal_momentum": 3.240530419067237e-15,
+      "tangential_momentum": 0.0,
+      "energy": 2.5924243352537894e-14
+     }
+    },
+    "rh_worst": 3.2481953634747435e-14,
+    "trajectory": {
+     "chi_deg": 7.734945255733087,
+     "q": 12.644616326609892,
+     "x_hinge": 0.16666666666666666,
+     "points": {
+      "0.1": {
+       "x": 1.41962333710957,
+       "y": 0.17018461288944153
+      },
+      "0.15": {
+       "x": 2.046101672331021,
+       "y": 0.2552769193341623
+      },
+      "0.2": {
+       "x": 2.672580007552473,
+       "y": 0.34036922577888307
+      }
+     }
+    }
+   },
+   "b1_chi07.73deg": {
+    "label": "b1_chi07.73deg",
+    "chi_deg": 7.734945255733227,
+    "q": 12.644616326609915,
+    "triple_point_speed_lab": [
+     12.529566704429048,
+     1.7018461288944493
+    ],
+    "slip_line_direction_deg": -141.69818303240504,
+    "states_triple_point_frame": {
+     "1_upstream": {
+      "rho": 1.4,
+      "u": -12.529566704429048,
+      "v": -1.7018461288944493,
+      "p": 1.0
+     },
+     "2_post_incident": {
+      "rho": 8.000000000000002,
+      "u": -5.38485712320743,
+      "v": -5.82684612889445,
+      "p": 116.50000000000001
+     },
+     "3_post_reflected": {
+      "rho": 11.01538584635264,
+      "u": -5.470931794092084,
+      "v": -4.320963293969946,
+      "p": 182.98838210085987
+     },
+     "3p_post_stem": {
+      "rho": 8.140724802999534,
+      "u": -2.1547704670887975,
+      "v": -1.7018461288944493,
+      "p": 182.9883821008598
+     }
+    },
+    "slip_line_properties": {
+     "p_post_reflected": 182.98838210085987,
+     "p_post_stem": 182.9883821008598,
+     "pressure_mismatch_rel": 3.1063949638877606e-16,
+     "velocity_cross_norm": 3.7119145552225304e-16,
+     "velocity_dot_sign": 1.0
+    },
+    "shock_angles_deg": {
+     "incident_normal_from_y_axis": 120.0,
+     "reflected_normal_from_x_axis": 273.2714065652281,
+     "stem_normal_from_x_axis": 180.0,
+     "stem_plane_from_wall": 90.0
+    },
+    "mach_numbers": {
+     "M2_post_incident": 1.7571620568509168,
+     "M1n_incident": 10.0,
+     "M1n_stem": 12.529566704429048,
+     "Mn_downstream_reflected": 0.8297946941810631
+    },
+    "rh_flux_residuals": {
+     "incident": {
+      "mass": 0.0,
+      "normal_momentum": 0.0,
+      "tangential_momentum": 1.0150610510858574e-15,
+      "energy": 1.6240976817373718e-14
+     },
+     "reflected": {
+      "mass": -3.223843212513468e-16,
+      "normal_momentum": -2.5790745700107745e-15,
+      "tangential_momentum": 2.5790745700107745e-15,
+      "energy": -4.126519312017239e-14
+     },
+     "stem": {
+      "mass": 0.0,
+      "normal_momentum": 0.0,
+      "tangential_momentum": 0.0,
+      "energy": 2.592424335253786e-14
+     }
+    },
+    "rh_worst": 4.126519312017239e-14,
+    "trajectory": {
+     "chi_deg": 7.734945255733227,
+     "q": 12.644616326609915,
+     "x_hinge": 0.16666666666666666,
+     "points": {
+      "0.1": {
+       "x": 1.4196233371095717,
+       "y": 0.17018461288944495
+      },
+      "0.15": {
+       "x": 2.0461016723310235,
+       "y": 0.2552769193341674
+      },
+      "0.2": {
+       "x": 2.6725800075524764,
+       "y": 0.3403692257788899
+      }
+     }
+    }
+   },
+   "b2_chi18.24deg": {
+    "label": "b2_chi18.24deg",
+    "chi_deg": 18.240770116673577,
+    "q": 15.014973506825031,
+    "triple_point_speed_lab": [
+     14.260464511805557,
+     4.69984907398013
+    ],
+    "slip_line_direction_deg": -117.39048938887728,
+    "states_triple_point_frame": {
+     "1_upstream": {
+      "rho": 1.4,
+      "u": -14.260464511805557,
+      "v": -4.69984907398013,
+      "p": 1.0
+     },
+     "2_post_incident": {
+      "rho": 8.000000000000002,
+      "u": -7.11575493058394,
+      "v": -8.82484907398013,
+      "p": 116.50000000000001
+     },
+     "3_post_reflected": {
+      "rho": 13.15283607559846,
+      "u": -4.697725007172232,
+      "v": -9.066513415030432,
+      "p": 237.08765610787674
+     },
+     "3p_post_stem": {
+      "rho": 8.198426621966131,
+      "u": -2.4351807044337357,
+      "v": -4.69984907398013,
+      "p": 237.08765610787665
+     }
+    },
+    "slip_line_properties": {
+     "p_post_reflected": 237.08765610787674,
+     "p_post_stem": 237.08765610787665,
+     "pressure_mismatch_rel": 3.596354601119164e-16,
+     "velocity_cross_norm": -1.3145770222236062e-16,
+     "velocity_dot_sign": 1.0
+    },
+    "shock_angles_deg": {
+     "incident_normal_from_y_axis": 120.0,
+     "reflected_normal_from_x_axis": 174.29265972697945,
+     "stem_normal_from_x_axis": 180.0,
+     "stem_plane_from_wall": 90.0
+    },
+    "mach_numbers": {
+     "M2_post_incident": 2.5106705879622075,
+     "M1n_incident": 10.0,
+     "M1n_stem": 14.260464511805557,
+     "Mn_downstream_reflected": 0.7510256461157843
+    },
+    "rh_flux_residuals": {
+     "incident": {
+      "mass": 2.5376526277146434e-16,
+      "normal_momentum": 2.0301221021717147e-15,
+      "tangential_momentum": 2.0301221021717147e-15,
+      "energy": 3.2481953634747435e-14
+     },
+     "reflected": {
+      "mass": 0.0,
+      "normal_momentum": 1.145505635220098e-15,
+      "tangential_momentum": 0.0,
+      "energy": 0.0
+     },
+     "stem": {
+      "mass": 0.0,
+      "normal_momentum": 2.84720332986499e-15,
+      "tangential_momentum": 0.0,
+      "energy": 4.555525327783984e-14
+     }
+    },
+    "rh_worst": 4.555525327783984e-14,
+    "trajectory": {
+     "chi_deg": 18.240770116673577,
+     "q": 15.014973506825031,
+     "x_hinge": 0.16666666666666666,
+     "points": {
+      "0.1": {
+       "x": 1.5927131178472225,
+       "y": 0.469984907398013
+      },
+      "0.15": {
+       "x": 2.3057363434375,
+       "y": 0.7049773610970195
+      },
+      "0.2": {
+       "x": 3.018759569027778,
+       "y": 0.939969814796026
+      }
+     }
+    }
+   }
+  },
+  "chi_deg": 7.734945255733087,
+  "q": 12.644616326609892,
+  "states_triple_point_frame": {
+   "1_upstream": {
+    "rho": 1.4,
+    "u": -12.52956670442903,
+    "v": -1.7018461288944153,
+    "p": 1.0
+   },
+   "2_post_incident": {
+    "rho": 8.000000000000002,
+    "u": -5.384857123207412,
+    "v": -5.8268461288944176,
+    "p": 116.50000000000001
+   },
+   "3_post_reflected": {
+    "rho": 11.015385846352562,
+    "u": -5.4709317940920625,
+    "v": -4.32096329396995,
+    "p": 182.98838210085802
+   },
+   "3p_post_stem": {
+    "rho": 8.140724802999532,
+    "u": -2.154770467088795,
+    "v": -1.7018461288944153,
+    "p": 182.98838210085933
+   }
+  },
+  "slip_line_properties": {
+   "p_post_reflected": 182.98838210085802,
+   "p_post_stem": 182.98838210085933,
+   "pressure_mismatch_rel": -7.144708416941868e-15,
+   "velocity_cross_norm": -1.1042945801787145e-14,
+   "velocity_dot_sign": 1.0
+  },
+  "rh_flux_residuals": {
+   "incident": {
+    "mass": 2.5376526277146434e-16,
+    "normal_momentum": 2.0301221021717147e-15,
+    "tangential_momentum": 3.045183153257572e-15,
+    "energy": 3.2481953634747435e-14
+   },
+   "reflected": {
+    "mass": 0.0,
+    "normal_momentum": 0.0,
+    "tangential_momentum": -1.2895372850053932e-15,
+    "energy": 0.0
+   },
+   "stem": {
+    "mass": 0.0,
+    "normal_momentum": 3.240530419067237e-15,
+    "tangential_momentum": 0.0,
+    "energy": 2.5924243352537894e-14
+   }
+  },
+  "rh_worst": 3.2481953634747435e-14,
+  "shock_angles_deg": {
+   "incident_normal_from_y_axis": 120.0,
+   "reflected_normal_from_x_axis": 273.27140656522806,
+   "stem_normal_from_x_axis": 180.0,
+   "stem_plane_from_wall": 90.0
+  },
+  "mach_numbers": {
+   "M2_post_incident": 1.7571620568509088,
+   "M1n_incident": 10.0,
+   "M1n_stem": 12.52956670442903,
+   "Mn_downstream_reflected": 0.8297946941810667
+  }
+ },
+ "branches": {
+  "b0_chi07.73deg": {
+   "label": "b0_chi07.73deg",
+   "chi_deg": 7.734945255733087,
+   "q": 12.644616326609892,
+   "triple_point_speed_lab": [
+    12.52956670442903,
+    1.7018461288944153
+   ],
+   "slip_line_direction_deg": -141.69818303240555,
+   "states_triple_point_frame": {
+    "1_upstream": {
+     "rho": 1.4,
+     "u": -12.52956670442903,
+     "v": -1.7018461288944153,
+     "p": 1.0
+    },
+    "2_post_incident": {
+     "rho": 8.000000000000002,
+     "u": -5.384857123207412,
+     "v": -5.8268461288944176,
+     "p": 116.50000000000001
+    },
+    "3_post_reflected": {
+     "rho": 11.015385846352562,
+     "u": -5.4709317940920625,
+     "v": -4.32096329396995,
+     "p": 182.98838210085802
+    },
+    "3p_post_stem": {
+     "rho": 8.140724802999532,
+     "u": -2.154770467088795,
+     "v": -1.7018461288944153,
+     "p": 182.98838210085933
+    }
+   },
+   "slip_line_properties": {
+    "p_post_reflected": 182.98838210085802,
+    "p_post_stem": 182.98838210085933,
+    "pressure_mismatch_rel": -7.144708416941868e-15,
+    "velocity_cross_norm": -1.1042945801787145e-14,
+    "velocity_dot_sign": 1.0
+   },
+   "shock_angles_deg": {
+    "incident_normal_from_y_axis": 120.0,
+    "reflected_normal_from_x_axis": 273.27140656522806,
+    "stem_normal_from_x_axis": 180.0,
+    "stem_plane_from_wall": 90.0
+   },
+   "mach_numbers": {
+    "M2_post_incident": 1.7571620568509088,
+    "M1n_incident": 10.0,
+    "M1n_stem": 12.52956670442903,
+    "Mn_downstream_reflected": 0.8297946941810667
+   },
+   "rh_flux_residuals": {
+    "incident": {
+     "mass": 2.5376526277146434e-16,
+     "normal_momentum": 2.0301221021717147e-15,
+     "tangential_momentum": 3.045183153257572e-15,
+     "energy": 3.2481953634747435e-14
+    },
+    "reflected": {
+     "mass": 0.0,
+     "normal_momentum": 0.0,
+     "tangential_momentum": -1.2895372850053932e-15,
+     "energy": 0.0
+    },
+    "stem": {
+     "mass": 0.0,
+     "normal_momentum": 3.240530419067237e-15,
+     "tangential_momentum": 0.0,
+     "energy": 2.5924243352537894e-14
+    }
+   },
+   "rh_worst": 3.2481953634747435e-14,
+   "trajectory": {
+    "chi_deg": 7.734945255733087,
+    "q": 12.644616326609892,
+    "x_hinge": 0.16666666666666666,
+    "points": {
+     "0.1": {
+      "x": 1.41962333710957,
+      "y": 0.17018461288944153
+     },
+     "0.15": {
+      "x": 2.046101672331021,
+      "y": 0.2552769193341623
+     },
+     "0.2": {
+      "x": 2.672580007552473,
+      "y": 0.34036922577888307
+     }
+    }
+   }
+  },
+  "b1_chi07.73deg": {
+   "label": "b1_chi07.73deg",
+   "chi_deg": 7.734945255733227,
+   "q": 12.644616326609915,
+   "triple_point_speed_lab": [
+    12.529566704429048,
+    1.7018461288944493
+   ],
+   "slip_line_direction_deg": -141.69818303240504,
+   "states_triple_point_frame": {
+    "1_upstream": {
+     "rho": 1.4,
+     "u": -12.529566704429048,
+     "v": -1.7018461288944493,
+     "p": 1.0
+    },
+    "2_post_incident": {
+     "rho": 8.000000000000002,
+     "u": -5.38485712320743,
+     "v": -5.82684612889445,
+     "p": 116.50000000000001
+    },
+    "3_post_reflected": {
+     "rho": 11.01538584635264,
+     "u": -5.470931794092084,
+     "v": -4.320963293969946,
+     "p": 182.98838210085987
+    },
+    "3p_post_stem": {
+     "rho": 8.140724802999534,
+     "u": -2.1547704670887975,
+     "v": -1.7018461288944493,
+     "p": 182.9883821008598
+    }
+   },
+   "slip_line_properties": {
+    "p_post_reflected": 182.98838210085987,
+    "p_post_stem": 182.9883821008598,
+    "pressure_mismatch_rel": 3.1063949638877606e-16,
+    "velocity_cross_norm": 3.7119145552225304e-16,
+    "velocity_dot_sign": 1.0
+   },
+   "shock_angles_deg": {
+    "incident_normal_from_y_axis": 120.0,
+    "reflected_normal_from_x_axis": 273.2714065652281,
+    "stem_normal_from_x_axis": 180.0,
+    "stem_plane_from_wall": 90.0
+   },
+   "mach_numbers": {
+    "M2_post_incident": 1.7571620568509168,
+    "M1n_incident": 10.0,
+    "M1n_stem": 12.529566704429048,
+    "Mn_downstream_reflected": 0.8297946941810631
+   },
+   "rh_flux_residuals": {
+    "incident": {
+     "mass": 0.0,
+     "normal_momentum": 0.0,
+     "tangential_momentum": 1.0150610510858574e-15,
+     "energy": 1.6240976817373718e-14
+    },
+    "reflected": {
+     "mass": -3.223843212513468e-16,
+     "normal_momentum": -2.5790745700107745e-15,
+     "tangential_momentum": 2.5790745700107745e-15,
+     "energy": -4.126519312017239e-14
+    },
+    "stem": {
+     "mass": 0.0,
+     "normal_momentum": 0.0,
+     "tangential_momentum": 0.0,
+     "energy": 2.592424335253786e-14
+    }
+   },
+   "rh_worst": 4.126519312017239e-14,
+   "trajectory": {
+    "chi_deg": 7.734945255733227,
+    "q": 12.644616326609915,
+    "x_hinge": 0.16666666666666666,
+    "points": {
+     "0.1": {
+      "x": 1.4196233371095717,
+      "y": 0.17018461288944495
+     },
+     "0.15": {
+      "x": 2.0461016723310235,
+      "y": 0.2552769193341674
+     },
+     "0.2": {
+      "x": 2.6725800075524764,
+      "y": 0.3403692257788899
+     }
+    }
+   }
+  },
+  "b2_chi18.24deg": {
+   "label": "b2_chi18.24deg",
+   "chi_deg": 18.240770116673577,
+   "q": 15.014973506825031,
+   "triple_point_speed_lab": [
+    14.260464511805557,
+    4.69984907398013
+   ],
+   "slip_line_direction_deg": -117.39048938887728,
+   "states_triple_point_frame": {
+    "1_upstream": {
+     "rho": 1.4,
+     "u": -14.260464511805557,
+     "v": -4.69984907398013,
+     "p": 1.0
+    },
+    "2_post_incident": {
+     "rho": 8.000000000000002,
+     "u": -7.11575493058394,
+     "v": -8.82484907398013,
+     "p": 116.50000000000001
+    },
+    "3_post_reflected": {
+     "rho": 13.15283607559846,
+     "u": -4.697725007172232,
+     "v": -9.066513415030432,
+     "p": 237.08765610787674
+    },
+    "3p_post_stem": {
+     "rho": 8.198426621966131,
+     "u": -2.4351807044337357,
+     "v": -4.69984907398013,
+     "p": 237.08765610787665
+    }
+   },
+   "slip_line_properties": {
+    "p_post_reflected": 237.08765610787674,
+    "p_post_stem": 237.08765610787665,
+    "pressure_mismatch_rel": 3.596354601119164e-16,
+    "velocity_cross_norm": -1.3145770222236062e-16,
+    "velocity_dot_sign": 1.0
+   },
+   "shock_angles_deg": {
+    "incident_normal_from_y_axis": 120.0,
+    "reflected_normal_from_x_axis": 174.29265972697945,
+    "stem_normal_from_x_axis": 180.0,
+    "stem_plane_from_wall": 90.0
+   },
+   "mach_numbers": {
+    "M2_post_incident": 2.5106705879622075,
+    "M1n_incident": 10.0,
+    "M1n_stem": 14.260464511805557,
+    "Mn_downstream_reflected": 0.7510256461157843
+   },
+   "rh_flux_residuals": {
+    "incident": {
+     "mass": 2.5376526277146434e-16,
+     "normal_momentum": 2.0301221021717147e-15,
+     "tangential_momentum": 2.0301221021717147e-15,
+     "energy": 3.2481953634747435e-14
+    },
+    "reflected": {
+     "mass": 0.0,
+     "normal_momentum": 1.145505635220098e-15,
+     "tangential_momentum": 0.0,
+     "energy": 0.0
+    },
+    "stem": {
+     "mass": 0.0,
+     "normal_momentum": 2.84720332986499e-15,
+     "tangential_momentum": 0.0,
+     "energy": 4.555525327783984e-14
+    }
+   },
+   "rh_worst": 4.555525327783984e-14,
+   "trajectory": {
+    "chi_deg": 18.240770116673577,
+    "q": 15.014973506825031,
+    "x_hinge": 0.16666666666666666,
+    "points": {
+     "0.1": {
+      "x": 1.5927131178472225,
+      "y": 0.469984907398013
+     },
+     "0.15": {
+      "x": 2.3057363434375,
+      "y": 0.7049773610970195
+     },
+     "0.2": {
+      "x": 3.018759569027778,
+      "y": 0.939969814796026
+     }
+    }
+   }
+  }
+ },
+ "branch_labels": [
+  "b0_chi07.73deg",
+  "b1_chi07.73deg",
+  "b2_chi18.24deg"
+ ],
+ "detachment_angle_deg": 44.42901938037104,
+ "times": [
+  0.1,
+  0.15,
+  0.2
+ ],
+ "galilean_cross_check": {
+  "chi_deg": 7.734945255732082,
+  "reflected_normal_deg": 273.27140656522784,
+  "stem_normal_deg": 180.0,
+  "stem_plane_from_wall_deg": 0.0,
+  "residual": [
+   -6.927260769469883e-14,
+   -9.51178104775855e-14,
+   -1.053624400407091e-16
+  ]
+ },
+ "chi_agreement_deg": 1.0045297926808416e-12
+}
