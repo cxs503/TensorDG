@@ -135,6 +135,16 @@ def cell_averages(
     ncells, final_time, left, right, diaphragm=0.5,
     domain=(0.0, 1.0), quadrature_order=8, gamma=GAMMA,
 ):
+    """Cell averages from a **fixed** Gauss rule -- not a converged reference.
+
+    A cell that contains a wave is integrated inexactly, and the error has the
+    size ``rho_q * jump`` with ``rho_q`` a constant of the rule: it does **not**
+    shrink under refinement, it only moves into fewer cells, so the induced
+    relative-L2 bias decays like ``N^{-1/2}`` and never to zero.  Use
+    :func:`benchmarks.shock_reference_quadrature.cell_averages` (breakpoint-split,
+    exact) when the number is compared against a tolerance; the difference is
+    measured in ``docs/REFERENCE-QUADRATURE-INSTRUMENT-AUDIT.md``.
+    """
     lower, upper = domain
     dx = (upper - lower) / ncells
     centers = lower + (np.arange(ncells) + 0.5) * dx
