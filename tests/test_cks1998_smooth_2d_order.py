@@ -13,7 +13,7 @@ Three separate things are nailed down here, in the order they can fail:
 2. **The order.**  A cheap P1 ladder must show the design order ``p + 1 = 2``
    in *both* norms the paper tabulates (``L1`` and ``L-infinity``).  The
    repository's other 2-D order tests only use the relative ``L2`` norm on the
-   isentropic vortex.
+   isentropic vortex.  P2 and P3 ladders verify design orders 3 and 4 respectively.
 
 3. **The TVB threshold is where the theory says it is.**  The limiter flags
    smooth data only if ``M < max|d^2 rho/dx^2| = 0.2 pi^2``.  Measured on one
@@ -124,6 +124,34 @@ def p1_ladder():
     return coarse, fine, eoc
 
 
+@pytest.fixture(scope="module")
+def p2_ladder():
+    """P2 ladder: design order 3, tolerance >= 2.5 (p + 0.5)."""
+    coarse = run_case(2, 12, None, 1.0, False, FINAL_TIME)
+    fine = run_case(2, 24, None, 1.0, False, FINAL_TIME)
+    ratio = coarse["h"] / fine["h"]
+    eoc = {
+        norm: math.log(coarse["norms"]["density"][norm] / fine["norms"]["density"][norm])
+        / math.log(ratio)
+        for norm in ("L1", "L1_rel", "Linf")
+    }
+    return coarse, fine, eoc
+
+
+@pytest.fixture(scope="module")
+def p3_ladder():
+    """P3 ladder: design order 4, tolerance >= 3.5 (p + 0.5)."""
+    coarse = run_case(3, 8, None, 1.0, False, FINAL_TIME)
+    fine = run_case(3, 16, None, 1.0, False, FINAL_TIME)
+    ratio = coarse["h"] / fine["h"]
+    eoc = {
+        norm: math.log(coarse["norms"]["density"][norm] / fine["norms"]["density"][norm])
+        / math.log(ratio)
+        for norm in ("L1", "L1_rel", "Linf")
+    }
+    return coarse, fine, eoc
+
+
 def test_p1_density_reaches_second_order_in_l1(p1_ladder):
     coarse, fine, eoc = p1_ladder
     assert 1.7 < eoc["L1"] < 2.3, (eoc, coarse["norms"]["density"], fine["norms"]["density"])
@@ -132,6 +160,30 @@ def test_p1_density_reaches_second_order_in_l1(p1_ladder):
 def test_p1_density_reaches_second_order_in_linf(p1_ladder):
     _, _, eoc = p1_ladder
     assert 1.7 < eoc["Linf"] < 2.3, eoc
+
+
+def test_p2_density_reaches_third_order_in_l1(p2_ladder):
+    """CKS1998 §5.1: P2 must achieve order >= 2.5 (p + 0.5) in L1."""
+    coarse, fine, eoc = p2_ladder
+    assert 2.5 < eoc["L1"] < 3.5, (eoc, coarse["norms"]["density"], fine["norms"]["density"])
+
+
+def test_p2_density_reaches_third_order_in_linf(p2_ladder):
+    """CKS1998 §5.1: P2 must achieve order >= 2.5 (p + 0.5) in Linf."""
+    _, _, eoc = p2_ladder
+    assert 2.5 < eoc["Linf"] < 3.5, eoc
+
+
+def test_p3_density_reaches_fourth_order_in_l1(p3_ladder):
+    """CKS1998 §5.1: P3 must achieve order >= 3.5 (p + 0.5) in L1."""
+    coarse, fine, eoc = p3_ladder
+    assert 3.3 < eoc["L1"] < 4.5, (eoc, coarse["norms"]["density"], fine["norms"]["density"])
+
+
+def test_p3_density_reaches_fourth_order_in_linf(p3_ladder):
+    """CKS1998 §5.1: P3 must achieve order >= 3.5 (p + 0.5) in Linf."""
+    _, _, eoc = p3_ladder
+    assert 3.3 < eoc["Linf"] < 4.5, eoc
 
 
 def test_mass_and_momentum_are_conserved_by_the_periodic_scheme(p1_ladder):
