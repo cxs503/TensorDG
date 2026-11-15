@@ -121,6 +121,8 @@ __all__ = [
     "order_ceiling",
     "certify",
     "judge",
+    "certify_functional",
+    "judge_functional",
     "audit_ladder",
     "band_coverage_study",
     "digest_levels",
@@ -154,6 +156,7 @@ WITHHELD_ORDER_TOO_LOW = "WITHHELD_ORDER_TOO_LOW"
 WITHHELD_ORDER_TOO_HIGH = "WITHHELD_ORDER_TOO_HIGH"
 WITHHELD_ROUNDOFF_FLOOR = "WITHHELD_ROUNDOFF_FLOOR"
 WITHHELD_BAND_CONSUMES_GATE = "WITHHELD_BAND_CONSUMES_GATE"
+WITHHELD_ZERO_FUNCTIONAL = "WITHHELD_ZERO_FUNCTIONAL"
 
 PASS = "PASS"
 PASS_MARGINAL = "PASS_MARGINAL"
@@ -497,6 +500,173 @@ def judge(candidate, certification: dict, *, tolerance_percent: float | None = N
         "reference_verdict": certification["verdict"],
         "candidate_grid": int(np.asarray(candidate).size),
         "reference_grid": int(ref.size),
+    }
+
+
+# ------------------------------------------------------- functional level
+def certify_functional(values, *, r: float = 2.0, fs: float = FS_GCI,
+                       p_min: float = P_MIN, p_max: float = P_MAX,
+                       roundoff_floor: float = ROUNDOFF_FLOOR,
+                       tolerance_percent: float | None = None,
+                       u_share_max: float = U_SHARE_MAX) -> dict:
+    """Certify a **scalar functional** of the solution instead of a profile.
+
+    Why this exists
+    ---------------
+    :func:`certify` certifies a whole profile, and a profile-level gate is a
+    *global* statement: an L1 norm over the domain is dominated by whatever
+    carries the most absolute mass, so a localized O(1) defect (a smeared shock
+    over a few cells) can mask a physically decisive but small-amplitude feature
+    (the wave train behind a shock, a vortex core peak, a wall shear extremum).
+    A validation claim of the form "the feature is right to X %" therefore needs
+    the *feature* certified, not the profile.
+
+    The method is Roache's, applied to the functional: with ``F_i`` the
+    functional evaluated on a nesting ladder ``coarse -> fine``,
+
+        d_i     = |F_i - F_(i+1)| / |F_finest|        (relative differences)
+        p       = log(d_c / d_f) / log(r)             (observed order)
+        F_exact = F_fine + (F_fine - F_coarse) / (r**p - 1)
+        U       = fs * d_fine / (r**p - 1)            (band of the fine level)
+
+    and the same three machine decisions as the profile engine: refusal of
+    non-asymptotic ladders (:func:`classify`), gate validity
+    ``U / tau <= u_share_max``, and a ``PASS_MARGINAL`` zone.
+
+    Sign and zero handling: differences are taken in absolute value for the
+    order estimate but **retained in sign** in the Richardson step, so a
+    functional that converges monotonically from either side works.  A
+    functional that vanishes in the continuum limit (``F_exact ~ 0``) cannot be
+    certified on a relative scale -- the relative band is unbounded by
+    construction -- and is refused with ``WITHHELD_ZERO_FUNCTIONAL`` rather than
+    reported as an infinite error.  (Interpolation-free boundary functionals
+    such as "mass flux through a face" are fine; a pure difference of two equal
+    quantities is not.)
+
+    Sampling caveat (the caller's business, not the engine's): extremum-type
+    functionals (max, min, argmax) carry an O(h) sampling bias that does not
+    shrink under grid doubling as cleanly as an integral does, so their observed
+    order is typically lower than the solver's.  The engine reports the order it
+    measured; it does not repair the functional.
+    """
+    vals = [float(v) for v in values]
+    if len(vals) < 3:
+        return {"verdict": WITHHELD_TOO_FEW_LEVELS, "classification": "too_few",
+                "values": vals, "certified_value": None, "band_absolute": None,
+                "band_percent": None, "observed_order": None,
+                "gate_usable": False, "tolerance_percent": tolerance_percent}
+    f_finest = vals[-1]
+    scale = abs(f_finest)
+    if scale <= roundoff_floor:
+        return {"verdict": WITHHELD_ZERO_FUNCTIONAL, "classification": "zero",
+                "values": vals, "certified_value": None, "band_absolute": None,
+                "band_percent": None, "observed_order": None,
+                "gate_usable": False, "tolerance_percent": tolerance_percent}
+    diffs, signed = [], []
+    for i in range(len(vals) - 1):
+        step = abs(vals[i + 1] - vals[i])
+        signed.append(vals[i + 1] - vals[i])
+        diffs.append(step / scale)
+    orders = []
+    for i in range(len(diffs) - 1):
+        # uniform nesting ratio: the caller passes one value per level, so the
+        # refinement ratio between consecutive levels is a single scalar
+        r_loc = float(r)
+        if diffs[i] <= 0.0 or diffs[i + 1] <= 0.0:
+            p_loc = None
+        else:
+            p_loc = observed_order(diffs[i], diffs[i + 1], r_loc)
+        orders.append({"levels_index": [i, i + 1, i + 2],
+                       "refinement": r_loc, "observed_order": p_loc})
+    d_fine = diffs[-1]
+    p_used = orders[-1]["observed_order"]
+    case, verdict = classify(p_used, d_fine, p_min=p_min, p_max=p_max,
+                             roundoff_floor=roundoff_floor)
+    if verdict == CERTIFIED:
+        # a ladder is only asymptotic if every local order is positive; one
+        # inflated finest triple cannot buy certification (same guard as certify)
+        if any(o["observed_order"] is None or o["observed_order"] <= 0.0
+               for o in orders):
+            case, verdict = "stagnant", WITHHELD_STAGNANT
+    certified = None
+    band_abs = None
+    band_percent = None
+    share = None
+    if verdict == CERTIFIED:
+        certified = f_finest + signed[-1] / (r ** p_used - 1.0)
+        band_abs = float(fs * d_fine * scale / (r ** p_used - 1.0))
+        if abs(certified) <= roundoff_floor:
+            verdict, case = WITHHELD_ZERO_FUNCTIONAL, "zero"
+        else:
+            band_percent = 100.0 * band_abs / abs(certified)
+            if tolerance_percent:
+                share = band_percent / float(tolerance_percent)
+    gate_usable = bool(verdict == CERTIFIED and band_percent is not None
+                       and tolerance_percent is not None
+                       and share is not None and share <= u_share_max)
+    return {
+        "verdict": verdict,
+        "classification": case,
+        "values": vals,
+        "relative_differences_percent": [100.0 * d for d in diffs],
+        "observed_order": p_used,
+        "orders": orders,
+        "certified_value": certified,
+        "band_absolute": band_abs,
+        "band_percent": band_percent,
+        "tolerance_percent": tolerance_percent,
+        "band_share_of_gate": share,
+        "gate_usable": gate_usable,
+        "u_share_max": u_share_max,
+        "refinement": float(r),
+        "fs": float(fs),
+    }
+
+
+def judge_functional(candidate, certification: dict, *,
+                     tolerance_percent: float | None = None) -> dict:
+    """Compare one measured functional value against a functional certification.
+
+    Decisions mirror :func:`judge`: ``WITHHELD`` (reference not usable),
+    ``FAIL`` (``err >= tau``), ``PASS`` (``err + U < tau``) and
+    ``PASS_MARGINAL`` (passes, but the margin is inside the reference band).
+    The band is absolute on the functional scale, so the gate semantics are
+    identical to the profile engine and a feature gate cannot be passed by
+    reference noise.
+    """
+    tau = float(certification.get("tolerance_percent") if tolerance_percent is None
+                else tolerance_percent)
+    ref = certification.get("certified_value")
+    band = certification.get("band_percent")
+    if ref is None or abs(ref) <= ROUNDOFF_FLOOR:
+        return {"decision": WITHHELD, "reason": certification.get("verdict"),
+                "error_percent": None, "tolerance_percent": tau,
+                "band_percent": band, "candidate": candidate, "reference": ref}
+    err = 100.0 * abs(float(candidate) - ref) / abs(ref)
+    share_max = float(certification.get("u_share_max", U_SHARE_MAX))
+    gate_usable = bool(certification.get("verdict") == CERTIFIED
+                       and band is not None and band / tau <= share_max)
+    if not gate_usable:
+        decision, reason = WITHHELD, certification.get("verdict")
+    elif err >= tau:
+        decision, reason = FAIL, "error above tolerance"
+    elif band is not None and err + band < tau:
+        decision, reason = PASS, "margin larger than the reference band"
+    else:
+        decision, reason = PASS_MARGINAL, \
+            "error below tolerance but margin inside the reference band"
+    return {
+        "decision": decision,
+        "reason": reason,
+        "error_percent": err,
+        "tolerance_percent": tau,
+        "band_percent": band,
+        "band_share_of_gate": None if band is None else band / tau,
+        "robust_margin_percent_of_gate": None
+        if not gate_usable or band is None else 100.0 * (tau - err - band) / tau,
+        "reference_verdict": certification.get("verdict"),
+        "candidate": candidate,
+        "reference": ref,
     }
 
 
