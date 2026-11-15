@@ -59,7 +59,7 @@
 
 ## 4. 未通过 / 未完成（honest FAIL，不粉饰）
 
-**(a) G3 内部壁面激波反射门未通过。** 精确参考是
+**(a) G3 内部壁面激波反射门未通过。**（**归因已更新（m21992）**：`_solid_interface` 内壁面通量与已验证的域边界壁路径**逐位相同**（max|Δ| = 0.0，同 378 步），因此本门的残余偏差不能归给内壁面通量；见 `docs/CASE-REPRO-DG-CKS1998-G3-EMBEDDED-WALL-ATTRIBUTION.md`。） 精确参考是
 `benchmarks.euler_dg_2d_wall_bc.WallReflection`（入射激波由 Rankine--Hugoniot 现算，
 反射激波 Mach 数由跳跃条件二分），只把壁面从「域边界」换成「域内固体块」。
 - 首次配置（40×1 P1、`x_shock=0.95`、`x_wall=1.0`）读出平台区 `p ≈ 1.0`（应 15.0），
