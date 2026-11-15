@@ -1,0 +1,256 @@
+{
+ "anchor": "CASE-LAX-DG",
+ "case": "CASE-LAX-DG",
+ "config": {
+  "final_time": 0.13,
+  "ledger_leg": [
+   400,
+   3
+  ],
+  "metrics": "whole-field relative L1 and L2 of density",
+  "quadrature_order": 10
+ },
+ "environment": {
+  "cpu": "Loongson-3C6000/D",
+  "machine": "loongarch64",
+  "numpy": "2.4.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "python": "3.11.6",
+  "torch": "2.7.1",
+  "torch_threads": 8
+ },
+ "ledger_arm_rejudged": false,
+ "legs": [
+  [
+   400,
+   3
+  ]
+ ],
+ "question": "how tightly is a committed CASE-LAX-DG artifact reproducible on another stack?",
+ "rows": [
+  {
+   "cells": 100,
+   "committed": {
+    "pool": {
+     "environment": null,
+     "l1_density": 0.015847005256776892,
+     "steps": 1271
+    }
+   },
+   "degree": 3,
+   "density_min": 0.30324801360950426,
+   "drift_l1": 1.0102519976129543e-07,
+   "l1_density": 0.015847006857723764,
+   "l2_density": 0.05306209064256054,
+   "pressure_min": 0.41668367475791324,
+   "stack": "torch2.7.1/numpy2.4.6/loongarch64",
+   "steps": 1271,
+   "steps_agree": true,
+   "torch_threads": 1,
+   "wall_seconds": 16.681846857070923
+  },
+  {
+   "cells": 100,
+   "committed": {
+    "pool": {
+     "environment": null,
+     "l1_density": 0.015847005256776892,
+     "steps": 1271
+    }
+   },
+   "degree": 3,
+   "density_min": 0.30324801360950426,
+   "drift_l1": 1.0102519976129543e-07,
+   "l1_density": 0.015847006857723764,
+   "l2_density": 0.05306209064256054,
+   "pressure_min": 0.41668367475791324,
+   "stack": "torch2.7.1/numpy2.4.6/loongarch64",
+   "steps": 1271,
+   "steps_agree": true,
+   "torch_threads": 8,
+   "wall_seconds": 16.70397925376892
+  },
+  {
+   "cells": 200,
+   "committed": {
+    "pool": {
+     "environment": null,
+     "l1_density": 0.012147420335832907,
+     "steps": 2547
+    },
+    "probe": {
+     "environment": {
+      "machine": "loongarch64",
+      "numpy": "2.0.1",
+      "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+      "python": "3.11.6",
+      "torch": "2.13.0"
+     },
+     "l1_density": 0.012147420335832907,
+     "steps": 2547
+    }
+   },
+   "degree": 3,
+   "density_min": 0.29730924583642,
+   "drift_l1": 4.097961934013128e-06,
+   "l1_density": 0.01214747011549904,
+   "l2_density": 0.041999795954607705,
+   "pressure_min": 0.0911570921701842,
+   "stack": "torch2.7.1/numpy2.4.6/loongarch64",
+   "steps": 2547,
+   "steps_agree": true,
+   "torch_threads": 1,
+   "wall_seconds": 35.22986960411072
+  },
+  {
+   "cells": 200,
+   "committed": {
+    "pool": {
+     "environment": null,
+     "l1_density": 0.012147420335832907,
+     "steps": 2547
+    },
+    "probe": {
+     "environment": {
+      "machine": "loongarch64",
+      "numpy": "2.0.1",
+      "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+      "python": "3.11.6",
+      "torch": "2.13.0"
+     },
+     "l1_density": 0.012147420335832907,
+     "steps": 2547
+    }
+   },
+   "degree": 3,
+   "density_min": 0.29730924583642,
+   "drift_l1": 4.097961934013128e-06,
+   "l1_density": 0.01214747011549904,
+   "l2_density": 0.041999795954607705,
+   "pressure_min": 0.0911570921701842,
+   "stack": "torch2.7.1/numpy2.4.6/loongarch64",
+   "steps": 2547,
+   "steps_agree": true,
+   "torch_threads": 8,
+   "wall_seconds": 37.58658289909363
+  },
+  {
+   "cells": 400,
+   "committed": {
+    "pool": {
+     "environment": null,
+     "l1_density": 0.008685539963016797,
+     "steps": 5109
+    },
+    "probe": {
+     "environment": {
+      "machine": "loongarch64",
+      "numpy": "2.0.1",
+      "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+      "python": "3.11.6",
+      "torch": "2.13.0"
+     },
+     "l1_density": 0.008685539963016797,
+     "steps": 5109
+    }
+   },
+   "degree": 3,
+   "density_min": 0.29713088460535425,
+   "drift_l1": 0.00010645991275737288,
+   "l1_density": 0.008686464624843512,
+   "l2_density": 0.03115561985348536,
+   "pressure_min": 0.4293662792237144,
+   "stack": "torch2.7.1/numpy2.4.6/loongarch64",
+   "steps": 5109,
+   "steps_agree": true,
+   "torch_threads": 1,
+   "wall_seconds": 80.34759640693665
+  },
+  {
+   "cells": 400,
+   "committed": {
+    "pool": {
+     "environment": null,
+     "l1_density": 0.008685539963016797,
+     "steps": 5109
+    },
+    "probe": {
+     "environment": {
+      "machine": "loongarch64",
+      "numpy": "2.0.1",
+      "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+      "python": "3.11.6",
+      "torch": "2.13.0"
+     },
+     "l1_density": 0.008685539963016797,
+     "steps": 5109
+    }
+   },
+   "degree": 3,
+   "density_min": 0.29713088460535425,
+   "drift_l1": 0.00010645991275737288,
+   "l1_density": 0.008686464624843512,
+   "l2_density": 0.03115561985348536,
+   "pressure_min": 0.4293662792237144,
+   "stack": "torch2.7.1/numpy2.4.6/loongarch64",
+   "steps": 5109,
+   "steps_agree": true,
+   "torch_threads": 8,
+   "wall_seconds": 83.7671365737915
+  }
+ ],
+ "stacks": [
+  {
+   "environment": {
+    "cpu": "Loongson-3C6000/D",
+    "machine": "loongarch64",
+    "numpy": "2.4.6",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+    "python": "3.11.6",
+    "torch": "2.7.1",
+    "torch_threads": 8
+   },
+   "tag": "torch2.7.1/numpy2.4.6/loongarch64"
+  }
+ ],
+ "thread_hypothesis_falsified": true,
+ "thread_tests": {
+  "p3.N100": {
+   "fields_bit_identical": true,
+   "fields_sha256": {
+    "1": "4a8cdd3aabc7110f39a5cdff13de3d0ce99ac54db37110088aebdf116ea618d2",
+    "8": "4a8cdd3aabc7110f39a5cdff13de3d0ce99ac54db37110088aebdf116ea618d2"
+   },
+   "threads": [
+    1,
+    8
+   ]
+  },
+  "p3.N200": {
+   "fields_bit_identical": true,
+   "fields_sha256": {
+    "1": "80554edb4f2dcd8a136ff02a27e0bd680c5a0cf100d0bfab9d1bd5d4aed4e055",
+    "8": "80554edb4f2dcd8a136ff02a27e0bd680c5a0cf100d0bfab9d1bd5d4aed4e055"
+   },
+   "threads": [
+    1,
+    8
+   ]
+  },
+  "p3.N400": {
+   "fields_bit_identical": true,
+   "fields_sha256": {
+    "1": "cc57ab15197b41746296cbc7174c11857747cfc5cfc480e41db04e89add57e86",
+    "8": "cc57ab15197b41746296cbc7174c11857747cfc5cfc480e41db04e89add57e86"
+   },
+   "threads": [
+    1,
+    8
+   ]
+  }
+ },
+ "threads": [
+  8
+ ],
+ "worst_drift_l1": 0.00010645991275737288
+}
