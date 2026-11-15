@@ -1,0 +1,320 @@
+{
+ "anchor": "CASE-LAX-DG",
+ "attainability": {
+  "feasible": true,
+  "field": "density",
+  "floor_share_of_tolerance": 0.6090123027857931,
+  "measured_over_required": 1.013253052754161,
+  "reading": "the bar at the pinned leg is reachable in principle iff the scheme keeps its solver leg below sqrt(tol^2 - floor^2); the committed scheme sits at the ratio measured/required printed below, i.e. the distance to the feasibility boundary is that ratio times 1.0",
+  "reference_floor": 0.018270369083573792,
+  "relative_reduction_needed": 0.013079706711109695,
+  "solver_leg_measured": 0.02411017729889938,
+  "solver_leg_required": 0.023794823251076923
+ },
+ "case": {
+  "diaphragm": 0.5,
+  "domain": [
+   0.0,
+   1.0
+  ],
+  "final_time": 0.13,
+  "gamma": 1.4,
+  "left_state": [
+   0.445,
+   0.698,
+   3.528
+  ],
+  "name": "Lax (1954) shock tube / Toro test 2",
+  "right_state": [
+   0.5,
+   0.0,
+   0.571
+  ]
+ },
+ "config": {
+  "closed_arm_set": true,
+  "control_tolerance": 1e-05,
+  "dof": 1600,
+  "metric": "whole-field relative L2 on the element Gauss nodes, every field, denominator = norm of the exact solution -- the case pool's own ruler, unchanged",
+  "pinned_cells": 400,
+  "pinned_degree": 3,
+  "quadrature_order": 10,
+  "tolerance": 0.03,
+  "tolerance_source": "tensordg.cases.lax_1d/lax_case_pool.ledger_acceptance_tolerance()",
+  "variant_order": [
+   "base",
+   "cfl020",
+   "cfl050",
+   "pos_none",
+   "av",
+   "ao"
+  ]
+ },
+ "control_check": {
+  "committed_l2": {
+   "density": 0.03115561881158076,
+   "pressure": 0.01305011534420177,
+   "velocity": 0.022480528737058383
+  },
+  "measured_l2": {
+   "density": 0.03115561985348536,
+   "pressure": 0.013050132375520466,
+   "velocity": 0.022480536543055322
+  },
+  "note": "residual control difference is BLAS/thread-count reduction order, not a model change; all sweep arms are run with OMP_NUM_THREADS=1 on the compute cluster",
+  "relative_difference": {
+   "density": 3.3441948532348236e-08,
+   "pressure": 1.305070357343104e-06,
+   "velocity": 3.472336896705767e-07
+  },
+  "reproduced": true,
+  "source": "docs/benchmarks/results/lax_case_pool/metrics.json",
+  "worst_relative_difference": 1.305070357343104e-06
+ },
+ "generated_at_utc": "2026-11-15T09:25:00Z",
+ "question": "Does any admissible configuration of the existing scheme bring the pinned ledger leg p3.N400 under the registered 3 % whole-field relative-L2 bar without changing the degrees of freedom?",
+ "rows": [
+  {
+   "cells": 400,
+   "cfl": 0.35,
+   "decision": {
+    "admissible": false,
+    "margin": 1.0385206617828455,
+    "passes_tolerance": false,
+    "same_discretisation_budget": true
+   },
+   "degree": 3,
+   "density_min": 0.29713088460535425,
+   "dof": 1600,
+   "dt_mean": 2.5445292620865142e-05,
+   "flux": "hllc",
+   "knob": {},
+   "l1": {
+    "density": 0.008686464624843512,
+    "pressure": 0.007314181334501461,
+    "velocity": 0.012309200656242785
+   },
+   "l2": {
+    "density": 0.03115561985348536,
+    "pressure": 0.013050132375520466,
+    "velocity": 0.022480536543055322
+   },
+   "limiter": "local positivity fallback",
+   "positivity": "scale",
+   "positivity_stats": {
+    "cell_stages": 6130800,
+    "limited_cells": 1442,
+    "min_theta": 8.336338614750463e-296
+   },
+   "pressure_min": 0.4293662792237144,
+   "role": "control",
+   "solver_kwargs": {
+    "cfl": 0.35,
+    "degree": 3,
+    "final_time": 0.13,
+    "limiter": null,
+    "limiter_stage": "every",
+    "ncells": 400,
+    "positivity": "scale"
+   },
+   "steps": 5109,
+   "variant": "base",
+   "wall_seconds": 99.25126433372498,
+   "why": "production configuration (unlimited modal DG + HLLC + SSP-RK3, CFL 0.35); must reproduce the committed ledger arm bitwise",
+   "worst_field": "density",
+   "worst_l2": 0.03115561985348536
+  },
+  {
+   "cells": 400,
+   "decision": {
+    "admissible": false,
+    "error": "not_run",
+    "margin": null,
+    "passes_tolerance": false,
+    "same_discretisation_budget": true,
+    "unknown": true
+   },
+   "degree": 3,
+   "dof": 1600,
+   "knob": {
+    "cfl": 0.2
+   },
+   "not_run": true,
+   "role": "temporal probe",
+   "variant": "cfl020",
+   "wall_seconds": 0.0,
+   "why": "if the pinned deficit were dt-dominated, cutting the CFL by 1.75x would move the whole-field L2; otherwise the deficit is spatial"
+  },
+  {
+   "cells": 400,
+   "cfl": 0.5,
+   "decision": {
+    "admissible": false,
+    "margin": 1.03308306101845,
+    "passes_tolerance": false,
+    "same_discretisation_budget": true
+   },
+   "degree": 3,
+   "density_min": 0.29685538846177667,
+   "dof": 1600,
+   "dt_mean": 3.633314700950252e-05,
+   "flux": "hllc",
+   "knob": {
+    "cfl": 0.5
+   },
+   "l1": {
+    "density": 0.008553484118584136,
+    "pressure": 0.007170313397762059,
+    "velocity": 0.012063105614803947
+   },
+   "l2": {
+    "density": 0.030992491830553498,
+    "pressure": 0.012834582378296834,
+    "velocity": 0.022081578866533703
+   },
+   "limiter": "local positivity fallback",
+   "positivity": "scale",
+   "positivity_stats": {
+    "cell_stages": 4293600,
+    "limited_cells": 1038,
+    "min_theta": 8.915865750962192e-298
+   },
+   "pressure_min": 0.43264117086897314,
+   "role": "temporal probe",
+   "solver_kwargs": {
+    "cfl": 0.5,
+    "degree": 3,
+    "final_time": 0.13,
+    "limiter": null,
+    "limiter_stage": "every",
+    "ncells": 400,
+    "positivity": "scale"
+   },
+   "steps": 3578,
+   "variant": "cfl050",
+   "wall_seconds": 55.049012184143066,
+   "why": "upper end of the solver's accepted CFL range -- the cheapest grid-identical run, brackets the temporal share from above",
+   "worst_field": "density",
+   "worst_l2": 0.030992491830553498
+  },
+  {
+   "cells": 400,
+   "decision": {
+    "admissible": false,
+    "error": "FloatingPointError: Nonphysical high-order Euler state; reduce CFL",
+    "margin": null,
+    "passes_tolerance": false,
+    "same_discretisation_budget": true,
+    "unknown": false
+   },
+   "degree": 3,
+   "dof": 1600,
+   "error": "FloatingPointError: Nonphysical high-order Euler state; reduce CFL",
+   "knob": {
+    "positivity": "none"
+   },
+   "role": "safety-net cost",
+   "variant": "pos_none",
+   "wall_seconds": 0.0,
+   "why": "remove the Zhang-Shu positivity scaling net: measures what the admissibility safety net costs in accuracy at this mesh"
+  },
+  {
+   "cells": 400,
+   "cfl": 0.35,
+   "decision": {
+    "admissible": false,
+    "margin": 1.3195926791863453,
+    "passes_tolerance": false,
+    "same_discretisation_budget": true
+   },
+   "degree": 3,
+   "density_min": 0.3211804241527183,
+   "dof": 1600,
+   "dt_mean": 2.6156941649899397e-05,
+   "flux": "hllc",
+   "knob": {
+    "limiter": "av"
+   },
+   "l1": {
+    "density": 0.004860191645980402,
+    "pressure": 0.002122547199301941,
+    "velocity": 0.003963340803093258
+   },
+   "l2": {
+    "density": 0.03958778037559035,
+    "pressure": 0.014625935391486782,
+    "velocity": 0.02987651869589146
+   },
+   "limiter": "av",
+   "positivity": "scale",
+   "positivity_stats": {
+    "cell_stages": 5964000,
+    "limited_cells": 0,
+    "min_theta": 1.0
+   },
+   "pressure_min": 0.5171692637033007,
+   "role": "shock capture",
+   "solver_kwargs": {
+    "cfl": 0.35,
+    "degree": 3,
+    "final_time": 0.13,
+    "limiter": "av",
+    "limiter_stage": "every",
+    "ncells": 400,
+    "positivity": "scale"
+   },
+   "steps": 4970,
+   "variant": "av",
+   "wall_seconds": 92.57728576660156,
+   "why": "modal artificial viscosity (continuous-strength shock capturing, library defaults) instead of no limiter",
+   "worst_field": "density",
+   "worst_l2": 0.03958778037559035
+  },
+  {
+   "cells": 400,
+   "decision": {
+    "admissible": false,
+    "error": "not_run",
+    "margin": null,
+    "passes_tolerance": false,
+    "same_discretisation_budget": true,
+    "unknown": true
+   },
+   "degree": 3,
+   "dof": 1600,
+   "knob": {
+    "limiter": "ao"
+   },
+   "not_run": true,
+   "role": "shock capture",
+   "variant": "ao",
+   "wall_seconds": 0.0,
+   "why": "hierarchical AO limiter, which keeps design order in troubled cells instead of collapsing them"
+  }
+ ],
+ "tournament": {
+  "ao": null,
+  "av": 1.3195926791863453,
+  "base": 1.0385206617828455,
+  "cfl020": null,
+  "cfl050": 1.03308306101845,
+  "pos_none": null
+ },
+ "verdict": {
+  "admissible_arms": [],
+  "arms_errored": [
+   "pos_none"
+  ],
+  "arms_not_run": [
+   "cfl020",
+   "ao"
+  ],
+  "control_reproduced": true,
+  "measured_worst_over_required": 1.013253052754161,
+  "relative_reduction_needed": 0.013079706711109695,
+  "rule": "an arm is admissible iff it keeps the discretisation budget (same cells, same degree) and meets the tolerance on every field; the sweep is PASS iff at least one admissible arm exists AND the control arm reproduces the committed ledger arm",
+  "scope_complete": false,
+  "verdict": "FAIL"
+ },
+ "wall_seconds": 246.8775622844696
+}

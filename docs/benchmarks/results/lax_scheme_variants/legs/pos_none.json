@@ -1,0 +1,13 @@
+{
+ "cells": 400,
+ "degree": 3,
+ "dof": 1600,
+ "error": "FloatingPointError: Nonphysical high-order Euler state; reduce CFL",
+ "knob": {
+  "positivity": "none"
+ },
+ "role": "safety-net cost",
+ "variant": "pos_none",
+ "wall_seconds": 0.0,
+ "why": "remove the Zhang-Shu positivity scaling net: measures what the admissibility safety net costs in accuracy at this mesh"
+}

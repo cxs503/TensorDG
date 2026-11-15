@@ -1,0 +1,44 @@
+{
+ "cells": 400,
+ "cfl": 0.35,
+ "degree": 3,
+ "density_min": 0.29713088460535425,
+ "dof": 1600,
+ "dt_mean": 2.5445292620865142e-05,
+ "flux": "hllc",
+ "knob": {},
+ "l1": {
+  "density": 0.008686464624843512,
+  "pressure": 0.007314181334501461,
+  "velocity": 0.012309200656242785
+ },
+ "l2": {
+  "density": 0.03115561985348536,
+  "pressure": 0.013050132375520466,
+  "velocity": 0.022480536543055322
+ },
+ "limiter": "local positivity fallback",
+ "positivity": "scale",
+ "positivity_stats": {
+  "cell_stages": 6130800,
+  "limited_cells": 1442,
+  "min_theta": 8.336338614750463e-296
+ },
+ "pressure_min": 0.4293662792237144,
+ "role": "control",
+ "solver_kwargs": {
+  "cfl": 0.35,
+  "degree": 3,
+  "final_time": 0.13,
+  "limiter": null,
+  "limiter_stage": "every",
+  "ncells": 400,
+  "positivity": "scale"
+ },
+ "steps": 5109,
+ "variant": "base",
+ "wall_seconds": 99.25126433372498,
+ "why": "production configuration (unlimited modal DG + HLLC + SSP-RK3, CFL 0.35); must reproduce the committed ledger arm bitwise",
+ "worst_field": "density",
+ "worst_l2": 0.03115561985348536
+}
