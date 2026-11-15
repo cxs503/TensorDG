@@ -1,0 +1,313 @@
+{
+ "schema_version": "1.0",
+ "feature_anchor": "FEAT-OSS-INVENTORY-FVM",
+ "wave": 2,
+ "protocol": "LBM wave-2 relay: every entry carries a machine-verified upstream path:line pointer re-derivable from the raw cache",
+ "generated_at": "2026-11-15T13:23:33Z",
+ "target_wave1_registry": "/srv/tensor/agent/work/m21837/docs/oss-inventory-fvm/registry.json",
+ "wave1_debt_addressed": "wave-1 evidence_policy: capability tags were curated, not source-verified; this wave binds the eight GAP-FVM-* anchors to located upstream code",
+ "provenance": {
+  "api": "api.github.com (unauthenticated, read-only)",
+  "raw_dir": "artifacts/oss_inventory_fvm_wave2/raw",
+  "n_raw_files": 22,
+  "trees": {
+   "su2code/SU2": {
+    "branch": "master",
+    "tree_sha": "6c0e5c5c720936b175c4004e57332884443437f5"
+   },
+   "petsc/petsc": {
+    "branch": "main",
+    "tree_sha": "ba01f435f0e8ef12e5aae82249537588cca3d3b6"
+   },
+   "hypre-space/hypre": {
+    "branch": "master",
+    "tree_sha": "1da70dfc55ba6b88d43cf14c881beb810b92f079"
+   },
+   "truchas/truchas": {
+    "branch": "master",
+    "tree_sha": "297653c8b9ab7c0d3203555f69703711fdc878f5"
+   }
+  },
+  "note": "path/line/snippet/licence-irrelevant metadata are produced by the probe; only the search intent (gap, path regex, needle regex) is curated"
+ },
+ "coverage": {
+  "gaps_targeted": 8,
+  "gaps_with_verified_pointer": 8,
+  "specs": 12,
+  "verified": 9,
+  "status_counts": {
+   "path_not_found": 3,
+   "verified": 9
+  },
+  "repos_touched": [
+   "AMReX-Codes/amrex",
+   "OpenFOAM/OpenFOAM-dev",
+   "hypre-space/hypre",
+   "petsc/petsc",
+   "su2code/SU2",
+   "truchas/truchas"
+  ]
+ },
+ "gaps": {
+  "GAP-FVM-AMG-KRYLOV": {
+   "n_specs": 2,
+   "n_verified": 1,
+   "repos_verified": [
+    "petsc/petsc"
+   ],
+   "pointers": [
+    {
+     "gap": "GAP-FVM-AMG-KRYLOV",
+     "repo": "petsc/petsc",
+     "claim": "PETSc GAMG (smoothed-aggregation AMG) preconditioner entry",
+     "path_rx": "src/ksp/pc/impls/gamg/gamg\\.c$",
+     "needle_rx": "PCGAMG",
+     "status": "verified",
+     "path": "src/ksp/pc/impls/gamg/gamg.c",
+     "line": 24,
+     "snippet": "static PetscBool         PCGAMGPackageInitialized;",
+     "blob_sha": "fb513499f5a3a58d15c05c83058f7b2bcecdbe45",
+     "file_bytes": 98202,
+     "needle": "PCGAMG",
+     "tried": [
+      "src/ksp/pc/impls/gamg/gamg.c"
+     ]
+    },
+    {
+     "gap": "GAP-FVM-AMG-KRYLOV",
+     "repo": "hypre-space/hypre",
+     "claim": "BoomerAMG setup/solve driver",
+     "path_rx": "parcsr_ls/.*boomeramg\\.c$",
+     "needle_rx": "BoomerAMG",
+     "status": "path_not_found",
+     "reason": "no tree path matches parcsr_ls/.*boomeramg\\.c$"
+    }
+   ]
+  },
+  "GAP-FVM-AMR-QUADTREE": {
+   "n_specs": 2,
+   "n_verified": 1,
+   "repos_verified": [
+    "AMReX-Codes/amrex"
+   ],
+   "pointers": [
+    {
+     "gap": "GAP-FVM-AMR-QUADTREE",
+     "repo": "AMReX-Codes/amrex",
+     "claim": "coarse-fine flux register (refluxing) data structure",
+     "path_rx": "AmrCore/AMReX_FluxRegister\\.(H|cpp)$",
+     "needle_rx": "FluxRegister",
+     "status": "verified",
+     "path": "Src/AmrCore/AMReX_FluxRegister.H",
+     "line": 10,
+     "snippet": "* \\file AMReX_FluxRegister.H",
+     "blob_sha": "cba8ac7cf6622444faf27d3a573b89e96c114d05",
+     "file_bytes": 15089,
+     "needle": "FluxRegister",
+     "tried": [
+      "Src/AmrCore/AMReX_FluxRegister.H"
+     ]
+    },
+    {
+     "gap": "GAP-FVM-AMR-QUADTREE",
+     "repo": "OpenFOAM/OpenFOAM-dev",
+     "claim": "run-time h-refinement of an FV mesh (hanging-node aware)",
+     "path_rx": "dynamicRefineFvMesh\\.(H|C)$",
+     "needle_rx": "refine",
+     "status": "path_not_found",
+     "reason": "no tree path matches dynamicRefineFvMesh\\.(H|C)$"
+    }
+   ]
+  },
+  "GAP-FVM-COMBUSTION-SPECIES": {
+   "n_specs": 1,
+   "n_verified": 1,
+   "repos_verified": [
+    "OpenFOAM/OpenFOAM-dev"
+   ],
+   "pointers": [
+    {
+     "gap": "GAP-FVM-COMBUSTION-SPECIES",
+     "repo": "OpenFOAM/OpenFOAM-dev",
+     "claim": "finite-rate chemistry integration contract",
+     "path_rx": "chemistryModel/.*/chemistryModel\\.(H|C)$",
+     "needle_rx": "chemistry",
+     "status": "verified",
+     "path": "src/thermophysicalModels/chemistryModel/chemistryModel/chemistryModel.C",
+     "line": 26,
+     "snippet": "#include \"chemistryModel.H\"",
+     "blob_sha": "d9bd5820983eaf1d84d4d38c444761f06154967e",
+     "file_bytes": 2622,
+     "needle": "chemistry",
+     "tried": [
+      "src/thermophysicalModels/chemistryModel/chemistryModel/chemistryModel.C"
+     ]
+    }
+   ]
+  },
+  "GAP-FVM-IMPLICIT-DUAL-TIME": {
+   "n_specs": 2,
+   "n_verified": 2,
+   "repos_verified": [
+    "OpenFOAM/OpenFOAM-dev",
+    "su2code/SU2"
+   ],
+   "pointers": [
+    {
+     "gap": "GAP-FVM-IMPLICIT-DUAL-TIME",
+     "repo": "OpenFOAM/OpenFOAM-dev",
+     "claim": "iterative implicit smoother used by the steady-state loop",
+     "path_rx": "lduMatrix/solvers/.*/(GaussSeidel|smoothSolver)\\.(H|C)$",
+     "needle_rx": "class\\s+\\w*Smoother|GaussSeidel",
+     "status": "verified",
+     "path": "src/OpenFOAM/matrices/lduMatrix/solvers/smoothSolver/smoothSolver.H",
+     "line": 29,
+     "snippet": "run-time selected smoother e.g. GaussSeidel to converge the solution to",
+     "blob_sha": "9fbf7184c3d26fc5624ab8c7dab632def3f67e47",
+     "file_bytes": 3276,
+     "needle": "GaussSeidel",
+     "tried": [
+      "src/OpenFOAM/matrices/lduMatrix/solvers/smoothSolver/smoothSolver.C",
+      "src/OpenFOAM/matrices/lduMatrix/solvers/smoothSolver/smoothSolver.H"
+     ]
+    },
+    {
+     "gap": "GAP-FVM-IMPLICIT-DUAL-TIME",
+     "repo": "su2code/SU2",
+     "claim": "LU-SGS / preconditioned implicit Euler linearisation",
+     "path_rx": "solvers/CEulerSolver\\.(cpp|hpp)$",
+     "needle_rx": "LU_SGS|LUSGS|Precond",
+     "status": "verified",
+     "path": "SU2_CFD/include/solvers/CEulerSolver.hpp",
+     "line": 495,
+     "snippet": "void SetPreconditioner(const CConfig *config, unsigned long iPoint,",
+     "blob_sha": "bb426fb321cd0e94944457ad48229b08ffc86dd2",
+     "file_bytes": 69699,
+     "needle": "Precond",
+     "tried": [
+      "SU2_CFD/include/solvers/CEulerSolver.hpp"
+     ]
+    }
+   ]
+  },
+  "GAP-FVM-LOWMACH-PRECOND": {
+   "n_specs": 1,
+   "n_verified": 1,
+   "repos_verified": [
+    "su2code/SU2"
+   ],
+   "pointers": [
+    {
+     "gap": "GAP-FVM-LOWMACH-PRECOND",
+     "repo": "su2code/SU2",
+     "claim": "low-Mach preconditioning matrix inside the numerics kernel",
+     "path_rx": "numerics/CNumerics\\.(cpp|hpp)$",
+     "needle_rx": "Precond|precond",
+     "status": "verified",
+     "path": "SU2_CFD/include/numerics/CNumerics.hpp",
+     "line": 1183,
+     "snippet": "* \\brief Compute the projection of the inviscid Jacobian matrices (overload for low speed preconditioner version).",
+     "blob_sha": "1b22ed12a63d614a92988752c2cb60e6481d93a3",
+     "file_bytes": 85760,
+     "needle": "precond",
+     "tried": [
+      "SU2_CFD/include/numerics/CNumerics.hpp"
+     ]
+    }
+   ]
+  },
+  "GAP-FVM-MPI-DECOMP": {
+   "n_specs": 1,
+   "n_verified": 1,
+   "repos_verified": [
+    "AMReX-Codes/amrex"
+   ],
+   "pointers": [
+    {
+     "gap": "GAP-FVM-MPI-DECOMP",
+     "repo": "AMReX-Codes/amrex",
+     "claim": "MPI communicator management for the AMR hierarchy",
+     "path_rx": "Base/AMReX_ParallelDescriptor\\.(H|cpp)$",
+     "needle_rx": "MPI_Comm_split|MyComm|MPI_Comm",
+     "status": "verified",
+     "path": "Src/Base/AMReX_ParallelDescriptor.H",
+     "line": 105,
+     "snippet": "MPI_Comm mpi_comm = MPI_COMM_WORLD);",
+     "blob_sha": "62ba64c3e73b125cc58149b3db29782d255834fe",
+     "file_bytes": 50428,
+     "needle": "MPI_Comm",
+     "tried": [
+      "Src/Base/AMReX_ParallelDescriptor.H"
+     ]
+    }
+   ]
+  },
+  "GAP-FVM-MRF-SLIDING-AMI": {
+   "n_specs": 2,
+   "n_verified": 1,
+   "repos_verified": [
+    "OpenFOAM/OpenFOAM-dev"
+   ],
+   "pointers": [
+    {
+     "gap": "GAP-FVM-MRF-SLIDING-AMI",
+     "repo": "OpenFOAM/OpenFOAM-dev",
+     "claim": "AMI weight generation for non-conformal sliding interfaces",
+     "path_rx": "AMIInterpolation/AMIInterpolation\\.(H|C)$",
+     "needle_rx": "weight",
+     "status": "path_not_found",
+     "reason": "no tree path matches AMIInterpolation/AMIInterpolation\\.(H|C)$"
+    },
+    {
+     "gap": "GAP-FVM-MRF-SLIDING-AMI",
+     "repo": "OpenFOAM/OpenFOAM-dev",
+     "claim": "multiple reference frame source term",
+     "path_rx": "MRF/MRFZone\\.(H|C)$",
+     "needle_rx": "MRF|rotating",
+     "status": "verified",
+     "path": "src/finiteVolume/cfdTools/general/MRF/MRFZone.C",
+     "line": 26,
+     "snippet": "#include \"MRFZone.H\"",
+     "blob_sha": "c7e76384a2e083dc759a77801e4d2bcdb0d0c875",
+     "file_bytes": 9558,
+     "needle": "MRF",
+     "tried": [
+      "src/finiteVolume/cfdTools/general/MRF/MRFZone.C"
+     ]
+    }
+   ]
+  },
+  "GAP-FVM-RADIATION-P1": {
+   "n_specs": 1,
+   "n_verified": 1,
+   "repos_verified": [
+    "truchas/truchas"
+   ],
+   "pointers": [
+    {
+     "gap": "GAP-FVM-RADIATION-P1",
+     "repo": "truchas/truchas",
+     "claim": "P1 (spherical-harmonics) radiation diffusion solve",
+     "path_rx": "[Rr]adiation.*\\.(F90|f90)$",
+     "needle_rx": "P1|radiation",
+     "status": "verified",
+     "path": "src/truchas/enclosure_radiation/Test/test_rade.F90",
+     "line": 65,
+     "snippet": "use enclosure_radiation_namelist, only: read_enclosure_radiation_namelists",
+     "blob_sha": "7c05671f1a2be2934a437fcd8da588c954e8a5c4",
+     "file_bytes": 7256,
+     "needle": "radiation",
+     "tried": [
+      "src/truchas/enclosure_radiation/Test/test_rade.F90"
+     ]
+    }
+   ]
+  }
+ },
+ "limitations": [
+  "One pointer per (gap, mechanism claim) — this is a source-reading *start*, not a full per-functional-point solution set (LBM wave-2 style 96-point taxonomy is still outstanding for FVM).",
+  "Pointers prove that the mechanism is implemented at that location; they do not prove algorithm equivalence with TensorFVM's formulation.",
+  "Licence flags are inherited from the wave-1 registry; GPL upstreams are read-only references (re-implement from the papers, do not copy code).",
+  "GitHub default-branch trees move: the registry pins the tree sha and the blob sha of every quoted file, so drift is detectable but not prevented."
+ ]
+}
