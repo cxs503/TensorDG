@@ -25,13 +25,15 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ARTIFACT = ROOT / "docs" / "benchmarks" / "results" / "lax_case_pool" / "metrics.json"
+ARTIFACT_DIR = ROOT / "docs" / "benchmarks" / "results" / "lax_case_pool"
+ARTIFACT = ARTIFACT_DIR / "metrics.json"
 REPORT = ROOT / "docs" / "CASE-LAX-DG.md"
 
 FIELDS = ("density", "velocity", "pressure")
@@ -50,6 +52,78 @@ def _pct(value, digits=3):
 
 
 _BOUNDARY = r"(?=^## |^Verification verdict |\Z)"
+
+
+# --------------------------------------------------------------- artifact inventory
+# The report's section (4) used to carry a hand-typed inventory whose paths
+# (``runs/...``) are not carried into ``main`` and whose byte counts / hashes
+# belonged to an earlier figure generation.  Both blocks are therefore rendered
+# from what is actually committed, so a reader can re-check them with
+# ``sha256sum`` instead of trusting the prose.
+INVENTORY = (
+    ("metrics.json", "实测值 + 判据 verdict + 全部容差配置"),
+    ("profiles.npz", "最细腿原始量 vs 精确解逐点场"),
+    ("summary.md", "由 metrics.json 渲染的表（禁手改）"),
+    ("figures/lax_profiles.png", "场量对比图（最细腿 vs 精确解）"),
+    ("figures/lax_convergence.png", "收敛图（全场与解析区 rel L1 vs N）"),
+    ("figures/time_refinement.png", "dt 细化：固定网格上 L1 误差 vs dt"),
+    ("figures/entropy_wave_order.png", "熵波实测阶 vs 设计阶 p+1"),
+    ("figures/lax_acceptance_a0.png", "验收 A0：逐腿 relative L2/L1 vs 容差"),
+)
+
+FIGURE_NOTES = {
+    "lax_profiles.png": "最细腿 (N=400, P3) 的 rho/u/p 数值 vs 精确解",
+    "lax_convergence.png": "全场与解析区相对 L1 随 N 收敛（log-log）",
+    "time_refinement.png": "dt 细化各腿误差 vs dt（平坦即空间误差主导）",
+    "entropy_wave_order.png": "光滑熵波实测阶 vs p+1",
+    "lax_acceptance_a0.png": "验收臂：逐腿 relative L2/L1 与 3 % 容差线",
+}
+
+_FIGURE_BLOCK = re.compile(
+    r"^[^\n]*张图由 `benchmarks/lax_case_pool\.py` 直接渲染[^\n]*\n\n(?:\* [^\n]*\n)+",
+    re.M)
+_INVENTORY_BLOCK = re.compile(
+    r"^\| 文件 \| 用途 \| bytes \| sha256\[:16\] \|\n\|---\|---\|---\|---\|\n"
+    r"(?:\| [^\n]*\n)+", re.M)
+
+
+def _sha16(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:16]
+
+
+def committed_artifacts() -> set[str]:
+    """Every tracked artifact of the pool record, as ``posix`` relative paths."""
+    return {p.relative_to(ARTIFACT_DIR).as_posix()
+            for p in sorted(ARTIFACT_DIR.rglob("*")) if p.is_file()}
+
+
+def figure_block() -> str:
+    figures = sorted((ARTIFACT_DIR / "figures").glob("*.png"))
+    lines = [f"{len(figures)} 张图由 `benchmarks/lax_case_pool.py` 直接渲染"
+             "（剖面 + 与精确解比较 + 熵波设计阶拟合 + dt 细化 + 验收臂）：", ""]
+    for path in figures:
+        note = FIGURE_NOTES.get(path.name, "由 `benchmarks/lax_case_pool.py` 渲染")
+        lines.append(f"* `{path.relative_to(ROOT).as_posix()}` — {note}")
+    return "\n".join(lines)
+
+
+def inventory_table() -> str:
+    lines = ["| 文件 | 用途 | bytes | sha256[:16] |", "|---|---|---|---|"]
+    for rel, purpose in INVENTORY:
+        path = ARTIFACT_DIR / rel
+        if path.exists():
+            lines.append(f"| `{path.relative_to(ROOT).as_posix()}` | {purpose} | "
+                         f"{path.stat().st_size} | {_sha16(path)} |")
+        else:
+            lines.append(f"| `{path.relative_to(ROOT).as_posix()}` | {purpose} | "
+                         "MISSING | MISSING |")
+    return "\n".join(lines)
+
+
+def _replace_block(text: str, pattern: re.Pattern, body: str) -> str:
+    if not pattern.search(text):
+        raise ValueError(f"report lost its anchor block for {pattern.pattern!r}")
+    return pattern.sub(lambda _m: body + "\n", text, count=1)
 
 
 def _replace_section(text: str, title: str, body: str) -> str:
@@ -195,6 +269,8 @@ def apply(text: str, metrics: dict) -> str:
     text = _replace_section(text, "resolution ladder", ladder_table(metrics))
     text = _replace_section(text, "gates", gate_table(metrics))
     text = _replace_section(text, "acceptance (A0 ledger)", acceptance_block(metrics))
+    text = _replace_block(text, _FIGURE_BLOCK, figure_block())
+    text = _replace_block(text, _INVENTORY_BLOCK, inventory_table())
     return text if text.endswith("\n") else text + "\n"
 
 
@@ -221,6 +297,32 @@ def discrepancies(text: str, metrics: dict) -> list[str]:
             f"Acceptance verdict (ledger A0, relative L2 vs exact < 3 %): "
             f"**{verdicts['acceptance']}**" not in text):
         problems.append("stale acceptance verdict line")
+    problems.extend(_inventory_problems(text))
+    return problems
+
+
+def _inventory_problems(text: str) -> list[str]:
+    """Section (4): the picture list and the artifact inventory must be renderings
+    of what is committed (paths, byte counts and sha256 prefixes)."""
+    problems: list[str] = []
+    for label, pattern, expected in (
+            ("figure block", _FIGURE_BLOCK, figure_block()),
+            ("artifact inventory", _INVENTORY_BLOCK, inventory_table())):
+        match = pattern.search(text)
+        if match is None:
+            problems.append(f"missing {label}")
+        elif match.group(0).strip() != expected.strip():
+            problems.append(f"stale {label}: paths / bytes / sha256 of the "
+                            "committed artifacts changed")
+        elif "`runs/" in match.group(0):
+            problems.append(f"{label} cites `runs/`, which the merge gate "
+                            "does not carry into `main`")
+    listed = {rel for rel, _purpose in INVENTORY}
+    for rel in sorted(committed_artifacts() - listed):
+        problems.append(f"unlisted committed artifact: {rel}")
+    for rel in sorted(listed):
+        if not (ARTIFACT_DIR / rel).exists():
+            problems.append(f"listed artifact missing on disk: {rel}")
     return problems
 
 

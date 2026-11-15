@@ -8,7 +8,8 @@ Three layers, deliberately independent of each other:
 2. **detector layer** -- the level-crossing locator is applied to the *exact*
    field and must return the exact positions, and a synthetic profile whose
    contact and shock are known must not be confused;
-3. **artifact layer** -- the committed ``runs/lax_case_pool/metrics.json`` is
+3. **artifact layer** -- the committed
+   ``docs/benchmarks/results/lax_case_pool/metrics.json`` is
    re-adjudicated from its stored numbers (a hand-edited verdict cannot pass),
    plus one cheap DG run proving the gates are reachable at a coarse resolution.
 """
