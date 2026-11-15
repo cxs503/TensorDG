@@ -63,6 +63,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import time
 from pathlib import Path
 
@@ -71,7 +72,9 @@ import torch
 
 import tensordg.euler_dg_2d as dg2
 from tensordg.euler_1d import GAMMA
-from tensordg.euler_2d import _cell_averages, solve_isentropic_vortex, vortex_error, vortex_primitive
+from tensordg.euler_2d import (_cell_averages, minimum_images,
+                               solve_isentropic_vortex, vortex_error,
+                               vortex_primitive)
 
 from benchmarks.verify_euler_dg_2d import _reconstruct, _vortex_error as dg_vortex_error
 
@@ -88,6 +91,33 @@ BOX_AREA = (DOMAIN[0][1] - DOMAIN[0][0]) * (DOMAIN[1][1] - DOMAIN[1][0])
 #: discretisation defect -- the numbers of both readings are kept in
 #: ``docs/CASE-DG-EULER-VORTEX-ERR.md``.
 PERIOD = (DOMAIN[0][1] - DOMAIN[0][0], DOMAIN[1][1] - DOMAIN[1][0])
+
+#: Which periodic reference to measure against.
+#: ``min_image`` -- the min-image fold, i.e. only the nearest image of the
+#:   free-space vortex (the reading published through round 6);
+#: ``lattice``   -- the full lattice sum, which also carries the tails of the
+#:   neighbouring images and is therefore the exact periodic solution up to
+#:   O(tail^2) nonlinearity.  The two differ by a *velocity-only* truncation
+#:   floor of ~1.5e-6 relative L2 (density/pressure differ by ~5e-13), see
+#:   ``docs/CASE-DG-EULER-VORTEX-ERR-reference-floor.md``.
+REFERENCE_MIN_IMAGE = "min_image"
+REFERENCE_LATTICE = "lattice"
+REFERENCE_MODELS = (REFERENCE_MIN_IMAGE, REFERENCE_LATTICE)
+REFERENCE_MODEL = REFERENCE_MIN_IMAGE
+
+
+def reference_images(final_time: float, strength: float = STRENGTH,
+                     background=BACKGROUND) -> int:
+    """Lattice half-width that resolves the periodic reference at ``final_time``.
+
+    One ring more than :func:`minimum_images` requires, so the truncated tail can
+    be compared against a converged sum.
+    """
+    del strength
+    half_box = 0.5 * max(abs(DOMAIN[0][1] - DOMAIN[0][0]),
+                         abs(DOMAIN[1][1] - DOMAIN[1][0]))
+    travel = max(abs(background[0]), abs(background[1])) * final_time
+    return 1 + int(math.ceil((half_box + travel) / min(PERIOD)))
 
 #: C1 -- case-pool tolerance for this entry (ref: Yee et al. 2000).
 TOLERANCE = 0.06
@@ -391,6 +421,16 @@ def _initial_p0_state(config: dict):
                           torch.device("cpu"), torch.float64)
 
 
+def _reference_kwargs(config: dict, final_time: float) -> dict:
+    """Keyword arguments selecting the periodic reference for one checkpoint."""
+    model = config.get("reference", REFERENCE_MODEL)
+    if model == REFERENCE_LATTICE:
+        return {"period": PERIOD, "images": reference_images(final_time)}
+    if model == REFERENCE_MIN_IMAGE:
+        return {"period": PERIOD}
+    raise ValueError(f"unknown reference model {model!r}")
+
+
 def run_dg(config: dict) -> dict:
     started = time.time()
     degree = config["degree"]
@@ -407,8 +447,9 @@ def run_dg(config: dict) -> dict:
         domain=DOMAIN,
     )
     nodes, weights, basis, _, _ = _operators(degree)
+    reference_kwargs = _reference_kwargs(config, final_time)
     errors = dg_vortex_error(coeff, basis, nodes, DOMAIN, final_time, strength,
-                            background, period=PERIOD)
+                            background, **reference_kwargs)
     final = _dg_measurements(coeff, basis, nodes, weights)
     coeff0, basis0, nodes0, weights0 = _initial_dg_state(config)
     initial = _dg_measurements(coeff0, basis0, nodes0, weights0)
@@ -426,6 +467,8 @@ def run_dg(config: dict) -> dict:
         "dofs": meta["dofs"],
         "errors": {name: float(errors[name]) for name in FIELDS},
         "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+        "reference_model": config.get("reference", REFERENCE_MODEL),
+        "reference_images": reference_kwargs.get("images"),
         "final": final,
         "initial": initial,
         "wall_seconds": time.time() - started,
@@ -446,8 +489,9 @@ def run_p0(config: dict) -> dict:
         background_velocity=background,
     )
     conservative = fields["conservative"] if isinstance(fields, dict) else fields
+    reference_kwargs = _reference_kwargs(config, final_time)
     raw = vortex_error(x, y, conservative, final_time, strength, background,
-                       period=PERIOD)
+                       **reference_kwargs)
     errors = {name: raw[name]["relative_l2"] for name in FIELDS}
     final = _p0_measurements(conservative)
     initial = _p0_measurements(_initial_p0_state(config))
@@ -462,6 +506,8 @@ def run_p0(config: dict) -> dict:
         "dofs": int(conservative.numel()),
         "errors": {name: float(errors[name]) for name in FIELDS},
         "metric": "exact cell-average relative L2 (P0 finite volume)",
+        "reference_model": config.get("reference", REFERENCE_MODEL),
+        "reference_images": reference_kwargs.get("images"),
         "final": final,
         "initial": initial,
         "wall_seconds": time.time() - started,
@@ -861,6 +907,13 @@ def evaluate_gates(records: list, exact: dict) -> dict:
 
 
 def aggregate(records: list, exact: dict, output_dir: Path) -> dict:
+    models = {r.get("reference_model", REFERENCE_MIN_IMAGE) for r in records}
+    if len(models) > 1:
+        raise SystemExit(
+            "results/ mixes reference models "
+            f"{sorted(models)}: the published numbers must be measured against one "
+            "reference, use a separate --output-dir per model")
+    model = models.pop() if models else REFERENCE_MODEL
     evaluation = evaluate_gates(records, exact)
     metrics = {
         "case": "EULER-VORTEX-ERR",
@@ -877,13 +930,21 @@ def aggregate(records: list, exact: dict, output_dir: Path) -> dict:
         "tolerance_relative_l2": TOLERANCE,
         "reference_model": {
             "period": list(PERIOD),
+            "model": model,
+            "images_per_checkpoint": {
+                r["task_key"]: r.get("reference_images")
+                for r in records if r.get("reference_images") is not None},
             "note": ("both solvers close their faces periodically, so the exact "
-                     "solution is evaluated through the periodic (min-image) map; "
-                     "the free-space form differs from it by the sweep below as "
-                     "soon as the centre is advected out of the box"),
-            "truncated_images": ("next image shell at radial distance >= box - |shift| "
-                                 ">= 5 -> amplitude ratio ~6e-6, two orders below "
-                                 "the coarsest family's discretisation error"),
+                     "solution is evaluated through the periodic map; "
+                     "`min_image` folds the displacement onto the nearest image "
+                     "only and drops the neighbouring tails, `lattice` sums them "
+                     "(exact up to O(tail^2)) -- see "
+                     "docs/CASE-DG-EULER-VORTEX-ERR-reference-floor.md"),
+            "truncated_images": (
+                "min_image: next image shell at radial distance >= box - |shift| "
+                ">= 5 -> envelope ratio ~6e-6 -> measured 4e-13 relative L2 in "
+                "density/pressure (second order in the envelope) but 1.5e-6 in "
+                "velocity (first order, displacement-weighted)"),
         },
         "reference_defect_percent": reference_defect_sweep(
             sorted({r["final_time"] for r in records})),
@@ -946,6 +1007,11 @@ def _markdown(records: list, metrics: dict, exact: dict) -> str:
         "",
         "本文件由 `benchmarks/case_euler_vortex_errconserve.py --aggregate` 从 "
         "`results/*.json` 程序化生成，数字零手抄。",
+        "",
+        f"参考解模型：`{metrics['reference_model'].get('model', REFERENCE_MODEL)}`"
+        + ("" if metrics['reference_model'].get('model', REFERENCE_MODEL)
+           == REFERENCE_MIN_IMAGE else
+           "（格点镜像求和；每检查点的像半宽见 `metrics.json`）"),
         "",
         "## 门禁",
         "",
@@ -1190,6 +1256,10 @@ def main(argv=None) -> int:
     parser.add_argument("--aggregate", action="store_true")
     parser.add_argument("--figures", action="store_true")
     parser.add_argument("--threads", type=int, default=1)
+    parser.add_argument("--reference", choices=REFERENCE_MODELS,
+                        default=REFERENCE_MODEL,
+                        help="periodic reference: min_image fold (published "
+                             "through round 6) or the exact lattice sum")
     args = parser.parse_args(argv)
 
     torch.set_num_threads(max(1, args.threads))
@@ -1201,6 +1271,7 @@ def main(argv=None) -> int:
                   "final_time": args.final_time if args.final_time is not None else 1.0,
                   "cfl": args.cfl if args.cfl is not None else (0.2 if args.task == "dg" else 0.4),
                   "strength": args.strength}
+        config["reference"] = args.reference
         if args.task == "dg":
             config["degree"] = args.degree if args.degree is not None else 2
         record = run_task(config)
@@ -1213,6 +1284,7 @@ def main(argv=None) -> int:
     if args.shard:
         index, total = (int(part) for part in args.shard.split("/"))
         for config in select_shard(index, total):
+            config = dict(config, reference=args.reference)
             path = output_dir / "results" / f"{task_key(config)}.json"
             if path.exists():
                 print(f"skip existing {path.name}", flush=True)

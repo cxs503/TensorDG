@@ -43,8 +43,49 @@ def _wrap_shift(shift, period):
     return shift - length * torch.floor(shift / length + 0.5)
 
 
+def _period_pair(period):
+    """Normalise ``period`` to ``(Lx, Ly)``."""
+    if np.isscalar(period):
+        length = float(period)
+        return length, length
+    return float(period[0]), float(period[1])
+
+
+def _vortex_from_shift(x_shift, y_shift, strength, background_velocity):
+    """Free-space isentropic vortex evaluated on a displacement field."""
+    radius2 = x_shift ** 2 + y_shift ** 2
+    exponential = torch.exp(0.5 * (1.0 - radius2))
+    temperature = 1.0 - (GAMMA - 1.0) * strength ** 2 / (
+        8.0 * GAMMA * math.pi ** 2
+    ) * exponential ** 2
+    rho = temperature ** (1.0 / (GAMMA - 1.0))
+    velocity_x = background_velocity[0] - strength / (2.0 * math.pi) * exponential * y_shift
+    velocity_y = background_velocity[1] + strength / (2.0 * math.pi) * exponential * x_shift
+    pressure = rho ** GAMMA
+    return rho, velocity_x, velocity_y, pressure
+
+
+def minimum_images(period, x, y, time, background_velocity=(1.0, 1.0), margin=1):
+    """Lattice half-width needed to resolve the periodic reference unambiguously.
+
+    The nearest image of every quadrature point must lie inside the summed
+    lattice, i.e. ``images * L >= |x - u t|`` on both axes; ``margin`` extra
+    rings are added so that the truncated tail can be measured against a
+    converged sum.
+    """
+    period_x, period_y = _period_pair(period)
+    x_shift = torch.as_tensor(x) - background_velocity[0] * time
+    y_shift = torch.as_tensor(y) - background_velocity[1] * time
+    need = 0
+    if x_shift.numel():
+        need = max(need, int(math.ceil(float(x_shift.abs().max()) / period_x)))
+    if y_shift.numel():
+        need = max(need, int(math.ceil(float(y_shift.abs().max()) / period_y)))
+    return max(1, need + margin)
+
+
 def vortex_primitive(x, y, time=0.0, strength=5.0, background_velocity=(1.0, 1.0),
-                     period=None):
+                     period=None, images=None):
     """Analytical isentropic vortex with unit far-field density and pressure.
 
     ``period`` (scalar box length, or ``(Lx, Ly)``) makes the solution *periodic*:
@@ -60,29 +101,53 @@ def vortex_primitive(x, y, time=0.0, strength=5.0, background_velocity=(1.0, 1.0
     at ``t = 5``, 16.2 % at ``t = 10`` -- see
     ``docs/CASE-DG-EULER-VORTEX-ERR.md``).
 
-    The folding keeps only the nearest image.  The truncated images enter at
-    radial distance ``>= L - |shift| >= 5`` for ``L = 10``, i.e. they are
-    ``exp(0.5 * (1 - 25)) ~ 6e-6`` of the vortex amplitude -- two orders below
-    the discretisation error of the coarsest mesh used here, and exactly zero at
-    ``time = 0`` where the displacement already lies inside the box.
+    The min-image fold (``images=None``, the default) keeps only the *nearest*
+    image.  That is an approximation: the true periodic solution carries the
+    tails of the neighbouring images, and folding drops them.  Measured cost of
+    the dropped tails on this case: ``4e-13`` relative L2 in density/pressure
+    (the density perturbation is second order in the Gaussian envelope) but
+    ``1.5e-6`` in velocity (first order, and weighted by the displacement) --
+    see ``docs/CASE-DG-EULER-VORTEX-ERR-reference-floor.md``.  Passing
+    ``images=K`` instead sums the ``(2K+1)^2`` lattice images
+    (:func:`minimum_images` returns a sufficient ``K``), which removes that
+    floor; ``images`` requires ``period``.
+
+    Both readings keep the free-space vortex as the ``t = 0`` state, so only
+    long-time comparisons differ.
     """
     x_shift = x - background_velocity[0] * time
     y_shift = y - background_velocity[1] * time
-    if period is not None:
-        period_x, period_y = ((float(period), float(period))
-                              if np.isscalar(period) else (float(period[0]),
-                                                           float(period[1])))
-        x_shift = _wrap_shift(x_shift, period_x)
-        y_shift = _wrap_shift(y_shift, period_y)
-    radius2 = x_shift ** 2 + y_shift ** 2
-    exponential = torch.exp(0.5 * (1.0 - radius2))
-    temperature = 1.0 - (GAMMA - 1.0) * strength ** 2 / (
-        8.0 * GAMMA * math.pi ** 2
-    ) * exponential ** 2
-    rho = temperature ** (1.0 / (GAMMA - 1.0))
-    velocity_x = background_velocity[0] - strength / (2.0 * math.pi) * exponential * y_shift
-    velocity_y = background_velocity[1] + strength / (2.0 * math.pi) * exponential * x_shift
-    pressure = rho ** GAMMA
+    if period is None:
+        if images is not None:
+            raise ValueError("images requires period (the lattice is periodic)")
+        return _vortex_from_shift(x_shift, y_shift, strength, background_velocity)
+    period_x, period_y = _period_pair(period)
+    if images is None:
+        return _vortex_from_shift(
+            _wrap_shift(x_shift, period_x), _wrap_shift(y_shift, period_y),
+            strength, background_velocity)
+    images = int(images)
+    if images < 1:
+        raise ValueError(f"images must be >= 1, got {images!r}")
+    need = minimum_images(period, x, y, time, background_velocity, margin=0)
+    if images < need:
+        raise ValueError(
+            f"images={images} does not cover the nearest image at t={time:g} "
+            f"(need >= {need}); the truncated lattice would use the wrong image")
+    background_x, background_y = background_velocity
+    rho = torch.ones_like(x_shift)
+    velocity_x = torch.full_like(x_shift, background_x)
+    velocity_y = torch.full_like(x_shift, background_y)
+    pressure = torch.ones_like(x_shift)
+    for m in range(-images, images + 1):
+        for n in range(-images, images + 1):
+            rho_i, u_i, v_i, p_i = _vortex_from_shift(
+                x_shift - m * period_x, y_shift - n * period_y,
+                strength, background_velocity)
+            rho = rho + (rho_i - 1.0)
+            velocity_x = velocity_x + (u_i - background_x)
+            velocity_y = velocity_y + (v_i - background_y)
+            pressure = pressure + (p_i - 1.0)
     return rho, velocity_x, velocity_y, pressure
 
 
@@ -313,12 +378,15 @@ def solve_isentropic_vortex(
 
 
 def vortex_error(x, y, conservative, final_time, strength=5.0,
-                 background_velocity=(1.0, 1.0), period=None):
+                 background_velocity=(1.0, 1.0), period=None, images=None):
     """Compare P0 states with four-point-per-direction exact cell averages.
 
     ``period`` is forwarded to :func:`vortex_primitive`; pass the box length for
     periodic runs, otherwise the long-time reference is the free-space vortex
-    and the reported error is dominated by the reference defect.
+    and the reported error is dominated by the reference defect.  ``images``
+    selects the lattice-sum reference (see :func:`vortex_primitive`); leaving it
+    at ``None`` keeps the min-image fold, which carries a velocity-only
+    truncation floor of about ``1.5e-6`` relative L2 on this case.
     """
     nx, ny = conservative.shape[:2]
     dx = float((x[-1] - x[0]).item()) / (nx - 1)
@@ -329,7 +397,7 @@ def vortex_error(x, y, conservative, final_time, strength=5.0,
     xq = x[:, None, None, None] + 0.5 * dx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * dy * nodes[None, None, None, :]
     exact_q = vortex_primitive(xq, yq, final_time, strength, background_velocity,
-                               period=period)
+                               period=period, images=images)
     reference = tuple(
         0.25 * torch.sum(
             field * weights[None, None, :, None] * weights[None, None, None, :],
