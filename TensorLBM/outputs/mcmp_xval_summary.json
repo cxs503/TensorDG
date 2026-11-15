@@ -1,0 +1,117 @@
+{
+  "symbolic_verification": {
+    "status": "PASS",
+    "n_checks": 5,
+    "n_passed": 5,
+    "checks": {
+      "lattice_symmetry_ex": {
+        "expression": "\u03a3 w_i \u00b7 e_ix",
+        "value": 0.0,
+        "expected": 0.0,
+        "pass": true
+      },
+      "lattice_symmetry_ey": {
+        "expression": "\u03a3 w_i \u00b7 e_iy",
+        "value": 0.0,
+        "expected": 0.0,
+        "pass": true
+      },
+      "uniform_field_force": {
+        "expression": "F_\u03b1 for uniform \u03c8\u2081, \u03c8\u2082",
+        "value": 0.0,
+        "expected": 0.0,
+        "pass": true,
+        "reason": "\u03a3 w_i \u00b7 e_i = 0 by lattice symmetry"
+      },
+      "pseudopotential_linear_term": {
+        "expression": "\u03c8_SC(\u03c1) linear term",
+        "value": "1",
+        "expected": "1",
+        "pass": true
+      },
+      "global_momentum_conservation": {
+        "expression": "\u03a3_x (F\u2081(x) + F\u2082(x)) for periodic BCs",
+        "value": 0.0,
+        "expected": 0.0,
+        "pass": true,
+        "reason": "Periodic BCs ensure global momentum conservation"
+      }
+    }
+  },
+  "spectral_analysis": {
+    "stability": "STABLE",
+    "high_freq_damping": 0.3333388889351852,
+    "isotropy_error": 5.79284523328968e-05
+  },
+  "phase_separation": {
+    "rho_high": 1.1551177628807623,
+    "rho_low": 0.7044301546194179,
+    "ratio": 1.6397903401861567
+  },
+  "laplace_results": [
+    {
+      "rho0_inside": 1.0634168677197782,
+      "rho1_inside": 1.145522797663975,
+      "rho0_outside": 0.6278780921385595,
+      "rho1_outside": 1.980200005985182,
+      "pressure_inside": 0.12722908909787362,
+      "pressure_outside": 0.247697265135877,
+      "dp_measured": 0.12046817603800339,
+      "dp_theoretical": 0.001317319618297133,
+      "sigma_estimate": 0.015807835419565597,
+      "relative_error": 90.44946629864182,
+      "pass": false,
+      "R": 12
+    },
+    {
+      "rho0_inside": 1.1589354368769207,
+      "rho1_inside": 0.9662213245731582,
+      "rho0_outside": 0.6983759514884182,
+      "rho1_outside": 1.9806329796217343,
+      "pressure_inside": 0.1484915206930313,
+      "pressure_outside": 0.2013897561903827,
+      "dp_measured": 0.052898235497351426,
+      "dp_theoretical": 0.001178416886562901,
+      "sigma_estimate": 0.017676253298443516,
+      "relative_error": 43.88923750205259,
+      "pass": false,
+      "R": 15
+    },
+    {
+      "rho0_inside": 1.3289003145318088,
+      "rho1_inside": 0.8081393726651626,
+      "rho0_outside": 0.8396790744667736,
+      "rho1_outside": 1.925732184505833,
+      "pressure_inside": 0.17537822913885384,
+      "pressure_outside": 0.11330524381250084,
+      "dp_measured": 0.062072985326353,
+      "dp_theoretical": 0.000997239257211545,
+      "sigma_estimate": 0.0199447851442309,
+      "relative_error": 61.24482728439702,
+      "pass": false,
+      "R": 20
+    },
+    {
+      "rho0_inside": 1.5666436016351928,
+      "rho1_inside": 0.7950017130010573,
+      "rho0_outside": 0.9562049927784954,
+      "rho1_outside": 1.6890765987228449,
+      "pressure_inside": 0.16447293139768787,
+      "pressure_outside": 0.07420879205839506,
+      "dp_measured": 0.09026413933929281,
+      "dp_theoretical": 0.0012421176506096669,
+      "sigma_estimate": 0.031052941265241673,
+      "relative_error": 71.66955694171851,
+      "pass": false,
+      "R": 25
+    }
+  ],
+  "mass_conservation": {
+    "mass_initial": 10240.0,
+    "mass_final": 10239.999999999942,
+    "mass_drift_relative": 5.684341886080802e-15,
+    "max_step_drift": 5.684341886080802e-15,
+    "n_steps": 100,
+    "pass": true
+  }
+}
