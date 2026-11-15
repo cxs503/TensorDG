@@ -25,6 +25,15 @@ from .cross_force import (
     spectral_analysis_cross_force,
 )
 from .mcmp import MCMPSolver, setup_laplace_test, measure_laplace_pressure
+from .immersed import (
+    StaticMarkerObstacles,
+    make_circle_markers,
+    multi_direct_forcing,
+    guo_source,
+    kernel_3pt,
+    kernel_4pt,
+)
+from .cylinder import run_cylinder, CylinderResult
 from .sparse_aos import (
     SparseAOSLBM,
     SparseDomain,
@@ -52,4 +61,12 @@ __all__ = [
     "SparseDomain",
     "build_sparse_domain",
     "channel_mask",
+    "StaticMarkerObstacles",
+    "make_circle_markers",
+    "multi_direct_forcing",
+    "guo_source",
+    "kernel_3pt",
+    "kernel_4pt",
+    "run_cylinder",
+    "CylinderResult",
 ]
