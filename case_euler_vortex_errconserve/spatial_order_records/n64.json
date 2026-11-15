@@ -1,0 +1,37 @@
+{
+ "cells": 64,
+ "degree": 2,
+ "final_time": 1.0,
+ "steps": 937,
+ "dofs": 147456,
+ "wall_seconds": 168.56248021125793,
+ "errors": {
+  "density": 5.898946868239215e-06,
+  "velocity_x": 1.1491199259052786e-05,
+  "velocity_y": 1.1487894109436742e-05,
+  "pressure": 8.36133382380212e-06
+ },
+ "errors_wrong_reference": {
+  "density": 0.004676683718327043,
+  "velocity_x": 0.011467932151500267,
+  "velocity_y": 0.011467938390160345,
+  "pressure": 0.005936313174764233
+ },
+ "projection_errors": {
+  "density": 3.861540274161916e-06,
+  "velocity_x": 6.899000058687352e-06,
+  "velocity_y": 6.899000058687278e-06,
+  "pressure": 5.613388821014784e-06
+ },
+ "cfl_control": {
+  "cfl": 0.1,
+  "steps": 1874,
+  "wall_seconds": 391.7898442745209,
+  "errors": {
+   "density": 5.898945346957792e-06,
+   "velocity_x": 1.149119442322687e-05,
+   "velocity_y": 1.1487890468876214e-05,
+   "pressure": 8.361332158555714e-06
+  }
+ }
+}

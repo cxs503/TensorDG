@@ -1,0 +1,256 @@
+{
+  "case": "EULER-VORTEX-ERR",
+  "ledger_slug": "CASE-DG-EULER-VORTEX-ERR",
+  "question": "does the DG family converge to the analytic isentropic vortex at its design order p+1, or only sit within the 6 % tolerance of it?",
+  "design": {
+    "degree": 2,
+    "fields": [
+      "density",
+      "velocity_x",
+      "velocity_y",
+      "pressure"
+    ],
+    "final_time": 1.0,
+    "cfl": 0.2,
+    "cfl_control": 0.1,
+    "meshes": [
+      16,
+      32,
+      64
+    ],
+    "hypothesis": "observed L2 order = p + 1 = 3",
+    "asymptotic_window": [
+      32,
+      64
+    ]
+  },
+  "gates": {
+    "S1_spatial_order": {
+      "criterion": "fitted order of every field over meshes [32, 64] >= 2.70 (= 0.9 * (p+1), p=2), and the finest-pair local order also >= 2.70",
+      "passed": true,
+      "status": "passed",
+      "design_order": 3,
+      "lower_bound": 2.7,
+      "fit_meshes": [
+        32,
+        64
+      ],
+      "fitted_orders": {
+        "density": 3.0695238292769846,
+        "velocity_x": 3.0352886010037277,
+        "velocity_y": 3.037329240557704,
+        "pressure": 3.0586419887359386
+      },
+      "finest_pair_local_orders": {
+        "density": 3.0695238292769886,
+        "velocity_x": 3.035288601003728,
+        "velocity_y": 3.0373292405577073,
+        "pressure": 3.0586419887359444
+      },
+      "worst_fitted_order": 3.0352886010037277,
+      "worst_finest_local_order": 3.035288601003728
+    },
+    "S2_measurement_consistency": {
+      "criterion": "pure L2 projection error of every field over meshes [32, 64] decays at >= 2.70: the h-scaling lives in the metric and the reference evaluation, not only in the solver",
+      "passed": true,
+      "status": "passed",
+      "orders": {
+        "density": 2.9930244764124514,
+        "velocity_x": 2.9928109589941143,
+        "velocity_y": 2.992810958994071,
+        "pressure": 2.9944341073310334
+      },
+      "lowest": 2.992810958994071
+    },
+    "S3_temporal_negligible": {
+      "criterion": "relative change of every field error between CFL 0.1 and 0.2 < 2% on the asymptotic window meshes [32, 64] -> the measured decay is spatial",
+      "passed": true,
+      "status": "passed",
+      "per_mesh": {
+        "16": {
+          "density": 2.066576625524734e-06,
+          "velocity_x": 3.0460430293896075e-06,
+          "velocity_y": 2.1400802368108057e-06,
+          "pressure": 1.5861458211605282e-06
+        },
+        "32": {
+          "density": 8.418990972646293e-07,
+          "velocity_x": 1.3619396947030158e-06,
+          "velocity_y": 9.875639581757462e-07,
+          "pressure": 6.597860364310673e-07
+        },
+        "64": {
+          "density": 2.5789034164813686e-07,
+          "velocity_x": 4.2082865393386396e-07,
+          "velocity_y": 3.1690408122312147e-07,
+          "pressure": 1.9916037799055454e-07
+        }
+      },
+      "per_mesh_window": {
+        "32": {
+          "density": 8.418990972646293e-07,
+          "velocity_x": 1.3619396947030158e-06,
+          "velocity_y": 9.875639581757462e-07,
+          "pressure": 6.597860364310673e-07
+        },
+        "64": {
+          "density": 2.5789034164813686e-07,
+          "velocity_x": 4.2082865393386396e-07,
+          "velocity_y": 3.1690408122312147e-07,
+          "pressure": 1.9916037799055454e-07
+        }
+      },
+      "worst": 1.3619396947030158e-06,
+      "evaluated_meshes": [
+        32,
+        64
+      ],
+      "control_meshes": [
+        16,
+        32,
+        64
+      ]
+    },
+    "S4_reference_discriminates": {
+      "criterion": "scored against the exact solution at t + 0.05 the fitted order collapses below 1.50 (= half the design order): a constant reference offset produces an O(1) error floor, so the S1 statistic rejects a wrong reference instead of rubber-stamping it",
+      "passed": true,
+      "status": "passed",
+      "wrong_reference_time": 1.05,
+      "orders": {
+        "density": 0.0002000871781773349,
+        "velocity_x": 9.384121574446853e-06,
+        "velocity_y": 3.842553109986898e-05,
+        "pressure": 0.00020527923276341398
+      },
+      "worst": 9.384121574446853e-06,
+      "highest": 0.00020527923276341398
+    },
+    "S5_tolerance_margin": {
+      "criterion": "finest mesh (n=64) max field error < 0.1 * case tolerance (0.06)",
+      "passed": true,
+      "status": "passed",
+      "finest_cells": 64,
+      "finest_max_error": 1.1491199259052786e-05,
+      "finest_max_percent": 0.0011491199259052785,
+      "case_tolerance": 0.06,
+      "margin_factor": 5221.3871370067745
+    },
+    "all_passed": true,
+    "failed": [],
+    "not_evaluated": [],
+    "verdict": "PASS"
+  },
+  "records": [
+    {
+      "cells": 16,
+      "degree": 2,
+      "final_time": 1.0,
+      "steps": 234,
+      "dofs": 9216,
+      "wall_seconds": 8.449934959411621,
+      "errors": {
+        "density": 0.0003975616110753456,
+        "velocity_x": 0.0008149204122572573,
+        "velocity_y": 0.0008140024155402119,
+        "pressure": 0.0005624651713984708
+      },
+      "errors_wrong_reference": {
+        "density": 0.00470552773107746,
+        "velocity_x": 0.01148249358991389,
+        "velocity_y": 0.011494828999047777,
+        "pressure": 0.005976030210847549
+      },
+      "projection_errors": {
+        "density": 0.00023905844881695582,
+        "velocity_x": 0.00039759938279405736,
+        "velocity_y": 0.0003975993827940529,
+        "pressure": 0.00034732367275257654
+      },
+      "cfl_control": {
+        "cfl": 0.1,
+        "steps": 468,
+        "wall_seconds": 16.88032603263855,
+        "errors": {
+          "density": 0.00039756078948381294,
+          "velocity_x": 0.000814917929974616,
+          "velocity_y": 0.0008140006735097297,
+          "pressure": 0.0005624642792466896
+        }
+      }
+    },
+    {
+      "cells": 32,
+      "degree": 2,
+      "final_time": 1.0,
+      "steps": 469,
+      "dofs": 36864,
+      "wall_seconds": 29.004992723464966,
+      "errors": {
+        "density": 4.952143598292114e-05,
+        "velocity_x": 9.420593619619386e-05,
+        "velocity_y": 9.431214706129683e-05,
+        "pressure": 6.966562656570704e-05
+      },
+      "errors_wrong_reference": {
+        "density": 0.0046773323719329915,
+        "velocity_x": 0.011468006745795293,
+        "velocity_y": 0.011468243837589792,
+        "pressure": 0.005937157905272188
+      },
+      "projection_errors": {
+        "density": 3.074331633944396e-05,
+        "velocity_x": 5.491765932359208e-05,
+        "velocity_y": 5.4917659323589834e-05,
+        "pressure": 4.4734193477521055e-05
+      },
+      "cfl_control": {
+        "cfl": 0.1,
+        "steps": 937,
+        "wall_seconds": 58.847291231155396,
+        "errors": {
+          "density": 4.952139429086889e-05,
+          "velocity_x": 9.420580789338988e-05,
+          "velocity_y": 9.431205392201957e-05,
+          "pressure": 6.966558060129941e-05
+        }
+      }
+    },
+    {
+      "cells": 64,
+      "degree": 2,
+      "final_time": 1.0,
+      "steps": 937,
+      "dofs": 147456,
+      "wall_seconds": 168.56248021125793,
+      "errors": {
+        "density": 5.898946868239215e-06,
+        "velocity_x": 1.1491199259052786e-05,
+        "velocity_y": 1.1487894109436742e-05,
+        "pressure": 8.36133382380212e-06
+      },
+      "errors_wrong_reference": {
+        "density": 0.004676683718327043,
+        "velocity_x": 0.011467932151500267,
+        "velocity_y": 0.011467938390160345,
+        "pressure": 0.005936313174764233
+      },
+      "projection_errors": {
+        "density": 3.861540274161916e-06,
+        "velocity_x": 6.899000058687352e-06,
+        "velocity_y": 6.899000058687278e-06,
+        "pressure": 5.613388821014784e-06
+      },
+      "cfl_control": {
+        "cfl": 0.1,
+        "steps": 1874,
+        "wall_seconds": 391.7898442745209,
+        "errors": {
+          "density": 5.898945346957792e-06,
+          "velocity_x": 1.149119442322687e-05,
+          "velocity_y": 1.1487890468876214e-05,
+          "pressure": 8.361332158555714e-06
+        }
+      }
+    }
+  ]
+}
