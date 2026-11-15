@@ -5,24 +5,31 @@
     "cells": 8,
     "dx": 1.25,
     "steps": 70,
-    "dt": 0.013632253763201763,
+    "dt": 0.013632253763202096,
     "dofs": 1024,
     "errors": {
-      "density": 0.014134235930886252,
-      "velocity_x": 0.030748929862872,
-      "velocity_y": 0.031155412702897636,
-      "pressure": 0.021143921551037677
+      "density": 0.014134235930886236,
+      "velocity_x": 0.03074892986287199,
+      "velocity_y": 0.031155412702897598,
+      "pressure": 0.021143921551037736
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 2.300712823867798,
+    "wall_seconds": 2.714709520339966,
     "conservation_drift": {
       "mass": 2.6037424447494053e-15,
-      "x_momentum": 2.7483948027910388e-15,
-      "y_momentum": 2.8930471608326723e-15,
-      "energy": 2.6380802656431674e-15
+      "x_momentum": 2.6037424447494053e-15,
+      "y_momentum": 2.748394802791039e-15,
+      "energy": 3.1327203154512605e-15
     },
-    "max_conservation_drift": 2.8930471608326723e-15,
-    "max_relative_l2": 0.031155412702897636,
+    "max_conservation_drift": 3.1327203154512605e-15,
+    "conservation_tolerance": 1e-12,
+    "conservation_pass": true,
+    "max_step_drift": null,
+    "max_step_drift_name": "",
+    "max_step_drift_step": -1,
+    "max_relative_l2": 0.031155412702897598,
+    "max_percent": 3.11554127028976,
+    "gate_pass": true,
     "config_label": "DG P1 8x8"
   },
   {
@@ -31,24 +38,31 @@
     "cells": 16,
     "dx": 0.625,
     "steps": 142,
-    "dt": 7.26736327394395e-05,
+    "dt": 7.267363273932848e-05,
     "dofs": 4096,
     "errors": {
-      "density": 0.0038091135365159135,
-      "velocity_x": 0.008372785308544036,
-      "velocity_y": 0.008195545377869335,
-      "pressure": 0.005499213353963675
+      "density": 0.003809113536515978,
+      "velocity_x": 0.008372785308544033,
+      "velocity_y": 0.008195545377869266,
+      "pressure": 0.0054992133539637075
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 5.949776887893677,
+    "wall_seconds": 6.666068077087402,
     "conservation_drift": {
       "mass": 5.3521202398279745e-15,
-      "x_momentum": 5.3521202398279745e-15,
-      "y_momentum": 5.3521202398279745e-15,
+      "x_momentum": 5.207468341454245e-15,
+      "y_momentum": 5.207468341454245e-15,
       "energy": 5.605870733381418e-15
     },
     "max_conservation_drift": 5.605870733381418e-15,
-    "max_relative_l2": 0.008372785308544036,
+    "conservation_tolerance": 1e-12,
+    "conservation_pass": true,
+    "max_step_drift": null,
+    "max_step_drift_name": "",
+    "max_step_drift_step": -1,
+    "max_relative_l2": 0.008372785308544033,
+    "max_percent": 0.8372785308544033,
+    "gate_pass": true,
     "config_label": "DG P1 16x16"
   },
   {
@@ -57,24 +71,31 @@
     "cells": 8,
     "dx": 1.25,
     "steps": 117,
-    "dt": 0.004237641927159808,
+    "dt": 0.0042376419271593635,
     "dofs": 2304,
     "errors": {
-      "density": 0.003275074550264168,
-      "velocity_x": 0.005619999088492312,
-      "velocity_y": 0.005493569107830254,
-      "pressure": 0.004287231014401607
+      "density": 0.003275074550264314,
+      "velocity_x": 0.005619999088492276,
+      "velocity_y": 0.0054935691078302614,
+      "pressure": 0.004287231014401712
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 3.842895984649658,
+    "wall_seconds": 4.852799415588379,
     "conservation_drift": {
-      "mass": 4.484208160361187e-15,
-      "x_momentum": 4.3395562842205034e-15,
-      "y_momentum": 4.19490440807982e-15,
-      "energy": 4.946354237934303e-15
+      "mass": 4.3395562842205034e-15,
+      "x_momentum": 4.62886003650187e-15,
+      "y_momentum": 4.3395562842205034e-15,
+      "energy": 4.781475763336493e-15
     },
-    "max_conservation_drift": 4.946354237934303e-15,
-    "max_relative_l2": 0.005619999088492312,
+    "max_conservation_drift": 4.781475763336493e-15,
+    "conservation_tolerance": 1e-12,
+    "conservation_pass": true,
+    "max_step_drift": null,
+    "max_step_drift_name": "",
+    "max_step_drift_step": -1,
+    "max_relative_l2": 0.005619999088492276,
+    "max_percent": 0.5619999088492276,
+    "gate_pass": true,
     "config_label": "DG P2 8x8"
   },
   {
@@ -83,24 +104,31 @@
     "cells": 16,
     "dx": 0.625,
     "steps": 234,
-    "dt": 0.004264584341176381,
+    "dt": 0.004264584341176714,
     "dofs": 9216,
     "errors": {
-      "density": 0.00039756161424075504,
-      "velocity_x": 0.000819485914820153,
-      "velocity_y": 0.0008185905141060892,
-      "pressure": 0.0005624651741025578
+      "density": 0.00039756161424077657,
+      "velocity_x": 0.0008194859148201383,
+      "velocity_y": 0.0008185905141061799,
+      "pressure": 0.0005624651741025694
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 11.404750108718872,
+    "wall_seconds": 11.693114280700684,
     "conservation_drift": {
       "mass": 8.679113908613846e-15,
       "x_momentum": 8.679113908613846e-15,
-      "y_momentum": 8.679113908613846e-15,
-      "energy": 1.0222470283958379e-14
+      "y_momentum": 8.679113908613844e-15,
+      "energy": 9.5629560720901e-15
     },
-    "max_conservation_drift": 1.0222470283958379e-14,
-    "max_relative_l2": 0.000819485914820153,
+    "max_conservation_drift": 9.5629560720901e-15,
+    "conservation_tolerance": 1e-12,
+    "conservation_pass": true,
+    "max_step_drift": null,
+    "max_step_drift_name": "",
+    "max_step_drift_step": -1,
+    "max_relative_l2": 0.0008194859148201383,
+    "max_percent": 0.08194859148201383,
+    "gate_pass": true,
     "config_label": "DG P2 16x16"
   },
   {
@@ -109,24 +137,31 @@
     "cells": 6,
     "dx": 1.6666666666666667,
     "steps": 123,
-    "dt": 0.002327231923040962,
+    "dt": 0.002327231923040851,
     "dofs": 2304,
     "errors": {
-      "density": 0.0016570169938132959,
-      "velocity_x": 0.003524005471025961,
-      "velocity_y": 0.003402458895472119,
-      "pressure": 0.002413891529292311
+      "density": 0.0016570169938132922,
+      "velocity_x": 0.0035240054710260426,
+      "velocity_y": 0.003402458895472136,
+      "pressure": 0.0024138915292922945
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 3.8693008422851562,
+    "wall_seconds": 4.673730373382568,
     "conservation_drift": {
-      "mass": 4.339556510997277e-15,
+      "mass": 4.6288602783970946e-15,
       "x_momentum": 4.773512162097003e-15,
       "y_momentum": 4.628860278397094e-15,
-      "energy": 5.4409903814619344e-15
+      "energy": 5.11123338864606e-15
     },
-    "max_conservation_drift": 5.4409903814619344e-15,
-    "max_relative_l2": 0.003524005471025961,
+    "max_conservation_drift": 5.11123338864606e-15,
+    "conservation_tolerance": 1e-12,
+    "conservation_pass": true,
+    "max_step_drift": null,
+    "max_step_drift_name": "",
+    "max_step_drift_step": -1,
+    "max_relative_l2": 0.0035240054710260426,
+    "max_percent": 0.35240054710260427,
+    "gate_pass": true,
     "config_label": "DG P3 6x6"
   },
   {
@@ -135,24 +170,31 @@
     "cells": 12,
     "dx": 0.8333333333333334,
     "steps": 246,
-    "dt": 0.0026043343523515228,
+    "dt": 0.0026043343523505236,
     "dofs": 9216,
     "errors": {
-      "density": 0.00011695079824100424,
-      "velocity_x": 0.00034575546941306674,
-      "velocity_y": 0.0003442700852271111,
-      "pressure": 0.00017515818267716419
+      "density": 0.00011695079824103543,
+      "velocity_x": 0.0003457554694131154,
+      "velocity_y": 0.0003442700852270745,
+      "pressure": 0.0001751581826771661
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 10.461581945419312,
+    "wall_seconds": 11.71663784980774,
     "conservation_drift": {
-      "mass": 9.691677198836798e-15,
+      "mass": 8.968417706386291e-15,
       "x_momentum": 8.968417706386292e-15,
       "y_momentum": 8.67911390940609e-15,
       "energy": 1.0387348835907752e-14
     },
     "max_conservation_drift": 1.0387348835907752e-14,
-    "max_relative_l2": 0.00034575546941306674,
+    "conservation_tolerance": 1e-12,
+    "conservation_pass": true,
+    "max_step_drift": null,
+    "max_step_drift_name": "",
+    "max_step_drift_step": -1,
+    "max_relative_l2": 0.0003457554694131154,
+    "max_percent": 0.03457554694131154,
+    "gate_pass": true,
     "config_label": "DG P3 12x12"
   },
   {
@@ -176,8 +218,15 @@
       "energy": 1.4839069767036357e-15
     },
     "max_conservation_drift": 1.4839069767036357e-15,
-    "wall_seconds": 0.26251912117004395,
+    "conservation_tolerance": 1e-12,
+    "conservation_pass": true,
+    "max_step_drift": 1.4839069767036357e-15,
+    "max_step_drift_name": "energy",
+    "max_step_drift_step": 18,
+    "wall_seconds": 0.19077277183532715,
     "max_relative_l2": 0.10593213971725648,
+    "max_percent": 10.593213971725648,
+    "gate_pass": false,
     "config_label": "P0 16x16"
   },
   {
@@ -201,8 +250,15 @@
       "energy": 2.802935398908073e-15
     },
     "max_conservation_drift": 2.802935398908073e-15,
-    "wall_seconds": 0.5098598003387451,
+    "conservation_tolerance": 1e-12,
+    "conservation_pass": true,
+    "max_step_drift": 2.802935398908073e-15,
+    "max_step_drift_name": "energy",
+    "max_step_drift_step": 42,
+    "wall_seconds": 0.4588477611541748,
     "max_relative_l2": 0.07799898324635561,
+    "max_percent": 7.799898324635561,
+    "gate_pass": false,
     "config_label": "P0 32x32"
   }
 ]
