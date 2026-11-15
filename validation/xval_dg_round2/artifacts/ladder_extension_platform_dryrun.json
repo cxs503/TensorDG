@@ -1,0 +1,167 @@
+{
+ "contract": {
+  "all_passed": true,
+  "mode": "platform_contract",
+  "result_meta": {
+   "benchmark_id": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+   "benchmark_version": "3.0.0",
+   "execution_status": "success",
+   "implementation_project": "TensorDG",
+   "implementation_revision": "703f2ae2a96364d4e1c13291fbb8e89eeb452940",
+   "run_id": "xval-dg-round2-xval-dg-round2-ladder-extension",
+   "workload_id": "xval-dg-round2-ladder-extension",
+   "workload_version": "1"
+  },
+  "rows": [
+   {
+    "abs_error": 3.645972412869014e-13,
+    "got_value": 3.8571429999996356,
+    "metric": "plateau_rho",
+    "passed": true,
+    "ref_value": 3.857143,
+    "rel_error": 9.452520720307788e-14,
+    "tolerance_rel": 0.01,
+    "unit": "-"
+   },
+   {
+    "abs_error": 0.009070912825119848,
+    "got_value": 2.3984375,
+    "metric": "shock_position",
+    "passed": true,
+    "ref_value": 2.38936658717488,
+    "rel_error": 0.003796367151783536,
+    "tolerance_rel": 0.01,
+    "unit": "-"
+   },
+   {
+    "abs_error": 2.37281803094902e-07,
+    "got_value": 31.089151951696795,
+    "metric": "mass_integral",
+    "passed": true,
+    "ref_value": 31.0891521889786,
+    "rel_error": 7.632302150041283e-09,
+    "tolerance_rel": 0.01,
+    "unit": "-"
+   }
+  ]
+ },
+ "rows": [
+  {
+   "description": "post-shock plateau density rho_L (Hugoniot, Mach 3)",
+   "error_percent": 9.452520720307786e-12,
+   "error_percent_three_level": 1.985144485499962e-10,
+   "got": 3.8571429999996356,
+   "got_three_level": 3.8571429999923432,
+   "kind": "relative",
+   "name": "plateau_rho",
+   "pass": true,
+   "ref": 3.857143,
+   "tol_percent": 1.0,
+   "unit": "-"
+  },
+  {
+   "description": "transmitted-shock position x_L + W t (Hugoniot speed)",
+   "error_percent": 0.3796367151783536,
+   "error_percent_three_level": 0.575818415598905,
+   "got": 2.3984375,
+   "got_three_level": 2.403125,
+   "kind": "relative",
+   "name": "shock_position",
+   "pass": true,
+   "ref": 2.38936658717488,
+   "tol_percent": 1.0,
+   "unit": "-"
+  },
+  {
+   "description": "global mass M(0) + rho_L u_L t (exact budget)",
+   "error_percent": 7.632302150041282e-07,
+   "error_percent_three_level": 3.0529006561918926e-06,
+   "got": 31.089151951696795,
+   "got_three_level": 31.089151239857667,
+   "kind": "relative",
+   "name": "mass_integral",
+   "pass": true,
+   "ref": 31.0891521889786,
+   "tol_percent": 1.0,
+   "unit": "-"
+  },
+  {
+   "description": "untouched entropy wave 1 + 0.2 sin(5x), x >= 2.6 (max |err| %)",
+   "error_percent": 1.850374631474417e-14,
+   "error_percent_three_level": 1.850372065257868e-14,
+   "got": 1.850374631474417e-14,
+   "got_three_level": 1.850372065257868e-14,
+   "kind": "bounded",
+   "name": "preshock_sine_linf_percent",
+   "pass": true,
+   "ref": null,
+   "tol_percent": 1.0,
+   "unit": "%"
+  }
+ ],
+ "spec": {
+  "benchmark": {
+   "benchmark_id": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+   "version": "3.0.0"
+  },
+  "evaluation": {
+   "extract": {
+    "format": "json_stdout"
+   },
+   "metrics": [
+    {
+     "got_pointer": "reference.plateau_rho",
+     "name": "plateau_rho",
+     "ref_pointer": "oracle.plateau_rho",
+     "tolerance_rel": 0.01,
+     "unit": "-"
+    },
+    {
+     "got_pointer": "reference.shock_position",
+     "name": "shock_position",
+     "ref_pointer": "oracle.shock_position",
+     "tolerance_rel": 0.01,
+     "unit": "-"
+    },
+    {
+     "got_pointer": "reference.mass_integral",
+     "name": "mass_integral",
+     "ref_pointer": "oracle.mass_integral",
+     "tolerance_rel": 0.01,
+     "unit": "-"
+    }
+   ],
+   "notes": "ref = closed-form oracle (Hugoniot plateau, Hugoniot shock position, exact mass budget); got = the same quantity measured on the profile the four-level certification returns (N=3200). The three-level figures stay in the repo artifact, not in the spec."
+  },
+  "execution": {
+   "timeout_seconds": 5400
+  },
+  "implementation": {
+   "project": "TensorDG",
+   "revision": "703f2ae2a96364d4e1c13291fbb8e89eeb452940"
+  },
+  "notes": "ladder extension 3 -> 4 levels: does the profile handed downstream still satisfy the closed forms? Inequality gates (band coverage, per-leg L1) are repo-side by the same rule as post_platform.py.",
+  "workload": {
+   "command": [
+    "python",
+    "-m",
+    "benchmarks.xval_dg_round2_ladder_extension",
+    "--json-stdout"
+   ],
+   "configuration": {
+    "case": "Shu-Osher 1988 shock/entropy interaction (1D Euler, gamma=1.4, x in [-5,5], t=1.8)",
+    "gate_percent": 5.0,
+    "reference_ladder": [
+     800,
+     1600,
+     3200,
+     6400
+    ],
+    "reference_ncells": 3200,
+    "reference_scheme": "FV-WENO5-JS/HLLC/SSP-RK3, CFL=0.3"
+   },
+   "version": "1",
+   "workload_id": "xval-dg-round2-ladder-extension"
+  }
+ }
+}
