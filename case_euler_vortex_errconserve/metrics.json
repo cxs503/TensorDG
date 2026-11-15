@@ -359,16 +359,305 @@
       "dg_d2_n32_t20_cfl0.2"
     ],
     "pending": {
-      "dg_d3_n32_t1_cfl0.2": "cj3432",
-      "dg_d3_n32_t2_cfl0.2": "cj3432",
-      "dg_d3_n32_t5_cfl0.2": "cj3432",
-      "dg_d3_n32_t10_cfl0.2": "cj3432",
-      "dg_d1_n64_t2_cfl0.2": "cj3432",
-      "dg_d1_n64_t5_cfl0.2": "cj3432",
-      "dg_d1_n64_t10_cfl0.2": "cj3432",
-      "dg_d2_n32_t20_cfl0.2": "cj3432"
+      "dg_d3_n32_t1_cfl0.2": "cj3606",
+      "dg_d3_n32_t2_cfl0.2": "cj3607",
+      "dg_d3_n32_t5_cfl0.2": "cj3607",
+      "dg_d3_n32_t10_cfl0.2": "cj3608",
+      "dg_d1_n64_t2_cfl0.2": "cj3605",
+      "dg_d1_n64_t5_cfl0.2": "cj3606",
+      "dg_d1_n64_t10_cfl0.2": "cj3607",
+      "dg_d2_n32_t20_cfl0.2": "cj3608"
     },
     "unexpected": []
+  },
+  "provenance": {
+    "certificates_file": "provenance_certificates.json",
+    "replay_tolerance": 1e-09,
+    "counts": {
+      "recorded": 13,
+      "unverified": 7,
+      "replayed": 12,
+      "missing": 8
+    },
+    "rows": {
+      "dg_d1_n32_t10_cfl0.2": {
+        "family": "dg_d1_n32_cfl0.2",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 182.92026805877686,
+        "status": "recorded"
+      },
+      "dg_d1_n32_t1_cfl0.2": {
+        "family": "dg_d1_n32_cfl0.2",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 18.941245317459106,
+        "status": "recorded"
+      },
+      "dg_d1_n32_t2_cfl0.2": {
+        "family": "dg_d1_n32_cfl0.2",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 35.34992790222168,
+        "status": "recorded"
+      },
+      "dg_d1_n32_t5_cfl0.2": {
+        "family": "dg_d1_n32_cfl0.2",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 93.07698345184326,
+        "status": "recorded"
+      },
+      "dg_d1_n64_t1_cfl0.2": {
+        "family": "dg_d1_n64_cfl0.2",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 89.62885165214539,
+        "status": "recorded"
+      },
+      "dg_d2_n32_t10_cfl0.2": {
+        "family": "dg_d2_n32_cfl0.2",
+        "recorded_reference_model": null,
+        "wall_seconds": 474.3131642341614,
+        "status": "unverified"
+      },
+      "dg_d2_n32_t10_cfl0.2_diraxis0": {
+        "family": "dg_d2_n32_cfl0.2_diraxis0",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 311.734726190567,
+        "status": "recorded"
+      },
+      "dg_d2_n32_t10_cfl0.2_dirobl30": {
+        "family": "dg_d2_n32_cfl0.2_dirobl30",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 326.42739248275757,
+        "status": "recorded"
+      },
+      "dg_d2_n32_t10_cfl0.4": {
+        "family": "dg_d2_n32_cfl0.4",
+        "recorded_reference_model": null,
+        "wall_seconds": 160.94161295890808,
+        "status": "unverified"
+      },
+      "dg_d2_n32_t1_cfl0.2": {
+        "family": "dg_d2_n32_cfl0.2",
+        "recorded_reference_model": null,
+        "wall_seconds": 46.749340295791626,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 0.0,
+          "wall_seconds": 43.490036964416504
+        },
+        "status": "replayed"
+      },
+      "dg_d2_n32_t1_cfl0.2_diraxis0": {
+        "family": "dg_d2_n32_cfl0.2_diraxis0",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 29.936875820159912,
+        "status": "recorded"
+      },
+      "dg_d2_n32_t1_cfl0.2_dirobl30": {
+        "family": "dg_d2_n32_cfl0.2_dirobl30",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 35.16226935386658,
+        "status": "recorded"
+      },
+      "dg_d2_n32_t1_cfl0.4": {
+        "family": "dg_d2_n32_cfl0.4",
+        "recorded_reference_model": null,
+        "wall_seconds": 16.70085620880127,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 1.5124161064817206e-13,
+          "wall_seconds": 20.96488308906555
+        },
+        "status": "replayed"
+      },
+      "dg_d2_n32_t2_cfl0.2": {
+        "family": "dg_d2_n32_cfl0.2",
+        "recorded_reference_model": null,
+        "wall_seconds": 65.25408697128296,
+        "status": "unverified"
+      },
+      "dg_d2_n32_t2_cfl0.2_diraxis0": {
+        "family": "dg_d2_n32_cfl0.2_diraxis0",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 61.40388226509094,
+        "status": "recorded"
+      },
+      "dg_d2_n32_t2_cfl0.2_dirobl30": {
+        "family": "dg_d2_n32_cfl0.2_dirobl30",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 64.45938467979431,
+        "status": "recorded"
+      },
+      "dg_d2_n32_t2_cfl0.4": {
+        "family": "dg_d2_n32_cfl0.4",
+        "recorded_reference_model": null,
+        "wall_seconds": 33.24723529815674,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 4.4194977682856375e-13,
+          "wall_seconds": 42.817034006118774
+        },
+        "status": "replayed"
+      },
+      "dg_d2_n32_t5_cfl0.2": {
+        "family": "dg_d2_n32_cfl0.2",
+        "recorded_reference_model": null,
+        "wall_seconds": 160.13221144676208,
+        "status": "unverified"
+      },
+      "dg_d2_n32_t5_cfl0.2_diraxis0": {
+        "family": "dg_d2_n32_cfl0.2_diraxis0",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 155.25927686691284,
+        "status": "recorded"
+      },
+      "dg_d2_n32_t5_cfl0.2_dirobl30": {
+        "family": "dg_d2_n32_cfl0.2_dirobl30",
+        "recorded_reference_model": "min_image",
+        "wall_seconds": 161.6032338142395,
+        "status": "recorded"
+      },
+      "dg_d2_n32_t5_cfl0.4": {
+        "family": "dg_d2_n32_cfl0.4",
+        "recorded_reference_model": null,
+        "wall_seconds": 78.59720087051392,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 1.1334673056073137e-12,
+          "wall_seconds": 100.69470810890198
+        },
+        "status": "replayed"
+      },
+      "dg_d2_n64_t10_cfl0.2": {
+        "family": "dg_d2_n64_cfl0.2",
+        "recorded_reference_model": null,
+        "wall_seconds": 2665.5340604782104,
+        "status": "unverified"
+      },
+      "dg_d2_n64_t1_cfl0.2": {
+        "family": "dg_d2_n64_cfl0.2",
+        "recorded_reference_model": null,
+        "wall_seconds": 186.6368064880371,
+        "status": "unverified"
+      },
+      "dg_d2_n64_t2_cfl0.2": {
+        "family": "dg_d2_n64_cfl0.2",
+        "recorded_reference_model": null,
+        "wall_seconds": 405.41865134239197,
+        "status": "unverified"
+      },
+      "p0_n128_t10_cfl0.4": {
+        "family": "p0_n128",
+        "recorded_reference_model": null,
+        "wall_seconds": 61.20380663871765,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 3.4451555256475413e-16,
+          "wall_seconds": 67.33322238922119
+        },
+        "status": "replayed"
+      },
+      "p0_n128_t1_cfl0.4": {
+        "family": "p0_n128",
+        "recorded_reference_model": null,
+        "wall_seconds": 8.713639259338379,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 0.0,
+          "wall_seconds": 7.914970397949219
+        },
+        "status": "replayed"
+      },
+      "p0_n128_t2_cfl0.4": {
+        "family": "p0_n128",
+        "recorded_reference_model": null,
+        "wall_seconds": 15.494946241378784,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 0.0,
+          "wall_seconds": 15.462194681167603
+        },
+        "status": "replayed"
+      },
+      "p0_n128_t5_cfl0.4": {
+        "family": "p0_n128",
+        "recorded_reference_model": null,
+        "wall_seconds": 37.20704221725464,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 0.0,
+          "wall_seconds": 35.084091663360596
+        },
+        "status": "replayed"
+      },
+      "p0_n256_t1_cfl0.4": {
+        "family": "p0_n256",
+        "recorded_reference_model": null,
+        "wall_seconds": 56.9797203540802,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 0.0,
+          "wall_seconds": 53.08884644508362
+        },
+        "status": "replayed"
+      },
+      "p0_n64_t10_cfl0.4": {
+        "family": "p0_n64",
+        "recorded_reference_model": null,
+        "wall_seconds": 11.428268432617188,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 2.9104591609816983e-16,
+          "wall_seconds": 13.864655017852783
+        },
+        "status": "replayed"
+      },
+      "p0_n64_t1_cfl0.4": {
+        "family": "p0_n64",
+        "recorded_reference_model": null,
+        "wall_seconds": 1.6969425678253174,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 0.0,
+          "wall_seconds": 1.6450119018554688
+        },
+        "status": "replayed"
+      },
+      "p0_n64_t5_cfl0.4": {
+        "family": "p0_n64",
+        "recorded_reference_model": null,
+        "wall_seconds": 6.922694683074951,
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 0.0,
+          "wall_seconds": 7.5480263233184814
+        },
+        "status": "replayed"
+      },
+      "dg_d3_n32_t1_cfl0.2": {
+        "status": "missing"
+      },
+      "dg_d3_n32_t2_cfl0.2": {
+        "status": "missing"
+      },
+      "dg_d3_n32_t5_cfl0.2": {
+        "status": "missing"
+      },
+      "dg_d3_n32_t10_cfl0.2": {
+        "status": "missing"
+      },
+      "dg_d1_n64_t2_cfl0.2": {
+        "status": "missing"
+      },
+      "dg_d1_n64_t5_cfl0.2": {
+        "status": "missing"
+      },
+      "dg_d1_n64_t10_cfl0.2": {
+        "status": "missing"
+      },
+      "dg_d2_n32_t20_cfl0.2": {
+        "status": "missing"
+      }
+    },
+    "note": "`recorded` = the result file carries the reference model it was measured against; `replayed` = legacy record (no model in the file) certified by a re-run of the same checkpoint against the current reference; `unverified` = legacy record with no certificate, i.e. its numbers are not shown to belong to the current reference"
   },
   "exact_invariants": {
     "mass": 98.24174356019108,
@@ -516,14 +805,14 @@
         "dg_d2_n32_t20_cfl0.2"
       ],
       "pending_jobs": {
-        "dg_d3_n32_t1_cfl0.2": "cj3432",
-        "dg_d3_n32_t2_cfl0.2": "cj3432",
-        "dg_d3_n32_t5_cfl0.2": "cj3432",
-        "dg_d3_n32_t10_cfl0.2": "cj3432",
-        "dg_d1_n64_t2_cfl0.2": "cj3432",
-        "dg_d1_n64_t5_cfl0.2": "cj3432",
-        "dg_d1_n64_t10_cfl0.2": "cj3432",
-        "dg_d2_n32_t20_cfl0.2": "cj3432"
+        "dg_d3_n32_t1_cfl0.2": "cj3606",
+        "dg_d3_n32_t2_cfl0.2": "cj3607",
+        "dg_d3_n32_t5_cfl0.2": "cj3607",
+        "dg_d3_n32_t10_cfl0.2": "cj3608",
+        "dg_d1_n64_t2_cfl0.2": "cj3605",
+        "dg_d1_n64_t5_cfl0.2": "cj3606",
+        "dg_d1_n64_t10_cfl0.2": "cj3607",
+        "dg_d2_n32_t20_cfl0.2": "cj3608"
       },
       "unexpected": [],
       "note": "unexpected keys are listed for transparency but are not a failure: extra evidence is allowed, missing evidence is not. A missing checkpoint with a submitted job reads not_evaluated (INCOMPLETE), never passed",
@@ -826,6 +1115,46 @@
       "passed": true,
       "status": "informational"
     },
+    "C11_provenance_integrity": {
+      "criterion": "every record on disk matches its declared configuration (physics fields) and either records the reference model it was measured against or carries a replay certificate that reproduces its errors to 1e-09 against the aggregated model",
+      "measured": 1.1334673056073137e-12,
+      "worst_at": "dg_d2_n32_t5_cfl0.4",
+      "counts": {
+        "recorded": 13,
+        "unverified": 7,
+        "replayed": 12,
+        "missing": 8
+      },
+      "present": 32,
+      "replayed": {
+        "dg_d2_n32_t1_cfl0.2": 0.0,
+        "dg_d2_n32_t1_cfl0.4": 1.5124161064817206e-13,
+        "dg_d2_n32_t2_cfl0.4": 4.4194977682856375e-13,
+        "dg_d2_n32_t5_cfl0.4": 1.1334673056073137e-12,
+        "p0_n128_t10_cfl0.4": 3.4451555256475413e-16,
+        "p0_n128_t1_cfl0.4": 0.0,
+        "p0_n128_t2_cfl0.4": 0.0,
+        "p0_n128_t5_cfl0.4": 0.0,
+        "p0_n256_t1_cfl0.4": 0.0,
+        "p0_n64_t10_cfl0.4": 2.9104591609816983e-16,
+        "p0_n64_t1_cfl0.4": 0.0,
+        "p0_n64_t5_cfl0.4": 0.0
+      },
+      "unverified": [
+        "dg_d2_n32_t10_cfl0.2",
+        "dg_d2_n32_t10_cfl0.4",
+        "dg_d2_n32_t2_cfl0.2",
+        "dg_d2_n32_t5_cfl0.2",
+        "dg_d2_n64_t10_cfl0.2",
+        "dg_d2_n64_t1_cfl0.2",
+        "dg_d2_n64_t2_cfl0.2"
+      ],
+      "config_mismatch": [],
+      "certificate_rejected": [],
+      "certificates_on_disk": 12,
+      "passed": false,
+      "status": "not_evaluated"
+    },
     "informational": [
       "C1x_crosscheck_raw",
       "C7x_design_space_spread",
@@ -834,7 +1163,8 @@
     "all_passed": false,
     "not_evaluated": [
       "C6_ladder_completeness",
-      "C9_design_order"
+      "C9_design_order",
+      "C11_provenance_integrity"
     ],
     "failed": [],
     "verdict": "INCOMPLETE"

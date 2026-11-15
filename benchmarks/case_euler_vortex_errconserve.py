@@ -279,6 +279,26 @@ PENDING_RUNS = {
     "dg_d2_n32_t20_cfl0.2": "cj3608",
 }
 
+#: Provenance of the *result files* (not of the paper): ``run_dg``/``run_p0``
+#: record ``reference_model`` inside every record, but the bundle also contains
+#: records written before that field existed.  The aggregator used to default a
+#: missing field to ``min_image`` -- an *assumption*, and exactly the assumption
+#: that was wrong in rounds 1-3 (the pre-referencing runs were measured against
+#: the free-space formula, which is not the periodic solution for t > 5).  A
+#: record without a recorded model is therefore only trusted when a replay
+#: certificate says the same checkpoint was re-run against the current reference
+#: and reproduced the stored numbers.
+PROVENANCE_CERTIFICATES = "provenance_certificates.json"
+#: Accepted relative deviation between a stored error and its replay.  A genuine
+#: replay reproduces to round-off (measured 0 .. 1e-15), so 1e-9 leaves three
+#: orders of magnitude of slack for BLAS/threading non-determinism while still
+#: rejecting any record that was produced by a different reference or scheme.
+PROVENANCE_REPLAY_TOLERANCE = 1e-9
+#: Fields of a configuration that change the *physics or the discretisation*.
+#: They must agree between the declaration and the record: a result file whose
+#: own config says another CFL/degree/mesh is evidence for a different problem.
+PROVENANCE_PHYSICS_FIELDS = ("task", "degree", "cells", "final_time", "cfl", "strength")
+
 #: Configuration carrying C2/C4 (same pair of meshes as the sibling entry's gate).
 #: The CFL is part of the family identity: ``dt`` follows it, so two CFLs on the
 #: same mesh are two different discretisations and must never share one fit.
@@ -358,6 +378,118 @@ def ladder_completeness(records: list) -> dict:
         "pending": pending,
         "unexpected": unexpected,
     }
+
+
+def canonical_config(config: dict) -> dict:
+    """Configuration in a comparison-normal form.
+
+    JSON round-trips tuples into lists, so a naive ``dict == dict`` marks every
+    direction family as mismatched.  Normalising here keeps the audit about the
+    physics instead of about the serialisation.
+    """
+    out = {key: config[key] for key in PROVENANCE_PHYSICS_FIELDS if key in config}
+    if "background_velocity" in config:
+        out["background_velocity"] = [float(v) for v in config["background_velocity"]]
+    if "reference" in config:
+        out["reference"] = config["reference"]
+    return out
+
+
+def config_mismatch(record: dict, declared: dict) -> dict:
+    """Fields where a record's *own* configuration contradicts its declaration."""
+    got = canonical_config(record.get("config") or {})
+    want = canonical_config(declared)
+    diffs = {}
+    for key in PROVENANCE_PHYSICS_FIELDS:
+        if key in want and got.get(key) != want[key]:
+            diffs[key] = {"declared": want[key], "record": got.get(key)}
+    if "background_velocity" in want:
+        have = got.get("background_velocity")
+        if have is None or any(abs(a - b) > 1e-12
+                               for a, b in zip(have, want["background_velocity"])) \
+                or len(have) != len(want["background_velocity"]):
+            diffs["background_velocity"] = {"declared": want["background_velocity"],
+                                            "record": have}
+    return diffs
+
+
+def load_provenance_certificates(output_dir) -> dict:
+    """Replay certificates on disk (``{}`` when none were produced yet)."""
+    path = Path(output_dir) / PROVENANCE_CERTIFICATES
+    if not path.exists():
+        return {}
+    data = json.loads(path.read_text())
+    return data.get("certificates", data)
+
+
+def provenance_audit(records: list, certificates: dict | None = None) -> dict:
+    """Classify every declared checkpoint by the *provenance* of its evidence.
+
+    C6 asks "is there a file?", which a stale file answers just as well as a
+    fresh one.  This audit asks the question C6 cannot:
+
+    * ``recorded``   -- the record carries the reference model it was measured
+      against (and it is the one being aggregated);
+    * ``replayed``   -- a legacy record (no recorded model) whose checkpoint was
+      re-run against the current reference and reproduced the stored errors
+      within ``PROVENANCE_REPLAY_TOLERANCE``;
+    * ``unverified`` -- legacy record, no certificate: unknown provenance;
+    * ``config_mismatch`` -- the record's own config contradicts the ladder;
+    * ``missing``    -- declared, no file at all.
+    """
+    certificates = certificates or {}
+    by_key = {record["task_key"]: record for record in records}
+    ladder = {task_key(declared): declared for declared in LADDER}
+    # Audit every record on disk, not just the declared ones: an undeclared
+    # record still contributes numbers to the gates (C6 reports it as
+    # ``unexpected``), so its provenance has to be graded as well.
+    rows = {}
+    for key, record in by_key.items():
+        declared = ladder.get(key)
+        row = {"family": record.get("family"),
+               "recorded_reference_model": record.get("reference_model"),
+               "wall_seconds": record.get("wall_seconds")}
+        mismatch = config_mismatch(record, declared) if declared else {}
+        if mismatch:
+            row["status"] = "config_mismatch"
+            row["config_mismatch"] = mismatch
+            rows[key] = row
+            continue
+        recorded = record.get("reference_model")
+        if recorded is not None:
+            row["status"] = "recorded"
+            rows[key] = row
+            continue
+        certificate = certificates.get(key)
+        if certificate is None:
+            row["status"] = "unverified"
+            rows[key] = row
+            continue
+        delta = certificate.get("replay_delta")
+        problems = []
+        if certificate.get("reference_model") != REFERENCE_MODEL:
+            problems.append(f"replayed against {certificate.get('reference_model')!r}, "
+                            f"aggregate is {REFERENCE_MODEL!r}")
+        if delta is None or not np.isfinite(delta) or delta > PROVENANCE_REPLAY_TOLERANCE:
+            problems.append(f"replay delta {delta!r} > {PROVENANCE_REPLAY_TOLERANCE:g}")
+        row["certificate"] = {"reference_model": certificate.get("reference_model"),
+                             "replay_delta": delta,
+                             "wall_seconds": certificate.get("wall_seconds")}
+        if problems:
+            row["status"] = "certificate_rejected"
+            row["problems"] = problems
+        else:
+            row["status"] = "replayed"
+        rows[key] = row
+    for key in ladder:
+        rows.setdefault(key, {"status": "missing"})
+    counts = {}
+    for row in rows.values():
+        counts[row["status"]] = counts.get(row["status"], 0) + 1
+    present = {k: v for k, v in rows.items() if v["status"] != "missing"}
+    return {"rows": rows, "counts": counts, "present": len(present),
+            "certificates_used": len(certificates),
+            "replay_tolerance": PROVENANCE_REPLAY_TOLERANCE}
 
 
 def family_key(record: dict) -> str:
@@ -831,7 +963,7 @@ def _normalise_families(records: list) -> list:
     return records
 
 
-def evaluate_gates(records: list, exact: dict) -> dict:
+def evaluate_gates(records: list, exact: dict, certificates: dict | None = None) -> dict:
     records = _normalise_families(records)
     families = _group(records)
     gate_rows = [r for r in families.get(GATE_FAMILY, []) if r["final_time"] >= T_REF]
@@ -1217,6 +1349,45 @@ def evaluate_gates(records: list, exact: dict) -> dict:
     gates["C7x_design_space_spread"] = design_space_spread(records)
     gates["C7x_amplification_prediction"] = amplification(records)
 
+    # -- C11: provenance of the evidence bundle. ------------------------------
+    # C6 counts files; a stale file counts too.  Nine of the ten gates below are
+    # computed from records that were measured against an *exact solution*, so
+    # the reference used is part of the claim: this gate refuses to let a record
+    # of unknown provenance stand in for a verified one unless a replay
+    # certificate reproduces it against the current reference.
+    audit = provenance_audit(records, certificates)
+    statuses = {k: v["status"] for k, v in audit["rows"].items()}
+    unverified = sorted(k for k, v in statuses.items() if v == "unverified")
+    mismatched = sorted(k for k, v in statuses.items() if v == "config_mismatch")
+    rejected = sorted(k for k, v in statuses.items()
+                      if v == "certificate_rejected")
+    replayed = {k: audit["rows"][k]["certificate"]["replay_delta"]
+                for k, v in statuses.items() if v == "replayed"}
+    if mismatched or rejected:
+        c11_status = "failed"
+    elif unverified or audit["present"] == 0:
+        c11_status = "not_evaluated"
+    else:
+        c11_status = "passed"
+    gates["C11_provenance_integrity"] = {
+        "criterion": (
+            "every record on disk matches its declared configuration (physics "
+            "fields) and either records the reference model it was measured "
+            "against or carries a replay certificate that reproduces its errors "
+            f"to {PROVENANCE_REPLAY_TOLERANCE:g} against the aggregated model"),
+        "measured": (max(replayed.values()) if replayed else 0.0),
+        "worst_at": (max(replayed, key=replayed.get) if replayed else None),
+        "counts": audit["counts"],
+        "present": audit["present"],
+        "replayed": replayed,
+        "unverified": unverified,
+        "config_mismatch": mismatched,
+        "certificate_rejected": rejected,
+        "certificates_on_disk": audit["certificates_used"],
+        "passed": c11_status == "passed",
+        "status": c11_status,
+    }
+
     gates["informational"] = ["C1x_crosscheck_raw", "C7x_design_space_spread",
                               "C7x_amplification_prediction"]
     acceptance = {k: v for k, v in gates.items()
@@ -1240,7 +1411,9 @@ def aggregate(records: list, exact: dict, output_dir: Path) -> dict:
             f"{sorted(models)}: the published numbers must be measured against one "
             "reference, use a separate --output-dir per model")
     model = models.pop() if models else REFERENCE_MODEL
-    evaluation = evaluate_gates(records, exact)
+    certificates = load_provenance_certificates(output_dir)
+    evaluation = evaluate_gates(records, exact, certificates)
+    provenance = provenance_audit(records, certificates)
     metrics = {
         "case": "EULER-VORTEX-ERR",
         "ledger_slug": "CASE-DG-EULER-VORTEX-ERR",
@@ -1276,6 +1449,18 @@ def aggregate(records: list, exact: dict, output_dir: Path) -> dict:
             sorted({r["final_time"] for r in records})),
         "ladder": list(LADDER),
         "ladder_completeness": ladder_completeness(records),
+        "provenance": {
+            "certificates_file": PROVENANCE_CERTIFICATES,
+            "replay_tolerance": PROVENANCE_REPLAY_TOLERANCE,
+            "counts": provenance["counts"],
+            "rows": provenance["rows"],
+            "note": ("`recorded` = the result file carries the reference model it "
+                     "was measured against; `replayed` = legacy record (no model "
+                     "in the file) certified by a re-run of the same checkpoint "
+                     "against the current reference; `unverified` = legacy record "
+                     "with no certificate, i.e. its numbers are not shown to "
+                     "belong to the current reference"),
+        },
         "exact_invariants": exact,
         "gates": evaluation["gates"],
         "family_count": evaluation["families"],
@@ -1402,6 +1587,18 @@ def _markdown(records: list, metrics: dict, exact: dict) -> str:
         f"{gates['C10_direction_invariance']['measured']:.3f}"
         f"（{gates['C10_direction_invariance']['worst_at']}） | "
         f"{flag('C10_direction_invariance')} |",
+        f"| C11 证据溯源 | 每个结果文件与其声明的配置（任务/阶数/网格/CFL/beta/方向）"
+        f"一致，且文件里记了所用参考解模型、或有重放证书把同一检查点对照当前模型复现"
+        f"到 {PROVENANCE_REPLAY_TOLERANCE:g} | 记录 "
+        f"{gates['C11_provenance_integrity']['counts'].get('recorded', 0)}，"
+        f"重放证书 {gates['C11_provenance_integrity']['counts'].get('replayed', 0)}，"
+        f"未证实 {len(gates['C11_provenance_integrity']['unverified'])}，"
+        f"配置矛盾 {len(gates['C11_provenance_integrity']['config_mismatch'])}，"
+        f"证书被拒 {len(gates['C11_provenance_integrity']['certificate_rejected'])}"
+        + (f"（未证实：{', '.join(gates['C11_provenance_integrity']['unverified'][:4])}"
+           + ("…" if len(gates['C11_provenance_integrity']['unverified']) > 4 else "") + "）"
+           if gates['C11_provenance_integrity']['unverified'] else "") + " | "
+        f"{flag('C11_provenance_integrity')} |",
         "",
         "## 阶数轴（C8）与设计阶（C9）",
         "",
