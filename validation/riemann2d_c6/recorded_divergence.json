@@ -1,0 +1,8 @@
+{
+  "provenance": "docs/CASE-DG-CKS1998-2D-RIEMANN-CONSERVATION.md section 3 (previous mission m17539-family).",
+  "caveat": "Transcribed from the previous mission's recorded table; the exact configuration of the +2.209e+07 row (its 540 steps match neither t=0.05 nor t=0.25 at 16x16 with the current code) is NOT fully identified. Used only as a sensitivity fixture for gate C6 and as the reported divergence datum, never as a physics result of this mission.",
+  "mass_change": 4.846e+26,
+  "mass_change_16_mesh": 22090000.0,
+  "final_time": 0.25,
+  "ncells": 32
+}
