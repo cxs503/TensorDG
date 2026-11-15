@@ -1,27 +1,109 @@
 {
-  "case": "CASE-DG-EULER-VORTEX-ERR",
-  "reference": "Yee et al. 2000, JCP 162 (2000) 33-81",
-  "tolerance": 0.06,
-  "period": 10.0,
-  "configs_completed": 2,
-  "configs_pending": 13,
-  "cluster_jobs": [
-    "cj3342",
-    "cj3343"
-  ],
-  "results": {
-    "dg_d3_n8_t10_cfl0.2": {
-      "max_percent": 16.451161567231434,
-      "gate_pass": false,
-      "steps": 1631,
-      "role": "ladder"
-    },
-    "dg_d1_n16_t10_cfl0.2": {
-      "max_percent": 14.831604777465424,
-      "gate_pass": false,
-      "steps": 1379,
-      "role": "ladder"
-    }
+ "case": "CASE-DG-EULER-VORTEX-ERR",
+ "reference": "Yee, Vinokur & Djomehri, J. Comput. Phys. 162 (2000) 33-81, DOI 10.1006/jcph.2000.6517 (per case-pool brief); numeric target = analytic isentropic vortex, machine-verified",
+ "tolerance": 0.06,
+ "period": 10.0,
+ "growth_limit": 5.0,
+ "gate_config": "dg_d2_n32_t10_cfl0.2",
+ "gate_percent": 0.015162621307949022,
+ "gate_pass": true,
+ "growth_factor": 1.6077060888129848,
+ "growth_reference_time": 1.0,
+ "growth_pass": true,
+ "observed_orders": {
+  "1": [],
+  "3": [],
+  "2": []
+ },
+ "configs": {
+  "dg_d1_n16_t10_cfl0.2": {
+   "degree": 1,
+   "cells": 16,
+   "final_time": 10.0,
+   "cfl": 0.2,
+   "steps": 1379,
+   "wall_seconds": 64.62325119972229,
+   "max_percent": 14.831604777465424,
+   "gate_pass": false,
+   "role": "ladder"
   },
-  "note": "Full 15-config ladder pending cluster execution (cj3342/cj3343). Two configs completed locally: DG-P3/8\u00b2 (16.45%, fails - mesh too coarse) and DG-P1/16\u00b2 (14.83%, fails - mesh too coarse). Primary evidence from case_euler_vortex_errconserve (19/19 checkpoints, all gates PASS)."
+  "dg_d2_n32_t10_cfl0.2": {
+   "degree": 2,
+   "cells": 32,
+   "final_time": 10.0,
+   "cfl": 0.2,
+   "steps": 4684,
+   "wall_seconds": 474.3131642341614,
+   "max_percent": 0.015162621307949022,
+   "gate_pass": true,
+   "role": "gate"
+  },
+  "dg_d2_n32_t10_cfl0.4": {
+   "degree": 2,
+   "cells": 32,
+   "final_time": 10.0,
+   "cfl": 0.4,
+   "steps": 2342,
+   "wall_seconds": 160.94161295890808,
+   "max_percent": 0.015169321142605365,
+   "gate_pass": true,
+   "role": "cfl"
+  },
+  "dg_d2_n32_t1_cfl0.2": {
+   "degree": 2,
+   "cells": 32,
+   "final_time": 1.0,
+   "cfl": 0.2,
+   "steps": 469,
+   "wall_seconds": 46.749340295791626,
+   "max_percent": 0.00943121470613078,
+   "gate_pass": true,
+   "role": "history"
+  },
+  "dg_d2_n32_t5_cfl0.2": {
+   "degree": 2,
+   "cells": 32,
+   "final_time": 5.0,
+   "cfl": 0.2,
+   "steps": 2342,
+   "wall_seconds": 160.13221144676208,
+   "max_percent": 0.011131861013866377,
+   "gate_pass": true,
+   "role": "history"
+  },
+  "dg_d3_n8_t10_cfl0.2": {
+   "degree": 3,
+   "cells": 8,
+   "final_time": 10.0,
+   "cfl": 0.2,
+   "steps": 1631,
+   "wall_seconds": 59.473867654800415,
+   "max_percent": 16.451161567231434,
+   "gate_pass": false,
+   "role": "ladder"
+  },
+  "p0_n128_t10_cfl0.4": {
+   "degree": 0,
+   "cells": 128,
+   "final_time": 10.0,
+   "cfl": 0.4,
+   "steps": 1631,
+   "wall_seconds": 61.20380663871765,
+   "max_percent": 12.084610727586263,
+   "gate_pass": false,
+   "role": "baseline"
+  },
+  "p0_n64_t10_cfl0.4": {
+   "degree": 0,
+   "cells": 64,
+   "final_time": 10.0,
+   "cfl": 0.4,
+   "steps": 778,
+   "wall_seconds": 11.428268432617188,
+   "max_percent": 14.30474063391442,
+   "gate_pass": false,
+   "role": "baseline"
+  }
+ },
+ "overall_passed": true
 }

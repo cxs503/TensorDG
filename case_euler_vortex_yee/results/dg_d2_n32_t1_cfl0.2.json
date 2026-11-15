@@ -1,0 +1,38 @@
+{
+ "task": "dg",
+ "degree": 2,
+ "cells": 32,
+ "dx": 0.3125,
+ "steps": 469,
+ "dt": 0.0007577638729985292,
+ "dofs": 36864,
+ "errors": {
+  "density": 4.95214359829303e-05,
+  "velocity_x": 9.42059361961997e-05,
+  "velocity_y": 9.431214706130781e-05,
+  "pressure": 6.966562656570692e-05
+ },
+ "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+ "wall_seconds": 46.749340295791626,
+ "conservation_drift": {
+  "mass": 1.7213575918193442e-14,
+  "momentum_x": 1.7213575918193442e-14,
+  "momentum_y": 1.7647531613610077e-14,
+  "energy": 1.9290790686602623e-14,
+  "entropy": 2.342349749832296e-08
+ },
+ "max_conservation_drift": 2.342349749832296e-08,
+ "final_time": 1.0,
+ "cfl": 0.2,
+ "strength": 5.0,
+ "max_relative_l2": 9.431214706130781e-05,
+ "max_percent": 0.00943121470613078,
+ "gate_pass": true,
+ "reference": "Yee, Vinokur & Djomehri, J. Comput. Phys. 162 (2000) 33-81, DOI 10.1006/jcph.2000.6517 (per case-pool brief); numeric target = analytic isentropic vortex, machine-verified",
+ "config_id": "dg_d2_n32_t1_cfl0.2",
+ "role": "history",
+ "case": "CASE-DG-EULER-VORTEX-ERR",
+ "tolerance": 0.06,
+ "period": 10.0,
+ "wall_seconds_including_setup": 46.749340295791626
+}
