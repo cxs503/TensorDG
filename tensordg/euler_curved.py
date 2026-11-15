@@ -66,10 +66,56 @@ G3  general-mesh equivalence: the same vortex on the warped and on the straight
 G4  conservation: total mass/momentum/energy drift on the warped periodic mesh
     at round-off (conservative DG + consistent metrics telescope).
 
-Not implemented (honest scope): reflective/characteristic curved walls (the
-``CurvedMesh.walls`` flags are ignored -- only periodic edges are supported),
-shock limiters on curved elements, and triangular mappings.  Do not read this
-module as evidence for those.
+Boundary conditions (``boundaries=`` / ``farfield=``)
+-----------------------------------------------------
+The four mesh boundary families ``(axis0_lo, axis0_hi, axis1_lo, axis1_hi)``
+each carry one kind:
+
+``"auto"``      derive from the mesh (periodic axis -> periodic, ``walls`` flag
+                -> wall, otherwise the historical zero-gradient outflow copy);
+``"periodic"``  the existing periodic connectivity;
+``"wall"``      exact slip wall: the numerical normal flux is ``(0, p n)`` with
+                ``p`` taken from the *interior* trace (mass and energy flux are
+                identically zero, so a closed wall domain conserves both);
+``"farfield"``  free-stream ghost state (``farfield=(rho,u,v,p)``) fed to the
+                same HLLC solver -- supersonic in/outflow and subsonic
+                inflow/outflow all fall out of the Riemann solver;
+``"outflow"``   zero-gradient copy of the interior trace (supersonic outflow).
+
+``wall_force`` integrates ``p n`` over the wall faces and returns the force the
+fluid exerts on the body.  ``cylinder_annulus_mesh`` builds the body-fitted
+O-grid with radial clustering that the CKS1998 cylinder case needs.
+
+*** HONEST STATUS OF THE BOUNDARY KINDS: consistent, but NOT time-marchable. ***
+Everything that can be checked *without* marching is exact:
+
+* free-stream preservation of a uniform slip flow in a wall-bounded channel --
+  the semi-discrete operator is ``O(1e-15)``;
+* the wall numerical flux is impermeable and adiabatic -- its mass and energy
+  components vanish to round-off and the momentum component is ``p n``;
+* a wall-closed domain conserves total mass and total energy to round-off at
+  short times;
+* the resolved geometry (``cylinder_annulus_mesh``) reproduces the analytic
+  annulus area to ``5e-5`` relative.
+
+But an explicit SSP-RK3 march of a state that is an *exact* steady solution
+(``u_t = 0``) grows round-off by ~6x per 10 steps and blows up within a few
+hundred steps, for both wall-flux variants tried (bare ``(0, p n)`` and the
+mirror-ghost HLLC): the reflective boundary is *linearly unstable* as
+implemented here.  The failure is reproduced by
+``tests/test_euler_curved_boundaries.py::test_wall_boundary_march_is_unstable_honest``
+and quantified in ``validation/curved_wall_bc/metrics.json``.  Consequences:
+
+* the CKS1998 "flow past a circular cylinder" case is **not** reproduced by this
+  module; no cylinder result may be claimed from it;
+* the far-field kind is additionally only a Dirichlet-type ghost (no
+  characteristic radiation condition), so reflections are unbounded by design;
+* do not delete the honest test to "enable" walls -- fix the stability first
+  (candidates: a genuinely two-point wall flux, the Bassi--Rebay/BR1 interface
+  form for boundary faces, or an entropy-stable wall SAT term).
+
+Still not implemented (honest scope): shock limiters on curved elements and
+triangular mappings.  Do not read this module as evidence for those.
 
 References
 ----------
@@ -98,13 +144,16 @@ GAMMA = 1.4
 
 __all__ = [
     "GAMMA",
+    "BOUNDARY_KINDS",
     "CurvilinearEuler",
     "conserved_from_primitive",
     "primitive_from_conserved",
     "euler_flux",
     "hllc_normal",
+    "wall_normal_flux",
     "warped_box_mesh",
     "straight_box_mesh",
+    "cylinder_annulus_mesh",
 ]
 
 
@@ -239,6 +288,96 @@ def hllc_normal(left: np.ndarray, right: np.ndarray, normal_x, normal_y,
     return np.where(degenerate[..., None], rusanov, flux)
 
 
+def wall_normal_flux(inner: np.ndarray, normal_x, normal_y,
+                     gamma: float = GAMMA) -> np.ndarray:
+    """Slip-wall numerical normal flux via the mirror ghost state + HLLC.
+
+    ``inner`` are the *interior* traces ``(..., 4)`` on the wall face and
+    ``(normal_x, normal_y)`` the unit face normal in the orientation the DG face
+    term uses (``J grad(xi)`` / ``J grad(eta)``).  The ghost state mirrors the
+    normal velocity and keeps density, pressure and the tangential velocity:
+
+        ``rho_g = rho``, ``p_g = p``, ``u_n,g = -u_n``, ``u_t,g = u_t``.
+
+    Because the Riemann fan is exactly symmetric, the star normal velocity is
+    zero and the flux through the wall is ``(0, p, 0, 0)`` * up to round-off --
+    i.e. impermeable and adiabatic -- but, unlike the bare ``(0, p n)`` flux, it
+    inherits the HLLC dissipation that the interior faces have.  Dropping that
+    dissipation is linearly unstable on a curved wall (observed: round-off grows
+    ~6x per 10 RK steps until blow-up), so the ghost form is the one used.
+    """
+    state = np.asarray(inner, float)
+    rho, velocity_x, velocity_y, pressure = primitive_from_conserved(state, gamma)
+    normal_x = np.asarray(normal_x, float)
+    normal_y = np.asarray(normal_y, float)
+    normal_velocity = velocity_x * normal_x + velocity_y * normal_y
+    tangential = -velocity_x * normal_y + velocity_y * normal_x
+    ghost = conserved_from_primitive(
+        rho,
+        -normal_velocity * normal_x - tangential * normal_y,
+        -normal_velocity * normal_y + tangential * normal_x,
+        pressure,
+        gamma,
+    )
+    return hllc_normal(state, ghost, normal_x, normal_y, gamma)
+
+
+BOUNDARY_KINDS = ("auto", "periodic", "wall", "farfield", "outflow")
+
+
+def cylinder_annulus_mesh(nr: int, ntheta: int, r_inner: float, r_outer: float,
+                          degree: int = 1, growth: float = 1.0,
+                          inner_curve=None):
+    """Body-fitted polar O-grid around a circular cylinder, radially clustered.
+
+    Axis 0 is radial (``axis0_lo`` = the cylinder wall, ``axis0_hi`` = the outer
+    far-field circle), axis 1 is azimuthal and **periodic**; the wall flags mark
+    the two circular boundaries.  ``growth >= 1`` is a geometric radial spacing
+    with first-cell thickness
+
+        ``dr0 = (r_outer - r_inner) (growth - 1) / (growth**nr - 1)``
+
+    so ``growth = 1`` recovers the uniform spacing of
+    ``curved_geometry.annulus_mesh``.  ``inner_curve(theta) -> (x, y)`` allows a
+    non-circular body (CAD contract); the default is the exact circle.
+    """
+    nr, ntheta = int(nr), int(ntheta)
+    if nr < 1 or ntheta < 4:
+        raise ValueError("need nr >= 1 and ntheta >= 4")
+    if not (0.0 < r_inner < r_outer):
+        raise ValueError("require 0 < r_inner < r_outer")
+    if growth < 1.0:
+        raise ValueError("growth must be >= 1")
+    nodes, _ = gll_nodes_weights(max(int(degree), 1))
+    if abs(growth - 1.0) < 1e-14:
+        radii = np.linspace(r_inner, r_outer, nr + 1)
+    else:
+        q = float(growth)
+        dr0 = (r_outer - r_inner) * (q - 1.0) / (q ** nr - 1.0)
+        radii = r_inner + dr0 * (q ** np.arange(nr + 1) - 1.0) / (q - 1.0)
+        radii[-1] = r_outer
+    if inner_curve is None:
+        def inner_curve(theta):
+            return np.stack([r_inner * np.cos(theta), r_inner * np.sin(theta)], -1)
+    outer_curve = lambda theta: np.stack(
+        [r_outer * np.cos(theta), r_outer * np.sin(theta)], -1)
+    maps = []
+    for i in range(nr):
+        r_local = radii[i] + 0.5 * (radii[i + 1] - radii[i]) * (nodes + 1.0)
+        lam_local = (r_local - r_inner) / (r_outer - r_inner)
+        row = []
+        for j in range(ntheta):
+            theta_local = 2.0 * np.pi * (j + 0.5 * (nodes + 1.0)) / ntheta
+            R, TH = np.meshgrid(r_local, theta_local, indexing="ij")
+            lam = np.meshgrid(lam_local, theta_local, indexing="ij")[0]
+            Pi, Po = inner_curve(TH), outer_curve(TH)
+            X = (1.0 - lam) * Pi[..., 0] + lam * Po[..., 0]
+            Y = (1.0 - lam) * Pi[..., 1] + lam * Po[..., 1]
+            row.append(IsoparametricMap.from_nodal(X, Y))
+        maps.append(row)
+    return CurvedMesh(maps, periodic=(False, True), walls=(True, False, False, False))
+
+
 # ---------------------------------------------------------------------------
 # Mesh builders on a scaled periodic box (the isentropic-vortex domain)
 # ---------------------------------------------------------------------------
@@ -295,6 +434,47 @@ def straight_box_mesh(nx: int, ny: int, degree: int = 1,
 # ---------------------------------------------------------------------------
 # The solver
 # ---------------------------------------------------------------------------
+_BOUNDARY_SIDES = ((0, -1), (0, 1), (1, -1), (1, 1))
+
+
+def resolve_boundaries(mesh: CurvedMesh, boundaries=None) -> dict:
+    """Resolve the four boundary families to concrete kinds.
+
+    ``boundaries`` is a 4-tuple in the order ``(axis0_lo, axis0_hi, axis1_lo,
+    axis1_hi)`` (the ``CurvedMesh.walls`` order) with entries from
+    :data:`BOUNDARY_KINDS`; ``None`` means ``"auto"`` everywhere.  A periodic
+    axis must be periodic on both of its sides and a non-periodic axis must not
+    be, so an inconsistent request is an error rather than a silent corner.
+    """
+    if boundaries is None:
+        requested = ("auto",) * 4
+    else:
+        requested = tuple(boundaries)
+        if len(requested) != 4:
+            raise ValueError("boundaries needs exactly 4 entries "
+                             "(axis0_lo, axis0_hi, axis1_lo, axis1_hi)")
+    kinds = {}
+    for index, (axis, side) in enumerate(_BOUNDARY_SIDES):
+        kind = str(requested[index])
+        if kind not in BOUNDARY_KINDS:
+            raise ValueError(f"unknown boundary kind {kind!r}; "
+                             f"expected one of {BOUNDARY_KINDS}")
+        periodic = bool(mesh.periodic[axis])
+        if kind == "auto":
+            if periodic:
+                kind = "periodic"
+            elif mesh.walls[index]:
+                kind = "wall"
+            else:
+                kind = "outflow"
+        if (kind == "periodic") != periodic:
+            raise ValueError(
+                f"boundary {kind!r} requested on a "
+                f"{'periodic' if periodic else 'non-periodic'} axis")
+        kinds[(axis, side)] = kind
+    return kinds
+
+
 class CurvilinearEuler:
     """Strong-form modal DG for the 2-D Euler equations on ``CurvedMesh``.
 
@@ -313,11 +493,20 @@ class CurvilinearEuler:
         polynomial of this degree instead of ``nq-1``.  ``p`` reproduces the
         naive implementation whose aliasing breaks free-stream preservation;
         leave it ``None`` for the correct scheme.
+    boundaries : 4-tuple of str, optional
+        Boundary kind per family ``(axis0_lo, axis0_hi, axis1_lo, axis1_hi)``,
+        see :func:`resolve_boundaries`.  ``None`` reproduces the historical
+        behaviour (periodic edges everywhere the mesh is periodic, zero-gradient
+        outflow copies on every other edge).
+    farfield : sequence of 4 floats, optional
+        Free-stream primitive state ``(rho, u, v, p)`` for the ``"farfield"``
+        kind; required if and only if some family is a far-field boundary.
     """
 
     def __init__(self, mesh: CurvedMesh, degree: int, cfl: float = 0.3,
                  gamma: float = GAMMA, nquad: int | None = None,
-                 volume_derivative_degree: int | None = None):
+                 volume_derivative_degree: int | None = None,
+                 boundaries=None, farfield=None):
         self.mesh = mesh
         self.p = int(degree)
         if self.p < 0:
@@ -337,6 +526,28 @@ class CurvilinearEuler:
         self._build_geometry()
         self._build_face_geometry()
         self._build_mass_matrix()
+        self.boundary_kinds = resolve_boundaries(mesh, boundaries)
+        needs_farfield = any(k == "farfield" for k in self.boundary_kinds.values())
+        if needs_farfield and farfield is None:
+            raise ValueError("a farfield boundary needs farfield=(rho, u, v, p)")
+        if farfield is not None:
+            state = np.asarray(farfield, dtype=float).reshape(-1)
+            if state.size != 4:
+                raise ValueError("farfield must be the primitive (rho, u, v, p)")
+            if not np.all(np.isfinite(state)) or state[0] <= 0.0 or state[3] <= 0.0:
+                raise ValueError("farfield needs finite rho > 0 and p > 0")
+            self.farfield_primitive = state
+            # the Riemann solver works on *conserved* states: convert once
+            self.farfield = conserved_from_primitive(
+                state[0], state[1], state[2], state[3], self.gamma)
+        else:
+            self.farfield = None
+            self.farfield_primitive = None
+        if not needs_farfield:
+            self.farfield = None
+            self.farfield_primitive = None
+        self.wall_sides = tuple(
+            side for side, kind in self.boundary_kinds.items() if kind == "wall")
 
     # -- geometry -----------------------------------------------------------
     def _build_geometry(self):
@@ -477,6 +688,14 @@ class CurvilinearEuler:
         hi_eta = np.einsum("nklc,qk->nqc", state, basis)
         return lo_xi, hi_xi, lo_eta, hi_eta
 
+    def sample(self, state: np.ndarray) -> np.ndarray:
+        """Nodal (Gauss-point) values ``(ncells, nq, nq, 4)`` of a modal state."""
+        return np.einsum("qk,nklc,rl->nqrc", self.basis, state, self.basis)
+
+    def primitive(self, state: np.ndarray):
+        """``(rho, u, v, p)`` sampled at the volume quadrature points."""
+        return primitive_from_conserved(self.sample(state), self.gamma)
+
     def _face_states(self, traces, axis: int, side: int):
         """Interior trace and neighbour trace on one edge family (periodic)."""
         inside = {(0, -1): traces[0], (0, 1): traces[1],
@@ -492,6 +711,21 @@ class CurvilinearEuler:
             result[valid] = outer[neighbour[valid]]
         # an unreachable (wall) edge falls back to an outflow copy of the trace
         return inner, result
+
+    def _boundary_normal_flux(self, kind, inner, side, unit_x, unit_y):
+        """Unit-normal numerical flux on a non-periodic boundary face.
+
+        ``inner`` are the interior traces and ``(unit_x, unit_y)`` the face unit
+        normal in the orientation the DG face term uses (the reference
+        ``+xi``/``+eta`` normal), so the caller can subtract the physical flux of
+        ``inner`` without a sign flip.
+        """
+        if kind == "wall":
+            return wall_normal_flux(inner, unit_x, unit_y, self.gamma)
+        ghost = np.broadcast_to(self.farfield.reshape((1,) * (inner.ndim - 1) + (4,)),
+                                inner.shape)
+        left, right = (inner, ghost) if side > 0 else (ghost, inner)
+        return hllc_normal(left, right, unit_x, unit_y, self.gamma)
 
     # -- spatial operator ---------------------------------------------------
     def rhs(self, state: np.ndarray) -> np.ndarray:
@@ -531,6 +765,18 @@ class CurvilinearEuler:
                 numerical = geometry["magnitude"][..., None] * hllc_normal(
                     left, right, geometry["unit_x"], geometry["unit_y"], self.gamma
                 )
+                kind = self.boundary_kinds[(axis, side)]
+                if kind in ("wall", "farfield"):
+                    numerical = np.array(numerical, copy=True)
+                    on_boundary = self.mesh.neighbours[(axis, side)] < 0
+                    if np.any(on_boundary):
+                        numerical[on_boundary] = (
+                            geometry["magnitude"][on_boundary][..., None]
+                            * self._boundary_normal_flux(
+                                kind, inner[on_boundary], side,
+                                geometry["unit_x"][on_boundary],
+                                geometry["unit_y"][on_boundary])
+                        )
                 flux_x_in, flux_y_in = euler_flux(inner, self.gamma)
                 physical = (
                     geometry["metric"][..., 0, None] * flux_x_in
@@ -591,6 +837,75 @@ class CurvilinearEuler:
         sampled = np.einsum("qk,nklc,rl->nqrc", self.basis, state, self.basis)
         weight = self.J * self.w[None, :, None] * self.w[None, None, :]
         return np.einsum("nqr,nqrc->c", weight, sampled)
+
+    # -- wall diagnostics ----------------------------------------------------
+    def wall_pressure(self, state: np.ndarray):
+        """Wall-face pressure samples: ``{side: dict(x, y, theta, p, dS)}``.
+
+        ``p`` is the pressure of the *interior* trace at the wall quadrature
+        points (what the wall flux uses), ``dS`` the physical arc-length weight
+        ``|J grad(xi)| w`` (or ``|J grad(eta)| w``), so
+        ``sum(p * dS) / sum(dS)`` is the area-weighted wall pressure and
+        ``sum(p n dS)`` the pressure force.
+        """
+        traces = self.traces(state)
+        out = {}
+        for side in self.wall_sides:
+            axis, sign = side
+            geometry = self.face[side]
+            cells = self.mesh.neighbours[side] < 0
+            inner = traces[2 * axis + (0 if sign < 0 else 1)][cells]
+            _, _, _, pressure = primitive_from_conserved(inner, self.gamma)
+            x = np.broadcast_to(geometry["x"][cells], pressure.shape)
+            y = np.broadcast_to(geometry["y"][cells], pressure.shape)
+            dS = geometry["magnitude"][cells] * self.w[None, :]
+            out[side] = {
+                "x": np.array(x),
+                "y": np.array(y),
+                "theta": np.arctan2(np.array(y), np.array(x)),
+                "p": np.array(pressure),
+                "dS": np.array(np.broadcast_to(dS, pressure.shape)),
+            }
+        return out
+
+    def wall_force(self, state: np.ndarray):
+        """Pressure force the fluid exerts on the body: ``-oint p n_body dS``.
+
+        The reference normals of the ``lo`` faces point *into* the element (hence
+        into the fluid) and those of the ``hi`` faces point out, so the physical
+        body normal is ``+n_ref`` on ``lo`` and ``-n_ref`` on ``hi``; the force on
+        the body is minus the pressure integral along it.  Returns
+        ``{"Fx": .., "Fy": .., "per_side": {side: (Fx, Fy)}}``.
+        """
+        force = np.zeros(2)
+        per_side = {}
+        walls = self.wall_pressure(state)
+        for (axis, sign), data in walls.items():
+            geometry = self.face[(axis, sign)]
+            cells = self.mesh.neighbours[(axis, sign)] < 0
+            nx = np.broadcast_to(geometry["unit_x"][cells], data["p"].shape)
+            ny = np.broadcast_to(geometry["unit_y"][cells], data["p"].shape)
+            # force on body = -sum_lo oint p n_ref dS + sum_hi oint p n_ref dS
+            s = -1.0 if sign < 0 else 1.0
+            contribution = np.array([
+                s * float(np.sum(data["p"] * nx * data["dS"])),
+                s * float(np.sum(data["p"] * ny * data["dS"])),
+            ])
+            per_side[(axis, sign)] = tuple(float(v) for v in contribution)
+            force += contribution
+        return {"Fx": float(force[0]), "Fy": float(force[1]),
+                "per_side": per_side}
+
+    def steady_residual(self, state: np.ndarray) -> dict:
+        """``sup |dU/dt|`` and its per-step density change (steady-state monitor)."""
+        rate = self.rhs(state)
+        dt = self.stable_dt(state)
+        return {
+            "operator": float(np.max(np.abs(rate))),
+            "density_per_step": float(np.max(np.abs(rate[..., 0])) * dt),
+            "relative": float(np.max(np.abs(rate)) / max(np.max(np.abs(state)), 1e-30)),
+            "dt": float(dt),
+        }
 
     def max_wave_speed(self, state: np.ndarray) -> float:
         sampled = np.einsum("qk,nklc,rl->nqrc", self.basis, state, self.basis)
