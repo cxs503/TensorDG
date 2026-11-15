@@ -1,0 +1,46 @@
+{
+ "cells": 400,
+ "cfl": 0.35,
+ "degree": 3,
+ "density_min": 0.33783177401764375,
+ "dof": 1600,
+ "dt_mean": 2.6337115072933552e-05,
+ "flux": "hllc",
+ "knob": {
+  "limiter": "ao"
+ },
+ "l1": {
+  "density": 0.013987551555660489,
+  "pressure": 0.004435060745587418,
+  "velocity": 0.006905670440968263
+ },
+ "l2": {
+  "density": 0.05627793543286587,
+  "pressure": 0.014631701156186859,
+  "velocity": 0.02842984746735078
+ },
+ "limiter": "ao",
+ "positivity": "scale",
+ "positivity_stats": {
+  "cell_stages": 5923200,
+  "limited_cells": 0,
+  "min_theta": 1.0
+ },
+ "pressure_min": 0.5709996146117605,
+ "role": "shock capture",
+ "solver_kwargs": {
+  "cfl": 0.35,
+  "degree": 3,
+  "final_time": 0.13,
+  "limiter": "ao",
+  "limiter_stage": "every",
+  "ncells": 400,
+  "positivity": "scale"
+ },
+ "steps": 4936,
+ "variant": "ao",
+ "wall_seconds": 189.12616276741028,
+ "why": "hierarchical AO limiter, which keeps design order in troubled cells instead of collapsing them",
+ "worst_field": "density",
+ "worst_l2": 0.05627793543286587
+}

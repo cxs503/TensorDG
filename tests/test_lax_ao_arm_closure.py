@@ -148,3 +148,46 @@ class TestAOFrameworkConsistency:
         # After AO is filled, only pos_none should be errored
         assert "ao" not in not_run, "AO should not be in arms_not_run"
         assert "ao" not in errored, "AO should not be in arms_errored"
+
+
+# ------------------------------------------------------- closed-set completeness
+class TestClosedArmSetComplete:
+    """The pre-registered arm set must be fully *measured*, not merely declared closed.
+
+    ``closed_arm_set`` in the artifact means "no arm was added or dropped after
+    the numbers were seen".  It must not be readable as "every arm has a number":
+    the AO arm spent one full round as ``not_run`` after a cluster job that
+    crashed on a stale checkout (rc=1) while the platform still showed
+    ``succeeded``.  These checks bind the closure claim to files on disk.
+    """
+
+    def test_every_pre_registered_arm_has_a_leg_file(self):
+        missing = [name for name in study.VARIANT_ORDER
+                   if not (LEGS / f"{name}.json").exists()]
+        assert not missing, f"pre-registered arms without a leg record: {missing}"
+
+    def test_metrics_has_one_row_per_arm(self):
+        metrics = json.loads(METRICS.read_text())
+        assert [r["variant"] for r in metrics["rows"]] == list(study.VARIANT_ORDER)
+
+    def test_no_arm_is_silently_unknown(self):
+        metrics = json.loads(METRICS.read_text())
+        unknown = [r["variant"] for r in metrics["rows"]
+                   if r.get("not_run") or "error" in r]
+        # pos_none is a registered crash (positivity=none is nonphysical at this
+        # mesh, recorded with its exception); it is an outcome, not a hole.
+        assert set(unknown) <= {"pos_none"}, (
+            f"arms left without a measurement: {unknown}")
+
+    def test_ao_row_is_bound_to_its_leg_file(self):
+        metrics = json.loads(METRICS.read_text())
+        leg = json.loads((LEGS / "ao.json").read_text())
+        ao_row = next(r for r in metrics["rows"] if r["variant"] == "ao")
+        for field in study.FIELDS:
+            assert math.isclose(ao_row["l2"][field], leg["l2"][field], rel_tol=1e-12)
+        assert ao_row["steps"] == leg["steps"]
+
+    def test_ao_leg_reports_its_provenance(self):
+        leg = json.loads((LEGS / "ao.json").read_text())
+        assert leg["solver_kwargs"]["limiter"] == "ao"
+        assert leg["density_min"] > 0 and leg["pressure_min"] > 0
