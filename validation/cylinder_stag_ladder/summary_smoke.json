@@ -1,0 +1,91 @@
+{
+  "rows": [
+    {
+      "tag": "m3-p0-8x16-g1.35-R5",
+      "nr": 8,
+      "ntheta": 16,
+      "degree": 0,
+      "mach": 3.0,
+      "r_out": 5.0,
+      "growth": 1.35,
+      "cfl": 0.4,
+      "cells": 128,
+      "dof": 512,
+      "dt": 0.0021785049405953806,
+      "steps": 919,
+      "time": 2.002046040407136,
+      "wall_seconds": 19.77654967084527,
+      "steady": false,
+      "blew_up": false,
+      "residual_first": 56.59235705548543,
+      "residual_last": 3.595494541027338,
+      "residual_ratio": 0.06353321770114947,
+      "mass_drift_rel": 0.060111531834341946,
+      "energy_drift_rel": 0.054141228708078595,
+      "cp_stag": 1.8123770437538187,
+      "cp_stag_mean_band": 1.6658489789823883,
+      "cp_stag_target": 1.7557086827407338,
+      "cp_stag_rel_error": 0.032276630838678357,
+      "cp_min": -0.12975969163944434,
+      "cd": 1.4383300503399146,
+      "symmetry_error": 3.0935209059724814e-15
+    },
+    {
+      "tag": "m3-p0-12x24-g1.25-R5",
+      "nr": 12,
+      "ntheta": 24,
+      "degree": 0,
+      "mach": 3.0,
+      "r_out": 5.0,
+      "growth": 1.25,
+      "cfl": 0.4,
+      "cells": 288,
+      "dof": 1152,
+      "dt": 0.0012171484153656342,
+      "steps": 1644,
+      "time": 2.0009919948610766,
+      "wall_seconds": 55.94628348015249,
+      "steady": false,
+      "blew_up": false,
+      "residual_first": 137.35603510825996,
+      "residual_last": 5.748351944320531,
+      "residual_ratio": 0.04185001365094624,
+      "mass_drift_rel": 0.056400929276833184,
+      "energy_drift_rel": 0.050227083937897946,
+      "cp_stag": 1.8422146253361635,
+      "cp_stag_mean_band": 1.751691592544287,
+      "cp_stag_target": 1.7557086827407338,
+      "cp_stag_rel_error": 0.049271239269826024,
+      "cp_min": -0.14838886050203556,
+      "cd": 1.4382254756946047,
+      "symmetry_error": 2.772220914457131e-15
+    }
+  ],
+  "fits": {
+    "m3-p0": {
+      "cells": [
+        128.0,
+        288.0
+      ],
+      "rel_error": [
+        0.032276630838678357,
+        0.049271239269826024
+      ],
+      "loglog_slope": 0.5216195616816919,
+      "error_ratio_last_two": 1.5265298139724781
+    }
+  },
+  "best": {
+    "tag": "m3-p0-8x16-g1.35-R5",
+    "cp_stag": 1.8123770437538187,
+    "cp_stag_target": 1.7557086827407338,
+    "cp_stag_rel_error": 0.032276630838678357,
+    "steady": false,
+    "symmetry_error": 3.0935209059724814e-15
+  },
+  "gate": {
+    "tolerance_rel": 0.03,
+    "passed": false,
+    "value": 0.032276630838678357
+  }
+}
