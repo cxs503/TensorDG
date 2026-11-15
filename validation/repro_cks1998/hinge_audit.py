@@ -42,8 +42,9 @@ from typing import Any, Dict, List, Mapping, Tuple
 
 import numpy as np
 
-from validation.repro_cks1998.bench_spec import (HINGE_RULES, HINGE_TOL, DocError,
-                                                 get_pointer, hinge)
+from validation.repro_cks1998.bench_spec import (E3_PREREGISTRATION, HINGE_RULES,
+                                                 HINGE_TOL, DocError, get_pointer,
+                                                 hinge)
 
 #: raw 重算的比对容差：重算走的是同一批浮点数上的同式代数，差异只应来自 ulp。
 RAW_REL_TOL = 1e-9
@@ -93,7 +94,9 @@ def recompute_raw(doc: Mapping[str, Any], rule: Mapping[str, Any]) -> Tuple[floa
         if not cells or not errs:
             raise DocError(f"{metric}: rows 行缺 cells/l1_errors，无法重算观测阶")
         return lsq_order(cells, errs), f"lsq slope over {len(list(errs))} grids from rows"
-    if metric.startswith("e3_overshoot"):
+    if metric.startswith("e3"):        # e3_overshoot_* / e3_paper_overshoot_* 同一条路径
+        if "limiter" in row and row.get("limiter") != "strict_all" and not metric.startswith("e3_paper"):
+            raise DocError(f"{metric}: rows 行 limiter={row.get('limiter')!r} 与度量不符")
         if "pt_min" not in row or "pt_max" not in row:
             raise DocError(f"{metric}: rows 行缺 pt_min/pt_max，无法重算点值超调")
         return (pointwise_overshoot_pct(float(row["pt_min"]), float(row["pt_max"])),
@@ -257,3 +260,75 @@ def main(argv: List[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+# ---------------------------------------------------------------------------
+# E3 并列门的**分辨率预登记**核验（审计 m22343 §3 F1/F2 的机器化闭合）
+# ---------------------------------------------------------------------------
+def verify_preregistration(doc: Mapping[str, Any]) -> Dict[str, Any]:
+    """核对论文配置门的「分辨率/限幅策略/粗网格披露」是否与预登记一致。
+
+    审计 m22343 §3 的两条发现：F1 旧门例 ``strict_all`` 是"构造即真"；F2 同一判据在
+    论文配置下 N=80→100 **翻转**（1.389 % → 0.000 %），单分辨率门会把"网格选得好"
+    当成"性质成立"。本函数把"门钉在哪一档"从散文变成可拒收的检查：
+
+    * 该度量的 ``rows`` 行必须存在且**唯一**；
+    * 行的 ``limiter`` 必须等于预登记的论文策略（``tvb_M0``）；
+    * 行的 ``ncells`` 必须等于该档位（``workload.profile``）预登记的分辨率——换网格即抛；
+    * ``E3_paper_resolution`` 披露行必须存在，且 ``ncells`` 等于预登记的粗网格点。
+
+    返回 ``{metric: {limiter, ncells, coarse_ncells, gate_pct, coarse_pct,
+    resolution_sensitive}}``；``resolution_sensitive=True`` 表示"门在预登记分辨率上过、
+    而在粗网格上已越界"——即该判据**不是**分辨率无关的性质（报告必须披露）。
+    """
+    report: Dict[str, Any] = {}
+    if not E3_PREREGISTRATION:
+        return report
+    profile = str(((doc.get("workload") or {}).get("profile")) or "")
+    rows = list(doc.get("rows") or [])
+    for metric, reg in E3_PREREGISTRATION.items():
+        want = (reg.get("ncells_by_profile") or {}).get(profile)
+        coarse_want = (reg.get("coarse_ncells_by_profile") or {}).get(profile)
+        if want is None:
+            raise DocError(f"{metric}: 档位 {profile!r} 未在 E3_PREREGISTRATION 登记分辨率")
+        gate_rows = [r for r in rows if r.get("metric") == metric]
+        if not gate_rows:
+            raise DocError(f"{metric}: 预登记门例缺 rows 行（无法第三方重算）")
+        if len(gate_rows) > 1:
+            raise DocError(f"{metric}: rows 里出现 {len(gate_rows)} 行（必须唯一）")
+        row = gate_rows[0]
+        if row.get("limiter") != reg["limiter"]:
+            raise DocError(f"{metric}: limiter={row.get('limiter')!r} 与预登记的论文策略 "
+                           f"{reg['limiter']!r} 不一致")
+        if int(row.get("ncells", -1)) != int(want):
+            raise DocError(f"{metric}: ncells={row.get('ncells')!r} 与档位 {profile!r} 预登记分辨率 "
+                           f"{want} 不一致（门不得悄悄换网格）")
+        disc = [r for r in rows if r.get("section") == "E3_paper_resolution"
+                and r.get("degree") == row.get("degree")]
+        if not disc:
+            raise DocError(f"{metric}: 缺粗网格分辨率披露行（E3_paper_resolution），"
+                           "判据的分辨率敏感性不可见")
+        if int(disc[0].get("ncells", -1)) != int(coarse_want):
+            raise DocError(f"{metric}: 披露行 ncells={disc[0].get('ncells')!r} 与预登记的 "
+                           f"粗网格 {coarse_want} 不一致")
+        bound = float(_rule_bound(metric))
+        gate_pct = float(row.get("overshoot_pointwise_pct"))
+        coarse_pct = float(disc[0].get("overshoot_pointwise_pct"))
+        recomputed_gate = pointwise_overshoot_pct(float(row["pt_min"]), float(row["pt_max"]))
+        if abs(recomputed_gate - gate_pct) > 1e-9 * max(1.0, abs(gate_pct)):
+            raise DocError(f"{metric}: 自述超调 {gate_pct:.6g} %% 与由 pt_min/pt_max 重算的 "
+                           f"{recomputed_gate:.6g} %% 不一致")
+        report[metric] = {"limiter": row["limiter"], "ncells": int(row["ncells"]),
+                          "coarse_ncells": int(disc[0].get("ncells")),
+                          "bound": bound, "gate_pct": gate_pct,
+                          "coarse_pct": coarse_pct,
+                          "gate_holds": bool(gate_pct <= bound),
+                          "coarse_holds": bool(coarse_pct <= bound),
+                          "resolution_sensitive": bool(coarse_pct > bound >= gate_pct)}
+    return report
+
+
+def _rule_bound(metric: str) -> float:
+    for rule in HINGE_RULES:
+        if rule["metric"] == metric:
+            return float(rule["bound"])
+    raise DocError(f"HINGE_RULES 未登记度量 {metric}")
