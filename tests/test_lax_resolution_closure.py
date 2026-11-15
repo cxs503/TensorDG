@@ -223,3 +223,81 @@ def test_closure_n800_l2_matches_documentation(metrics):
     assert abs(leg["l2"]["density"] - expected) < 5e-5, (
         f"N=800 density L2 = {leg['l2']['density']:.6f}, expected ~{expected}"
     )
+
+# ------------------------------------------------- m22300 (reopened #617): summary.md consistency
+#
+# The committed one-line summary used to be written by the ingest *only when
+# it did not exist*, so a summary left by an earlier --quick run ("closure
+# mesh 200") survived the full run whose verdict was closure mesh 800.  The
+# tests below pin summary.md to metrics.json and regression-test the ingest
+# so a stale summary can never survive an ingest again.
+
+SUMMARY = Path("docs/benchmarks/results/lax_resolution_closure/summary.md")
+
+
+def test_summary_md_verdict_matches_the_gate(metrics):
+    """summary.md is a view of metrics.json: the verdict line must agree.
+
+    The verdict line is rendered by ``benchmarks.lax_resolution_closure.
+    render_summary`` as ``Verdict: **<status>**  (closure mesh = <N>)``;
+    asserting the exact line (not a substring) is what catches a stale file.
+    """
+    if not SUMMARY.exists():
+        pytest.skip(f"{SUMMARY} not generated yet")
+    text = SUMMARY.read_text(encoding="utf-8")
+    gate = metrics["gate"]
+    mesh = "None" if gate["closure_mesh"] is None else str(gate["closure_mesh"])
+    expected = f"Verdict: **{gate['status']}**  (closure mesh = {mesh})"
+    assert expected in text, (
+        f"summary.md does not carry the artifact verdict line {expected!r}; "
+        "the file is stale relative to metrics.json"
+    )
+
+
+def test_summary_md_tables_match_metrics(metrics):
+    """Every ladder/arm row of summary.md must equal the artifact numbers."""
+    if not SUMMARY.exists():
+        pytest.skip(f"{SUMMARY} not generated yet")
+    text = SUMMARY.read_text(encoding="utf-8")
+    for e in metrics["ladder"]:
+        row = (f"| {e['cells']} | {e['l2']['density']:.4%} | "
+               f"{e['l2']['velocity']:.4%} | {e['l2']['pressure']:.4%} | "
+               f"{e['l1']['density']:.4%} | {e['band_l1']['density']:.4%} |")
+        assert row in text, f"ladder row for N={e['cells']} missing/stale"
+    for a in metrics["arms"]:
+        row = (f"| {a['limiter']} | {a['l2']['density']:.4%} | "
+               f"{a['l2']['velocity']:.4%} | {a['l2']['pressure']:.4%} |")
+        assert row in text, f"arm row for limiter={a['limiter']} missing/stale"
+
+
+def test_ingest_refreshes_a_stale_summary(tmp_path, monkeypatch, metrics):
+    """An ingest overwrites a stale summary.md instead of skipping it.
+
+    Reproduces the m22300 defect: a stale summary (closure mesh 200) is
+    pre-placed, then a full-run digest is ingested; the refreshed summary
+    must carry the ingested closure mesh, not the stale one.
+    """
+    import scripts.ingest_lax_closure_run as ingest
+
+    out = tmp_path / "out"
+    out.mkdir(parents=True)
+    monkeypatch.setattr(ingest, "OUT", out)
+    monkeypatch.setattr(ingest, "render_doc", lambda: None)
+    (out / "summary.md").write_text(
+        "# CASE-LAX-DG resolution closure\n"
+        "verdict PASS, closure mesh 200\n", encoding="utf-8")
+
+    digest = {k: metrics[k] for k in
+              ("ladder", "arms", "gate", "wall_seconds", "generated_at_utc")}
+    record = {"job_id": "cjTEST", "node": "nTEST", "rc": 0,
+              "output_tail": "DIGEST" + json.dumps(digest)}
+    log = tmp_path / "job.log"
+    log.write_text(json.dumps(record) + "\n", encoding="utf-8")
+
+    assert ingest.main([str(log)]) == 0
+    refreshed = (out / "summary.md").read_text(encoding="utf-8")
+    assert "closure mesh 200" not in refreshed
+    assert f"closure mesh = {metrics['gate']['closure_mesh']}" in refreshed
+    # the ingested metrics.json must be self-contained for render_summary
+    reingested = json.loads((out / "metrics.json").read_text(encoding="utf-8"))
+    assert reingested["out_dir"] == str(out)
