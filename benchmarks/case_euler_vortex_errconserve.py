@@ -31,6 +31,15 @@ C3 discrete  total mass / x-momentum / y-momentum / energy drift by
 C4 entropy   ``S = int p rho^{-gamma} dA`` (exact value = box area, the
    budget    vortex is isentropic) drifts by < 1e-3 relative; physical
              dissipation may only *decrease* it.
+C5 cross-    the P0 second code path must converge (observed order >= 0.8 at
+   check     t = 1), so the case is not certified by a single implementation.
+C6 ladder    every checkpoint declared in ``LADDER`` has a result record --
+   complete- a declared-but-missing run is a hard FAIL, never a silent PASS.
+   ness
+C7 design-   C2's conclusion must survive a change of *design point*: every DG
+   space     family (mesh x CFL) with >= 3 checkpoints has alpha <= 1, and at
+   invariance least two such families must exist.  Without it C2 is a statement
+             about one 32^2 / CFL 0.2 run rather than about the scheme.
 ============ ==========================================================
 
 Two independent discrete families are measured, so the criteria are not
@@ -117,6 +126,14 @@ LADDER = (
       for t in (1.0, 2.0, 5.0, 10.0)),
     *({"task": "p0", "cells": 128, "final_time": t, "cfl": 0.4}
       for t in (1.0, 2.0, 5.0, 10.0)),
+    # -- design-space replication of C2 (mesh axis + CFL axis) --------------
+    # Round 5 measured alpha on one mesh at one CFL only, which leaves the
+    # criterion open to the objection that it is a property of that pair.  The
+    # two families below close it: same degree, one axis moved at a time.
+    *({"task": "dg", "degree": 2, "cells": 32, "final_time": t, "cfl": 0.4}
+      for t in (1.0, 2.0, 5.0, 10.0)),
+    *({"task": "dg", "degree": 2, "cells": 64, "final_time": t, "cfl": 0.2}
+      for t in (1.0, 2.0, 10.0)),
     # cross-check resolution ladder at the design checkpoint t = 1:
     # n = 64/128/256 gives three points for an observed convergence order (C5).
     *({"task": "p0", "cells": cells, "final_time": 1.0, "cfl": 0.4}
@@ -125,8 +142,41 @@ LADDER = (
       for t in (5.0, 10.0)),
 )
 
+#: Checkpoints that are declared in ``LADDER`` and whose run has been *submitted*
+#: to the compute gate but has not landed in ``results/`` yet.  They are absent
+#: evidence, so the verdict is INCOMPLETE -- never PASS -- until they land; the
+#: archive keeps them visible (a hole that is merely quiet is exactly the defect
+#: C6 was written for).  When a record arrives the entry is ignored automatically.
+PENDING_RUNS = {
+    "dg_d2_n32_t1_cfl0.4": "cj3182",
+    "dg_d2_n32_t2_cfl0.4": "cj3182",
+    "dg_d2_n32_t5_cfl0.4": "cj3182",
+    "dg_d2_n32_t10_cfl0.4": "cj3182",
+    "dg_d2_n64_t1_cfl0.2": "cj3183",
+    "dg_d2_n64_t2_cfl0.2": "cj3183",
+    "dg_d2_n64_t10_cfl0.2": "cj3181",
+}
+
 #: Configuration carrying C2/C4 (same pair of meshes as the sibling entry's gate).
-GATE_FAMILY = "dg_d2_n32"
+#: The CFL is part of the family identity: ``dt`` follows it, so two CFLs on the
+#: same mesh are two different discretisations and must never share one fit.
+GATE_FAMILY = "dg_d2_n32_cfl0.2"
+#: C7 -- minimum number of *decidable* DG design points (mesh x CFL) that must
+#: show error conservation.  One point is an anecdote: C2 lives on a single
+#: (32^2, CFL 0.2) run, so without C7 the criterion could be an artefact of that
+#: one mesh and that one time step.
+MIN_DECIDABLE_DESIGN_FAMILIES = 2
+#: One full box crossing per axis: L / u_inf = 10 / 1.
+BOX_CROSSING_TIME = 10.0
+#: Informational, predeclared refinement prediction: a second-order scheme's
+#: spatial error falls faster than its projection floor, so the amplification
+#: A = e(10)/e(0) must not grow under mesh refinement.  Registered as a
+#: prediction (supported / falsified), not as a gate: no literature threshold
+#: exists for A, and inventing one is out of bounds for this case pool.
+AMPLIFICATION_PREDICTION = (
+    "A(t=10) = e(10)/e(0) on the refined mesh (dg_d2_n64_cfl0.2) must not exceed "
+    "A(t=10) on the design mesh (dg_d2_n32_cfl0.2)")
+
 
 
 def task_key(config: dict) -> str:
@@ -155,18 +205,21 @@ def ladder_completeness(records: list) -> dict:
     declared = declared_task_keys()
     present = {record["task_key"] for record in records}
     missing = [key for key in declared if key not in present]
+    pending = {key: PENDING_RUNS[key] for key in missing if key in PENDING_RUNS}
     unexpected = sorted(present - set(declared))
     return {
         "declared": len(declared),
         "present": len(present),
         "missing": missing,
+        "pending": pending,
         "unexpected": unexpected,
     }
 
 
 def family_key(record: dict) -> str:
     if record["task"] == "dg":
-        return f"dg_d{record['degree']}_n{record['cells']}"
+        return (f"dg_d{record['degree']}_n{record['cells']}"
+                f"_cfl{record['cfl']:g}")
     return f"p0_n{record['cells']}"
 
 
@@ -492,7 +545,99 @@ def _observed_order(records, checkpoint: float):
     return float(-np.polyfit(np.log(cells), np.log(err), 1)[0]), [int(c) for c in cells]
 
 
+def design_space_spread(records: list) -> dict:
+    """Cross-design-point errors at one box crossing (informational, C7x).
+
+    C7 decides *whether* conservation survives a change of design point; this
+    block records *how much* the long-time error moves when the mesh or the time
+    step is changed.  It is informational because no literature threshold exists
+    for either ratio -- the numbers are here so a reader can judge them, and so a
+    future round cannot claim "design-space invariant" without them on the page.
+    """
+    at_crossing = {}
+    for record in records:
+        if (record["family"].startswith("dg_d")
+                and abs(record["final_time"] - BOX_CROSSING_TIME) < 1e-9):
+            at_crossing[record["family"]] = record["max_percent"]
+    design_point, cfl_point, refined = ("dg_d2_n32_cfl0.2",
+                                        "dg_d2_n32_cfl0.4",
+                                        "dg_d2_n64_cfl0.2")
+    ratio = lambda num, den: (at_crossing[num] / at_crossing[den]
+                             if num in at_crossing and den in at_crossing
+                             and at_crossing[den] > 0.0 else float("nan"))
+    return {
+        "criterion": ("INFORMATIONAL: max-field error at t = "
+                      f"{BOX_CROSSING_TIME:g} per DG design point, and the two "
+                      "one-at-a-time ratios"),
+        "e_at_crossing_percent": at_crossing,
+        "cfl_ratio_0p4_over_0p2": ratio(cfl_point, design_point),
+        "refinement_ratio_n64_over_n32": ratio(refined, design_point),
+        "passed": True,   # informational: never gates the verdict
+        "status": "informational",
+    }
+
+
+def amplification(records: list) -> dict:
+    """A(t) = e(t)/e(0) per design point, e(0) from the projection baseline (C7x).
+
+    The predeclared prediction (:data:`AMPLIFICATION_PREDICTION`) is falsifiable:
+    if the refined mesh amplifies the *same* transport error more than the design
+    mesh does, then the "error is a property of the mesh/flux pair, not of the
+    elapsed time" reading would be wrong in the one direction that matters, and
+    this flag would read ``False``.  Reported, never gated.
+    """
+    from benchmarks.vortex_err_projection_baseline import dg_baseline
+
+    values = {}
+    for record in records:
+        config = record.get("config") or {}
+        cells, degree = config.get("cells"), config.get("degree")
+        if (not record["family"].startswith("dg_d")
+                or cells is None or degree is None
+                or abs(record["final_time"] - BOX_CROSSING_TIME) > 1e-9):
+            continue
+        e0 = dg_baseline(degree=degree, cells=cells)["max_relative_l2"]
+        values[record["family"]] = {
+            "cells": int(cells),
+            "cfl": float(record["cfl"]),
+            "e0_percent": 100.0 * e0,
+            "e_crossing_percent": record["max_percent"],
+            "amplification": (record["max_relative_l2"] / e0 if e0 > 0.0
+                              else float("nan")),
+        }
+    design_point, refined = "dg_d2_n32_cfl0.2", "dg_d2_n64_cfl0.2"
+    supported = None
+    if design_point in values and refined in values:
+        supported = bool(values[refined]["amplification"]
+                         <= values[design_point]["amplification"])
+    return {
+        "prediction": AMPLIFICATION_PREDICTION,
+        "values": values,
+        "supported": supported,
+        "passed": True,   # a falsified prediction is a finding, not a gate failure
+        "status": "informational",
+    }
+
+
+def _normalise_families(records: list) -> list:
+    """Re-derive the family key from each record's own configuration.
+
+    Result files written before the CFL became part of the family identity carry
+    the old mesh-only key (``dg_d2_n32``).  Trusting the stored string would
+    split one family into two and silently hide the design family from C2, so the
+    key is always recomputed from ``(task, degree, cells, cfl)`` -- the config is
+    the authority, not the label.
+    """
+    for record in records:
+        config = record.get("config") or {}
+        if (record.get("task") and record.get("cfl") is not None
+                and config.get("cells") is not None):
+            record["family"] = family_key(record)
+    return records
+
+
 def evaluate_gates(records: list, exact: dict) -> dict:
+    records = _normalise_families(records)
     families = _group(records)
     gate_rows = [r for r in families.get(GATE_FAMILY, []) if r["final_time"] >= T_REF]
     gates = {}
@@ -625,21 +770,83 @@ def evaluate_gates(records: list, exact: dict) -> dict:
 
     # -- C6: ladder completeness (no declared checkpoint may be silently absent).
     completeness = ladder_completeness(records)
-    c6_ok = not completeness["missing"]
+    # A missing checkpoint that has a *submitted job* behind it is still missing
+    # evidence, but it is a known, self-resolving hole rather than a silent one:
+    # it reads as ``not_evaluated`` (=> INCOMPLETE), never as ``passed``.  Any
+    # other missing checkpoint stays a hard failure.
+    unfinished = [key for key in completeness["missing"]
+                  if key not in completeness["pending"]]
+    if not completeness["missing"]:
+        c6_status = "passed"
+    elif unfinished:
+        c6_status = "failed"
+    else:
+        c6_status = "not_evaluated"
     gates["C6_ladder_completeness"] = {
         "criterion": ("every checkpoint declared in LADDER has a result record "
                       f"({completeness['declared']} declared)"),
         "declared": completeness["declared"],
         "present": completeness["present"],
         "missing": completeness["missing"],
+        "pending_jobs": completeness["pending"],
         "unexpected": completeness["unexpected"],
         "note": ("unexpected keys are listed for transparency but are not a "
-                 "failure: extra evidence is allowed, missing evidence is not"),
-        "passed": c6_ok,
-        "status": "passed" if c6_ok else "failed",
+                 "failure: extra evidence is allowed, missing evidence is not. "
+                 "A missing checkpoint with a submitted job reads not_evaluated "
+                 "(INCOMPLETE), never passed"),
+        "passed": c6_status == "passed",
+        "status": c6_status,
     }
 
-    gates["informational"] = ["C1x_crosscheck_raw"]
+    # -- C7: does the conservation conclusion survive a change of design point?
+    # C2 is bound to one (mesh, CFL) pair.  A reviewer is entitled to ask whether
+    # alpha <= 1 there is a property of the scheme or of that one run, so every DG
+    # design point with enough checkpoints for a decidable exponent is graded by
+    # the same bound, and at least ``MIN_DECIDABLE_DESIGN_FAMILIES`` of them must
+    # exist -- otherwise the criterion is reported as *not evaluated* rather than
+    # silently satisfied by a single family.
+    design_families = {name: rows for name, rows in families.items()
+                       if name.startswith("dg_d")}
+    per_family = {}
+    for name, rows in sorted(design_families.items()):
+        exponent = exponents.get(name, float("nan"))
+        per_family[name] = {
+            "checkpoints": len(rows),
+            "final_time_max": max(r["final_time"] for r in rows),
+            "cfl": sorted({float(r["cfl"]) for r in rows}),
+            "exponent": exponent,
+            "passed": bool(np.isfinite(exponent)
+                           and exponent <= MAX_GROWTH_EXPONENT + 1e-9),
+        }
+    evaluated = {k: v for k, v in per_family.items() if np.isfinite(v["exponent"])}
+    offenders = {k: v["exponent"] for k, v in evaluated.items() if not v["passed"]}
+    if offenders:
+        c7_status = "failed"
+    elif len(evaluated) < MIN_DECIDABLE_DESIGN_FAMILIES:
+        c7_status = "not_evaluated"
+    else:
+        c7_status = "passed"
+    gates["C7_design_space_invariance"] = {
+        "criterion": (f"every DG design point (mesh x CFL) with >= 3 checkpoints "
+                      f"satisfies alpha <= {MAX_GROWTH_EXPONENT}, and at least "
+                      f"{MIN_DECIDABLE_DESIGN_FAMILIES} such points exist"),
+        "measured": max((v["exponent"] for v in evaluated.values()),
+                        default=float("nan")),
+        "worst_at": (max(evaluated, key=lambda k: evaluated[k]["exponent"])
+                     if evaluated else None),
+        "per_family": per_family,
+        "evaluated_families": sorted(evaluated),
+        "offenders": offenders,
+        "passed": c7_status == "passed",
+        "status": c7_status,
+    }
+
+    # -- C7x: informational spread / amplification prediction. ----------------
+    gates["C7x_design_space_spread"] = design_space_spread(records)
+    gates["C7x_amplification_prediction"] = amplification(records)
+
+    gates["informational"] = ["C1x_crosscheck_raw", "C7x_design_space_spread",
+                              "C7x_amplification_prediction"]
     acceptance = {k: v for k, v in gates.items()
                   if isinstance(v, dict) and k not in gates["informational"]}
     gates["all_passed"] = all(v["passed"] for v in acceptance.values())
@@ -769,8 +976,44 @@ def _markdown(records: list, metrics: dict, exact: dict) -> str:
         f"{flag('C4_entropy_budget')} |",
         f"| C6 阶梯完整性 | LADDER 声明的 {gates['C6_ladder_completeness']['declared']} "
         f"个检查点全部有结果文件 | 已有 {gates['C6_ladder_completeness']['present']} 个，"
-        f"缺失 {gates['C6_ladder_completeness']['missing'] or '无'} | "
+        f"缺失 {gates['C6_ladder_completeness']['missing'] or '无'}"
+        + (f"（已递交 {'/'.join(sorted(set(gates['C6_ladder_completeness']['pending_jobs'].values())))}，"
+           "未落地 => 判据 INCOMPLETE）"
+           if gates['C6_ladder_completeness']['pending_jobs'] else "") + " | "
         f"{flag('C6_ladder_completeness')} |",
+        f"| C7 设计空间不变性 | 每个有 >= 3 检查点的 DG 设计点 "
+        f"(网格 x CFL) 都满足 alpha <= {MAX_GROWTH_EXPONENT}，且至少 "
+        f"{MIN_DECIDABLE_DESIGN_FAMILIES} 个设计点可判 | 可判 "
+        f"{len(gates['C7_design_space_invariance']['evaluated_families'])} 个族，"
+        f"最大 alpha {gates['C7_design_space_invariance']['measured']:.3f}"
+        f"（{gates['C7_design_space_invariance']['worst_at']}） | "
+        f"{flag('C7_design_space_invariance')} |",
+        "",
+        "## 设计空间（C7：网格轴 / CFL 轴，一轮动一个）",
+        "",
+        "| 设计点 | 检查点数 | CFL | alpha | t_max | 判定 |",
+        "|---|---|---|---|---|---|",
+    ]
+    for name, row in gates["C7_design_space_invariance"]["per_family"].items():
+        lines.append(
+            f"| {name} | {row['checkpoints']} | "
+            f"{'/'.join(f'{c:g}' for c in row['cfl'])} | {row['exponent']:.3f} | "
+            f"{row['final_time_max']:g} | {'通过' if row['passed'] else '未通过'} |")
+    spread = gates["C7x_design_space_spread"]
+    amp = gates["C7x_amplification_prediction"]
+    lines += [
+        "",
+        f"C7x（仅登记）：t = {BOX_CROSSING_TIME:g} 的最大场误差 —— "
+        + "，".join(f"{k} {v:.4f}%" for k, v in
+                    sorted(spread["e_at_crossing_percent"].items()))
+        + f"；CFL 0.4/0.2 比 {spread['cfl_ratio_0p4_over_0p2']:.3f}，"
+        f"网格 64/32 比 {spread['refinement_ratio_n64_over_n32']:.3f}。"
+        f"放大因子预测（{AMPLIFICATION_PREDICTION}）："
+        + ("支持" if amp["supported"] else
+           ("被否定" if amp["supported"] is False else "未评估"))
+        + ("（" + "，".join(f"{k} A={v['amplification']:.3f}"
+                            for k, v in sorted(amp["values"].items())) + "）"
+           if amp["values"] else ""),
         "",
         "## 误差随时间（族内逐检查点）",
         "",
@@ -875,6 +1118,42 @@ def make_figures(records: list, output_dir: Path) -> list:
     figures.append({"name": "fig_invariants_vs_time.png",
                     "caption": "左：C3 质量/能量守恒漂移（应处于舍入水平）；"
                                "右：C4 熵泛函漂移与涡核最小密度的相对误差随时间的增长。"})
+
+    # -- design space (C7): one axis moved at a time --------------------------
+    design = {name: rows for name, rows in families.items() if name.startswith("dg_d")}
+    if design:
+        fig, axes = plt.subplots(1, 2, figsize=(11.0, 4.4), sharey=True)
+        panels = (
+            (axes[0], "dg_d2_n32_cfl0.2", "dg_d2_n64_cfl0.2",
+             "mesh axis (CFL 0.2): 32^2 vs 64^2"),
+            (axes[1], "dg_d2_n32_cfl0.2", "dg_d2_n32_cfl0.4",
+             "time-step axis (32^2): CFL 0.2 vs 0.4"),
+        )
+        for ax, base, other, title in panels:
+            for name in (base, other):
+                rows = design.get(name)
+                if not rows:
+                    continue
+                exponent = _fit_exponent([r["final_time"] for r in rows],
+                                         [r["max_relative_l2"] for r in rows])
+                label = f"{name} (alpha={exponent:.3f})" if np.isfinite(exponent) else name
+                ax.loglog([r["final_time"] for r in rows],
+                          [100.0 * r["max_relative_l2"] for r in rows], "o-", label=label)
+            ax.axhline(100.0 * TOLERANCE, color="crimson", ls="--",
+                       label=f"tolerance {TOLERANCE:.0%}")
+            ax.set_xlabel("time t")
+            ax.set_title(title)
+            ax.grid(True, which="both", alpha=0.3)
+            ax.legend(fontsize=7, loc="lower right")
+        axes[0].set_ylabel("max primitive-field relative L2 error [%]")
+        fig.tight_layout()
+        fig.savefig(output_dir / "fig_design_space.png", dpi=150)
+        plt.close(fig)
+        figures.append({"name": "fig_design_space.png",
+                        "caption": "C7 设计空间：左=网格轴（32² vs 64²，同 CFL 0.2），"
+                                   "右=时间步轴（同 32²，CFL 0.2 vs 0.4）；"
+                                   "两条直线的斜率即各自的累积指数 alpha，"
+                                   "误差守恒（alpha <= 1）在两条轴上都必须成立。"})
     return figures
 
 
