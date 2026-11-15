@@ -1,0 +1,638 @@
+{
+  "case": {
+    "sod": {
+      "left": [
+        1.0,
+        0.0,
+        1.0
+      ],
+      "right": [
+        0.125,
+        0.0,
+        0.1
+      ],
+      "final_time": 0.2
+    },
+    "lax": {
+      "left": [
+        0.445,
+        0.698,
+        3.528
+      ],
+      "right": [
+        0.5,
+        0.0,
+        0.571
+      ],
+      "final_time": 0.13
+    }
+  },
+  "wave_positions": {
+    "sod": {
+      "head": 0.26335680867601535,
+      "tail": 0.4859454374877633,
+      "contact": 0.6854905240097899,
+      "front": 0.8504311464060357
+    },
+    "lax": {
+      "head": 0.15763654037219582,
+      "tail": 0.28722933252692573,
+      "contact": 0.6987339934622749,
+      "front": 0.8223117925286793
+    }
+  },
+  "star_state": {
+    "sod": [
+      0.30313017805064685,
+      0.9274526200489499
+    ],
+    "lax": [
+      2.4660979192073564,
+      1.528723026632884
+    ]
+  },
+  "tolerance": 0.03,
+  "legacy_quadrature_order": 8,
+  "quadrature_convergence": {
+    "reference_order": 64,
+    "rows": [
+      {
+        "quadrature_order": 4,
+        "max_abs_drift": 4.440892098500626e-16
+      },
+      {
+        "quadrature_order": 8,
+        "max_abs_drift": 5.551115123125783e-16
+      },
+      {
+        "quadrature_order": 16,
+        "max_abs_drift": 4.440892098500626e-16
+      },
+      {
+        "quadrature_order": 40,
+        "max_abs_drift": 4.440892098500626e-16
+      }
+    ]
+  },
+  "bias": {
+    "sod": [
+      {
+        "ncells": 100,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.26335680867601535,
+          0.4859454374877633,
+          0.6854905240097899,
+          0.8504311464060357
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.007884963340097917,
+            "rms_rel": 0.001223458313363152,
+            "max_rel_of_max": 0.00788496334009791
+          },
+          "velocity": {
+            "max_abs": 0.0069555492128652655,
+            "rms_rel": 0.0011330429318912628,
+            "max_rel_of_max": 0.00749962754161841
+          },
+          "pressure": {
+            "max_abs": 0.001523400677842443,
+            "rms_rel": 0.000245579864838116,
+            "max_rel_of_max": 0.0015234006778424417
+          }
+        }
+      },
+      {
+        "ncells": 200,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.26335680867601535,
+          0.4859454374877633,
+          0.6854905240097899,
+          0.8504311464060357
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.007633899883425166,
+            "rms_rel": 0.0009926940686695155,
+            "max_rel_of_max": 0.007633899883425159
+          },
+          "velocity": {
+            "max_abs": 0.03303123717736383,
+            "rms_rel": 0.003804022534721119,
+            "max_rel_of_max": 0.03561501306192919
+          },
+          "pressure": {
+            "max_abs": 0.007234483944543638,
+            "rms_rel": 0.000823761975116172,
+            "max_rel_of_max": 0.0072344839445436316
+          }
+        }
+      },
+      {
+        "ncells": 400,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.26335680867601535,
+          0.4859454374877633,
+          0.6854905240097899,
+          0.8504311464060357
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.00553042720699215,
+            "rms_rel": 0.00044054664957758556,
+            "max_rel_of_max": 0.005530427206992145
+          },
+          "velocity": {
+            "max_abs": 0.00988087343135366,
+            "rms_rel": 0.0008045941454425327,
+            "max_rel_of_max": 0.010653777042359714
+          },
+          "pressure": {
+            "max_abs": 0.0021641036275242,
+            "rms_rel": 0.0001742438262447676,
+            "max_rel_of_max": 0.002164103627524198
+          }
+        }
+      },
+      {
+        "ncells": 800,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.26335680867601535,
+          0.4859454374877633,
+          0.6854905240097899,
+          0.8504311464060357
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.011856780790361676,
+            "rms_rel": 0.0006751547253452024,
+            "max_rel_of_max": 0.011856780790361666
+          },
+          "velocity": {
+            "max_abs": 0.024353993669286367,
+            "rms_rel": 0.0014021638809565572,
+            "max_rel_of_max": 0.026259016517740288
+          },
+          "pressure": {
+            "max_abs": 0.005333998700681186,
+            "rms_rel": 0.0003036748200172441,
+            "max_rel_of_max": 0.005333998700681182
+          }
+        }
+      },
+      {
+        "ncells": 1600,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.26335680867601535,
+          0.4859454374877633,
+          0.6854905240097899,
+          0.8504311464060357
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.008576876878164053,
+            "rms_rel": 0.00033290849821603053,
+            "max_rel_of_max": 0.008576876878164046
+          },
+          "velocity": {
+            "max_abs": 0.0078762596477564,
+            "rms_rel": 0.0003205972222230057,
+            "max_rel_of_max": 0.0084923579679353
+          },
+          "pressure": {
+            "max_abs": 0.0017250541861124347,
+            "rms_rel": 6.944479043079433e-05,
+            "max_rel_of_max": 0.0017250541861124331
+          }
+        }
+      },
+      {
+        "ncells": 3200,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.26335680867601535,
+          0.4859454374877633,
+          0.6854905240097899,
+          0.8504311464060357
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.01120025217331988,
+            "rms_rel": 0.00038347844108926215,
+            "max_rel_of_max": 0.01120025217331813
+          },
+          "velocity": {
+            "max_abs": 0.05658424698618403,
+            "rms_rel": 0.0016285099082710343,
+            "max_rel_of_max": 0.0610103910032501
+          },
+          "pressure": {
+            "max_abs": 0.012393051587411746,
+            "rms_rel": 0.00035277563896543953,
+            "max_rel_of_max": 0.012393051587409809
+          }
+        }
+      }
+    ],
+    "lax": [
+      {
+        "ncells": 100,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.15763654037219582,
+          0.28722933252692573,
+          0.6987339934622749,
+          0.8223117925286793
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.0557829362311234,
+            "rms_rel": 0.010982005104501237,
+            "max_rel_of_max": 0.042775552398011764
+          },
+          "velocity": {
+            "max_abs": 0.1060543459215964,
+            "rms_rel": 0.008684876090049672,
+            "max_rel_of_max": 0.06937446749604353
+          },
+          "pressure": {
+            "max_abs": 0.1314714089978709,
+            "rms_rel": 0.005187566644020178,
+            "max_rel_of_max": 0.03726513860483866
+          }
+        }
+      },
+      {
+        "ncells": 200,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.15763654037219582,
+          0.28722933252692573,
+          0.6987339934622749,
+          0.8223117925286793
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.06280685142941778,
+            "rms_rel": 0.008296238260595005,
+            "max_rel_of_max": 0.0481616412793686
+          },
+          "velocity": {
+            "max_abs": 0.057543419038493804,
+            "rms_rel": 0.003330650114007973,
+            "max_rel_of_max": 0.03764149426416179
+          },
+          "pressure": {
+            "max_abs": 0.07133431745588137,
+            "rms_rel": 0.0019899806021568644,
+            "max_rel_of_max": 0.02021947773692781
+          }
+        }
+      },
+      {
+        "ncells": 400,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.15763654037219582,
+          0.28722933252692573,
+          0.6987339934622749,
+          0.8223117925286793
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.01983573648496928,
+            "rms_rel": 0.0017447994097097021,
+            "max_rel_of_max": 0.015210468338390805
+          },
+          "velocity": {
+            "max_abs": 0.037711640887267084,
+            "rms_rel": 0.0015421598867888984,
+            "max_rel_of_max": 0.024668720383135938
+          },
+          "pressure": {
+            "max_abs": 0.046749640667600456,
+            "rms_rel": 0.0009218990439223248,
+            "max_rel_of_max": 0.01325103193526089
+          }
+        }
+      },
+      {
+        "ncells": 800,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.15763654037219582,
+          0.28722933252692573,
+          0.6987339934622749,
+          0.8223117925286793
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.012286823982030182,
+            "rms_rel": 0.00090547852000884,
+            "max_rel_of_max": 0.009421800259328277
+          },
+          "velocity": {
+            "max_abs": 0.017181025063434774,
+            "rms_rel": 0.0004968015657307481,
+            "max_rel_of_max": 0.011238808315249567
+          },
+          "pressure": {
+            "max_abs": 0.02129864225258693,
+            "rms_rel": 0.00029698888786647455,
+            "max_rel_of_max": 0.0060370301169464045
+          }
+        }
+      },
+      {
+        "ncells": 1600,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.15763654037219582,
+          0.28722933252692573,
+          0.6987339934622749,
+          0.8223117925286793
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.023991555076655735,
+            "rms_rel": 0.0011679959933058503,
+            "max_rel_of_max": 0.01839723920302582
+          },
+          "velocity": {
+            "max_abs": 0.026792635490171746,
+            "rms_rel": 0.0005478032354101725,
+            "max_rel_of_max": 0.017526154197585516
+          },
+          "pressure": {
+            "max_abs": 0.03321377835164552,
+            "rms_rel": 0.00032748247497577267,
+            "max_rel_of_max": 0.009414336267473213
+          }
+        }
+      },
+      {
+        "ncells": 3200,
+        "affected_cells": 4,
+        "quadrature_order": 8,
+        "breakpoints": [
+          0.15763654037219582,
+          0.28722933252692573,
+          0.6987339934622749,
+          0.8223117925286793
+        ],
+        "fields": {
+          "density": {
+            "max_abs": 0.06358538332597097,
+            "rms_rel": 0.0018873585370254606,
+            "max_rel_of_max": 0.048758636242076187
+          },
+          "velocity": {
+            "max_abs": 0.1208883342189141,
+            "rms_rel": 0.0017476694356033222,
+            "max_rel_of_max": 0.0790779834625504
+          },
+          "pressure": {
+            "max_abs": 0.14986052191490273,
+            "rms_rel": 0.0010448047408983295,
+            "max_rel_of_max": 0.04247747219810165
+          }
+        }
+      }
+    ]
+  },
+  "gates": [
+    {
+      "key": "sod-1d-p0-n3200",
+      "label": "1-D P0 Sod (tests/test_euler_sod_1d.py)",
+      "config": "P0 FV, N=3200, CFL 0.4, t=0.2",
+      "ncells": 3200,
+      "steps": 3499,
+      "tolerance": 0.03,
+      "status": "measured",
+      "fields": {
+        "density": {
+          "legacy_rel_l2": 0.014223484538851673,
+          "exact_rel_l2": 0.014214547943377316,
+          "delta_pp": 0.0008936595474356643,
+          "pass_legacy": true,
+          "pass_exact": true,
+          "margin_exact_pp": 1.5785452056622684
+        },
+        "velocity": {
+          "legacy_rel_l2": 0.025176584320029952,
+          "exact_rel_l2": 0.024602271010381767,
+          "delta_pp": 0.05743133096481855,
+          "pass_legacy": true,
+          "pass_exact": true,
+          "margin_exact_pp": 0.5397728989618232
+        },
+        "pressure": {
+          "legacy_rel_l2": 0.008169458496384575,
+          "exact_rel_l2": 0.008113546432033082,
+          "delta_pp": 0.005591206435149286,
+          "pass_legacy": true,
+          "pass_exact": true,
+          "margin_exact_pp": 2.1886453567966915
+        }
+      },
+      "worst_field_legacy": "velocity",
+      "worst_field_exact": "velocity",
+      "flip": false
+    },
+    {
+      "key": "sod-2d-p0-extruded-n3200",
+      "label": "extruded 2-D P0 Sod (tests/test_euler_2d_p0_verification.py)",
+      "config": "P0 FV, nx=3200 x ny=2, CFL 0.4, t=0.2, outflow x",
+      "ncells": 3200,
+      "status": "not_run",
+      "reason": "sod-2d-p0-n3200: not computed in this session; the run exceeds the local single-command budget and is queued on the cluster (job cj3966)"
+    },
+    {
+      "key": "sod-dg-p2-tvb-n400",
+      "label": "DG P2 Sod (tests/test_repro_cks1998.py)",
+      "config": "DG P2 + TVB(M=1, final stage), N=400, CFL 0.12, t=0.2",
+      "ncells": 400,
+      "status": "not_run",
+      "reason": "sod-dg-p2-n400: not computed in this session; the run exceeds the local single-command budget and is queued on the cluster (job cj3966)"
+    }
+  ],
+  "refinement": {
+    "rows": [
+      {
+        "ncells": 400,
+        "steps": 431,
+        "fields": {
+          "density": {
+            "legacy_rel_l2": 0.031409611565350125,
+            "exact_rel_l2": 0.031352620344453394,
+            "bias_rel_l2": 0.00044054664957758556
+          },
+          "velocity": {
+            "legacy_rel_l2": 0.07835442500807921,
+            "exact_rel_l2": 0.0779762555387167,
+            "bias_rel_l2": 0.0008045941454425327
+          },
+          "pressure": {
+            "legacy_rel_l2": 0.02961166296751734,
+            "exact_rel_l2": 0.029575503983191538,
+            "bias_rel_l2": 0.0001742438262447676
+          }
+        }
+      },
+      {
+        "ncells": 800,
+        "steps": 869,
+        "fields": {
+          "density": {
+            "legacy_rel_l2": 0.02344644288100687,
+            "exact_rel_l2": 0.02340858253203076,
+            "bias_rel_l2": 0.0006751547253452024
+          },
+          "velocity": {
+            "legacy_rel_l2": 0.052590017960127446,
+            "exact_rel_l2": 0.05209750808043357,
+            "bias_rel_l2": 0.0014021638809565572
+          },
+          "pressure": {
+            "legacy_rel_l2": 0.019383553498229667,
+            "exact_rel_l2": 0.019340474313712972,
+            "bias_rel_l2": 0.0003036748200172441
+          }
+        }
+      },
+      {
+        "ncells": 1600,
+        "steps": 1746,
+        "fields": {
+          "density": {
+            "legacy_rel_l2": 0.018150175557289917,
+            "exact_rel_l2": 0.018110851690130565,
+            "bias_rel_l2": 0.00033290849821603053
+          },
+          "velocity": {
+            "legacy_rel_l2": 0.03607975990156078,
+            "exact_rel_l2": 0.03606995889229877,
+            "bias_rel_l2": 0.0003205972222230057
+          },
+          "pressure": {
+            "legacy_rel_l2": 0.01261782445081115,
+            "exact_rel_l2": 0.012621031814249884,
+            "bias_rel_l2": 6.944479043079433e-05
+          }
+        }
+      },
+      {
+        "ncells": 3200,
+        "steps": 3499,
+        "fields": {
+          "density": {
+            "legacy_rel_l2": 0.014223484538851673,
+            "exact_rel_l2": 0.014214547943377316,
+            "bias_rel_l2": 0.00038347844108926215
+          },
+          "velocity": {
+            "legacy_rel_l2": 0.025176584320029952,
+            "exact_rel_l2": 0.024602271010381767,
+            "bias_rel_l2": 0.0016285099082710343
+          },
+          "pressure": {
+            "legacy_rel_l2": 0.008169458496384575,
+            "exact_rel_l2": 0.008113546432033082,
+            "bias_rel_l2": 0.00035277563896543953
+          }
+        }
+      }
+    ],
+    "orders": [
+      {
+        "pair": [
+          400,
+          800
+        ],
+        "density": {
+          "order_legacy": 0.4218370372206774,
+          "order_exact": 0.42154844648405493
+        },
+        "velocity": {
+          "order_legacy": 0.5752257626152296,
+          "order_exact": 0.58182051001674
+        },
+        "pressure": {
+          "order_legacy": 0.6113324357162229,
+          "order_exact": 0.6127795766153035
+        }
+      },
+      {
+        "pair": [
+          800,
+          1600
+        ],
+        "density": {
+          "order_legacy": 0.36938556170436426,
+          "order_exact": 0.3701831842897887
+        },
+        "velocity": {
+          "order_legacy": 0.5435992515324154,
+          "order_exact": 0.5304165884625042
+        },
+        "pressure": {
+          "order_legacy": 0.6193698935595421,
+          "order_exact": 0.6157933158987462
+        }
+      },
+      {
+        "pair": [
+          1600,
+          3200
+        ],
+        "density": {
+          "order_legacy": 0.35170855598421563,
+          "order_exact": 0.34948617420267547
+        },
+        "velocity": {
+          "order_legacy": 0.5191071705273391,
+          "order_exact": 0.5520062835264171
+        },
+        "pressure": {
+          "order_legacy": 0.6271508249337008,
+          "order_exact": 0.6374253010202038
+        }
+      }
+    ]
+  },
+  "verdict": {
+    "gates_audited": 3,
+    "gates_measured": 1,
+    "gates_not_run": [
+      "sod-2d-p0-extruded-n3200",
+      "sod-dg-p2-tvb-n400"
+    ],
+    "verdict_flips": [],
+    "worst_sod_bias_rel_l2": 0.003804022534721119,
+    "worst_lax_bias_rel_l2": 0.010982005104501237,
+    "tightest_gate_margin_pp": 0.5397728989618232,
+    "largest_gate_shift_pp": 0.05743133096481855,
+    "bias_still_above_1e-3_at": [
+      100,
+      200,
+      800,
+      3200
+    ]
+  }
+}
