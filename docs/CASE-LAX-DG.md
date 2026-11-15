@@ -81,22 +81,26 @@ Lax (1954) 激波管 / Toro (1999) test 2：`[0,1]` 域内隔膜 `x0 = 0.5` 两�
 
 ## ④ 图与工件（已随仓提交，m16585 落盘）
 
-三张图由 `benchmarks/lax_case_pool.py` 直接渲染（剖面 + 与精确解比较 + 熵波设计阶拟合）：
+5 张图由 `benchmarks/lax_case_pool.py` 直接渲染（剖面 + 与精确解比较 + 熵波设计阶拟合 + dt 细化 + 验收臂）：
 
-* `runs/lax_case_pool/figures/lax_profiles.png` — 最细腿 (N=400, P3) 的 rho/u/p 数值 vs 精确解
-* `runs/lax_case_pool/figures/lax_convergence.png` — 全场与解析区相对 L1 随 N 收敛（log-log）
-* `runs/lax_case_pool/figures/entropy_wave_order.png` — 光滑熵波实测阶 vs p+1
+* `docs/benchmarks/results/lax_case_pool/figures/entropy_wave_order.png` — 光滑熵波实测阶 vs p+1
+* `docs/benchmarks/results/lax_case_pool/figures/lax_acceptance_a0.png` — 验收臂：逐腿 relative L2/L1 与 3 % 容差线
+* `docs/benchmarks/results/lax_case_pool/figures/lax_convergence.png` — 全场与解析区相对 L1 随 N 收敛（log-log）
+* `docs/benchmarks/results/lax_case_pool/figures/lax_profiles.png` — 最细腿 (N=400, P3) 的 rho/u/p 数值 vs 精确解
+* `docs/benchmarks/results/lax_case_pool/figures/time_refinement.png` — dt 细化各腿误差 vs dt（平坦即空间误差主导）
 
 工件清单（`sha256` 由 `sha256sum` 直读，重跑可逐位校验）：
 
 | 文件 | 用途 | bytes | sha256[:16] |
 |---|---|---|---|
-| `runs/lax_case_pool/metrics.json` | 实测值 + 判据 verdict + 全部容差配置 | 14022 | 63c83d5d37c980b8 |
-| `runs/lax_case_pool/profiles.npz` | 最细腿原始量 vs 精确解逐点场 | 225846 | 3542bd55f1684d40 |
-| `runs/lax_case_pool/summary.md` | 由 metrics.json 渲染的表（禁手改） | 2300 | 89416a1dfa43148c |
-| `runs/lax_case_pool/figures/lax_profiles.png` | 场量对比图 | 89240 | 6a75d44ad7c6a95b |
-| `runs/lax_case_pool/figures/lax_convergence.png` | 收敛图 | 87338 | 71975d1e790c85d8 |
-| `runs/lax_case_pool/figures/entropy_wave_order.png` | 熵波阶数图 | 59423 | 91bd74b53d9a4da5 |
+| `docs/benchmarks/results/lax_case_pool/metrics.json` | 实测值 + 判据 verdict + 全部容差配置 | 34647 | cab44001048395cc |
+| `docs/benchmarks/results/lax_case_pool/profiles.npz` | 最细腿原始量 vs 精确解逐点场 | 225846 | 7bdcc57cb9a0c212 |
+| `docs/benchmarks/results/lax_case_pool/summary.md` | 由 metrics.json 渲染的表（禁手改） | 5672 | 6513f513e500ad04 |
+| `docs/benchmarks/results/lax_case_pool/figures/lax_profiles.png` | 场量对比图（最细腿 vs 精确解） | 88993 | f78845d66a09ee9a |
+| `docs/benchmarks/results/lax_case_pool/figures/lax_convergence.png` | 收敛图（全场与解析区 rel L1 vs N） | 91941 | e0d2435c305669ea |
+| `docs/benchmarks/results/lax_case_pool/figures/time_refinement.png` | dt 细化：固定网格上 L1 误差 vs dt | 50076 | 972a3bc56946c56f |
+| `docs/benchmarks/results/lax_case_pool/figures/entropy_wave_order.png` | 熵波实测阶 vs 设计阶 p+1 | 59423 | 91bd74b53d9a4da5 |
+| `docs/benchmarks/results/lax_case_pool/figures/lax_acceptance_a0.png` | 验收 A0：逐腿 relative L2/L1 vs 容差 | 108114 | b18efb3bbc640302 |
 
 **复现与门禁状态**（2026-11-12，m16585）：`PYTHONPATH=. python -m benchmarks.lax_case_pool`
 全量（非 `--quick`）墙钟 **373.2 s**，9 条阶梯腿的 rel L1 rho/u/p 与解析区 rho 与本文表格
