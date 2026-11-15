@@ -1,0 +1,371 @@
+{
+  "final_time": 0.1,
+  "cfl": 0.2,
+  "degree": 1,
+  "meshes": [
+    8,
+    16,
+    32
+  ],
+  "amplitude": 0.06,
+  "blocks": {
+    "strength_1": {
+      "straight": {
+        "projection": [
+          {
+            "cells": 8,
+            "worst": 0.004130856151695921
+          },
+          {
+            "cells": 16,
+            "worst": 0.0009918514583102825
+          },
+          {
+            "cells": 32,
+            "worst": 0.0002514007923594916
+          }
+        ],
+        "projection_orders": [
+          2.0582448413125185,
+          1.9801348790285886
+        ],
+        "evolve": [
+          {
+            "cells": 8,
+            "blown_up": false,
+            "worst": 0.006837383595444876,
+            "dt": 0.0071428571428571435,
+            "steps": 14,
+            "mass_drift_relative": 1.0956239730876438e-05
+          },
+          {
+            "cells": 16,
+            "blown_up": false,
+            "worst": 0.0042218582107554645,
+            "dt": 0.003703703703703704,
+            "steps": 27,
+            "mass_drift_relative": 2.069003579359886e-05
+          },
+          {
+            "cells": 32,
+            "blown_up": false,
+            "worst": 0.011385337419977604,
+            "dt": 0.0018867924528301887,
+            "steps": 53,
+            "mass_drift_relative": 0.0001610975119459136
+          }
+        ],
+        "evolve_orders": [
+          0.6955662394097099,
+          -1.4312270160049896
+        ],
+        "fixed_dt_1e-3": [
+          {
+            "cells": 8,
+            "blown_up": false,
+            "worst": 0.006837438275041214,
+            "dt": 0.001,
+            "steps": 100,
+            "mass_drift_relative": 1.0959995059817556e-05
+          },
+          {
+            "cells": 16,
+            "blown_up": false,
+            "worst": 0.004222105288722404,
+            "dt": 0.001,
+            "steps": 100,
+            "mass_drift_relative": 2.0697046889621758e-05
+          }
+        ]
+      },
+      "warped": {
+        "projection": [
+          {
+            "cells": 8,
+            "worst": 0.007526074584365352
+          },
+          {
+            "cells": 16,
+            "worst": 0.0016648477908526318
+          },
+          {
+            "cells": 32,
+            "worst": 0.00042683533463710305
+          }
+        ],
+        "projection_orders": [
+          2.1765073022178467,
+          1.9636387679543787
+        ],
+        "evolve": [
+          {
+            "cells": 8,
+            "blown_up": false,
+            "worst": 0.01044898885486119,
+            "dt": 0.004545454545454546,
+            "steps": 22,
+            "mass_drift_relative": 4.34187538629393e-06
+          },
+          {
+            "cells": 16,
+            "blown_up": false,
+            "worst": 0.004159855409161797,
+            "dt": 0.002325581395348837,
+            "steps": 43,
+            "mass_drift_relative": 1.020168127699317e-05
+          },
+          {
+            "cells": 32,
+            "blown_up": false,
+            "worst": 0.007919124305528536,
+            "dt": 0.0011764705882352942,
+            "steps": 85,
+            "mass_drift_relative": 5.141924005519952e-05
+          }
+        ],
+        "evolve_orders": [
+          1.328758051686446,
+          -0.9288075231776288
+        ],
+        "fixed_dt_1e-3": [
+          {
+            "cells": 8,
+            "blown_up": false,
+            "worst": 0.010448992836410874,
+            "dt": 0.001,
+            "steps": 100,
+            "mass_drift_relative": 4.341631874923605e-06
+          },
+          {
+            "cells": 16,
+            "blown_up": false,
+            "worst": 0.004159866492951065,
+            "dt": 0.001,
+            "steps": 100,
+            "mass_drift_relative": 1.0202178992395089e-05
+          }
+        ]
+      },
+      "cartesian_reference": [
+        {
+          "cells": 8,
+          "worst": 0.018371176947784923,
+          "errors": {
+            "density": 0.006681798864196237,
+            "velocity_x": 0.01834001042684005,
+            "velocity_y": 0.018371176947784923,
+            "pressure": 0.010147745146079338
+          },
+          "steps": 8,
+          "dt": 0.0023823175942647573
+        },
+        {
+          "cells": 16,
+          "worst": 0.005839044930434285,
+          "errors": {
+            "density": 0.0028206983660619377,
+            "velocity_x": 0.0058374306156371404,
+            "velocity_y": 0.005839044930434285,
+            "pressure": 0.004162153443000468
+          },
+          "steps": 15,
+          "dt": 0.000955048077156212
+        },
+        {
+          "cells": 32,
+          "worst": 0.0016821443587419218,
+          "errors": {
+            "density": 0.0007828992057810391,
+            "velocity_x": 0.0016820291857778133,
+            "velocity_y": 0.0016821443587419218,
+            "pressure": 0.001168074802773023
+          },
+          "steps": 29,
+          "dt": 0.0004163288848051533
+        }
+      ],
+      "cartesian_orders": [
+        1.6536397379640282,
+        1.7954308919419641
+      ]
+    },
+    "strength_5": {
+      "straight": {
+        "projection": [
+          {
+            "cells": 8,
+            "worst": 0.016659831697327484
+          },
+          {
+            "cells": 16,
+            "worst": 0.0045146099294568805
+          },
+          {
+            "cells": 32,
+            "worst": 0.001129893336169833
+          }
+        ],
+        "projection_orders": [
+          1.8837005795170907,
+          1.998414755372901
+        ],
+        "evolve": [
+          {
+            "cells": 8,
+            "blown_up": false,
+            "worst": 0.03140540862399034,
+            "dt": 0.00625,
+            "steps": 16,
+            "mass_drift_relative": 0.0003873965444300624
+          },
+          {
+            "cells": 16,
+            "blown_up": false,
+            "worst": 0.02665766847892373,
+            "dt": 0.0030303030303030303,
+            "steps": 33,
+            "mass_drift_relative": 0.0006527348037213933
+          },
+          {
+            "cells": 32,
+            "blown_up": true,
+            "message": "curvilinear Euler solve went unstable (max|U| > 52375.2)"
+          }
+        ],
+        "evolve_orders": [
+          0.2364624351467063,
+          null
+        ],
+        "fixed_dt_1e-3": [
+          {
+            "cells": 8,
+            "blown_up": false,
+            "worst": 0.031405766042984375,
+            "dt": 0.001,
+            "steps": 100,
+            "mass_drift_relative": 0.00038748340270792125
+          },
+          {
+            "cells": 16,
+            "blown_up": false,
+            "worst": 0.02665885248883095,
+            "dt": 0.001,
+            "steps": 100,
+            "mass_drift_relative": 0.0006528703837769252
+          }
+        ]
+      },
+      "warped": {
+        "projection": [
+          {
+            "cells": 8,
+            "worst": 0.03418131171004272
+          },
+          {
+            "cells": 16,
+            "worst": 0.007125073370288387
+          },
+          {
+            "cells": 32,
+            "worst": 0.0018744490854014904
+          }
+        ],
+        "projection_orders": [
+          2.262230986116924,
+          1.9264382313119164
+        ],
+        "evolve": [
+          {
+            "cells": 8,
+            "blown_up": false,
+            "worst": 0.05437350350748853,
+            "dt": 0.0038461538461538464,
+            "steps": 26,
+            "mass_drift_relative": 0.00040732759441388484
+          },
+          {
+            "cells": 16,
+            "blown_up": false,
+            "worst": 0.024446712438790184,
+            "dt": 0.0018867924528301887,
+            "steps": 53,
+            "mass_drift_relative": 0.00033573028023082906
+          },
+          {
+            "cells": 32,
+            "blown_up": false,
+            "worst": 0.04659586811199546,
+            "dt": 0.0009615384615384616,
+            "steps": 104,
+            "mass_drift_relative": 0.0014882291813210432
+          }
+        ],
+        "evolve_orders": [
+          1.153263323359299,
+          -0.9305615630662247
+        ],
+        "fixed_dt_1e-3": [
+          {
+            "cells": 8,
+            "blown_up": false,
+            "worst": 0.05437353112112231,
+            "dt": 0.001,
+            "steps": 100,
+            "mass_drift_relative": 0.00040734325150375386
+          },
+          {
+            "cells": 16,
+            "blown_up": false,
+            "worst": 0.02444677642463195,
+            "dt": 0.001,
+            "steps": 100,
+            "mass_drift_relative": 0.0003357377028080844
+          }
+        ]
+      },
+      "cartesian_reference": [
+        {
+          "cells": 8,
+          "worst": 0.018371176947784923,
+          "errors": {
+            "density": 0.006681798864196237,
+            "velocity_x": 0.01834001042684005,
+            "velocity_y": 0.018371176947784923,
+            "pressure": 0.010147745146079338
+          },
+          "steps": 8,
+          "dt": 0.0023823175942647573
+        },
+        {
+          "cells": 16,
+          "worst": 0.005839044930434285,
+          "errors": {
+            "density": 0.0028206983660619377,
+            "velocity_x": 0.0058374306156371404,
+            "velocity_y": 0.005839044930434285,
+            "pressure": 0.004162153443000468
+          },
+          "steps": 15,
+          "dt": 0.000955048077156212
+        },
+        {
+          "cells": 32,
+          "worst": 0.0016821443587419218,
+          "errors": {
+            "density": 0.0007828992057810391,
+            "velocity_x": 0.0016820291857778133,
+            "velocity_y": 0.0016821443587419218,
+            "pressure": 0.001168074802773023
+          },
+          "steps": 29,
+          "dt": 0.0004163288848051533
+        }
+      ],
+      "cartesian_orders": [
+        1.6536397379640282,
+        1.7954308919419641
+      ]
+    }
+  },
+  "wall_seconds": 99.92402195930481
+}
