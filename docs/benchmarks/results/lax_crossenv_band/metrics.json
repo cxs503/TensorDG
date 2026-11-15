@@ -1,0 +1,1277 @@
+{
+ "anchor": "CASE-LAX-DG",
+ "case": "CASE-LAX-DG",
+ "cluster_controls": {
+  "jobs": {
+   "cj3821": "8 threads, ref=main (queued at submission time)",
+   "cj3826": "1 thread, ref=main (queued at submission time)"
+  },
+  "parsed": {},
+  "status": "NOT_RUN (queued; no node reading available when this artifact was sealed)"
+ },
+ "crossenv_band": {
+  "band_is_monotone_in_steps": false,
+  "conservative_choice": "the gate uses the maximum over legs *and* fields, because the acceptance rule itself is max_field",
+  "legacy_reproduction": {
+   "hypothesis": "H-stale-code",
+   "reading": "legacy artifact reproduced bitwise by today's code => it is a host-class record, not stale code",
+   "rows": [
+    {
+     "bitwise_equal": true,
+     "leg": "p3.N200",
+     "legacy_steps": 2547,
+     "steps": 2547,
+     "threads": 1,
+     "worst_relative_difference": 0.0
+    },
+    {
+     "bitwise_equal": true,
+     "leg": "p3.N200",
+     "legacy_steps": 2547,
+     "steps": 2547,
+     "threads": 2,
+     "worst_relative_difference": 0.0
+    },
+    {
+     "bitwise_equal": true,
+     "leg": "p3.N200",
+     "legacy_steps": 2547,
+     "steps": 2547,
+     "threads": 4,
+     "worst_relative_difference": 0.0
+    },
+    {
+     "bitwise_equal": true,
+     "leg": "p3.N200",
+     "legacy_steps": 2547,
+     "steps": 2547,
+     "threads": 8,
+     "worst_relative_difference": 0.0
+    },
+    {
+     "bitwise_equal": true,
+     "leg": "p3.N400",
+     "legacy_steps": 5109,
+     "steps": 5109,
+     "threads": 8,
+     "worst_relative_difference": 0.0
+    }
+   ],
+   "statement": "the legacy probe artifact is stale (produced by older code)",
+   "verdict": "PASS"
+  },
+  "max_band": 0.0071894235514038864,
+  "max_band_field": "pressure",
+  "max_band_leg": "p3.N800",
+  "max_band_source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+  "max_band_steps": 10250,
+  "model": "none: the observed band is not monotone in step count, so the largest measured value is used as a conservative bound",
+  "per_field_max": {
+   "density": 0.0024954443067505497,
+   "pressure": 0.0071894235514038864,
+   "velocity": 0.0058684822147035175
+  },
+  "per_leg": {
+   "p1.N400": 1.095760138370669e-09,
+   "p1.N800": 1.2962255483188971e-08,
+   "p2.N400": 1.0208415096963327e-08,
+   "p2.N800": 8.969674639785388e-07,
+   "p3.N200": 1.2484952220573038e-05,
+   "p3.N400": 0.0003035904017652567,
+   "p3.N800": 0.0071894235514038864
+  },
+  "rows": [
+   {
+    "cells": 400,
+    "degree": 1,
+    "field": "density",
+    "leg": "p1.N400",
+    "local_class": 0.0072183346661303036,
+    "node_class": 0.007218334666646664,
+    "rel_diff": 7.153455967210644e-11,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 2199
+   },
+   {
+    "cells": 400,
+    "degree": 1,
+    "field": "velocity",
+    "leg": "p1.N400",
+    "local_class": 0.00195719944801882,
+    "node_class": 0.0019571994497084586,
+    "rel_diff": 8.632939513490691e-10,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 2199
+   },
+   {
+    "cells": 400,
+    "degree": 1,
+    "field": "pressure",
+    "leg": "p1.N400",
+    "local_class": 0.001104549721066206,
+    "node_class": 0.0011045497222765275,
+    "rel_diff": 1.095760138370669e-09,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 2199
+   },
+   {
+    "cells": 800,
+    "degree": 1,
+    "field": "density",
+    "leg": "p1.N800",
+    "local_class": 0.004236667356142455,
+    "node_class": 0.0042366673590538695,
+    "rel_diff": 6.871944192374986e-10,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 4390
+   },
+   {
+    "cells": 800,
+    "degree": 1,
+    "field": "velocity",
+    "leg": "p1.N800",
+    "local_class": 0.0008808367764798322,
+    "node_class": 0.0008808367873301405,
+    "rel_diff": 1.2318182480714921e-08,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 4390
+   },
+   {
+    "cells": 800,
+    "degree": 1,
+    "field": "pressure",
+    "leg": "p1.N800",
+    "local_class": 0.000540630112907592,
+    "node_class": 0.0005406301199153777,
+    "rel_diff": 1.2962255483188971e-08,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 4390
+   },
+   {
+    "cells": 400,
+    "degree": 2,
+    "field": "density",
+    "leg": "p2.N400",
+    "local_class": 0.004528163040625704,
+    "node_class": 0.004528163036034107,
+    "rel_diff": 1.0140087782394203e-09,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 3662
+   },
+   {
+    "cells": 400,
+    "degree": 2,
+    "field": "velocity",
+    "leg": "p2.N400",
+    "local_class": 0.0016631083827524469,
+    "node_class": 0.0016631083834395502,
+    "rel_diff": 4.131440715680275e-10,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 3662
+   },
+   {
+    "cells": 400,
+    "degree": 2,
+    "field": "pressure",
+    "leg": "p2.N400",
+    "local_class": 0.001098465075950289,
+    "node_class": 0.0010984650647367018,
+    "rel_diff": 1.0208415096963327e-08,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 3662
+   },
+   {
+    "cells": 800,
+    "degree": 2,
+    "field": "density",
+    "leg": "p2.N800",
+    "local_class": 0.002548119913717155,
+    "node_class": 0.0025481197117722715,
+    "rel_diff": 7.925251024337162e-08,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 7341
+   },
+   {
+    "cells": 800,
+    "degree": 2,
+    "field": "velocity",
+    "leg": "p2.N800",
+    "local_class": 0.0007970664127346948,
+    "node_class": 0.0007970658715369152,
+    "rel_diff": 6.789875201567874e-07,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 7341
+   },
+   {
+    "cells": 800,
+    "degree": 2,
+    "field": "pressure",
+    "leg": "p2.N800",
+    "local_class": 0.0005447908373597366,
+    "node_class": 0.0005447903487005192,
+    "rel_diff": 8.969674639785388e-07,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 7341
+   },
+   {
+    "cells": 200,
+    "degree": 3,
+    "field": "density",
+    "leg": "p3.N200",
+    "local_class": 0.01214747011549904,
+    "node_class": 0.012147420335832907,
+    "rel_diff": 4.097961933974624e-06,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 2547
+   },
+   {
+    "cells": 200,
+    "degree": 3,
+    "field": "velocity",
+    "leg": "p3.N200",
+    "local_class": 0.016989928406710906,
+    "node_class": 0.016989783003049697,
+    "rel_diff": 8.558300078496092e-06,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 2547
+   },
+   {
+    "cells": 200,
+    "degree": 3,
+    "field": "pressure",
+    "leg": "p3.N200",
+    "local_class": 0.009564283253848274,
+    "node_class": 0.00956416384571963,
+    "rel_diff": 1.2484952220573038e-05,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 2547
+   },
+   {
+    "cells": 400,
+    "degree": 3,
+    "field": "density",
+    "leg": "p3.N400",
+    "local_class": 0.008686464624843512,
+    "node_class": 0.008685539963016797,
+    "rel_diff": 0.0001064599127574748,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 5109
+   },
+   {
+    "cells": 400,
+    "degree": 3,
+    "field": "velocity",
+    "leg": "p3.N400",
+    "local_class": 0.012309200656242785,
+    "node_class": 0.012306385471484237,
+    "rel_diff": 0.00022875805126303824,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 5109
+   },
+   {
+    "cells": 400,
+    "degree": 3,
+    "field": "pressure",
+    "leg": "p3.N400",
+    "local_class": 0.007314181334501461,
+    "node_class": 0.007311961493174056,
+    "rel_diff": 0.0003035904017652567,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 5109
+   },
+   {
+    "cells": 800,
+    "degree": 3,
+    "field": "density",
+    "leg": "p3.N800",
+    "local_class": 0.006180135570300353,
+    "node_class": 0.006164751775579453,
+    "rel_diff": 0.0024954443067505497,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 10250
+   },
+   {
+    "cells": 800,
+    "degree": 3,
+    "field": "velocity",
+    "leg": "p3.N800",
+    "local_class": 0.008281602249514547,
+    "node_class": 0.008233285360806078,
+    "rel_diff": 0.0058684822147035175,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 10250
+   },
+   {
+    "cells": 800,
+    "degree": 3,
+    "field": "pressure",
+    "leg": "p3.N800",
+    "local_class": 0.005168108687451226,
+    "node_class": 0.0051312181865732845,
+    "rel_diff": 0.0071894235514038864,
+    "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+    "steps": 10250
+   },
+   {
+    "cells": 400,
+    "degree": 1,
+    "field": "density",
+    "leg": "p1.N400",
+    "local_class": 0.0072183346661303036,
+    "node_class": 0.007218334666646664,
+    "rel_diff": 7.153455967210644e-11,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 2199
+   },
+   {
+    "cells": 400,
+    "degree": 1,
+    "field": "velocity",
+    "leg": "p1.N400",
+    "local_class": 0.00195719944801882,
+    "node_class": 0.0019571994497084586,
+    "rel_diff": 8.632939513490691e-10,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 2199
+   },
+   {
+    "cells": 400,
+    "degree": 1,
+    "field": "pressure",
+    "leg": "p1.N400",
+    "local_class": 0.001104549721066206,
+    "node_class": 0.0011045497222765275,
+    "rel_diff": 1.095760138370669e-09,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 2199
+   },
+   {
+    "cells": 400,
+    "degree": 2,
+    "field": "density",
+    "leg": "p2.N400",
+    "local_class": 0.004528163040625704,
+    "node_class": 0.004528163036034107,
+    "rel_diff": 1.0140087782394203e-09,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 3662
+   },
+   {
+    "cells": 400,
+    "degree": 2,
+    "field": "velocity",
+    "leg": "p2.N400",
+    "local_class": 0.0016631083827524469,
+    "node_class": 0.0016631083834395502,
+    "rel_diff": 4.131440715680275e-10,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 3662
+   },
+   {
+    "cells": 400,
+    "degree": 2,
+    "field": "pressure",
+    "leg": "p2.N400",
+    "local_class": 0.001098465075950289,
+    "node_class": 0.0010984650647367018,
+    "rel_diff": 1.0208415096963327e-08,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 3662
+   },
+   {
+    "cells": 200,
+    "degree": 3,
+    "field": "density",
+    "leg": "p3.N200",
+    "local_class": 0.01214747011549904,
+    "node_class": 0.012147420335832907,
+    "rel_diff": 4.097961933974624e-06,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 2547
+   },
+   {
+    "cells": 200,
+    "degree": 3,
+    "field": "velocity",
+    "leg": "p3.N200",
+    "local_class": 0.016989928406710906,
+    "node_class": 0.016989783003049697,
+    "rel_diff": 8.558300078496092e-06,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 2547
+   },
+   {
+    "cells": 200,
+    "degree": 3,
+    "field": "pressure",
+    "leg": "p3.N200",
+    "local_class": 0.009564283253848274,
+    "node_class": 0.00956416384571963,
+    "rel_diff": 1.2484952220573038e-05,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 2547
+   },
+   {
+    "cells": 400,
+    "degree": 3,
+    "field": "density",
+    "leg": "p3.N400",
+    "local_class": 0.008686464624843512,
+    "node_class": 0.008685539963016797,
+    "rel_diff": 0.0001064599127574748,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 5109
+   },
+   {
+    "cells": 400,
+    "degree": 3,
+    "field": "velocity",
+    "leg": "p3.N400",
+    "local_class": 0.012309200656242785,
+    "node_class": 0.012306385471484237,
+    "rel_diff": 0.00022875805126303824,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 5109
+   },
+   {
+    "cells": 400,
+    "degree": 3,
+    "field": "pressure",
+    "leg": "p3.N400",
+    "local_class": 0.007314181334501461,
+    "node_class": 0.007311961493174056,
+    "rel_diff": 0.0003035904017652567,
+    "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+    "steps": 5109
+   }
+  ],
+  "sources": [
+   "legacy probe @1c0b73c^ vs committed pool artifact",
+   "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)"
+  ]
+ },
+ "figures": [
+  {
+   "caption": "Per-leg relative disagreement between the host classes that produced the two committed Lax artifacts (log scale).",
+   "name": "crossenv_band_per_leg.png"
+  },
+  {
+   "caption": "Every certification verdict's relative distance to the ledger bar against the measured cross-environment band (log scale); all verdicts sit outside the band.",
+   "name": "verdict_robustness.png"
+  }
+ ],
+ "gates": {
+  "thread_attribution_falsified": true,
+  "verdicts_stable_under_band": true
+ },
+ "host": {
+  "machine": "loongarch64",
+  "nodename": "ec6ae0b42a0c",
+  "nproc": 128,
+  "numpy": "2.4.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "python": "3.11.6",
+  "torch": "2.7.1"
+ },
+ "hypotheses": [
+  {
+   "controls": [
+    {
+     "hypothesis": "H-thread",
+     "legs": [
+      {
+       "bitwise_identical": true,
+       "leg": "p3.N200",
+       "readings": {
+        "density": [
+         0.01214747011549904,
+         0.01214747011549904,
+         0.01214747011549904,
+         0.01214747011549904
+        ],
+        "pressure": [
+         0.009564283253848274,
+         0.009564283253848274,
+         0.009564283253848274,
+         0.009564283253848274
+        ],
+        "velocity": [
+         0.016989928406710906,
+         0.016989928406710906,
+         0.016989928406710906,
+         0.016989928406710906
+        ]
+       },
+       "steps": 2547,
+       "threads": [
+        1,
+        2,
+        4,
+        8
+       ],
+       "verdict": "PASS",
+       "worst_relative_spread": 0.0
+      },
+      {
+       "bitwise_identical": true,
+       "leg": "p3.N400",
+       "readings": {
+        "density": [
+         0.008686464624843512
+        ],
+        "pressure": [
+         0.007314181334501461
+        ],
+        "velocity": [
+         0.012309200656242785
+        ]
+       },
+       "steps": 5109,
+       "threads": [
+        8
+       ],
+       "verdict": "PASS",
+       "worst_relative_spread": 0.0
+      }
+     ],
+     "statement": "the cross-artifact drift is caused by the torch thread count",
+     "tolerance": 1e-15,
+     "verdict": "PASS",
+     "worst_relative_spread": 0.0
+    },
+    {
+     "hypothesis": "H-thread",
+     "rows": [
+      {
+       "identical_coefficients": true,
+       "leg": "p3.N400",
+       "repeats": 3,
+       "threads": [
+        64,
+        1,
+        64
+       ],
+       "verdict": "PASS",
+       "worst_relative_l2_spread": 0.0
+      }
+     ],
+     "source": "docs/benchmarks/results/lax_reproducibility_audit/metrics.json",
+     "statement": "the cross-artifact drift is caused by the torch thread count",
+     "thread_settings": [
+      1,
+      64
+     ],
+     "verdict": "PASS",
+     "worst_relative_spread": 0.0
+    }
+   ],
+   "id": "H-thread",
+   "statement": "the cross-artifact drift is caused by the torch thread count",
+   "verdict": "FALSIFIED"
+  },
+  {
+   "controls": [
+    {
+     "hypothesis": "H-stale-code",
+     "reading": "legacy artifact reproduced bitwise by today's code => it is a host-class record, not stale code",
+     "rows": [
+      {
+       "bitwise_equal": true,
+       "leg": "p3.N200",
+       "legacy_steps": 2547,
+       "steps": 2547,
+       "threads": 1,
+       "worst_relative_difference": 0.0
+      },
+      {
+       "bitwise_equal": true,
+       "leg": "p3.N200",
+       "legacy_steps": 2547,
+       "steps": 2547,
+       "threads": 2,
+       "worst_relative_difference": 0.0
+      },
+      {
+       "bitwise_equal": true,
+       "leg": "p3.N200",
+       "legacy_steps": 2547,
+       "steps": 2547,
+       "threads": 4,
+       "worst_relative_difference": 0.0
+      },
+      {
+       "bitwise_equal": true,
+       "leg": "p3.N200",
+       "legacy_steps": 2547,
+       "steps": 2547,
+       "threads": 8,
+       "worst_relative_difference": 0.0
+      },
+      {
+       "bitwise_equal": true,
+       "leg": "p3.N400",
+       "legacy_steps": 5109,
+       "steps": 5109,
+       "threads": 8,
+       "worst_relative_difference": 0.0
+      }
+     ],
+     "statement": "the legacy probe artifact is stale (produced by older code)",
+     "verdict": "PASS"
+    }
+   ],
+   "id": "H-stale-code",
+   "statement": "the legacy probe artifact is stale (produced by older code)",
+   "verdict": "FALSIFIED"
+  },
+  {
+   "controls": [
+    {
+     "band_is_monotone_in_steps": false,
+     "conservative_choice": "the gate uses the maximum over legs *and* fields, because the acceptance rule itself is max_field",
+     "legacy_reproduction": {
+      "hypothesis": "H-stale-code",
+      "reading": "legacy artifact reproduced bitwise by today's code => it is a host-class record, not stale code",
+      "rows": [
+       {
+        "bitwise_equal": true,
+        "leg": "p3.N200",
+        "legacy_steps": 2547,
+        "steps": 2547,
+        "threads": 1,
+        "worst_relative_difference": 0.0
+       },
+       {
+        "bitwise_equal": true,
+        "leg": "p3.N200",
+        "legacy_steps": 2547,
+        "steps": 2547,
+        "threads": 2,
+        "worst_relative_difference": 0.0
+       },
+       {
+        "bitwise_equal": true,
+        "leg": "p3.N200",
+        "legacy_steps": 2547,
+        "steps": 2547,
+        "threads": 4,
+        "worst_relative_difference": 0.0
+       },
+       {
+        "bitwise_equal": true,
+        "leg": "p3.N200",
+        "legacy_steps": 2547,
+        "steps": 2547,
+        "threads": 8,
+        "worst_relative_difference": 0.0
+       },
+       {
+        "bitwise_equal": true,
+        "leg": "p3.N400",
+        "legacy_steps": 5109,
+        "steps": 5109,
+        "threads": 8,
+        "worst_relative_difference": 0.0
+       }
+      ],
+      "statement": "the legacy probe artifact is stale (produced by older code)",
+      "verdict": "PASS"
+     },
+     "max_band": 0.0071894235514038864,
+     "max_band_field": "pressure",
+     "max_band_leg": "p3.N800",
+     "max_band_source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+     "max_band_steps": 10250,
+     "model": "none: the observed band is not monotone in step count, so the largest measured value is used as a conservative bound",
+     "per_field_max": {
+      "density": 0.0024954443067505497,
+      "pressure": 0.0071894235514038864,
+      "velocity": 0.0058684822147035175
+     },
+     "per_leg": {
+      "p1.N400": 1.095760138370669e-09,
+      "p1.N800": 1.2962255483188971e-08,
+      "p2.N400": 1.0208415096963327e-08,
+      "p2.N800": 8.969674639785388e-07,
+      "p3.N200": 1.2484952220573038e-05,
+      "p3.N400": 0.0003035904017652567,
+      "p3.N800": 0.0071894235514038864
+     },
+     "rows": [
+      {
+       "cells": 400,
+       "degree": 1,
+       "field": "density",
+       "leg": "p1.N400",
+       "local_class": 0.0072183346661303036,
+       "node_class": 0.007218334666646664,
+       "rel_diff": 7.153455967210644e-11,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 2199
+      },
+      {
+       "cells": 400,
+       "degree": 1,
+       "field": "velocity",
+       "leg": "p1.N400",
+       "local_class": 0.00195719944801882,
+       "node_class": 0.0019571994497084586,
+       "rel_diff": 8.632939513490691e-10,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 2199
+      },
+      {
+       "cells": 400,
+       "degree": 1,
+       "field": "pressure",
+       "leg": "p1.N400",
+       "local_class": 0.001104549721066206,
+       "node_class": 0.0011045497222765275,
+       "rel_diff": 1.095760138370669e-09,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 2199
+      },
+      {
+       "cells": 800,
+       "degree": 1,
+       "field": "density",
+       "leg": "p1.N800",
+       "local_class": 0.004236667356142455,
+       "node_class": 0.0042366673590538695,
+       "rel_diff": 6.871944192374986e-10,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 4390
+      },
+      {
+       "cells": 800,
+       "degree": 1,
+       "field": "velocity",
+       "leg": "p1.N800",
+       "local_class": 0.0008808367764798322,
+       "node_class": 0.0008808367873301405,
+       "rel_diff": 1.2318182480714921e-08,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 4390
+      },
+      {
+       "cells": 800,
+       "degree": 1,
+       "field": "pressure",
+       "leg": "p1.N800",
+       "local_class": 0.000540630112907592,
+       "node_class": 0.0005406301199153777,
+       "rel_diff": 1.2962255483188971e-08,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 4390
+      },
+      {
+       "cells": 400,
+       "degree": 2,
+       "field": "density",
+       "leg": "p2.N400",
+       "local_class": 0.004528163040625704,
+       "node_class": 0.004528163036034107,
+       "rel_diff": 1.0140087782394203e-09,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 3662
+      },
+      {
+       "cells": 400,
+       "degree": 2,
+       "field": "velocity",
+       "leg": "p2.N400",
+       "local_class": 0.0016631083827524469,
+       "node_class": 0.0016631083834395502,
+       "rel_diff": 4.131440715680275e-10,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 3662
+      },
+      {
+       "cells": 400,
+       "degree": 2,
+       "field": "pressure",
+       "leg": "p2.N400",
+       "local_class": 0.001098465075950289,
+       "node_class": 0.0010984650647367018,
+       "rel_diff": 1.0208415096963327e-08,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 3662
+      },
+      {
+       "cells": 800,
+       "degree": 2,
+       "field": "density",
+       "leg": "p2.N800",
+       "local_class": 0.002548119913717155,
+       "node_class": 0.0025481197117722715,
+       "rel_diff": 7.925251024337162e-08,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 7341
+      },
+      {
+       "cells": 800,
+       "degree": 2,
+       "field": "velocity",
+       "leg": "p2.N800",
+       "local_class": 0.0007970664127346948,
+       "node_class": 0.0007970658715369152,
+       "rel_diff": 6.789875201567874e-07,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 7341
+      },
+      {
+       "cells": 800,
+       "degree": 2,
+       "field": "pressure",
+       "leg": "p2.N800",
+       "local_class": 0.0005447908373597366,
+       "node_class": 0.0005447903487005192,
+       "rel_diff": 8.969674639785388e-07,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 7341
+      },
+      {
+       "cells": 200,
+       "degree": 3,
+       "field": "density",
+       "leg": "p3.N200",
+       "local_class": 0.01214747011549904,
+       "node_class": 0.012147420335832907,
+       "rel_diff": 4.097961933974624e-06,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 2547
+      },
+      {
+       "cells": 200,
+       "degree": 3,
+       "field": "velocity",
+       "leg": "p3.N200",
+       "local_class": 0.016989928406710906,
+       "node_class": 0.016989783003049697,
+       "rel_diff": 8.558300078496092e-06,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 2547
+      },
+      {
+       "cells": 200,
+       "degree": 3,
+       "field": "pressure",
+       "leg": "p3.N200",
+       "local_class": 0.009564283253848274,
+       "node_class": 0.00956416384571963,
+       "rel_diff": 1.2484952220573038e-05,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 2547
+      },
+      {
+       "cells": 400,
+       "degree": 3,
+       "field": "density",
+       "leg": "p3.N400",
+       "local_class": 0.008686464624843512,
+       "node_class": 0.008685539963016797,
+       "rel_diff": 0.0001064599127574748,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 5109
+      },
+      {
+       "cells": 400,
+       "degree": 3,
+       "field": "velocity",
+       "leg": "p3.N400",
+       "local_class": 0.012309200656242785,
+       "node_class": 0.012306385471484237,
+       "rel_diff": 0.00022875805126303824,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 5109
+      },
+      {
+       "cells": 400,
+       "degree": 3,
+       "field": "pressure",
+       "leg": "p3.N400",
+       "local_class": 0.007314181334501461,
+       "node_class": 0.007311961493174056,
+       "rel_diff": 0.0003035904017652567,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 5109
+      },
+      {
+       "cells": 800,
+       "degree": 3,
+       "field": "density",
+       "leg": "p3.N800",
+       "local_class": 0.006180135570300353,
+       "node_class": 0.006164751775579453,
+       "rel_diff": 0.0024954443067505497,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 10250
+      },
+      {
+       "cells": 800,
+       "degree": 3,
+       "field": "velocity",
+       "leg": "p3.N800",
+       "local_class": 0.008281602249514547,
+       "node_class": 0.008233285360806078,
+       "rel_diff": 0.0058684822147035175,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 10250
+      },
+      {
+       "cells": 800,
+       "degree": 3,
+       "field": "pressure",
+       "leg": "p3.N800",
+       "local_class": 0.005168108687451226,
+       "node_class": 0.0051312181865732845,
+       "rel_diff": 0.0071894235514038864,
+       "source": "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)",
+       "steps": 10250
+      },
+      {
+       "cells": 400,
+       "degree": 1,
+       "field": "density",
+       "leg": "p1.N400",
+       "local_class": 0.0072183346661303036,
+       "node_class": 0.007218334666646664,
+       "rel_diff": 7.153455967210644e-11,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 2199
+      },
+      {
+       "cells": 400,
+       "degree": 1,
+       "field": "velocity",
+       "leg": "p1.N400",
+       "local_class": 0.00195719944801882,
+       "node_class": 0.0019571994497084586,
+       "rel_diff": 8.632939513490691e-10,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 2199
+      },
+      {
+       "cells": 400,
+       "degree": 1,
+       "field": "pressure",
+       "leg": "p1.N400",
+       "local_class": 0.001104549721066206,
+       "node_class": 0.0011045497222765275,
+       "rel_diff": 1.095760138370669e-09,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 2199
+      },
+      {
+       "cells": 400,
+       "degree": 2,
+       "field": "density",
+       "leg": "p2.N400",
+       "local_class": 0.004528163040625704,
+       "node_class": 0.004528163036034107,
+       "rel_diff": 1.0140087782394203e-09,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 3662
+      },
+      {
+       "cells": 400,
+       "degree": 2,
+       "field": "velocity",
+       "leg": "p2.N400",
+       "local_class": 0.0016631083827524469,
+       "node_class": 0.0016631083834395502,
+       "rel_diff": 4.131440715680275e-10,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 3662
+      },
+      {
+       "cells": 400,
+       "degree": 2,
+       "field": "pressure",
+       "leg": "p2.N400",
+       "local_class": 0.001098465075950289,
+       "node_class": 0.0010984650647367018,
+       "rel_diff": 1.0208415096963327e-08,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 3662
+      },
+      {
+       "cells": 200,
+       "degree": 3,
+       "field": "density",
+       "leg": "p3.N200",
+       "local_class": 0.01214747011549904,
+       "node_class": 0.012147420335832907,
+       "rel_diff": 4.097961933974624e-06,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 2547
+      },
+      {
+       "cells": 200,
+       "degree": 3,
+       "field": "velocity",
+       "leg": "p3.N200",
+       "local_class": 0.016989928406710906,
+       "node_class": 0.016989783003049697,
+       "rel_diff": 8.558300078496092e-06,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 2547
+      },
+      {
+       "cells": 200,
+       "degree": 3,
+       "field": "pressure",
+       "leg": "p3.N200",
+       "local_class": 0.009564283253848274,
+       "node_class": 0.00956416384571963,
+       "rel_diff": 1.2484952220573038e-05,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 2547
+      },
+      {
+       "cells": 400,
+       "degree": 3,
+       "field": "density",
+       "leg": "p3.N400",
+       "local_class": 0.008686464624843512,
+       "node_class": 0.008685539963016797,
+       "rel_diff": 0.0001064599127574748,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 5109
+      },
+      {
+       "cells": 400,
+       "degree": 3,
+       "field": "velocity",
+       "leg": "p3.N400",
+       "local_class": 0.012309200656242785,
+       "node_class": 0.012306385471484237,
+       "rel_diff": 0.00022875805126303824,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 5109
+      },
+      {
+       "cells": 400,
+       "degree": 3,
+       "field": "pressure",
+       "leg": "p3.N400",
+       "local_class": 0.007314181334501461,
+       "node_class": 0.007311961493174056,
+       "rel_diff": 0.0003035904017652567,
+       "source": "legacy probe @1c0b73c^ vs committed pool artifact",
+       "steps": 5109
+      }
+     ],
+     "sources": [
+      "legacy probe @1c0b73c^ vs committed pool artifact",
+      "legacy probe @1c0b73c^ vs regenerated probe artifact (cluster)"
+     ]
+    }
+   ],
+   "id": "H-host-class",
+   "statement": "same architecture, same commit, different host class => a reproducible per-leg numerical band",
+   "verdict": "SUPPORTED"
+  }
+ ],
+ "metrics_sha256": "bbc225121f2741913c29c1225ad8f27f4367a346e00adf10ea411f428a3f5ba5",
+ "question": "is the documented cross-artifact Lax drift caused by thread count, and does the measured cross-environment band leave every certification verdict intact?",
+ "reproducibility_control": {
+  "hypothesis": "H-thread",
+  "rows": [
+   {
+    "identical_coefficients": true,
+    "leg": "p3.N400",
+    "repeats": 3,
+    "threads": [
+     64,
+     1,
+     64
+    ],
+    "verdict": "PASS",
+    "worst_relative_l2_spread": 0.0
+   }
+  ],
+  "source": "docs/benchmarks/results/lax_reproducibility_audit/metrics.json",
+  "statement": "the cross-artifact drift is caused by the torch thread count",
+  "thread_settings": [
+   1,
+   64
+  ],
+  "verdict": "PASS",
+  "worst_relative_spread": 0.0
+ },
+ "thread_invariance": {
+  "hypothesis": "H-thread",
+  "legs": [
+   {
+    "bitwise_identical": true,
+    "leg": "p3.N200",
+    "readings": {
+     "density": [
+      0.01214747011549904,
+      0.01214747011549904,
+      0.01214747011549904,
+      0.01214747011549904
+     ],
+     "pressure": [
+      0.009564283253848274,
+      0.009564283253848274,
+      0.009564283253848274,
+      0.009564283253848274
+     ],
+     "velocity": [
+      0.016989928406710906,
+      0.016989928406710906,
+      0.016989928406710906,
+      0.016989928406710906
+     ]
+    },
+    "steps": 2547,
+    "threads": [
+     1,
+     2,
+     4,
+     8
+    ],
+    "verdict": "PASS",
+    "worst_relative_spread": 0.0
+   },
+   {
+    "bitwise_identical": true,
+    "leg": "p3.N400",
+    "readings": {
+     "density": [
+      0.008686464624843512
+     ],
+     "pressure": [
+      0.007314181334501461
+     ],
+     "velocity": [
+      0.012309200656242785
+     ]
+    },
+    "steps": 5109,
+    "threads": [
+     8
+    ],
+    "verdict": "PASS",
+    "worst_relative_spread": 0.0
+   }
+  ],
+  "statement": "the cross-artifact drift is caused by the torch thread count",
+  "tolerance": 1e-15,
+  "verdict": "PASS",
+  "worst_relative_spread": 0.0
+ },
+ "verdict": "PASS",
+ "verdict_robustness": {
+  "band": 0.0071894235514038864,
+  "band_leg": null,
+  "certified_leg": "p2.N800",
+  "certified_row": {
+   "band": 0.0071894235514038864,
+   "distance_to_bar": 0.16716606127292402,
+   "dof": 2400,
+   "leg": "p2.N800",
+   "ratio": 23.251664069823974,
+   "robust": true,
+   "status": "PASS",
+   "worst_l2": 0.025703283359080602
+  },
+  "no_flips": true,
+  "rows": [
+   {
+    "band": 0.0071894235514038864,
+    "distance_to_bar": 0.3920805213892811,
+    "dof": 800,
+    "leg": "p1.N400",
+    "ratio": 54.535738308632425,
+    "robust": true,
+    "status": "FAIL",
+    "worst_l2": 0.04934864082420773
+   },
+   {
+    "band": 0.0071894235514038864,
+    "distance_to_bar": 0.20451032376751446,
+    "dof": 1600,
+    "leg": "p1.N800",
+    "ratio": 28.445997416243408,
+    "robust": true,
+    "status": "FAIL",
+    "worst_l2": 0.03771262015879683
+   },
+   {
+    "band": 0.0071894235514038864,
+    "distance_to_bar": 0.015568348544696093,
+    "dof": 3200,
+    "leg": "p1.N1600",
+    "ratio": 2.165451573882588,
+    "robust": true,
+    "status": "PASS",
+    "worst_l2": 0.029540109282639455
+   },
+   {
+    "band": 0.0071894235514038864,
+    "distance_to_bar": 0.14914641221598948,
+    "dof": 1200,
+    "leg": "p2.N400",
+    "ratio": 20.745253238956202,
+    "robust": true,
+    "status": "FAIL",
+    "worst_l2": 0.03525871011266807
+   },
+   {
+    "band": 0.0071894235514038864,
+    "distance_to_bar": 0.16716606127292402,
+    "dof": 2400,
+    "leg": "p2.N800",
+    "ratio": 23.251664069823974,
+    "robust": true,
+    "status": "PASS",
+    "worst_l2": 0.025703283359080602
+   },
+   {
+    "band": 0.0071894235514038864,
+    "distance_to_bar": 0.26674839045060533,
+    "dof": 3000,
+    "leg": "p2.N1000",
+    "ratio": 37.10288989699558,
+    "robust": true,
+    "status": "PASS",
+    "worst_l2": 0.02368268254860656
+   },
+   {
+    "band": 0.0071894235514038864,
+    "distance_to_bar": 0.03709182663228684,
+    "dof": 1600,
+    "leg": "p3.N400",
+    "ratio": 5.15922123200599,
+    "robust": true,
+    "status": "FAIL",
+    "worst_l2": 0.031155618811580767
+   },
+   {
+    "band": 0.0071894235514038864,
+    "distance_to_bar": 0.295952609868187,
+    "dof": 3200,
+    "leg": "p3.N800",
+    "ratio": 41.164998522085405,
+    "robust": true,
+    "status": "PASS",
+    "worst_l2": 0.023148994624927942
+   }
+  ],
+  "tightest": {
+   "band": 0.0071894235514038864,
+   "distance_to_bar": 0.015568348544696093,
+   "dof": 3200,
+   "leg": "p1.N1600",
+   "ratio": 2.165451573882588,
+   "robust": true,
+   "status": "PASS",
+   "worst_l2": 0.029540109282639455
+  },
+  "tolerance": 0.03,
+  "verdict": "PASS"
+ }
+}
