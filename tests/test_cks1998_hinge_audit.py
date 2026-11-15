@@ -134,7 +134,7 @@ def real_doc():
 def test_real_workload_document_is_hinge_consistent(real_doc):
     doc = json.loads(real_doc)
     report = hinge_audit.verify_hinge_consistency(doc)
-    assert len(report) == len(bench_spec.HINGE_RULES) == 5
+    assert len(report) == len(bench_spec.HINGE_RULES) == 7  # +论文配置并列门 2 条
     for name, row in report.items():
         assert row["consistent"], name
         assert row["decision"] == "PASS", (name, row)

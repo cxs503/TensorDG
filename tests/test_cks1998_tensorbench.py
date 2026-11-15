@@ -40,6 +40,11 @@ FROZEN_TOLERANCES = {
     # 1e-9 只吸收 JSON 往返的 1 ulp（比观测阶有效数字低 6 个量级）。
     "a2_l1_order_p1": 1e-9, "a2_l1_order_p2": 1e-9, "a2_l1_order_p3": 1e-9,
     "e3_overshoot_p1": 1e-9, "e3_overshoot_p2": 1e-9,
+    # --- E3 并列门：**论文配置**（TVB M=0）在预登记分辨率上的同一条判据（m22426）---
+    # 为什么不改旧两条：它们是 m22274 的预登记（strict_all），改门=改写历史判据；
+    # 并列门让"门例配置是构造即真"的审计发现（m22343 §3 F1）有独立判据可查。
+    # 分辨率属判据本体（bench_spec.E3_PREREGISTRATION），见 tests/test_cks1998_e3_paper_prereg.py。
+    "e3_paper_overshoot_p1": 1e-9, "e3_paper_overshoot_p2": 1e-9,
 }
 
 
