@@ -196,36 +196,47 @@ def test_closed_annulus_conserves_mass_and_energy():
 
 
 # -- B6 --------------------------------------------------------------------
-def test_wall_boundary_march_is_still_unstable_honest():
-    """HONEST NEGATIVE RESULT -- updated after the interface-orientation fix.
+def test_wall_boundary_march_is_stable_and_uncovariant_flux_is_not():
+    """Was the HONEST NEGATIVE RESULT ("the wall march blows up"); now the gate.
 
-    The state below is an *exact* steady solution (uniform slip flow, wall flux
-    equal to the physical flux) and the semi-discrete residual is round-off, yet
-    the explicit march still amplifies round-off exponentially: the reflective
-    wall is *still* linearly unstable as implemented here.  What the interface
-    fix changed is only the rate: it blows up at step ~700 (dt = 4.2e-3) where
-    the pre-fix operator needed a few hundred steps and grew ~6x per 10 steps.
-    This test pins the remaining defect so it cannot be claimed as a working
-    capability; deleting it is only allowed together with a stable two-point /
-    BR1 wall flux (see the module docstring of ``euler_curved``).
+    Root cause of the blow-up: ``_boundary_normal_flux`` posed the wall Riemann
+    problem with the *reference* normal of a low face (which points into the
+    element) and the interior state as ``left``.  HLLC is covariant only under
+    (``n -> -n`` *and* ``left <-> right``), so the dissipative part of the wall
+    flux entered with the wrong sign on the low faces: the linearised operator
+    about a uniform slip state had ``max Re = +9.19`` (6x4 channel, p=1) and
+    round-off blew up at ~700 steps.  With the orientation fixed ``max Re`` is
+    ``+9.8e-8``; this test marches the exact steady state for 3000 steps and
+    requires round-off-level drift, then flips the wall flux back (negative
+    control) and requires the blow-up -- otherwise the gate is vacuous.
     """
     mesh = _channel(8, 6)
     solver = CurvilinearEuler(mesh, 1)
     state = solver.project(_uniform_slip)
+    assert float(np.max(np.abs(solver.rhs(state)))) < 1e-10
     dt = solver.stable_dt(state)
-    start = float(np.max(np.abs(solver.rhs(state))))
-    assert start < 1e-10, start          # the exact state *is* steady
-    drift = []
-    state0 = state.copy()
-    blew_up = False
-    for step in range(2000):
+    started = state.copy()
+    for _ in range(3000):
         state = solver.ssp_rk3_step(state, dt)
-        if step % 200 == 0:
-            drift.append(float(np.max(np.abs(state - state0))))
-        if not np.all(np.isfinite(state)) or np.abs(state).max() > 1e3:
+    assert np.all(np.isfinite(state))
+    drift = float(np.max(np.abs(state - started)))
+    assert drift < 1e-8, drift          # round-off level: no exponential growth
+
+    broken = CurvilinearEuler(mesh, 1)
+    original = broken._boundary_normal_flux
+
+    def uncovariant(kind, inner, side, ux, uy, _o=original):
+        """The pre-fix flux: the low-face wall flux keeps the reference normal."""
+        flux = _o(kind, inner, side, ux, uy)
+        return -flux if (kind == "wall" and side < 0) else flux
+
+    broken._boundary_normal_flux = uncovariant
+    st = broken.project(_uniform_slip)
+    dtb = broken.stable_dt(st)
+    blew_up = False
+    for _ in range(3000):
+        st = broken.ssp_rk3_step(st, dtb)
+        if not np.all(np.isfinite(st)) or float(np.abs(st).max()) > 1e3:
             blew_up = True
             break
-    assert blew_up, ("the wall-boundary march stayed bounded over 2000 steps -- "
-                     f"if the boundary is now stable, remove the instability "
-                     f"warning from the module docstring (drift={drift})")
-    assert len(drift) >= 2 and drift[-1] > 1e3 * max(drift[0], 1e-16), drift
+    assert blew_up, "negative control stayed bounded: the gate is vacuous"

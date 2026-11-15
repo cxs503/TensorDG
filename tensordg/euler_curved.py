@@ -121,6 +121,17 @@ Everything that can be checked *without* marching is exact:
 * the resolved geometry (``cylinder_annulus_mesh``) reproduces the analytic
   annulus area to ``5e-5`` relative.
 
+**Fixed 2026-11-16.**  The blow-up described next had one root cause: the wall
+Riemann problem was posed with the *reference* normal of a low face (which points
+into the element) while keeping the interior state on the ``left`` side.  HLLC is
+covariant only under (``n -> -n`` *and* ``left <-> right``), so on the low faces the
+dissipative part of the wall flux entered with the wrong sign.  The linearised
+operator about a uniform slip state had ``max Re = +9.19`` (6x4 channel, p=1); with
+the orientation fixed it is ``+9.8e-8`` and the same march stays at round-off for
+3000 steps (``tests/test_euler_curved_boundaries.py``, which also keeps the
+uncovariant flux as a negative control).  See
+``docs/CASE-DG-CKS1998-CYLINDER-WALL-STABILITY.md``.
+
 But an explicit SSP-RK3 march of a state that is an *exact* steady solution
 (``u_t = 0``) still amplifies round-off and blows up at ~700 steps (8x6 channel,
 p=1, dt=4.2e-3) even though the semi-discrete residual on that state is 1e-14:
@@ -129,8 +140,11 @@ interface-orientation fix of 2026-11-15 made it ~10x slower but did not cure it.
 ``tests/test_euler_curved_boundaries.py::test_wall_boundary_march_is_unstable_honest``
 and quantified in ``validation/curved_wall_bc/metrics.json``.  Consequences:
 
-* the CKS1998 "flow past a circular cylinder" case is **not** reproduced by this
-  module; no cylinder result may be claimed from it;
+* the CKS1998 "flow past a circular cylinder" case is now *runnable*
+  (``benchmarks/cylinder_euler_steady.py``) but no quantitative cylinder number
+  is claimed here yet: the steady subsonic run was still queued (cj3709) when
+  this note was written.  Supersonic shock capturing remains out of scope --
+  without a limiter P1 oscillates into negative pressure at M=3;
 * the far-field kind is additionally only a Dirichlet-type ghost (no
   characteristic radiation condition), so reflections are unbounded by design;
 * do not delete the honest test to "enable" walls -- fix the stability first
@@ -782,6 +796,17 @@ class CurvilinearEuler:
         ``inner`` without a sign flip.
         """
         if kind == "wall":
+            if side < 0:
+                # The reference normal of a low face points *into* the element,
+                # while the physical wall flux must be posed with the *outward*
+                # normal and the interior state on the upwind side.  HLLC is
+                # covariant under (normal -> -normal, left <-> right), so the
+                # outward-normal flux is ``-HLLC(n_out; U_in, U_ghost)``; the
+                # naive ``HLLC(n_ref; U_in, U_ghost)`` silently puts the interior
+                # state *downwind* and returns a flux whose dissipative part has
+                # the wrong sign (documented defect, see
+                # docs/CASE-DG-CKS1998-CYLINDER-WALL-STABILITY.md).
+                return -wall_normal_flux(inner, -unit_x, -unit_y, self.gamma)
             return wall_normal_flux(inner, unit_x, unit_y, self.gamma)
         ghost = np.broadcast_to(self.farfield.reshape((1,) * (inner.ndim - 1) + (4,)),
                                 inner.shape)
