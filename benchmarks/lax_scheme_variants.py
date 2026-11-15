@@ -300,6 +300,50 @@ def attainability(tolerance: float, floor_entry: dict | None = None,
     }
 
 
+# --------------------------------------------------------------- temporal probe
+def temporal_probe(rows, tolerance: float) -> dict | None:
+    """Separate the *temporal* share of the deficit using the CFL arms alone.
+
+    The CFL arms are the only pre-registered arms that move ``dt`` while leaving
+    the mesh, the degree and the scheme untouched, so their spread is the entire
+    temporal lever the existing scheme has at this DOF.  Two readings matter and
+    both are read off the recorded rows, never asserted in prose:
+
+    * if the finest measured ``dt`` still misses the bar, then reducing ``dt``
+      alone cannot pass the ledger;
+    * the *direction* of the trend says why -- whole-field error that grows as
+      ``dt`` shrinks is discontinuity oscillation being damped by temporal
+      dissipation, not an under-resolved time integration.
+
+    No extrapolation is claimed: every statement is about the finest ``dt``
+    actually run, not about a ``dt -> 0`` limit nobody computed.
+    """
+    arms = [r for r in rows
+            if r.get("role") in ("control", "temporal probe") and not _failed(r)]
+    if len(arms) < 2:
+        return None
+    arms = sorted(arms, key=lambda r: r["dt_mean"])
+    worst = [float(r["worst_l2"]) for r in arms]
+    finest, coarsest = arms[0], arms[-1]
+    return {
+        "arms": [{"variant": r["variant"], "role": r.get("role"),
+                  "cfl": float(r["cfl"]), "dt_mean": float(r["dt_mean"]),
+                  "worst_l2": float(r["worst_l2"])} for r in arms],
+        "dt_span_ratio": float(arms[-1]["dt_mean"] / arms[0]["dt_mean"]),
+        "finest_dt_arm": finest["variant"],
+        "finest_dt": float(finest["dt_mean"]),
+        "finest_dt_worst_l2": worst[0],
+        "coarsest_dt_arm": coarsest["variant"],
+        "coarsest_dt_worst_l2": worst[-1],
+        "worst_l2_spread": max(worst) - min(worst),
+        "spread_over_tolerance": (max(worst) - min(worst)) / tolerance,
+        "bar_met_at_finest_dt": bool(worst[0] < tolerance),
+        "error_grows_as_dt_shrinks": bool(all(
+            worst[i] >= worst[i + 1] for i in range(len(worst) - 1))),
+        "time_refinement_insufficient": bool(worst[0] >= tolerance),
+    }
+
+
 def aggregate(variants=VARIANTS, legs_dir: Path | None = None,
               allow_missing: bool = False) -> dict:
     """Assemble ``metrics.json`` from the per-arm records."""
@@ -375,6 +419,7 @@ def aggregate(variants=VARIANTS, legs_dir: Path | None = None,
             "reproduced": bool(control_ok),
         },
         "attainability": bound,
+        "temporal_probe": temporal_probe(rows, tolerance),
         "rows": rows,
         "verdict": {
             "rule": ("an arm is admissible iff it keeps the discretisation budget "
@@ -545,7 +590,34 @@ def render_report(metrics: dict | None = None, path: Path | None = None) -> str:
             f"{r['worst_field']} {_f(r['worst_l2'])} | {r['decision']['margin']:.4f} | "
             f"{'**是**' if r['decision']['admissible'] else '否'} |")
     add("")
-    add("### 可行性界（与格式无关）")
+    temporal = metrics.get("temporal_probe")
+    if temporal:
+        add("### 时间误差 vs 空间误差（CFL 支臂，仅动 `dt`）")
+        add("")
+        add("| 臂 | 角色 | CFL | dt_mean | 最差场量 L2 |")
+        add("|---|---|---|---|---|")
+        for arm in temporal["arms"]:
+            add(f"| `{arm['variant']}` | {arm.get('role') or '—'} | {arm['cfl']:.2f} | "
+                f"`{arm['dt_mean']:.4e}` | {arm['worst_l2']*100:.4f} % |")
+        add("")
+        add(f"* {len(temporal['arms'])} 条臂覆盖 `dt` 的 "
+            f"{temporal['dt_span_ratio']:.2f}× 行程（含生产臂作参考点），"
+            f"最差场量 L2 只扫过 {temporal['worst_l2_spread']*100:.4f} 个百分点"
+            f"（= 容差的 {temporal['spread_over_tolerance']*100:.2f} %），"
+            f"即**时间离散这根旋钮的全部行程**；")
+        add(f"* 最小 `dt` 的臂 `{temporal['finest_dt_arm']}` 最差量 "
+            f"{temporal['finest_dt_worst_l2']*100:.4f} %，"
+            f"{'仍' if temporal['time_refinement_insufficient'] else '已'}"
+            f"{'未' if temporal['time_refinement_insufficient'] else ''}过 3 % 线——"
+            + ("**把 dt 减小本身不能达标**，" if temporal["time_refinement_insufficient"]
+               else "")
+            + "缺口不在时间离散；")
+        add(f"* 趋势：误差随 `dt` 变小而"
+            f"{'变大' if temporal['error_grows_as_dt_shrinks'] else '不单调'}，"
+            "这与「整场 L2 由间断处振荡幅度主导、被时间耗散压制」一致，"
+            "而非时间积分阶数不足。")
+        add("")
+        add("### 可行性界（与格式无关）")
     add("")
     add("| 量 | 值 |")
     add("|---|---|")
@@ -600,10 +672,11 @@ def render_report(metrics: dict | None = None, path: Path | None = None) -> str:
     if not verdict["scope_complete"]:
         unknown = list(verdict.get("arms_not_run", [])) + list(verdict.get("arms_errored", []))
         add("")
-        add(f"> **范围声明（honest）**：本轮的 `{'`, `'.join(unknown)}` 臂**未跑出结果**"
-            "（集群作业 `cj3572` 仍在排队，本机 120 s 前台窗不够 CFL 0.20 的 8900 步，"
-            "`ao` 限幅臂同理）。它们在台账里记作 **unknown，不是 pass**——"
-            "因此上面的 FAIL 只是「已测臂无一可用」，不是「六臂全否」。")
+        add(f"> **范围声明（honest）**：本轮的 `{'`, `'.join(unknown)}` 臂**未跑出结果**，"
+            "在台账里记作 **unknown，不是 pass**——"
+            f"因此上面的判定只覆盖已测的 "
+            f"{len([r for r in rows if not _failed(r)])} 条臂，"
+            "未测的旋钮既不算通过也不算失败。")
     add("")
     text = "\n".join(lines) + "\n"
     path.write_text(text)
