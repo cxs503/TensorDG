@@ -270,6 +270,19 @@ from .certified_reference import (
     SUPERCONVERGENCE_SLACK,
 )
 
+# ---- feature_gate (set-level feature gates + cell-average extremum deconvolution)
+from .feature_gate import (
+    cell_average_extremum,
+    judge_feature_set,
+    gate_teeth_check,
+    kind_of,
+    GATE_PASS,
+    GATE_PASS_MARGINAL,
+    GATE_FAIL,
+    GATE_WITHHELD,
+    DEFAULT_REQUIRED,
+)
+
 # ---- curved_geometry
 from .curved_geometry import (
     legendre_eval_matrix,
@@ -790,6 +803,15 @@ __all__ = [
     "certified_richardson_extrapolate",
     "certify",
     "certify_functional",
+    "cell_average_extremum",
+    "judge_feature_set",
+    "gate_teeth_check",
+    "kind_of",
+    "GATE_PASS",
+    "GATE_PASS_MARGINAL",
+    "GATE_FAIL",
+    "GATE_WITHHELD",
+    "DEFAULT_REQUIRED",
     "check_hydrostatic_equilibrium",
     "check_hydrostatic_equilibrium_2d",
     "circle_contract",
