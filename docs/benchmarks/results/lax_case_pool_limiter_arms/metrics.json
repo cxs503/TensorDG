@@ -90,7 +90,7 @@
      "degree": 1,
      "arm": "none",
      "steps": 555,
-     "dt": 1.4796088349672276e-05,
+     "dt": 0.00023423423423423424,
      "limiter": "local positivity fallback",
      "positivity_stats": {
       "limited_cells": 238,
@@ -115,14 +115,17 @@
       "velocity": 0.001244863348558426,
       "pressure": 0.0007632270912716671
      },
-     "wall_seconds": 6.637979984283447
+     "wall_seconds": 6.637979984283447,
+     "dt_legacy_last_step": 1.4796088349672276e-05,
+     "dt_last": 1.4796088349672276e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 200,
      "degree": 1,
      "arm": "none",
      "steps": 1103,
-     "dt": 8.093190388724913e-05,
+     "dt": 0.00011786038077969175,
      "limiter": "local positivity fallback",
      "positivity_stats": {
       "limited_cells": 479,
@@ -147,14 +150,17 @@
       "velocity": 0.0008263718872188344,
       "pressure": 0.0005109399579168232
      },
-     "wall_seconds": 13.59009075164795
+     "wall_seconds": 13.59009075164795,
+     "dt_legacy_last_step": 8.093190388724913e-05,
+     "dt_last": 8.093190388724913e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 400,
      "degree": 1,
      "arm": "none",
      "steps": 2199,
-     "dt": 3.0716573045319606e-05,
+     "dt": 5.911778080945885e-05,
      "limiter": "local positivity fallback",
      "positivity_stats": {
       "limited_cells": 991,
@@ -179,14 +185,17 @@
       "velocity": 0.0004938390729024582,
       "pressure": 0.00030341504094270015
      },
-     "wall_seconds": 29.48934245109558
+     "wall_seconds": 29.48934245109558,
+     "dt_legacy_last_step": 3.0716573045319606e-05,
+     "dt_last": 3.0716573045319606e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 100,
      "degree": 2,
      "arm": "none",
      "steps": 913,
-     "dt": 0.000127064992871323,
+     "dt": 0.00014238773274917853,
      "limiter": "local positivity fallback",
      "positivity_stats": {
       "limited_cells": 347,
@@ -211,14 +220,17 @@
       "velocity": 0.006637793405158729,
       "pressure": 0.003821604373683525
      },
-     "wall_seconds": 10.91091251373291
+     "wall_seconds": 10.91091251373291,
+     "dt_legacy_last_step": 0.000127064992871323,
+     "dt_last": 0.000127064992871323,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 200,
      "degree": 2,
      "arm": "none",
      "steps": 1828,
-     "dt": 3.1684282652405527e-05,
+     "dt": 7.111597374179431e-05,
      "limiter": "local positivity fallback",
      "positivity_stats": {
       "limited_cells": 693,
@@ -243,14 +255,17 @@
       "velocity": 0.0022477788507812976,
       "pressure": 0.001562281425602629
      },
-     "wall_seconds": 23.529781818389893
+     "wall_seconds": 23.529781818389893,
+     "dt_legacy_last_step": 3.1684282652405527e-05,
+     "dt_last": 3.1684282652405527e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 400,
      "degree": 2,
      "arm": "none",
      "steps": 3662,
-     "dt": 2.2465755355777217e-05,
+     "dt": 3.54997269251775e-05,
      "limiter": "local positivity fallback",
      "positivity_stats": {
       "limited_cells": 1383,
@@ -275,14 +290,17 @@
       "velocity": 0.0007275048169575719,
       "pressure": 0.0006004086446796544
      },
-     "wall_seconds": 51.67393112182617
+     "wall_seconds": 51.67393112182617,
+     "dt_legacy_last_step": 2.2465755355777217e-05,
+     "dt_last": 2.2465755355777217e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 100,
      "degree": 3,
      "arm": "none",
      "steps": 1271,
-     "dt": 9.666605433275577e-05,
+     "dt": 0.0001022816679779701,
      "limiter": "local positivity fallback",
      "positivity_stats": {
       "limited_cells": 354,
@@ -307,14 +325,17 @@
       "velocity": 0.01831856935692982,
       "pressure": 0.009887238821220895
      },
-     "wall_seconds": 15.737141370773315
+     "wall_seconds": 15.737141370773315,
+     "dt_legacy_last_step": 9.666605433275577e-05,
+     "dt_last": 9.666605433275577e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 200,
      "degree": 3,
      "arm": "none",
      "steps": 2547,
-     "dt": 4.799444239023121e-05,
+     "dt": 5.104043973301924e-05,
      "limiter": "local positivity fallback",
      "positivity_stats": {
       "limited_cells": 716,
@@ -339,14 +360,17 @@
       "velocity": 0.015228778255070947,
       "pressure": 0.0087241801604082
      },
-     "wall_seconds": 33.469987869262695
+     "wall_seconds": 33.469987869262695,
+     "dt_legacy_last_step": 4.799444239023121e-05,
+     "dt_last": 4.799444239023121e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 400,
      "degree": 3,
      "arm": "none",
      "steps": 5109,
-     "dt": 2.2296238657348866e-05,
+     "dt": 2.5445292620865142e-05,
      "limiter": "local positivity fallback",
      "positivity_stats": {
       "limited_cells": 1442,
@@ -371,7 +395,10 @@
       "velocity": 0.011740666401353787,
       "pressure": 0.0069726875260687285
      },
-     "wall_seconds": 72.85928201675415
+     "wall_seconds": 72.85928201675415,
+     "dt_legacy_last_step": 2.2296238657348866e-05,
+     "dt_last": 2.2296238657348866e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     }
    ],
    "finest": {
@@ -711,7 +738,7 @@
      "degree": 1,
      "arm": "tvb",
      "steps": 531,
-     "dt": 4.154165840850044e-05,
+     "dt": 0.0002448210922787194,
      "limiter": "tvb",
      "positivity_stats": {
       "limited_cells": 0,
@@ -736,14 +763,17 @@
       "velocity": 0.0038485643269420416,
       "pressure": 0.002070815145481803
      },
-     "wall_seconds": 7.437812566757202
+     "wall_seconds": 7.437812566757202,
+     "dt_legacy_last_step": 4.154165840850044e-05,
+     "dt_last": 4.154165840850044e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 200,
      "degree": 1,
      "arm": "tvb",
      "steps": 1062,
-     "dt": 0.00011269513961684186,
+     "dt": 0.0001224105461393597,
      "limiter": "tvb",
      "positivity_stats": {
       "limited_cells": 0,
@@ -768,14 +798,17 @@
       "velocity": 0.0023313393930944576,
       "pressure": 0.0013023628726276546
      },
-     "wall_seconds": 15.532089948654175
+     "wall_seconds": 15.532089948654175,
+     "dt_legacy_last_step": 0.00011269513961684186,
+     "dt_last": 0.00011269513961684186,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 400,
      "degree": 1,
      "arm": "tvb",
      "steps": 2122,
-     "dt": 2.6874829444162307e-05,
+     "dt": 6.126295947219604e-05,
      "limiter": "tvb",
      "positivity_stats": {
       "limited_cells": 0,
@@ -800,14 +833,17 @@
       "velocity": 0.0013191380449850334,
       "pressure": 0.0007486650283577822
      },
-     "wall_seconds": 33.43519449234009
+     "wall_seconds": 33.43519449234009,
+     "dt_legacy_last_step": 2.6874829444162307e-05,
+     "dt_last": 2.6874829444162307e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 100,
      "degree": 2,
      "arm": "tvb",
      "steps": 874,
-     "dt": 0.00014101450262982151,
+     "dt": 0.00014874141876430207,
      "limiter": "tvb",
      "positivity_stats": {
       "limited_cells": 0,
@@ -832,14 +868,17 @@
       "velocity": 0.003733983682366146,
       "pressure": 0.0019819605233858477
      },
-     "wall_seconds": 12.50130581855774
+     "wall_seconds": 12.50130581855774,
+     "dt_legacy_last_step": 0.00014101450262982151,
+     "dt_last": 0.00014101450262982151,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 200,
      "degree": 2,
      "arm": "tvb",
      "steps": 1751,
-     "dt": 2.8353512626921873e-05,
+     "dt": 7.424328954882925e-05,
      "limiter": "tvb",
      "positivity_stats": {
       "limited_cells": 0,
@@ -864,14 +903,17 @@
       "velocity": 0.002257502389831799,
       "pressure": 0.0012531621508917472
      },
-     "wall_seconds": 27.60975408554077
+     "wall_seconds": 27.60975408554077,
+     "dt_legacy_last_step": 2.8353512626921873e-05,
+     "dt_last": 2.8353512626921873e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 400,
      "degree": 2,
      "arm": "tvb",
      "steps": 3501,
-     "dt": 2.549081102462547e-05,
+     "dt": 3.71322479291631e-05,
      "limiter": "tvb",
      "positivity_stats": {
       "limited_cells": 0,
@@ -896,14 +938,17 @@
       "velocity": 0.001279694352191069,
       "pressure": 0.0007281624731046748
      },
-     "wall_seconds": 61.45465397834778
+     "wall_seconds": 61.45465397834778,
+     "dt_legacy_last_step": 2.549081102462547e-05,
+     "dt_last": 2.549081102462547e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 100,
      "degree": 3,
      "arm": "tvb",
      "steps": 1223,
-     "dt": 8.586146275579853e-05,
+     "dt": 0.0001062959934587081,
      "limiter": "tvb",
      "positivity_stats": {
       "limited_cells": 0,
@@ -928,14 +973,17 @@
       "velocity": 0.0038003613100469793,
       "pressure": 0.002015491781642442
      },
-     "wall_seconds": 19.131038665771484
+     "wall_seconds": 19.131038665771484,
+     "dt_legacy_last_step": 8.586146275579853e-05,
+     "dt_last": 8.586146275579853e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 200,
      "degree": 3,
      "arm": "tvb",
      "steps": 2449,
-     "dt": 8.420433675632166e-06,
+     "dt": 5.3082890975908535e-05,
      "limiter": "tvb",
      "positivity_stats": {
       "limited_cells": 0,
@@ -960,14 +1008,17 @@
       "velocity": 0.0022812397187231895,
       "pressure": 0.0012642056710472727
      },
-     "wall_seconds": 40.13224720954895
+     "wall_seconds": 40.13224720954895,
+     "dt_legacy_last_step": 8.420433675632166e-06,
+     "dt_last": 8.420433675632166e-06,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 400,
      "degree": 3,
      "arm": "tvb",
      "steps": 4897,
-     "dt": 1.197527265334175e-05,
+     "dt": 2.654686542781295e-05,
      "limiter": "tvb",
      "positivity_stats": {
       "limited_cells": 0,
@@ -992,7 +1043,10 @@
       "velocity": 0.0012934270253009638,
       "pressure": 0.0007323668893992488
      },
-     "wall_seconds": 87.68272542953491
+     "wall_seconds": 87.68272542953491,
+     "dt_legacy_last_step": 1.197527265334175e-05,
+     "dt_last": 1.197527265334175e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     }
    ],
    "finest": {
@@ -1332,7 +1386,7 @@
      "degree": 1,
      "arm": "weno",
      "steps": 545,
-     "dt": 2.6652925370990177e-05,
+     "dt": 0.00023853211009174313,
      "limiter": "weno",
      "positivity_stats": {
       "limited_cells": 0,
@@ -1357,14 +1411,17 @@
       "velocity": 0.004096769396621718,
       "pressure": 0.002223196026398367
      },
-     "wall_seconds": 9.428979873657227
+     "wall_seconds": 9.428979873657227,
+     "dt_legacy_last_step": 2.6652925370990177e-05,
+     "dt_last": 2.6652925370990177e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 200,
      "degree": 1,
      "arm": "weno",
      "steps": 1082,
-     "dt": 0.00010640723380425654,
+     "dt": 0.0001201478743068392,
      "limiter": "weno",
      "positivity_stats": {
       "limited_cells": 0,
@@ -1389,14 +1446,17 @@
       "velocity": 0.002223269931685984,
       "pressure": 0.0012101416480075455
      },
-     "wall_seconds": 19.543147087097168
+     "wall_seconds": 19.543147087097168,
+     "dt_legacy_last_step": 0.00010640723380425654,
+     "dt_last": 0.00010640723380425654,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 400,
      "degree": 1,
      "arm": "weno",
      "steps": 2150,
-     "dt": 1.3057846636549408e-05,
+     "dt": 6.046511627906977e-05,
      "limiter": "weno",
      "positivity_stats": {
       "limited_cells": 0,
@@ -1421,14 +1481,17 @@
       "velocity": 0.0011767449241021604,
       "pressure": 0.0006530948927845831
      },
-     "wall_seconds": 42.606112241744995
+     "wall_seconds": 42.606112241744995,
+     "dt_legacy_last_step": 1.3057846636549408e-05,
+     "dt_last": 1.3057846636549408e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 100,
      "degree": 2,
      "arm": "weno",
      "steps": 894,
-     "dt": 5.5233566279788704e-05,
+     "dt": 0.00014541387024608502,
      "limiter": "weno",
      "positivity_stats": {
       "limited_cells": 0,
@@ -1453,14 +1516,17 @@
       "velocity": 0.0041291483692560685,
       "pressure": 0.002227787705837205
      },
-     "wall_seconds": 16.471219778060913
+     "wall_seconds": 16.471219778060913,
+     "dt_legacy_last_step": 5.5233566279788704e-05,
+     "dt_last": 5.5233566279788704e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 200,
      "degree": 2,
      "arm": "weno",
      "steps": 1778,
-     "dt": 2.9147151674596694e-05,
+     "dt": 7.311586051743532e-05,
      "limiter": "weno",
      "positivity_stats": {
       "limited_cells": 0,
@@ -1485,14 +1551,17 @@
       "velocity": 0.002193010447740375,
       "pressure": 0.0011882805085581944
      },
-     "wall_seconds": 33.84484386444092
+     "wall_seconds": 33.84484386444092,
+     "dt_legacy_last_step": 2.9147151674596694e-05,
+     "dt_last": 2.9147151674596694e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 400,
      "degree": 2,
      "arm": "weno",
      "steps": 3539,
-     "dt": 1.2966734500630128e-05,
+     "dt": 3.673354054817745e-05,
      "limiter": "weno",
      "positivity_stats": {
       "limited_cells": 0,
@@ -1517,14 +1586,17 @@
       "velocity": 0.001150714959015343,
       "pressure": 0.0006359245435392253
      },
-     "wall_seconds": 72.7773985862732
+     "wall_seconds": 72.7773985862732,
+     "dt_legacy_last_step": 1.2966734500630128e-05,
+     "dt_last": 1.2966734500630128e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 100,
      "degree": 3,
      "arm": "weno",
      "steps": 1251,
-     "dt": 8.365813024019397e-06,
+     "dt": 0.00010391686650679457,
      "limiter": "weno",
      "positivity_stats": {
       "limited_cells": 0,
@@ -1549,14 +1621,17 @@
       "velocity": 0.004166828664442369,
       "pressure": 0.002241591124086234
      },
-     "wall_seconds": 22.542429447174072
+     "wall_seconds": 22.542429447174072,
+     "dt_legacy_last_step": 8.365813024019397e-06,
+     "dt_last": 8.365813024019397e-06,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 200,
      "degree": 3,
      "arm": "weno",
      "steps": 2488,
-     "dt": 1.4914201340254785e-05,
+     "dt": 5.22508038585209e-05,
      "limiter": "weno",
      "positivity_stats": {
       "limited_cells": 0,
@@ -1581,14 +1656,17 @@
       "velocity": 0.0022131025907256405,
       "pressure": 0.0011984069348093603
      },
-     "wall_seconds": 50.23668193817139
+     "wall_seconds": 50.23668193817139,
+     "dt_legacy_last_step": 1.4914201340254785e-05,
+     "dt_last": 1.4914201340254785e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     },
     {
      "cells": 400,
      "degree": 3,
      "arm": "weno",
      "steps": 4952,
-     "dt": 2.184000182928192e-05,
+     "dt": 2.6252019386106624e-05,
      "limiter": "weno",
      "positivity_stats": {
       "limited_cells": 0,
@@ -1613,7 +1691,10 @@
       "velocity": 0.0011726067127170918,
       "pressure": 0.0006504909168914259
      },
-     "wall_seconds": 101.3209216594696
+     "wall_seconds": 101.3209216594696,
+     "dt_legacy_last_step": 2.184000182928192e-05,
+     "dt_last": 2.184000182928192e-05,
+     "dt_semantics": "dt = final_time/steps (mean step); a time-truncated final step, when recorded, is kept under dt_last*"
     }
    ],
    "finest": {
@@ -2501,5 +2582,202 @@
   "weno": "FAIL"
  },
  "wall_seconds": 1363.5568628311157,
- "figures_provenance": "scripts/render_lax_figures.py (record + profiles.npz; rendered off-node: the loong64 compute image has no matplotlib)"
+ "figures_provenance": "scripts/render_lax_figures.py (record + profiles.npz; rendered off-node: the loong64 compute image has no matplotlib)",
+ "dt_repair": {
+  "repaired_at_utc": "2026-11-15T03:26:14Z",
+  "reason": "dt was the solver's time-truncated final step (meta['dt']); the recorded value is preserved under dt_last and dt is recomputed as final_time/steps. Solver was not re-run: both numbers were already carried by the same leg record.",
+  "solver_rerun": false,
+  "legs": [
+   {
+    "leg": "p1.N100",
+    "steps": 555,
+    "legacy_dt": 1.4796088349672276e-05,
+    "dt_mean": 0.00023423423423423424,
+    "relative_difference": 0.9368320843533222
+   },
+   {
+    "leg": "p1.N200",
+    "steps": 1103,
+    "legacy_dt": 8.093190388724913e-05,
+    "dt_mean": 0.00011786038077969175,
+    "relative_difference": 0.31332392317203234
+   },
+   {
+    "leg": "p1.N400",
+    "steps": 2199,
+    "legacy_dt": 3.0716573045319606e-05,
+    "dt_mean": 5.911778080945885e-05,
+    "relative_difference": 0.480417352871863
+   },
+   {
+    "leg": "p2.N100",
+    "steps": 913,
+    "legacy_dt": 0.000127064992871323,
+    "dt_mean": 0.00014238773274917853,
+    "relative_difference": 0.10761278083447767
+   },
+   {
+    "leg": "p2.N200",
+    "steps": 1828,
+    "legacy_dt": 3.1684282652405527e-05,
+    "dt_mean": 7.111597374179431e-05,
+    "relative_difference": 0.5544702408569439
+   },
+   {
+    "leg": "p2.N400",
+    "steps": 3662,
+    "legacy_dt": 2.2465755355777217e-05,
+    "dt_mean": 3.54997269251775e-05,
+    "relative_difference": 0.3671569529780295
+   },
+   {
+    "leg": "p3.N100",
+    "steps": 1271,
+    "legacy_dt": 9.666605433275577e-05,
+    "dt_mean": 0.0001022816679779701,
+    "relative_difference": 0.05490342263898014
+   },
+   {
+    "leg": "p3.N200",
+    "steps": 2547,
+    "legacy_dt": 4.799444239023121e-05,
+    "dt_mean": 5.104043973301924e-05,
+    "relative_difference": 0.05967811716985483
+   },
+   {
+    "leg": "p3.N400",
+    "steps": 5109,
+    "legacy_dt": 2.2296238657348866e-05,
+    "dt_mean": 2.5445292620865142e-05,
+    "relative_difference": 0.12375782076618963
+   },
+   {
+    "leg": "p1.N100",
+    "steps": 531,
+    "legacy_dt": 4.154165840850044e-05,
+    "dt_mean": 0.0002448210922787194,
+    "relative_difference": 0.8303183029622021
+   },
+   {
+    "leg": "p1.N200",
+    "steps": 1062,
+    "legacy_dt": 0.00011269513961684186,
+    "dt_mean": 0.0001224105461393597,
+    "relative_difference": 0.07936739789933801
+   },
+   {
+    "leg": "p1.N400",
+    "steps": 2122,
+    "legacy_dt": 2.6874829444162307e-05,
+    "dt_mean": 6.126295947219604e-05,
+    "relative_difference": 0.561320091688366
+   },
+   {
+    "leg": "p2.N100",
+    "steps": 874,
+    "legacy_dt": 0.00014101450262982151,
+    "dt_mean": 0.00014874141876430207,
+    "relative_difference": 0.051948651550276996
+   },
+   {
+    "leg": "p2.N200",
+    "steps": 1751,
+    "legacy_dt": 2.8353512626921873e-05,
+    "dt_mean": 7.424328954882925e-05,
+    "relative_difference": 0.6180999953096908
+   },
+   {
+    "leg": "p2.N400",
+    "steps": 3501,
+    "legacy_dt": 2.549081102462547e-05,
+    "dt_mean": 3.71322479291631e-05,
+    "relative_difference": 0.3135128507906633
+   },
+   {
+    "leg": "p3.N100",
+    "steps": 1223,
+    "legacy_dt": 8.586146275579853e-05,
+    "dt_mean": 0.0001062959934587081,
+    "relative_difference": 0.19224177730506464
+   },
+   {
+    "leg": "p3.N200",
+    "steps": 2449,
+    "legacy_dt": 8.420433675632166e-06,
+    "dt_mean": 5.3082890975908535e-05,
+    "relative_difference": 0.8413719840644371
+   },
+   {
+    "leg": "p3.N400",
+    "steps": 4897,
+    "legacy_dt": 1.197527265334175e-05,
+    "dt_mean": 2.654686542781295e-05,
+    "relative_difference": 0.5489006908968111
+   },
+   {
+    "leg": "p1.N100",
+    "steps": 545,
+    "legacy_dt": 2.6652925370990177e-05,
+    "dt_mean": 0.00023853211009174313,
+    "relative_difference": 0.8882627359446951
+   },
+   {
+    "leg": "p1.N200",
+    "steps": 1082,
+    "legacy_dt": 0.00010640723380425654,
+    "dt_mean": 0.0001201478743068392,
+    "relative_difference": 0.11436440787534177
+   },
+   {
+    "leg": "p1.N400",
+    "steps": 2150,
+    "legacy_dt": 1.3057846636549408e-05,
+    "dt_mean": 6.046511627906977e-05,
+    "relative_difference": 0.7840433056262983
+   },
+   {
+    "leg": "p2.N100",
+    "steps": 894,
+    "legacy_dt": 5.5233566279788704e-05,
+    "dt_mean": 0.00014541387024608502,
+    "relative_difference": 0.6201630134297608
+   },
+   {
+    "leg": "p2.N200",
+    "steps": 1778,
+    "legacy_dt": 2.9147151674596694e-05,
+    "dt_mean": 7.311586051743532e-05,
+    "relative_difference": 0.6013566486351314
+   },
+   {
+    "leg": "p2.N400",
+    "steps": 3539,
+    "legacy_dt": 1.2966734500630128e-05,
+    "dt_mean": 3.673354054817745e-05,
+    "relative_difference": 0.6470055892482306
+   },
+   {
+    "leg": "p3.N100",
+    "steps": 1251,
+    "legacy_dt": 8.365813024019397e-06,
+    "dt_mean": 0.00010391686650679457,
+    "relative_difference": 0.9194951377457826
+   },
+   {
+    "leg": "p3.N200",
+    "steps": 2488,
+    "legacy_dt": 1.4914201340254785e-05,
+    "dt_mean": 5.22508038585209e-05,
+    "relative_difference": 0.7145651312726623
+   },
+   {
+    "leg": "p3.N400",
+    "steps": 4952,
+    "legacy_dt": 2.184000182928192e-05,
+    "dt_mean": 2.6252019386106624e-05,
+    "relative_difference": 0.1680639303184303
+   }
+  ],
+  "worst_relative_difference": 0.9368320843533222
+ }
 }
