@@ -1,0 +1,235 @@
+{
+  "case": "shu-osher-1988-shock-entropy",
+  "what": "cross-order coverage audit of the round-2 certified reference",
+  "gate_percent": 3.0,
+  "ladder": [
+    800,
+    1600,
+    3200,
+    6400
+  ],
+  "cfl": 0.3,
+  "certified_reference_weno5": {
+    "verdict": "CERTIFIED",
+    "classification": "monotonic",
+    "band_percent": 0.04162173159427086,
+    "band_share_of_gate": 0.013873910531423618,
+    "observed_order": null,
+    "reference_ncells": 3200,
+    "ladder": [
+      800,
+      1600,
+      3200,
+      6400
+    ]
+  },
+  "certified_reference_weno7": {
+    "verdict": "CERTIFIED",
+    "classification": "monotonic",
+    "band_percent": 0.04223673726054417,
+    "band_share_of_gate": 0.01407891242018139,
+    "observed_order": null,
+    "reference_ncells": 3200,
+    "ladder": [
+      800,
+      1600,
+      3200,
+      6400
+    ]
+  },
+  "certified_reference_weno5_generic": null,
+  "certified_reference_weno5_3level": {
+    "verdict": "CERTIFIED",
+    "classification": "monotonic",
+    "band_percent": 0.08279718833081827,
+    "band_share_of_gate": 0.027599062776939423,
+    "observed_order": null,
+    "reference_ncells": 1600,
+    "ladder": [
+      800,
+      1600,
+      3200
+    ]
+  },
+  "certified_reference_weno7_3level": {
+    "verdict": "CERTIFIED",
+    "classification": "monotonic",
+    "band_percent": 0.15036847195762051,
+    "band_share_of_gate": 0.050122823985873505,
+    "observed_order": null,
+    "reference_ncells": 1600,
+    "ladder": [
+      800,
+      1600,
+      3200
+    ]
+  },
+  "distances": {
+    "cross_order_4level_percent": 0.051905571776562624,
+    "cross_order_3level_percent": 0.11876378441596298,
+    "intra_family_weno5_3v4_percent": null,
+    "weno5_shipped_vs_generic_percent": null
+  },
+  "coverage": {
+    "delta_percent": 0.051905571776562624,
+    "band_reference_percent": 0.04162173159427086,
+    "band_other_percent": 0.04223673726054417,
+    "ratio_delta_over_band": 1.2470786242758654,
+    "level": "MARGINAL",
+    "band_covers_cross_family": false,
+    "combined_bands_cover": true
+  },
+  "gate_survival": {
+    "worst_leg_error_percent": 2.448435747293259,
+    "gate_percent": 3.0,
+    "margin_percent": 0.5515642527067408,
+    "delta_percent": 0.051905571776562624,
+    "worst_plus_delta_percent": 2.500341319069822,
+    "gate_survives_cross_family_shift": true
+  },
+  "dg_legs": {
+    "gate_percent": 3.0,
+    "legs": [
+      {
+        "leg": "dg_cfl0p1_limweno_n400_p2",
+        "error_percent_vs_weno5_ref": 1.5171656768803217,
+        "verdict_vs_weno5_ref": "PASS",
+        "error_percent_vs_weno7_ref": 1.5193055252109784,
+        "verdict_vs_weno7_ref": "PASS",
+        "shift_pp": 0.002139848330656724,
+        "passes_both": true,
+        "passes_weno5_only": false
+      },
+      {
+        "leg": "dg_cfl0p2_limweno_n400_p2",
+        "error_percent_vs_weno5_ref": 1.5156332600080202,
+        "verdict_vs_weno5_ref": "PASS",
+        "error_percent_vs_weno7_ref": 1.5177341892971794,
+        "verdict_vs_weno7_ref": "PASS",
+        "shift_pp": 0.00210092928915917,
+        "passes_both": true,
+        "passes_weno5_only": false
+      },
+      {
+        "leg": "dg_cfl0p4_limweno_n200_p1",
+        "error_percent_vs_weno5_ref": 2.448435747293259,
+        "verdict_vs_weno5_ref": "PASS",
+        "error_percent_vs_weno7_ref": 2.4504052555237243,
+        "verdict_vs_weno7_ref": "PASS",
+        "shift_pp": 0.0019695082304651557,
+        "passes_both": true,
+        "passes_weno5_only": false
+      },
+      {
+        "leg": "dg_cfl0p4_limweno_n200_p2",
+        "error_percent_vs_weno5_ref": 2.4130979574908964,
+        "verdict_vs_weno5_ref": "PASS",
+        "error_percent_vs_weno7_ref": 2.4149340875247374,
+        "verdict_vs_weno7_ref": "PASS",
+        "shift_pp": 0.001836130033840977,
+        "passes_both": true,
+        "passes_weno5_only": false
+      },
+      {
+        "leg": "dg_cfl0p4_limweno_n200_p3",
+        "error_percent_vs_weno5_ref": 2.419341113003779,
+        "verdict_vs_weno5_ref": "PASS",
+        "error_percent_vs_weno7_ref": 2.4211405583124423,
+        "verdict_vs_weno7_ref": "PASS",
+        "shift_pp": 0.0017994453086633833,
+        "passes_both": true,
+        "passes_weno5_only": false
+      },
+      {
+        "leg": "dg_cfl0p4_limweno_n400_p1",
+        "error_percent_vs_weno5_ref": 1.5454910731182592,
+        "verdict_vs_weno5_ref": "PASS",
+        "error_percent_vs_weno7_ref": 1.5476410441289552,
+        "verdict_vs_weno7_ref": "PASS",
+        "shift_pp": 0.002149971010696028,
+        "passes_both": true,
+        "passes_weno5_only": false
+      },
+      {
+        "leg": "dg_cfl0p4_limweno_n400_p2",
+        "error_percent_vs_weno5_ref": 1.5137710561353854,
+        "verdict_vs_weno5_ref": "PASS",
+        "error_percent_vs_weno7_ref": 1.5159750639763638,
+        "verdict_vs_weno7_ref": "PASS",
+        "shift_pp": 0.002204007840978406,
+        "passes_both": true,
+        "passes_weno5_only": false
+      },
+      {
+        "leg": "dg_cfl0p4_limweno_n400_p3",
+        "error_percent_vs_weno5_ref": 1.520547428157471,
+        "verdict_vs_weno5_ref": "PASS",
+        "error_percent_vs_weno7_ref": 1.522723841693015,
+        "verdict_vs_weno7_ref": "PASS",
+        "shift_pp": 0.002176413535543986,
+        "passes_both": true,
+        "passes_weno5_only": false
+      },
+      {
+        "leg": "dg_cfl0p4_limweno_n800_p1",
+        "error_percent_vs_weno5_ref": 0.580253569169223,
+        "verdict_vs_weno5_ref": "PASS",
+        "error_percent_vs_weno7_ref": 0.5838846322560699,
+        "verdict_vs_weno7_ref": "PASS",
+        "shift_pp": 0.0036310630868469085,
+        "passes_both": true,
+        "passes_weno5_only": false
+      },
+      {
+        "leg": "dg_cfl0p4_limweno_n800_p2",
+        "error_percent_vs_weno5_ref": 0.5642338520068497,
+        "verdict_vs_weno5_ref": "PASS",
+        "error_percent_vs_weno7_ref": 0.5679428300480073,
+        "verdict_vs_weno7_ref": "PASS",
+        "shift_pp": 0.0037089780411575513,
+        "passes_both": true,
+        "passes_weno5_only": false
+      },
+      {
+        "leg": "dg_cfl0p4_limweno_n800_p3",
+        "error_percent_vs_weno5_ref": 0.6647450421181312,
+        "verdict_vs_weno5_ref": "PASS",
+        "error_percent_vs_weno7_ref": 0.6686086362794007,
+        "verdict_vs_weno7_ref": "PASS",
+        "shift_pp": 0.003863594161269468,
+        "passes_both": true,
+        "passes_weno5_only": false
+      }
+    ],
+    "n_legs": 11,
+    "worst_vs_weno5": {
+      "leg": "dg_cfl0p4_limweno_n200_p1",
+      "error_percent": 2.448435747293259
+    },
+    "worst_vs_weno7": {
+      "leg": "dg_cfl0p4_limweno_n200_p1",
+      "error_percent": 2.448435747293259
+    },
+    "n_pass_both": 11,
+    "verdict_flips": [],
+    "max_abs_shift_pp": 0.003863594161269468,
+    "max_shift_pp": 0.003863594161269468
+  },
+  "verdict": "MARGINAL",
+  "accepted": false,
+  "sources": {
+    "weno5_ladder": [
+      "validation/repro_shu_osher/artifacts/raw/fv_cfl0p3_n800.npz",
+      "validation/repro_shu_osher/artifacts/raw/fv_cfl0p3_n1600.npz",
+      "validation/repro_shu_osher/artifacts/raw/fv_cfl0p3_n3200.npz",
+      "validation/repro_shu_osher/artifacts/raw/fv_cfl0p3_n6400.npz"
+    ],
+    "weno7_ladder": [
+      "validation/xval_dg_round2/artifacts/band_honesty/raw_weno7/fv_weno7_cfl0p3_n800.npz",
+      "validation/xval_dg_round2/artifacts/band_honesty/raw_weno7/fv_weno7_cfl0p3_n1600.npz",
+      "validation/xval_dg_round2/artifacts/band_honesty/raw_weno7/fv_weno7_cfl0p3_n3200.npz",
+      "validation/xval_dg_round2/artifacts/band_honesty/raw_weno7/fv_weno7_cfl0p3_n6400.npz"
+    ],
+    "weno5_generic_ladder": []
+  }
+}
