@@ -127,13 +127,7 @@ CASES: List[T3Case] = [
             "error at 32 cells/diameter, still far inside the 15 % limit."
         ),
         repro_cmd="python benchmarks/t3_matrix_run.py --only cylinder-2d-re100",
-        probe=None,
-        gap=(
-            "No curved/staircase solid support with a drag (momentum-exchange) "
-            "diagnostic and no unsteady time-averaging harness: "
-            "HalfwayBounceBack handles flat-axis walls only, and "
-            "tensorlbm has no force-integral routine over an immersed body."
-        ),
+        probe="cylinder_ibm_cd_st",
     ),
     T3Case(
         key="sphere-3d",
@@ -450,10 +444,53 @@ def probe_laplace_droplet(n: int = 96, radii=(12.0, 16.0, 20.0),
     }
 
 
+def probe_cylinder_ibm_cd_st(d_cells: int = 16, re: float = 100.0,
+                             steps_per_diameter: float = 150.0,
+                             n_steps: int = 0,
+                             tolerance: float = 0.10,
+                             threads: int = 4) -> dict:
+    """Flow past a static immersed-marker cylinder: Cd and St at Re = 100.
+
+    The body is a ring of Lagrangian markers held at zero velocity (LIFE's
+    static-immersed-marker-obstacle convention); no solid mask is involved.
+    References pinned in :data:`CASES` (Park et al. 1998).
+    """
+    from .cylinder import run_cylinder
+
+    cd_ref, st_ref = 1.35, 0.165
+    if n_steps <= 0:
+        n_steps = int(round(steps_per_diameter * d_cells))
+    t0 = time.time()
+    res = run_cylinder(d_cells=d_cells, re=re, n_steps=n_steps,
+                       average_from=0.55, sample_every=2, threads=threads,
+                       field_snapshot=False)
+    cd_rel = abs(res.cd_mean - cd_ref) / cd_ref
+    st_rel = abs(res.st - st_ref) / st_ref if res.st == res.st else float("inf")
+    worst = max(cd_rel, st_rel)
+    return {
+        "measured": float(worst),
+        "pass": bool(worst <= tolerance and res.converged_wake),
+        "solver_steps": int(n_steps),
+        "detail": {
+            "d_cells": d_cells, "re": re, "cd": res.cd_mean, "st": res.st,
+            "cd_rel_error": cd_rel, "st_rel_error": st_rel,
+            "cd_amp": res.cd_amp, "cl_rms": res.cl_rms,
+            "n_periods": res.n_periods,
+            "slip_rel_to_u0": res.slip_rel_to_u0,
+            "mass_drift": res.mass_drift,
+            "n_markers": res.marker_stats["n_markers"],
+            "marker_spacing_realised": res.marker_stats["spacing_realised"],
+            "wall_seconds": time.time() - t0,
+            "history": res.history,
+        },
+    }
+
+
 PROBES: Dict[str, Callable[..., dict]] = {
     "cavity_ghia": probe_cavity_ghia,
     "tg_decay_2d": probe_tg_decay_2d,
     "laplace_droplet": probe_laplace_droplet,
+    "cylinder_ibm_cd_st": probe_cylinder_ibm_cd_st,
 }
 
 
