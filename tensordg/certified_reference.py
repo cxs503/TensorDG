@@ -110,6 +110,7 @@ __all__ = [
     "U_SHARE_MAX",
     "P_MIN",
     "P_MAX",
+    "SUPERCONVERGENCE_SLACK",
     "ROUNDOFF_FLOOR",
     "coarsen",
     "rel_l1",
@@ -117,6 +118,7 @@ __all__ = [
     "richardson_extrapolate",
     "gci",
     "classify",
+    "order_ceiling",
     "certify",
     "judge",
     "audit_ladder",
@@ -132,9 +134,15 @@ U_SHARE_MAX = 1.0 / 3.0
 #: shock-capturing ladder typically shows p ~ 1; anything below half an order is
 #: a stagnating ladder, not a converging one.
 P_MIN = 0.5
-#: Highest observed order accepted.  Above this the "convergence" is more likely
-#: a round-off floor, a metric artifact or a superconvergent fluke.
+#: Highest observed order accepted **without a declared design order**.  Above
+#: this the "convergence" is more likely a round-off floor, a metric artifact or
+#: a superconvergent fluke.  A caller that *knows* its scheme's design order can
+#: declare it (``design_order=``) and the ceiling is replaced by the measured
+#: superconvergence rate of cell averages, :func:`order_ceiling`.
 P_MAX = 6.0
+#: Half-width of the superconvergence window (in orders of accuracy) accepted
+#: when a caller declares ``design_order``.  See :func:`order_ceiling`.
+SUPERCONVERGENCE_SLACK = 0.5
 #: Relative differences below this are treated as floating-point noise.
 ROUNDOFF_FLOOR = 1e-12
 
@@ -205,9 +213,37 @@ def gci(d_coarse: float, d_fine: float, p: float, fs: float = FS_GCI,
     return float(fs * d_fine / (r ** p - 1.0))
 
 
+def order_ceiling(design_order: float, *,
+                  slack: float = SUPERCONVERGENCE_SLACK) -> tuple[float, float]:
+    """Expected observed order of a DG ladder on *cell averages*, and its window.
+
+    A DG scheme of degree ``k`` on a smooth solution converges at ``O(h**(k+1))``
+    in L2, but the **cell averages** -- exactly what ``certify`` consumes and what
+    ``coarsen`` preserves -- superconverge one order faster in 1D, at
+    ``O(h**(2k+1))`` (Cockburn, Luskin, Shu & Sueli 2003, *Enhanced accuracy by
+    post-processing for finite element methods for hyperbolic equations*, SIAM J.
+    Numer. Anal. 41:1--27).  Measured on this repository's own solvers
+    (``tools/certify_physical_band.py``): P1 -> 2.9876, P2 -> 4.9892,
+    P3 -> 7.1240, i.e. ``2k+1`` to within 2 %.
+
+    Returns ``(rate, ceiling)`` where ``rate = 2*design_order + 1`` is the order a
+    ladder *should* show and ``ceiling = rate + slack`` is the largest order still
+    compatible with it.  The absolute ceiling ``P_MAX = 6.0`` was a policy bound,
+    not a physical one: it refuses every P3 ladder by construction, because
+    ``2*3+1 = 7 > 6``.  Declaring the design order replaces the policy bound by
+    the physical one, and the window is *two-sided* -- a ladder whose observed
+    order merely exceeds 6 but sits well below ``2k+1`` is still refused, since it
+    matches neither the classical nor the superconvergent rate.
+    """
+    rate = 2.0 * float(design_order) + 1.0
+    return rate, rate + float(slack)
+
+
 def classify(p: float | None, d_fine: float, *, p_min: float = P_MIN,
              p_max: float = P_MAX,
-             roundoff_floor: float = ROUNDOFF_FLOOR) -> tuple[str, str]:
+             roundoff_floor: float = ROUNDOFF_FLOOR,
+             design_order: float | None = None,
+             super_slack: float = SUPERCONVERGENCE_SLACK) -> tuple[str, str]:
     """Three-case classification of a ladder (Celik et al. 2008 style).
 
     Returns ``(case, verdict)`` where ``case`` is one of ``"monotonic"``,
@@ -225,9 +261,15 @@ def classify(p: float | None, d_fine: float, *, p_min: float = P_MIN,
         return "stagnant", WITHHELD_STAGNANT
     if p < p_min:
         return "order_too_low", WITHHELD_ORDER_TOO_LOW
-    if p > p_max:
-        return "order_too_high", WITHHELD_ORDER_TOO_HIGH
-    return "monotonic", CERTIFIED
+    if p <= p_max:
+        return "monotonic", CERTIFIED
+    if design_order is not None:
+        rate, ceiling = order_ceiling(design_order, slack=super_slack)
+        # two-sided window: "above the policy bound" is not by itself evidence of
+        # superconvergence; the order must also match 2k+1, not merely clear 6.
+        if rate - float(super_slack) <= p <= ceiling:
+            return "monotonic", CERTIFIED
+    return "order_too_high", WITHHELD_ORDER_TOO_HIGH
 
 
 def digest_levels(levels) -> str:
@@ -242,12 +284,20 @@ def digest_levels(levels) -> str:
 # ---------------------------------------------------------------- certification
 def certify(levels, *, tolerance_percent: float, fs: float = FS_GCI,
             u_share_max: float = U_SHARE_MAX, p_min: float = P_MIN,
-            p_max: float = P_MAX, roundoff_floor: float = ROUNDOFF_FLOOR) -> dict:
+            p_max: float = P_MAX, roundoff_floor: float = ROUNDOFF_FLOOR,
+            design_order: float | None = None,
+            super_slack: float = SUPERCONVERGENCE_SLACK) -> dict:
     """Certify a reference profile from a nesting ladder of profiles.
 
     ``levels`` is a list of ``{"ncells": int, "field": array}`` in **coarse to
     fine** order; ``tolerance_percent`` is the gate the reference will be used
     at (it enters only the gate-validity rule, never the numbers).
+
+    ``design_order`` is optional and is the *only* way to accept an observed
+    order above the absolute ``p_max``: declaring the scheme's polynomial degree
+    ``k`` replaces the policy ceiling by the physical superconvergence window of
+    :func:`order_ceiling` (``2k+1 +/- super_slack``).  Without it the behaviour
+    is bit-for-bit the shipped one, so every published number stays comparable.
 
     Returns a JSON-able dict (arrays excluded) whose ``verdict`` is ``CERTIFIED``
     only if the ladder is asymptotic *and* the band fits the gate.  The certified
@@ -296,7 +346,23 @@ def certify(levels, *, tolerance_percent: float, fs: float = FS_GCI,
     p_used = orders[-1]["observed_order"]
     r_fine = float(levels[-1]["ncells"]) / float(levels[-2]["ncells"])
     case, verdict = classify(p_used, d_fine, p_min=p_min, p_max=p_max,
-                             roundoff_floor=roundoff_floor)
+                             roundoff_floor=roundoff_floor,
+                             design_order=design_order, super_slack=super_slack)
+    # Guard on the declared-design-order path: the window is only opened when the
+    # *whole* ladder is strictly contracting (every local order positive).  A
+    # single inflated order at the finest triple -- the classic noise signature --
+    # then cannot buy certification that the rest of the ladder does not support.
+    superconvergent = False
+    rate = ceiling = None
+    if design_order is not None:
+        rate, ceiling = order_ceiling(design_order, slack=super_slack)
+        superconvergent = bool(verdict == CERTIFIED and p_used is not None
+                               and p_used > p_max)
+        if superconvergent:
+            local = [o["observed_order"] for o in orders]
+            if any(o is None or not np.isfinite(o) or o <= 0.0 for o in local):
+                case, verdict = "order_too_high", WITHHELD_ORDER_TOO_HIGH
+                superconvergent = False
 
     band = (gci(diffs[-2]["rel_l1"], d_fine, p_used, fs=fs, r=r_fine)
             if p_used is not None and p_used > 0.0 else float("inf"))
@@ -341,6 +407,10 @@ def certify(levels, *, tolerance_percent: float, fs: float = FS_GCI,
         "fs_gci": float(fs),
         "p_min": float(p_min),
         "p_max": float(p_max),
+        "design_order": None if design_order is None else float(design_order),
+        "order_ceiling": None if ceiling is None else float(ceiling),
+        "order_rate_expected": None if rate is None else float(rate),
+        "superconvergent": superconvergent,
         "ladder": [int(lv["ncells"]) for lv in levels],
         "differences": diffs,
         "orders": orders,
