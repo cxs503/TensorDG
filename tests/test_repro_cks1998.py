@@ -40,8 +40,9 @@ def test_unknown_troubled_policy_is_rejected():
 
 
 def test_unknown_integrator_is_rejected():
+    """An unrecognised time integrator name must raise ValueError."""
     try:
-        solve_advection(ncells=8, degree=1, final_time=0.1, time_integrator="euler")
+        solve_advection(ncells=8, degree=1, final_time=0.1, time_integrator="dormand_prince")
     except ValueError as exc:
         assert "ssp_rk3" in str(exc)
     else:  # pragma: no cover
