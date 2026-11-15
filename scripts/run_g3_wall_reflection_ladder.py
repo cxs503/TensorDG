@@ -50,6 +50,11 @@ LADDER = (
     ((58, 1), 1),
     ((116, 1), 1),
     ((58, 1), 2),
+    # m22062 additions: the first three rungs leave < 3 plateau cells after the
+    # front/wall buffers (the gate then reports ``not_run``), so the finer rungs
+    # are what actually answer "on which mesh is the reflected plateau < 3 %".
+    ((232, 1), 1),
+    ((116, 1), 2),
 )
 
 #: ``ymax`` is deliberately large: with ``ny = 1`` the y-direction is uniform and

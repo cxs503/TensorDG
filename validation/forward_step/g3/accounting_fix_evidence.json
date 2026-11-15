@@ -1,0 +1,22 @@
+{
+  "case": "G3 accounting + axis-1 embedded wall (mission m22062)",
+  "anchor": "REPRO-DG-CKS1998",
+  "defect": "conservation_residual_total returned nan on every obstacle-free run",
+  "reproduction": {
+    "command": "gate_wall_reflection(ncells=(16,1), degree=1, wall_mode=<arm>, limiter=None, x_wall=0.3, x_shock=0.25, xmax=0.35, ymax=0.5, extra_time=0.03)",
+    "before_fix": {"boundary": {"mass_relative_residual": "nan", "energy_relative_residual": "nan"},
+                   "solid": {"mass_relative_residual": 7.377465408116578e-15,
+                             "energy_relative_residual": 4.4908943474083465e-15}},
+    "after_fix": {"boundary": {"mass_relative_residual": 9.496425394530583e-15,
+                               "energy_relative_residual": 7.880055774558118e-15,
+                               "steps": 255, "obstacle_impulse_x_momentum": 0.0},
+                  "solid": {"mass_relative_residual": 7.377465408116578e-15,
+                            "energy_relative_residual": 4.4908943474083465e-15,
+                            "steps": 234}}
+  },
+  "axis1_equivalence_test": {"name": "tests/test_g3_embedded_wall_equivalence.py::test_embedded_wall_in_the_y_direction_matches_the_boundary_wall",
+                             "result": "1 passed in 96.62s", "criterion": "max|delta| <= 1e-9 * max|coeff| on identical fluid cells"},
+  "quantitative_ladder": {"status": "WITHHELD", "cluster_job": "cj3879", "node": "n315", "rc": 0,
+                          "reason": "the fetch bundle is the pre-run stage snapshot (2858 entries, no validation/forward_step/g3), so the ladder rows were not retrieved before this mission closed"},
+  "never_measured_before": "reflected-plateau error vs mesh (docs/CASE-REPRO-DG-CKS1998-FORWARD-STEP.md 4(a), attribution doc 5.4)"
+}
