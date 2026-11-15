@@ -1,0 +1,1068 @@
+{
+ "audit": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE/feature-level",
+ "case": "CASE-SHU-OSHER (Shu & Osher 1988), t=1.8, gamma=1.4",
+ "anchor": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+ "gate_percent": 3.0,
+ "u_share_max": 0.3333333333333333,
+ "window": {
+  "x_lo": -2.7031070606282466,
+  "x_hi": 2.28936658717488,
+  "rho_plateau": 3.857143,
+  "head_inset": 0.05,
+  "shock_inset": 0.1
+ },
+ "ladders": {
+  "weno5": [
+   800,
+   1600,
+   3200,
+   6400
+  ],
+  "weno7": [
+   800,
+   1600,
+   3200,
+   6400
+  ]
+ },
+ "features": {
+  "amplitude": {
+   "kind": "extremum",
+   "weno5": {
+    "verdict": "CERTIFIED",
+    "classification": "monotonic",
+    "values": [
+     0.845570221975604,
+     0.8351039269270819,
+     0.8303222964770642,
+     0.8287465139148389
+    ],
+    "certified_value": 0.8279719635399228,
+    "band_absolute": 0.0009681879686451049,
+    "band_percent": 0.11693487355606834,
+    "observed_order": 1.6014341600434865,
+    "band_share_of_gate": 0.03897829118535611,
+    "gate_usable": true
+   },
+   "weno7": {
+    "verdict": "CERTIFIED",
+    "classification": "monotonic",
+    "values": [
+     0.830167064073327,
+     0.8271596167507302,
+     0.8282080012776265,
+     0.8278093163536484
+    ],
+    "certified_value": 0.8275646653366345,
+    "band_absolute": 0.0003058137712673109,
+    "band_percent": 0.036953459237280606,
+    "observed_order": 1.3948470093392114
+   },
+   "G0_certifiable": true,
+   "G1_gate_usable": true,
+   "G2_cross_family": {
+    "delta": 0.00040729820328822,
+    "delta_percent_of_value": 0.049192269934703055,
+    "band_sum_absolute": 0.001274001739912416,
+    "ratio_to_band_sum": 0.31969987993597293,
+    "covered": true
+   }
+  },
+  "crest": {
+   "kind": "extremum",
+   "weno5": {
+    "verdict": "CERTIFIED",
+    "classification": "monotonic",
+    "values": [
+     4.678201310902247,
+     4.679750288115062,
+     4.680389190376859,
+     4.680413723239022
+    ],
+    "certified_value": 4.6804147028798155,
+    "band_absolute": 1.224550991372936e-06,
+    "band_percent": 2.616330109850055e-05,
+    "observed_order": 4.702807783966169,
+    "band_share_of_gate": 8.72110036616685e-06,
+    "gate_usable": true
+   },
+   "weno7": {
+    "verdict": "WITHHELD_STAGNANT",
+    "classification": "stagnant",
+    "values": [
+     4.6731615458847,
+     4.673356413442839,
+     4.679291490460577,
+     4.6795854646991595
+    ],
+    "certified_value": null,
+    "band_absolute": null,
+    "band_percent": null,
+    "observed_order": 4.33550511130182
+   },
+   "G0_certifiable": false,
+   "G1_gate_usable": false,
+   "G2_cross_family": null
+  },
+  "rms": {
+   "kind": "integral",
+   "weno5": {
+    "verdict": "CERTIFIED",
+    "classification": "monotonic",
+    "values": [
+     0.30281300221926627,
+     0.30140997212903936,
+     0.300444853847175,
+     0.30010642666753573
+    ],
+    "certified_value": 0.29992366843862206,
+    "band_absolute": 0.00022844778614205925,
+    "band_percent": 0.076168642285332,
+    "observed_order": 1.5118603270831297,
+    "band_share_of_gate": 0.025389547428444,
+    "gate_usable": true
+   },
+   "weno7": {
+    "verdict": "WITHHELD_STAGNANT",
+    "classification": "stagnant",
+    "values": [
+     0.29823397391598777,
+     0.2993905278196351,
+     0.29970402867673906,
+     0.30008277884814505
+    ],
+    "certified_value": null,
+    "band_absolute": null,
+    "band_percent": null,
+    "observed_order": -0.27277715416026105
+   },
+   "G0_certifiable": false,
+   "G1_gate_usable": false,
+   "G2_cross_family": null
+  },
+  "l1": {
+   "kind": "integral",
+   "weno5": {
+    "verdict": "WITHHELD_STAGNANT",
+    "classification": "stagnant",
+    "values": [
+     0.2308104119091107,
+     0.23251697353103673,
+     0.23256943122721532,
+     0.23265552239075163
+    ],
+    "certified_value": null,
+    "band_absolute": null,
+    "band_percent": null,
+    "observed_order": -0.7147107167399094,
+    "band_share_of_gate": null,
+    "gate_usable": false
+   },
+   "weno7": {
+    "verdict": "CERTIFIED",
+    "classification": "monotonic",
+    "values": [
+     0.22981765416045596,
+     0.2311258769373581,
+     0.23211259370530254,
+     0.2326607551623282
+    ],
+    "certified_value": 0.2333459161340172,
+    "band_absolute": 0.000856451214611245,
+    "band_percent": 0.36703072794269975,
+    "observed_order": 0.848035134538021
+   },
+   "G0_certifiable": false,
+   "G1_gate_usable": false,
+   "G2_cross_family": null
+  },
+  "peak_x": {
+   "kind": "phase",
+   "weno5": {
+    "verdict": "WITHHELD_STAGNANT",
+    "classification": "stagnant",
+    "values": [
+     1.84375,
+     1.8406250000000002,
+     1.8421875000000005,
+     1.83984375
+    ],
+    "certified_value": null,
+    "band_absolute": null,
+    "band_percent": null,
+    "observed_order": -0.5849625007211561,
+    "band_share_of_gate": null,
+    "gate_usable": false
+   },
+   "weno7": {
+    "verdict": "WITHHELD_STAGNANT",
+    "classification": "stagnant",
+    "values": [
+     1.84375,
+     1.8406250000000002,
+     1.8390625000000007,
+     1.8414062500000004
+    ],
+    "certified_value": null,
+    "band_absolute": null,
+    "band_percent": null,
+    "observed_order": -0.5849625007214294
+   },
+   "G0_certifiable": false,
+   "G1_gate_usable": false,
+   "G2_cross_family": null
+  }
+ },
+ "usable_features": [
+  "amplitude"
+ ],
+ "legs": [
+  {
+   "configuration": "DG P1 N=200 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n200_p1.npz",
+   "degree": 1,
+   "ncells": 200,
+   "cfl": 0.4,
+   "features": {
+    "amplitude": 0.2612690691817119,
+    "crest": 4.131403521676252,
+    "rms": 0.13916106446780968,
+    "l1": 0.12218193901300696,
+    "peak_x": 1.7750000000000004,
+    "n_cells_in_window": 100,
+    "window": [
+     -2.7031070606282466,
+     2.28936658717488
+    ],
+    "rho_plateau": 3.857143
+   },
+   "feature_judgements": {
+    "amplitude": {
+     "decision": "FAIL",
+     "reason": "error above tolerance",
+     "error_percent": 68.44469611450629,
+     "tolerance_percent": 3.0,
+     "band_percent": 0.11693487355606834,
+     "band_share_of_gate": 0.03897829118535611,
+     "robust_margin_percent_of_gate": -2185.3876996020786,
+     "reference_verdict": "CERTIFIED",
+     "candidate": 0.2612690691817119,
+     "reference": 0.8279719635399228
+    }
+   },
+   "round2_profile_rel_l1_percent": 2.455700790452218,
+   "round2_profile_decision": "PASS",
+   "worst_error_percent": 68.44469611450629,
+   "worst_feature": "amplitude",
+   "n_feature_pass": 0,
+   "n_feature_marginal": 0,
+   "n_feature_fail": 1,
+   "n_feature_withheld": 0
+  },
+  {
+   "configuration": "DG P1 N=400 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n400_p1.npz",
+   "degree": 1,
+   "ncells": 400,
+   "cfl": 0.4,
+   "features": {
+    "amplitude": 0.4738876339808096,
+    "crest": 4.346179002567964,
+    "rms": 0.19397290963011038,
+    "l1": 0.1644118668009374,
+    "peak_x": 1.8375000000000004,
+    "n_cells_in_window": 200,
+    "window": [
+     -2.7031070606282466,
+     2.28936658717488
+    ],
+    "rho_plateau": 3.857143
+   },
+   "feature_judgements": {
+    "amplitude": {
+     "decision": "FAIL",
+     "reason": "error above tolerance",
+     "error_percent": 42.76525596896496,
+     "tolerance_percent": 3.0,
+     "band_percent": 0.11693487355606834,
+     "band_share_of_gate": 0.03897829118535611,
+     "robust_margin_percent_of_gate": -1329.4063614173676,
+     "reference_verdict": "CERTIFIED",
+     "candidate": 0.4738876339808096,
+     "reference": 0.8279719635399228
+    }
+   },
+   "round2_profile_rel_l1_percent": 1.5479276855264736,
+   "round2_profile_decision": "PASS",
+   "worst_error_percent": 42.76525596896496,
+   "worst_feature": "amplitude",
+   "n_feature_pass": 0,
+   "n_feature_marginal": 0,
+   "n_feature_fail": 1,
+   "n_feature_withheld": 0
+  },
+  {
+   "configuration": "DG P1 N=800 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n800_p1.npz",
+   "degree": 1,
+   "ncells": 800,
+   "cfl": 0.4,
+   "features": {
+    "amplitude": 0.6755452444602401,
+    "crest": 4.56772480164174,
+    "rms": 0.2640716555583396,
+    "l1": 0.21078797759443657,
+    "peak_x": 1.84375,
+    "n_cells_in_window": 399,
+    "window": [
+     -2.7031070606282466,
+     2.28936658717488
+    ],
+    "rho_plateau": 3.857143
+   },
+   "feature_judgements": {
+    "amplitude": {
+     "decision": "FAIL",
+     "reason": "error above tolerance",
+     "error_percent": 18.40964740255157,
+     "tolerance_percent": 3.0,
+     "band_percent": 0.11693487355606834,
+     "band_share_of_gate": 0.03897829118535611,
+     "robust_margin_percent_of_gate": -517.5527425369213,
+     "reference_verdict": "CERTIFIED",
+     "candidate": 0.6755452444602401,
+     "reference": 0.8279719635399228
+    }
+   },
+   "round2_profile_rel_l1_percent": 0.5786426564376876,
+   "round2_profile_decision": "PASS",
+   "worst_error_percent": 18.40964740255157,
+   "worst_feature": "amplitude",
+   "n_feature_pass": 0,
+   "n_feature_marginal": 0,
+   "n_feature_fail": 1,
+   "n_feature_withheld": 0
+  },
+  {
+   "configuration": "DG P2 N=200 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n200_p2.npz",
+   "degree": 2,
+   "ncells": 200,
+   "cfl": 0.4,
+   "features": {
+    "amplitude": 0.2678332371892336,
+    "crest": 4.137633806801094,
+    "rms": 0.14088021161975897,
+    "l1": 0.12308973018717691,
+    "peak_x": 1.7750000000000004,
+    "n_cells_in_window": 100,
+    "window": [
+     -2.7031070606282466,
+     2.28936658717488
+    ],
+    "rho_plateau": 3.857143
+   },
+   "feature_judgements": {
+    "amplitude": {
+     "decision": "FAIL",
+     "reason": "error above tolerance",
+     "error_percent": 67.65189535595678,
+     "tolerance_percent": 3.0,
+     "band_percent": 0.11693487355606834,
+     "band_share_of_gate": 0.03897829118535611,
+     "robust_margin_percent_of_gate": -2158.961007650428,
+     "reference_verdict": "CERTIFIED",
+     "candidate": 0.2678332371892336,
+     "reference": 0.8279719635399228
+    }
+   },
+   "round2_profile_rel_l1_percent": 2.4203035576168808,
+   "round2_profile_decision": "PASS",
+   "worst_error_percent": 67.65189535595678,
+   "worst_feature": "amplitude",
+   "n_feature_pass": 0,
+   "n_feature_marginal": 0,
+   "n_feature_fail": 1,
+   "n_feature_withheld": 0
+  },
+  {
+   "configuration": "DG P2 N=400 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n400_p2.npz",
+   "degree": 2,
+   "ncells": 400,
+   "cfl": 0.4,
+   "features": {
+    "amplitude": 0.48640914380032463,
+    "crest": 4.354034921472549,
+    "rms": 0.1961944227787866,
+    "l1": 0.16598263392224347,
+    "peak_x": 1.8375000000000004,
+    "n_cells_in_window": 200,
+    "window": [
+     -2.7031070606282466,
+     2.28936658717488
+    ],
+    "rho_plateau": 3.857143
+   },
+   "feature_judgements": {
+    "amplitude": {
+     "decision": "FAIL",
+     "reason": "error above tolerance",
+     "error_percent": 41.25294512138741,
+     "tolerance_percent": 3.0,
+     "band_percent": 0.11693487355606834,
+     "band_share_of_gate": 0.03897829118535611,
+     "robust_margin_percent_of_gate": -1278.9959998314494,
+     "reference_verdict": "CERTIFIED",
+     "candidate": 0.48640914380032463,
+     "reference": 0.8279719635399228
+    }
+   },
+   "round2_profile_rel_l1_percent": 1.5160255033385162,
+   "round2_profile_decision": "PASS",
+   "worst_error_percent": 41.25294512138741,
+   "worst_feature": "amplitude",
+   "n_feature_pass": 0,
+   "n_feature_marginal": 0,
+   "n_feature_fail": 1,
+   "n_feature_withheld": 0
+  },
+  {
+   "configuration": "DG P2 N=800 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n800_p2.npz",
+   "degree": 2,
+   "ncells": 800,
+   "cfl": 0.4,
+   "features": {
+    "amplitude": 0.68136283089709,
+    "crest": 4.571212511381567,
+    "rms": 0.2667355429031013,
+    "l1": 0.21222789113822565,
+    "peak_x": 1.84375,
+    "n_cells_in_window": 399,
+    "window": [
+     -2.7031070606282466,
+     2.28936658717488
+    ],
+    "rho_plateau": 3.857143
+   },
+   "feature_judgements": {
+    "amplitude": {
+     "decision": "FAIL",
+     "reason": "error above tolerance",
+     "error_percent": 17.707016553557924,
+     "tolerance_percent": 3.0,
+     "band_percent": 0.11693487355606834,
+     "band_share_of_gate": 0.03897829118535611,
+     "robust_margin_percent_of_gate": -494.1317142371331,
+     "reference_verdict": "CERTIFIED",
+     "candidate": 0.68136283089709,
+     "reference": 0.8279719635399228
+    }
+   },
+   "round2_profile_rel_l1_percent": 0.5667191536375117,
+   "round2_profile_decision": "PASS",
+   "worst_error_percent": 17.707016553557924,
+   "worst_feature": "amplitude",
+   "n_feature_pass": 0,
+   "n_feature_marginal": 0,
+   "n_feature_fail": 1,
+   "n_feature_withheld": 0
+  },
+  {
+   "configuration": "DG P3 N=200 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n200_p3.npz",
+   "degree": 3,
+   "ncells": 200,
+   "cfl": 0.4,
+   "features": {
+    "amplitude": 0.26887599274896123,
+    "crest": 4.139073805625976,
+    "rms": 0.1409878839017696,
+    "l1": 0.1231447175714345,
+    "peak_x": 1.7750000000000004,
+    "n_cells_in_window": 100,
+    "window": [
+     -2.7031070606282466,
+     2.28936658717488
+    ],
+    "rho_plateau": 3.857143
+   },
+   "feature_judgements": {
+    "amplitude": {
+     "decision": "FAIL",
+     "reason": "error above tolerance",
+     "error_percent": 67.52595442973634,
+     "tolerance_percent": 3.0,
+     "band_percent": 0.11693487355606834,
+     "band_share_of_gate": 0.03897829118535611,
+     "robust_margin_percent_of_gate": -2154.7629767764133,
+     "reference_verdict": "CERTIFIED",
+     "candidate": 0.26887599274896123,
+     "reference": 0.8279719635399228
+    }
+   },
+   "round2_profile_rel_l1_percent": 2.426617313273359,
+   "round2_profile_decision": "PASS",
+   "worst_error_percent": 67.52595442973634,
+   "worst_feature": "amplitude",
+   "n_feature_pass": 0,
+   "n_feature_marginal": 0,
+   "n_feature_fail": 1,
+   "n_feature_withheld": 0
+  },
+  {
+   "configuration": "DG P3 N=400 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n400_p3.npz",
+   "degree": 3,
+   "ncells": 400,
+   "cfl": 0.4,
+   "features": {
+    "amplitude": 0.48752763693953294,
+    "crest": 4.355583563037874,
+    "rms": 0.19633091158990965,
+    "l1": 0.1660064404863973,
+    "peak_x": 1.8375000000000004,
+    "n_cells_in_window": 200,
+    "window": [
+     -2.7031070606282466,
+     2.28936658717488
+    ],
+    "rho_plateau": 3.857143
+   },
+   "feature_judgements": {
+    "amplitude": {
+     "decision": "FAIL",
+     "reason": "error above tolerance",
+     "error_percent": 41.117856834771246,
+     "tolerance_percent": 3.0,
+     "band_percent": 0.11693487355606834,
+     "band_share_of_gate": 0.03897829118535611,
+     "robust_margin_percent_of_gate": -1274.4930569442438,
+     "reference_verdict": "CERTIFIED",
+     "candidate": 0.48752763693953294,
+     "reference": 0.8279719635399228
+    }
+   },
+   "round2_profile_rel_l1_percent": 1.5220332833304568,
+   "round2_profile_decision": "PASS",
+   "worst_error_percent": 41.117856834771246,
+   "worst_feature": "amplitude",
+   "n_feature_pass": 0,
+   "n_feature_marginal": 0,
+   "n_feature_fail": 1,
+   "n_feature_withheld": 0
+  },
+  {
+   "configuration": "DG P3 N=800 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n800_p3.npz",
+   "degree": 3,
+   "ncells": 800,
+   "cfl": 0.4,
+   "features": {
+    "amplitude": 0.6836336233767764,
+    "crest": 4.572904852822238,
+    "rms": 0.2673600403742195,
+    "l1": 0.2124536995015242,
+    "peak_x": 1.84375,
+    "n_cells_in_window": 399,
+    "window": [
+     -2.7031070606282466,
+     2.28936658717488
+    ],
+    "rho_plateau": 3.857143
+   },
+   "feature_judgements": {
+    "amplitude": {
+     "decision": "FAIL",
+     "reason": "error above tolerance",
+     "error_percent": 17.432756967523424,
+     "tolerance_percent": 3.0,
+     "band_percent": 0.11693487355606834,
+     "band_share_of_gate": 0.03897829118535611,
+     "robust_margin_percent_of_gate": -484.9897280359831,
+     "reference_verdict": "CERTIFIED",
+     "candidate": 0.6836336233767764,
+     "reference": 0.8279719635399228
+    }
+   },
+   "round2_profile_rel_l1_percent": 0.6698665541799362,
+   "round2_profile_decision": "PASS",
+   "worst_error_percent": 17.432756967523424,
+   "worst_feature": "amplitude",
+   "n_feature_pass": 0,
+   "n_feature_marginal": 0,
+   "n_feature_fail": 1,
+   "n_feature_withheld": 0
+  },
+  {
+   "configuration": "DG P2 N=400 CFL=0.1",
+   "file": "dg_cfl0p1_limweno_n400_p2.npz",
+   "degree": 2,
+   "ncells": 400,
+   "cfl": 0.1,
+   "features": {
+    "amplitude": 0.48484062026364017,
+    "crest": 4.353126378645361,
+    "rms": 0.19590071611710194,
+    "l1": 0.16577187438964835,
+    "peak_x": 1.8375000000000004,
+    "n_cells_in_window": 200,
+    "window": [
+     -2.7031070606282466,
+     2.28936658717488
+    ],
+    "rho_plateau": 3.857143
+   },
+   "feature_judgements": {
+    "amplitude": {
+     "decision": "FAIL",
+     "reason": "error above tolerance",
+     "error_percent": 41.44238674571228,
+     "tolerance_percent": 3.0,
+     "band_percent": 0.11693487355606834,
+     "band_share_of_gate": 0.03897829118535611,
+     "robust_margin_percent_of_gate": -1285.310720642278,
+     "reference_verdict": "CERTIFIED",
+     "candidate": 0.48484062026364017,
+     "reference": 0.8279719635399228
+    }
+   },
+   "round2_profile_rel_l1_percent": 1.5197126973719546,
+   "round2_profile_decision": "PASS",
+   "worst_error_percent": 41.44238674571228,
+   "worst_feature": "amplitude",
+   "n_feature_pass": 0,
+   "n_feature_marginal": 0,
+   "n_feature_fail": 1,
+   "n_feature_withheld": 0
+  },
+  {
+   "configuration": "DG P2 N=400 CFL=0.2",
+   "file": "dg_cfl0p2_limweno_n400_p2.npz",
+   "degree": 2,
+   "ncells": 400,
+   "cfl": 0.2,
+   "features": {
+    "amplitude": 0.48520798790297803,
+    "crest": 4.353447037413983,
+    "rms": 0.19598004960985846,
+    "l1": 0.1658306687042609,
+    "peak_x": 1.8375000000000004,
+    "n_cells_in_window": 200,
+    "window": [
+     -2.7031070606282466,
+     2.28936658717488
+    ],
+    "rho_plateau": 3.857143
+   },
+   "feature_judgements": {
+    "amplitude": {
+     "decision": "FAIL",
+     "reason": "error above tolerance",
+     "error_percent": 41.398017170954304,
+     "tolerance_percent": 3.0,
+     "band_percent": 0.11693487355606834,
+     "band_share_of_gate": 0.03897829118535611,
+     "robust_margin_percent_of_gate": -1283.8317348170124,
+     "reference_verdict": "CERTIFIED",
+     "candidate": 0.48520798790297803,
+     "reference": 0.8279719635399228
+    }
+   },
+   "round2_profile_rel_l1_percent": 1.5180917212484835,
+   "round2_profile_decision": "PASS",
+   "worst_error_percent": 41.398017170954304,
+   "worst_feature": "amplitude",
+   "n_feature_pass": 0,
+   "n_feature_marginal": 0,
+   "n_feature_fail": 1,
+   "n_feature_withheld": 0
+  }
+ ],
+ "feature_summary": {
+  "amplitude": {
+   "reference": 0.8279719635399228,
+   "band_percent": 0.11693487355606834,
+   "worst_error_percent": 68.44469611450629,
+   "median_error_percent": 41.398017170954304,
+   "n_fail": 11,
+   "n_marginal": 0
+  }
+ },
+ "supplementary_single_family": {
+  "crest": {
+   "certifiable_by": "weno5",
+   "certified_value": 4.6804147028798155,
+   "band_percent": 2.616330109850055e-05,
+   "observed_order": 4.702807783966169,
+   "informational_only": true,
+   "legs": [
+    {
+     "configuration": "DG P1 N=200 CFL=0.4",
+     "error_percent": 11.729968732594614,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P1 N=400 CFL=0.4",
+     "error_percent": 7.141155678068431,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P1 N=800 CFL=0.4",
+     "error_percent": 2.4076905229944416,
+     "decision": "PASS"
+    },
+    {
+     "configuration": "DG P2 N=200 CFL=0.4",
+     "error_percent": 11.596854777521186,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=400 CFL=0.4",
+     "error_percent": 6.9733090361939025,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=800 CFL=0.4",
+     "error_percent": 2.3331734136946687,
+     "decision": "PASS"
+    },
+    {
+     "configuration": "DG P3 N=200 CFL=0.4",
+     "error_percent": 11.566088298132154,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P3 N=400 CFL=0.4",
+     "error_percent": 6.940221336414392,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P3 N=800 CFL=0.4",
+     "error_percent": 2.2970154758172967,
+     "decision": "PASS"
+    },
+    {
+     "configuration": "DG P2 N=400 CFL=0.1",
+     "error_percent": 6.9927206243728195,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=400 CFL=0.2",
+     "error_percent": 6.9858695483682745,
+     "decision": "FAIL"
+    }
+   ],
+   "worst_error_percent": 11.729968732594614,
+   "median_error_percent": 6.9858695483682745,
+   "n_fail": 8
+  },
+  "rms": {
+   "certifiable_by": "weno5",
+   "certified_value": 0.29992366843862206,
+   "band_percent": 0.076168642285332,
+   "observed_order": 1.5118603270831297,
+   "informational_only": true,
+   "legs": [
+    {
+     "configuration": "DG P1 N=200 CFL=0.4",
+     "error_percent": 53.601172860991355,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P1 N=400 CFL=0.4",
+     "error_percent": 35.325907875187916,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P1 N=800 CFL=0.4",
+     "error_percent": 11.953712445211501,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=200 CFL=0.4",
+     "error_percent": 53.02797796747093,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=400 CFL=0.4",
+     "error_percent": 34.585215031491636,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=800 CFL=0.4",
+     "error_percent": 11.065524007590133,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P3 N=200 CFL=0.4",
+     "error_percent": 52.992078072483935,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P3 N=400 CFL=0.4",
+     "error_percent": 34.539707182166644,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P3 N=800 CFL=0.4",
+     "error_percent": 10.857305204996365,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=400 CFL=0.1",
+     "error_percent": 34.683142168490754,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=400 CFL=0.2",
+     "error_percent": 34.65669094069352,
+     "decision": "FAIL"
+    }
+   ],
+   "worst_error_percent": 53.601172860991355,
+   "median_error_percent": 34.65669094069352,
+   "n_fail": 11
+  },
+  "l1": {
+   "certifiable_by": "weno7",
+   "certified_value": 0.2333459161340172,
+   "band_percent": 0.36703072794269975,
+   "observed_order": 0.848035134538021,
+   "informational_only": true,
+   "legs": [
+    {
+     "configuration": "DG P1 N=200 CFL=0.4",
+     "error_percent": 47.63913547866233,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P1 N=400 CFL=0.4",
+     "error_percent": 29.541570932610206,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P1 N=800 CFL=0.4",
+     "error_percent": 9.667166631116427,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=200 CFL=0.4",
+     "error_percent": 47.25010309737627,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=400 CFL=0.4",
+     "error_percent": 28.868421323939128,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=800 CFL=0.4",
+     "error_percent": 9.050094103066652,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P3 N=200 CFL=0.4",
+     "error_percent": 47.22653834631116,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P3 N=400 CFL=0.4",
+     "error_percent": 28.85821906090053,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P3 N=800 CFL=0.4",
+     "error_percent": 8.95332430866028,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=400 CFL=0.1",
+     "error_percent": 28.95874196725138,
+     "decision": "FAIL"
+    },
+    {
+     "configuration": "DG P2 N=400 CFL=0.2",
+     "error_percent": 28.93354576258381,
+     "decision": "FAIL"
+    }
+   ],
+   "worst_error_percent": 47.63913547866233,
+   "median_error_percent": 28.93354576258381,
+   "n_fail": 11
+  },
+  "peak_x": {
+   "certifiable_by": null,
+   "note": "no family certifies this functional"
+  }
+ },
+ "same_grid_cross_scheme": [
+  {
+   "feature": "amplitude",
+   "ncells": 800,
+   "reference_certified": 0.8279719635399228,
+   "weno5_error_percent": 2.1254655001168716,
+   "weno7_error_percent": 0.26511773708124753,
+   "dg_p1_error_percent": 18.40964740255157,
+   "dg_p2_error_percent": 17.707016553557924,
+   "dg_p3_error_percent": 17.432756967523424
+  },
+  {
+   "feature": "amplitude",
+   "ncells": 1600,
+   "reference_certified": 0.8279719635399228,
+   "weno5_error_percent": 0.8613774017983727,
+   "weno7_error_percent": 0.09811283774868292
+  },
+  {
+   "feature": "amplitude",
+   "ncells": 3200,
+   "reference_certified": 0.8279719635399228,
+   "weno5_error_percent": 0.28386624676188793,
+   "weno7_error_percent": 0.028507938444509003
+  },
+  {
+   "feature": "amplitude",
+   "ncells": 6400,
+   "reference_certified": 0.8279719635399228,
+   "weno5_error_percent": 0.09354789884486128,
+   "weno7_error_percent": 0.019644045141209977
+  }
+ ],
+ "G4_counterexamples": [
+  {
+   "configuration": "DG P1 N=200 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n200_p1.npz",
+   "profile_decision": "PASS",
+   "profile_rel_l1_percent": 2.455700790452218,
+   "failed_features": {
+    "amplitude": {
+     "error_percent": 68.44469611450629,
+     "decision": "FAIL"
+    }
+   }
+  },
+  {
+   "configuration": "DG P1 N=400 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n400_p1.npz",
+   "profile_decision": "PASS",
+   "profile_rel_l1_percent": 1.5479276855264736,
+   "failed_features": {
+    "amplitude": {
+     "error_percent": 42.76525596896496,
+     "decision": "FAIL"
+    }
+   }
+  },
+  {
+   "configuration": "DG P1 N=800 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n800_p1.npz",
+   "profile_decision": "PASS",
+   "profile_rel_l1_percent": 0.5786426564376876,
+   "failed_features": {
+    "amplitude": {
+     "error_percent": 18.40964740255157,
+     "decision": "FAIL"
+    }
+   }
+  },
+  {
+   "configuration": "DG P2 N=200 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n200_p2.npz",
+   "profile_decision": "PASS",
+   "profile_rel_l1_percent": 2.4203035576168808,
+   "failed_features": {
+    "amplitude": {
+     "error_percent": 67.65189535595678,
+     "decision": "FAIL"
+    }
+   }
+  },
+  {
+   "configuration": "DG P2 N=400 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n400_p2.npz",
+   "profile_decision": "PASS",
+   "profile_rel_l1_percent": 1.5160255033385162,
+   "failed_features": {
+    "amplitude": {
+     "error_percent": 41.25294512138741,
+     "decision": "FAIL"
+    }
+   }
+  },
+  {
+   "configuration": "DG P2 N=800 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n800_p2.npz",
+   "profile_decision": "PASS",
+   "profile_rel_l1_percent": 0.5667191536375117,
+   "failed_features": {
+    "amplitude": {
+     "error_percent": 17.707016553557924,
+     "decision": "FAIL"
+    }
+   }
+  },
+  {
+   "configuration": "DG P3 N=200 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n200_p3.npz",
+   "profile_decision": "PASS",
+   "profile_rel_l1_percent": 2.426617313273359,
+   "failed_features": {
+    "amplitude": {
+     "error_percent": 67.52595442973634,
+     "decision": "FAIL"
+    }
+   }
+  },
+  {
+   "configuration": "DG P3 N=400 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n400_p3.npz",
+   "profile_decision": "PASS",
+   "profile_rel_l1_percent": 1.5220332833304568,
+   "failed_features": {
+    "amplitude": {
+     "error_percent": 41.117856834771246,
+     "decision": "FAIL"
+    }
+   }
+  },
+  {
+   "configuration": "DG P3 N=800 CFL=0.4",
+   "file": "dg_cfl0p4_limweno_n800_p3.npz",
+   "profile_decision": "PASS",
+   "profile_rel_l1_percent": 0.6698665541799362,
+   "failed_features": {
+    "amplitude": {
+     "error_percent": 17.432756967523424,
+     "decision": "FAIL"
+    }
+   }
+  },
+  {
+   "configuration": "DG P2 N=400 CFL=0.1",
+   "file": "dg_cfl0p1_limweno_n400_p2.npz",
+   "profile_decision": "PASS",
+   "profile_rel_l1_percent": 1.5197126973719546,
+   "failed_features": {
+    "amplitude": {
+     "error_percent": 41.44238674571228,
+     "decision": "FAIL"
+    }
+   }
+  },
+  {
+   "configuration": "DG P2 N=400 CFL=0.2",
+   "file": "dg_cfl0p2_limweno_n400_p2.npz",
+   "profile_decision": "PASS",
+   "profile_rel_l1_percent": 1.5180917212484835,
+   "failed_features": {
+    "amplitude": {
+     "error_percent": 41.398017170954304,
+     "decision": "FAIL"
+    }
+   }
+  }
+ ],
+ "G4_profile_gate_sufficient": false
+}
