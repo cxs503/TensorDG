@@ -8,8 +8,10 @@
       10.0,
       10.0
     ],
-    "note": "both solvers close their faces periodically, so the exact solution is evaluated through the periodic (min-image) map; the free-space form differs from it by the sweep below as soon as the centre is advected out of the box",
-    "truncated_images": "next image shell at radial distance >= box - |shift| >= 5 -> amplitude ratio ~6e-6, two orders below the coarsest family's discretisation error"
+    "model": "min_image",
+    "images_per_checkpoint": {},
+    "note": "both solvers close their faces periodically, so the exact solution is evaluated through the periodic map; `min_image` folds the displacement onto the nearest image only and drops the neighbouring tails, `lattice` sums them (exact up to O(tail^2)) -- see docs/CASE-DG-EULER-VORTEX-ERR-reference-floor.md",
+    "truncated_images": "min_image: next image shell at radial distance >= box - |shift| >= 5 -> envelope ratio ~6e-6 -> measured 4e-13 relative L2 in density/pressure (second order in the envelope) but 1.5e-6 in velocity (first order, displacement-weighted)"
   },
   "reference_defect_percent": {
     "1": {
@@ -162,13 +164,128 @@
       "cells": 64,
       "final_time": 10.0,
       "cfl": 0.4
+    },
+    {
+      "task": "dg",
+      "degree": 1,
+      "cells": 32,
+      "final_time": 1.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 1,
+      "cells": 32,
+      "final_time": 2.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 1,
+      "cells": 32,
+      "final_time": 5.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 1,
+      "cells": 32,
+      "final_time": 10.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 1.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 2.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 5.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 10.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 1,
+      "cells": 64,
+      "final_time": 1.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 1,
+      "cells": 64,
+      "final_time": 2.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 1,
+      "cells": 64,
+      "final_time": 5.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 1,
+      "cells": 64,
+      "final_time": 10.0,
+      "cfl": 0.2
+    },
+    {
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 20.0,
+      "cfl": 0.2
     }
   ],
   "ladder_completeness": {
-    "declared": 19,
-    "present": 19,
-    "missing": [],
-    "pending": {},
+    "declared": 32,
+    "present": 21,
+    "missing": [
+      "dg_d1_n32_t5_cfl0.2",
+      "dg_d1_n32_t10_cfl0.2",
+      "dg_d3_n32_t1_cfl0.2",
+      "dg_d3_n32_t2_cfl0.2",
+      "dg_d3_n32_t5_cfl0.2",
+      "dg_d3_n32_t10_cfl0.2",
+      "dg_d1_n64_t1_cfl0.2",
+      "dg_d1_n64_t2_cfl0.2",
+      "dg_d1_n64_t5_cfl0.2",
+      "dg_d1_n64_t10_cfl0.2",
+      "dg_d2_n32_t20_cfl0.2"
+    ],
+    "pending": {
+      "dg_d1_n32_t5_cfl0.2": "cj3432",
+      "dg_d1_n32_t10_cfl0.2": "cj3432",
+      "dg_d3_n32_t1_cfl0.2": "cj3432",
+      "dg_d3_n32_t2_cfl0.2": "cj3432",
+      "dg_d3_n32_t5_cfl0.2": "cj3432",
+      "dg_d3_n32_t10_cfl0.2": "cj3432",
+      "dg_d1_n64_t1_cfl0.2": "cj3432",
+      "dg_d1_n64_t2_cfl0.2": "cj3432",
+      "dg_d1_n64_t5_cfl0.2": "cj3432",
+      "dg_d1_n64_t10_cfl0.2": "cj3432",
+      "dg_d2_n32_t20_cfl0.2": "cj3432"
+    },
     "unexpected": []
   },
   "exact_invariants": {
@@ -186,6 +303,7 @@
       "measured": 0.04926036192305211,
       "worst_at": "p0_n64_t1_cfl0.4",
       "families": [
+        "dg_d1_n32_cfl0.2",
         "dg_d2_n32_cfl0.2",
         "dg_d2_n32_cfl0.4",
         "dg_d2_n64_cfl0.2",
@@ -203,6 +321,7 @@
       "note": "reported for transparency only: the first-order P0 family exceeds the snapshot tolerance during long-time transport; accumulation is what C2 measures, and C5 keeps the cross-check honest",
       "per_reference_time": {
         "1": {
+          "dg_d1_n32_t1_cfl0.2": 0.0020100992123961822,
           "dg_d2_n32_t1_cfl0.2": 9.431214706130781e-05,
           "dg_d2_n32_t1_cfl0.4": 9.431289954286675e-05,
           "dg_d2_n64_t1_cfl0.2": 1.1491199259052786e-05,
@@ -211,6 +330,7 @@
           "p0_n64_t1_cfl0.4": 0.04926036192305211
         },
         "2": {
+          "dg_d1_n32_t2_cfl0.2": 0.0023210234148808807,
           "dg_d2_n32_t2_cfl0.2": 9.689709783192219e-05,
           "dg_d2_n32_t2_cfl0.4": 9.690238135314187e-05,
           "dg_d2_n64_t2_cfl0.2": 1.1529982784080826e-05,
@@ -246,6 +366,7 @@
       "exponent": 0.19871721658331432,
       "checkpoint_count": 4,
       "exponents_all_families": {
+        "dg_d1_n32_cfl0.2": NaN,
         "dg_d2_n32_cfl0.2": 0.19871721658331432,
         "dg_d2_n32_cfl0.4": 0.19890142843159025,
         "dg_d2_n64_cfl0.2": 0.029322048158809108,
@@ -282,21 +403,54 @@
       "status": "passed"
     },
     "C6_ladder_completeness": {
-      "criterion": "every checkpoint declared in LADDER has a result record (19 declared)",
-      "declared": 19,
-      "present": 19,
-      "missing": [],
-      "pending_jobs": {},
+      "criterion": "every checkpoint declared in LADDER has a result record (32 declared)",
+      "declared": 32,
+      "present": 21,
+      "missing": [
+        "dg_d1_n32_t5_cfl0.2",
+        "dg_d1_n32_t10_cfl0.2",
+        "dg_d3_n32_t1_cfl0.2",
+        "dg_d3_n32_t2_cfl0.2",
+        "dg_d3_n32_t5_cfl0.2",
+        "dg_d3_n32_t10_cfl0.2",
+        "dg_d1_n64_t1_cfl0.2",
+        "dg_d1_n64_t2_cfl0.2",
+        "dg_d1_n64_t5_cfl0.2",
+        "dg_d1_n64_t10_cfl0.2",
+        "dg_d2_n32_t20_cfl0.2"
+      ],
+      "pending_jobs": {
+        "dg_d1_n32_t5_cfl0.2": "cj3432",
+        "dg_d1_n32_t10_cfl0.2": "cj3432",
+        "dg_d3_n32_t1_cfl0.2": "cj3432",
+        "dg_d3_n32_t2_cfl0.2": "cj3432",
+        "dg_d3_n32_t5_cfl0.2": "cj3432",
+        "dg_d3_n32_t10_cfl0.2": "cj3432",
+        "dg_d1_n64_t1_cfl0.2": "cj3432",
+        "dg_d1_n64_t2_cfl0.2": "cj3432",
+        "dg_d1_n64_t5_cfl0.2": "cj3432",
+        "dg_d1_n64_t10_cfl0.2": "cj3432",
+        "dg_d2_n32_t20_cfl0.2": "cj3432"
+      },
       "unexpected": [],
       "note": "unexpected keys are listed for transparency but are not a failure: extra evidence is allowed, missing evidence is not. A missing checkpoint with a submitted job reads not_evaluated (INCOMPLETE), never passed",
-      "passed": true,
-      "status": "passed"
+      "passed": false,
+      "status": "not_evaluated"
     },
     "C7_design_space_invariance": {
-      "criterion": "every DG design point (mesh x CFL) with >= 3 checkpoints satisfies alpha <= 1.0, and at least 2 such points exist",
+      "criterion": "every DG design point (mesh x CFL x degree) with >= 3 checkpoints satisfies alpha <= 1.0, and at least 2 such points exist",
       "measured": 0.19890142843159025,
       "worst_at": "dg_d2_n32_cfl0.4",
       "per_family": {
+        "dg_d1_n32_cfl0.2": {
+          "checkpoints": 2,
+          "final_time_max": 2.0,
+          "cfl": [
+            0.2
+          ],
+          "exponent": NaN,
+          "passed": false
+        },
         "dg_d2_n32_cfl0.2": {
           "checkpoints": 4,
           "final_time_max": 10.0,
@@ -333,6 +487,90 @@
       "offenders": {},
       "passed": true,
       "status": "passed"
+    },
+    "C8_degree_invariance": {
+      "criterion": "every DG degree in [1, 2, 3] with >= 3 checkpoints satisfies alpha <= 1.0, and at least 2 distinct degrees are decidable",
+      "measured": 0.19871721658331432,
+      "worst_at": 2,
+      "per_degree": {
+        "1": {
+          "family": "dg_d1_n32_cfl0.2",
+          "checkpoints": 2,
+          "final_time_max": 2.0,
+          "exponent": NaN,
+          "passed": false
+        },
+        "2": {
+          "family": "dg_d2_n32_cfl0.2",
+          "checkpoints": 4,
+          "final_time_max": 10.0,
+          "exponent": 0.19871721658331432,
+          "passed": true
+        },
+        "3": {
+          "family": "dg_d3_n32_cfl0.2",
+          "checkpoints": 0,
+          "final_time_max": null,
+          "exponent": NaN,
+          "passed": false
+        }
+      },
+      "degrees_evaluated": [
+        2
+      ],
+      "offenders": {},
+      "passed": false,
+      "status": "not_evaluated"
+    },
+    "C9_design_order": {
+      "criterion": "observed spatial order over n=[32, 64] reaches 0.8 * (p + 1) for every degree in [1, 2] at t in [1.0, 10.0]",
+      "measured": 3.036914226534744,
+      "worst_at": "dg_d2_t1",
+      "per_case": {
+        "dg_d1_t1": {
+          "degree": 1,
+          "checkpoint": 1.0,
+          "cells": [
+            32
+          ],
+          "order": NaN,
+          "target": 1.6,
+          "passed": false
+        },
+        "dg_d1_t10": {
+          "degree": 1,
+          "checkpoint": 10.0,
+          "cells": [],
+          "order": NaN,
+          "target": 1.6,
+          "passed": false
+        },
+        "dg_d2_t1": {
+          "degree": 2,
+          "checkpoint": 1.0,
+          "cells": [
+            32,
+            64
+          ],
+          "order": 3.036914226534744,
+          "target": 2.4000000000000004,
+          "passed": true
+        },
+        "dg_d2_t10": {
+          "degree": 2,
+          "checkpoint": 10.0,
+          "cells": [
+            32,
+            64
+          ],
+          "order": 3.6302415505266614,
+          "target": 2.4000000000000004,
+          "passed": true
+        }
+      },
+      "failures": {},
+      "passed": false,
+      "status": "not_evaluated"
     },
     "C7x_design_space_spread": {
       "criterion": "INFORMATIONAL: max-field error at t = 10 per DG design point, and the two one-at-a-time ratios",
@@ -380,12 +618,17 @@
       "C7x_design_space_spread",
       "C7x_amplification_prediction"
     ],
-    "all_passed": true,
-    "not_evaluated": [],
+    "all_passed": false,
+    "not_evaluated": [
+      "C6_ladder_completeness",
+      "C8_degree_invariance",
+      "C9_design_order"
+    ],
     "failed": [],
-    "verdict": "PASS"
+    "verdict": "INCOMPLETE"
   },
   "family_count": {
+    "dg_d1_n32_cfl0.2": 2,
     "dg_d2_n32_cfl0.2": 4,
     "dg_d2_n32_cfl0.4": 4,
     "dg_d2_n64_cfl0.2": 3,
@@ -394,6 +637,104 @@
     "p0_n64": 3
   },
   "records": [
+    {
+      "task_key": "dg_d1_n32_t1_cfl0.2",
+      "family": "dg_d1_n32_cfl0.2",
+      "config": {
+        "task": "dg",
+        "cells": 32,
+        "final_time": 1.0,
+        "cfl": 0.2,
+        "strength": 5.0,
+        "reference": "min_image",
+        "degree": 1
+      },
+      "final_time": 1.0,
+      "cfl": 0.2,
+      "steps": 282,
+      "errors": {
+        "density": 0.0009272514930407138,
+        "velocity_x": 0.0020100992123961822,
+        "velocity_y": 0.0020026663199439517,
+        "pressure": 0.0013723166611430756
+      },
+      "max_percent": 0.20100992123961822,
+      "invariant_drift": {
+        "mass": 1.0414936689999394e-14,
+        "momentum_x": 1.0559588588471605e-14,
+        "momentum_y": 1.0414936689999394e-14,
+        "energy": 1.1706377254263137e-14,
+        "entropy": 4.468253976928549e-05
+      },
+      "entropy_drift": 4.468253976930292e-05,
+      "entropy_production": 4.468253976930292e-05,
+      "density_min_relative_error": 0.01447535988510558,
+      "initial_invariants": {
+        "mass": 98.24174356019094,
+        "momentum_x": 98.24174356019095,
+        "momentum_y": 98.24174356019094,
+        "energy": 344.7593266010296,
+        "entropy": 100.00003593465337
+      },
+      "final_invariants": {
+        "mass": 98.24174356018992,
+        "momentum_x": 98.24174356018992,
+        "momentum_y": 98.24174356018992,
+        "energy": 344.7593266010256,
+        "entropy": 100.00450419023595
+      },
+      "gate_pass": true,
+      "wall_seconds": 18.941245317459106
+    },
+    {
+      "task_key": "dg_d1_n32_t2_cfl0.2",
+      "family": "dg_d1_n32_cfl0.2",
+      "config": {
+        "task": "dg",
+        "cells": 32,
+        "final_time": 2.0,
+        "cfl": 0.2,
+        "strength": 5.0,
+        "reference": "min_image",
+        "degree": 1
+      },
+      "final_time": 2.0,
+      "cfl": 0.2,
+      "steps": 563,
+      "errors": {
+        "density": 0.0009978245121394426,
+        "velocity_x": 0.0023110113716565584,
+        "velocity_y": 0.0023210234148808807,
+        "pressure": 0.0014968932037281687
+      },
+      "max_percent": 0.23210234148808806,
+      "invariant_drift": {
+        "mass": 2.1119177176943214e-14,
+        "momentum_x": 2.0974525278471e-14,
+        "momentum_y": 2.0974525278471002e-14,
+        "energy": 2.357763306140322e-14,
+        "entropy": 9.287218413594147e-05
+      },
+      "entropy_drift": 9.287218413600584e-05,
+      "entropy_production": 9.287218413600584e-05,
+      "density_min_relative_error": 0.0013740710749392724,
+      "initial_invariants": {
+        "mass": 98.24174356019094,
+        "momentum_x": 98.24174356019095,
+        "momentum_y": 98.24174356019094,
+        "energy": 344.7593266010296,
+        "entropy": 100.00003593465337
+      },
+      "final_invariants": {
+        "mass": 98.24174356018887,
+        "momentum_x": 98.2417435601889,
+        "momentum_y": 98.24174356018888,
+        "energy": 344.7593266010215,
+        "entropy": 100.00932315640429
+      },
+      "gate_pass": true,
+      "wall_seconds": 35.34992790222168
+    },
     {
       "task_key": "dg_d2_n32_t1_cfl0.2",
       "family": "dg_d2_n32_cfl0.2",
