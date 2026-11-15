@@ -1,0 +1,790 @@
+{
+ "MF1_field_certification": {
+  "fields": {
+   "rho": {
+    "band_percent": 0.08279718833081827,
+    "band_share_of_strict_gate": 0.027599062776939423,
+    "classification": "monotonic",
+    "differences_percent": [
+     0.23083911384330436,
+     0.09489332553025007
+    ],
+    "gate_usable_at_strict": true,
+    "observed_order": 1.2825091761164593,
+    "reference_ncells": 1600,
+    "verdict": "CERTIFIED"
+   },
+   "rho_e": {
+    "band_percent": 0.041615175636648405,
+    "band_share_of_strict_gate": 0.013871725212216135,
+    "classification": "monotonic",
+    "differences_percent": [
+     0.12016492767925385,
+     0.04875759410379151
+    ],
+    "gate_usable_at_strict": true,
+    "observed_order": 1.3013170362476338,
+    "reference_ncells": 1600,
+    "verdict": "CERTIFIED"
+   },
+   "rho_u": {
+    "band_percent": 0.07886454193347998,
+    "band_share_of_strict_gate": 0.026288180644493328,
+    "classification": "monotonic",
+    "differences_percent": [
+     0.23281285596394655,
+     0.0936886910483659
+    ],
+    "gate_usable_at_strict": true,
+    "observed_order": 1.3132239072757896,
+    "reference_ncells": 1600,
+    "verdict": "CERTIFIED"
+   }
+  },
+  "pass": true,
+  "strict_percent": 3.0,
+  "u_share_max": 0.3333333333333333
+ },
+ "MF2_derived_usability": {
+  "band_rule": {
+   "description": "band(derived) = sum of the bands of the conserved fields it is made of (triangle inequality, conservative)",
+   "kind": "additive",
+   "p": [
+    "rho_e",
+    "rho_u",
+    "rho"
+   ],
+   "u": [
+    "rho_u",
+    "rho"
+   ]
+  },
+  "derived": {
+   "p": {
+    "band_percent": 0.20327690590094666,
+    "band_rule": "additive",
+    "band_share_of_strict_gate": 0.06775896863364889,
+    "gate_usable_at_strict": true,
+    "sources": [
+     "rho_e",
+     "rho_u",
+     "rho"
+    ]
+   },
+   "u": {
+    "band_percent": 0.16166173026429825,
+    "band_rule": "additive",
+    "band_share_of_strict_gate": 0.05388724342143275,
+    "gate_usable_at_strict": true,
+    "sources": [
+     "rho_u",
+     "rho"
+    ]
+   }
+  },
+  "pass": true,
+  "strict_percent": 3.0
+ },
+ "MF3_leg_gate_all_fields": {
+  "gate_percent": 5.0,
+  "n_comparisons": 55,
+  "n_legs": 11,
+  "pass": true,
+  "per_field": {
+   "p": {
+    "max_percent": 0.8300457923758828,
+    "min_percent": 0.15139631272728646,
+    "n_over_gate": 0,
+    "n_over_strict": 0
+   },
+   "rho": {
+    "max_percent": 2.455700790452218,
+    "min_percent": 0.5667191536375117,
+    "n_over_gate": 0,
+    "n_over_strict": 0
+   },
+   "rho_e": {
+    "max_percent": 1.1803784999796152,
+    "min_percent": 0.25736895558387984,
+    "n_over_gate": 0,
+    "n_over_strict": 0
+   },
+   "rho_u": {
+    "max_percent": 2.4894724208577217,
+    "min_percent": 0.5848606334075195,
+    "n_over_gate": 0,
+    "n_over_strict": 0
+   },
+   "u": {
+    "max_percent": 0.7410593606300004,
+    "min_percent": 0.1523504842635129,
+    "n_over_gate": 0,
+    "n_over_strict": 0
+   }
+  },
+  "strict_percent": 3.0,
+  "worst": {
+   "configuration": "DG P1 N=200 CFL=0.4",
+   "decision": "PASS",
+   "field": "rho_u",
+   "rel_l1_percent": 2.4894724208577217
+  }
+ },
+ "MF4_state_oracles": {
+  "pass": true,
+  "rows": [
+   {
+    "got": 3.8571430000047267,
+    "kind": "relative",
+    "name": "plateau_rho",
+    "pass": true,
+    "ref": 3.857143,
+    "rel_error_percent": 1.2253736665802165e-10,
+    "tolerance_percent": 1.0
+   },
+   {
+    "got": 2.629368999997525,
+    "kind": "relative",
+    "name": "plateau_u",
+    "pass": true,
+    "ref": 2.629369,
+    "rel_error_percent": 9.412559311737527e-11,
+    "tolerance_percent": 1.0
+   },
+   {
+    "got": 10.333330000017762,
+    "kind": "relative",
+    "name": "plateau_p",
+    "pass": true,
+    "ref": 10.33333,
+    "rel_error_percent": 1.7188836548492214e-10,
+    "tolerance_percent": 1.0
+   },
+   {
+    "exact_state": {
+     "entropy_wave_p": 1.0,
+     "entropy_wave_u": 0.0
+    },
+    "got": 0.0,
+    "kind": "absolute_deviation",
+    "name": "entropy_wave_u_deviation",
+    "pass": true,
+    "ref": 0.0,
+    "rel_error_percent": 0.0,
+    "tolerance_percent": 1.0
+   },
+   {
+    "exact_state": {
+     "entropy_wave_p": 1.0,
+     "entropy_wave_u": 0.0
+    },
+    "got": 0.0,
+    "kind": "absolute_deviation",
+    "name": "entropy_wave_p_deviation",
+    "pass": true,
+    "ref": 0.0,
+    "rel_error_percent": 0.0,
+    "tolerance_percent": 1.0
+   }
+  ],
+  "tolerance_percent": 1.0,
+  "windows": {
+   "plateau": [
+    -5.0,
+    -3.0
+   ],
+   "undisturbed": [
+    2.5893665871748803,
+    5.0
+   ]
+  },
+  "worst_deviation_percent": 1.7188836548492214e-10
+ },
+ "MF5_budget_closure": {
+  "mass_cross_check_case_module_percent": 0.0,
+  "pass": true,
+  "rates": {
+   "energy": 130.15374165611723,
+   "mass": 10.141852232767,
+   "momentum": 36.00000186341833
+  },
+  "rows": [
+   {
+    "got": 31.08915244857708,
+    "name": "mass",
+    "pass": true,
+    "ref": 31.0891521889786,
+    "rel_error_percent": 8.350130668613329e-07,
+    "tolerance_percent": 0.01
+   },
+   {
+    "got": 74.9418555868976,
+    "name": "momentum",
+    "pass": true,
+    "ref": 74.94185558692001,
+    "rel_error_percent": 2.990387375701034e-11,
+    "tolerance_percent": 0.01
+   },
+   {
+    "got": 295.943395912631,
+    "name": "energy",
+    "pass": true,
+    "ref": 295.94339591272023,
+    "rel_error_percent": 3.0155823324332104e-11,
+    "tolerance_percent": 0.01
+   }
+  ],
+  "tolerance_percent": 0.01
+ },
+ "MF6_rho_gate_proxy": {
+  "declared_criterion": "rho-only gate is a faithful proxy if every ratio <= 1.05",
+  "description": "each quantity's leg error against the density error the round-2 gate actually measures",
+  "ratios": {
+   "p": {
+    "max_ratio_to_rho": 0.44892995795852253,
+    "worst_leg": "DG P3 N=800 CFL=0.4"
+   },
+   "rho_e": {
+    "max_ratio_to_rho": 0.6825797048575293,
+    "worst_leg": "DG P3 N=800 CFL=0.4"
+   },
+   "rho_u": {
+    "max_ratio_to_rho": 1.184800509013413,
+    "worst_leg": "DG P3 N=800 CFL=0.4"
+   },
+   "u": {
+    "max_ratio_to_rho": 0.3544982252738729,
+    "worst_leg": "DG P2 N=800 CFL=0.4"
+   }
+  },
+  "rho_only_gate_conservative": false
+ },
+ "accepted": true,
+ "band_percent": {
+  "p": 0.20327690590094666,
+  "rho": 0.08279718833081827,
+  "rho_e": 0.041615175636648405,
+  "rho_u": 0.07886454193347998,
+  "u": 0.16166173026429825
+ },
+ "benchmark": {
+  "benchmark_id": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE-MULTIFIELD",
+  "version": "2026.1"
+ },
+ "budgets": {
+  "closure": "inflow through x=-5 only; the outflow face at u_R = 0 discharges pressure",
+  "cross_check_mass_case_module": 31.0891521889786,
+  "energy": {
+   "final_predicted": 295.94339591272023,
+   "initial": 61.666660931709174,
+   "rate": 130.15374165611723
+  },
+  "final_time": 1.8,
+  "mass": {
+   "final_predicted": 31.0891521889786,
+   "initial": 12.833818169997997,
+   "rate": 10.141852232767
+  },
+  "momentum": {
+   "final_predicted": 74.94185558692001,
+   "inflow_flux": 37.00000186341833,
+   "initial": 10.141852232767,
+   "outflow_flux": 1.0,
+   "rate": 36.00000186341833
+  }
+ },
+ "case": "shu_osher_shock_entropy_wave",
+ "fields": [
+  "rho",
+  "rho_u",
+  "rho_e",
+  "u",
+  "p"
+ ],
+ "legs": [
+  {
+   "cfl": 0.4,
+   "configuration": "DG P1 N=200 CFL=0.4",
+   "degree": 1,
+   "error_localisation": {
+    "half_width": 0.3,
+    "shock_share_percent": 13.895452053327666,
+    "shock_window": [
+     2.125000000000001,
+     2.7250000000000005
+    ]
+   },
+   "file": "dg_cfl0p4_limweno_n200_p1.npz",
+   "ncells": 200,
+   "p": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.169954207624117,
+    "rel_l1_percent": 0.8300457923758828
+   },
+   "rho": {
+    "decision_strict": "PASS",
+    "margin_percent": 0.5442992095477819,
+    "rel_l1_percent": 2.455700790452218
+   },
+   "rho_e": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.8196215000203848,
+    "rel_l1_percent": 1.1803784999796152
+   },
+   "rho_u": {
+    "decision_strict": "PASS",
+    "margin_percent": 0.5105275791422783,
+    "rel_l1_percent": 2.4894724208577217
+   },
+   "u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.2589406393699996,
+    "rel_l1_percent": 0.7410593606300004
+   }
+  },
+  {
+   "cfl": 0.4,
+   "configuration": "DG P1 N=400 CFL=0.4",
+   "degree": 1,
+   "error_localisation": {
+    "half_width": 0.3,
+    "shock_share_percent": 11.173266024944352,
+    "shock_window": [
+     2.1125000000000007,
+     2.7125000000000004
+    ]
+   },
+   "file": "dg_cfl0p4_limweno_n400_p1.npz",
+   "ncells": 400,
+   "p": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.6258441790996105,
+    "rel_l1_percent": 0.37415582090038957
+   },
+   "rho": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.4520723144735264,
+    "rel_l1_percent": 1.5479276855264736
+   },
+   "rho_e": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.326772647276097,
+    "rel_l1_percent": 0.6732273527239031
+   },
+   "rho_u": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.4067896054151732,
+    "rel_l1_percent": 1.5932103945848268
+   },
+   "u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.6555018644837474,
+    "rel_l1_percent": 0.34449813551625275
+   }
+  },
+  {
+   "cfl": 0.4,
+   "configuration": "DG P1 N=800 CFL=0.4",
+   "degree": 1,
+   "error_localisation": {
+    "half_width": 0.3,
+    "shock_share_percent": 10.229961837850471,
+    "shock_window": [
+     2.10625,
+     2.70625
+    ]
+   },
+   "file": "dg_cfl0p4_limweno_n800_p1.npz",
+   "ncells": 800,
+   "p": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.847240019351064,
+    "rel_l1_percent": 0.1527599806489361
+   },
+   "rho": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.4213573435623124,
+    "rel_l1_percent": 0.5786426564376876
+   },
+   "rho_e": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.7399742576357924,
+    "rel_l1_percent": 0.26002574236420767
+   },
+   "rho_u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.4041063218592225,
+    "rel_l1_percent": 0.5958936781407773
+   },
+   "u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.845497461504786,
+    "rel_l1_percent": 0.15450253849521417
+   }
+  },
+  {
+   "cfl": 0.4,
+   "configuration": "DG P2 N=200 CFL=0.4",
+   "degree": 2,
+   "error_localisation": {
+    "half_width": 0.3,
+    "shock_share_percent": 13.256700602517945,
+    "shock_window": [
+     2.125000000000001,
+     2.7250000000000005
+    ]
+   },
+   "file": "dg_cfl0p4_limweno_n200_p2.npz",
+   "ncells": 200,
+   "p": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.216754632740102,
+    "rel_l1_percent": 0.7832453672598981
+   },
+   "rho": {
+    "decision_strict": "PASS",
+    "margin_percent": 0.5796964423831192,
+    "rel_l1_percent": 2.4203035576168808
+   },
+   "rho_e": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.8578848964030648,
+    "rel_l1_percent": 1.1421151035969352
+   },
+   "rho_u": {
+    "decision_strict": "PASS",
+    "margin_percent": 0.5499232589188581,
+    "rel_l1_percent": 2.450076741081142
+   },
+   "u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.2863571161358065,
+    "rel_l1_percent": 0.7136428838641936
+   }
+  },
+  {
+   "cfl": 0.4,
+   "configuration": "DG P2 N=400 CFL=0.4",
+   "degree": 2,
+   "error_localisation": {
+    "half_width": 0.3,
+    "shock_share_percent": 11.141127417273223,
+    "shock_window": [
+     2.1125000000000007,
+     2.7125000000000004
+    ]
+   },
+   "file": "dg_cfl0p4_limweno_n400_p2.npz",
+   "ncells": 400,
+   "p": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.641713138356253,
+    "rel_l1_percent": 0.35828686164374696
+   },
+   "rho": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.4839744966614838,
+    "rel_l1_percent": 1.5160255033385162
+   },
+   "rho_e": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.3352068391949365,
+    "rel_l1_percent": 0.6647931608050633
+   },
+   "rho_u": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.428765218160874,
+    "rel_l1_percent": 1.571234781839126
+   },
+   "u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.6628665733303905,
+    "rel_l1_percent": 0.33713342666960944
+   }
+  },
+  {
+   "cfl": 0.4,
+   "configuration": "DG P2 N=800 CFL=0.4",
+   "degree": 2,
+   "error_localisation": {
+    "half_width": 0.3,
+    "shock_share_percent": 10.491456230106008,
+    "shock_window": [
+     2.10625,
+     2.70625
+    ]
+   },
+   "file": "dg_cfl0p4_limweno_n800_p2.npz",
+   "ncells": 800,
+   "p": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.8486036872727136,
+    "rel_l1_percent": 0.15139631272728646
+   },
+   "rho": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.4332808463624884,
+    "rel_l1_percent": 0.5667191536375117
+   },
+   "rho_e": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.74263104441612,
+    "rel_l1_percent": 0.25736895558387984
+   },
+   "rho_u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.4151393665924807,
+    "rel_l1_percent": 0.5848606334075195
+   },
+   "u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.847649515736487,
+    "rel_l1_percent": 0.1523504842635129
+   }
+  },
+  {
+   "cfl": 0.4,
+   "configuration": "DG P3 N=200 CFL=0.4",
+   "degree": 3,
+   "error_localisation": {
+    "half_width": 0.3,
+    "shock_share_percent": 13.404290648178561,
+    "shock_window": [
+     2.125000000000001,
+     2.7250000000000005
+    ]
+   },
+   "file": "dg_cfl0p4_limweno_n200_p3.npz",
+   "ncells": 200,
+   "p": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.20841482204692,
+    "rel_l1_percent": 0.7915851779530797
+   },
+   "rho": {
+    "decision_strict": "PASS",
+    "margin_percent": 0.5733826867266409,
+    "rel_l1_percent": 2.426617313273359
+   },
+   "rho_e": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.8511548109309706,
+    "rel_l1_percent": 1.1488451890690294
+   },
+   "rho_u": {
+    "decision_strict": "PASS",
+    "margin_percent": 0.5409588264858112,
+    "rel_l1_percent": 2.459041173514189
+   },
+   "u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.2746284867965287,
+    "rel_l1_percent": 0.7253715132034714
+   }
+  },
+  {
+   "cfl": 0.4,
+   "configuration": "DG P3 N=400 CFL=0.4",
+   "degree": 3,
+   "error_localisation": {
+    "half_width": 0.3,
+    "shock_share_percent": 11.204707976350962,
+    "shock_window": [
+     2.1125000000000007,
+     2.7125000000000004
+    ]
+   },
+   "file": "dg_cfl0p4_limweno_n400_p3.npz",
+   "ncells": 400,
+   "p": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.6322029079275135,
+    "rel_l1_percent": 0.3677970920724866
+   },
+   "rho": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.4779667166695432,
+    "rel_l1_percent": 1.5220332833304568
+   },
+   "rho_e": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.3199790497535067,
+    "rel_l1_percent": 0.6800209502464933
+   },
+   "rho_u": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.4155215498903675,
+    "rel_l1_percent": 1.5844784501096325
+   },
+   "u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.6553771761352154,
+    "rel_l1_percent": 0.34462282386478443
+   }
+  },
+  {
+   "cfl": 0.4,
+   "configuration": "DG P3 N=800 CFL=0.4",
+   "degree": 3,
+   "error_localisation": {
+    "half_width": 0.3,
+    "shock_share_percent": 8.952453894683469,
+    "shock_window": [
+     2.10625,
+     2.70625
+    ]
+   },
+   "file": "dg_cfl0p4_limweno_n800_p3.npz",
+   "ncells": 800,
+   "p": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.699276835994181,
+    "rel_l1_percent": 0.3007231640058191
+   },
+   "rho": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.3301334458200635,
+    "rel_l1_percent": 0.6698665541799362
+   },
+   "rho_e": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.542762685153929,
+    "rel_l1_percent": 0.457237314846071
+   },
+   "rho_u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.2063417656365507,
+    "rel_l1_percent": 0.7936582343634495
+   },
+   "u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.762533495372888,
+    "rel_l1_percent": 0.23746650462711205
+   }
+  },
+  {
+   "cfl": 0.1,
+   "configuration": "DG P2 N=400 CFL=0.1",
+   "degree": 2,
+   "error_localisation": {
+    "half_width": 0.3,
+    "shock_share_percent": 11.15353206110273,
+    "shock_window": [
+     2.1125000000000007,
+     2.7125000000000004
+    ]
+   },
+   "file": "dg_cfl0p1_limweno_n400_p2.npz",
+   "ncells": 400,
+   "p": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.6402117350646543,
+    "rel_l1_percent": 0.3597882649353457
+   },
+   "rho": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.4802873026280454,
+    "rel_l1_percent": 1.5197126973719546
+   },
+   "rho_e": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.333174937377515,
+    "rel_l1_percent": 0.666825062622485
+   },
+   "rho_u": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.4257667417061086,
+    "rel_l1_percent": 1.5742332582938914
+   },
+   "u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.6614987483223462,
+    "rel_l1_percent": 0.33850125167765366
+   }
+  },
+  {
+   "cfl": 0.2,
+   "configuration": "DG P2 N=400 CFL=0.2",
+   "degree": 2,
+   "error_localisation": {
+    "half_width": 0.3,
+    "shock_share_percent": 11.120793321208446,
+    "shock_window": [
+     2.1125000000000007,
+     2.7125000000000004
+    ]
+   },
+   "file": "dg_cfl0p2_limweno_n400_p2.npz",
+   "ncells": 400,
+   "p": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.6415291602752533,
+    "rel_l1_percent": 0.3584708397247468
+   },
+   "rho": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.4819082787515165,
+    "rel_l1_percent": 1.5180917212484835
+   },
+   "rho_e": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.3345362345229086,
+    "rel_l1_percent": 0.6654637654770913
+   },
+   "rho_u": {
+    "decision_strict": "PASS",
+    "margin_percent": 1.4273499610735552,
+    "rel_l1_percent": 1.5726500389264448
+   },
+   "u": {
+    "decision_strict": "PASS",
+    "margin_percent": 2.6626898476355425,
+    "rel_l1_percent": 0.33731015236445727
+   }
+  }
+ ],
+ "oracle": {
+  "entropy_wave_p": 1.0,
+  "entropy_wave_u": 0.0,
+  "plateau_p": 10.33333,
+  "plateau_rho": 3.857143,
+  "plateau_rho_e": 39.166660931709174,
+  "plateau_rho_u": 10.141852232767,
+  "plateau_u": 2.629369,
+  "plateau_window": [
+   -5.0,
+   -3.0
+  ],
+  "shock_position_analytic": 2.38936658717488,
+  "source": "tensordg.cases.shock_entropy closed forms (Hugoniot + left/right states)",
+  "undisturbed_window": [
+   2.5893665871748803,
+   5.0
+  ]
+ },
+ "rawdir": "validation/repro_shu_osher/artifacts/raw",
+ "thresholds": {
+  "band_rule": {
+   "description": "band(derived) = sum of the bands of the conserved fields it is made of (triangle inequality, conservative)",
+   "kind": "additive",
+   "p": [
+    "rho_e",
+    "rho_u",
+    "rho"
+   ],
+   "u": [
+    "rho_u",
+    "rho"
+   ]
+  },
+  "budget_tolerance_percent": 0.01,
+  "gate_percent": 5.0,
+  "oracle_tolerance_percent": 1.0,
+  "strict_percent": 3.0,
+  "u_share_max": 0.3333333333333333
+ },
+ "workload": {
+  "version": "1",
+  "workload_id": "xval-dg-round2-multifield"
+ }
+}
