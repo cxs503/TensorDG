@@ -303,11 +303,15 @@ def figure_smooth(smooth: dict, path: Path):
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(5.2, 4.0))
-    h = None
     for key, val in smooth["by_degree"].items():
         deg = int(key[1:])
         n = len(val["l2_errors"])
-        h = np.array(PROFILES[CURRENT_PROFILE]["smooth_cells"][:n], dtype=float)
+        # grid sequence from the recorded rows, not from a module-global profile:
+        # the figure must be renderable from a committed metrics.json alone
+        # (defect: PROFILES[CURRENT_PROFILE] mismatched the payload -> crash on
+        # a 5-grid full-profile metrics in a process whose global was "quick").
+        h = np.array([r["ncells"] for r in smooth["rows"] if r["degree"] == deg][:n],
+                     dtype=float)
         ax.loglog(1.0 / h, val["l2_errors"], "o-",
                   label=f"DG P{deg}: order {val['observed_order']:.2f} (target {deg + 1})")
         ref = val["l2_errors"][0] * (h[0] / h) ** (deg + 0.5)
@@ -329,13 +333,16 @@ def figure_tvd(tvd: dict, path: Path):
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(5.6, 4.0))
-    for degree in PROFILES[CURRENT_PROFILE]["tvd_degrees"]:
+    # degrees / cell count are read back from the measurements (keys ``p<d>_<policy>``)
+    degrees = sorted({int(tag[1]) for tag in tvd["cases"]})
+    ncells = int(next(iter(tvd["cases"].values()))["ncells"])
+    for degree in degrees:
         for limiter, policy, tag, style in (
                 (None, "tvb", "unlimited", ":"),
                 ("tvb", "tvb", "TVB M=0 (paper)", "--"),
                 ("tvb", "all", "strict minmod", "-")):
             c, coeff, _ = solve_advection(
-                ncells=PROFILES[CURRENT_PROFILE]["tvd_cells"], degree=degree,
+                ncells=ncells, degree=degree,
                 final_time=1.0, cfl=0.2, initial=square_wave, limiter=limiter,
                 tvb_constant=0.0, time_integrator="ssp_rk3",
                 troubled_policy=policy,
@@ -369,7 +376,12 @@ def figure_sod(sod: dict, path: Path):
     import matplotlib.pyplot as plt
     from benchmarks.sod_exact import cell_averages
 
-    degree, ncells = max(PROFILES[CURRENT_PROFILE]["sod_cases"])
+    # the plotted case is the gate case (finest mesh of the degree), taken from
+    # the payload rather than from the module-global profile
+    gate = [(c["degree"], c["ncells"]) for c in sod["cases"].values()
+            if c.get("gate_case")]
+    degree, ncells = max(gate or [(c["degree"], c["ncells"])
+                                  for c in sod["cases"].values()])
     x, coeff, _ = solve_euler_dg_1d(
         SOD_LEFT, SOD_RIGHT, ncells=ncells, degree=degree, final_time=SOD_T,
         cfl=0.12, limiter="tvb", tvb_constant=1.0, limiter_stage="final",

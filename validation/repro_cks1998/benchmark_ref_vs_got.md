@@ -1,7 +1,7 @@
 # REPRO-DG-CKS1998 — reference vs got
 
 Anchor: Cockburn & Shu 1998/2001 RKDG benchmark set (SIAM Review 43(1), JCP 141)
-Profile: `quick` · gated PASS 11/11 · non-gated out-of-tolerance 7 · unscored 4 · rows 54
+Profile: `full` · gated PASS 15/15 · non-gated out-of-tolerance 9 · unscored 6 · rows 78
 
 `verdict` is the tolerance rule applied to (ref, got) **and nothing else**; `gated` marks the pre-declared anchor rows. A non-gated row that leaves its tolerance is printed as `FAIL`, so the table can no longer hide a violation behind the word `informative`.
 
@@ -9,18 +9,21 @@ Profile: `quick` · gated PASS 11/11 · non-gated out-of-tolerance 7 · unscored
 
 | item | quantity | ref | got | abs diff | rel diff | tolerance | verdict | gated | ref source |
 |---|---|---:|---:|---:|---:|---|---|---|---|
-| A1_smooth_order | L2 observed order p1 | 2 | 2.01315 | 0.0132 | 0.00658 | >= p+0.5 = 1.5 | PASS | yes | paper_theorem |
-| A1_smooth_order | L2 observed order p2 | 3 | 2.99976 | -0.000236 | 7.86e-05 | >= p+0.5 = 2.5 | PASS | yes | paper_theorem |
-| A1_smooth_order | L2 observed order p3 | 4 | 3.99769 | -0.00231 | 0.000578 | >= p+0.5 = 3.5 | PASS | yes | paper_theorem |
-| A2_discont_order | L1 observed order p1 | 0.5 | 0.667656 | 0.168 | 0.335 | >= 0.5 | PASS | yes | paper_theorem |
-| A2_discont_order | L1 observed order p2 | 0.5 | 0.664468 | 0.164 | 0.329 | >= 0.5 | PASS | yes | paper_theorem |
-| A2_discont_order | L1 observed order p3 | 0.5 | 0.664059 | 0.164 | 0.328 | >= 0.5 | PASS | yes | paper_theorem |
+| A1_smooth_order | L2 observed order p1 | 2 | 2.00424 | 0.00424 | 0.00212 | >= p+0.5 = 1.5 | PASS | yes | paper_theorem |
+| A1_smooth_order | L2 observed order p2 | 3 | 2.99993 | -7.1e-05 | 2.37e-05 | >= p+0.5 = 2.5 | PASS | yes | paper_theorem |
+| A1_smooth_order | L2 observed order p3 | 4 | 3.9999 | -0.000104 | 2.59e-05 | >= p+0.5 = 3.5 | PASS | yes | paper_theorem |
+| A2_discont_order | L1 observed order p1 | 0.5 | 0.667553 | 0.168 | 0.335 | >= 0.5 | PASS | yes | paper_theorem |
+| A2_discont_order | L1 observed order p2 | 0.5 | 0.664722 | 0.165 | 0.329 | >= 0.5 | PASS | yes | paper_theorem |
+| A2_discont_order | L1 observed order p3 | 0.5 | 0.664227 | 0.164 | 0.328 | >= 0.5 | PASS | yes | paper_theorem |
 | E2_sod_p2_n200 | rel L2 error, density |  | 0.0160431 |  |  | < 3% | PASS | no | analytic |
 | E2_sod_p2_n200 | rel L2 error, velocity |  | 0.0417341 |  |  | < 3% | FAIL | no | analytic |
 | E2_sod_p2_n200 | rel L2 error, pressure |  | 0.0115047 |  |  | < 3% | PASS | no | analytic |
 | E2_sod_p2_n400 | rel L2 error, density |  | 0.0111321 |  |  | < 3% | PASS | yes | analytic |
 | E2_sod_p2_n400 | rel L2 error, velocity |  | 0.023677 |  |  | < 3% | PASS | yes | analytic |
 | E2_sod_p2_n400 | rel L2 error, pressure |  | 0.00594414 |  |  | < 3% | PASS | yes | analytic |
+| E2_sod_p1_n400 | rel L2 error, density |  | 0.0108482 |  |  | < 3% | PASS | yes | analytic |
+| E2_sod_p1_n400 | rel L2 error, velocity |  | 0.0234615 |  |  | < 3% | PASS | yes | analytic |
+| E2_sod_p1_n400 | rel L2 error, pressure |  | 0.00579662 |  |  | < 3% | PASS | yes | analytic |
 | E2_sod_p2_n200 | density at x=0.102 | 1 | 1 | 0 | 0 | < 3% rel | PASS | no | analytic |
 | E2_sod_p2_n200 | velocity at x=0.102 | 0 | 5.78803e-16 | 5.79e-16 |  | < 3% rel | UNSCORED | no | analytic |
 | E2_sod_p2_n200 | pressure at x=0.102 | 1 | 1 | 0 | 0 | < 3% rel | PASS | no | analytic |
@@ -57,12 +60,33 @@ Profile: `quick` · gated PASS 11/11 · non-gated out-of-tolerance 7 · unscored
 | E2_sod_p2_n400 | density at x=0.901 | 0.125 | 0.125 | -2.36e-13 | 1.89e-12 | < 3% rel | PASS | no | analytic |
 | E2_sod_p2_n400 | velocity at x=0.901 | 0 | 1.88446e-12 | 1.88e-12 |  | < 3% rel | UNSCORED | no | analytic |
 | E2_sod_p2_n400 | pressure at x=0.901 | 0.1 | 0.1 | -2.63e-13 | 2.63e-12 | < 3% rel | PASS | no | analytic |
-| E3_tvd | pointwise max, p1_unlimited | 1 | 1.0685 | 0.0685 | 0.0685 | <= 1% overshoot | FAIL | no | analytic |
-| E3_tvd | pointwise max, p1_tvb_M0 | 1 | 1.01389 | 0.0139 | 0.0139 | <= 1% overshoot | FAIL | no | analytic |
-| E3_tvd | pointwise max, p1_strict_all | 1 | 0.999956 | -4.35e-05 | -4.35e-05 | <= 1% overshoot | PASS | yes | analytic |
-| E3_tvd | pointwise max, p2_unlimited | 1 | 1.0852 | 0.0852 | 0.0852 | <= 1% overshoot | FAIL | no | analytic |
-| E3_tvd | pointwise max, p2_tvb_M0 | 1 | 1.0037 | 0.0037 | 0.0037 | <= 1% overshoot | PASS | no | analytic |
-| E3_tvd | pointwise max, p2_strict_all | 1 | 0.999956 | -4.35e-05 | -4.35e-05 | <= 1% overshoot | PASS | yes | analytic |
+| E2_sod_p1_n400 | density at x=0.101 | 1 | 1 | 0 | 0 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | velocity at x=0.101 | 0 | 0 | 0 |  | < 3% rel | UNSCORED | no | analytic |
+| E2_sod_p1_n400 | pressure at x=0.101 | 1 | 1 | 0 | 0 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | density at x=0.301 | 0.873497 | 0.869566 | -0.00393 | 0.0045 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | velocity at x=0.301 | 0.157888 | 0.163074 | 0.00519 | 0.0328 | < 3% rel | FAIL | no | analytic |
+| E2_sod_p1_n400 | pressure at x=0.301 | 0.827498 | 0.822292 | -0.00521 | 0.00629 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | density at x=0.451 | 0.491778 | 0.496115 | 0.00434 | 0.00882 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | velocity at x=0.451 | 0.782888 | 0.773843 | -0.00905 | 0.0116 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | pressure at x=0.451 | 0.370235 | 0.374826 | 0.00459 | 0.0124 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | density at x=0.551 | 0.426319 | 0.426274 | -4.54e-05 | 0.000107 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | velocity at x=0.551 | 0.927453 | 0.927485 | 3.24e-05 | 3.5e-05 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | pressure at x=0.551 | 0.30313 | 0.303119 | -1.1e-05 | 3.63e-05 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | density at x=0.701 | 0.265574 | 0.269121 | 0.00355 | 0.0134 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | velocity at x=0.701 | 0.927453 | 0.927459 | 5.98e-06 | 6.45e-06 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | pressure at x=0.701 | 0.30313 | 0.303133 | 2.52e-06 | 8.3e-06 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | density at x=0.901 | 0.125 | 0.125 | 0 | 0 | < 3% rel | PASS | no | analytic |
+| E2_sod_p1_n400 | velocity at x=0.901 | 0 | 1.01722e-15 | 1.02e-15 |  | < 3% rel | UNSCORED | no | analytic |
+| E2_sod_p1_n400 | pressure at x=0.901 | 0.1 | 0.1 | -2.78e-17 | 2.78e-16 | < 3% rel | PASS | no | analytic |
+| E3_tvd | pointwise max, p1_unlimited | 1 | 1.06326 | 0.0633 | 0.0633 | <= 1% overshoot | FAIL | no | analytic |
+| E3_tvd | pointwise max, p1_tvb_M0 | 1 | 1.01404 | 0.014 | 0.014 | <= 1% overshoot | FAIL | no | analytic |
+| E3_tvd | pointwise max, p1_strict_all | 1 | 0.999996 | -4.31e-06 | -4.31e-06 | <= 1% overshoot | PASS | yes | analytic |
+| E3_tvd | pointwise max, p2_unlimited | 1 | 1.08573 | 0.0857 | 0.0857 | <= 1% overshoot | FAIL | no | analytic |
+| E3_tvd | pointwise max, p2_tvb_M0 | 1 | 1.00779 | 0.00779 | 0.00779 | <= 1% overshoot | PASS | no | analytic |
+| E3_tvd | pointwise max, p2_strict_all | 1 | 0.999996 | -4.31e-06 | -4.31e-06 | <= 1% overshoot | PASS | yes | analytic |
+| E3_tvd | pointwise max, p3_unlimited | 1 | 1.10118 | 0.101 | 0.101 | <= 1% overshoot | FAIL | no | analytic |
+| E3_tvd | pointwise max, p3_tvb_M0 | 1 | 1.00445 | 0.00445 | 0.00445 | <= 1% overshoot | PASS | no | analytic |
+| E3_tvd | pointwise max, p3_strict_all | 1 | 0.999996 | -4.31e-06 | -4.31e-06 | <= 1% overshoot | PASS | yes | analytic |
 
 ## Gate verdict (from the run artifacts)
 
