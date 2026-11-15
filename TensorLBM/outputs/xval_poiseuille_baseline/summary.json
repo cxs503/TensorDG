@@ -1,0 +1,137 @@
+{
+ "_spec": {
+  "slug": "XVAL-LBM-SINGLE-PHASE-POISEUILLE-BASELINE-SKELETO",
+  "reference": {
+   "oss": "lettucecfd/lettuce",
+   "paths": [
+    "lettuce/ext/_flows/poiseuille.py:30",
+    "lettuce/ext/_reporter/error_reporter.py:11"
+   ],
+   "adopted_pattern": "force-driven single-phase channel + analytic parabola + reusable error reporter with pre-registered gate"
+  },
+  "canonical_case": {
+   "Nx": 8,
+   "Ny": 32,
+   "tau": 0.8,
+   "force": 1e-05,
+   "forcing": "guo",
+   "wall_origin": 0.5,
+   "residual_tol": 1e-12
+  },
+  "gate": {
+   "quantity": "rel_l2_profile_vs_analytic",
+   "tolerance": 0.01,
+   "basis": "L2 over fluid nodes, normalised by u_max_analytic (lettuce-style 1 % analytic-profile gate; ecosystem cap 15 %)"
+  },
+  "grid_ladder": [
+   16,
+   32,
+   64
+  ],
+  "reported_quantities": [
+   "rel_l2",
+   "rel_linf",
+   "rel_u_max",
+   "steps",
+   "final_residual",
+   "mass_drift"
+  ]
+ },
+ "_updated": "2026-11-15T17:05:29",
+ "A_delivery_replica": {
+  "description": "delivery replica: legacy force term + node-centred analytic reference + 2000 fixed steps",
+  "result": {
+   "case": {
+    "Nx": 64,
+    "Ny": 32,
+    "tau": 0.8,
+    "omega": 1.25,
+    "nu": 0.1,
+    "force": 1e-05,
+    "forcing": "simple",
+    "wall_origin": 0.0,
+    "channel_width": 31.0,
+    "init": "rest",
+    "u_max_analytic": 0.0120125,
+    "reynolds": 3.723875
+   },
+   "convergence": {
+    "steps": 2000,
+    "residual_tol": 0.0,
+    "final_residual": Infinity,
+    "converged": false
+   },
+   "errors": {
+    "rel_l2": 0.13697392551076965,
+    "rel_linf": 0.1718327808712634,
+    "offset": -0.0015968325193220635,
+    "rel_l2_shape": 0.03303377448099083,
+    "rel_linf_shape": 0.06286943431018452,
+    "abs_l2": 0.0016453992801981204,
+    "abs_linf": 0.002064141280216052,
+    "u_max_numeric": 0.009935858719783957,
+    "u_max_reference": 0.0120125,
+    "rel_u_max": -0.17287336359758942,
+    "offset_over_force": -159.68325193220633
+   },
+   "mass_drift": -2.5625013222452253e-10
+  },
+  "wall_seconds": 8.9,
+  "note": "`residual_tol=0` disables early stopping, so the step count is exactly the delivered 2000; nothing else is changed.",
+  "elapsed_seconds": 8.9
+ },
+ "G_force_independence": {
+  "description": "relative error and offset/force are independent of the forcing amplitude (the residual error is O(F), not O(F^2))",
+  "rows": [
+   {
+    "force": 1e-06,
+    "u_max_analytic": 0.000147,
+    "mach": 0.000254611468712625,
+    "rel_l2": 0.0017006803045599437,
+    "offset_over_force": 0.25000000477031176,
+    "rel_l2_shape": 1.4771303164581293e-11,
+    "wall_seconds": 6.3
+   },
+   {
+    "force": 1e-05,
+    "u_max_analytic": 0.0014700000000000004,
+    "mach": 0.0025461146871262504,
+    "rel_l2": 0.00170068030262123,
+    "offset_over_force": 0.25000000448532084,
+    "rel_l2_shape": 1.4614501584983837e-11,
+    "wall_seconds": 6.2
+   },
+   {
+    "force": 0.0001,
+    "u_max_analytic": 0.0147,
+    "mach": 0.025461146871262497,
+    "rel_l2": 0.0017006803028675498,
+    "offset_over_force": 0.2500000045215298,
+    "rel_l2_shape": 1.47038483676269e-11,
+    "wall_seconds": 6.2
+   }
+  ],
+  "spread_relative": 1.1399636524848723e-09,
+  "elapsed_seconds": 18.6
+ },
+ "I_gate": {
+  "tolerance": 0.01,
+  "basis": "L2 over fluid nodes, normalised by u_max_analytic (lettuce-style 1 % analytic-profile gate; ecosystem cap 15 %)",
+  "spec": {
+   "quantity": "rel_l2_profile_vs_analytic",
+   "tolerance": 0.01,
+   "basis": "L2 over fluid nodes, normalised by u_max_analytic (lettuce-style 1 % analytic-profile gate; ecosystem cap 15 %)"
+  },
+  "checks": {
+   "delivery_replica_2000_steps": {
+    "quantity": "rel_l2_profile_vs_analytic",
+    "value": 0.13697392551076965,
+    "tolerance": 0.01,
+    "basis": "L2 over fluid nodes, normalised by u_max_analytic (lettuce-style 1 % analytic-profile gate; ecosystem cap 15 %)",
+    "passed": false
+   }
+  },
+  "n_pass": 0,
+  "n_total": 1
+ }
+}
