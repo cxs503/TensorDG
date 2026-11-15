@@ -1,0 +1,308 @@
+{
+  "certificates": {
+    "dg_d2_n32_t1_cfl0.2": {
+      "absolute_delta": {
+        "density": 0.0,
+        "pressure": 0.0,
+        "velocity_x": 0.0,
+        "velocity_y": 0.0
+      },
+      "certified_at": "2026-11-15T09:51:50",
+      "config": {
+        "cells": 32,
+        "cfl": 0.2,
+        "degree": 2,
+        "final_time": 1.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "dg"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 0.0,
+      "replayed_max_percent": 0.00943121470613078,
+      "steps": 469,
+      "stored_max_percent": 0.00943121470613078,
+      "task_key": "dg_d2_n32_t1_cfl0.2",
+      "tolerance": 1e-09,
+      "wall_seconds": 43.490036964416504
+    },
+    "dg_d2_n32_t1_cfl0.4": {
+      "absolute_delta": {
+        "density": 1.4264034831762418e-17,
+        "pressure": 6.261267546103788e-18,
+        "velocity_x": 5.990217002982412e-18,
+        "velocity_y": 9.974659986866641e-18
+      },
+      "certified_at": "2026-11-15T09:50:16",
+      "config": {
+        "cells": 32,
+        "cfl": 0.4,
+        "degree": 2,
+        "final_time": 1.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "dg"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 1.5124161064817206e-13,
+      "replayed_max_percent": 0.009431289954285677,
+      "steps": 235,
+      "stored_max_percent": 0.009431289954286675,
+      "task_key": "dg_d2_n32_t1_cfl0.4",
+      "tolerance": 1e-09,
+      "wall_seconds": 20.96488308906555
+    },
+    "dg_d2_n32_t2_cfl0.4": {
+      "absolute_delta": {
+        "density": 4.026455818068042e-17,
+        "pressure": 2.2199039481640703e-17,
+        "velocity_x": 4.2825985813177425e-17,
+        "velocity_y": 1.2522535092207576e-17
+      },
+      "certified_at": "2026-11-15T09:51:07",
+      "config": {
+        "cells": 32,
+        "cfl": 0.4,
+        "degree": 2,
+        "final_time": 2.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "dg"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 4.4194977682856375e-13,
+      "replayed_max_percent": 0.009690238135309904,
+      "steps": 469,
+      "stored_max_percent": 0.009690238135314187,
+      "task_key": "dg_d2_n32_t2_cfl0.4",
+      "tolerance": 1e-09,
+      "wall_seconds": 42.817034006118774
+    },
+    "dg_d2_n32_t5_cfl0.4": {
+      "absolute_delta": {
+        "density": 1.8512752095189988e-17,
+        "pressure": 1.2620113287731272e-16,
+        "velocity_x": 6.747803271006658e-17,
+        "velocity_y": 5.708324438136181e-17
+      },
+      "certified_at": "2026-11-15T09:55:34",
+      "config": {
+        "cells": 32,
+        "cfl": 0.4,
+        "degree": 2,
+        "final_time": 5.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "dg"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 1.1334673056073137e-12,
+      "replayed_max_percent": 0.011134077908826,
+      "steps": 1171,
+      "stored_max_percent": 0.011134077908819252,
+      "task_key": "dg_d2_n32_t5_cfl0.4",
+      "tolerance": 1e-09,
+      "wall_seconds": 100.69470810890198
+    },
+    "p0_n128_t10_cfl0.4": {
+      "absolute_delta": {
+        "density": 2.0816681711721685e-17,
+        "pressure": 0.0,
+        "velocity_x": 1.3877787807814457e-17,
+        "velocity_y": 4.163336342344337e-17
+      },
+      "certified_at": "2026-11-15T09:53:03",
+      "config": {
+        "cells": 128,
+        "cfl": 0.4,
+        "final_time": 10.0,
+        "reference": "min_image",
+        "task": "p0"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 3.4451555256475413e-16,
+      "replayed_max_percent": 12.084610727586268,
+      "steps": 1631,
+      "stored_max_percent": 12.084610727586263,
+      "task_key": "p0_n128_t10_cfl0.4",
+      "tolerance": 1e-09,
+      "wall_seconds": 67.33322238922119
+    },
+    "p0_n128_t1_cfl0.4": {
+      "absolute_delta": {
+        "density": 0.0,
+        "pressure": 0.0,
+        "velocity_x": 0.0,
+        "velocity_y": 0.0
+      },
+      "certified_at": "2026-11-15T09:49:55",
+      "config": {
+        "cells": 128,
+        "cfl": 0.4,
+        "final_time": 1.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "p0"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 0.0,
+      "replayed_max_percent": 2.8169111512511273,
+      "steps": 183,
+      "stored_max_percent": 2.8169111512511273,
+      "task_key": "p0_n128_t1_cfl0.4",
+      "tolerance": 1e-09,
+      "wall_seconds": 7.914970397949219
+    },
+    "p0_n128_t2_cfl0.4": {
+      "absolute_delta": {
+        "density": 0.0,
+        "pressure": 0.0,
+        "velocity_x": 0.0,
+        "velocity_y": 0.0
+      },
+      "certified_at": "2026-11-15T09:48:01",
+      "config": {
+        "cells": 128,
+        "cfl": 0.4,
+        "final_time": 2.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "p0"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 0.0,
+      "replayed_max_percent": 4.875468300660122,
+      "steps": 357,
+      "stored_max_percent": 4.875468300660122,
+      "task_key": "p0_n128_t2_cfl0.4",
+      "tolerance": 1e-09,
+      "wall_seconds": 15.462194681167603
+    },
+    "p0_n128_t5_cfl0.4": {
+      "absolute_delta": {
+        "density": 0.0,
+        "pressure": 0.0,
+        "velocity_x": 0.0,
+        "velocity_y": 0.0
+      },
+      "certified_at": "2026-11-15T09:48:36",
+      "config": {
+        "cells": 128,
+        "cfl": 0.4,
+        "final_time": 5.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "p0"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 0.0,
+      "replayed_max_percent": 8.876448131193005,
+      "steps": 854,
+      "stored_max_percent": 8.876448131193005,
+      "task_key": "p0_n128_t5_cfl0.4",
+      "tolerance": 1e-09,
+      "wall_seconds": 35.084091663360596
+    },
+    "p0_n256_t1_cfl0.4": {
+      "absolute_delta": {
+        "density": 0.0,
+        "pressure": 0.0,
+        "velocity_x": 0.0,
+        "velocity_y": 0.0
+      },
+      "certified_at": "2026-11-15T09:56:49",
+      "config": {
+        "cells": 256,
+        "cfl": 0.4,
+        "final_time": 1.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "p0"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 0.0,
+      "replayed_max_percent": 1.518646310926804,
+      "steps": 370,
+      "stored_max_percent": 1.518646310926804,
+      "task_key": "p0_n256_t1_cfl0.4",
+      "tolerance": 1e-09,
+      "wall_seconds": 53.08884644508362
+    },
+    "p0_n64_t10_cfl0.4": {
+      "absolute_delta": {
+        "density": 6.938893903907228e-18,
+        "pressure": 4.163336342344337e-17,
+        "velocity_x": 2.7755575615628914e-17,
+        "velocity_y": 2.7755575615628914e-17
+      },
+      "certified_at": "2026-11-15T09:49:47",
+      "config": {
+        "cells": 64,
+        "cfl": 0.4,
+        "final_time": 10.0,
+        "reference": "min_image",
+        "task": "p0"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 2.9104591609816983e-16,
+      "replayed_max_percent": 14.304740633914417,
+      "steps": 778,
+      "stored_max_percent": 14.30474063391442,
+      "task_key": "p0_n64_t10_cfl0.4",
+      "tolerance": 1e-09,
+      "wall_seconds": 13.864655017852783
+    },
+    "p0_n64_t1_cfl0.4": {
+      "absolute_delta": {
+        "density": 0.0,
+        "pressure": 0.0,
+        "velocity_x": 0.0,
+        "velocity_y": 0.0
+      },
+      "certified_at": "2026-11-15T09:49:26",
+      "config": {
+        "cells": 64,
+        "cfl": 0.4,
+        "final_time": 1.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "p0"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 0.0,
+      "replayed_max_percent": 4.926036192305211,
+      "steps": 90,
+      "stored_max_percent": 4.926036192305211,
+      "task_key": "p0_n64_t1_cfl0.4",
+      "tolerance": 1e-09,
+      "wall_seconds": 1.6450119018554688
+    },
+    "p0_n64_t5_cfl0.4": {
+      "absolute_delta": {
+        "density": 0.0,
+        "pressure": 0.0,
+        "velocity_x": 0.0,
+        "velocity_y": 0.0
+      },
+      "certified_at": "2026-11-15T09:49:33",
+      "config": {
+        "cells": 64,
+        "cfl": 0.4,
+        "final_time": 5.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "p0"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 0.0,
+      "replayed_max_percent": 12.0235164048954,
+      "steps": 408,
+      "stored_max_percent": 12.0235164048954,
+      "task_key": "p0_n64_t5_cfl0.4",
+      "tolerance": 1e-09,
+      "wall_seconds": 7.5480263233184814
+    }
+  },
+  "reference_model": "min_image",
+  "tolerance": 1e-09
+}
