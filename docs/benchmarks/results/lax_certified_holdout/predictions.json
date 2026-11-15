@@ -1,0 +1,278 @@
+{
+ "case": "CASE-LAX-DG",
+ "anchor": "CASE-LAX-DG",
+ "phase": "predict",
+ "registered_at_utc": "2026-11-15T12:57:16Z",
+ "tolerance": 0.03,
+ "upstream": "docs/benchmarks/results/lax_certified_configuration/metrics.json",
+ "enumerated_legs": [
+  {
+   "leg": "p1.N400",
+   "cells": 400,
+   "degree": 1,
+   "dof": 800,
+   "worst_l2": 0.04934864082420773,
+   "worst_field": "density",
+   "wall_seconds": 29.568403244018555
+  },
+  {
+   "leg": "p2.N400",
+   "cells": 400,
+   "degree": 2,
+   "dof": 1200,
+   "worst_l2": 0.03525871011266807,
+   "worst_field": "density",
+   "wall_seconds": 50.15139651298523
+  },
+  {
+   "leg": "p1.N800",
+   "cells": 800,
+   "degree": 1,
+   "dof": 1600,
+   "worst_l2": 0.03771262015879683,
+   "worst_field": "density",
+   "wall_seconds": 67.70367407798767
+  },
+  {
+   "leg": "p3.N400",
+   "cells": 400,
+   "degree": 3,
+   "dof": 1600,
+   "worst_l2": 0.031155618811580767,
+   "worst_field": "density",
+   "wall_seconds": 73.85039496421814
+  },
+  {
+   "leg": "p2.N800",
+   "cells": 800,
+   "degree": 2,
+   "dof": 2400,
+   "worst_l2": 0.025703283359080602,
+   "worst_field": "density",
+   "wall_seconds": 118.37833666801453
+  },
+  {
+   "leg": "p2.N1000",
+   "cells": 1000,
+   "degree": 2,
+   "dof": 3000,
+   "worst_l2": 0.02368268254860656,
+   "worst_field": "density",
+   "wall_seconds": 158.24522829055786
+  },
+  {
+   "leg": "p1.N1600",
+   "cells": 1600,
+   "degree": 1,
+   "dof": 3200,
+   "worst_l2": 0.029540109282639455,
+   "worst_field": "density",
+   "wall_seconds": 169.17153191566467
+  },
+  {
+   "leg": "p3.N800",
+   "cells": 800,
+   "degree": 3,
+   "dof": 3200,
+   "worst_l2": 0.023148994624927942,
+   "worst_field": "density",
+   "wall_seconds": 176.35498762130737
+  }
+ ],
+ "calibration": {
+  "dof": {
+   "loo": [
+    {
+     "leg": "p1.N400",
+     "observed": 0.04934864082420773,
+     "predicted": 0.04297094287367072,
+     "abs_error": 0.006377697950537012
+    },
+    {
+     "leg": "p2.N400",
+     "observed": 0.03525871011266807,
+     "predicted": 0.03952570260918946,
+     "abs_error": 0.004266992496521391
+    },
+    {
+     "leg": "p1.N800",
+     "observed": 0.03771262015879683,
+     "predicted": 0.03303788811031507,
+     "abs_error": 0.004674732048481761
+    },
+    {
+     "leg": "p3.N400",
+     "observed": 0.031155618811580767,
+     "predicted": 0.034105524970165536,
+     "abs_error": 0.002949906158584769
+    },
+    {
+     "leg": "p2.N800",
+     "observed": 0.025703283359080602,
+     "predicted": 0.02835822956772572,
+     "abs_error": 0.002654946208645117
+    },
+    {
+     "leg": "p2.N1000",
+     "observed": 0.02368268254860656,
+     "predicted": 0.025697034920674506,
+     "abs_error": 0.0020143523720679464
+    },
+    {
+     "leg": "p1.N1600",
+     "observed": 0.029540109282639455,
+     "predicted": 0.022829268911534827,
+     "abs_error": 0.006710840371104629
+    },
+    {
+     "leg": "p3.N800",
+     "observed": 0.023148994624927942,
+     "predicted": 0.024976022653056606,
+     "abs_error": 0.001827028028128664
+    }
+   ],
+   "max_abs_error": 0.006710840371104629,
+   "rms_abs_error": 0.004314468202091698,
+   "window": 0.006710840371104629
+  },
+  "family": {
+   "loo": [
+    {
+     "leg": "p1.N400",
+     "observed": 0.04934864082420773,
+     "predicted": 0.04814612246805499,
+     "abs_error": 0.0012025183561527389
+    },
+    {
+     "leg": "p2.N400",
+     "observed": 0.03525871011266807,
+     "predicted": 0.0331467491069493,
+     "abs_error": 0.002111961005718768
+    },
+    {
+     "leg": "p1.N800",
+     "observed": 0.03771262015879683,
+     "predicted": 0.038180678921370934,
+     "abs_error": 0.00046805876257410145
+    },
+    {
+     "leg": "p3.N400",
+     "observed": 0.031155618811580767,
+     "predicted": 0.034105524970165536,
+     "abs_error": 0.002949906158584769
+    },
+    {
+     "leg": "p2.N800",
+     "observed": 0.025703283359080602,
+     "predicted": 0.02609284242531552,
+     "abs_error": 0.000389559066234918
+    },
+    {
+     "leg": "p2.N1000",
+     "observed": 0.02368268254860656,
+     "predicted": 0.023216407509078323,
+     "abs_error": 0.00046627503952823696
+    },
+    {
+     "leg": "p1.N1600",
+     "observed": 0.029540109282639455,
+     "predicted": 0.028820281480660636,
+     "abs_error": 0.0007198278019788194
+    },
+    {
+     "leg": "p3.N800",
+     "observed": 0.023148994624927942,
+     "predicted": 0.024976022653056606,
+     "abs_error": 0.001827028028128664
+    }
+   ],
+   "max_abs_error": 0.002949906158584769,
+   "rms_abs_error": 0.0015432436292952061,
+   "window": 0.002949906158584769
+  }
+ },
+ "design": {
+  "holdout": [
+   "p2.N600",
+   "p3.N600"
+  ],
+  "models": [
+   "dof",
+   "family"
+  ],
+  "window_rule": "window = max leave-one-out absolute prediction error of the same model on the enumerated legs (error units)",
+  "verdict_rule": "PASS iff worst-field whole-field relative L2 < tolerance",
+  "consensus_rule": "PASS/FAIL only when both models agree, else DISPUTED",
+  "metric": "imported from benchmarks.lax_case_pool.run_ladder (10-node Gauss, whole field, relative L2, worst field reported)"
+ },
+ "legs": {
+  "p2.N600": {
+   "cells": 600,
+   "degree": 2,
+   "dof": 1800,
+   "per_model": {
+    "dof": {
+     "predicted_worst_l2": 0.03189102066399951,
+     "window": 0.006710840371104629,
+     "interval": [
+      0.02518018029289488,
+      0.038601861035104136
+     ],
+     "predicted_verdict": "FAIL"
+    },
+    "family": {
+     "predicted_worst_l2": 0.029437542326966534,
+     "window": 0.002949906158584769,
+     "interval": [
+      0.026487636168381765,
+      0.03238744848555131
+     ],
+     "predicted_verdict": "PASS"
+    }
+   },
+   "consensus": {
+    "per_model": {
+     "dof": "FAIL",
+     "family": "PASS"
+    },
+    "agree": false,
+    "verdict": "DISPUTED"
+   },
+   "question": "frontier minimality: does a smaller-DOF leg also pass?"
+  },
+  "p3.N600": {
+   "cells": 600,
+   "degree": 3,
+   "dof": 2400,
+   "per_model": {
+    "dof": {
+     "predicted_worst_l2": 0.027935267297523925,
+     "window": 0.006710840371104629,
+     "interval": [
+      0.021224426926419297,
+      0.03464610766862855
+     ],
+     "predicted_verdict": "PASS"
+    },
+    "family": {
+     "predicted_worst_l2": 0.026186275602249624,
+     "window": 0.002949906158584769,
+     "interval": [
+      0.023236369443664855,
+      0.029136181760834393
+     ],
+     "predicted_verdict": "PASS"
+    }
+   },
+   "consensus": {
+    "per_model": {
+     "dof": "PASS",
+     "family": "PASS"
+    },
+    "agree": true,
+    "verdict": "PASS"
+   },
+   "question": "DOF sufficiency: same DOF as the certified leg p2.N800"
+  }
+ }
+}

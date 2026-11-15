@@ -1,0 +1,428 @@
+{
+ "case": "CASE-LAX-DG",
+ "generated_at_utc": "2026-11-15T13:43:30Z",
+ "tolerance": 0.03,
+ "design": {
+  "kind": "retrospective out-of-sample (legs measured earlier, never fitted)",
+  "fitted_on": "docs/benchmarks/results/lax_certified_configuration/metrics.json",
+  "tested_on": "docs/benchmarks/results/lax_resolution_closure/metrics.json legs absent from the enumerated grid",
+  "windows": "leave-one-out max absolute error on the enumerated legs",
+  "spans_beyond_fitted_dof_range": true,
+  "caveat": "the test points are not blind: they were measured before this round for another study; this is weaker than the pre-registered hold-out and is labelled as such"
+ },
+ "enumerated_legs": [
+  {
+   "leg": "p1.N400",
+   "cells": 400,
+   "degree": 1,
+   "dof": 800,
+   "worst_l2": 0.04934864082420773,
+   "worst_field": "density",
+   "wall_seconds": 29.568403244018555
+  },
+  {
+   "leg": "p2.N400",
+   "cells": 400,
+   "degree": 2,
+   "dof": 1200,
+   "worst_l2": 0.03525871011266807,
+   "worst_field": "density",
+   "wall_seconds": 50.15139651298523
+  },
+  {
+   "leg": "p1.N800",
+   "cells": 800,
+   "degree": 1,
+   "dof": 1600,
+   "worst_l2": 0.03771262015879683,
+   "worst_field": "density",
+   "wall_seconds": 67.70367407798767
+  },
+  {
+   "leg": "p3.N400",
+   "cells": 400,
+   "degree": 3,
+   "dof": 1600,
+   "worst_l2": 0.031155618811580767,
+   "worst_field": "density",
+   "wall_seconds": 73.85039496421814
+  },
+  {
+   "leg": "p2.N800",
+   "cells": 800,
+   "degree": 2,
+   "dof": 2400,
+   "worst_l2": 0.025703283359080602,
+   "worst_field": "density",
+   "wall_seconds": 118.37833666801453
+  },
+  {
+   "leg": "p2.N1000",
+   "cells": 1000,
+   "degree": 2,
+   "dof": 3000,
+   "worst_l2": 0.02368268254860656,
+   "worst_field": "density",
+   "wall_seconds": 158.24522829055786
+  },
+  {
+   "leg": "p1.N1600",
+   "cells": 1600,
+   "degree": 1,
+   "dof": 3200,
+   "worst_l2": 0.029540109282639455,
+   "worst_field": "density",
+   "wall_seconds": 169.17153191566467
+  },
+  {
+   "leg": "p3.N800",
+   "cells": 800,
+   "degree": 3,
+   "dof": 3200,
+   "worst_l2": 0.023148994624927942,
+   "worst_field": "density",
+   "wall_seconds": 176.35498762130737
+  }
+ ],
+ "calibration": {
+  "dof": {
+   "loo": [
+    {
+     "leg": "p1.N400",
+     "observed": 0.04934864082420773,
+     "predicted": 0.04297094287367072,
+     "abs_error": 0.006377697950537012
+    },
+    {
+     "leg": "p2.N400",
+     "observed": 0.03525871011266807,
+     "predicted": 0.03952570260918946,
+     "abs_error": 0.004266992496521391
+    },
+    {
+     "leg": "p1.N800",
+     "observed": 0.03771262015879683,
+     "predicted": 0.03303788811031507,
+     "abs_error": 0.004674732048481761
+    },
+    {
+     "leg": "p3.N400",
+     "observed": 0.031155618811580767,
+     "predicted": 0.034105524970165536,
+     "abs_error": 0.002949906158584769
+    },
+    {
+     "leg": "p2.N800",
+     "observed": 0.025703283359080602,
+     "predicted": 0.02835822956772572,
+     "abs_error": 0.002654946208645117
+    },
+    {
+     "leg": "p2.N1000",
+     "observed": 0.02368268254860656,
+     "predicted": 0.025697034920674506,
+     "abs_error": 0.0020143523720679464
+    },
+    {
+     "leg": "p1.N1600",
+     "observed": 0.029540109282639455,
+     "predicted": 0.022829268911534827,
+     "abs_error": 0.006710840371104629
+    },
+    {
+     "leg": "p3.N800",
+     "observed": 0.023148994624927942,
+     "predicted": 0.024976022653056606,
+     "abs_error": 0.001827028028128664
+    }
+   ],
+   "max_abs_error": 0.006710840371104629,
+   "rms_abs_error": 0.004314468202091698,
+   "window": 0.006710840371104629
+  },
+  "family": {
+   "loo": [
+    {
+     "leg": "p1.N400",
+     "observed": 0.04934864082420773,
+     "predicted": 0.04814612246805499,
+     "abs_error": 0.0012025183561527389
+    },
+    {
+     "leg": "p2.N400",
+     "observed": 0.03525871011266807,
+     "predicted": 0.0331467491069493,
+     "abs_error": 0.002111961005718768
+    },
+    {
+     "leg": "p1.N800",
+     "observed": 0.03771262015879683,
+     "predicted": 0.038180678921370934,
+     "abs_error": 0.00046805876257410145
+    },
+    {
+     "leg": "p3.N400",
+     "observed": 0.031155618811580767,
+     "predicted": 0.034105524970165536,
+     "abs_error": 0.002949906158584769
+    },
+    {
+     "leg": "p2.N800",
+     "observed": 0.025703283359080602,
+     "predicted": 0.02609284242531552,
+     "abs_error": 0.000389559066234918
+    },
+    {
+     "leg": "p2.N1000",
+     "observed": 0.02368268254860656,
+     "predicted": 0.023216407509078323,
+     "abs_error": 0.00046627503952823696
+    },
+    {
+     "leg": "p1.N1600",
+     "observed": 0.029540109282639455,
+     "predicted": 0.028820281480660636,
+     "abs_error": 0.0007198278019788194
+    },
+    {
+     "leg": "p3.N800",
+     "observed": 0.023148994624927942,
+     "predicted": 0.024976022653056606,
+     "abs_error": 0.001827028028128664
+    }
+   ],
+   "max_abs_error": 0.002949906158584769,
+   "rms_abs_error": 0.0015432436292952061,
+   "window": 0.002949906158584769
+  }
+ },
+ "legs": [
+  {
+   "leg": "p3.N200",
+   "cells": 200,
+   "degree": 3,
+   "dof": 800,
+   "steps": 2547,
+   "l2_errors": {
+    "density": 0.04199979591491615,
+    "velocity": 0.03390223437837867,
+    "pressure": 0.016554124820957365
+   },
+   "worst_l2": 0.04199979591491615,
+   "worst_field": "density",
+   "source": "docs/benchmarks/results/lax_resolution_closure/metrics.json"
+  },
+  {
+   "leg": "p3.N1600",
+   "cells": 1600,
+   "degree": 3,
+   "dof": 6400,
+   "steps": 20562,
+   "l2_errors": {
+    "density": 0.018750088875749,
+    "velocity": 0.014754490074605699,
+    "pressure": 0.009167454665104489
+   },
+   "worst_l2": 0.018750088875749,
+   "worst_field": "density",
+   "source": "docs/benchmarks/results/lax_resolution_closure/metrics.json"
+  }
+ ],
+ "evaluation": {
+  "legs": [
+   {
+    "leg": "p3.N200",
+    "dof": 800,
+    "per_model": {
+     "dof": {
+      "predicted_worst_l2": 0.04632290156001064,
+      "observed_worst_l2": 0.04199979591491615,
+      "signed_error": -0.004323105645094492,
+      "abs_error": 0.004323105645094492,
+      "window": 0.006710840371104629,
+      "inside_window": true,
+      "predicted_verdict": "FAIL",
+      "observed_verdict": "FAIL",
+      "verdict_correct": true,
+      "scaled_error_in_windows": 0.6441973592024054
+     },
+     "family": {
+      "predicted_worst_l2": 0.04193152226521575,
+      "observed_worst_l2": 0.04199979591491615,
+      "signed_error": 6.827364970039829e-05,
+      "abs_error": 6.827364970039829e-05,
+      "window": 0.002949906158584769,
+      "inside_window": true,
+      "predicted_verdict": "FAIL",
+      "observed_verdict": "FAIL",
+      "verdict_correct": true,
+      "scaled_error_in_windows": 0.023144346304613594
+     }
+    }
+   },
+   {
+    "leg": "p3.N1600",
+    "dof": 6400,
+    "per_model": {
+     "dof": {
+      "predicted_worst_l2": 0.017785168655446847,
+      "observed_worst_l2": 0.018750088875749,
+      "signed_error": 0.0009649202203021526,
+      "abs_error": 0.0009649202203021526,
+      "window": 0.006710840371104629,
+      "inside_window": true,
+      "predicted_verdict": "PASS",
+      "observed_verdict": "PASS",
+      "verdict_correct": true,
+      "scaled_error_in_windows": 0.14378530361963046
+     },
+     "family": {
+      "predicted_worst_l2": 0.017199977807719015,
+      "observed_worst_l2": 0.018750088875749,
+      "signed_error": 0.0015501110680299843,
+      "abs_error": 0.0015501110680299843,
+      "window": 0.002949906158584769,
+      "inside_window": true,
+      "predicted_verdict": "PASS",
+      "observed_verdict": "PASS",
+      "verdict_correct": true,
+      "scaled_error_in_windows": 0.5254780947925669
+     }
+    }
+   }
+  ],
+  "summary": {
+   "predictions": 4,
+   "inside_window": 4,
+   "verdict_correct": 4,
+   "median_scaled_error": 0.5254780947925669
+  }
+ },
+ "frontier": {
+  "tolerance": 0.03,
+  "rows": [
+   {
+    "leg": "p1.N400",
+    "dof": 800,
+    "degree": 1,
+    "cells": 400,
+    "worst_l2": 0.04934864082420773,
+    "source": "enumerated"
+   },
+   {
+    "leg": "p3.N200",
+    "dof": 800,
+    "degree": 3,
+    "cells": 200,
+    "worst_l2": 0.04199979591491615,
+    "source": "hold-out"
+   },
+   {
+    "leg": "p2.N400",
+    "dof": 1200,
+    "degree": 2,
+    "cells": 400,
+    "worst_l2": 0.03525871011266807,
+    "source": "enumerated"
+   },
+   {
+    "leg": "p1.N800",
+    "dof": 1600,
+    "degree": 1,
+    "cells": 800,
+    "worst_l2": 0.03771262015879683,
+    "source": "enumerated"
+   },
+   {
+    "leg": "p3.N400",
+    "dof": 1600,
+    "degree": 3,
+    "cells": 400,
+    "worst_l2": 0.031155618811580767,
+    "source": "enumerated"
+   },
+   {
+    "leg": "p2.N800",
+    "dof": 2400,
+    "degree": 2,
+    "cells": 800,
+    "worst_l2": 0.025703283359080602,
+    "source": "enumerated"
+   },
+   {
+    "leg": "p2.N1000",
+    "dof": 3000,
+    "degree": 2,
+    "cells": 1000,
+    "worst_l2": 0.02368268254860656,
+    "source": "enumerated"
+   },
+   {
+    "leg": "p1.N1600",
+    "dof": 3200,
+    "degree": 1,
+    "cells": 1600,
+    "worst_l2": 0.029540109282639455,
+    "source": "enumerated"
+   },
+   {
+    "leg": "p3.N800",
+    "dof": 3200,
+    "degree": 3,
+    "cells": 800,
+    "worst_l2": 0.023148994624927942,
+    "source": "enumerated"
+   },
+   {
+    "leg": "p3.N1600",
+    "dof": 6400,
+    "degree": 3,
+    "cells": 1600,
+    "worst_l2": 0.018750088875749,
+    "source": "hold-out"
+   }
+  ],
+  "minimal_dof_passing": {
+   "leg": "p2.N800",
+   "dof": 2400,
+   "degree": 2,
+   "cells": 800,
+   "worst_l2": 0.025703283359080602,
+   "source": "enumerated"
+  },
+  "enumerated_minimal_dof_passing": "p2.N800",
+  "minimality_restated": false,
+  "per_degree_monotone": {
+   "1": {
+    "legs": [
+     "p1.N400",
+     "p1.N800",
+     "p1.N1600"
+    ],
+    "monotone_in_cells": true
+   },
+   "2": {
+    "legs": [
+     "p2.N400",
+     "p2.N800",
+     "p2.N1000"
+    ],
+    "monotone_in_cells": true
+   },
+   "3": {
+    "legs": [
+     "p3.N200",
+     "p3.N400",
+     "p3.N800",
+     "p3.N1600"
+    ],
+    "monotone_in_cells": true
+   }
+  }
+ },
+ "figures": [
+  "docs/benchmarks/results/lax_certified_holdout/figures/holdout_frontier.png",
+  "docs/benchmarks/results/lax_certified_holdout/figures/holdout_error_in_windows.png"
+ ],
+ "doc": "docs/CASE-LAX-DG-certified-holdout.md"
+}
