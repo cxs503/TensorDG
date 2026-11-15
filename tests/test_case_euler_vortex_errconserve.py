@@ -121,18 +121,33 @@ def _ladder_record(config, error, drift=1e-15, entropy=1e-6):
                                drift=drift, entropy=entropy)
     record["task_key"] = ec.task_key(config)
     record["config"] = dict(config)
+    # Real result files carry the configuration at top level, and C8/C9 read it
+    # there (degree / cells); a synthetic bundle missing it would grade as nan.
+    record["task"] = config["task"]
+    record["cells"] = config["cells"]
+    record["cfl"] = config["cfl"]
+    if config["task"] == "dg":
+        record["degree"] = config["degree"]
     return record
 
 
 def _full_ladder_records(dg_error=None, p0_error=None, drop=()):
-    """Synthetic evidence bundle covering every declared checkpoint (C6-complete)."""
-    dg_error = dg_error or (lambda t: 1e-4 * (1.0 + 0.01 * math.log(t)))
+    """Synthetic evidence bundle covering every declared checkpoint (C6-complete).
+
+    ``dg_error`` is a function of ``(degree, cells, final_time)``: C8 and C9 grade
+    the *degree* and the *mesh refinement* of a DG family, so a synthetic error
+    that depends on time alone would (rightly) read as zero spatial order.
+    """
+    dg_error = dg_error or (
+        lambda degree, cells, t: 0.02 / cells ** (degree + 1)
+        * (1.0 + 0.01 * math.log(t)))
     p0_error = p0_error or (lambda n, t: 0.4 / n * (1.0 + 0.01 * math.log(t)))
     records = []
     for config in ec.LADDER:
         if ec.task_key(config) in drop:
             continue
-        error = (dg_error(config["final_time"]) if config["task"] == "dg"
+        error = (dg_error(config["degree"], config["cells"], config["final_time"])
+                 if config["task"] == "dg"
                  else p0_error(config["cells"], config["final_time"]))
         records.append(_ladder_record(config, error))
     return records
@@ -304,10 +319,12 @@ def test_c7_rejects_conservation_that_holds_only_on_the_design_point():
         # super-linear accumulation on the fine mesh only
         return 1e-4 * time ** (2.0 if config["cells"] == 64 else 0.2)
 
-    records = _full_ladder_records(dg_error=lambda t: 1e-4 * t,
+    records = _full_ladder_records(dg_error=lambda d, c, t: 1e-4 * t,
                                    p0_error=lambda n, t: 0.4 / n)
     for config in ec.LADDER:
-        if config["task"] == "dg" and config["cells"] == 64:
+        # only the degree-2 refined mesh: the p = 1 pair is a different family
+        if (config["task"] == "dg" and config["cells"] == 64
+                and config["degree"] == 2):
             for record in records:
                 if record["task_key"] == ec.task_key(config):
                     record["max_relative_l2"] = error(config)
@@ -344,10 +361,13 @@ def test_ladder_covers_both_design_axes():
     # and every DG family must offer >= 3 checkpoints, otherwise alpha is nan
     families = {}
     for config in dg:
-        families.setdefault(f"{config['cells']}_cfl{config['cfl']:g}",
-                            []).append(config["final_time"])
+        families.setdefault(
+            f"d{config['degree']}_n{config['cells']}_cfl{config['cfl']:g}",
+            []).append(config["final_time"])
     for key, times in families.items():
         assert len(set(times)) >= 3, key
+    # the degree axis itself must stay covered: C8 is vacuous without it
+    assert {c["degree"] for c in dg} >= set(ec.DEGREE_AXIS)
 
 
 def test_c7x_amplification_prediction_is_falsifiable():
@@ -530,3 +550,106 @@ def test_dg_metric_reports_projection_error_only_for_the_exact_periodic_state():
                              ec.BACKGROUND)
     assert max(good[name] for name in ec.FIELDS) < 1e-2   # projection error only
     assert bad["velocity_x"] > 0.1                        # reference defect
+
+
+# ---------------------------------------------------------------------------
+# C8: degree invariance
+# ---------------------------------------------------------------------------
+
+def test_c8_rejects_conservation_that_holds_only_at_the_design_degree():
+    """The defect C8 exists for: alpha <= 1 at p = 2 and nowhere else.
+
+    C7 moves the mesh and the CFL, so before C8 a "conserved error" certified on
+    p = 2 alone was still a statement about one polynomial degree.  Here the
+    p = 1 and p = 3 families accumulate super-linearly while the design degree
+    stays clean: C2 (design point) must still read passed, C8 must fail.
+    """
+    exact = ec.exact_invariants(points=80)
+    base = _full_ladder_records()
+    records = []
+    for record in base:
+        if record["task"] == "dg" and record["degree"] != 2 and record["cfl"] == 0.2:
+            record["max_relative_l2"] = 1e-6 * record["final_time"] ** 2
+            record["max_percent"] = 100.0 * record["max_relative_l2"]
+        records.append(record)
+    gates = ec.evaluate_gates(records, exact)["gates"]
+    c8 = gates["C8_degree_invariance"]
+    assert set(c8["offenders"]) == {1, 3}
+    assert c8["passed"] is False and c8["status"] == "failed"
+    assert gates["C2_error_conservation"]["passed"] is True
+    assert gates["verdict"] == "FAIL"
+
+
+def test_c8_is_not_evaluated_when_only_one_degree_is_decidable():
+    """One degree is the anecdote C7 was written against; C8 says so out loud."""
+    exact = ec.exact_invariants(points=80)
+    # only the design degree p = 2 is kept: one degree is not an invariance
+    keep = {2}
+    records = [record for record in _full_ladder_records()
+               if record["task"] != "dg" or record.get("degree") in keep]
+    gates = ec.evaluate_gates(records, exact)["gates"]
+    c8 = gates["C8_degree_invariance"]
+    assert c8["status"] == "not_evaluated" and c8["passed"] is False
+    assert "C8_degree_invariance" in gates["not_evaluated"]
+    assert gates["all_passed"] is False
+
+
+def test_c8_degree_axis_is_actually_declared_in_the_ladder():
+    """Guard: a C8 with no degree families to grade is a vacuous pass."""
+    degrees = {config["degree"] for config in ec.LADDER if config["task"] == "dg"}
+    assert set(ec.DEGREE_AXIS) <= degrees
+    assert ec.MIN_DECIDABLE_DEGREES <= len(ec.DEGREE_AXIS)
+
+
+# ---------------------------------------------------------------------------
+# C9: the long-time error must still fall at the design order
+# ---------------------------------------------------------------------------
+
+def test_c9_measures_design_order_at_both_checkpoints():
+    exact = ec.exact_invariants(points=80)
+    gates = ec.evaluate_gates(_full_ladder_records(), exact)["gates"]
+    c9 = gates["C9_design_order"]
+    assert c9["status"] == "passed"
+    for degree in ec.ORDER_FAMILIES:
+        for checkpoint in ec.ORDER_CHECKPOINTS:
+            row = c9["per_case"][f"dg_d{degree}_t{checkpoint:g}"]
+            assert row["order"] == pytest.approx(degree + 1, abs=0.05), row
+            assert row["target"] == pytest.approx(ec.ORDER_SLACK * (degree + 1))
+
+
+def test_c9_rejects_a_long_time_residue_that_ignores_the_mesh():
+    """A grid-independent residue after the box crossing kills the order.
+
+    This is the failure mode C2's exponent alone cannot see: an error that stops
+    improving with h still grows slowly in time, so alpha stays small while the
+    "the error is a grid property" claim is already false.
+    """
+    exact = ec.exact_invariants(points=80)
+    base = _full_ladder_records()
+    records = []
+    for record in base:
+        if (record["task"] == "dg" and record["degree"] == 2
+                and record["cfl"] == 0.2
+                and abs(record["final_time"] - 10.0) < 1e-12):
+            record["max_relative_l2"] = 1e-5    # same on n = 32 and n = 64
+            record["max_percent"] = 1e-3
+        records.append(record)
+    gates = ec.evaluate_gates(records, exact)["gates"]
+    c9 = gates["C9_design_order"]
+    assert list(c9["failures"]) == ["dg_d2_t10"]
+    assert c9["failures"]["dg_d2_t10"] == pytest.approx(0.0, abs=1e-9)
+    assert c9["passed"] is False and c9["status"] == "failed"
+    # the t = 1 snapshot is untouched: C9 is specific, not a blanket failure
+    assert c9["per_case"]["dg_d2_t1"]["passed"] is True
+
+
+def test_c9_is_not_evaluated_when_a_degree_has_no_refinement():
+    exact = ec.exact_invariants(points=80)
+    records = [record for record in _full_ladder_records()
+               if not (record["task"] == "dg" and record["degree"] == 1
+                       and record["cells"] == 64)]
+    gates = ec.evaluate_gates(records, exact)["gates"]
+    c9 = gates["C9_design_order"]
+    assert c9["status"] == "not_evaluated" and c9["passed"] is False
+    assert "C9_design_order" in gates["not_evaluated"]
+    assert gates["all_passed"] is False
