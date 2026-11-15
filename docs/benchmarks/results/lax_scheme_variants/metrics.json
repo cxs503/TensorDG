@@ -71,7 +71,7 @@
   "source": "docs/benchmarks/results/lax_case_pool/metrics.json",
   "worst_relative_difference": 1.305070357343104e-06
  },
- "generated_at_utc": "2026-11-15T11:57:00Z",
+ "generated_at_utc": "2026-11-15T22:15:57Z",
  "question": "Does any admissible configuration of the existing scheme bring the pinned ledger leg p3.N400 under the registered 3 % whole-field relative-L2 bar without changing the degrees of freedom?",
  "rows": [
   {
@@ -303,24 +303,55 @@
   },
   {
    "cells": 400,
+   "cfl": 0.35,
    "decision": {
     "admissible": false,
-    "error": "not_run",
-    "margin": null,
+    "margin": 1.875931181095529,
     "passes_tolerance": false,
-    "same_discretisation_budget": true,
-    "unknown": true
+    "same_discretisation_budget": true
    },
    "degree": 3,
+   "density_min": 0.33783177401764375,
    "dof": 1600,
+   "dt_mean": 2.6337115072933552e-05,
+   "flux": "hllc",
    "knob": {
     "limiter": "ao"
    },
-   "not_run": true,
+   "l1": {
+    "density": 0.013987551555660489,
+    "pressure": 0.004435060745587418,
+    "velocity": 0.006905670440968263
+   },
+   "l2": {
+    "density": 0.05627793543286587,
+    "pressure": 0.014631701156186859,
+    "velocity": 0.02842984746735078
+   },
+   "limiter": "ao",
+   "positivity": "scale",
+   "positivity_stats": {
+    "cell_stages": 5923200,
+    "limited_cells": 0,
+    "min_theta": 1.0
+   },
+   "pressure_min": 0.5709996146117605,
    "role": "shock capture",
+   "solver_kwargs": {
+    "cfl": 0.35,
+    "degree": 3,
+    "final_time": 0.13,
+    "limiter": "ao",
+    "limiter_stage": "every",
+    "ncells": 400,
+    "positivity": "scale"
+   },
+   "steps": 4936,
    "variant": "ao",
-   "wall_seconds": 0.0,
-   "why": "hierarchical AO limiter, which keeps design order in troubled cells instead of collapsing them"
+   "wall_seconds": 189.12616276741028,
+   "why": "hierarchical AO limiter, which keeps design order in troubled cells instead of collapsing them",
+   "worst_field": "density",
+   "worst_l2": 0.05627793543286587
   }
  ],
  "temporal_probe": {
@@ -360,7 +391,7 @@
   "worst_l2_spread": 0.0016512986881713557
  },
  "tournament": {
-  "ao": null,
+  "ao": 1.875931181095529,
   "av": 1.3195926791863453,
   "base": 1.0385206617828455,
   "cfl020": 1.0881263506241619,
@@ -372,9 +403,7 @@
   "arms_errored": [
    "pos_none"
   ],
-  "arms_not_run": [
-   "ao"
-  ],
+  "arms_not_run": [],
   "control_reproduced": true,
   "measured_worst_over_required": 1.013253052754161,
   "relative_reduction_needed": 0.013079706711109695,
@@ -382,5 +411,5 @@
   "scope_complete": false,
   "verdict": "FAIL"
  },
- "wall_seconds": 406.99935698509216
+ "wall_seconds": 596.1255197525024
 }
