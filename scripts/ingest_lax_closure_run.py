@@ -8,8 +8,9 @@ figures and its metrics digest is printed into the job log:
 
 This script parses that digest (so no number is ever transcribed by hand),
 writes ``metrics.json`` in the standard artifact form, redraws the two figures
-locally from the same numbers, and renders
-``docs/CASE-LAX-DG-resolution-closure.md``.
+locally from the same numbers, renders
+``docs/CASE-LAX-DG-resolution-closure.md``, and re-renders ``summary.md``
+from the same numbers (an ingest must never leave a stale summary behind).
 
 Usage::
 
@@ -26,7 +27,7 @@ sys.path.insert(0, str(ROOT))
 
 from benchmarks.lax_resolution_closure import (  # noqa: E402
     ARM_CELLS, CFL, CLOSURE_LADDER, DEGREE, DOMAIN, FINAL_TIME,
-    LIMITER_ARMS, R3_BAND_WIDTH,
+    LIMITER_ARMS, R3_BAND_WIDTH, render_summary,
 )
 from scripts.render_lax_closure_doc import main as render_doc  # noqa: E402
 
@@ -135,19 +136,17 @@ def main(argv=None):
                             "(no matplotlib there); the digest was printed to the "
                             "job log and ingested here, and the two figures were "
                             "redrawn locally from these numbers")},
+        "out_dir": str(OUT),
     }
     OUT.mkdir(parents=True, exist_ok=True)
     metrics["figures"] = render_figures(metrics)
     (OUT / "metrics.json").write_text(json.dumps(metrics, indent=1), encoding="utf-8")
     render_doc()
-    summary = OUT / "summary.md"
-    if not summary.exists():
-        summary.write_text(
-            "\n".join(["# CASE-LAX-DG resolution closure",
-                       f"verdict {metrics['gate']['status']}, closure mesh "
-                       f"{metrics['gate']['closure_mesh']}",
-                       "see metrics.json / docs/CASE-LAX-DG-resolution-closure.md"]),
-            encoding="utf-8")
+    # Always re-render the summary from the ingested metrics.  The previous
+    # "write only if missing" rule let a stale summary.md from an earlier
+    # (e.g. --quick) run survive the full run, so the one-line verdict could
+    # disagree with the artifact it points at (m22300, reopened #617).
+    render_summary(metrics)
     print(json.dumps({"verdict": metrics["gate"]["status"],
                       "closure_mesh": metrics["gate"]["closure_mesh"],
                       "job": metrics["source"]["job"],
