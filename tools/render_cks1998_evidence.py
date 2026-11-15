@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -44,13 +45,39 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def manifest(profile_dir: Path) -> list[dict]:
-    rows = []
+def tracked_files(directory: Path) -> set[str] | None:
+    """Committed paths under ``directory``; ``None`` if git is unavailable.
+
+    A sha256 is only evidence if the bytes travel with the repository.  The
+    manifest therefore lists *tracked* files only: an untracked figure that
+    happens to exist in one working copy cannot be verified from a fresh clone,
+    and a manifest entry nobody can check is worse than no entry (audit m15345
+    defect M1: three ``artifacts/full/*.png`` rows whose bytes are not in git).
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(REPO), "ls-files", "-z", "--",
+             str(directory.relative_to(REPO))],
+            capture_output=True, text=True, check=True).stdout
+    except Exception:                                    # pragma: no cover
+        return None
+    return {p for p in out.split("\0") if p}
+
+
+def manifest(profile_dir: Path) -> tuple[list[dict], list[dict]]:
+    """(verifiable rows, generated-but-untracked files)."""
+    tracked = tracked_files(profile_dir)
+    rows, untracked = [], []
     for p in sorted(profile_dir.iterdir()):
-        if p.is_file():
-            rows.append({"file": str(p.relative_to(REPO)), "bytes": p.stat().st_size,
-                         "sha256": sha256(p)})
-    return rows
+        if not p.is_file():
+            continue
+        rel = str(p.relative_to(REPO))
+        row = {"file": rel, "bytes": p.stat().st_size, "sha256": sha256(p)}
+        if tracked is None or rel in tracked:
+            rows.append(row)
+        else:
+            untracked.append(row)
+    return rows, untracked
 
 
 def key_numbers(metrics: dict) -> dict:
@@ -91,10 +118,19 @@ def render(profiles: list[str]) -> str:
             continue
         metrics = json.loads(mp.read_text())
         tables[prof] = key_numbers(metrics)
+        rows, untracked = manifest(pdir)
         lines += [f"## Profile `{prof}` — artifact manifest", "",
+                  "Committed files only: every sha256 below can be re-verified in a "
+                  "fresh clone (`sha256sum <file>`).", "",
                   "| file | bytes | sha256 |", "|---|---:|---|"]
-        for row in manifest(pdir):
+        for row in rows:
             lines.append(f"| `{row['file']}` | {row['bytes']} | `{row['sha256']}` |")
+        if untracked:
+            lines += ["", "Generated locally, **not** committed (excluded from the "
+                          "manifest because their bytes are not in the repository; "
+                          "reproduce with the commands above):", ""]
+            for row in untracked:
+                lines.append(f"- `{row['file']}` ({row['bytes']} B)")
         lines += ["", "### Key numbers", "",
                   "| quantity | key | value |", "|---|---|---:|"]
         kn = tables[prof]
@@ -119,7 +155,9 @@ def render(profiles: list[str]) -> str:
         lines += ["## Reference vs got (from `benchmark_ref_vs_got.json`)", "",
                   f"Profile `{table['profile']}` · rows {table['counts']['total']} "
                   f"(PASS {table['counts']['PASS']} / FAIL {table['counts']['FAIL']} / "
-                  f"informative {table['counts']['informative']})", "",
+                  f"unscored {table['counts']['unscored']}; "
+                  f"gated {table['counts']['gated_pass']}/{table['counts']['gated_total']})",
+                  "",
                   "| item | quantity | ref | got | tol | verdict | ref source |",
                   "|---|---|---:|---:|---|---|---|"]
         for r in table["rows"]:

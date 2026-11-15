@@ -15,6 +15,8 @@ OMP_NUM_THREADS=1 python -m pytest tests/test_repro_cks1998.py -x -q
 
 ## Profile `quick` — artifact manifest
 
+Committed files only: every sha256 below can be re-verified in a fresh clone (`sha256sum <file>`).
+
 | file | bytes | sha256 |
 |---|---:|---|
 | `validation/repro_cks1998/artifacts/quick/A1_smooth.csv` | 584 | `db66be51257dbee5cdf9527c14232514254eaa244d74aeec7b21f38602ed9860` |
@@ -52,17 +54,21 @@ Gate verdict: `{"A1_smooth_order": true, "A2_discontinuous_order": true, "E2_sod
 
 ## Profile `full` — artifact manifest
 
+Committed files only: every sha256 below can be re-verified in a fresh clone (`sha256sum <file>`).
+
 | file | bytes | sha256 |
 |---|---:|---|
 | `validation/repro_cks1998/artifacts/full/A1_smooth.csv` | 943 | `ac43d311f52333022328c2286d378311e750b8774eb4a2251b3b0d9c67b5fab5` |
 | `validation/repro_cks1998/artifacts/full/A2_discontinuous.csv` | 2359 | `f93c2fd241870033f02e3933e9fe2de23dfffb73ad1ea2f4b0d47ec3399dcedc` |
 | `validation/repro_cks1998/artifacts/full/E2_sod.csv` | 425 | `9fa48ae4fd9ab4c1e22a10d4552f89c80e3b63791eb9954e5aeeafd627cfed94` |
 | `validation/repro_cks1998/artifacts/full/E3_tvd.csv` | 1404 | `a9a3bc141426ed15af198f9737760bae387cc67bb9e946552ca12e3ad5fa9f2a` |
-| `validation/repro_cks1998/artifacts/full/a1_l2_order.png` | 79293 | `fe9cc648d69bfe7b81531bab034cc8f17fcabd3d338c84e80391ca2c30e4194b` |
-| `validation/repro_cks1998/artifacts/full/e2_sod.png` | 35106 | `c4887f8302c97b6b99d6fec0aca0ac5a2447661d1858652767251eef318a8eaa` |
-| `validation/repro_cks1998/artifacts/full/e3_limiter.png` | 78047 | `911ba352b35ff498ac0abec2a98a7f78189bb48cdf38dc5bd94307da6bdd9913` |
 | `validation/repro_cks1998/artifacts/full/metrics.json` | 38465 | `e5fe3177e32f33e9ac1cf3e40ca0809bda7cbb5f86e3d84ff5034e3c80c93936` |
 | `validation/repro_cks1998/artifacts/full/summary.md` | 2871 | `229d31850ea8e9189bb90519d92ed81cd63ab3b84e25223990cb3c0db0f6026f` |
+
+Generated locally, **not** committed (excluded from the manifest because their bytes are not in the repository; reproduce with the commands above):
+
+- `validation/repro_cks1998/artifacts/full/a1_l2_order.png` (79293 B)
+- `validation/repro_cks1998/artifacts/full/e2_sod.png` (35106 B)
 
 ### Key numbers
 
@@ -97,27 +103,30 @@ Gate verdict: `{"A1_smooth_order": true, "A2_discontinuous_order": true, "E2_sod
 
 ## Reference vs got (from `benchmark_ref_vs_got.json`)
 
-Profile `quick` · rows 54 (PASS 43 / FAIL 0 / informative 11)
+Profile `full` · rows 78 (PASS 63 / FAIL 9 / unscored 6; gated 15/15)
 
 | item | quantity | ref | got | tol | verdict | ref source |
 |---|---|---:|---:|---|---|---|
-| A1_smooth_order | L2 observed order p1 | 2 | 2.01315 | >= p+0.5 = 1.5 | PASS | paper_theorem |
-| A1_smooth_order | L2 observed order p2 | 3 | 2.99976 | >= p+0.5 = 2.5 | PASS | paper_theorem |
-| A1_smooth_order | L2 observed order p3 | 4 | 3.99769 | >= p+0.5 = 3.5 | PASS | paper_theorem |
-| A2_discont_order | L1 observed order p1 | 0.5 | 0.667656 | >= 0.5 | PASS | paper_theorem |
-| A2_discont_order | L1 observed order p2 | 0.5 | 0.664468 | >= 0.5 | PASS | paper_theorem |
-| A2_discont_order | L1 observed order p3 | 0.5 | 0.664059 | >= 0.5 | PASS | paper_theorem |
+| A1_smooth_order | L2 observed order p1 | 2 | 2.00424 | >= p+0.5 = 1.5 | PASS | paper_theorem |
+| A1_smooth_order | L2 observed order p2 | 3 | 2.99993 | >= p+0.5 = 2.5 | PASS | paper_theorem |
+| A1_smooth_order | L2 observed order p3 | 4 | 3.9999 | >= p+0.5 = 3.5 | PASS | paper_theorem |
+| A2_discont_order | L1 observed order p1 | 0.5 | 0.667553 | >= 0.5 | PASS | paper_theorem |
+| A2_discont_order | L1 observed order p2 | 0.5 | 0.664722 | >= 0.5 | PASS | paper_theorem |
+| A2_discont_order | L1 observed order p3 | 0.5 | 0.664227 | >= 0.5 | PASS | paper_theorem |
 | E2_sod_p2_n200 | rel L2 error, density |  | 0.0160431 | < 3% | PASS | analytic |
-| E2_sod_p2_n200 | rel L2 error, velocity |  | 0.0417341 | < 3% | informative | analytic |
+| E2_sod_p2_n200 | rel L2 error, velocity |  | 0.0417341 | < 3% | FAIL | analytic |
 | E2_sod_p2_n200 | rel L2 error, pressure |  | 0.0115047 | < 3% | PASS | analytic |
 | E2_sod_p2_n400 | rel L2 error, density |  | 0.0111321 | < 3% | PASS | analytic |
 | E2_sod_p2_n400 | rel L2 error, velocity |  | 0.023677 | < 3% | PASS | analytic |
 | E2_sod_p2_n400 | rel L2 error, pressure |  | 0.00594414 | < 3% | PASS | analytic |
+| E2_sod_p1_n400 | rel L2 error, density |  | 0.0108482 | < 3% | PASS | analytic |
+| E2_sod_p1_n400 | rel L2 error, velocity |  | 0.0234615 | < 3% | PASS | analytic |
+| E2_sod_p1_n400 | rel L2 error, pressure |  | 0.00579662 | < 3% | PASS | analytic |
 | E2_sod_p2_n200 | density at x=0.102 | 1 | 1 | < 3% rel | PASS | analytic |
-| E2_sod_p2_n200 | velocity at x=0.102 | 0 | 5.78803e-16 | < 3% rel | informative | analytic |
+| E2_sod_p2_n200 | velocity at x=0.102 | 0 | 5.78803e-16 | < 3% rel | UNSCORED | analytic |
 | E2_sod_p2_n200 | pressure at x=0.102 | 1 | 1 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n200 | density at x=0.302 | 0.869561 | 0.862163 | < 3% rel | PASS | analytic |
-| E2_sod_p2_n200 | velocity at x=0.302 | 0.163097 | 0.1729 | < 3% rel | informative | analytic |
+| E2_sod_p2_n200 | velocity at x=0.302 | 0.163097 | 0.1729 | < 3% rel | FAIL | analytic |
 | E2_sod_p2_n200 | pressure at x=0.302 | 0.822287 | 0.812479 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n200 | density at x=0.453 | 0.489293 | 0.49822 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n200 | velocity at x=0.453 | 0.788097 | 0.769393 | < 3% rel | PASS | analytic |
@@ -125,17 +134,17 @@ Profile `quick` · rows 54 (PASS 43 / FAIL 0 / informative 11)
 | E2_sod_p2_n200 | density at x=0.552 | 0.426319 | 0.426199 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n200 | velocity at x=0.552 | 0.927453 | 0.927479 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n200 | pressure at x=0.552 | 0.30313 | 0.303145 | < 3% rel | PASS | analytic |
-| E2_sod_p2_n200 | density at x=0.703 | 0.265574 | 0.275702 | < 3% rel | informative | analytic |
+| E2_sod_p2_n200 | density at x=0.703 | 0.265574 | 0.275702 | < 3% rel | FAIL | analytic |
 | E2_sod_p2_n200 | velocity at x=0.703 | 0.927453 | 0.927725 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n200 | pressure at x=0.703 | 0.30313 | 0.303244 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n200 | density at x=0.902 | 0.125 | 0.125 | < 3% rel | PASS | analytic |
-| E2_sod_p2_n200 | velocity at x=0.902 | 0 | -1.77704e-09 | < 3% rel | informative | analytic |
+| E2_sod_p2_n200 | velocity at x=0.902 | 0 | -1.77704e-09 | < 3% rel | UNSCORED | analytic |
 | E2_sod_p2_n200 | pressure at x=0.902 | 0.1 | 0.1 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n400 | density at x=0.101 | 1 | 1 | < 3% rel | PASS | analytic |
-| E2_sod_p2_n400 | velocity at x=0.101 | 0 | 0 | < 3% rel | PASS | analytic |
+| E2_sod_p2_n400 | velocity at x=0.101 | 0 | 0 | < 3% rel | UNSCORED | analytic |
 | E2_sod_p2_n400 | pressure at x=0.101 | 1 | 1 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n400 | density at x=0.301 | 0.873497 | 0.869379 | < 3% rel | PASS | analytic |
-| E2_sod_p2_n400 | velocity at x=0.301 | 0.157888 | 0.163239 | < 3% rel | informative | analytic |
+| E2_sod_p2_n400 | velocity at x=0.301 | 0.157888 | 0.163239 | < 3% rel | FAIL | analytic |
 | E2_sod_p2_n400 | pressure at x=0.301 | 0.827498 | 0.822045 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n400 | density at x=0.451 | 0.491778 | 0.496295 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n400 | velocity at x=0.451 | 0.782888 | 0.77351 | < 3% rel | PASS | analytic |
@@ -147,14 +156,35 @@ Profile `quick` · rows 54 (PASS 43 / FAIL 0 / informative 11)
 | E2_sod_p2_n400 | velocity at x=0.701 | 0.927453 | 0.927494 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n400 | pressure at x=0.701 | 0.30313 | 0.303136 | < 3% rel | PASS | analytic |
 | E2_sod_p2_n400 | density at x=0.901 | 0.125 | 0.125 | < 3% rel | PASS | analytic |
-| E2_sod_p2_n400 | velocity at x=0.901 | 0 | 1.88446e-12 | < 3% rel | informative | analytic |
+| E2_sod_p2_n400 | velocity at x=0.901 | 0 | 1.88446e-12 | < 3% rel | UNSCORED | analytic |
 | E2_sod_p2_n400 | pressure at x=0.901 | 0.1 | 0.1 | < 3% rel | PASS | analytic |
-| E3_tvd | pointwise max, p1_unlimited | 1 | 1.0685 | <= 1% overshoot | informative | analytic |
-| E3_tvd | pointwise max, p1_tvb_M0 | 1 | 1.01389 | <= 1% overshoot | informative | analytic |
-| E3_tvd | pointwise max, p1_strict_all | 1 | 0.999956 | <= 1% overshoot | PASS | analytic |
-| E3_tvd | pointwise max, p2_unlimited | 1 | 1.0852 | <= 1% overshoot | informative | analytic |
-| E3_tvd | pointwise max, p2_tvb_M0 | 1 | 1.0037 | <= 1% overshoot | informative | analytic |
-| E3_tvd | pointwise max, p2_strict_all | 1 | 0.999956 | <= 1% overshoot | PASS | analytic |
+| E2_sod_p1_n400 | density at x=0.101 | 1 | 1 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | velocity at x=0.101 | 0 | 0 | < 3% rel | UNSCORED | analytic |
+| E2_sod_p1_n400 | pressure at x=0.101 | 1 | 1 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | density at x=0.301 | 0.873497 | 0.869566 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | velocity at x=0.301 | 0.157888 | 0.163074 | < 3% rel | FAIL | analytic |
+| E2_sod_p1_n400 | pressure at x=0.301 | 0.827498 | 0.822292 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | density at x=0.451 | 0.491778 | 0.496115 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | velocity at x=0.451 | 0.782888 | 0.773843 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | pressure at x=0.451 | 0.370235 | 0.374826 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | density at x=0.551 | 0.426319 | 0.426274 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | velocity at x=0.551 | 0.927453 | 0.927485 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | pressure at x=0.551 | 0.30313 | 0.303119 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | density at x=0.701 | 0.265574 | 0.269121 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | velocity at x=0.701 | 0.927453 | 0.927459 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | pressure at x=0.701 | 0.30313 | 0.303133 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | density at x=0.901 | 0.125 | 0.125 | < 3% rel | PASS | analytic |
+| E2_sod_p1_n400 | velocity at x=0.901 | 0 | 1.01722e-15 | < 3% rel | UNSCORED | analytic |
+| E2_sod_p1_n400 | pressure at x=0.901 | 0.1 | 0.1 | < 3% rel | PASS | analytic |
+| E3_tvd | pointwise max, p1_unlimited | 1 | 1.06326 | <= 1% overshoot | FAIL | analytic |
+| E3_tvd | pointwise max, p1_tvb_M0 | 1 | 1.01404 | <= 1% overshoot | FAIL | analytic |
+| E3_tvd | pointwise max, p1_strict_all | 1 | 0.999996 | <= 1% overshoot | PASS | analytic |
+| E3_tvd | pointwise max, p2_unlimited | 1 | 1.08573 | <= 1% overshoot | FAIL | analytic |
+| E3_tvd | pointwise max, p2_tvb_M0 | 1 | 1.00779 | <= 1% overshoot | PASS | analytic |
+| E3_tvd | pointwise max, p2_strict_all | 1 | 0.999996 | <= 1% overshoot | PASS | analytic |
+| E3_tvd | pointwise max, p3_unlimited | 1 | 1.10118 | <= 1% overshoot | FAIL | analytic |
+| E3_tvd | pointwise max, p3_tvb_M0 | 1 | 1.00445 | <= 1% overshoot | PASS | analytic |
+| E3_tvd | pointwise max, p3_strict_all | 1 | 0.999996 | <= 1% overshoot | PASS | analytic |
 
 Integration probe: `probe_pass=True`
 
