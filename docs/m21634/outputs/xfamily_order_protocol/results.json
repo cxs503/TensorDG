@@ -1,0 +1,608 @@
+{
+  "anchor_cited": {
+    "alias_detector": "not_run: per-family own errors are absent from the cited ladder",
+    "asymptotic_subset_all_below_gate": true,
+    "asymptotic_subset_percent": [
+      1.6746,
+      0.9321,
+      0.5569
+    ],
+    "normalisation_ratio": 3.9287320143884896,
+    "percent_lid_normalised": [
+      0.8896,
+      0.4256,
+      0.2367,
+      0.1506
+    ],
+    "percent_v_normalised": [
+      3.495,
+      1.6746,
+      0.9321,
+      0.5569
+    ],
+    "required_resolution_for_gate": 78.01526521640514,
+    "resolutions": [
+      65.0,
+      97.0,
+      129.0,
+      161.0
+    ],
+    "source": "tensor_reports#19236 (GAP-DIFFLBM-XSOLVER-ORDER ladder)",
+    "status": "cited_not_recomputed",
+    "verdict": {
+      "cancellation_index": [],
+      "converged_a": true,
+      "converged_b": true,
+      "degenerate": false,
+      "differences": [
+        0.03495,
+        0.016746,
+        0.009321000000000001,
+        0.005568999999999999
+      ],
+      "family_errors_a": [],
+      "family_errors_b": [],
+      "floor": 2.220446049250313e-16,
+      "gate_order": 1.8,
+      "gate_order_passed": true,
+      "gate_pct_passed": false,
+      "gate_percent": 3.0,
+      "notes": [
+        "R5 violation: observed 2.32 > bracket [2.00, 2.00] without an alias signature; check the metric and the sameness of the node sets."
+      ],
+      "order_attribution": "above_range_violation",
+      "order_bracket": [
+        2.0,
+        2.0
+      ],
+      "p_finest": 2.3243370969953636,
+      "p_lsq": 2.013926714521543,
+      "p_pairwise": [
+        1.8379102438284696,
+        2.0550213066785523,
+        2.3243370969953636
+      ],
+      "passed": false,
+      "resolutions": [
+        65.0,
+        97.0,
+        129.0,
+        161.0
+      ],
+      "signal_levels": 10.0,
+      "used_levels": 4
+    }
+  },
+  "family_orders_theoretical": {
+    "dg_p1": 2.0,
+    "dg_p2": 3.0,
+    "dg_p3": 5.0,
+    "fd2": 2.0,
+    "fd4": 4.0
+  },
+  "gate_order": 1.8,
+  "gate_percent": 3.0,
+  "half_gate_budget_percent": 1.5,
+  "ladder": [
+    8,
+    16,
+    32,
+    64
+  ],
+  "own_error_observed_order": {
+    "dg_p1": [
+      2.0019431625595723
+    ],
+    "dg_p2": [
+      3.0561859916546625
+    ],
+    "dg_p3": [
+      4.9970995722361975
+    ],
+    "fd2": [
+      2.0035013791409835
+    ],
+    "fd4": [
+      4.0070481834939775
+    ]
+  },
+  "own_error_pairwise_order": {
+    "dg_p1": [
+      2.0045897410449247,
+      2.0011897991987304,
+      2.000301068555342
+    ],
+    "dg_p2": [
+      3.1926697842988747,
+      2.9965994818216406,
+      2.999150878787813
+    ],
+    "dg_p3": [
+      4.993108506455725,
+      4.998276520396779,
+      4.999521373802566
+    ],
+    "fd2": [
+      2.008366739527052,
+      2.0020872428223124,
+      2.000521533846476
+    ],
+    "fd4": [
+      4.016817243993866,
+      4.004216993830051,
+      4.001054042545993
+    ]
+  },
+  "own_max_point_error": {
+    "dg_p1": {
+      "16": 0.0032163084849148316,
+      "32": 0.0008034142674018252,
+      "64": 0.00020081165613317076,
+      "8": 0.012906228132522068
+    },
+    "dg_p2": {
+      "16": 3.5530825052961632e-06,
+      "32": 4.4518340127800756e-07,
+      "64": 5.568068727542125e-08,
+      "8": 3.2485882083266304e-05
+    },
+    "dg_p3": {
+      "16": 3.3621320225818364e-09,
+      "32": 1.0519221592800437e-10,
+      "64": 3.2883475037105585e-12,
+      "8": 1.0707552073421761e-07
+    },
+    "fd2": {
+      "16": 0.003218964440077521,
+      "32": 0.000803577679367562,
+      "64": 0.0002008218096913872,
+      "8": 0.012950746721878792
+    },
+    "fd4": {
+      "16": 2.4869167062901987e-05,
+      "32": 1.5497862930757833e-06,
+      "64": 9.679090140490842e-08,
+      "8": 0.0004025721410065852
+    }
+  },
+  "pairs": [
+    {
+      "a": "dg_p1",
+      "b": "fd2",
+      "differences": [
+        0.00012978683840457516,
+        1.6109154664699062e-05,
+        2.0101236495803643e-06,
+        2.5115581295427625e-07
+      ],
+      "family_orders": [
+        2.0,
+        2.0
+      ],
+      "order_bracket": [
+        2.0,
+        2.0
+      ],
+      "percent": [
+        0.012978683840457516,
+        0.0016109154664699062,
+        0.00020101236495803643,
+        2.5115581295427625e-05
+      ],
+      "required_resolution_for_gate": 1.3005960978585185,
+      "triangle_ratio": [
+        0.0050194131036363455,
+        0.0025032589685725264,
+        0.0012508610597715888,
+        0.0006253358704525545
+      ],
+      "verdict": {
+        "cancellation_index": [
+          0.010021571820666932,
+          0.005004452507810591,
+          0.0025014677500280838,
+          0.0012506401239000874
+        ],
+        "converged_a": true,
+        "converged_b": true,
+        "degenerate": false,
+        "differences": [
+          0.00012978683840457516,
+          1.6109154664699062e-05,
+          2.0101236495803643e-06,
+          2.5115581295427625e-07
+        ],
+        "family_errors_a": [
+          0.012906228132522068,
+          0.0032163084849148316,
+          0.0008034142674018252,
+          0.00020081165613317076
+        ],
+        "family_errors_b": [
+          0.012950746721878792,
+          0.003218964440077521,
+          0.000803577679367562,
+          0.0002008218096913872
+        ],
+        "floor": 2.220446049250313e-16,
+        "gate_order": 1.8,
+        "gate_order_passed": true,
+        "gate_pct_passed": true,
+        "gate_percent": 3.0,
+        "notes": [
+          "R5 alias regime: the cross-family difference is only 1.0% of either family's own error, so both families share their leading truncation term and the observed order (3.00) exceeds both family orders. Agreement between aliases is not evidence of accuracy: this ladder must be reported with each family's own error against an independent reference, and the 3% gate must not be credited."
+        ],
+        "order_attribution": "alias_pair_shared_error",
+        "order_bracket": [
+          2.0,
+          2.0
+        ],
+        "p_finest": 3.0006296778243873,
+        "p_lsq": 3.004256175475211,
+        "p_pairwise": [
+          3.010191392969778,
+          3.002524635592402,
+          3.0006296778243873
+        ],
+        "passed": false,
+        "resolutions": [
+          8.0,
+          16.0,
+          32.0,
+          64.0
+        ],
+        "signal_levels": 10.0,
+        "used_levels": 4
+      }
+    },
+    {
+      "a": "dg_p2",
+      "b": "fd2",
+      "differences": [
+        0.012918260839795526,
+        0.0032169540882067693,
+        0.0008034522748070483,
+        0.00020081397148352664
+      ],
+      "family_orders": [
+        3.0,
+        2.0
+      ],
+      "order_bracket": [
+        2.0,
+        3.0
+      ],
+      "percent": [
+        1.2918260839795526,
+        0.32169540882067693,
+        0.08034522748070483,
+        0.020081397148352664
+      ],
+      "required_resolution_for_gate": 5.238512535174921,
+      "triangle_ratio": [
+        0.9949957174651015,
+        0.9982735751358804,
+        0.9992903336606291,
+        0.9996837928679005
+      ],
+      "verdict": {
+        "cancellation_index": [
+          0.9974915823171505,
+          0.9993754662693002,
+          0.9998439422052982,
+          0.9999609693395722
+        ],
+        "converged_a": true,
+        "converged_b": true,
+        "degenerate": false,
+        "differences": [
+          0.012918260839795526,
+          0.0032169540882067693,
+          0.0008034522748070483,
+          0.00020081397148352664
+        ],
+        "family_errors_a": [
+          3.2485882083266304e-05,
+          3.5530825052961632e-06,
+          4.4518340127800756e-07,
+          5.568068727542125e-08
+        ],
+        "family_errors_b": [
+          0.012950746721878792,
+          0.003218964440077521,
+          0.000803577679367562,
+          0.0002008218096913872
+        ],
+        "floor": 2.220446049250313e-16,
+        "gate_order": 1.8,
+        "gate_order_passed": true,
+        "gate_pct_passed": true,
+        "gate_percent": 3.0,
+        "notes": [],
+        "order_attribution": "dominant_family_controls",
+        "order_bracket": [
+          2.0,
+          3.0
+        ],
+        "p_finest": 2.000352682909582,
+        "p_lsq": 2.002363630634538,
+        "p_pairwise": [
+          2.0056446045269882,
+          2.0014111110089203,
+          2.000352682909582
+        ],
+        "passed": true,
+        "resolutions": [
+          8.0,
+          16.0,
+          32.0,
+          64.0
+        ],
+        "signal_levels": 10.0,
+        "used_levels": 4
+      }
+    },
+    {
+      "a": "dg_p3",
+      "b": "fd2",
+      "differences": [
+        0.01295078269053862,
+        0.003218965007583008,
+        0.0008035776888104529,
+        0.0002008218114745164
+      ],
+      "family_orders": [
+        5.0,
+        2.0
+      ],
+      "order_bracket": [
+        2.0,
+        5.0
+      ],
+      "percent": [
+        1.295078269053862,
+        0.3218965007583008,
+        0.08035776888104529,
+        0.02008218114745164
+      ],
+      "required_resolution_for_gate": 5.239721561293312,
+      "triangle_ratio": [
+        0.9999945094847013,
+        0.9999991318252598,
+        0.9999998808462269,
+        0.9999999925047071
+      ],
+      "verdict": {
+        "cancellation_index": [
+          1.0000027773425426,
+          1.0000001763006388,
+          1.0000000117510617,
+          1.0000000088791612
+        ],
+        "converged_a": true,
+        "converged_b": true,
+        "degenerate": false,
+        "differences": [
+          0.01295078269053862,
+          0.003218965007583008,
+          0.0008035776888104529,
+          0.0002008218114745164
+        ],
+        "family_errors_a": [
+          1.0707552073421761e-07,
+          3.3621320225818364e-09,
+          1.0519221592800437e-10,
+          3.2883475037105585e-12
+        ],
+        "family_errors_b": [
+          0.012950746721878792,
+          0.003218964440077521,
+          0.000803577679367562,
+          0.0002008218096913872
+        ],
+        "floor": 2.220446049250313e-16,
+        "gate_order": 1.8,
+        "gate_order_passed": true,
+        "gate_pct_passed": true,
+        "gate_percent": 3.0,
+        "notes": [],
+        "order_attribution": "dominant_family_controls",
+        "order_bracket": [
+          2.0,
+          5.0
+        ],
+        "p_finest": 2.0005215379897523,
+        "p_lsq": 2.003502601093315,
+        "p_pairwise": [
+          2.0083704920317658,
+          2.002087480217149,
+          2.0005215379897523
+        ],
+        "passed": true,
+        "resolutions": [
+          8.0,
+          16.0,
+          32.0,
+          64.0
+        ],
+        "signal_levels": 10.0,
+        "used_levels": 4
+      }
+    },
+    {
+      "a": "dg_p2",
+      "b": "fd4",
+      "differences": [
+        0.00043505802308985153,
+        2.687951893365348e-05,
+        1.67519085358947e-06,
+        1.0462910926545277e-07
+      ],
+      "family_orders": [
+        3.0,
+        4.0
+      ],
+      "order_bracket": [
+        3.0,
+        4.0
+      ],
+      "percent": [
+        0.04350580230898515,
+        0.002687951893365348,
+        0.000167519085358947,
+        1.0462910926545277e-05
+      ],
+      "required_resolution_for_gate": 2.7678549413402633,
+      "triangle_ratio": [
+        1.0,
+        0.945721022861229,
+        0.8397074192809213,
+        0.6862203651909017
+      ],
+      "verdict": {
+        "cancellation_index": [
+          1.080695802749885,
+          1.0808371211495214,
+          1.0809173245846706,
+          1.0809808333921236
+        ],
+        "converged_a": true,
+        "converged_b": true,
+        "degenerate": false,
+        "differences": [
+          0.00043505802308985153,
+          2.687951893365348e-05,
+          1.67519085358947e-06,
+          1.0462910926545277e-07
+        ],
+        "family_errors_a": [
+          3.2485882083266304e-05,
+          3.5530825052961632e-06,
+          4.4518340127800756e-07,
+          5.568068727542125e-08
+        ],
+        "family_errors_b": [
+          0.0004025721410065852,
+          2.4869167062901987e-05,
+          1.5497862930757833e-06,
+          9.679090140490842e-08
+        ],
+        "floor": 2.220446049250313e-16,
+        "gate_order": 1.8,
+        "gate_order_passed": true,
+        "gate_pct_passed": true,
+        "gate_percent": 3.0,
+        "notes": [],
+        "order_attribution": "dominant_family_controls",
+        "order_bracket": [
+          3.0,
+          4.0
+        ],
+        "p_finest": 4.000969280142868,
+        "p_lsq": 4.0069233413413485,
+        "p_pairwise": [
+          4.016628600691349,
+          4.004109942727708,
+          4.000969280142868
+        ],
+        "passed": true,
+        "resolutions": [
+          8.0,
+          16.0,
+          32.0,
+          64.0
+        ],
+        "signal_levels": 10.0,
+        "used_levels": 4
+      }
+    },
+    {
+      "a": "dg_p3",
+      "b": "fd4",
+      "differences": [
+        0.00040253617234675687,
+        2.486859955741494e-05,
+        1.5497768501848697e-06,
+        9.678911827570857e-08
+      ],
+      "family_orders": [
+        5.0,
+        4.0
+      ],
+      "order_bracket": [
+        4.0,
+        5.0
+      ],
+      "percent": [
+        0.04025361723467569,
+        0.002486859955741494,
+        0.00015497768501848697,
+        9.678911827570857e-06
+      ],
+      "required_resolution_for_gate": 2.7147138191259588,
+      "triangle_ratio": [
+        0.9996447689011712,
+        0.9998420089296576,
+        0.9999260366884202,
+        0.9999476055668575
+      ],
+      "verdict": {
+        "cancellation_index": [
+          0.999910652883882,
+          0.9999771803580871,
+          0.9999939069722349,
+          0.9999815775122045
+        ],
+        "converged_a": true,
+        "converged_b": true,
+        "degenerate": false,
+        "differences": [
+          0.00040253617234675687,
+          2.486859955741494e-05,
+          1.5497768501848697e-06,
+          9.678911827570857e-08
+        ],
+        "family_errors_a": [
+          1.0707552073421761e-07,
+          3.3621320225818364e-09,
+          1.0519221592800437e-10,
+          3.2883475037105585e-12
+        ],
+        "family_errors_b": [
+          0.0004025721410065852,
+          2.4869167062901987e-05,
+          1.5497862930757833e-06,
+          9.679090140490842e-08
+        ],
+        "floor": 2.220446049250313e-16,
+        "gate_order": 1.8,
+        "gate_order_passed": true,
+        "gate_pct_passed": true,
+        "gate_percent": 3.0,
+        "notes": [],
+        "order_attribution": "dominant_family_controls",
+        "order_bracket": [
+          4.0,
+          5.0
+        ],
+        "p_finest": 4.001071830414875,
+        "p_lsq": 4.007015071881704,
+        "p_pairwise": [
+          4.016721259753592,
+          4.004192862077912,
+          4.001071830414875
+        ],
+        "passed": true,
+        "resolutions": [
+          8.0,
+          16.0,
+          32.0,
+          64.0
+        ],
+        "signal_levels": 10.0,
+        "used_levels": 4
+      }
+    }
+  ],
+  "problem": "-Delta u = 2*pi^2 sin(pi x) sin(pi y) on (0,1)^2, u=0 on boundary"
+}
