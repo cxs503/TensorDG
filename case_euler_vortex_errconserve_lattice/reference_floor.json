@@ -176,13 +176,13 @@
       "images": 2,
       "floor_relative_l2": {
         "density": 4.3058653337835243e-13,
-        "velocity_x": 1.4630368847104904e-06,
+        "velocity_x": 1.4630368847104902e-06,
         "velocity_y": 1.4630368847106242e-06,
         "pressure": 6.053692712858707e-13
       },
       "floor_percent": {
         "density": 4.305865333783524e-11,
-        "velocity_x": 0.00014630368847104905,
+        "velocity_x": 0.00014630368847104902,
         "velocity_y": 0.0001463036884710624,
         "pressure": 6.053692712858707e-11
       },
@@ -197,11 +197,11 @@
       "published_max_percent": 2.8169111512511273,
       "floor_over_published": {
         "density": 3.364711719052127e-11,
-        "velocity_x": 5.221026007621664e-05,
+        "velocity_x": 5.2210260076216636e-05,
         "velocity_y": 5.1937629770850894e-05,
         "pressure": 2.988256138548596e-11
       },
-      "worst_floor_over_error": 5.221026007621664e-05,
+      "worst_floor_over_error": 5.2210260076216636e-05,
       "worst_floor_over_error_field": "velocity_x"
     },
     {
@@ -213,15 +213,15 @@
       "cfl": 0.4,
       "images": 2,
       "floor_relative_l2": {
-        "density": 4.3186124635107166e-13,
+        "density": 4.318612463510717e-13,
         "velocity_x": 1.4640451559596905e-06,
-        "velocity_y": 1.4640451559591967e-06,
+        "velocity_y": 1.4640451559591965e-06,
         "pressure": 6.071613729316592e-13
       },
       "floor_percent": {
-        "density": 4.318612463510717e-11,
+        "density": 4.3186124635107174e-11,
         "velocity_x": 0.00014640451559596907,
-        "velocity_y": 0.00014640451559591968,
+        "velocity_y": 0.00014640451559591965,
         "pressure": 6.071613729316593e-11
       },
       "max_floor_percent": 0.00014640451559596907,
@@ -236,7 +236,7 @@
       "floor_over_published": {
         "density": 1.7052518751408905e-11,
         "velocity_x": 3.0113720173275122e-05,
-        "velocity_y": 3.0028810889016952e-05,
+        "velocity_y": 3.002881088901695e-05,
         "pressure": 1.5347319575883806e-11
       },
       "worst_floor_over_error": 3.0113720173275122e-05,
@@ -251,7 +251,7 @@
       "cfl": 0.4,
       "images": 2,
       "floor_relative_l2": {
-        "density": 4.3202889798746694e-13,
+        "density": 4.32028897987467e-13,
         "velocity_x": 1.46417847611637e-06,
         "velocity_y": 1.4641784761163761e-06,
         "pressure": 6.073970189742279e-13
@@ -290,7 +290,7 @@
       "images": 3,
       "floor_relative_l2": {
         "density": 4.3202889798730624e-13,
-        "velocity_x": 1.4641784761163852e-06,
+        "velocity_x": 1.464178476116385e-06,
         "velocity_y": 1.4641784761163761e-06,
         "pressure": 6.073970189728157e-13
       },
@@ -311,11 +311,11 @@
       "published_max_percent": 12.084610727586263,
       "floor_over_published": {
         "density": 7.968597078291128e-12,
-        "velocity_x": 1.2117111428509658e-05,
+        "velocity_x": 1.2117111428509656e-05,
         "velocity_y": 1.2116058258906167e-05,
         "pressure": 7.6882134209521e-12
       },
-      "worst_floor_over_error": 1.2117111428509658e-05,
+      "worst_floor_over_error": 1.2117111428509656e-05,
       "worst_floor_over_error_field": "velocity_x"
     },
     {
@@ -632,13 +632,13 @@
       "images": 2,
       "floor_relative_l2": {
         "density": 4.319868161681919e-13,
-        "velocity_x": 1.4641451105410646e-06,
+        "velocity_x": 1.4641451105410644e-06,
         "velocity_y": 1.464145110541155e-06,
         "pressure": 6.07337896897326e-13
       },
       "floor_percent": {
         "density": 4.319868161681919e-11,
-        "velocity_x": 0.00014641451105410646,
+        "velocity_x": 0.00014641451105410643,
         "velocity_y": 0.0001464145110541155,
         "pressure": 6.07337896897326e-11
       },
@@ -653,11 +653,11 @@
       "published_max_percent": 1.518646310926804,
       "floor_over_published": {
         "density": 6.231239104563137e-11,
-        "velocity_x": 9.73315664073241e-05,
+        "velocity_x": 9.733156640732409e-05,
         "velocity_y": 9.641119857905638e-05,
         "pressure": 5.5015033608050254e-11
       },
-      "worst_floor_over_error": 9.73315664073241e-05,
+      "worst_floor_over_error": 9.733156640732409e-05,
       "worst_floor_over_error_field": "velocity_x"
     },
     {
@@ -735,6 +735,379 @@
       },
       "worst_floor_over_error": 1.0235916671566877e-05,
       "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d1_n32_t1_cfl0.2",
+      "task": "dg",
+      "degree": 1,
+      "cells": 32,
+      "final_time": 1.0,
+      "cfl": 0.2,
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.032153105212584e-13,
+        "velocity_x": 1.437150608085935e-06,
+        "velocity_y": 1.4371506080847208e-06,
+        "pressure": 5.668879326682326e-13
+      },
+      "floor_percent": {
+        "density": 4.032153105212584e-11,
+        "velocity_x": 0.0001437150608085935,
+        "velocity_y": 0.00014371506080847207,
+        "pressure": 5.668879326682326e-11
+      },
+      "max_floor_percent": 0.0001437150608085935,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.0009272514930407138,
+        "velocity_x": 0.0020100992123961822,
+        "velocity_y": 0.0020026663199439517,
+        "pressure": 0.0013723166611430756
+      },
+      "published_max_percent": 0.20100992123961822,
+      "floor_over_published": {
+        "density": 4.3484999867619954e-10,
+        "velocity_x": 0.0007149650122855123,
+        "velocity_y": 0.0007176186036448359,
+        "pressure": 4.1308828255137667e-10
+      },
+      "worst_floor_over_error": 0.0007176186036448359,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d1_n32_t2_cfl0.2",
+      "task": "dg",
+      "degree": 1,
+      "cells": 32,
+      "final_time": 2.0,
+      "cfl": 0.2,
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.2792032180468944e-13,
+        "velocity_x": 1.4639699873719366e-06,
+        "velocity_y": 1.463969987373129e-06,
+        "pressure": 6.016204311247983e-13
+      },
+      "floor_percent": {
+        "density": 4.2792032180468946e-11,
+        "velocity_x": 0.00014639699873719367,
+        "velocity_y": 0.0001463969987373129,
+        "pressure": 6.016204311247984e-11
+      },
+      "max_floor_percent": 0.0001463969987373129,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.0009978245121394426,
+        "velocity_x": 0.0023110113716565584,
+        "velocity_y": 0.0023210234148808807,
+        "pressure": 0.0014968932037281687
+      },
+      "published_max_percent": 0.23210234148808806,
+      "floor_over_published": {
+        "density": 4.2885328692435347e-10,
+        "velocity_x": 0.0006334758908272039,
+        "velocity_y": 0.0006307433083126663,
+        "pressure": 4.019127280599577e-10
+      },
+      "worst_floor_over_error": 0.0006334758908272039,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d1_n32_t5_cfl0.2",
+      "task": "dg",
+      "degree": 1,
+      "cells": 32,
+      "final_time": 5.0,
+      "cfl": 0.2,
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.2972301501668044e-13,
+        "velocity_x": 1.4640074356904556e-06,
+        "velocity_y": 1.4640074356904397e-06,
+        "pressure": 6.041551177740907e-13
+      },
+      "floor_percent": {
+        "density": 4.2972301501668044e-11,
+        "velocity_x": 0.00014640074356904556,
+        "velocity_y": 0.00014640074356904396,
+        "pressure": 6.041551177740907e-11
+      },
+      "max_floor_percent": 0.00014640074356904556,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": null,
+      "floor_over_published": null,
+      "worst_floor_over_error": null,
+      "worst_floor_over_error_field": null
+    },
+    {
+      "task_key": "dg_d1_n32_t10_cfl0.2",
+      "task": "dg",
+      "degree": 1,
+      "cells": 32,
+      "final_time": 10.0,
+      "cfl": 0.2,
+      "images": 3,
+      "floor_relative_l2": {
+        "density": 4.2972301501668044e-13,
+        "velocity_x": 1.4640074356904554e-06,
+        "velocity_y": 1.4640074356904397e-06,
+        "pressure": 6.041551177750901e-13
+      },
+      "floor_percent": {
+        "density": 4.2972301501668044e-11,
+        "velocity_x": 0.00014640074356904554,
+        "velocity_y": 0.00014640074356904396,
+        "pressure": 6.041551177750901e-11
+      },
+      "max_floor_percent": 0.00014640074356904554,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": null,
+      "floor_over_published": null,
+      "worst_floor_over_error": null,
+      "worst_floor_over_error_field": null
+    },
+    {
+      "task_key": "dg_d3_n32_t1_cfl0.2",
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 1.0,
+      "cfl": 0.2,
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.464020127601064e-13,
+        "velocity_x": 1.476462636390404e-06,
+        "velocity_y": 1.4764626363905076e-06,
+        "pressure": 6.276043703744236e-13
+      },
+      "floor_percent": {
+        "density": 4.464020127601064e-11,
+        "velocity_x": 0.0001476462636390404,
+        "velocity_y": 0.00014764626363905075,
+        "pressure": 6.276043703744235e-11
+      },
+      "max_floor_percent": 0.00014764626363905075,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": null,
+      "floor_over_published": null,
+      "worst_floor_over_error": null,
+      "worst_floor_over_error_field": null
+    },
+    {
+      "task_key": "dg_d3_n32_t2_cfl0.2",
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 2.0,
+      "cfl": 0.2,
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.1305942312131393e-13,
+        "velocity_x": 1.4486333313469274e-06,
+        "velocity_y": 1.4486333313462996e-06,
+        "pressure": 5.807273939678406e-13
+      },
+      "floor_percent": {
+        "density": 4.130594231213139e-11,
+        "velocity_x": 0.00014486333313469275,
+        "velocity_y": 0.00014486333313462995,
+        "pressure": 5.807273939678406e-11
+      },
+      "max_floor_percent": 0.00014486333313469275,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": null,
+      "floor_over_published": null,
+      "worst_floor_over_error": null,
+      "worst_floor_over_error_field": null
+    },
+    {
+      "task_key": "dg_d3_n32_t5_cfl0.2",
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 5.0,
+      "cfl": 0.2,
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.320262048707814e-13,
+        "velocity_x": 1.4641784707028615e-06,
+        "velocity_y": 1.4641784707028518e-06,
+        "pressure": 6.073933257374986e-13
+      },
+      "floor_percent": {
+        "density": 4.320262048707814e-11,
+        "velocity_x": 0.00014641784707028615,
+        "velocity_y": 0.00014641784707028518,
+        "pressure": 6.073933257374986e-11
+      },
+      "max_floor_percent": 0.00014641784707028615,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": null,
+      "floor_over_published": null,
+      "worst_floor_over_error": null,
+      "worst_floor_over_error_field": null
+    },
+    {
+      "task_key": "dg_d3_n32_t10_cfl0.2",
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 10.0,
+      "cfl": 0.2,
+      "images": 3,
+      "floor_relative_l2": {
+        "density": 4.320262048713986e-13,
+        "velocity_x": 1.464178470702862e-06,
+        "velocity_y": 1.4641784707028522e-06,
+        "pressure": 6.07393325737348e-13
+      },
+      "floor_percent": {
+        "density": 4.320262048713986e-11,
+        "velocity_x": 0.0001464178470702862,
+        "velocity_y": 0.00014641784707028523,
+        "pressure": 6.07393325737348e-11
+      },
+      "max_floor_percent": 0.0001464178470702862,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": null,
+      "floor_over_published": null,
+      "worst_floor_over_error": null,
+      "worst_floor_over_error_field": null
+    },
+    {
+      "task_key": "dg_d1_n64_t1_cfl0.2",
+      "task": "dg",
+      "degree": 1,
+      "cells": 64,
+      "final_time": 1.0,
+      "cfl": 0.2,
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.319149047561766e-13,
+        "velocity_x": 1.4644007522094195e-06,
+        "velocity_y": 1.4644007522091135e-06,
+        "pressure": 6.072368465723692e-13
+      },
+      "floor_percent": {
+        "density": 4.319149047561766e-11,
+        "velocity_x": 0.00014644007522094196,
+        "velocity_y": 0.00014644007522091136,
+        "pressure": 6.072368465723692e-11
+      },
+      "max_floor_percent": 0.00014644007522094196,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": null,
+      "floor_over_published": null,
+      "worst_floor_over_error": null,
+      "worst_floor_over_error_field": null
+    },
+    {
+      "task_key": "dg_d1_n64_t2_cfl0.2",
+      "task": "dg",
+      "degree": 1,
+      "cells": 64,
+      "final_time": 2.0,
+      "cfl": 0.2,
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.2354943995885624e-13,
+        "velocity_x": 1.4571234593671323e-06,
+        "velocity_y": 1.4571234593669394e-06,
+        "pressure": 5.954756283372824e-13
+      },
+      "floor_percent": {
+        "density": 4.235494399588562e-11,
+        "velocity_x": 0.00014571234593671324,
+        "velocity_y": 0.00014571234593669394,
+        "pressure": 5.954756283372824e-11
+      },
+      "max_floor_percent": 0.00014571234593671324,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": null,
+      "floor_over_published": null,
+      "worst_floor_over_error": null,
+      "worst_floor_over_error_field": null
+    },
+    {
+      "task_key": "dg_d1_n64_t5_cfl0.2",
+      "task": "dg",
+      "degree": 1,
+      "cells": 64,
+      "final_time": 5.0,
+      "cfl": 0.2,
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.3196083360233145e-13,
+        "velocity_x": 1.464175335098141e-06,
+        "velocity_y": 1.4641753350981454e-06,
+        "pressure": 6.073013976352833e-13
+      },
+      "floor_percent": {
+        "density": 4.319608336023315e-11,
+        "velocity_x": 0.0001464175335098141,
+        "velocity_y": 0.00014641753350981454,
+        "pressure": 6.073013976352833e-11
+      },
+      "max_floor_percent": 0.00014641753350981454,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": null,
+      "floor_over_published": null,
+      "worst_floor_over_error": null,
+      "worst_floor_over_error_field": null
+    },
+    {
+      "task_key": "dg_d1_n64_t10_cfl0.2",
+      "task": "dg",
+      "degree": 1,
+      "cells": 64,
+      "final_time": 10.0,
+      "cfl": 0.2,
+      "images": 3,
+      "floor_relative_l2": {
+        "density": 4.3196083360233145e-13,
+        "velocity_x": 1.464175335098141e-06,
+        "velocity_y": 1.4641753350981452e-06,
+        "pressure": 6.073013976352833e-13
+      },
+      "floor_percent": {
+        "density": 4.319608336023315e-11,
+        "velocity_x": 0.0001464175335098141,
+        "velocity_y": 0.0001464175335098145,
+        "pressure": 6.073013976352833e-11
+      },
+      "max_floor_percent": 0.0001464175335098145,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": null,
+      "floor_over_published": null,
+      "worst_floor_over_error": null,
+      "worst_floor_over_error_field": null
+    },
+    {
+      "task_key": "dg_d2_n32_t20_cfl0.2",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 20.0,
+      "cfl": 0.2,
+      "images": 4,
+      "floor_relative_l2": {
+        "density": 4.319382262339756e-13,
+        "velocity_x": 1.464177155904132e-06,
+        "velocity_y": 1.4641771559041464e-06,
+        "pressure": 6.072696272291899e-13
+      },
+      "floor_percent": {
+        "density": 4.3193822623397564e-11,
+        "velocity_x": 0.0001464177155904132,
+        "velocity_y": 0.00014641771559041465,
+        "pressure": 6.072696272291899e-11
+      },
+      "max_floor_percent": 0.00014641771559041465,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": null,
+      "floor_over_published": null,
+      "worst_floor_over_error": null,
+      "worst_floor_over_error_field": null
     }
   ],
   "worst": "dg_d2_n64_t1_cfl0.2",

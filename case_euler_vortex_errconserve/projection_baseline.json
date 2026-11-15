@@ -27,10 +27,22 @@
           "amplification": 1.7173373414475839
         },
         {
+          "task_key": "dg_d2_n32_t1_cfl0.4",
+          "final_time": 1.0,
+          "error": 9.431289954286675e-05,
+          "amplification": 1.7173510434437762
+        },
+        {
           "task_key": "dg_d2_n32_t2_cfl0.2",
           "final_time": 2.0,
           "error": 9.689709783192219e-05,
           "amplification": 1.7644069143764458
+        },
+        {
+          "task_key": "dg_d2_n32_t2_cfl0.4",
+          "final_time": 2.0,
+          "error": 9.690238135314187e-05,
+          "amplification": 1.7645031224320105
         },
         {
           "task_key": "dg_d2_n32_t5_cfl0.2",
@@ -39,10 +51,22 @@
           "amplification": 2.0270093720260802
         },
         {
+          "task_key": "dg_d2_n32_t5_cfl0.4",
+          "final_time": 5.0,
+          "error": 0.00011134077908819252,
+          "amplification": 2.0274130481805597
+        },
+        {
           "task_key": "dg_d2_n32_t10_cfl0.2",
           "final_time": 10.0,
           "error": 0.00015162621307949022,
           "amplification": 2.7609737003911845
+        },
+        {
+          "task_key": "dg_d2_n32_t10_cfl0.4",
+          "final_time": 10.0,
+          "error": 0.00015169321142605364,
+          "amplification": 2.7621936785801426
         }
       ]
     },
