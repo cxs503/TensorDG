@@ -110,3 +110,93 @@ def test_embedded_wall_moves_the_shock_back():
     assert behind_wall_shock.max().item() > wr.post[0], (
         "no compression between the reflected front and the wall")
     assert abs(meta["conservation_residual_total"]["mass"]["relative"]) < 1e-12
+
+# ---------------------------------------------------------------------------
+# (m22062) 1. the conserved-quantity ledger must be *evaluable* on both arms
+# ---------------------------------------------------------------------------
+def test_conservation_ledger_is_finite_exactly_when_no_obstacle_is_present():
+    """``conservation_residual_total`` is the strongest identity the solver reports
+    (``change == boundary_flux + obstacle_impulse``), and both arms must be able to
+    evaluate it.
+
+    Regression for the defect recorded in
+    ``docs/CASE-REPRO-DG-CKS1998-G3-EMBEDDED-WALL-ATTRIBUTION.md`` §5.3: the
+    identity was gated on ``solid_balance is not None``, so the *obstacle-free*
+    arm returned ``nan`` for every component -- and ``abs(nan) < tol`` is
+    ``False``, i.e. a conservation gate silently degraded to "cannot be judged"
+    on exactly the arm that needs no obstacle bookkeeping at all.  A ``nan``
+    residual is now a failure in its own right, not a non-answer.
+    """
+    import math
+
+    _, meta_bnd = _run("boundary")
+    _, meta_sol = _run("solid")
+
+    # no obstacle on the boundary arm -> the impulse term is exactly zero, not nan
+    assert meta_bnd["conservation_residual_total"]["mass"]["has_obstacle"] is False
+    assert meta_bnd["obstacle_impulse"]["mass"] == 0.0
+    assert meta_sol["conservation_residual_total"]["mass"]["has_obstacle"] is True
+
+    for arm, meta in (("boundary", meta_bnd), ("solid", meta_sol)):
+        for name in ("mass", "x_momentum", "y_momentum", "energy"):
+            entry = meta["conservation_residual_total"][name]
+            for key in ("change", "boundary_flux", "obstacle_impulse", "residual", "relative"):
+                assert math.isfinite(entry[key]), (arm, name, key, entry[key])
+            assert abs(entry["relative"]) < 1e-12, (arm, name, entry["relative"])
+
+
+# ---------------------------------------------------------------------------
+# (m22062) 2. the *y*-direction embedded wall (axis = 1) is the same invariant
+# ---------------------------------------------------------------------------
+# ``_solid_interface`` has an ``axis=1`` branch that no earlier case exercised:
+# every embedded-wall experiment so far (G3, the forward-facing step) put the
+# obstacle behind a *x*-face, which only reaches the ``axis=0`` branch.  The
+# step's vertical face ``x = 0.6, y in [0, 0.2]`` is therefore still unproven
+# (recorded as limitation 5 of the attribution doc).  Rotating the G3 experiment
+# by 90 degrees exercises it with the same invariant, so no second analytic
+# reference is introduced: the two arms must still agree to round-off.
+def _run_y(wall_mode, degree=1, ny_solid=NX_SOLID):
+    wr = _reference()
+    ny = NX_FLUID if wall_mode == "boundary" else NX_FLUID + ny_solid
+    ymax = ny * DX
+    solid = None
+    if wall_mode == "solid":
+        solid = torch.zeros(1, ny, dtype=torch.bool)
+        solid[:, NX_FLUID:] = True
+    pre_rho, pre_u, pre_p = wr.pre
+    post_rho, post_u, post_p = wr.post
+
+    def initial(x, y):
+        # the same two-shock Riemann problem, propagated along +y instead of +x
+        ahead = y < wr.x_zero
+        return (
+            torch.where(ahead, torch.full_like(x, pre_rho), torch.full_like(x, post_rho)),
+            torch.zeros_like(x),
+            torch.where(ahead, torch.full_like(x, pre_u), torch.full_like(x, post_u)),
+            torch.where(ahead, torch.full_like(x, pre_p), torch.full_like(x, post_p)),
+        )
+
+    x, y, coeff, meta = solve_euler_dg_2d(
+        initial, ncells=(1, ny), degree=degree, final_time=FINAL_TIME,
+        cfl=0.12, domain=((0.0, YMAX), (0.0, ymax)), periodic=(False, False),
+        limiter=None, solid=solid, track_boundary_flux=True,
+        bcs={"left": "wall", "right": "wall", "bottom": "outflow", "top": "wall"},
+    )
+    return coeff[:, :NX_FLUID], meta
+
+
+def test_embedded_wall_in_the_y_direction_matches_the_boundary_wall():
+    """The ``axis = 1`` solid-interface branch reproduces the domain-wall path."""
+    coeff_bnd, meta_bnd = _run_y("boundary")
+    coeff_sol, meta_sol = _run_y("solid")
+    scale = coeff_bnd.abs().max().item()
+    delta = (coeff_bnd - coeff_sol).abs().max().item()
+    assert delta <= 1e-9 * scale, (
+        f"y-direction embedded wall differs from the boundary wall by {delta / scale:.3e}")
+    assert meta_sol["steps"] == meta_bnd["steps"]
+    # the reflected plateau exists in the y-direction too
+    wr = _reference()
+    rho = coeff_sol[0, ..., 0, 0, 0]
+    assert rho.max().item() > wr.post[0]
+    for name in ("mass", "energy"):
+        assert abs(meta_sol["conservation_residual_total"][name]["relative"]) < 1e-12

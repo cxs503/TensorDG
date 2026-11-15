@@ -1204,9 +1204,18 @@ def solve_euler_dg_2d(
 
     obstacle_impulse = {}
     conservation_residual_total = {}
-    if solid_balance is not None and totals_initial is not None:
+    # The obstacle-impulse term is *identically zero* on a run with no solid
+    # cells: no interior face can push the fluid.  The pre-m22062 code assumed
+    # "solid_balance is None" meant "not tracked" and reported ``nan`` for the
+    # whole identity, so on the obstacle-free arm ``abs(nan) < tol`` was silently
+    # False and a conservation gate could not be evaluated at all (found by
+    # docs/CASE-REPRO-DG-CKS1998-G3-EMBEDDED-WALL-ATTRIBUTION.md §5.3).  The
+    # identity ``change == boundary_flux + obstacle_impulse`` is now evaluated
+    # whenever the boundary ledger is tracked, with the impulse exactly 0.
+    _has_obstacle = solid_mask is not None
+    if totals_initial is not None:
         for i, name in enumerate(_cons_names):
-            impulse = float(solid_balance[i].item())
+            impulse = 0.0 if solid_balance is None else float(solid_balance[i].item())
             change = float(totals_final[i].item()) - float(totals_initial[i].item())
             through_boundary = float(boundary_balance[i].item())
             scale = max(abs(float(totals_initial[i].item())), abs(through_boundary),
@@ -1218,6 +1227,7 @@ def solve_euler_dg_2d(
                 "obstacle_impulse": impulse,
                 "residual": change - through_boundary - impulse,
                 "relative": abs(change - through_boundary - impulse) / scale,
+                "has_obstacle": _has_obstacle,
             }
     else:
         for name in _cons_names:
@@ -1226,6 +1236,7 @@ def solve_euler_dg_2d(
                 "change": float("nan"), "boundary_flux": float("nan"),
                 "obstacle_impulse": float("nan"), "residual": float("nan"),
                 "relative": float("nan"),
+                "has_obstacle": _has_obstacle,
             }
 
     # Flux-balance identity for *non-periodic* domains: the change of a domain
