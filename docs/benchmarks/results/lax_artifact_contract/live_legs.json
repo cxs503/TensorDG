@@ -1,0 +1,362 @@
+[
+ {
+  "leg": "p3.N200",
+  "cells": 200,
+  "degree": 3,
+  "rows": [
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.012147420335832907,
+    "rerun": 0.01214747011549904,
+    "relative_difference": 4.09794514075143e-06,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.016989783003049697,
+    "rerun": 0.016989928406710906,
+    "relative_difference": 8.558226834622702e-06,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.00956416384571963,
+    "rerun": 0.009564283253848274,
+    "relative_difference": 1.2484796348487144e-05,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "density",
+    "committed": 0.04199979591491615,
+    "rerun": 0.04199979595460771,
+    "relative_difference": 9.45041794478951e-10,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "velocity",
+    "committed": 0.03390223437837867,
+    "rerun": 0.03390223394303045,
+    "relative_difference": 1.284128408441749e-08,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "pressure",
+    "committed": 0.016554124820957365,
+    "rerun": 0.0165541255077031,
+    "relative_difference": 4.148486951769473e-08,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool",
+    "metric": "steps",
+    "field": null,
+    "committed": 2547,
+    "rerun": 2547,
+    "relative_difference": 0.0,
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.012147420335832907,
+    "rerun": 0.01214747011549904,
+    "relative_difference": 4.09794514075143e-06,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.00956416384571963,
+    "rerun": 0.009564283253848274,
+    "relative_difference": 1.2484796348487144e-05,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.016989783003049697,
+    "rerun": 0.016989928406710906,
+    "relative_difference": 8.558226834622702e-06,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "steps",
+    "field": null,
+    "committed": 2547,
+    "rerun": 2547,
+    "relative_difference": 0.0,
+    "status": "PASS"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.012147420335832907,
+    "rerun": 0.01214747011549904,
+    "relative_difference": 4.09794514075143e-06,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.016989783003049697,
+    "rerun": 0.016989928406710906,
+    "relative_difference": 8.558226834622702e-06,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.00956416384571963,
+    "rerun": 0.009564283253848274,
+    "relative_difference": 1.2484796348487144e-05,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p3.N200",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "steps",
+    "field": null,
+    "committed": 2547,
+    "rerun": 2547,
+    "relative_difference": 0.0,
+    "status": "PASS"
+   }
+  ],
+  "wall_seconds": 41.98738431930542,
+  "verdict": "FAIL",
+  "worst_relative_difference": 1.2484796348487144e-05
+ },
+ {
+  "leg": "p2.N400",
+  "cells": 400,
+  "degree": 2,
+  "rows": [
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.004528163036034107,
+    "rerun": 0.004528163040625704,
+    "relative_difference": 1.0140087772112065e-09,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.0016631083834395502,
+    "rerun": 0.0016631083827524469,
+    "relative_difference": 4.131440715680275e-10,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.0010984650647367018,
+    "rerun": 0.001098465075950289,
+    "relative_difference": 1.020841499275159e-08,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "density",
+    "committed": 0.03525871011266807,
+    "rerun": 0.03525871011269383,
+    "relative_difference": 7.307162679196239e-13,
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "velocity",
+    "committed": 0.015763822704698702,
+    "rerun": 0.015763822704175624,
+    "relative_difference": 3.31821867324908e-11,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "whole_field_L2",
+    "field": "pressure",
+    "committed": 0.008575576839958242,
+    "rerun": 0.008575576840706735,
+    "relative_difference": 8.728197474612793e-11,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool",
+    "metric": "steps",
+    "field": null,
+    "committed": 3662,
+    "rerun": 3662,
+    "relative_difference": 0.0,
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.004528163036034107,
+    "rerun": 0.004528163040625704,
+    "relative_difference": 1.0140087772112065e-09,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.0010984650647367018,
+    "rerun": 0.001098465075950289,
+    "relative_difference": 1.020841499275159e-08,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.0016631083834395502,
+    "rerun": 0.0016631083827524469,
+    "relative_difference": 4.131440715680275e-10,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_asymptotic_probe",
+    "metric": "steps",
+    "field": null,
+    "committed": 3662,
+    "rerun": 3662,
+    "relative_difference": 0.0,
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_certified_configuration",
+    "metric": "whole_field_L2",
+    "field": "density",
+    "committed": 0.03525871011266807,
+    "rerun": 0.03525871011269383,
+    "relative_difference": 7.307162679196239e-13,
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_certified_configuration",
+    "metric": "whole_field_L2",
+    "field": "velocity",
+    "committed": 0.015763822704698702,
+    "rerun": 0.015763822704175624,
+    "relative_difference": 3.31821867324908e-11,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_certified_configuration",
+    "metric": "whole_field_L2",
+    "field": "pressure",
+    "committed": 0.008575576839958242,
+    "rerun": 0.008575576840706735,
+    "relative_difference": 8.728197474612793e-11,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_certified_configuration",
+    "metric": "steps",
+    "field": null,
+    "committed": 3662,
+    "rerun": 3662,
+    "relative_difference": 0.0,
+    "status": "PASS"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "density",
+    "committed": 0.004528163036034107,
+    "rerun": 0.004528163040625704,
+    "relative_difference": 1.0140087772112065e-09,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "velocity",
+    "committed": 0.0016631083834395502,
+    "rerun": 0.0016631083827524469,
+    "relative_difference": 4.131440715680275e-10,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "whole_field_L1",
+    "field": "pressure",
+    "committed": 0.0010984650647367018,
+    "rerun": 0.001098465075950289,
+    "relative_difference": 1.020841499275159e-08,
+    "status": "FAIL"
+   },
+   {
+    "leg": "p2.N400",
+    "publisher": "lax_case_pool_limiter_arms",
+    "metric": "steps",
+    "field": null,
+    "committed": 3662,
+    "rerun": 3662,
+    "relative_difference": 0.0,
+    "status": "PASS"
+   }
+  ],
+  "wall_seconds": 62.804043769836426,
+  "verdict": "FAIL",
+  "worst_relative_difference": 1.020841499275159e-08
+ }
+]
