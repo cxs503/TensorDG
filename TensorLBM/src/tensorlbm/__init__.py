@@ -1,22 +1,44 @@
-"""TensorLBM — PyTorch-based Lattice Boltzmann solver with mass-exchange selector.
+"""TensorLBM — PyTorch-based Lattice Boltzmann solver.
 
-Implements the mass-exchange-selector approach from Maarten-vd-Sande/lbm:
-a unified interface for selecting among mass-conserving exchange schemes
-(BGK, MRT, entropic) with verified conservation properties.
+Modules:
+    - D2Q9 lattice definition
+    - BGK, MRT, TRT collision operators
+    - Periodic streaming
+    - Mass-exchange selector (unified collision interface)
+    - MCMP (Multi-Component Multi-Phase) solver with Shan-Chen cross-force
+    - Cross-force operator with symbolic verification and spectral analysis
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
-from .mass_exchange_selector import MassExchangeSelector, Scheme
+from .lattice import D2Q9
 from .collision import bgk_collision, mrt_collision
 from .streaming import stream_periodic
-from .lattice import D2Q9
+from .mass_exchange_selector import MassExchangeSelector, Scheme
+from .cross_force import (
+    CrossForceOperator,
+    pseudopotential_rho,
+    pseudopotential_shan_chen,
+    pseudopotential_carnahan_starling,
+    symbolic_cross_force_verification,
+    spectral_analysis_cross_force,
+)
+from .mcmp import MCMPSolver, setup_laplace_test, measure_laplace_pressure
 
 __all__ = [
-    "MassExchangeSelector",
-    "Scheme",
+    "D2Q9",
     "bgk_collision",
     "mrt_collision",
     "stream_periodic",
-    "D2Q9",
+    "MassExchangeSelector",
+    "Scheme",
+    "CrossForceOperator",
+    "pseudopotential_rho",
+    "pseudopotential_shan_chen",
+    "pseudopotential_carnahan_starling",
+    "symbolic_cross_force_verification",
+    "spectral_analysis_cross_force",
+    "MCMPSolver",
+    "setup_laplace_test",
+    "measure_laplace_pressure",
 ]
