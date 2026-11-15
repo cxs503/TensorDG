@@ -1,0 +1,690 @@
+"""Curvilinear (isoparametric) DG for the two-dimensional Euler equations.
+
+Why this module exists
+----------------------
+Everything else in ``tensordg`` that solves the Euler system lives on a
+*uniform Cartesian* mesh: ``euler_dg_2d._rhs`` differentiates directly in
+``x``/``y`` with constant ``dx``/``dy``, so the Jacobian is constant, the
+metric terms are trivial and geometry can never limit the accuracy.
+``curved_geometry.py`` supplies the isoparametric geometry layer, the metric
+identities and a strong-form DG operator -- but only for a *scalar* advection
+equation (``CurvedAdvection``).
+
+The Cockburn & Shu benchmark set this repository tracks
+(``REPRO-DG-CKS1998``, JCP 141 (1998) 199--224, Part V) is precisely the
+*multidimensional systems* paper: the method is formulated on general meshes,
+and the flagship applications depend on curved geometry.  A curvilinear system
+solver is therefore the capability the reproduction was missing; this module
+adds it together with the verification that makes it trustworthy.
+
+What is implemented
+-------------------
+Strong-form modal DG, tensor-product Legendre basis of degree ``p``, on the
+isoparametric quadrilateral elements of ``curved_geometry.CurvedMesh``::
+
+    dU/dt = -(1/J) [ dF*_1/dxi + dF*_2/deta ] + (1/J) * oint phi [F*_hat - F*]
+
+with the *contravariant* fluxes
+
+    F*_1 = J xi_x F_x + J xi_y F_y =  y_eta F_x - x_eta F_y
+    F*_2 = J eta_x F_x + J eta_y F_y = -y_xi F_x + x_xi F_y
+
+so the volume integral ``int phi (1/J) dF*/dxi * J dxi deta`` needs no ``1/J``
+factor, and the interface flux is the HLLC (Toro) three-wave solver evaluated
+in the **physical face-normal direction** ``n = J grad(xi)`` and then scaled by
+the face Jacobian ``|n|``.
+
+Metric consistency (Kopriva & Batta, JCP 270 (2014) 550)
+-------------------------------------------------------
+The flux samples are differentiated with an operator that is *exact for
+polynomials* (interpolate the ``nq`` Gauss samples onto degree ``nq-1``, then
+differentiate in Legendre coefficient space) with ``nq >= p + g + 2``
+(``g`` = geometry degree).  Then
+
+* the discrete metric identity ``d/dxi (J xi_x) + d/deta (J eta_x) = 0`` holds
+  to round-off -- mixed partials of a polynomial commute *exactly*, and
+* a constant state is preserved by the semi-discrete operator to round-off,
+  i.e. free-stream preservation (FSP).
+
+Both are *gated* in ``benchmarks/euler_curved_verification.py`` and in
+``tests/test_euler_curved.py``.  The ``volume_derivative_degree`` constructor
+argument deliberately installs the *naive* alternative (differentiate with the
+solution's own degree-``p`` basis, i.e. under-integrate the aliasing product);
+it is the negative control, and the same gate must then fail by many orders of
+magnitude -- otherwise the gate is vacuous.
+
+Verification status (``benchmarks/euler_curved_verification.py``)
+-----------------------------------------------------------------
+G1  FSP: constant state on a doubly periodic warped mesh, ``p = 1, 2, 3`` ->
+    ``sup |dU/dt|`` and 200-step drift at round-off.
+G1n negative control (aliased volume derivative) -> defect O(1e-3).
+G2  accuracy: smooth isentropic vortex on the warped mesh, design order
+    ``p+1`` (paper tolerance ``p+1/2``) at ``p = 1, 2``.
+G3  general-mesh equivalence: the same vortex on the warped and on the straight
+    (affine) mesh at identical element counts -- the warped/straight error
+    ratio stays O(1), i.e. curvature does not cost accuracy.
+G4  conservation: total mass/momentum/energy drift on the warped periodic mesh
+    at round-off (conservative DG + consistent metrics telescope).
+
+Not implemented (honest scope): reflective/characteristic curved walls (the
+``CurvedMesh.walls`` flags are ignored -- only periodic edges are supported),
+shock limiters on curved elements, and triangular mappings.  Do not read this
+module as evidence for those.
+
+References
+----------
+* B. Cockburn, C.-W. Shu, JCP 141 (1998) 199--224 (RKDG V, multidimensional
+  systems); SIAM Rev. 43 (2001) 89--112.
+* D. A. Kopriva, G. J. Gassner, JCP 270 (2014) 550--565 (metric identities and
+  free-stream preservation).
+* E. F. Toro, *Riemann Solvers and Numerical Methods for Fluid Dynamics*,
+  Springer 2009, ch. 10 (HLLC).
+* J. S. Hesthaven, T. Warburton, *Nodal DG Methods*, Springer 2008, ch. 6.
+"""
+from __future__ import annotations
+
+import numpy as np
+
+from .curved_geometry import (
+    CurvedMesh,
+    IsoparametricMap,
+    gauss_nodes_weights,
+    gll_nodes_weights,
+    legendre_derivative_matrix,
+    legendre_eval_matrix,
+)
+
+GAMMA = 1.4
+
+__all__ = [
+    "GAMMA",
+    "CurvilinearEuler",
+    "conserved_from_primitive",
+    "primitive_from_conserved",
+    "euler_flux",
+    "hllc_normal",
+    "warped_box_mesh",
+    "straight_box_mesh",
+]
+
+
+# ---------------------------------------------------------------------------
+# Thermodynamics and fluxes
+# ---------------------------------------------------------------------------
+def primitive_from_conserved(state: np.ndarray, gamma: float = GAMMA):
+    """``(rho, u, v, p)`` from conservative ``(rho, rho u, rho v, E)``."""
+    rho = np.maximum(state[..., 0], 1e-12)
+    velocity_x = state[..., 1] / rho
+    velocity_y = state[..., 2] / rho
+    pressure = (gamma - 1.0) * (
+        state[..., 3] - 0.5 * rho * (velocity_x ** 2 + velocity_y ** 2)
+    )
+    return rho, velocity_x, velocity_y, pressure
+
+
+def conserved_from_primitive(rho, velocity_x, velocity_y, pressure,
+                             gamma: float = GAMMA) -> np.ndarray:
+    """Conservative vector ``(rho, rho u, rho v, E)`` stacked on the last axis."""
+    energy = pressure / (gamma - 1.0) + 0.5 * rho * (
+        velocity_x ** 2 + velocity_y ** 2
+    )
+    return np.stack([rho, rho * velocity_x, rho * velocity_y, energy], axis=-1)
+
+
+def euler_flux(state: np.ndarray, gamma: float = GAMMA):
+    """Physical fluxes ``(F_x, F_y)`` of the 2-D Euler equations."""
+    rho, velocity_x, velocity_y, pressure = primitive_from_conserved(state, gamma)
+    energy = state[..., 3]
+    flux_x = np.stack(
+        [
+            state[..., 1],
+            state[..., 1] * velocity_x + pressure,
+            state[..., 1] * velocity_y,
+            velocity_x * (energy + pressure),
+        ],
+        axis=-1,
+    )
+    flux_y = np.stack(
+        [
+            state[..., 2],
+            state[..., 2] * velocity_x,
+            state[..., 2] * velocity_y + pressure,
+            velocity_y * (energy + pressure),
+        ],
+        axis=-1,
+    )
+    return flux_x, flux_y
+
+
+def hllc_normal(left: np.ndarray, right: np.ndarray, normal_x, normal_y,
+                gamma: float = GAMMA) -> np.ndarray:
+    """HLLC flux ``F_hat . n`` for an arbitrary **unit** normal ``(nx, ny)``.
+
+    ``normal_x``/``normal_y`` broadcast against ``left[..., 0]``.  The result is
+    the physical flux dotted with the unit normal, i.e. a flux per unit face
+    length.  Degenerate (acoustically coincident) data falls back to Rusanov,
+    exactly like ``euler_dg_2d._hllc``.
+    """
+    normal_x = np.asarray(normal_x, dtype=float)
+    normal_y = np.asarray(normal_y, dtype=float)
+    rho_l = np.maximum(left[..., 0], 1e-12)
+    rho_r = np.maximum(right[..., 0], 1e-12)
+    vel_lx, vel_ly = left[..., 1] / rho_l, left[..., 2] / rho_l
+    vel_rx, vel_ry = right[..., 1] / rho_r, right[..., 2] / rho_r
+    pres_l = np.maximum(
+        (gamma - 1.0) * (left[..., 3] - 0.5 * rho_l * (vel_lx ** 2 + vel_ly ** 2)),
+        1e-12,
+    )
+    pres_r = np.maximum(
+        (gamma - 1.0) * (right[..., 3] - 0.5 * rho_r * (vel_rx ** 2 + vel_ry ** 2)),
+        1e-12,
+    )
+    sound_l = np.sqrt(gamma * pres_l / rho_l)
+    sound_r = np.sqrt(gamma * pres_r / rho_r)
+    un_l = vel_lx * normal_x + vel_ly * normal_y
+    un_r = vel_rx * normal_x + vel_ry * normal_y
+    speed_l = np.minimum(un_l - sound_l, un_r - sound_r)
+    speed_r = np.maximum(un_l + sound_l, un_r + sound_r)
+    denominator = rho_l * (speed_l - un_l) - rho_r * (speed_r - un_r)
+    safe = np.where(np.abs(denominator) < 1e-30, 1e-30, denominator)
+    speed_m = (
+        pres_r - pres_l
+        + rho_l * un_l * (speed_l - un_l)
+        - rho_r * un_r * (speed_r - un_r)
+    ) / safe
+
+    flux_lx, flux_ly = euler_flux(left, gamma)
+    flux_rx, flux_ry = euler_flux(right, gamma)
+    flux_l = flux_lx * normal_x[..., None] + flux_ly * normal_y[..., None]
+    flux_r = flux_rx * normal_x[..., None] + flux_ry * normal_y[..., None]
+
+    def star(state, rho, un, pres, speed, tangential):
+        gap = speed - un
+        gap = np.where(
+            np.abs(gap) < 1e-14, np.where(gap < 0.0, -1e-14, 1e-14), gap
+        )
+        rho_star = rho * (speed - un) / (speed - speed_m)
+        energy_star = rho_star * (
+            state[..., 3] / rho
+            + (speed_m - un) * (speed_m + pres / (rho * gap))
+        )
+        momentum_normal = rho_star * speed_m
+        momentum_tangential = rho_star * tangential
+        return np.stack(
+            [
+                rho_star,
+                momentum_normal * normal_x - momentum_tangential * normal_y,
+                momentum_normal * normal_y + momentum_tangential * normal_x,
+                energy_star,
+            ],
+            axis=-1,
+        )
+
+    star_l = star(
+        left, rho_l, un_l, pres_l, speed_l, -vel_lx * normal_y + vel_ly * normal_x
+    )
+    star_r = star(
+        right, rho_r, un_r, pres_r, speed_r, -vel_rx * normal_y + vel_ry * normal_x
+    )
+    star_flux_l = flux_l + speed_l[..., None] * (star_l - left)
+    star_flux_r = flux_r + speed_r[..., None] * (star_r - right)
+
+    flux = np.where((speed_l >= 0.0)[..., None], flux_l, star_flux_l)
+    flux = np.where((speed_m < 0.0)[..., None], star_flux_r, flux)
+    flux = np.where((speed_r <= 0.0)[..., None], flux_r, flux)
+
+    alpha = np.maximum(np.abs(un_l) + sound_l, np.abs(un_r) + sound_r)
+    rusanov = 0.5 * (flux_l + flux_r) - 0.5 * alpha[..., None] * (right - left)
+    degenerate = np.abs(speed_r - speed_l) < 1e-13
+    return np.where(degenerate[..., None], rusanov, flux)
+
+
+# ---------------------------------------------------------------------------
+# Mesh builders on a scaled periodic box (the isentropic-vortex domain)
+# ---------------------------------------------------------------------------
+def warped_box_mesh(nx: int, ny: int, degree: int, length: float = 10.0,
+                    amplitude: float = 0.06) -> CurvedMesh:
+    """Smooth doubly periodic warp of the square ``[0, length]^2``.
+
+    ``x = L (s + A sin 2 pi s cos 2 pi t)``, ``y = L (t + A sin 2 pi t cos 2 pi s)``
+    with ``s = i/nx``, ``t = j/ny``.  ``A = 0`` reproduces the Cartesian mesh;
+    ``degree >= 2`` makes every element genuinely curved.
+    """
+    degree = max(int(degree), 1)
+    if degree == 1 and float(amplitude) != 0.0:
+        # a bilinear map cannot represent the sinusoid: the warp would be a
+        # piecewise-linear kink mesh, not a smooth curved geometry
+        raise ValueError("a warped box needs geometry degree >= 2")
+    nodes, _ = gll_nodes_weights(degree)
+    maps = []
+    for i in range(nx):
+        row = []
+        for j in range(ny):
+            s = (i + 0.5 * (nodes + 1.0)) / nx
+            t = (j + 0.5 * (nodes + 1.0)) / ny
+            S, T = np.meshgrid(s, t, indexing="ij")
+            X = length * (
+                S + amplitude * np.sin(2 * np.pi * S) * np.cos(2 * np.pi * T)
+            )
+            Y = length * (
+                T + amplitude * np.sin(2 * np.pi * T) * np.cos(2 * np.pi * S)
+            )
+            row.append(IsoparametricMap.from_nodal(X, Y))
+        maps.append(row)
+    return CurvedMesh(maps, periodic=(True, True))
+
+
+def straight_box_mesh(nx: int, ny: int, degree: int = 1,
+                      length: float = 10.0) -> CurvedMesh:
+    """Straight (exactly affine) periodic box -- the geometry control."""
+    gdeg = max(int(degree), 1)
+    maps = []
+    for i in range(nx):
+        row = []
+        for j in range(ny):
+            row.append(
+                IsoparametricMap.affine(
+                    length * i / nx, length * (i + 1) / nx,
+                    length * j / ny, length * (j + 1) / ny, gdeg,
+                )
+            )
+        maps.append(row)
+    return CurvedMesh(maps, periodic=(True, True))
+
+
+# ---------------------------------------------------------------------------
+# The solver
+# ---------------------------------------------------------------------------
+class CurvilinearEuler:
+    """Strong-form modal DG for the 2-D Euler equations on ``CurvedMesh``.
+
+    Parameters
+    ----------
+    mesh : CurvedMesh
+        Periodic quadrilateral mesh (see ``warped_box_mesh``).
+    degree : int
+        Polynomial degree ``p`` of the solution.
+    cfl : float
+        CFL number used by :meth:`stable_dt`.
+    nquad : int, optional
+        Gauss points per direction; default ``max(2p+2, p+g+2)``.
+    volume_derivative_degree : int, optional
+        **Negative control only.**  Differentiate the volume flux as a
+        polynomial of this degree instead of ``nq-1``.  ``p`` reproduces the
+        naive implementation whose aliasing breaks free-stream preservation;
+        leave it ``None`` for the correct scheme.
+    """
+
+    def __init__(self, mesh: CurvedMesh, degree: int, cfl: float = 0.3,
+                 gamma: float = GAMMA, nquad: int | None = None,
+                 volume_derivative_degree: int | None = None):
+        self.mesh = mesh
+        self.p = int(degree)
+        if self.p < 0:
+            raise ValueError("degree must be >= 0")
+        self.K = self.p + 1
+        self.gamma = float(gamma)
+        self.cfl = float(cfl)
+        self.volume_degree = volume_derivative_degree
+        g = mesh.degree
+        nq = int(nquad) if nquad is not None else max(2 * self.p + 2, self.p + g + 2)
+        if nq < self.p + 1:
+            raise ValueError("nquad must be at least degree+1")
+        self.nq = nq
+        self.xi, self.w = gauss_nodes_weights(nq)
+        self.basis = legendre_eval_matrix(self.p, self.xi)
+        self.signs = (-1.0) ** np.arange(self.K)
+        self._build_geometry()
+        self._build_face_geometry()
+        self._build_mass_matrix()
+
+    # -- geometry -----------------------------------------------------------
+    def _build_geometry(self):
+        coef_x, coef_y = self.mesh.coefficients()
+        g = self.mesh.degree
+        deriv = legendre_derivative_matrix(g)
+        values = legendre_eval_matrix(g, self.xi)
+        d_values = values @ deriv
+
+        def sample(coef):
+            val = np.einsum("qk,nkl,rl->nqr", values, coef, values)
+            d_xi = np.einsum("qk,nkl,rl->nqr", d_values, coef, values)
+            d_eta = np.einsum("qk,nkl,rl->nqr", values, coef, d_values)
+            return val, d_xi, d_eta
+
+        self.xg, self.x_xi, self.x_eta = sample(coef_x)
+        self.yg, self.y_xi, self.y_eta = sample(coef_y)
+        self.J = self.x_xi * self.y_eta - self.x_eta * self.y_xi
+        if np.any(self.J <= 0.0):
+            raise ValueError(
+                "element with non-positive Jacobian "
+                f"(min J = {float(np.min(self.J)):.3e}); mesh is inverted"
+            )
+        # J grad(xi) = (y_eta, -x_eta),  J grad(eta) = (-y_xi, x_xi)
+        self.metric_xi = np.stack([self.y_eta, -self.x_eta], axis=-1)
+        self.metric_eta = np.stack([-self.y_xi, self.x_xi], axis=-1)
+
+    def _build_face_geometry(self):
+        """Physical normal and face Jacobian on the four edge families."""
+        coef_x, coef_y = self.mesh.coefficients()
+        deriv = legendre_derivative_matrix(self.mesh.degree)
+        values = legendre_eval_matrix(self.mesh.degree, self.xi)
+        d_values = values @ deriv
+        self.face = {}
+        for axis in (0, 1):
+            for side in (-1, 1):
+                fixed = np.array([float(side)])
+                if axis == 0:
+                    l_x = legendre_eval_matrix(self.mesh.degree, fixed)
+                    ld_x = l_x @ deriv
+                    l_y, ld_y = values, d_values
+                    drop = 1
+                else:
+                    l_x, ld_x = values, d_values
+                    l_y = legendre_eval_matrix(self.mesh.degree, fixed)
+                    ld_y = l_y @ deriv
+                    drop = 2
+
+                def sample(coef):
+                    val = np.einsum("qk,nkl,rl->nqr", l_x, coef, l_y)
+                    d_xi = np.einsum("qk,nkl,rl->nqr", ld_x, coef, l_y)
+                    d_eta = np.einsum("qk,nkl,rl->nqr", l_x, coef, ld_y)
+                    return (
+                        np.squeeze(val, axis=drop),
+                        np.squeeze(d_xi, axis=drop),
+                        np.squeeze(d_eta, axis=drop),
+                    )
+
+                x_face, x_xi, x_eta = sample(coef_x)
+                y_face, y_xi, y_eta = sample(coef_y)
+                if axis == 0:
+                    normal = np.stack([y_eta, -x_eta], axis=-1)
+                else:
+                    normal = np.stack([-y_xi, x_xi], axis=-1)
+                magnitude = np.hypot(normal[..., 0], normal[..., 1])
+                if np.any(magnitude <= 0.0):
+                    raise ValueError("degenerate face Jacobian")
+                self.face[(axis, side)] = {
+                    "x": x_face,
+                    "y": y_face,
+                    "metric": normal,
+                    "magnitude": magnitude,
+                    "unit_x": normal[..., 0] / magnitude,
+                    "unit_y": normal[..., 1] / magnitude,
+                }
+
+    def _build_mass_matrix(self):
+        k, nq = self.K, self.nq
+        tensor = np.einsum("q,qk,qi->qki", self.w, self.basis, self.basis)
+        mass = np.einsum("nqr,qka,rlb->nklab", self.J, tensor, tensor)
+        mass = mass.reshape(self.mesh.ncells, k * k, k * k)
+        mass = 0.5 * (mass + np.transpose(mass, (0, 2, 1)))
+        self.mass_inverse = np.linalg.inv(mass)
+        ref = np.array([2.0 / (2 * i + 1) for i in range(k)])
+        self.mass_ref_diag = np.outer(ref, ref)
+
+    # -- polynomial-exact differentiation -----------------------------------
+    def differentiate(self, field: np.ndarray, axis: int) -> np.ndarray:
+        """``d/dxi`` (axis 0) or ``d/deta`` (axis 1) at the Gauss nodes.
+
+        ``field`` is sampled at the ``nq`` Gauss nodes of both directions; any
+        trailing axes (the four Euler components) are carried along.  With the
+        default settings the operator is exact for polynomials of degree
+        ``nq-1`` -- which is what makes the metric identity discrete and the
+        free-stream state preserved.  ``volume_derivative_degree`` installs the
+        deliberately aliasing (degree ``p``, least-squares projected) operator
+        of the negative control.
+        """
+        degree = self.nq - 1 if self.volume_degree is None else int(self.volume_degree)
+        shape = field.shape
+        flat = field.reshape(shape[0], shape[1], shape[2], -1)
+        if axis == 0:
+            out = self._diff_first(flat, degree)
+        elif axis == 1:
+            swapped = np.transpose(flat, (0, 2, 1, 3))
+            out = np.transpose(self._diff_first(swapped, degree), (0, 2, 1, 3))
+        else:
+            raise ValueError("axis must be 0 or 1")
+        return out.reshape(shape)
+
+    def _diff_first(self, field: np.ndarray, degree: int) -> np.ndarray:
+        """Differentiate along the second axis of ``field`` (``n, q, r, comp``)."""
+        basis = legendre_eval_matrix(degree, self.xi)
+        # exact inverse for degree == nq-1, least squares (aliasing) otherwise
+        projector = np.linalg.inv(basis) if basis.shape[0] == basis.shape[1] \
+            else np.linalg.pinv(basis)
+        deriv = legendre_derivative_matrix(degree)
+        coef = np.einsum("sk,nkrc->nsrc", projector, field)
+        d_coef = np.einsum("ts,nsrc->ntrc", deriv, coef)
+        return np.einsum("rt,ntrc->nqrc".replace("q", "r", 1) if False else "rt,ntrc->nqrc",
+                         basis, d_coef) if False else np.einsum(
+            "st,ntrc->nsrc", basis, d_coef)
+
+    def apply_mass_inverse(self, values: np.ndarray) -> np.ndarray:
+        """Apply ``M^{-1}`` per cell to the ``(..., K*K, components)`` modes."""
+        n = self.mesh.ncells
+        components = values.shape[-1]
+        flat = values.reshape(n, self.K * self.K, components)
+        return np.einsum("nab,nbc->nac", self.mass_inverse, flat).reshape(values.shape)
+
+    # -- traces -------------------------------------------------------------
+    def traces(self, state: np.ndarray):
+        """Interior traces ``(lo_xi, hi_xi, lo_eta, hi_eta)``."""
+        basis, signs = self.basis, self.signs
+        lo_xi = np.einsum("k,nklc,rl->nrc", signs, state, basis)
+        hi_xi = np.einsum("nklc,rl->nrc", state, basis)
+        lo_eta = np.einsum("l,nklc,qk->nqc", signs, state, basis)
+        hi_eta = np.einsum("nklc,qk->nqc", state, basis)
+        return lo_xi, hi_xi, lo_eta, hi_eta
+
+    def _face_states(self, traces, axis: int, side: int):
+        """Interior trace and neighbour trace on one edge family (periodic)."""
+        inside = {(0, -1): traces[0], (0, 1): traces[1],
+                  (1, -1): traces[2], (1, 1): traces[3]}
+        outside_src = {(0, -1): traces[1], (0, 1): traces[0],
+                       (1, -1): traces[3], (1, 1): traces[2]}
+        neighbour = self.mesh.neighbours[(axis, side)]
+        inner = inside[(axis, side)]
+        outer = outside_src[(axis, side)]
+        result = np.array(inner, copy=True)
+        valid = neighbour >= 0
+        if np.any(valid):
+            result[valid] = outer[neighbour[valid]]
+        # an unreachable (wall) edge falls back to an outflow copy of the trace
+        return inner, result
+
+    # -- spatial operator ---------------------------------------------------
+    def rhs(self, state: np.ndarray) -> np.ndarray:
+        """Semi-discrete residual ``dU/dt`` of the strong-form curvilinear DG."""
+        basis, weights = self.basis, self.w
+        sampled = np.einsum("qk,nklc,rl->nqrc", basis, state, basis)
+        flux_x, flux_y = euler_flux(sampled, self.gamma)
+        contravariant_xi = (
+            self.metric_xi[..., 0, None] * flux_x
+            + self.metric_xi[..., 1, None] * flux_y
+        )
+        contravariant_eta = (
+            self.metric_eta[..., 0, None] * flux_x
+            + self.metric_eta[..., 1, None] * flux_y
+        )
+        divergence = (
+            self.differentiate(contravariant_xi, 0)
+            + self.differentiate(contravariant_eta, 1)
+        )
+        volume = np.einsum(
+            "qk,rl,nqrc,q,r->nklc", basis, basis, divergence, weights, weights
+        )
+
+        traces = self.traces(state)
+        face = np.zeros_like(state)
+        for axis in (0, 1):
+            for side in (-1, 1):
+                geometry = self.face[(axis, side)]
+                inner, outer = self._face_states(traces, axis, side)
+                # The face metrics are the *reference* +xi / +eta normals at both
+                # ends of the element, so HLLC must see the traces in that
+                # orientation: on a low face the neighbour is the "left" state.
+                if side > 0:
+                    left, right = inner, outer
+                else:
+                    left, right = outer, inner
+                numerical = geometry["magnitude"][..., None] * hllc_normal(
+                    left, right, geometry["unit_x"], geometry["unit_y"], self.gamma
+                )
+                flux_x_in, flux_y_in = euler_flux(inner, self.gamma)
+                physical = (
+                    geometry["metric"][..., 0, None] * flux_x_in
+                    + geometry["metric"][..., 1, None] * flux_y_in
+                )
+                correction = numerical - physical
+                edge_basis = np.ones(self.K) if side > 0 else self.signs
+                if axis == 0:
+                    face += np.einsum(
+                        "k,rl,nrc,r->nklc", edge_basis, basis, correction, weights
+                    )
+                else:
+                    face += np.einsum(
+                        "l,qk,nqc,q->nklc", edge_basis, basis, correction, weights
+                    )
+        # Strong form, reference-space (not outward) face orientation.  The
+        # sign of the face correction is fixed by the integration-by-parts
+        # identity ``int phi_x F = oint phi F - int phi F_x``:
+        #   dU/dt = M^{-1} [ -int phi div F* - oint phi (F*_hat - F*_int) ]
+        # With this sign the cell averages telescope to the conservative
+        # finite-volume update ``-(F*_hat_hi - F*_hat_lo)`` -- verified by the
+        # conservation gate and by the p=0 upwind limit.
+        return self.apply_mass_inverse(-volume - face)
+
+    # -- initial data, errors, time stepping --------------------------------
+    def project(self, primitive) -> np.ndarray:
+        """L2 projection of ``primitive(x, y) -> (rho, u, v, p)`` onto the mesh."""
+        rho, velocity_x, velocity_y, pressure = primitive(self.xg, self.yg)
+        state = conserved_from_primitive(
+            np.broadcast_to(rho, self.xg.shape),
+            np.broadcast_to(velocity_x, self.xg.shape),
+            np.broadcast_to(velocity_y, self.xg.shape),
+            np.broadcast_to(pressure, self.xg.shape),
+            self.gamma,
+        )
+        weight = (self.J * self.w[None, :, None] * self.w[None, None, :])[..., None]
+        rhs = np.einsum("qk,rl,nqrc->nklc", self.basis, self.basis, state * weight)
+        return self.apply_mass_inverse(rhs)
+
+    def relative_errors(self, state: np.ndarray, primitive) -> dict:
+        """Relative L2 errors of ``rho, u, v, p`` against the exact ``primitive``."""
+        sampled = np.einsum("qk,nklc,rl->nqrc", self.basis, state, self.basis)
+        rho, u, v, p = primitive_from_conserved(sampled, self.gamma)
+        rho_e, u_e, v_e, p_e = primitive(self.xg, self.yg)
+        weight = self.J * self.w[None, :, None] * self.w[None, None, :]
+        out = {}
+        for name, got, exact in (
+            ("rho", rho, rho_e), ("u", u, u_e), ("v", v, v_e), ("p", p, p_e)
+        ):
+            num = np.sqrt(np.sum(weight * (got - exact) ** 2))
+            den = np.sqrt(np.sum(weight * exact ** 2))
+            out[name] = float(num / den) if den > 0.0 else float(num)
+        out["worst"] = max(out["rho"], out["u"], out["v"], out["p"])
+        return out
+
+    def totals(self, state: np.ndarray) -> np.ndarray:
+        """Conserved integrals ``int U dV`` (4-vector) over the whole mesh."""
+        sampled = np.einsum("qk,nklc,rl->nqrc", self.basis, state, self.basis)
+        weight = self.J * self.w[None, :, None] * self.w[None, None, :]
+        return np.einsum("nqr,nqrc->c", weight, sampled)
+
+    def max_wave_speed(self, state: np.ndarray) -> float:
+        sampled = np.einsum("qk,nklc,rl->nqrc", self.basis, state, self.basis)
+        rho, u, v, p = primitive_from_conserved(sampled, self.gamma)
+        sound = np.sqrt(self.gamma * np.maximum(p, 0.0) / np.maximum(rho, 1e-12))
+        return float(np.max(np.hypot(u, v) + sound))
+
+    def stable_dt(self, state: np.ndarray | None = None,
+                  cfl: float | None = None) -> float:
+        """Reference-space CFL limit ``dt = cfl/(2p+1) * min J / (a (|grad xi|+|grad eta|))``.
+
+        ``a`` is the local speed ``|u| + c`` (a global bound taken when ``state``
+        is ``None``), and ``|grad xi| = sqrt(x_eta^2 + y_eta^2)/J`` on a
+        conforming quadrilateral.
+        """
+        cfl = self.cfl if cfl is None else float(cfl)
+        speed = 3.0 if state is None else self.max_wave_speed(state)
+        grad_xi = np.hypot(self.x_eta, self.y_eta) / self.J
+        grad_eta = np.hypot(self.x_xi, self.y_xi) / self.J
+        rate = float(np.max(speed * (grad_xi + grad_eta)))
+        if not np.isfinite(rate) or rate <= 0.0:
+            return np.inf
+        return cfl / (2 * self.p + 1) / rate
+
+    def ssp_rk3_step(self, state: np.ndarray, dt: float) -> np.ndarray:
+        k1 = self.rhs(state)
+        u1 = state + dt * k1
+        k2 = self.rhs(u1)
+        u2 = 0.75 * state + 0.25 * (u1 + dt * k2)
+        k3 = self.rhs(u2)
+        return state / 3.0 + (2.0 / 3.0) * (u2 + dt * k3)
+
+    def evolve(self, state: np.ndarray, final_time: float, dt: float | None = None,
+               max_steps: int = 200_000, guard: float | None = None):
+        """SSP-RK3 to ``final_time``; returns ``(state, dt, steps)``."""
+        dt = self.stable_dt(state) if dt is None else float(dt)
+        nsteps = max(1, int(np.ceil(final_time / dt)))
+        if nsteps > max_steps:
+            raise RuntimeError(f"time step too small: {nsteps} steps")
+        dt = final_time / nsteps
+        limit = 1e4 * (1.0 + float(np.max(np.abs(state)))) if guard is None else guard
+        for _ in range(nsteps):
+            state = self.ssp_rk3_step(state, dt)
+            if not np.all(np.isfinite(state)) or float(np.max(np.abs(state))) > limit:
+                raise RuntimeError(
+                    f"curvilinear Euler solve went unstable (max|U| > {limit:g})"
+                )
+        return state, dt, nsteps
+
+    # -- diagnostics --------------------------------------------------------
+    def metric_identity_defect(self) -> float:
+        """``sup |d/dxi (J xi_x) + d/deta (J eta_x)|`` for a unit free stream.
+
+        This is the *geometric* half of free-stream preservation: it uses only
+        the metric fluxes (a constant unit velocity) and the same polynomial
+        differentiation operator as the flux divergence.
+        """
+        ones = np.ones(self.J.shape)
+        metric_xi = self.metric_xi[..., 0] * ones
+        metric_eta = self.metric_eta[..., 0] * ones
+        defect = self.differentiate(metric_xi, 0) + self.differentiate(metric_eta, 1)
+        return float(np.max(np.abs(defect)))
+
+    def free_stream_defect(self, primitive=(1.0, 0.3, -0.2, 1.0),
+                           steps: int = 200) -> dict:
+        """Free-stream preservation on the *current* mesh.
+
+        ``operator``  : ``sup |dU/dt|`` of the assembled DG operator on the exact
+                        modal representation of a constant state;
+        ``metric``    : :meth:`metric_identity_defect`;
+        ``drift``     : ``sup |U - U0|`` in modal coefficients after ``steps``
+                        SSP-RK3 steps (``steps = 0`` skips the march -- used for
+                        the aliased negative control, which diverges);
+        ``relative``  : ``operator`` normalised by ``sup |U0|``.
+        """
+        state = self.project(lambda x, y: primitive)
+        constant = np.zeros_like(state)
+        constant[:, 0, 0, :] = state[:, 0, 0, :]
+        operator = self.rhs(constant)
+        dt = self.stable_dt(constant)
+        evolved = constant.copy()
+        stable = True
+        for _ in range(int(steps)):  # steps == 0: operator-only diagnostic
+            evolved = self.ssp_rk3_step(evolved, dt)
+            if not np.all(np.isfinite(evolved)):
+                # round-off perturbations are amplified by this limiter-free
+                # scheme (documented limitation); report, do not crash
+                stable = False
+                break
+        return {
+            "operator": float(np.max(np.abs(operator))),
+            "relative": float(np.max(np.abs(operator)) / np.max(np.abs(constant))),
+            "metric": self.metric_identity_defect(),
+            "drift": float(np.max(np.abs(evolved - constant))) if stable else float("inf"),
+            "dt": float(dt),
+            "steps": int(steps),
+        }
