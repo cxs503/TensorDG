@@ -1,0 +1,569 @@
+{
+  "L0_successive_differences": {
+    "criterion": "successive differences strictly decrease over the four levels",
+    "monotone": true,
+    "pass": true,
+    "rows": [
+      {
+        "levels": [
+          800,
+          1600
+        ],
+        "rel_l1": 0.0023083911384330436,
+        "rel_l1_percent": 0.23083911384330436
+      },
+      {
+        "levels": [
+          1600,
+          3200
+        ],
+        "rel_l1": 0.0009489332553025006,
+        "rel_l1_percent": 0.09489332553025007
+      },
+      {
+        "levels": [
+          3200,
+          6400
+        ],
+        "rel_l1": 0.0004197620469091096,
+        "rel_l1_percent": 0.041976204690910957
+      }
+    ]
+  },
+  "L1_extension_certified": {
+    "band_percent": 0.04162173159427086,
+    "band_share_of_gate": 0.008324346318854172,
+    "classification": "monotonic",
+    "criterion": "the extended ladder is CERTIFIED by the unchanged engine call",
+    "pass": true,
+    "reference_ncells": 3200,
+    "verdict": "CERTIFIED"
+  },
+  "L2_order_consistency": {
+    "criterion": "|p4-p3|/p3 <= 0.2",
+    "p_four_levels": 1.1767348864087728,
+    "p_three_levels": 1.2825091761164593,
+    "pass": true,
+    "relative_change": 0.0824744896001287,
+    "threshold": 0.2
+  },
+  "L3_band_covers_shift": {
+    "band_fraction_U3": 0.0008279718833081827,
+    "band_percent_U3": 0.08279718833081827,
+    "coverage_ratio": 0.7172555493847452,
+    "criterion": "rel L1(cert_3level, cert_4level) <= U3",
+    "grid": 1600,
+    "pass": true,
+    "shift_percent": 0.05938674280373328,
+    "shift_rel_l1": 0.0005938674280373328
+  },
+  "L4_claim_stable": {
+    "all_legs_pass_strict": true,
+    "criterion": "every leg < 3.0 % against the 4-level reference; no leg moves by more than 0.5 pp",
+    "legs_against_four_level": [
+      {
+        "cfl": 0.4,
+        "configuration": "DG P1 N=200 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 1,
+        "ncells": 200,
+        "pass_strict": true,
+        "rel_l1_percent": 2.448435747293259,
+        "rel_l2_percent": 5.2477912581577355
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P1 N=400 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 1,
+        "ncells": 400,
+        "pass_strict": true,
+        "rel_l1_percent": 1.5454910731182592,
+        "rel_l2_percent": 3.6405312730892065
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P1 N=800 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 1,
+        "ncells": 800,
+        "pass_strict": true,
+        "rel_l1_percent": 0.580253569169223,
+        "rel_l2_percent": 1.4904772174539724
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P2 N=200 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 2,
+        "ncells": 200,
+        "pass_strict": true,
+        "rel_l1_percent": 2.4130979574908964,
+        "rel_l2_percent": 5.218572351113111
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P2 N=400 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 2,
+        "ncells": 400,
+        "pass_strict": true,
+        "rel_l1_percent": 1.5137710561353854,
+        "rel_l2_percent": 3.5925801005271034
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P2 N=800 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 2,
+        "ncells": 800,
+        "pass_strict": true,
+        "rel_l1_percent": 0.5642338520068497,
+        "rel_l2_percent": 1.4500733016686573
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P3 N=200 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 3,
+        "ncells": 200,
+        "pass_strict": true,
+        "rel_l1_percent": 2.419341113003779,
+        "rel_l2_percent": 5.237438134296621
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P3 N=400 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 3,
+        "ncells": 400,
+        "pass_strict": true,
+        "rel_l1_percent": 1.520547428157471,
+        "rel_l2_percent": 3.5886896395244476
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P3 N=800 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 3,
+        "ncells": 800,
+        "pass_strict": true,
+        "rel_l1_percent": 0.6647450421181312,
+        "rel_l2_percent": 1.4582736946390233
+      },
+      {
+        "cfl": 0.1,
+        "configuration": "DG P2 N=400 CFL=0.1",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 2,
+        "ncells": 400,
+        "pass_strict": true,
+        "rel_l1_percent": 1.5171656768803217,
+        "rel_l2_percent": 3.597467527508342
+      },
+      {
+        "cfl": 0.2,
+        "configuration": "DG P2 N=400 CFL=0.2",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 2,
+        "ncells": 400,
+        "pass_strict": true,
+        "rel_l1_percent": 1.5156332600080202,
+        "rel_l2_percent": 3.59453333896632
+      }
+    ],
+    "legs_against_three_level": [
+      {
+        "cfl": 0.4,
+        "configuration": "DG P1 N=200 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 1,
+        "ncells": 200,
+        "pass_strict": true,
+        "rel_l1_percent": 2.455700790452218,
+        "rel_l2_percent": 5.26258797573505
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P1 N=400 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 1,
+        "ncells": 400,
+        "pass_strict": true,
+        "rel_l1_percent": 1.5479276855264736,
+        "rel_l2_percent": 3.6567205443012436
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P1 N=800 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 1,
+        "ncells": 800,
+        "pass_strict": true,
+        "rel_l1_percent": 0.5786426564376876,
+        "rel_l2_percent": 1.5171076720234342
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P2 N=200 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 2,
+        "ncells": 200,
+        "pass_strict": true,
+        "rel_l1_percent": 2.4203035576168808,
+        "rel_l2_percent": 5.232714790131884
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P2 N=400 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 2,
+        "ncells": 400,
+        "pass_strict": true,
+        "rel_l1_percent": 1.5160255033385162,
+        "rel_l2_percent": 3.6097968933967426
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P2 N=800 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 2,
+        "ncells": 800,
+        "pass_strict": true,
+        "rel_l1_percent": 0.5667191536375117,
+        "rel_l2_percent": 1.481059726190646
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P3 N=200 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 3,
+        "ncells": 200,
+        "pass_strict": true,
+        "rel_l1_percent": 2.426617313273359,
+        "rel_l2_percent": 5.252309346223882
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P3 N=400 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 3,
+        "ncells": 400,
+        "pass_strict": true,
+        "rel_l1_percent": 1.5220332833304568,
+        "rel_l2_percent": 3.606569471427054
+      },
+      {
+        "cfl": 0.4,
+        "configuration": "DG P3 N=800 CFL=0.4",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 3,
+        "ncells": 800,
+        "pass_strict": true,
+        "rel_l1_percent": 0.6698665541799362,
+        "rel_l2_percent": 1.4907988075831342
+      },
+      {
+        "cfl": 0.1,
+        "configuration": "DG P2 N=400 CFL=0.1",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 2,
+        "ncells": 400,
+        "pass_strict": true,
+        "rel_l1_percent": 1.5197126973719546,
+        "rel_l2_percent": 3.614589263334306
+      },
+      {
+        "cfl": 0.2,
+        "configuration": "DG P2 N=400 CFL=0.2",
+        "decision_3pct": "PASS",
+        "decision_5pct": "PASS",
+        "degree": 2,
+        "ncells": 400,
+        "pass_strict": true,
+        "rel_l1_percent": 1.5180917212484835,
+        "rel_l2_percent": 3.6115380300506894
+      }
+    ],
+    "max_abs_move_pp": 0.007276200269580091,
+    "moves": [
+      {
+        "configuration": "DG P1 N=200 CFL=0.4",
+        "delta_pp": -0.007265043158958928,
+        "pass_strict_4level": true,
+        "rel_l1_percent_3level": 2.455700790452218,
+        "rel_l1_percent_4level": 2.448435747293259
+      },
+      {
+        "configuration": "DG P1 N=400 CFL=0.4",
+        "delta_pp": -0.002436612408214467,
+        "pass_strict_4level": true,
+        "rel_l1_percent_3level": 1.5479276855264736,
+        "rel_l1_percent_4level": 1.5454910731182592
+      },
+      {
+        "configuration": "DG P1 N=800 CFL=0.4",
+        "delta_pp": 0.0016109127315353522,
+        "pass_strict_4level": true,
+        "rel_l1_percent_3level": 0.5786426564376876,
+        "rel_l1_percent_4level": 0.580253569169223
+      },
+      {
+        "configuration": "DG P2 N=200 CFL=0.4",
+        "delta_pp": -0.007205600125984368,
+        "pass_strict_4level": true,
+        "rel_l1_percent_3level": 2.4203035576168808,
+        "rel_l1_percent_4level": 2.4130979574908964
+      },
+      {
+        "configuration": "DG P2 N=400 CFL=0.4",
+        "delta_pp": -0.0022544472031307272,
+        "pass_strict_4level": true,
+        "rel_l1_percent_3level": 1.5160255033385162,
+        "rel_l1_percent_4level": 1.5137710561353854
+      },
+      {
+        "configuration": "DG P2 N=800 CFL=0.4",
+        "delta_pp": -0.0024853016306619624,
+        "pass_strict_4level": true,
+        "rel_l1_percent_3level": 0.5667191536375117,
+        "rel_l1_percent_4level": 0.5642338520068497
+      },
+      {
+        "configuration": "DG P3 N=200 CFL=0.4",
+        "delta_pp": -0.007276200269580091,
+        "pass_strict_4level": true,
+        "rel_l1_percent_3level": 2.426617313273359,
+        "rel_l1_percent_4level": 2.419341113003779
+      },
+      {
+        "configuration": "DG P3 N=400 CFL=0.4",
+        "delta_pp": -0.0014858551729859393,
+        "pass_strict_4level": true,
+        "rel_l1_percent_3level": 1.5220332833304568,
+        "rel_l1_percent_4level": 1.520547428157471
+      },
+      {
+        "configuration": "DG P3 N=800 CFL=0.4",
+        "delta_pp": -0.005121512061805,
+        "pass_strict_4level": true,
+        "rel_l1_percent_3level": 0.6698665541799362,
+        "rel_l1_percent_4level": 0.6647450421181312
+      },
+      {
+        "configuration": "DG P2 N=400 CFL=0.1",
+        "delta_pp": -0.002547020491632912,
+        "pass_strict_4level": true,
+        "rel_l1_percent_3level": 1.5197126973719546,
+        "rel_l1_percent_4level": 1.5171656768803217
+      },
+      {
+        "configuration": "DG P2 N=400 CFL=0.2",
+        "delta_pp": -0.0024584612404632278,
+        "pass_strict_4level": true,
+        "rel_l1_percent_3level": 1.5180917212484835,
+        "rel_l1_percent_4level": 1.5156332600080202
+      }
+    ],
+    "pass": true,
+    "worst_leg_4level": "DG P1 N=200 CFL=0.4",
+    "worst_rel_l1_percent_4level": 2.448435747293259
+  },
+  "accepted": true,
+  "benchmark": {
+    "benchmark_id": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+    "version": "3.0.0"
+  },
+  "case": "Shu-Osher 1988 shock/entropy interaction (1D Euler, gamma=1.4, x in [-5,5], t=1.8, Sod-style Hugoniot left state, transmissive ends)",
+  "certification_four_levels": {
+    "band_fraction": 0.00041621731594270855,
+    "band_percent": 0.04162173159427086,
+    "band_share_of_gate": 0.008324346318854172,
+    "classification": "monotonic",
+    "differences": [
+      {
+        "levels": [
+          800,
+          1600
+        ],
+        "refinement": 2,
+        "rel_l1": 0.0023083911384330436,
+        "rel_l1_percent": 0.23083911384330436
+      },
+      {
+        "levels": [
+          1600,
+          3200
+        ],
+        "refinement": 2,
+        "rel_l1": 0.0009489332553025006,
+        "rel_l1_percent": 0.09489332553025007
+      },
+      {
+        "levels": [
+          3200,
+          6400
+        ],
+        "refinement": 2,
+        "rel_l1": 0.0004197620469091096,
+        "rel_l1_percent": 0.041976204690910957
+      }
+    ],
+    "displacement_ratio": 1.0000000000000002,
+    "extrapolation_displacement_expected_percent": 0.09153095606262511,
+    "extrapolation_displacement_percent": 0.09153095606262514,
+    "fs_gci": 1.25,
+    "gate_usable": true,
+    "input_sha256": "253a856c432ca4d03221fee3a3469fb0d0340e7a17c95fb55727593b1dc78463",
+    "ladder": [
+      800,
+      1600,
+      3200,
+      6400
+    ],
+    "min_resolvable_error_percent": 0.04162173159427086,
+    "observed_order_used": 1.1767348864087728,
+    "orders": [
+      {
+        "levels": [
+          800,
+          1600,
+          3200
+        ],
+        "observed_order": 1.2825091761164593,
+        "refinement": 2.0
+      },
+      {
+        "levels": [
+          1600,
+          3200,
+          6400
+        ],
+        "observed_order": 1.1767348864087728,
+        "refinement": 2.0
+      }
+    ],
+    "p_max": 6.0,
+    "p_min": 0.5,
+    "reasons": [],
+    "reference_grid_size": 3200,
+    "reference_ncells": 3200,
+    "refinement_fine": 2.0,
+    "tolerance_percent": 5.0,
+    "u_share_max": 0.3333333333333333,
+    "verdict": "CERTIFIED"
+  },
+  "certification_three_levels": {
+    "band_fraction": 0.0008279718833081827,
+    "band_percent": 0.08279718833081827,
+    "band_share_of_gate": 0.016559437666163655,
+    "classification": "monotonic",
+    "differences": [
+      {
+        "levels": [
+          800,
+          1600
+        ],
+        "refinement": 2,
+        "rel_l1": 0.0023083911384330436,
+        "rel_l1_percent": 0.23083911384330436
+      },
+      {
+        "levels": [
+          1600,
+          3200
+        ],
+        "refinement": 2,
+        "rel_l1": 0.0009489332553025006,
+        "rel_l1_percent": 0.09489332553025007
+      }
+    ],
+    "displacement_ratio": 1.0000000000000007,
+    "extrapolation_displacement_expected_percent": 0.1714578113205768,
+    "extrapolation_displacement_percent": 0.1714578113205769,
+    "fs_gci": 1.25,
+    "gate_usable": true,
+    "input_sha256": "5ebc556fccd66a90c5831caa7ef5bafa9256e1c3d2f620d95f07c714f3916c10",
+    "ladder": [
+      800,
+      1600,
+      3200
+    ],
+    "min_resolvable_error_percent": 0.08279718833081827,
+    "observed_order_used": 1.2825091761164593,
+    "orders": [
+      {
+        "levels": [
+          800,
+          1600,
+          3200
+        ],
+        "observed_order": 1.2825091761164593,
+        "refinement": 2.0
+      }
+    ],
+    "p_max": 6.0,
+    "p_min": 0.5,
+    "reasons": [],
+    "reference_grid_size": 1600,
+    "reference_ncells": 1600,
+    "refinement_fine": 2.0,
+    "tolerance_percent": 5.0,
+    "u_share_max": 0.3333333333333333,
+    "verdict": "CERTIFIED"
+  },
+  "decisions": {
+    "L0": true,
+    "L1": true,
+    "L2": true,
+    "L3": true,
+    "L4": true
+  },
+  "ladder": {
+    "four_levels": [
+      800,
+      1600,
+      3200,
+      6400
+    ],
+    "refinement": 2,
+    "scheme": "FV-WENO5-JS/HLLC(Davis)/SSP-RK3, CFL=0.3",
+    "three_levels": [
+      800,
+      1600,
+      3200
+    ]
+  },
+  "rawdir": "validation/repro_shu_osher/artifacts/raw",
+  "thresholds": {
+    "gate_percent": 5.0,
+    "leg_stability_max_pp": 0.5,
+    "order_consistency_max": 0.2,
+    "strict_percent": 3.0
+  },
+  "workload": {
+    "version": "1",
+    "workload_id": "xval-dg-round2-ladder-extension"
+  }
+}
