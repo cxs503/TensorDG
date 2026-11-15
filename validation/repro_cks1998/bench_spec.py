@@ -29,9 +29,36 @@ ref-vs-got 判据写成平台契约文档，使数字由**平台侧从集群作�
   观测阶与守恒积分。这一组把"多维系统"（论文标题里的 multidimensions）也纳入机器判定。
 
 因此这些度量都不是"自己比自己"：观测阶 vs 理论阶；DG 数值解 vs 精确解。
-``A2``（限幅方波 L1 阶 ≥1/2）与 ``E3``（超调 ≤1 %）是**不等式**判据，不是 ref-vs-got，
-硬编码成 ``|got-ref|/|ref|`` 会伪造度量（例如把 got=0 % 与 ref=1 % 相减得 100 % 误差），
-故不进入本规格，继续留在仓内门 ``tests/test_repro_cks1998.py`` + 报告表中。
+
+不等式判据的**单侧 hinge 编码**（本模块 m22274 起）
+---------------------------------------------------
+``A2``（限幅方波 L1 收敛阶 ≥ 1/2）与 ``E3``（超调 ≤ 1 %）是论文的**不等式**判据，不是
+ref-vs-got。直接写成 ``ref = 界`` 的双侧相对误差会伪造度量：超调 0 % 对 1 % 的界算成
+100 % 误差（比超调 1.4 % 的 1.389 号结果"更差"），把越过界的很好结果也判红。
+
+故改用**保序 hinge**：把不等式压缩成一个**有界、单调、只朝通过方向饱和**的比值，再交给
+平台的双侧 ``|got-ref|/|ref| <= tol`` 规则：
+
+* 下界（``x >= b``，A2）：``got = min(x, b) / b``，``ref = 1``；
+  ``x >= b`` ⇒ ``got == 1`` 逐位（``min`` 与 ``/b`` 都是 IEEE 精确）⇒ 误差 0 ⇒ PASS；
+  ``x < b`` ⇒ ``got < 1`` ⇒ 误差 ``(b-x)/b`` ⇒ 只有 ``x` 越过界才会红。
+* 上界（``x <= b``，E3）：``got = max(x, b) / b``，``ref = 1``；对称成立。
+
+**等价性**（``tests/test_cks1998_inequality_hinge.py`` 逐点验证）：对任意 ``x``，
+hinge 编码的 PASS/FAIL 与原始不等式判据**完全相同**；"比要求更好"不再被双侧规则反判。
+
+**可审计性**（防"自带裁判"）：hinge 由 workload 在打印前施加，故同一份 stdout 文档里
+必须同时留下
+
+1. ``validation.hinge.<metric> = {raw, bound, kind, hinge}``（原始测量值与界的绑定），
+2. ``rows`` 里的原始网格梯次（A2 的 L1 误差、E3 的三种限幅器峰值），
+
+第三方可从 ``rows`` **重算**原始量与观测阶，并核对 ``hinge == clamp(raw)``——回归门
+``test_hinge_matches_raw_and_rows_recompute_the_order`` 就做这件事。hinge 只朝通过方向
+饱和，不可能把 FAIL 洗成 PASS（变换单调且饱和值恰在界上）。
+
+* ``tolerance_rel`` 取 ``1e-9``（**不是**放宽判据）：hinge 比值在界上逐位等于 1，理论误差
+  为 0；该 1e-9 只吸收 JSON 往返可能带来的 1 ulp 抖动，比观测阶的有效数字低 6 个量级。
 """
 from __future__ import annotations
 
@@ -49,6 +76,10 @@ RESULT_SCHEMA_VERSION = "1.0.0"
 ANCHOR = ("Cockburn, B. & Shu, C.-W., The Runge-Kutta discontinuous Galerkin method "
           "for conservation laws V: multidimensional systems, JCP 141 (1998) 199-224 "
           "/ SIAM Review 43(1) (2001)")
+
+#: hinge 编码的浮点护栏（**不是**判据放宽）：见模块 docstring 末段。定义在 METRICS 之前
+#: 因为度量表在 import 时求值。
+HINGE_TOL = 1e-9
 
 #: 平台侧复算的度量表。容差在**任何结果被看到之前**写定（见 git 首次提交时间）。
 METRICS: List[Dict[str, Any]] = [
@@ -98,13 +129,70 @@ METRICS: List[Dict[str, Any]] = [
     {"name": "sm2d_energy_integral", "got_pointer": "metrics.sm2d_energy_integral.value",
      "ref_pointer": "reference.sm2d_energy_integral", "tolerance_rel": 1e-3, "unit": "-",
      "ref_source": "exact conservation: E = 2.5 + rho with u=v=1 => 2.5*4 + 4 = 14"},
+    # --- A2/E3 不等式判据的 hinge 编码（见模块 docstring 的「单侧 hinge 编码」） ----
+    {"name": "a2_l1_order_p1", "got_pointer": "metrics.a2_l1_order_p1.value",
+     "ref_pointer": "reference.a2_l1_order_p1", "tolerance_rel": HINGE_TOL, "unit": "-",
+     "ref_source": "hinge lower bound b=1/2 on the L1 order of the limited square wave "
+                   "(A2, CKS1998 §3.2/§4): got=min(order,1/2)/(1/2), ref=1 => PASS iff order>=1/2"},
+    {"name": "a2_l1_order_p2", "got_pointer": "metrics.a2_l1_order_p2.value",
+     "ref_pointer": "reference.a2_l1_order_p2", "tolerance_rel": HINGE_TOL, "unit": "-",
+     "ref_source": "hinge lower bound b=1/2 on the L1 order, P2 (A2): same encoding"},
+    {"name": "a2_l1_order_p3", "got_pointer": "metrics.a2_l1_order_p3.value",
+     "ref_pointer": "reference.a2_l1_order_p3", "tolerance_rel": HINGE_TOL, "unit": "-",
+     "ref_source": "hinge lower bound b=1/2 on the L1 order, P3 (A2): same encoding"},
+    {"name": "e3_overshoot_p1", "got_pointer": "metrics.e3_overshoot_p1.value",
+     "ref_pointer": "reference.e3_overshoot_p1", "tolerance_rel": HINGE_TOL, "unit": "%",
+     "ref_source": "hinge upper bound b=1 % on the pointwise overshoot of the strict "
+                   "troubled-cell policy (E3 TVD, CKS1998 §3.2): got=max(over,1)/1, ref=1 "
+                   "=> PASS iff overshoot<=1 %"},
+    {"name": "e3_overshoot_p2", "got_pointer": "metrics.e3_overshoot_p2.value",
+     "ref_pointer": "reference.e3_overshoot_p2", "tolerance_rel": HINGE_TOL, "unit": "%",
+     "ref_source": "hinge upper bound b=1 % on the pointwise overshoot, P2 (E3): same encoding"},
 ]
 
-#: 未进入平台规格的判据（不等式），报告里必须显式说明理由（见模块 docstring）
-NOT_ENCODED = {
-    "A2_discontinuous_l1_order": "不等式判据（L1 阶 >= 1/2），无零附近可比的 ref 值",
-    "E3_tvb_no_new_extrema": "不等式判据（超调 <= 1 %），ref=1 % 与 got=0 % 的差商无意义",
-}
+#: 不等式判据 → 单侧 hinge 的登记表（唯一真源；workload 与测试都从这里取）。
+#: ``kind='lower'``：PASS 当且仅当 ``raw >= bound``；``kind='upper'``：``raw <= bound``。
+HINGE_RULES: List[Dict[str, Any]] = [
+    {"metric": "a2_l1_order_p1", "raw": "a2_l1_order_p1_raw", "kind": "lower",
+     "bound": 0.5, "unit": "-",
+     "criterion": "A2 limited square wave: L1 order >= 1/2 (CKS1998 half-order floor)"},
+    {"metric": "a2_l1_order_p2", "raw": "a2_l1_order_p2_raw", "kind": "lower",
+     "bound": 0.5, "unit": "-", "criterion": "A2 L1 order >= 1/2, P2"},
+    {"metric": "a2_l1_order_p3", "raw": "a2_l1_order_p3_raw", "kind": "lower",
+     "bound": 0.5, "unit": "-", "criterion": "A2 L1 order >= 1/2, P3"},
+    {"metric": "e3_overshoot_p1", "raw": "e3_overshoot_p1_raw", "kind": "upper",
+     "bound": 1.0, "unit": "%", "criterion": "E3 TVD: pointwise overshoot <= 1 %, P1"},
+    {"metric": "e3_overshoot_p2", "raw": "e3_overshoot_p2_raw", "kind": "upper",
+     "bound": 1.0, "unit": "%", "criterion": "E3 TVD: pointwise overshoot <= 1 %, P2"},
+]
+
+
+def hinge(raw: float, bound: float, kind: str) -> float:
+    """不等式 → 双侧可比值的**保序**编码（见模块 docstring）。
+
+    ``kind='lower'``（x >= b）: ``min(x, b)/b``；``kind='upper'``（x <= b）: ``max(x, b)/b``。
+    两侧都满足：PASS 当且仅当原始不等式成立，且"比要求更好"精确饱和到 1.0。
+    """
+    x = float(raw)
+    b = float(bound)
+    if not (b > 0.0):
+        raise DocError(f"hinge: bound 必须为正，得到 {bound!r}")
+    if kind == "lower":
+        return min(x, b) / b
+    if kind == "upper":
+        return max(x, b) / b
+    raise DocError(f"hinge: 未知 kind={kind!r}（只支持 'lower'/'upper'）")
+
+
+def hinge_holds(raw: float, bound: float, kind: str, tol: float = 0.0) -> bool:
+    """原始不等式判据本体（与 hinge 编码做等价性对拍用）。"""
+    x, b = float(raw), float(bound)
+    return (x >= b * (1.0 - tol)) if kind == "lower" else (x <= b * (1.0 + tol))
+
+
+#: hinge 化之后已无「进不了平台」的判据；保留该登记表为**空**，以便后续新增时仍显式声明。
+#: （历史：A2/E3 曾因不等式不可用相对误差编码而列在此处，m22274 用 hinge 闭合。）
+NOT_ENCODED: Dict[str, str] = {}
 
 
 # ---------------------------------------------------------------- spec
