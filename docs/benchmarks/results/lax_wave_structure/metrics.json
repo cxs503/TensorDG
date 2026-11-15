@@ -1,0 +1,524 @@
+{
+ "anchor": "CASE-LAX-DG",
+ "banked_l2": {
+  "metrics_sha256": "44dbc878aa762615e662f76f53a796d933455eee4344b0665074c0e58bfad6d4",
+  "path": "docs/benchmarks/results/lax_resolution_requirement/metrics.json",
+  "status": "ok",
+  "values": {
+   "p3.N400": {
+    "cells": 400,
+    "degree": 3,
+    "density": 0.031155618811580767,
+    "pressure": 0.013050115344201776,
+    "velocity": 0.022480528737058404
+   },
+   "p3.N800": {
+    "cells": 800,
+    "degree": 3,
+    "density": 0.023148994624927942,
+    "pressure": 0.008994023222666417,
+    "velocity": 0.013825704983298062
+   }
+  }
+ },
+ "case": {
+  "cfl": 0.35,
+  "diaphragm": 0.5,
+  "final_time": 0.13,
+  "gamma": 1.4,
+  "left": [
+   0.445,
+   0.698,
+   3.528
+  ],
+  "right": [
+   0.5,
+   0.0,
+   0.571
+  ]
+ },
+ "exact": {
+  "positions": {
+   "contact": 0.6987339934622749,
+   "rarefaction_head": 0.15763654037219582,
+   "rarefaction_tail": 0.28722933252692573,
+   "shock": 0.8223117925286793
+  },
+  "star": {
+   "density_star_left": 0.34456847418960945,
+   "density_star_right": 1.3040845320261998,
+   "pressure": 2.4660979192073564,
+   "velocity": 1.528723026632884
+  }
+ },
+ "figures": [
+  "profiles_zoom.png",
+  "tv_ratio_vs_n.png",
+  "extrema_vs_n.png"
+ ],
+ "generated_at_utc": "2026-11-15T12:52:48Z",
+ "legs": [
+  {
+   "cells": 400,
+   "degree": 3,
+   "dx": 0.0025,
+   "extrema": {
+    "density": {
+     "exact_max": 1.3040845320261998,
+     "exact_min": 0.34456847418960945,
+     "nodes": 4000,
+     "nodes_outside_exact_range": 1042,
+     "num_max": 1.3744894974959094,
+     "num_min": 0.2971308846053502,
+     "overshoot": 0.07040496546970965,
+     "overshoot_rel_span": 0.07337549475560722,
+     "undershoot": 0.047437589584259254,
+     "undershoot_rel_span": 0.049439078373754615,
+     "x_at_num_max": 0.7014360929237271,
+     "x_at_num_min": 0.6964360929237271
+    },
+    "pressure": {
+     "exact_max": 3.528,
+     "exact_min": 0.571,
+     "nodes": 4000,
+     "nodes_outside_exact_range": 692,
+     "num_max": 3.5425911625276623,
+     "num_min": 0.429366279223538,
+     "overshoot": 0.014591162527662238,
+     "overshoot_rel_span": 0.004934447929544213,
+     "undershoot": 0.14163372077646197,
+     "undershoot_rel_span": 0.04789777503431247,
+     "x_at_num_max": 0.15540073803962623,
+     "x_at_num_min": 0.8249673831606464
+    }
+   },
+   "l2_errors": null,
+   "l2_source": "docs/benchmarks/results/lax_resolution_requirement/metrics.json",
+   "leg": "p3.N400",
+   "limiter": null,
+   "limiter_stage": "every",
+   "plateau": {
+    "star_left": {
+     "density": {
+      "exact": 0.34456847418960945,
+      "rel_error": 5.620254618076933e-05,
+      "value": 0.3445491085640264
+     },
+     "pressure": {
+      "exact": 2.4660979192073564,
+      "rel_error": 2.7719140403982433e-05,
+      "value": 2.466029561092884
+     },
+     "velocity": {
+      "exact": 1.528723026632884,
+      "rel_error": 0.00011301995355464284,
+      "value": 1.528895802838352
+     }
+    },
+    "star_right": {
+     "density": {
+      "exact": 1.3040845320261998,
+      "rel_error": 7.761428765563077e-05,
+      "value": 1.3041857476181957
+     },
+     "pressure": {
+      "exact": 2.4660979192073564,
+      "rel_error": 0.00017241563718605192,
+      "value": 2.465672725363253
+     },
+     "velocity": {
+      "exact": 1.528723026632884,
+      "rel_error": 0.00022637435464155305,
+      "value": 1.5290690903214637
+     }
+    }
+   },
+   "position_errors": {
+    "contact": {
+     "abs_error": 6.889012945343609e-05,
+     "rel_error": 0.0003466453456115837,
+     "x_exact": 0.69873375,
+     "x_num": 0.6988026401294535
+    },
+    "rarefaction_head": {
+     "abs_error": 0.00034801642156701007,
+     "rel_error": 0.0010512732576788756,
+     "x_exact": 0.16895722018516715,
+     "x_num": 0.16860920376360014
+    },
+    "rarefaction_tail": {
+     "abs_error": 0.0005789919157778156,
+     "rel_error": 0.0025429438613145334,
+     "x_exact": 0.2723143146862412,
+     "x_num": 0.272893306602019
+    },
+    "shock": {
+     "abs_error": 0.00015854684253824303,
+     "rel_error": 0.0004919060148792293,
+     "x_exact": 0.82231125,
+     "x_num": 0.8224697968425383
+    }
+   },
+   "positions": {
+    "contact": 0.6988026401294535,
+    "rarefaction_head": 0.16860920376360014,
+    "rarefaction_tail": 0.272893306602019,
+    "shock": 0.8224697968425383
+   },
+   "source": "docs/benchmarks/results/lax_case_pool/profiles.npz",
+   "thickness": {
+    "contact": {
+     "width": 0.0022824988718257444,
+     "width_cells": 0.9129995487302978,
+     "x10": 0.6976649624114533,
+     "x90": 0.699947461283279
+    },
+    "shock": {
+     "width": 0.00040520508266506106,
+     "width_cells": 0.16208203306602442,
+     "x10": 0.8221077940309508,
+     "x90": 0.8225129991136159
+    }
+   },
+   "tv": {
+    "density": {
+     "exact": 1.8640321156731805,
+     "numerical": 10.053490208550638,
+     "ratio": 5.393410405335157
+    },
+    "pressure": {
+     "exact": 2.957,
+     "numerical": 32.821112423658846,
+     "ratio": 11.099463112498764
+    }
+   },
+   "tvb_constant": 1.0
+  },
+  {
+   "cells": 800,
+   "degree": 3,
+   "dx": 0.00125,
+   "extrema": {
+    "density": {
+     "exact_max": 1.3040845320261998,
+     "exact_min": 0.34456847418960945,
+     "nodes": 8000,
+     "nodes_outside_exact_range": 2113,
+     "num_max": 1.3748281421825626,
+     "num_min": 0.20792989567471107,
+     "overshoot": 0.07074361015636277,
+     "overshoot_rel_span": 0.07372842755322674,
+     "undershoot": 0.13663857851489838,
+     "undershoot_rel_span": 0.14240363920847326,
+     "x_at_num_max": 0.6999836915803233,
+     "x_at_num_min": 0.8225163084196767
+    },
+    "pressure": {
+     "exact_max": 3.528,
+     "exact_min": 0.571,
+     "nodes": 8000,
+     "nodes_outside_exact_range": 1378,
+     "num_max": 3.5392074792346793,
+     "num_min": 0.24399079623626743,
+     "overshoot": 0.01120747923467924,
+     "overshoot_rel_span": 0.0037901519224481706,
+     "undershoot": 0.32700920376373255,
+     "undershoot_rel_span": 0.11058816495222609,
+     "x_at_num_max": 0.15616566460418063,
+     "x_at_num_min": 0.8225163084196767
+    }
+   },
+   "l2_errors": null,
+   "l2_source": "docs/benchmarks/results/lax_resolution_requirement/metrics.json",
+   "leg": "p3.N800",
+   "limiter": null,
+   "limiter_stage": "every",
+   "plateau": {
+    "star_left": {
+     "density": {
+      "exact": 0.34456847418960945,
+      "rel_error": 5.2294049950267275e-05,
+      "value": 0.3445504553086089
+     },
+     "pressure": {
+      "exact": 2.4660979192073564,
+      "rel_error": 3.97205516169919e-05,
+      "value": 2.465999964437664
+     },
+     "velocity": {
+      "exact": 1.528723026632884,
+      "rel_error": 7.95819738611916e-05,
+      "value": 1.5288446854288305
+     }
+    },
+    "star_right": {
+     "density": {
+      "exact": 1.3040845320261998,
+      "rel_error": 0.0005975746450507553,
+      "value": 1.303305244174858
+     },
+     "pressure": {
+      "exact": 2.4660979192073564,
+      "rel_error": 0.001003130560244689,
+      "value": 2.4636241010200437
+     },
+     "velocity": {
+      "exact": 1.528723026632884,
+      "rel_error": 0.0008001253319060211,
+      "value": 1.529946196651961
+     }
+    }
+   },
+   "position_errors": {
+    "contact": {
+     "abs_error": 5.890918696804803e-05,
+     "rel_error": 0.0002964226608115029,
+     "x_exact": 0.69873375,
+     "x_num": 0.6987926591869681
+    },
+    "rarefaction_head": {
+     "abs_error": 0.0002612456774968852,
+     "rel_error": 0.0007891598712499082,
+     "x_exact": 0.16895722018516715,
+     "x_num": 0.16869597450767027
+    },
+    "rarefaction_tail": {
+     "abs_error": 0.0002658497014069172,
+     "rel_error": 0.0011676171079467164,
+     "x_exact": 0.2723143146862412,
+     "x_num": 0.2725801643876481
+    },
+    "shock": {
+     "abs_error": 9.470833580527138e-05,
+     "rel_error": 0.0002938412351578524,
+     "x_exact": 0.82231125,
+     "x_num": 0.8224059583358053
+    }
+   },
+   "positions": {
+    "contact": 0.6987926591869681,
+    "rarefaction_head": 0.16869597450767027,
+    "rarefaction_tail": 0.2725801643876481,
+    "shock": 0.8224059583358053
+   },
+   "source": "docs/benchmarks/results/lax_resolution_requirement/profiles.npz",
+   "thickness": {
+    "contact": {
+     "width": 0.0012744104465644002,
+     "width_cells": 1.0195283572515201,
+     "x10": 0.6981237791815617,
+     "x90": 0.699398189628126
+    },
+    "shock": {
+     "width": 0.0002887595284196687,
+     "width_cells": 0.23100762273573494,
+     "x10": 0.8222029389942406,
+     "x90": 0.8224916985226602
+    }
+   },
+   "tv": {
+    "density": {
+     "exact": 1.8640321156731805,
+     "numerical": 14.472570738186077,
+     "ratio": 7.764120916424996
+    },
+    "pressure": {
+     "exact": 2.957,
+     "numerical": 46.015372462610685,
+     "ratio": 15.561505736425664
+    }
+   },
+   "tvb_constant": 1.0
+  }
+ ],
+ "limiter_arms": [],
+ "metrics_sha256": "e56bfd2093df6e4ca4349ff78334a2a6800f2b8089142ba10211d25f71514130",
+ "metrics_sha256_covers": "payload without this field",
+ "pre_registered_definitions": {
+  "W1": "wave position rel error |x_num-x_ex|c/|x_ex-x0| (reuses pool C1)",
+  "W2": "10%-90% density transition thickness, in cells (w/dx)",
+  "W3": "overshoot/undershoot outside the exact field range",
+  "W4": "TV(numerical)/TV(exact) on Gauss nodes sorted by x",
+  "W5": "star-plateau relative error (pool definition)"
+ },
+ "profiles_file": "profiles.npz",
+ "question": "does the integral <3 % L2 acceptance of CASE-LAX-DG also imply a monotone, non-oscillatory solution, and how thick are the captured shock and contact?",
+ "reuse_agreement_solver_vs_committed": {
+  "p3.N400": {
+   "contact_width": null,
+   "p_tv_ratio": null,
+   "p_undershoot": null,
+   "rho_tv_ratio": null,
+   "rho_undershoot": null
+  },
+  "p3.N800": {
+   "contact_width": null,
+   "p_tv_ratio": null,
+   "p_undershoot": null,
+   "rho_tv_ratio": null,
+   "rho_undershoot": null
+  }
+ },
+ "reuse_check": {
+  "p3.N400": {
+   "extrema": {
+    "density": {
+     "exact_max": 1.3040845320261998,
+     "exact_min": 0.34456847418960945,
+     "nodes": 4000,
+     "nodes_outside_exact_range": 1042,
+     "num_max": 1.3744894974959094,
+     "num_min": 0.2971308846053502,
+     "overshoot": 0.07040496546970965,
+     "overshoot_rel_span": 0.07337549475560722,
+     "undershoot": 0.047437589584259254,
+     "undershoot_rel_span": 0.049439078373754615,
+     "x_at_num_max": 0.7014360929237271,
+     "x_at_num_min": 0.6964360929237271
+    },
+    "pressure": {
+     "exact_max": 3.528,
+     "exact_min": 0.571,
+     "nodes": 4000,
+     "nodes_outside_exact_range": 692,
+     "num_max": 3.5425911625276623,
+     "num_min": 0.429366279223538,
+     "overshoot": 0.014591162527662238,
+     "overshoot_rel_span": 0.004934447929544213,
+     "undershoot": 0.14163372077646197,
+     "undershoot_rel_span": 0.04789777503431247,
+     "x_at_num_max": 0.15540073803962623,
+     "x_at_num_min": 0.8249673831606464
+    }
+   },
+   "path": "docs/benchmarks/results/lax_case_pool/profiles.npz",
+   "status": "ok",
+   "thickness": {
+    "contact": {
+     "width": 0.0022824988718257444,
+     "width_cells": 0.9129995487302978,
+     "x10": 0.6976649624114533,
+     "x90": 0.699947461283279
+    },
+    "shock": {
+     "width": 0.00040520508266506106,
+     "width_cells": 0.16208203306602442,
+     "x10": 0.8221077940309508,
+     "x90": 0.8225129991136159
+    }
+   },
+   "tv": {
+    "density": {
+     "exact": 1.8640321156731805,
+     "numerical": 10.053490208550638,
+     "ratio": 5.393410405335157
+    },
+    "pressure": {
+     "exact": 2.957,
+     "numerical": 32.821112423658846,
+     "ratio": 11.099463112498764
+    }
+   }
+  },
+  "p3.N800": {
+   "extrema": {
+    "density": {
+     "exact_max": 1.3040845320261998,
+     "exact_min": 0.34456847418960945,
+     "nodes": 8000,
+     "nodes_outside_exact_range": 2113,
+     "num_max": 1.3748281421825626,
+     "num_min": 0.20792989567471107,
+     "overshoot": 0.07074361015636277,
+     "overshoot_rel_span": 0.07372842755322674,
+     "undershoot": 0.13663857851489838,
+     "undershoot_rel_span": 0.14240363920847326,
+     "x_at_num_max": 0.6999836915803233,
+     "x_at_num_min": 0.8225163084196767
+    },
+    "pressure": {
+     "exact_max": 3.528,
+     "exact_min": 0.571,
+     "nodes": 8000,
+     "nodes_outside_exact_range": 1378,
+     "num_max": 3.5392074792346793,
+     "num_min": 0.24399079623626743,
+     "overshoot": 0.01120747923467924,
+     "overshoot_rel_span": 0.0037901519224481706,
+     "undershoot": 0.32700920376373255,
+     "undershoot_rel_span": 0.11058816495222609,
+     "x_at_num_max": 0.15616566460418063,
+     "x_at_num_min": 0.8225163084196767
+    }
+   },
+   "path": "docs/benchmarks/results/lax_resolution_requirement/profiles.npz",
+   "status": "ok",
+   "thickness": {
+    "contact": {
+     "width": 0.0012744104465644002,
+     "width_cells": 1.0195283572515201,
+     "x10": 0.6981237791815617,
+     "x90": 0.699398189628126
+    },
+    "shock": {
+     "width": 0.0002887595284196687,
+     "width_cells": 0.23100762273573494,
+     "x10": 0.8222029389942406,
+     "x90": 0.8224916985226602
+    }
+   },
+   "tv": {
+    "density": {
+     "exact": 1.8640321156731805,
+     "numerical": 14.472570738186077,
+     "ratio": 7.764120916424996
+    },
+    "pressure": {
+     "exact": 2.957,
+     "numerical": 46.015372462610685,
+     "ratio": 15.561505736425664
+    }
+   }
+  }
+ },
+ "trends": {
+  "thickness_scaling_exponent_contact": {
+   "interpretation": "1.0 = fixed thickness in cells (first-order-like captured jump)",
+   "slope_log_w_vs_log_dx": 0.8407841490796992,
+   "width_cells": [
+    0.9129995487302978,
+    1.0195283572515201
+   ]
+  },
+  "thickness_scaling_exponent_shock": {
+   "interpretation": "1.0 = fixed thickness in cells (first-order-like captured jump)",
+   "slope_log_w_vs_log_dx": 0.48878371758004086,
+   "width_cells": [
+    0.16208203306602442,
+    0.23100762273573494
+   ]
+  },
+  "tv_ratio_change": {
+   "density": {
+    "first": 5.393410405335157,
+    "grows_with_refinement": true,
+    "last": 7.764120916424996
+   },
+   "pressure": {
+    "first": 11.099463112498764,
+    "grows_with_refinement": true,
+    "last": 15.561505736425664
+   }
+  }
+ },
+ "verdict": {
+  "acceptance_metric_untouched": "the ledger arm (relative L2, P3/N=400) is NOT re-graded by this audit",
+  "admissibility_gate_proposed": "nodes_outside_exact_range == 0 and TV ratio <= 1.02 at the certified resolution",
+  "admissibility_pass": false,
+  "l2_pass_at_3pct": {
+   "p3.N400": false,
+   "p3.N800": true
+  }
+ },
+ "wall_seconds": 0.48741674423217773
+}
