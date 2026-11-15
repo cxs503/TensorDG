@@ -756,3 +756,41 @@ def test_committed_replay_certificates_only_contain_reproductions():
     # every certified key must still have its record on disk
     present = {p.stem for p in (case_dir / "results").glob("*.json")}
     assert set(certificates) <= present
+
+
+def test_c11_all_legacy_records_have_certificates():
+    """Every legacy record (no recorded reference_model) must have a replay certificate.
+
+    This is the completeness check for C11: the gate logic correctly grades
+    unverified records, but we also need to ensure that *all* legacy records
+    have been certified.  Without this test, unverified records can silently
+    persist in the artifact bundle.
+    """
+    import json as _json
+    import pathlib
+    case_dir = pathlib.Path(__file__).resolve().parents[1] / \
+        "case_euler_vortex_errconserve"
+    results_dir = case_dir / "results"
+
+    # Load all result records
+    records = []
+    for fn in sorted(results_dir.glob("*.json")):
+        records.append(_json.loads(fn.read_text()))
+
+    # Find legacy records (no reference_model)
+    legacy_keys = [r["task_key"] for r in records
+                   if r.get("reference_model") is None]
+
+    # Load certificates
+    cert_path = case_dir / ec.PROVENANCE_CERTIFICATES
+    assert cert_path.exists(), f"no certificates at {cert_path}"
+    bundle = _json.loads(cert_path.read_text())
+    certificates = bundle.get("certificates", {})
+
+    # Every legacy record must have a certificate
+    unverified = [k for k in legacy_keys if k not in certificates]
+    assert not unverified, (
+        f"{len(unverified)} legacy record(s) lack replay certificates: "
+        f"{unverified}. Run: "
+        f"PYTHONPATH=. python3 tools/provenance_certify.py --remaining"
+    )
