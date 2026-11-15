@@ -264,31 +264,19 @@ LADDER = (
 #: archive keeps them visible (a hole that is merely quiet is exactly the defect
 #: C6 was written for).  When a record arrives the entry is ignored automatically.
 PENDING_RUNS = {
-    # round 7 (degree axis + design order + double box crossing) -- one job
-    # (13 shards, submitted through the compute gate; a landed record makes its
-    # entry here irrelevant automatically).
-    "dg_d1_n32_t1_cfl0.2": "cj3432",
-    "dg_d1_n32_t2_cfl0.2": "cj3432",
-    "dg_d1_n32_t5_cfl0.2": "cj3432",
-    "dg_d1_n32_t10_cfl0.2": "cj3432",
-    "dg_d3_n32_t1_cfl0.2": "cj3432",
-    "dg_d3_n32_t2_cfl0.2": "cj3432",
-    "dg_d3_n32_t5_cfl0.2": "cj3432",
-    "dg_d3_n32_t10_cfl0.2": "cj3432",
-    "dg_d1_n64_t1_cfl0.2": "cj3432",
-    "dg_d1_n64_t2_cfl0.2": "cj3432",
-    "dg_d1_n64_t5_cfl0.2": "cj3432",
-    "dg_d1_n64_t10_cfl0.2": "cj3432",
-    "dg_d2_n32_t20_cfl0.2": "cj3432",
-    # round 9 (direction axis, C10) -- two jobs, one per rotated direction
-    "dg_d2_n32_t1_cfl0.2_diraxis0": "cj3486",
-    "dg_d2_n32_t2_cfl0.2_diraxis0": "cj3486",
-    "dg_d2_n32_t5_cfl0.2_diraxis0": "cj3486",
-    "dg_d2_n32_t10_cfl0.2_diraxis0": "cj3486",
-    "dg_d2_n32_t1_cfl0.2_dirobl30": "cj3487",
-    "dg_d2_n32_t2_cfl0.2_dirobl30": "cj3487",
-    "dg_d2_n32_t5_cfl0.2_dirobl30": "cj3487",
-    "dg_d2_n32_t10_cfl0.2_dirobl30": "cj3487",
+    # round 7 (degree axis + design order + double box crossing) -- four jobs
+    # (cj3605-cj3608, 4 shards; a landed record makes its entry here irrelevant).
+    # Previously submitted as cj3432 (partial: only dg_d1_n64_t1 landed).
+    "dg_d1_n32_t5_cfl0.2": "cj3605",
+    "dg_d1_n32_t10_cfl0.2": "cj3606",
+    "dg_d3_n32_t1_cfl0.2": "cj3606",
+    "dg_d3_n32_t2_cfl0.2": "cj3607",
+    "dg_d3_n32_t5_cfl0.2": "cj3607",
+    "dg_d3_n32_t10_cfl0.2": "cj3608",
+    "dg_d1_n64_t2_cfl0.2": "cj3605",
+    "dg_d1_n64_t5_cfl0.2": "cj3606",
+    "dg_d1_n64_t10_cfl0.2": "cj3607",
+    "dg_d2_n32_t20_cfl0.2": "cj3608",
 }
 
 #: Configuration carrying C2/C4 (same pair of meshes as the sibling entry's gate).
