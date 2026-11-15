@@ -1,0 +1,46 @@
+{
+ "cells": 400,
+ "cfl": 0.5,
+ "degree": 3,
+ "density_min": 0.29685538846177667,
+ "dof": 1600,
+ "dt_mean": 3.633314700950252e-05,
+ "flux": "hllc",
+ "knob": {
+  "cfl": 0.5
+ },
+ "l1": {
+  "density": 0.008553484118584136,
+  "pressure": 0.007170313397762059,
+  "velocity": 0.012063105614803947
+ },
+ "l2": {
+  "density": 0.030992491830553498,
+  "pressure": 0.012834582378296834,
+  "velocity": 0.022081578866533703
+ },
+ "limiter": "local positivity fallback",
+ "positivity": "scale",
+ "positivity_stats": {
+  "cell_stages": 4293600,
+  "limited_cells": 1038,
+  "min_theta": 8.915865750962192e-298
+ },
+ "pressure_min": 0.43264117086897314,
+ "role": "temporal probe",
+ "solver_kwargs": {
+  "cfl": 0.5,
+  "degree": 3,
+  "final_time": 0.13,
+  "limiter": null,
+  "limiter_stage": "every",
+  "ncells": 400,
+  "positivity": "scale"
+ },
+ "steps": 3578,
+ "variant": "cfl050",
+ "wall_seconds": 55.049012184143066,
+ "why": "upper end of the solver's accepted CFL range -- the cheapest grid-identical run, brackets the temporal share from above",
+ "worst_field": "density",
+ "worst_l2": 0.030992491830553498
+}
