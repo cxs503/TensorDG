@@ -1,0 +1,43 @@
+{
+ "anchor": "REPRO-DG-CKS1998",
+ "provenance": "local quick check (single shell run, nx=100 ny=2 P1 Sod, cfl=0.2, t=0.2); the full ladder is validation/char_limiter_2d/results.json from cluster job cj3288",
+ "sod_p1_nx100": {
+  "none": {
+   "nx": 100,
+   "L1_density": 0.002258,
+   "L1_density_rel": 0.004015,
+   "overshoot_above_left": 0.00698,
+   "undershoot_below_right": 0.001083,
+   "plateau_wiggles": 27,
+   "max_abs_error": 0.028055,
+   "steps": 762
+  },
+  "tvb": {
+   "nx": 100,
+   "L1_density": 0.006728,
+   "L1_density_rel": 0.011963,
+   "overshoot_above_left": 0.002899,
+   "undershoot_below_right": 1e-06,
+   "plateau_wiggles": 20,
+   "max_abs_error": 0.068683,
+   "steps": 730
+  },
+  "char_tvb": {
+   "nx": 100,
+   "L1_density": 0.012525,
+   "L1_density_rel": 0.02227,
+   "overshoot_above_left": 0.005436,
+   "undershoot_below_right": 1.2e-05,
+   "plateau_wiggles": 19,
+   "max_abs_error": 0.076259,
+   "steps": 719
+  }
+ },
+ "smooth_p2_m1_n12": {
+  "tvb": {
+   "L1_density": 0.0217400683,
+   "L1_density_rel": 0.0054350171,
+   "Linf_density": 0.0417961512
+  }
+ }
+}
