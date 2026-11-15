@@ -1,0 +1,72 @@
+{
+  "case": "REPRO-DG-CKS1998 embedded-wall shock reflection: solid vs boundary arm",
+  "reference": "Cockburn & Shu JCP 141 (1998); exact two-shock solution (Rankine-Hugoniot)",
+  "settings": {
+    "incident_mach": 2.0,
+    "cfl": 0.12,
+    "tvb_constant": 1.0,
+    "extra_time": 0.15,
+    "x_shock": 0.4,
+    "x_wall": 1.0,
+    "xmax": 1.2,
+    "tolerance_percent": 3.0
+  },
+  "rows": [
+    {
+      "wall_mode": "boundary",
+      "nx": 10,
+      "degree": 1,
+      "dx": 0.1,
+      "steps": 562,
+      "seconds": 51.5,
+      "plateau_cells": 0,
+      "plateau_worst_percent": null,
+      "plateau_mean_rho_percent": null,
+      "plateau_mean_p_percent": null,
+      "l1_rho_percent": 10.731628807706443,
+      "linf_rho_percent": 49.290692538433106,
+      "l1_p_percent": 5.619577942065644,
+      "pass_3pct": false
+    },
+    {
+      "wall_mode": "solid",
+      "nx": 12,
+      "degree": 1,
+      "dx": 0.09999999999999999,
+      "steps": 562,
+      "seconds": 54.9,
+      "plateau_cells": 0,
+      "plateau_worst_percent": null,
+      "plateau_mean_rho_percent": null,
+      "plateau_mean_p_percent": null,
+      "l1_rho_percent": 10.731628807706414,
+      "linf_rho_percent": 49.29069253843249,
+      "l1_p_percent": 5.619577942065793,
+      "pass_3pct": false
+    }
+  ],
+  "parity": [
+    {
+      "shared_cells": 10,
+      "dx": 0.09999999999999999,
+      "whole_domain_l1_relative": 1.6283271027835636e-15,
+      "plateau_max_relative": null,
+      "plateau_max_percent": null,
+      "pressure_plateau_max_percent": null,
+      "solid_error_plateau_percent": null,
+      "boundary_error_plateau_percent": null,
+      "degree": 1,
+      "nx_solid": 12,
+      "nx_boundary": 10
+    }
+  ],
+  "orders": {
+    "solid_p1_l1_rho_order": [],
+    "boundary_p1_l1_rho_order": []
+  },
+  "environment": {
+    "python": "3.11.6",
+    "torch": "2.7.1",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38"
+  }
+}

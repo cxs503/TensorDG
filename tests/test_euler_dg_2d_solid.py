@@ -8,8 +8,9 @@ implementation to an independent reference:
 * the mask API rejects masks that are not a full ``(nx, ny)`` cell array;
 * a stream parallel to every embedded face is preserved (exact, round-off);
 * a closed box with an interior obstacle keeps mass and energy (exact);
-* a shock reflecting off an *embedded* wall reproduces the exact two-shock
-  solution of ``benchmarks.euler_dg_2d_wall_bc.WallReflection``;
+* an *embedded* wall and an outer ``bcs right="wall"`` produce the same solution
+  at equal dx (the matched A/B that isolates the wall flux from shock capturing
+  error; see ``docs/CASE-REPRO-DG-CKS1998-EMBEDDED-WALL-PARITY.md``);
 * the Mach 3 step case runs, leaves the upstream state untouched and produces
   the obstacle drag through ``obstacle_impulse``.
 
@@ -89,54 +90,59 @@ def test_closed_box_with_obstacle_conserves_mass_and_energy():
     assert abs(total["y_momentum"]["relative"]) < 1e-12
 
 
-def _reflection(incident_mach=2.0, x_shock=0.2, extra_time=0.05, nx=30, ny=1, degree=1):
-    wr = WallReflection(x_shock=x_shock, x_wall=0.5, incident_mach=incident_mach)
-    xmax, ymax = 0.6, 0.1
-    dx = xmax / nx
-    xc = (torch.arange(nx, dtype=torch.float64) + 0.5) * dx
-    solid = torch.zeros(nx, ny, dtype=torch.bool)
-    solid[xc > wr.x_wall] = True
+def test_exact_two_shock_orientation():
+    """The closed-form reference and the driver must agree on which side is post-shock.
 
-    def initial(x, y):
-        ahead = x < wr.x_zero
-        return (
-            torch.where(ahead, torch.full_like(x, wr.pre[0]), torch.full_like(x, wr.post[0])),
-            torch.where(ahead, torch.full_like(x, wr.pre[1]), torch.full_like(x, wr.post[1])),
-            torch.zeros_like(x),
-            torch.where(ahead, torch.full_like(x, wr.pre[2]), torch.full_like(x, wr.post[2])),
-        )
+    ``WallReflection`` describes a shock running *right*, so the post-shock state
+    sits to the LEFT of the front and the gas moves right, into the wall.  The
+    helper this file used to carry initialised the mirrored state (pre-shock on
+    the left), which put the gas moving *away* from the wall and made the
+    "reflected plateau" assertion fail for a reason that had nothing to do with
+    the wall flux.  This test pins the orientation down; it needs no solver.
+    """
+    from benchmarks.cks1998_embedded_wall_parity import _initial
 
-    t_end = wr.wall_time + extra_time
-    _, _, coeff, meta = solve_euler_dg_2d(
-        initial, ncells=(nx, ny), degree=degree, final_time=t_end, cfl=0.12,
-        domain=((0.0, xmax), (0.0, ymax)), periodic=(False, False), solid=solid,
-        track_boundary_flux=True,
-        bcs={"left": "outflow", "right": "wall", "bottom": "wall", "top": "wall"},
-    )
-    avg = coeff[..., 0, 0, :]
-    return wr, avg[..., 0], _pressure(avg), dx, meta
+    wr = WallReflection(x_shock=0.5, x_wall=1.0, incident_mach=2.0)
+    import numpy as np
+
+    left_rho, left_u, left_p = wr.state(np.array([0.3]), 0.0)
+    right_rho, right_u, right_p = wr.state(np.array([0.7]), 0.0)
+    assert float(left_rho[0]) == pytest.approx(wr.post[0]) and wr.post[0] > wr.pre[0]
+    assert float(right_rho[0]) == pytest.approx(wr.pre[0])
+    assert float(left_u[0]) > 0.0  # post-shock gas moves toward +x, i.e. into the wall
+    assert float(right_u[0]) == pytest.approx(wr.pre[1])
+    assert float(left_p[0]) == pytest.approx(wr.post[2])
+
+    # the driver's own initial data must agree, or the reference scores nothing
+    x = torch.tensor([0.3, 0.7])
+    y = torch.zeros_like(x)
+    rho, u, v, p = _initial(wr, 0.5)(x, y)
+    assert float(rho[0]) == pytest.approx(wr.post[0])
+    assert float(rho[1]) == pytest.approx(wr.pre[0])
+    assert float(p[0]) == pytest.approx(wr.post[2])
+    assert float(u[0]) > 0.0
 
 
-@pytest.mark.xfail(
-    reason="OPEN GATE (honest FAIL): the reflected plateau behind an embedded wall "
-           "does not yet match the exact two-shock reference at the tested "
-           "resolutions; see docs/CASE-REPRO-DG-CKS1998-FORWARD-STEP.md section 4.",
-    strict=False,
-)
-def test_shock_reflects_off_embedded_wall():
-    """The internal wall must reproduce the exact two-shock solution (< 6 %, P1)."""
-    wr, rho, pressure, dx, meta = _reflection()
-    assert meta["solid_cells"] > 0
-    # sample inside the plateau between the reflected front and the wall
-    front = wr.front(wr.wall_time + 0.05)
-    rel = []
-    for offset in (0.2, 0.45, 0.7):
-        xx = front + offset * (wr.x_wall - front)
-        i = min(int(xx / dx), rho.shape[0] - 1)
-        rel.append(abs(float(rho[i, 0]) / wr.reflected[0] - 1.0))
-        rel.append(abs(float(pressure[i, 0]) / wr.reflected[2] - 1.0))
-    worst = max(rel)
-    assert worst < 0.06, f"reflected plateau off by {100 * worst:.2f} %"
+def test_embedded_wall_matches_boundary_wall():
+    """An embedded wall and an outer wall produce the same solution at equal dx.
+
+    Gate G3 of ``docs/CASE-REPRO-DG-CKS1998-FORWARD-STEP.md`` was recorded as a
+    failure with two candidate causes: a wrong embedded-wall flux, or DG shock
+    smearing.  This is the matched A/B that separates them: the same reflection,
+    the same cell size, the same limiter, the wall in the same place -- only the
+    treatment (frozen solid cells vs ``bcs right="wall"``) differs.  The two arms
+    must agree to round-off; whatever error both of them carry is shock capturing
+    error, not a wall defect.
+    """
+    from benchmarks.cks1998_embedded_wall_parity import parity, run_arm
+
+    solid = run_arm(12, 1, "solid", extra_time=0.05)
+    boundary = run_arm(10, 1, "boundary", extra_time=0.05)
+    assert solid["solid_cells"] > 0
+    assert solid["steps"] == boundary["steps"]  # same dx, same CFL -> same march
+    gap = parity(solid, boundary)
+    assert math.isclose(gap["dx"], 0.1, rel_tol=1e-12)
+    assert gap["whole_domain_l1_relative"] < 1e-10, gap["whole_domain_l1_relative"]
 
 
 def test_forward_facing_step_upstream_untouched():
