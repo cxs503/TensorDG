@@ -67,9 +67,13 @@ from typing import Any, Dict, List, Mapping
 
 # ---------------------------------------------------------------- 身份
 BENCH_ID = "REPRO-DG-CKS1998"
-BENCH_VER = "1998.1"
+#: 版本随**度量集**走（平台按 (benchmark_id, version) 归档行）：
+#: 1998.1 = 13 条（A1/E2/B1/B2）；m22274 加 hinge 5 条未改版本（历史欠账）；
+#: 1998.2 = +E3 论文配置并列门 2 条（本单 m22426，度量集 20 条，含预登记表）。
+BENCH_VER = "1998.2"
 WORKLOAD_ID = "cks1998-dg-ladder"
-WORKLOAD_VER = "1"
+#: workload 程序版本（新增"论文配置并列门 + 粗网格分辨率披露"两段测量 ⇒ 2）。
+WORKLOAD_VER = "2"
 RESULT_SCHEMA_VERSION = "1.0.0"
 
 #: 锚点出处（与 feature_ledger.slug = REPRO-DG-CKS1998 同一篇）
@@ -148,6 +152,20 @@ METRICS: List[Dict[str, Any]] = [
     {"name": "e3_overshoot_p2", "got_pointer": "metrics.e3_overshoot_p2.value",
      "ref_pointer": "reference.e3_overshoot_p2", "tolerance_rel": HINGE_TOL, "unit": "%",
      "ref_source": "hinge upper bound b=1 % on the pointwise overshoot, P2 (E3): same encoding"},
+    # --- E3 并列门：**论文公开指示器**（TVB M=0）上的同一条 TVD 判据 ----------------
+    # 审计 m22343 §3 F1：旧门例钉在 strict_all（逐单元 minmod，"构造即真"），0.000 % 是
+    # 代码性质而非数值证据。这里把门并到 CKS1998 §3.2 的 TVB 指示器上（limiter=tvb,
+    # troubled_policy=tvb, tvb_constant=0），使判据**可能为假**（不限幅对照 6–9 %、
+    # 粗网格 N=80 时 1.389 %，见 validation/repro_cks1998/hinge_audit.py 的扫描）。
+    {"name": "e3_paper_overshoot_p1", "got_pointer": "metrics.e3_paper_overshoot_p1.value",
+     "ref_pointer": "reference.e3_paper_overshoot_p1", "tolerance_rel": HINGE_TOL,
+     "unit": "%",
+     "ref_source": "hinge upper bound b=1 % on the pointwise overshoot at the **paper** "
+                   "indicator (TVB M=0), P1, pinned to the preregistered resolution "
+                   "(E3_PREREGISTRATION): got=max(over,1)/1, ref=1 => PASS iff overshoot<=1 %"},
+    {"name": "e3_paper_overshoot_p2", "got_pointer": "metrics.e3_paper_overshoot_p2.value",
+     "ref_pointer": "reference.e3_paper_overshoot_p2", "tolerance_rel": HINGE_TOL,
+     "unit": "%", "ref_source": "hinge upper bound b=1 %, paper TVB M=0 indicator, P2"},
 ]
 
 #: 不等式判据 → 单侧 hinge 的登记表（唯一真源；workload 与测试都从这里取）。
@@ -164,7 +182,36 @@ HINGE_RULES: List[Dict[str, Any]] = [
      "bound": 1.0, "unit": "%", "criterion": "E3 TVD: pointwise overshoot <= 1 %, P1"},
     {"metric": "e3_overshoot_p2", "raw": "e3_overshoot_p2_raw", "kind": "upper",
      "bound": 1.0, "unit": "%", "criterion": "E3 TVD: pointwise overshoot <= 1 %, P2"},
+    # E3 并列门：论文配置（TVB M=0）。**分辨率是判据本体的一部分**（见 E3_PREREGISTRATION）：
+    # 同一判据在 N=80 会判红（1.389 %）、N=100 判绿（0 %），故门必须声明它钉在哪一档。
+    {"metric": "e3_paper_overshoot_p1", "raw": "e3_paper_overshoot_p1_raw", "kind": "upper",
+     "bound": 1.0, "unit": "%",
+     "criterion": "E3 TVD at the paper TVB M=0 indicator: pointwise overshoot <= 1 %, P1"},
+    {"metric": "e3_paper_overshoot_p2", "raw": "e3_paper_overshoot_p2_raw", "kind": "upper",
+     "bound": 1.0, "unit": "%",
+     "criterion": "E3 TVD at the paper TVB M=0 indicator: pointwise overshoot <= 1 %, P2"},
 ]
+
+#: E3 并列门的**分辨率预登记**（审计 m22343 §3 F1/F2 的机器化闭合）。
+#:
+#: 两处材料级欠账：(i) 旧门例 strict_all 是"构造即真"（逐单元 minmod 按构造无新极值），
+#: 0.000 % 不承担判别任务；(ii) 单分辨率门在论文配置下 N=80→100 之间**翻转**
+#: （1.389 % → 0.000 %）⇒ "超调 ≤ 1 %" 不是分辨率无关的性质，单点预登记会把
+#: "网格选得好"当成"性质成立"。
+#:
+#: 本表把两件事写进判据本体：
+#:   * ``ncells_by_profile``：门**钉住**的分辨率（该度量 rows 行的 ``ncells`` 与之不符 ⇒
+#:     ``DocError``，防止"悄悄换网格"）；smoke 档只用于契约自检，故另钉一档并显式标注。
+#:   * ``coarse_ncells_by_profile``：**粗网格披露点**（进 rows 的 ``E3_paper_resolution``
+#:     节，只披露不判定）——它是"该判据对分辨率敏感"的可见证据，而不是第二个门。
+E3_PREREGISTRATION: Dict[str, Dict[str, Any]] = {
+    "e3_paper_overshoot_p1": {"limiter": "tvb_M0",
+                              "ncells_by_profile": {"bench": 100, "smoke": 40},
+                              "coarse_ncells_by_profile": {"bench": 80, "smoke": 20}},
+    "e3_paper_overshoot_p2": {"limiter": "tvb_M0",
+                              "ncells_by_profile": {"bench": 100, "smoke": 40},
+                              "coarse_ncells_by_profile": {"bench": 80, "smoke": 20}},
+}
 
 
 def hinge(raw: float, bound: float, kind: str) -> float:
@@ -403,7 +450,9 @@ def validate_documents(spec: Mapping[str, Any], result: Mapping[str, Any],
         raise DocError("workload stdout 里取不到 JSON 文档（平台同样会拒收）")
     rows = evaluate_metrics(parsed, doc)
     hinge_report = _verify_hinge(doc)
+    from validation.repro_cks1998.hinge_audit import verify_preregistration
+    prereg_report = verify_preregistration(doc)
     return {"parsed": parsed, "result_meta": meta, "rows": rows,
-            "hinge": hinge_report,
+            "hinge": hinge_report, "preregistration": prereg_report,
             "passed": [r["metric"] for r in rows if r["passed"]],
             "failed": [r["metric"] for r in rows if not r["passed"]]}

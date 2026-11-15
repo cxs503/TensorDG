@@ -1,11 +1,11 @@
 {
  "benchmark": {
   "benchmark_id": "REPRO-DG-CKS1998",
-  "version": "1998.1"
+  "version": "1998.2"
  },
  "workload": {
   "workload_id": "cks1998-dg-ladder",
-  "version": "1",
+  "version": "2",
   "command": [
    "python",
    "validation/repro_cks1998/bench_workload.py",
@@ -56,7 +56,7 @@
  },
  "implementation": {
   "project": "TensorDG",
-  "revision": "1ed97bef00f00a69cb3c128c2195c83cbe6e7953"
+  "revision": "c58098650ff68a64d3654148e3c936a95650d14b"
  },
  "execution": {
   "timeout_seconds": 3600.0,
@@ -195,9 +195,23 @@
     "ref_pointer": "reference.e3_overshoot_p2",
     "tolerance_rel": 1e-09,
     "unit": "%"
+   },
+   {
+    "name": "e3_paper_overshoot_p1",
+    "got_pointer": "metrics.e3_paper_overshoot_p1.value",
+    "ref_pointer": "reference.e3_paper_overshoot_p1",
+    "tolerance_rel": 1e-09,
+    "unit": "%"
+   },
+   {
+    "name": "e3_paper_overshoot_p2",
+    "got_pointer": "metrics.e3_paper_overshoot_p2.value",
+    "ref_pointer": "reference.e3_paper_overshoot_p2",
+    "tolerance_rel": 1e-09,
+    "unit": "%"
    }
   ],
-  "notes": "theory: L2 order = k+1 = 2 (CKS1998 §2); theory: L2 order = k+1 = 3; theory: L2 order = k+1 = 4; exact Riemann (Toro, benchmarks.sod_exact) cell average; exact Riemann cell average (post-shock plateau); exact Riemann cell average (star region); exact conservation: 0.5*1.0 + 0.5*0.125 = 0.5625; exact conservation: 0.5*2.5 + 0.5*0.25 = 1.375; theory: 2-D Euler density L1 order = k+1 = 2 (CKS1998 §5.1); theory: 2-D Euler density L1 order = k+1 = 3 (CKS1998 §5.1); theory: 2-D Euler density L1 order = k+1 = 4 (CKS1998 §5.1); exact conservation: mean(rho)=1 over area 4 => 4; exact conservation: E = 2.5 + rho with u=v=1 => 2.5*4 + 4 = 14; hinge lower bound b=1/2 on the L1 order of the limited square wave (A2, CKS1998 §3.2/§4): got=min(order,1/2)/(1/2), ref=1 => PASS iff order>=1/2; hinge lower bound b=1/2 on the L1 order, P2 (A2): same encoding; hinge lower bound b=1/2 on the L1 order, P3 (A2): same encoding; hinge upper bound b=1 % on the pointwise overshoot of the strict troubled-cell policy (E3 TVD, CKS1998 §3.2): got=max(over,1)/1, ref=1 => PASS iff overshoot<=1 %; hinge upper bound b=1 % on the pointwise overshoot, P2 (E3): same encoding"
+  "notes": "theory: L2 order = k+1 = 2 (CKS1998 §2); theory: L2 order = k+1 = 3; theory: L2 order = k+1 = 4; exact Riemann (Toro, benchmarks.sod_exact) cell average; exact Riemann cell average (post-shock plateau); exact Riemann cell average (star region); exact conservation: 0.5*1.0 + 0.5*0.125 = 0.5625; exact conservation: 0.5*2.5 + 0.5*0.25 = 1.375; theory: 2-D Euler density L1 order = k+1 = 2 (CKS1998 §5.1); theory: 2-D Euler density L1 order = k+1 = 3 (CKS1998 §5.1); theory: 2-D Euler density L1 order = k+1 = 4 (CKS1998 §5.1); exact conservation: mean(rho)=1 over area 4 => 4; exact conservation: E = 2.5 + rho with u=v=1 => 2.5*4 + 4 = 14; hinge lower bound b=1/2 on the L1 order of the limited square wave (A2, CKS1998 §3.2/§4): got=min(order,1/2)/(1/2), ref=1 => PASS iff order>=1/2; hinge lower bound b=1/2 on the L1 order, P2 (A2): same encoding; hinge lower bound b=1/2 on the L1 order, P3 (A2): same encoding; hinge upper bound b=1 % on the pointwise overshoot of the strict troubled-cell policy (E3 TVD, CKS1998 §3.2): got=max(over,1)/1, ref=1 => PASS iff overshoot<=1 %; hinge upper bound b=1 % on the pointwise overshoot, P2 (E3): same encoding; hinge upper bound b=1 % on the pointwise overshoot at the **paper** indicator (TVB M=0), P1, pinned to the preregistered resolution (E3_PREREGISTRATION): got=max(over,1)/1, ref=1 => PASS iff overshoot<=1 %; hinge upper bound b=1 %, paper TVB M=0 indicator, P2"
  },
  "notes": "REPRO-DG-CKS1998 platform evidence loop: ref=theory order / exact Riemann; got=DG measurement."
 }

@@ -70,8 +70,12 @@ SMOOTH_2D_INTEGRAL_RUN_SMOKE = (2, SMOOTH_2D_SMOKE[2][-1])
 #: A2（限幅方波 L1 阶）与 E3（TVD 超调）的梯次。与仓内复现驱动
 #: ``validation/repro_cks1998/repro_cks1998.py`` 的 quick/full 档同源，不另立口径。
 INEQUALITY_PROFILES = {
-    "smoke": {"discont_cells": [20, 40], "tvd_cells": 40, "tvd_degrees": [1, 2]},
-    "bench": {"discont_cells": [40, 80, 160, 320], "tvd_cells": 100, "tvd_degrees": [1, 2]},
+    "smoke": {"discont_cells": [20, 40], "tvd_cells": 40, "tvd_degrees": [1, 2],
+              # E3 并列门（论文 TVB M=0）的预登记分辨率 / 粗网格披露点。
+              # 必须与 bench_spec.E3_PREREGISTRATION 的 *_by_profile 一致（有测试守护）。
+              "tvd_paper_cells": 40, "tvd_paper_coarse_cells": 20},
+    "bench": {"discont_cells": [40, 80, 160, 320], "tvd_cells": 100, "tvd_degrees": [1, 2],
+              "tvd_paper_cells": 100, "tvd_paper_coarse_cells": 80},
 }
 
 PROFILES = {
@@ -209,6 +213,40 @@ def _measure_inequality(hp: dict, rows: list, metrics: dict, reference: dict) ->
                "overshoot_pointwise_pct": float(strict["overshoot_pointwise_pct"]),
                "avg_min": float(strict["avg_min"]), "avg_max": float(strict["avg_max"]),
                "pt_min": float(strict["pt_min"]), "pt_max": float(strict["pt_max"])})
+    # ---- E3 并列门：**论文公开指示器**（TVB M=0）上的同一条 TVD 判据 ----
+    # 旧门例 strict_all 是"构造即真"（审计 m22343 §3 F1），本门把它补成"可能为假"的判据；
+    # 分辨率是判据本体的一部分（bench_spec.E3_PREREGISTRATION），文档行的 ncells /
+    # limiter 与预登记不符 ⇒ validate_documents / ingest 拒收。
+    paper_cells = int(hp["tvd_paper_cells"])
+    coarse_cells = int(hp["tvd_paper_coarse_cells"])
+    paper = e3 if paper_cells == int(hp["tvd_cells"]) else run_tvd(
+        {"tvd_cells": paper_cells, "tvd_degrees": list(hp["tvd_degrees"])})
+    for degree in hp["tvd_degrees"]:
+        case = paper["cases"][f"p{degree}_tvb_M0"]
+        _emit(f"e3_paper_overshoot_p{degree}", case["overshoot_pointwise_pct"],
+              {"case": "E3_tvd_paper", "degree": int(degree), "limiter": "tvb_M0",
+               "ncells": paper_cells,
+               "overshoot_pointwise_pct": float(case["overshoot_pointwise_pct"]),
+               "avg_min": float(case["avg_min"]), "avg_max": float(case["avg_max"]),
+               "pt_min": float(case["pt_min"]), "pt_max": float(case["pt_max"]),
+               "troubled_policy": "tvb", "tvb_constant": 0.0})
+    # 分辨率披露（只披露不判定）：同一条判据在粗网格上的**实测**值，用以证明
+    # "超调 ≤ 1 %" 对分辨率敏感，从而门必须钉住分辨率（审计 m22343 §3 F2）。
+    coarse = e3 if coarse_cells == int(hp["tvd_cells"]) else run_tvd(
+        {"tvd_cells": coarse_cells, "tvd_degrees": list(hp["tvd_degrees"])})
+    for degree in hp["tvd_degrees"]:
+        case = coarse["cases"][f"p{degree}_tvb_M0"]
+        rows.append({"section": "E3_paper_resolution", "case": "E3_tvd_paper",
+                     "degree": int(degree), "limiter": "tvb_M0",
+                     "ncells": coarse_cells,
+                     "overshoot_pointwise_pct": float(case["overshoot_pointwise_pct"]),
+                     "exceeds_1pct": bool(case["overshoot_pointwise_pct"] > 1.0),
+                     "gate_ncells": paper_cells, "preregistered": False,
+                     "note": "coarse-grid disclosure only: shows the criterion is "
+                             "resolution sensitive, hence the gate pins its resolution"})
+        log(f"E3 paper-resolution disclosure p{degree} n{coarse_cells}: "
+            f"{case['overshoot_pointwise_pct']:.3f} %")
+
     # 非门例（对照/公开指示器）也进 rows：它们的越界必须**看得见**，但不参与锚点判定
     for tag, case in e3["cases"].items():
         if tag.endswith("strict_all"):
@@ -226,7 +264,9 @@ def _measure_inequality(hp: dict, rows: list, metrics: dict, reference: dict) ->
             "e3_control_violates": list(e3["control_violates"]),
             "profiles": {"discont_cells": list(hp["discont_cells"]),
                          "tvd_cells": int(hp["tvd_cells"]),
-                         "tvd_degrees": list(hp["tvd_degrees"])}}
+                         "tvd_degrees": list(hp["tvd_degrees"]),
+                         "tvd_paper_cells": paper_cells,
+                         "tvd_paper_coarse_cells": coarse_cells}}
 
 
 def measure(profile: dict) -> dict:
