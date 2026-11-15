@@ -1,0 +1,55 @@
+{
+  "case": "XVAL-LBM-SINGLE-NODE-MULTI-GPU-HOST-STAGED-HALO / Taylor-Green physics audit (honest-FAIL close-out)",
+  "job": "cj3306 (compute gate, node n315)",
+  "thresholds": {
+    "acceptance": 0.15,
+    "tight": 0.03
+  },
+  "sweep": {
+    "grids": [
+      16,
+      24,
+      32
+    ],
+    "nus": [
+      0.005,
+      0.01,
+      0.02,
+      0.05,
+      0.1
+    ],
+    "steps": 600,
+    "fit_window": [
+      60,
+      480
+    ]
+  },
+  "worst_modal_rel_err_corrected_ic": 0.004625697,
+  "worst_ke_rel_err_corrected_ic": 0.004625882,
+  "all_corrected_within_acceptance": true,
+  "all_corrected_within_tight": true,
+  "malformed_modal_rel_err_min": 0.0007503712,
+  "malformed_modal_rel_err_max": 1.116977,
+  "malformed_ke_rel_err_min": 0.6088362,
+  "malformed_ke_rel_err_max": 0.9939436,
+  "hardcoded_k0_rel_err_malformed": 0.08553938,
+  "port_crosscheck_local": {
+    "n": 16,
+    "nu": 0.02,
+    "ke_rate_err_correct_ic": [
+      0.001,
+      0.001
+    ],
+    "ke_rate_err_malformed_ic": 0.6578,
+    "field_max_du_2x1x2_vs_oracle_50steps": 7e-16,
+    "field_max_drho": 1.4e-15
+  },
+  "root_cause": "xval driver IC `tg_velocity` applies k twice (meshgrid pre-scaled then sin(k*x)) -> sin(k^2 i): not Taylor-Green, not divergence-free, net momentum 1.08e-2 conserved -> total KE dominated by the mean mode",
+  "determinism": "sweep reproduced on n315 from stage_dir; table_tg_decay.csv 30 rows",
+  "per_grid_worst_modal_pct": {
+    "16": 0.463,
+    "24": 0.347,
+    "32": 0.11
+  },
+  "row_count": 30
+}
