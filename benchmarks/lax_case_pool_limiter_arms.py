@@ -112,7 +112,11 @@ def _leg(cells, degree, arm):
                                            weights, dx, mask=mask_legacy)
                        for field in ("density", "velocity", "pressure")}
     entry = {"cells": cells, "degree": degree, "arm": arm,
-             "steps": int(meta["steps"]), "dt": float(meta["dt"]),
+             "steps": int(meta["steps"]),
+             "dt": float(meta.get("dt_mean", FINAL_TIME / max(meta["steps"], 1))),
+             "dt_last": float(meta["dt"]),
+             "dt_semantics": ("dt = final_time/steps (mean step); dt_last = "
+                              "time-truncated final step"),
              "limiter": meta["limiter"],
              "positivity_stats": meta.get("positivity_stats"),
              "analytic_fraction": float(mask.mean()),
