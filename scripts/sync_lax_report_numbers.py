@@ -64,6 +64,7 @@ INVENTORY = (
     ("metrics.json", "实测值 + 判据 verdict + 全部容差配置"),
     ("profiles.npz", "最细腿原始量 vs 精确解逐点场"),
     ("summary.md", "由 metrics.json 渲染的表（禁手改）"),
+    ("figures_binding.json", "图-工件-渲染器溯源绑定（sha256 校验链）"),
     ("figures/lax_profiles.png", "场量对比图（最细腿 vs 精确解）"),
     ("figures/lax_convergence.png", "收敛图（全场与解析区 rel L1 vs N）"),
     ("figures/time_refinement.png", "dt 细化：固定网格上 L1 误差 vs dt"),
