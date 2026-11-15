@@ -58,16 +58,43 @@ Verdicts (never silently upgraded):
 * ``FAIL``        -- ``delta > tol``: the scheme is outside tolerance on the
   finest mesh available.
 
-Time-error separation runs the finest pair at ``CFL`` and at ``CFL/beta``:
-``eta = |e(CFL) - e(CFL/beta)| / e(CFL)`` is the fraction of the error that the
-time integrator owns.  The spatial order is treated as isolated only if
-``eta <= 0.05`` **and** the order moves by less than 1 % between the two runs.
+Time-error separation runs the finest pair at ``CFL`` and at
+``CFL/beta`` (default ``beta = 4``; the committed run uses
+``beta = 2`` because a single local command is capped at 120 s -- declared, not
+silently changed, and the pre-registered thresholds are untouched): ``eta = |e(CFL) - e(CFL/beta)| / e(CFL)`` is the
+fraction of the error that the time integrator owns, and the order drift is the
+relative change of the finest-pair order between the two runs.  See
+*Attribution* below for the pre-registered decision rule.
+
+Attribution (what the time run is allowed to say)
+-----------------------------------------------
+The ladder verdict is computed at the base ``CFL`` and is **never** upgraded by
+the time run.  What the time run adds is the *attribution* of the deviation:
+
+* ``SPATIAL_ISOLATED`` -- ``eta <= 5 %`` and the order moves by ``<= 1 %``: the
+  base-CFL order is the spatial order, so the ladder verdict is a statement
+  about the spatial operator;
+* ``TIME_DOMINATED`` -- the deviation shrinks with ``dt`` and at least 50 % of it
+  disappears: the ladder number was (mostly) a time-integration artefact;
+* ``TIME_SENSITIVE`` -- the deviation shrinks but less than 50 %: partial blame;
+* ``UNRESOLVED`` -- the deviation does not shrink (or ``eta`` > 5 %): no
+  attribution, and the base-CFL number is known not to be conservative.
+
+Every number needed to redo the decision is stored in the artefact (the raw
+time runs, ``eta``, the drift, the share), so the report is re-derivable from
+the committed JSON alone.
 
 Usage
 -----
     OMP_NUM_THREADS=1 python -m benchmarks.cks1998_vortex_order_certification  # full sweep
     OMP_NUM_THREADS=1 python -m benchmarks.cks1998_vortex_order_certification --quick  # ~2 min
     OMP_NUM_THREADS=1 python -m benchmarks.cks1998_vortex_order_certification --local-smoke  # seconds
+
+Cluster sharding (one degree per shard) and reassembly::
+
+    python -m benchmarks.cks1998_vortex_order_certification --degrees 1 \
+        --shard-out validation/cks1998_vortex_2d/records_p1.json
+    python -m benchmarks.cks1998_vortex_order_certification --assemble
 
 Results are written to ``validation/cks1998_vortex_2d/certification.json``.
 """
@@ -108,6 +135,17 @@ NORM = "L1_rel"
 
 #: ``(degree, meshes)`` ladders — four rungs per degree for a reliable EOC.
 LADDERS = {1: [12, 16, 24, 32], 2: [8, 12, 16, 24], 3: [6, 8, 12, 16]}
+
+#: Per-degree ``(coarse, fine)`` cell counts used for the time-error separation:
+#: always the two *finest* rungs of the ladder, because that is where the order
+#: verdict is decided.
+TIME_PAIR = {1: (24, 32), 2: (16, 24), 3: (12, 16)}
+#: ``dt -> dt / beta`` refinement factor of the time-error run.
+TIME_REFINEMENT = 4
+#: A degree whose order deviation shrinks by at least this fraction when the
+#: time step is refined is attributed to SSP-RK3 rather than to the spatial
+#: operator (pre-registered, before any number is looked at).
+DEVIATION_SHARE_MAX = 0.5
 
 
 # ---------------------------------------------------------------------------
@@ -244,6 +282,129 @@ def time_error_fraction(errors: list[float]) -> float:
     return abs(base - reduced) / base
 
 
+def order_drift(order_base: float, order_reduced: float) -> float:
+    """Relative change of the finest-pair order under ``dt -> dt/beta``."""
+    if order_base == 0.0:
+        raise ValueError("base-CFL order is zero")
+    return abs(order_reduced - order_base) / abs(order_base)
+
+
+def temporal_share_of_deviation(order_base: float, order_reduced: float,
+                                design_order: int) -> float:
+    """Fraction of the *order deviation* owned by the time integrator.
+
+    ``|p(CFL) - p(CFL/beta)| / |p(CFL) - (p+1)|`` clamped to ``[0, 1]``.  A value
+    near 1 says the deviation from the design order disappears when the time
+    step is refined -- i.e. the ladder's number was a time-integration artefact,
+    not a statement about the spatial operator.
+    """
+    deviation = abs(order_base - design_order)
+    if deviation == 0.0:
+        return 1.0 if abs(order_reduced - order_base) > 0.0 else 0.0
+    return min(1.0, abs(order_reduced - order_base) / deviation)
+
+
+def time_separation(runs: list[dict], design_order: int,
+                    beta: float = TIME_REFINEMENT,
+                    eta_max: float = TIME_FRACTION_MAX,
+                    drift_max: float = ORDER_DRIFT_MAX,
+                    share_max: float = DEVIATION_SHARE_MAX,
+                    tolerance: float = TOLERANCE_REL) -> dict:
+    """Attribute one degree's order deviation between space and time.
+
+    ``runs`` are exactly the records of one degree on the **same** two meshes at
+    two CFLs (``CFL`` and ``CFL/beta``).  Pure function: no solver, no I/O.
+
+    Pre-registered decision rule:
+
+    * the base-CFL order is *isolated* (``SPATIAL_ISOLATED``) only if
+      ``eta <= eta_max`` -- the temporal share of the error at the fine mesh --
+      **and** the order moves by no more than ``drift_max`` between the two CFLs;
+    * if it is not isolated **and** the deviation from the design order shrinks
+      when dt is refined, the ladder number was at least partly a time
+      artefact: ``TIME_DOMINATED`` when refining removes at least ``share_max``
+      of the deviation, else ``TIME_SENSITIVE`` (partial, mostly spatial);
+    * a deviation that fails to shrink (``GROWS`` / ``FLAT``) is
+      ``UNRESOLVED``: no attribution is claimed and the base-CFL number is
+      known *not* to be conservative.
+
+    Note the deliberate asymmetry: a time-contaminated ladder *must* show an
+    order drift, so ``SPATIAL_ISOLATED`` cannot be reached by a run whose
+    deviation is temporal -- the two diagnostics never collapse into one.
+    """
+    by_cfl: dict[float, dict[int, dict]] = {}
+    for record in runs:
+        by_cfl.setdefault(round(float(record["cfl"]), 12), {})[int(record["ncells"])] = record
+    cfls = sorted(by_cfl)
+    if len(cfls) != 2:
+        return {"status": "INSUFFICIENT_CFLS", "cfls": cfls}
+    reduced, base = cfls          # the reduced step is the smaller CFL
+    if abs(reduced - base / beta) > 1e-12 * max(base, 1.0):
+        return {"status": "CFL_RATIO_MISMATCH", "cfls": cfls, "beta": beta}
+    meshes = sorted(set(by_cfl[base]) & set(by_cfl[reduced]))
+    if len(meshes) != 2:
+        return {"status": "INSUFFICIENT_MESHES", "meshes": meshes}
+    coarse_n, fine_n = meshes
+    pairs = {}
+    for cfl in cfls:
+        coarse, fine = by_cfl[cfl][coarse_n], by_cfl[cfl][fine_n]
+        pairs[f"cfl{cfl:g}"] = {
+            "h_coarse": coarse["h"], "h_fine": fine["h"],
+            "error_coarse": coarse["error"], "error_fine": fine["error"],
+            "order": adjacent_order(coarse["error"], fine["error"],
+                                    coarse["h"] / fine["h"]),
+        }
+    p_base = pairs[f"cfl{base:g}"]["order"]
+    p_red = pairs[f"cfl{reduced:g}"]["order"]
+    eta = time_error_fraction([by_cfl[base][fine_n]["error"],
+                               by_cfl[reduced][fine_n]["error"]])
+    drift = order_drift(p_base, p_red)
+    spatial_isolated = bool(eta <= eta_max and drift <= drift_max)
+    share = temporal_share_of_deviation(p_base, p_red, design_order)
+    delta_base = abs(p_base - design_order) / design_order
+    delta_reduced = abs(p_red - design_order) / design_order
+    if delta_reduced < delta_base - 1e-12:
+        direction = "SHRINKS"
+    elif delta_reduced > delta_base + 1e-12:
+        direction = "GROWS"
+    else:
+        direction = "FLAT"
+    if spatial_isolated:
+        attribution = "SPATIAL_ISOLATED"
+    elif direction == "SHRINKS":
+        attribution = ("TIME_DOMINATED" if share >= share_max
+                       else "TIME_SENSITIVE")
+    else:
+        # refining dt made the deviation worse or left it unchanged: no
+        # attribution is possible, and the base-CFL number is not conservative.
+        attribution = "UNRESOLVED"
+    return {
+        "status": "OK",
+        "cfl_base": base,
+        "cfl_reduced": reduced,
+        "beta": beta,
+        "meshes": [coarse_n, fine_n],
+        "pairs": pairs,
+        "order_base": p_base,
+        "order_reduced": p_red,
+        "eta": eta,
+        "eta_max": eta_max,
+        "temporal_share_ok": bool(eta <= eta_max),
+        "order_drift": drift,
+        "order_drift_max": drift_max,
+        "order_drift_ok": bool(drift <= drift_max),
+        "spatial_isolated": spatial_isolated,
+        "delta_rel_base": delta_base,
+        "delta_rel_reduced": delta_reduced,
+        "deviation_share": share,
+        "deviation_share_max": share_max,
+        "within_tolerance_at_reduced_cfl": bool(delta_reduced <= tolerance),
+        "deviation_direction": direction,
+        "order_bracket": sorted([p_base, p_red]),
+        "attribution": attribution,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Analytic reference (same as cks1998_vortex_2d.py)
 # ---------------------------------------------------------------------------
@@ -342,22 +503,67 @@ def run_case(degree, ncells, final_time=FINAL_TIME, cfl=CFL0, device="cpu"):
 # ---------------------------------------------------------------------------
 # Assemble the full certification payload
 # ---------------------------------------------------------------------------
-def assemble(records: list[dict]) -> dict:
-    """Build the certification payload from raw run records."""
+def assemble(records: list[dict], beta: float = TIME_REFINEMENT) -> dict:
+    """Build the certification payload from raw run records.
+
+    Records are tagged by ``kind``: ``"ladder"`` entries feed the mesh ladder
+    (and the verdict), ``"time"`` entries feed the time-error separation.  A
+    record without ``kind`` is treated as a ladder entry, so old artefacts and
+    hand-built test fixtures keep working.
+    """
     by_degree = {}
     for degree in sorted(set(r["degree"] for r in records)):
+        own = [r for r in records if r["degree"] == degree]
         ladder = [
             {"h": r["h"], "error": r["norms"][FIELD][NORM], "ncells": r["ncells"]}
-            for r in records if r["degree"] == degree
+            for r in own if r.get("kind", "ladder") == "ladder"
         ]
         ladder.sort(key=lambda r: r["h"])
-        cert = certify(ladder, degree + 1)
-        by_degree[f"p{degree}"] = {
-            "certification": cert,
-            "runs": [r for r in records if r["degree"] == degree],
-        }
+        # A two-rung ladder cannot carry an order statement: refuse rather than
+        # point-estimate (this is also the ``--local-smoke`` path).
+        cert = (certify(ladder, degree + 1) if len(ladder) >= 3
+                else {"verdict": "INSUFFICIENT_LEVELS", "design_order": degree + 1,
+                      "levels": ladder})
+        bundle = {"certification": cert, "runs": own}
+        time_runs = [
+            {"ncells": r["ncells"], "cfl": r["cfl"], "h": r["h"],
+             "error": r["norms"][FIELD][NORM]}
+            for r in own if r.get("kind") == "time"
+        ]
+        if time_runs:
+            bundle["time_separation"] = time_separation(time_runs, degree + 1,
+                                                        beta=beta)
+        by_degree[f"p{degree}"] = bundle
     return {"field": FIELD, "norm": NORM, "tolerance_rel": TOLERANCE_REL,
+            "time_refinement": beta,
+            "time_fraction_max": TIME_FRACTION_MAX,
+            "order_drift_max": ORDER_DRIFT_MAX,
+            "deviation_share_max": DEVIATION_SHARE_MAX,
             "degrees": by_degree}
+
+
+def render_time_markdown(payload: dict) -> str:
+    """Markdown table for the time-error separation (empty when absent)."""
+    rows = []
+    for name in sorted(payload["degrees"]):
+        bundle = payload["degrees"][name]
+        sep = bundle.get("time_separation")
+        if not sep:
+            continue
+        if sep.get("status") != "OK":
+            rows.append(f"| {name} | {sep['status']} | | | | | | |")
+            continue
+        rows.append(
+            f"| {name} | {sep['cfl_base']:g} -> {sep['cfl_reduced']:g} "
+            f"| {sep['order_base']:.4f} | {sep['order_reduced']:.4f} "
+            f"| {sep['eta']*100:.2f} % | {sep['order_drift']*100:.2f} % "
+            f"| {sep['delta_rel_base']*100:.2f} % -> {sep['delta_rel_reduced']*100:.2f} % "
+            f"| {sep['spatial_isolated']} | **{sep['attribution']}** |")
+    if not rows:
+        return ""
+    header = ("| degree | CFL | order(CFL) | order(CFL/beta) | eta | order drift "
+              "| delta_rel (base -> reduced) | spatial isolated | attribution |")
+    return "\n".join([header, "|---|---|---|---|---|---|---|---|---|", *rows])
 
 
 def render_markdown(payload: dict) -> str:
@@ -370,6 +576,10 @@ def render_markdown(payload: dict) -> str:
     for name in sorted(payload["degrees"].keys()):
         bundle = payload["degrees"][name]
         cert = bundle["certification"]
+        if "order_fine" not in cert:  # refused ladder (INSUFFICIENT_LEVELS)
+            lines.append(f"| {name} | {cert['design_order']} | | | | | | | | "
+                         f"**{cert['verdict']}** |")
+            continue
         lines.append(
             f"| {name} | {cert['design_order']} | {cert['order_fine']:.4f} | "
             f"{cert['delta_rel']:.4f} | {cert['uncertainty']:.4f} | "
@@ -382,6 +592,23 @@ def render_markdown(payload: dict) -> str:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+def write_payload(records: list[dict], out: Path, beta: float = TIME_REFINEMENT,
+                  final_time: float = FINAL_TIME) -> dict:
+    """Assemble, stamp provenance and write the certification artefact."""
+    payload = assemble(records, beta=beta)
+    payload["table_markdown"] = render_markdown(payload)
+    payload["time_table_markdown"] = render_time_markdown(payload)
+    payload["reference"] = (
+        "analytic: isentropic vortex, beta=5, u_inf=(1,1), rho_inf=1, p_inf=1, "
+        f"domain=[-5,5]^2, periodic, final_time={final_time:g}"
+    )
+    payload["anchor"] = "REPRO-DG-CKS1998"
+    payload["case"] = "vortex_2d_certification"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(payload, indent=2))
+    return payload
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--degrees", type=int, nargs="*", default=[1, 2, 3])
@@ -389,6 +616,16 @@ def main(argv=None):
                     help="override the per-degree ladder")
     ap.add_argument("--final-time", type=float, default=FINAL_TIME)
     ap.add_argument("--cfl", type=float, default=CFL0)
+    ap.add_argument("--beta", type=float, default=TIME_REFINEMENT,
+                    help="dt -> dt/beta refinement factor of the time-error run")
+    ap.add_argument("--no-time-separation", action="store_true",
+                    help="skip the time-error separation runs (ladder only)")
+    ap.add_argument("--shard-out", type=Path, default=None,
+                    help="write the raw records of this degree slice to a JSON "
+                         "shard (for cluster sharding); no artefact is written")
+    ap.add_argument("--assemble", type=Path, nargs="*", default=None,
+                    help="merge raw record shards (default: validation/"
+                         "cks1998_vortex_2d/records_p*.json) into the artefact")
     ap.add_argument("--quick", action="store_true",
                     help="cheap corner: three meshes per degree")
     ap.add_argument("--local-smoke", action="store_true",
@@ -399,9 +636,26 @@ def main(argv=None):
 
     torch.set_num_threads(max(args.threads, 1))
 
+    if args.assemble is not None:
+        shards = args.assemble or sorted(OUT_DIR.glob("records_p*.json"))
+        if not shards:
+            raise SystemExit("no record shards to assemble")
+        records = []
+        for shard in shards:
+            records.extend(json.loads(Path(shard).read_text()))
+        payload = write_payload(records, args.out, args.beta, args.final_time)
+        print(f"Assembled {len(records)} runs from {len(shards)} shard(s) "
+              f"-> {args.out}")
+        print(payload["table_markdown"])
+        if payload.get("time_table_markdown"):
+            print()
+            print(payload["time_table_markdown"])
+        return 0
+
     if args.local_smoke:
         ladders = {1: [16, 24]}
         args.degrees = [1]
+        args.no_time_separation = True
     elif args.quick:
         ladders = {1: [16, 24, 32], 2: [12, 16, 24], 3: [8, 12, 16]}
     elif args.meshes:
@@ -414,26 +668,43 @@ def main(argv=None):
         ladder = ladders.get(degree, LADDERS.get(degree, [8, 12, 16]))
         for ncells in ladder:
             run = run_case(degree, ncells, args.final_time, args.cfl)
+            run["kind"] = "ladder"
             records.append(run)
             print(f"[vortex-cert] p{degree} {ncells}x{ncells}: "
                   f"L1rel={run['norms'][FIELD][NORM]:.3e} "
                   f"steps={run['steps']} wall={run['wall_seconds']}s", flush=True)
+        if args.no_time_separation or len(ladder) < 2:
+            continue
+        pair = TIME_PAIR.get(degree) or tuple(ladder[-2:])
+        if tuple(pair) != tuple(ladder[-2:]):
+            print(f"[vortex-cert] p{degree}: TIME_PAIR {pair} is not the finest "
+                  f"ladder pair {tuple(ladder[-2:])}; using the finest pair",
+                  flush=True)
+            pair = tuple(ladder[-2:])
+        for ncells in pair:
+            for cfl0 in (args.cfl, args.cfl / args.beta):
+                run = run_case(degree, ncells, args.final_time, cfl0)
+                run["kind"] = "time"
+                records.append(run)
+                print(f"[vortex-cert] p{degree} {ncells}x{ncells} cfl={cfl0:g}: "
+                      f"L1rel={run['norms'][FIELD][NORM]:.3e} "
+                      f"steps={run['steps']} wall={run['wall_seconds']}s",
+                      flush=True)
 
-    payload = assemble(records)
-    payload["table_markdown"] = render_markdown(payload)
-    payload["reference"] = (
-        "analytic: isentropic vortex, beta=5, u_inf=(1,1), rho_inf=1, p_inf=1, "
-        "domain=[-5,5]^2, periodic"
-    )
-    payload["anchor"] = "REPRO-DG-CKS1998"
-    payload["case"] = "vortex_2d_certification"
+    if args.shard_out is not None:
+        args.shard_out.parent.mkdir(parents=True, exist_ok=True)
+        args.shard_out.write_text(json.dumps(records, indent=1))
+        print(f"Shard written to {args.shard_out} ({len(records)} runs)")
+        return 0
 
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(payload, indent=2))
+    payload = write_payload(records, args.out, args.beta, args.final_time)
     print(f"\nCertification written to {args.out}")
     print(payload["table_markdown"])
+    if payload.get("time_table_markdown"):
+        print()
+        print(payload["time_table_markdown"])
 
-    # Summary verdict
+    # Summary verdict (ladder verdict only -- never upgraded by the time run)
     all_certified = all(
         bundle["certification"]["verdict"] == "CERTIFIED"
         for bundle in payload["degrees"].values()
