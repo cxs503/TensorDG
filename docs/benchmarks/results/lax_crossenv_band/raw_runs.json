@@ -1,0 +1,103 @@
+{
+ "host": {
+  "machine": "loongarch64",
+  "nodename": "ec6ae0b42a0c",
+  "nproc": 128,
+  "numpy": "2.4.6",
+  "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+  "python": "3.11.6",
+  "torch": "2.7.1"
+ },
+ "local": [
+  {
+   "cells": 200,
+   "degree": 3,
+   "host": "ec6ae0b42a0c",
+   "l1": {
+    "density": 0.01214747011549904,
+    "pressure": 0.009564283253848274,
+    "velocity": 0.016989928406710906
+   },
+   "l1_hex": {
+    "density": "0x1.8e0c5d7006bdbp-7",
+    "pressure": "0x1.396705e47987bp-7",
+    "velocity": "0x1.165cecb790aa9p-6"
+   },
+   "steps": 2547,
+   "threads": 1,
+   "torch_threads_effective": 1
+  },
+  {
+   "cells": 200,
+   "degree": 3,
+   "host": "ec6ae0b42a0c",
+   "l1": {
+    "density": 0.01214747011549904,
+    "pressure": 0.009564283253848274,
+    "velocity": 0.016989928406710906
+   },
+   "l1_hex": {
+    "density": "0x1.8e0c5d7006bdbp-7",
+    "pressure": "0x1.396705e47987bp-7",
+    "velocity": "0x1.165cecb790aa9p-6"
+   },
+   "steps": 2547,
+   "threads": 2,
+   "torch_threads_effective": 2
+  },
+  {
+   "cells": 200,
+   "degree": 3,
+   "host": "ec6ae0b42a0c",
+   "l1": {
+    "density": 0.01214747011549904,
+    "pressure": 0.009564283253848274,
+    "velocity": 0.016989928406710906
+   },
+   "l1_hex": {
+    "density": "0x1.8e0c5d7006bdbp-7",
+    "pressure": "0x1.396705e47987bp-7",
+    "velocity": "0x1.165cecb790aa9p-6"
+   },
+   "steps": 2547,
+   "threads": 4,
+   "torch_threads_effective": 4
+  },
+  {
+   "cells": 200,
+   "degree": 3,
+   "host": "ec6ae0b42a0c",
+   "l1": {
+    "density": 0.01214747011549904,
+    "pressure": 0.009564283253848274,
+    "velocity": 0.016989928406710906
+   },
+   "l1_hex": {
+    "density": "0x1.8e0c5d7006bdbp-7",
+    "pressure": "0x1.396705e47987bp-7",
+    "velocity": "0x1.165cecb790aa9p-6"
+   },
+   "steps": 2547,
+   "threads": 8,
+   "torch_threads_effective": 8
+  },
+  {
+   "cells": 400,
+   "degree": 3,
+   "host": "ec6ae0b42a0c",
+   "l1": {
+    "density": 0.008686464624843512,
+    "pressure": 0.007314181334501461,
+    "velocity": 0.012309200656242785
+   },
+   "l1_hex": {
+    "density": "0x1.1ca358bda3e1ep-7",
+    "pressure": "0x1.df5799a0f2504p-8",
+    "velocity": "0x1.93590f21155d6p-7"
+   },
+   "steps": 5109,
+   "threads": 8,
+   "torch_threads_effective": 8
+  }
+ ]
+}

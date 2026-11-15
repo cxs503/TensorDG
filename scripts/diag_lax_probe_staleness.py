@@ -49,7 +49,7 @@ def main() -> int:
         leg, _ = measure_leg(cells, degree, waves)
         row = {
             "cells": cells, "degree": degree,
-            "steps": leg["steps"], "dt_last": leg["dt"],
+            "steps": leg["steps"], "dt_last": leg.get("dt_last", leg.get("dt")),
             "dt_mean": 0.13 / leg["steps"],
             "errors": leg["errors"], "analytic_errors": leg["analytic_errors"],
         }
@@ -60,7 +60,7 @@ def main() -> int:
                 continue
             row[name] = {
                 "errors": entry["errors"],
-                "steps": entry["steps"], "dt": entry["dt"],
+                "steps": entry["steps"], "dt_last": entry.get("dt_last", entry.get("dt")),
                 "rel_diff_vs_current": {
                     f: abs(leg["errors"][f] - entry["errors"][f]) / abs(entry["errors"][f])
                     for f in ("density", "velocity", "pressure")},
