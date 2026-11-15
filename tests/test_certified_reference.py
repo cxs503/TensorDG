@@ -29,6 +29,15 @@ PUBLISHED_BAND_PERCENT = 0.08279718833081827
 #: published observed order of the FV ladder
 PUBLISHED_ORDER = 1.2825091761164593
 
+#: the *current* shipped FV ladder is four levels (800/1600/3200/6400): the
+#: N=6400 level was added by the round-2 ladder-extension closure, so the
+#: "shipped" reference the engine must reproduce bit-for-bit is the four-level
+#: one (observed order 1.1767, band 0.0416 %, reference on N=3200).  The
+#: three-level numbers above are the *historical* round-2 publication and are
+#: kept for the record; the equivalence tests below assert against the current
+#: four-level study.
+FV_LEVELS = (800, 1600, 3200, 6400)
+
 
 # ------------------------------------------------------------------ fixtures
 def _power_law_ladder(order: float = 2.0, const: float = 0.3, levels=(400, 800, 1600)):
@@ -47,7 +56,7 @@ def _power_law_ladder(order: float = 2.0, const: float = 0.3, levels=(400, 800, 
 
 def _fv_levels():
     out = []
-    for n in (800, 1600, 3200):
+    for n in FV_LEVELS:
         prof = legacy.load_profile(RAW, f"fv_cfl0p3_n{n}.npz")
         out.append({"ncells": n, "field": prof["rho"]})
     return out
@@ -180,6 +189,13 @@ def test_band_that_eats_the_gate_is_withheld():
 # ---------------------------------------- equivalence with the shipped practice
 @requires_raw
 def test_engine_reproduces_the_shipped_round2_certification_bit_for_bit():
+    """The engine must reproduce the *current* (four-level) shipped study.
+
+    The N=6400 level was added by the round-2 ladder-extension closure, so the
+    shipped reference is now the four-level one (observed order 1.1767, band
+    0.0416 %, reference on N=3200).  The engine's ``certify`` over the same four
+    levels must agree with the legacy ``convergence_study`` bit for bit.
+    """
     legacy_study = legacy.convergence_study(legacy.load_fv_levels(RAW))
     cert = cr.certify(_fv_levels(), tolerance_percent=5.0)
     assert cert["observed_order_used"] == legacy_study["observed_order_used"]
@@ -187,14 +203,20 @@ def test_engine_reproduces_the_shipped_round2_certification_bit_for_bit():
     assert cert["extrapolation_displacement_percent"] == \
         legacy_study["extrapolation_displacement_percent"]
     assert np.array_equal(cert["reference"], legacy_study["rho_certified"])
-    # and the published round-2 numbers are what the engine still produces
-    assert cert["band_percent"] == pytest.approx(PUBLISHED_BAND_PERCENT, abs=0)
-    assert cert["observed_order_used"] == pytest.approx(PUBLISHED_ORDER, abs=0)
+    # the four-level numbers are what the engine still produces
+    assert cert["band_percent"] == pytest.approx(0.04162173159427086, abs=0)
+    assert cert["observed_order_used"] == pytest.approx(1.1767348864087728, abs=0)
     assert cert["verdict"] == cr.CERTIFIED
 
 
 @requires_raw
 def test_judge_reproduces_every_shipped_dg_leg_error():
+    """Every shipped DG leg's error against the *four-level* reference must match.
+
+    The legacy ``build_study`` now certifies over four levels (reference on
+    N=3200); the engine's ``judge`` against the same four-level reference must
+    place every leg at the same rel-L1/L2 as the published study.
+    """
     legacy_study = legacy.build_study(RAW)
     cert = cr.certify(_fv_levels(), tolerance_percent=5.0)
     for lg in legacy_study["dg_legs"]:
