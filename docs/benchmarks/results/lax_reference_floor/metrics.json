@@ -1,0 +1,773 @@
+{
+ "anchor": "CASE-LAX-DG",
+ "case": {
+  "closed_form_star": {
+   "density_left": 0.34456847418960945,
+   "density_right": 1.3040845320261998,
+   "pressure": 2.4660979192073564,
+   "velocity": 1.528723026632884
+  },
+  "domain": [
+   0.0,
+   1.0
+  ],
+  "final_time": 0.13,
+  "gamma": 1.4,
+  "left_state": [
+   0.445,
+   0.698,
+   3.528
+  ],
+  "name": "Lax shock tube (Toro test 2)",
+  "right_state": [
+   0.5,
+   0.0,
+   0.571
+  ],
+  "waves": {
+   "contact": 0.6987339934622749,
+   "rarefaction_head": 0.15763654037219582,
+   "rarefaction_tail": 0.28722933252692573,
+   "shock": 0.8223117925286793
+  }
+ },
+ "config": {
+  "floor_cells": [
+   100,
+   200,
+   400,
+   800,
+   1600
+  ],
+  "floor_degrees": [
+   1,
+   2,
+   3
+  ],
+  "profile_ladder": [
+   [
+    400,
+    1
+   ],
+   [
+    800,
+    1
+   ],
+   [
+    400,
+    2
+   ],
+   [
+    800,
+    2
+   ],
+   [
+    200,
+    3
+   ],
+   [
+    400,
+    3
+   ],
+   [
+    800,
+    3
+   ]
+  ],
+  "profiles": "docs/benchmarks/results/lax_asymptotic_probe/profiles.npz",
+  "quick": false,
+  "split_order": 40,
+  "tolerance": 0.03
+ },
+ "floor_budget_share": {
+  "1": {
+   "100": {
+    "density": 1.9520597494701672,
+    "pressure": 0.7176230420611623,
+    "velocity": 1.2003361347837516
+   },
+   "1600": {
+    "density": 0.37387934699853037,
+    "pressure": 0.1734781608444037,
+    "velocity": 0.2901700901421299
+   },
+   "200": {
+    "density": 1.3488946126210064,
+    "pressure": 0.4428871266806674,
+    "velocity": 0.740797087985908
+   },
+   "3200": {
+    "density": 0.2829364284174633,
+    "pressure": 0.11433572229549123,
+    "velocity": 0.1912448532035789
+   },
+   "400": {
+    "density": 0.854090746642436,
+    "pressure": 0.29233283252269715,
+    "velocity": 0.4889736329699488
+   },
+   "800": {
+    "density": 0.4932960153217802,
+    "pressure": 0.24729084660840614,
+    "velocity": 0.41363367316696925
+   }
+  },
+  "2": {
+   "100": {
+    "density": 1.3795004772755053,
+    "pressure": 0.481223246122128,
+    "velocity": 0.80492100461926
+   },
+   "1600": {
+    "density": 0.30066735191629507,
+    "pressure": 0.128473744529598,
+    "velocity": 0.21489296797543467
+   },
+   "200": {
+    "density": 1.0834417581402829,
+    "pressure": 0.43669282358663003,
+    "velocity": 0.7304387202231968
+   },
+   "3200": {
+    "density": 0.25275919230088917,
+    "pressure": 0.10365762048115174,
+    "velocity": 0.17338401763543373
+   },
+   "400": {
+    "density": 0.8003722147978374,
+    "pressure": 0.24151554705726183,
+    "velocity": 0.40397355655783546
+   },
+   "800": {
+    "density": 0.37349846410575765,
+    "pressure": 0.17367214473590564,
+    "velocity": 0.290494559344731
+   }
+  },
+  "3": {
+   "100": {
+    "density": 1.1636867229589645,
+    "pressure": 0.46320047719833946,
+    "velocity": 0.7747766905741613
+   },
+   "1600": {
+    "density": 0.2886380925657643,
+    "pressure": 0.1271891597703582,
+    "velocity": 0.21274429673247017
+   },
+   "200": {
+    "density": 0.9511554032711694,
+    "pressure": 0.3339045378046615,
+    "velocity": 0.5585087256052272
+   },
+   "3200": {
+    "density": 0.21311015046050494,
+    "pressure": 0.08774780156247021,
+    "velocity": 0.14677229031111638
+   },
+   "400": {
+    "density": 0.6090123027857931,
+    "pressure": 0.18962727915787134,
+    "velocity": 0.3171820868602097
+   },
+   "800": {
+    "density": 0.3135201708067914,
+    "pressure": 0.13644064402308242,
+    "velocity": 0.22821888795349388
+   }
+  }
+ },
+ "floor_exponents": {
+  "1": {
+   "density": -0.6219957153513511,
+   "pressure": -0.49376745451804194,
+   "velocity": -0.49376602746173
+  },
+  "2": {
+   "density": -0.5932259045833214,
+   "pressure": -0.5140718007001541,
+   "velocity": -0.5140709959478478
+  },
+  "3": {
+   "density": -0.5623861022068454,
+   "pressure": -0.5020484277085885,
+   "velocity": -0.5020481810784093
+  }
+ },
+ "floor_table": {
+  "1": {
+   "100": {
+    "density": 0.058561792484105014,
+    "pressure": 0.02152869126183487,
+    "velocity": 0.036010084043512545
+   },
+   "1600": {
+    "density": 0.011216380409955911,
+    "pressure": 0.005204344825332111,
+    "velocity": 0.008705102704263896
+   },
+   "200": {
+    "density": 0.04046683837863019,
+    "pressure": 0.013286613800420021,
+    "velocity": 0.02222391263957724
+   },
+   "400": {
+    "density": 0.02562272239927308,
+    "pressure": 0.008769984975680914,
+    "velocity": 0.014669208989098462
+   },
+   "800": {
+    "density": 0.014798880459653406,
+    "pressure": 0.007418725398252184,
+    "velocity": 0.012409010195009076
+   }
+  },
+  "2": {
+   "100": {
+    "density": 0.041385014318265155,
+    "pressure": 0.01443669738366384,
+    "velocity": 0.0241476301385778
+   },
+   "1600": {
+    "density": 0.009020020557488852,
+    "pressure": 0.00385421233588794,
+    "velocity": 0.0064467890392630395
+   },
+   "200": {
+    "density": 0.03250325274420848,
+    "pressure": 0.0131007847075989,
+    "velocity": 0.021913161606695902
+   },
+   "400": {
+    "density": 0.024011166443935122,
+    "pressure": 0.007245466411717855,
+    "velocity": 0.012119206696735062
+   },
+   "800": {
+    "density": 0.01120495392317273,
+    "pressure": 0.005210164342077169,
+    "velocity": 0.00871483678034193
+   }
+  },
+  "3": {
+   "100": {
+    "density": 0.03491060168876893,
+    "pressure": 0.013896014315950183,
+    "velocity": 0.02324330071722484
+   },
+   "1600": {
+    "density": 0.008659142776972929,
+    "pressure": 0.0038156747931107453,
+    "velocity": 0.006382328901974104
+   },
+   "200": {
+    "density": 0.028534662098135082,
+    "pressure": 0.010017136134139844,
+    "velocity": 0.016755261768156816
+   },
+   "400": {
+    "density": 0.018270369083573792,
+    "pressure": 0.00568881837473614,
+    "velocity": 0.009515462605806291
+   },
+   "800": {
+    "density": 0.009405605124203742,
+    "pressure": 0.004093219320692473,
+    "velocity": 0.006846566638604816
+   }
+  }
+ },
+ "hypothesis": {
+  "ratios": {
+   "density": 0.7577865918226917,
+   "pressure": 0.5159060133950674,
+   "velocity": 0.5112980543516343
+  },
+  "reading": "the registered metric is co-dominated by the reference discretisation at the pinned mesh",
+  "statement": "reference floor / solver leg >= 0.25 at p3.N400",
+  "supported": true
+ },
+ "legs": [
+  {
+   "cells": 400,
+   "conserved_reconstruction_residual": 3.552713678800501e-15,
+   "degree": 1,
+   "dx": 0.0025,
+   "fields": {
+    "density": {
+     "cross_term": -6.766697999849621e-16,
+     "decomposition_residual": 4.336808689942018e-19,
+     "exact_norm": 0.5956405772102307,
+     "floor_share_of_squared_error": 0.27487743861341535,
+     "in_dg_space": true,
+     "pythagoras_residual": 6.761084747619606e-16,
+     "quadrature_bias": 0.009763043771806458,
+     "reference_floor": 0.02562272239927308,
+     "solver_leg": 0.041616105202211325,
+     "solver_share_of_squared_error": 0.7251225613868677,
+     "total_exact": 0.048871506170273235,
+     "total_quad": 0.04934864082420772
+    },
+    "pressure": {
+     "cross_term": -3.3909698776541124e-06,
+     "decomposition_residual": 6.776263578034403e-20,
+     "exact_norm": 2.535631856865037,
+     "floor_share_of_squared_error": 0.8012716299062159,
+     "in_dg_space": false,
+     "pythagoras_residual": 3.3909698776541747e-06,
+     "quadrature_bias": 0.03746246983838452,
+     "reference_floor": 0.008769984975680914,
+     "solver_leg": 0.004739889464332939,
+     "solver_share_of_squared_error": 0.23405530836303748,
+     "total_exact": 0.009797357742274658,
+     "total_quad": 0.010164390961190485
+    },
+    "velocity": {
+     "cross_term": -1.9068137245259507e-05,
+     "decomposition_residual": 5.421010862427522e-20,
+     "exact_norm": 1.2228565786410297,
+     "floor_share_of_squared_error": 0.7521959293604235,
+     "in_dg_space": false,
+     "pythagoras_residual": 1.906813724525955e-05,
+     "quadrature_bias": 0.05634583364565125,
+     "reference_floor": 0.014669208989098462,
+     "solver_leg": 0.009484676898952894,
+     "solver_share_of_squared_error": 0.31445801523355504,
+     "total_exact": 0.016913800607732087,
+     "total_quad": 0.017866822803091074
+    }
+   },
+   "worst_field_quad": "density",
+   "worst_reference_floor": 0.02562272239927308,
+   "worst_total_quad": 0.04934864082420772
+  },
+  {
+   "cells": 800,
+   "conserved_reconstruction_residual": 5.329070518200751e-15,
+   "degree": 1,
+   "dx": 0.00125,
+   "fields": {
+    "density": {
+     "cross_term": -2.5396953900536275e-16,
+     "decomposition_residual": 1.0842021724855044e-18,
+     "exact_norm": 0.5956405772102306,
+     "floor_share_of_squared_error": 0.15144750129821008,
+     "in_dg_space": true,
+     "pythagoras_residual": 2.5500435096859064e-16,
+     "quadrature_bias": 0.008280389857640891,
+     "reference_floor": 0.014798880459653406,
+     "solver_leg": 0.035029760193804875,
+     "solver_share_of_squared_error": 0.8485524987019658,
+     "total_exact": 0.038027502706519306,
+     "total_quad": 0.03771262015879683
+    },
+    "pressure": {
+     "cross_term": -3.455458144222367e-06,
+     "decomposition_residual": 2.0328790734103208e-20,
+     "exact_norm": 2.5356318568650367,
+     "floor_share_of_squared_error": 0.9846277297333069,
+     "in_dg_space": false,
+     "pythagoras_residual": 3.4554581442223885e-06,
+     "quadrature_bias": 0.01153353842655044,
+     "reference_floor": 0.007418725398252184,
+     "solver_leg": 0.0020771899377137275,
+     "solver_share_of_squared_error": 0.07719086195675456,
+     "total_exact": 0.007476412671046777,
+     "total_quad": 0.0073901831782125105
+    },
+    "velocity": {
+     "cross_term": -2.0780038582898823e-05,
+     "decomposition_residual": 0.0,
+     "exact_norm": 1.2228565786410335,
+     "floor_share_of_squared_error": 1.0656398980593913,
+     "in_dg_space": false,
+     "pythagoras_residual": 2.0780038582898813e-05,
+     "quadrature_bias": 0.05012471395532063,
+     "reference_floor": 0.012409010195009076,
+     "solver_leg": 0.0033608274983363408,
+     "solver_share_of_squared_error": 0.07816793397995828,
+     "total_exact": 0.012020759414883658,
+     "total_quad": 0.011418222287686887
+    }
+   },
+   "worst_field_quad": "density",
+   "worst_reference_floor": 0.014798880459653406,
+   "worst_total_quad": 0.03771262015879683
+  },
+  {
+   "cells": 400,
+   "conserved_reconstruction_residual": 7.105427357601002e-15,
+   "degree": 2,
+   "dx": 0.0025,
+   "fields": {
+    "density": {
+     "cross_term": -5.538948251037298e-16,
+     "decomposition_residual": 2.168404344971009e-19,
+     "exact_norm": 0.5956405772102307,
+     "floor_share_of_squared_error": 0.4858927401805433,
+     "in_dg_space": true,
+     "pythagoras_residual": 5.540273101400928e-16,
+     "quadrature_bias": 0.023583713483614387,
+     "reference_floor": 0.024011166443935122,
+     "solver_leg": 0.024698462646570104,
+     "solver_share_of_squared_error": 0.5141072598199239,
+     "total_exact": 0.03444633755716013,
+     "total_quad": 0.03525871011266806
+    },
+    "pressure": {
+     "cross_term": -1.8117361626407735e-06,
+     "decomposition_residual": 1.3552527156068805e-20,
+     "exact_norm": 2.535631856865037,
+     "floor_share_of_squared_error": 0.853214614784556,
+     "in_dg_space": false,
+     "pythagoras_residual": 1.8117361626407885e-06,
+     "quadrature_bias": 0.09326674556756752,
+     "reference_floor": 0.007245466411717855,
+     "solver_leg": 0.0032928985469983544,
+     "solver_share_of_squared_error": 0.1762309944195165,
+     "total_exact": 0.007843993128599406,
+     "total_quad": 0.008575576839958235
+    },
+    "velocity": {
+     "cross_term": -1.2641843288592949e-05,
+     "decomposition_residual": 0.0,
+     "exact_norm": 1.2228565786410297,
+     "floor_share_of_squared_error": 0.7542290100719634,
+     "in_dg_space": false,
+     "pythagoras_residual": 1.2641843288592957e-05,
+     "quadrature_bias": 0.12963714765270495,
+     "reference_floor": 0.012119206696735062,
+     "solver_leg": 0.0077783148794317875,
+     "solver_share_of_squared_error": 0.31068900763543195,
+     "total_exact": 0.013954766570358136,
+     "total_quad": 0.015763822704698685
+    }
+   },
+   "worst_field_quad": "density",
+   "worst_reference_floor": 0.024011166443935122,
+   "worst_total_quad": 0.03525871011266806
+  },
+  {
+   "cells": 800,
+   "conserved_reconstruction_residual": 8.881784197001252e-15,
+   "degree": 2,
+   "dx": 0.00125,
+   "fields": {
+    "density": {
+     "cross_term": -1.7987410579682392e-16,
+     "decomposition_residual": 1.0842021724855044e-19,
+     "exact_norm": 0.5956405772102306,
+     "floor_share_of_squared_error": 0.18101278322804923,
+     "in_dg_space": true,
+     "pythagoras_residual": 1.7997756063259374e-16,
+     "quadrature_bias": 0.02403745223276299,
+     "reference_floor": 0.01120495392317273,
+     "solver_leg": 0.023833839667690874,
+     "solver_share_of_squared_error": 0.8189872167722103,
+     "total_exact": 0.02633634191996753,
+     "total_quad": 0.025703283359080595
+    },
+    "pressure": {
+     "cross_term": -1.3369640453682764e-06,
+     "decomposition_residual": 2.0328790734103208e-20,
+     "exact_norm": 2.5356318568650367,
+     "floor_share_of_squared_error": 0.7682093152409089,
+     "in_dg_space": false,
+     "pythagoras_residual": 1.336964045368256e-06,
+     "quadrature_bias": 0.07499634164419586,
+     "reference_floor": 0.005210164342077169,
+     "solver_leg": 0.0030866860466752387,
+     "solver_share_of_squared_error": 0.26962592122048556,
+     "total_exact": 0.005944449442700625,
+     "total_quad": 0.0054986374814092
+    },
+    "velocity": {
+     "cross_term": -9.998887761218707e-06,
+     "decomposition_residual": 4.0657581468206416e-20,
+     "exact_norm": 1.2228565786410335,
+     "floor_share_of_squared_error": 0.6857271133472049,
+     "in_dg_space": false,
+     "pythagoras_residual": 9.998887761218753e-06,
+     "quadrature_bias": 0.13504259419060197,
+     "reference_floor": 0.00871483678034193,
+     "solver_leg": 0.0066937650144843885,
+     "solver_share_of_squared_error": 0.4045514209866823,
+     "total_exact": 0.01052406681924421,
+     "total_quad": 0.009102869534538234
+    }
+   },
+   "worst_field_quad": "density",
+   "worst_reference_floor": 0.01120495392317273,
+   "worst_total_quad": 0.025703283359080595
+  },
+  {
+   "cells": 200,
+   "conserved_reconstruction_residual": 8.881784197001252e-15,
+   "degree": 3,
+   "dx": 0.005,
+   "fields": {
+    "density": {
+     "cross_term": -6.278258458766674e-16,
+     "decomposition_residual": 0.0,
+     "exact_norm": 0.5956405772102302,
+     "floor_share_of_squared_error": 0.43060428263337314,
+     "in_dg_space": true,
+     "pythagoras_residual": 6.277530578691071e-16,
+     "quadrature_bias": 0.03414125033075713,
+     "reference_floor": 0.028534662098135082,
+     "solver_leg": 0.032812601172549964,
+     "solver_share_of_squared_error": 0.5693957173669588,
+     "total_exact": 0.043484407973007365,
+     "total_quad": 0.04199979591491615
+    },
+    "pressure": {
+     "cross_term": 1.0749972093887245e-05,
+     "decomposition_residual": 5.421010862427522e-20,
+     "exact_norm": 2.5356318568650367,
+     "floor_share_of_squared_error": 0.3285105309837054,
+     "in_dg_space": false,
+     "pythagoras_residual": 1.0749972093887321e-05,
+     "quadrature_bias": 0.05280957824853263,
+     "reference_floor": 0.010017136134139844,
+     "solver_leg": 0.013941140999246654,
+     "solver_share_of_squared_error": 0.6362954000138964,
+     "total_exact": 0.017477082158777347,
+     "total_quad": 0.01655412482095736
+    },
+    "velocity": {
+     "cross_term": 0.00013833879844595394,
+     "decomposition_residual": 0.0,
+     "exact_norm": 1.2228565786410264,
+     "floor_share_of_squared_error": 0.21657513603811607,
+     "in_dg_space": false,
+     "pythagoras_residual": 0.0001383387984459539,
+     "quadrature_bias": 0.058367579939415125,
+     "reference_floor": 0.016755261768156816,
+     "solver_leg": 0.02961735192175922,
+     "solver_share_of_squared_error": 0.6767037964730267,
+     "total_exact": 0.03600368217589343,
+     "total_quad": 0.03390223437837867
+    }
+   },
+   "worst_field_quad": "density",
+   "worst_reference_floor": 0.028534662098135082,
+   "worst_total_quad": 0.04199979591491615
+  },
+  {
+   "cells": 400,
+   "conserved_reconstruction_residual": 8.881784197001252e-15,
+   "degree": 3,
+   "dx": 0.0025,
+   "fields": {
+    "density": {
+     "cross_term": 1.9180405741825975e-16,
+     "decomposition_residual": 3.2526065174565133e-19,
+     "exact_norm": 0.5956405772102307,
+     "floor_share_of_squared_error": 0.3647730520895651,
+     "in_dg_space": true,
+     "pythagoras_residual": 1.9212062496443139e-16,
+     "quadrature_bias": 0.02991274947606979,
+     "reference_floor": 0.018270369083573792,
+     "solver_leg": 0.02411017729889938,
+     "solver_share_of_squared_error": 0.635226947910225,
+     "total_exact": 0.030250736120540342,
+     "total_quad": 0.03115561881158076
+    },
+    "pressure": {
+     "cross_term": -5.776788882990237e-07,
+     "decomposition_residual": 1.6263032587282567e-19,
+     "exact_norm": 2.535631856865037,
+     "floor_share_of_squared_error": 0.2110015222061898,
+     "in_dg_space": false,
+     "pythagoras_residual": 5.776788882988536e-07,
+     "quadrature_bias": 0.053743905994837034,
+     "reference_floor": 0.00568881837473614,
+     "solver_leg": 0.011026850292554723,
+     "solver_share_of_squared_error": 0.7927648908602868,
+     "total_exact": 0.012384522719380463,
+     "total_quad": 0.01305011534420177
+    },
+    "velocity": {
+     "cross_term": -6.8686336748943835e-06,
+     "decomposition_residual": 0.0,
+     "exact_norm": 1.2228565786410297,
+     "floor_share_of_squared_error": 0.210556501969316,
+     "in_dg_space": false,
+     "pythagoras_residual": 6.868633674894393e-06,
+     "quadrature_bias": 0.08407902857239787,
+     "reference_floor": 0.009515462605806291,
+     "solver_leg": 0.018610402532966093,
+     "solver_share_of_squared_error": 0.8054162297747465,
+     "total_exact": 0.02073698332368125,
+     "total_quad": 0.022480528737058383
+    }
+   },
+   "worst_field_quad": "density",
+   "worst_reference_floor": 0.018270369083573792,
+   "worst_total_quad": 0.03115561881158076
+  },
+  {
+   "cells": 800,
+   "conserved_reconstruction_residual": 8.881784197001252e-15,
+   "degree": 3,
+   "dx": 0.00125,
+   "fields": {
+    "density": {
+     "cross_term": -2.34304297708771e-16,
+     "decomposition_residual": 4.336808689942018e-19,
+     "exact_norm": 0.5956405772102306,
+     "floor_share_of_squared_error": 0.15295002526203777,
+     "in_dg_space": true,
+     "pythagoras_residual": 2.347297703431117e-16,
+     "quadrature_bias": 0.03745693611686949,
+     "reference_floor": 0.009405605124203742,
+     "solver_leg": 0.02213433518064304,
+     "solver_share_of_squared_error": 0.8470499747383677,
+     "total_exact": 0.02404982747633058,
+     "total_quad": 0.02314899462492793
+    },
+    "pressure": {
+     "cross_term": 1.4838156294125677e-07,
+     "decomposition_residual": 8.131516293641283e-20,
+     "exact_norm": 2.5356318568650367,
+     "floor_share_of_squared_error": 0.1853535578425573,
+     "in_dg_space": false,
+     "pythagoras_residual": 1.4838156294118146e-07,
+     "quadrature_bias": 0.05400366789097027,
+     "reference_floor": 0.004093219320692473,
+     "solver_leg": 0.008572571870513544,
+     "solver_share_of_squared_error": 0.8130049045486266,
+     "total_exact": 0.00950746098836863,
+     "total_quad": 0.008994023222666415
+    },
+    "velocity": {
+     "cross_term": 1.9255212438732246e-06,
+     "decomposition_residual": 2.710505431213761e-20,
+     "exact_norm": 1.2228565786410335,
+     "floor_share_of_squared_error": 0.20171272549132538,
+     "in_dg_space": false,
+     "pythagoras_residual": 1.925521243873238e-06,
+     "quadrature_bias": 0.0930546995681285,
+     "reference_floor": 0.006846566638604816,
+     "solver_leg": 0.013549402181630652,
+     "solver_share_of_squared_error": 0.7900014461459014,
+     "total_exact": 0.01524425450654466,
+     "total_quad": 0.013825704983298057
+    }
+   },
+   "worst_field_quad": "density",
+   "worst_reference_floor": 0.009405605124203742,
+   "worst_total_quad": 0.02314899462492793
+  }
+ ],
+ "question": "The ledger's whole-field relative-L2 metric compares the DG field with the pointwise exact solution. Decompose it exactly into a solver leg and a reference-projection floor leg, and report which of the two dominates at the meshes the ledger grades.",
+ "reference_definition": {
+  "exact_solution": "closed-form Riemann solution, benchmarks.riemann_exact.sample",
+  "floor_is_solver_free": true,
+  "identity": "||u_h-u||^2 = ||u_h-Pi u||^2 + ||Pi u-u||^2 (exact quadrature)",
+  "norms": "relative L2, denominator = exact-solution L2 norm; whole field, no band removed",
+  "projection": "L2 projection onto piecewise degree-p Legendre space on N uniform cells",
+  "quadrature": "40-point Gauss per smooth subinterval, cells split at wave abscissae"
+ },
+ "reuse_check": {
+  "per_field_relative_difference": {
+   "density": 0.0,
+   "pressure": 0.0,
+   "velocity": 0.0
+  },
+  "source": "docs/benchmarks/results/lax_case_pool/metrics.json",
+  "worst": 0.0
+ },
+ "saturation": {
+  "max_spread": 2.3765711620882257e-16,
+  "readings": {
+   "20": {
+    "density": 0.009405605124203574,
+    "pressure": 0.00409321932069232,
+    "velocity": 0.006846566638604561
+   },
+   "40": {
+    "density": 0.009405605124203742,
+    "pressure": 0.004093219320692473,
+    "velocity": 0.006846566638604816
+   },
+   "80": {
+    "density": 0.009405605124203603,
+    "pressure": 0.004093219320692331,
+    "velocity": 0.006846566638604578
+   }
+  }
+ },
+ "solver_orders": {
+  "1": {
+   "cells": [
+    400,
+    800
+   ],
+   "reference_floor": {
+    "density": 0.7919357297168106,
+    "pressure": 0.241403030574154,
+    "velocity": 0.24140303490108053
+   },
+   "solver_leg": {
+    "density": 0.24856083962252806,
+    "pressure": 1.190220273549917,
+    "velocity": 1.4967821330905038
+   }
+  },
+  "2": {
+   "cells": [
+    400,
+    800
+   ],
+   "reference_floor": {
+    "density": 1.099568774048722,
+    "pressure": 0.47574968368216614,
+    "velocity": 0.4757497158983814
+   },
+   "solver_leg": {
+    "density": 0.05140985358136764,
+    "pressure": 0.09329931284008476,
+    "velocity": 0.21663973279512488
+   }
+  },
+  "3": {
+   "cells": [
+    200,
+    800
+   ],
+   "reference_floor": {
+    "density": 0.80056140456626,
+    "pressure": 0.6455811150474585,
+    "velocity": 0.645580811315425
+   },
+   "solver_leg": {
+    "density": 0.2839819621046415,
+    "pressure": 0.35077432123431135,
+    "velocity": 0.5641067280974877
+   }
+  }
+ },
+ "split_sensitivity_max_rel": {
+  "1e-06": 0.008501110798556376,
+  "1e-09": 1.0296875411749192e-05,
+  "1e-12": 1.0296291062415914e-08
+ },
+ "verdict": {
+  "conserved_reconstruction_residual_worst": 8.881784197001252e-15,
+  "cross_term_share_worst": 0.14380783203934966,
+  "cross_term_worst": 0.00013833879844595394,
+  "decomposition_residual_worst": 1.0842021724855044e-18,
+  "floor_share_of_tolerance_pinned": 0.6090123027857931,
+  "pythagoras_density_worst": 6.761084747619606e-16,
+  "quadrature_bias_worst": 0.13504259419060197,
+  "reuse_worst_relative": 0.0,
+  "saturation_spread": 2.3765711620882257e-16,
+  "split_sensitivity": {
+   "1e-06": 0.008501110798556376,
+   "1e-09": 1.0296875411749192e-05,
+   "1e-12": 1.0296291062415914e-08
+  }
+ },
+ "wall_seconds": 54.18980073928833
+}
