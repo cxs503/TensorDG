@@ -1,0 +1,457 @@
+{
+  "case": "CASE-LAX-DG",
+  "anchor": "CASE-LAX-DG",
+  "question": "does the certified resolution record (p3.N800 PASS, p3.N400 FAIL) survive a temporal error budget, in the ledger's relative-L2 metric?",
+  "rule": "T1 temporal share of the baseline-CFL whole-field relative L2 error < 5 % for every leg and every field (order-identifiable -> temporal_share, else the measured 4x-dt bound); T2 p3.N800 max-field rel L2 < ledger tolerance at every CFL level; T3 p3.N400 max-field rel L2 >= ledger tolerance at every CFL level (the FAIL is not a dt artifact); T4 baseline-CFL L2 reproduces the committed resolution artifact; T5 steps and dt_mean halve with the CFL divisor (ratio in [1.9, 2.1]). Overall PASS iff T1-T5 hold.",
+  "generated_at_utc": "2026-11-15T05:27:02Z",
+  "config": {
+    "cfl": 0.35,
+    "divisors": [
+      1,
+      2,
+      4
+    ],
+    "legs": [
+      [
+        400,
+        3
+      ],
+      [
+        800,
+        3
+      ]
+    ],
+    "quadrature_order": 10,
+    "gamma": 1.4,
+    "left_state": [
+      0.445,
+      0.698,
+      3.528
+    ],
+    "right_state": [
+      0.5,
+      0.0,
+      0.571
+    ],
+    "final_time": 0.13,
+    "domain": [
+      0.0,
+      1.0
+    ],
+    "tolerance": 0.03,
+    "time_error_share": 0.05
+  },
+  "legs": [
+    {
+      "cells": 400,
+      "degree": 3,
+      "leg": "p3.N400",
+      "levels": [
+        {
+          "cells": 400,
+          "degree": 3,
+          "cfl": 0.35,
+          "cfl_divisor": 1,
+          "steps": 5109,
+          "dt_mean": 2.5445292620865142e-05,
+          "dt_last_step": 2.2296238657348866e-05,
+          "l2_errors": {
+            "density": 0.031155618811580767,
+            "velocity": 0.022480528737058404,
+            "pressure": 0.013050115344201776
+          },
+          "l1_errors": {
+            "density": 0.008685539963016797,
+            "velocity": 0.012306385471484237,
+            "pressure": 0.007311961493174056
+          },
+          "density_min": 0.2971308846053502,
+          "pressure_min": 0.429366279223538,
+          "wall_seconds": 76.19093775749207
+        },
+        {
+          "cells": 400,
+          "degree": 3,
+          "cfl": 0.175,
+          "cfl_divisor": 2,
+          "steps": 10217,
+          "dt_mean": 1.2723891553293531e-05,
+          "dt_last_step": 4.625167915578432e-06,
+          "l2_errors": {
+            "density": 0.031287726810632924,
+            "velocity": 0.02280459240231349,
+            "pressure": 0.013225792370287297
+          },
+          "l1_errors": {
+            "density": 0.008795353050075371,
+            "velocity": 0.012497799053919692,
+            "pressure": 0.007425132947172938
+          },
+          "density_min": 0.2971718582667452,
+          "pressure_min": 0.4267826446344814,
+          "wall_seconds": 144.3426604270935
+        },
+        {
+          "cells": 400,
+          "degree": 3,
+          "cfl": 0.0875,
+          "cfl_divisor": 4,
+          "steps": 20429,
+          "dt_mean": 6.363502863576289e-06,
+          "dt_last_step": 2.8279668532471547e-06,
+          "l2_errors": {
+            "density": 0.03133606521740729,
+            "velocity": 0.022940720431506547,
+            "pressure": 0.013288727033145403
+          },
+          "l1_errors": {
+            "density": 0.008830360689945263,
+            "velocity": 0.01256449934043382,
+            "pressure": 0.0074636160464598205
+          },
+          "density_min": 0.29731456830722264,
+          "pressure_min": 0.4254944068157849,
+          "wall_seconds": 282.9712059497833
+        }
+      ],
+      "fields": {
+        "density": {
+          "relative_l2": [
+            0.031155618811580767,
+            0.031287726810632924,
+            0.03133606521740729
+          ],
+          "temporal_order": null,
+          "temporal_share": null,
+          "temporal_bound": 0.005758425781111914
+        },
+        "velocity": {
+          "relative_l2": [
+            0.022480528737058404,
+            0.02280459240231349,
+            0.022940720431506547
+          ],
+          "temporal_order": null,
+          "temporal_share": null,
+          "temporal_bound": 0.02006003672910468
+        },
+        "pressure": {
+          "relative_l2": [
+            0.013050115344201776,
+            0.013225792370287297,
+            0.013288727033145403
+          ],
+          "temporal_order": null,
+          "temporal_share": null,
+          "temporal_bound": 0.017955947800603504
+        }
+      },
+      "wall_seconds": 503.5048041343689
+    },
+    {
+      "cells": 800,
+      "degree": 3,
+      "leg": "p3.N800",
+      "levels": [
+        {
+          "cells": 800,
+          "degree": 3,
+          "cfl": 0.35,
+          "cfl_divisor": 1,
+          "steps": 10250,
+          "dt_mean": 1.2682926829268293e-05,
+          "dt_last_step": 4.411476321131147e-06,
+          "l2_errors": {
+            "density": 0.023148994624927942,
+            "velocity": 0.013825704983298062,
+            "pressure": 0.008994023222666417
+          },
+          "l1_errors": {
+            "density": 0.006164751775579453,
+            "velocity": 0.008233285360806078,
+            "pressure": 0.0051312181865732845
+          },
+          "density_min": 0.20792989567471107,
+          "pressure_min": 0.24399079623626743,
+          "wall_seconds": 165.76886868476868
+        },
+        {
+          "cells": 800,
+          "degree": 3,
+          "cfl": 0.175,
+          "cfl_divisor": 2,
+          "steps": 20497,
+          "dt_mean": 6.342391569497976e-06,
+          "dt_last_step": 2.1549205982407393e-06,
+          "l2_errors": {
+            "density": 0.0232623101342936,
+            "velocity": 0.013966461064557489,
+            "pressure": 0.009120243881356325
+          },
+          "l1_errors": {
+            "density": 0.006251432365609852,
+            "velocity": 0.008360857862649534,
+            "pressure": 0.005213103486405241
+          },
+          "density_min": 0.20811974239617553,
+          "pressure_min": 0.24754131447538397,
+          "wall_seconds": 332.4127583503723
+        },
+        {
+          "cells": 800,
+          "degree": 3,
+          "cfl": 0.0875,
+          "cfl_divisor": 4,
+          "steps": 40986,
+          "dt_mean": 3.1718147660176647e-06,
+          "dt_last_step": 9.344549966594506e-07,
+          "l2_errors": {
+            "density": 0.02329895966156004,
+            "velocity": 0.014009769249600538,
+            "pressure": 0.009163610213633235
+          },
+          "l1_errors": {
+            "density": 0.006279293195409163,
+            "velocity": 0.00840253196693106,
+            "pressure": 0.005239855808578448
+          },
+          "density_min": 0.21011372223989805,
+          "pressure_min": 0.25214015551173485,
+          "wall_seconds": 662.4833984375
+        }
+      ],
+      "fields": {
+        "density": {
+          "relative_l2": [
+            0.023148994624927942,
+            0.0232623101342936,
+            0.02329895966156004
+          ],
+          "temporal_order": null,
+          "temporal_share": null,
+          "temporal_bound": 0.0064365550569847755
+        },
+        "velocity": {
+          "relative_l2": [
+            0.013825704983298062,
+            0.013966461064557489,
+            0.014009769249600538
+          ],
+          "temporal_order": null,
+          "temporal_share": null,
+          "temporal_bound": 0.013138279654943227
+        },
+        "pressure": {
+          "relative_l2": [
+            0.008994023222666417,
+            0.009120243881356325,
+            0.009163610213633235
+          ],
+          "temporal_order": null,
+          "temporal_share": null,
+          "temporal_bound": 0.018506569683039764
+        }
+      },
+      "wall_seconds": 1160.665025472641
+    }
+  ],
+  "checks": {
+    "temporal_budget": {
+      "tolerance": 0.05,
+      "per_leg": {
+        "p3.N400": {
+          "tolerance": 0.05,
+          "worst": 0.02006003672910468,
+          "worst_where": {
+            "field": "velocity",
+            "reading": "bound"
+          },
+          "status": "PASS"
+        },
+        "p3.N800": {
+          "tolerance": 0.05,
+          "worst": 0.018506569683039764,
+          "worst_where": {
+            "field": "pressure",
+            "reading": "bound"
+          },
+          "status": "PASS"
+        }
+      },
+      "reading": "temporal share of the baseline-CFL whole-field relative L2 error, from three exact dt halvings on a fixed mesh (pool semantics)",
+      "status": "PASS"
+    },
+    "ledger": {
+      "tolerance": 0.03,
+      "per_leg": {
+        "p3.N400": {
+          "per_level": {
+            "cfl=0.35000": {
+              "worst_l2": 0.031155618811580767,
+              "worst_field": "density",
+              "margin_of_tolerance": 1.0385206270526923,
+              "status": "FAIL"
+            },
+            "cfl=0.17500": {
+              "worst_l2": 0.031287726810632924,
+              "worst_field": "density",
+              "margin_of_tolerance": 1.0429242270210974,
+              "status": "FAIL"
+            },
+            "cfl=0.08750": {
+              "worst_l2": 0.03133606521740729,
+              "worst_field": "density",
+              "margin_of_tolerance": 1.0445355072469098,
+              "status": "FAIL"
+            }
+          },
+          "stable": true,
+          "status_at_baseline_cfl": "FAIL",
+          "uniform_status": "FAIL"
+        },
+        "p3.N800": {
+          "per_level": {
+            "cfl=0.35000": {
+              "worst_l2": 0.023148994624927942,
+              "worst_field": "density",
+              "margin_of_tolerance": 0.7716331541642648,
+              "status": "PASS"
+            },
+            "cfl=0.17500": {
+              "worst_l2": 0.0232623101342936,
+              "worst_field": "density",
+              "margin_of_tolerance": 0.7754103378097866,
+              "status": "PASS"
+            },
+            "cfl=0.08750": {
+              "worst_l2": 0.02329895966156004,
+              "worst_field": "density",
+              "margin_of_tolerance": 0.776631988718668,
+              "status": "PASS"
+            }
+          },
+          "stable": true,
+          "status_at_baseline_cfl": "PASS",
+          "uniform_status": "PASS"
+        }
+      },
+      "T2_resolution_pass_is_dt_robust": "PASS",
+      "T3_pinned_fail_is_not_dt_artifact": "PASS"
+    },
+    "reuse": {
+      "source": "docs/benchmarks/results/lax_resolution_requirement/metrics.json",
+      "rows": [
+        {
+          "leg": "p3.N400",
+          "field": "density",
+          "committed": 0.031155618811580767,
+          "rerun": 0.031155618811580767,
+          "relative_difference": 0.0
+        },
+        {
+          "leg": "p3.N400",
+          "field": "velocity",
+          "committed": 0.022480528737058404,
+          "rerun": 0.022480528737058404,
+          "relative_difference": 0.0
+        },
+        {
+          "leg": "p3.N400",
+          "field": "pressure",
+          "committed": 0.013050115344201776,
+          "rerun": 0.013050115344201776,
+          "relative_difference": 0.0
+        },
+        {
+          "leg": "p3.N800",
+          "field": "density",
+          "committed": 0.023148994624927942,
+          "rerun": 0.023148994624927942,
+          "relative_difference": 0.0
+        },
+        {
+          "leg": "p3.N800",
+          "field": "velocity",
+          "committed": 0.013825704983298062,
+          "rerun": 0.013825704983298062,
+          "relative_difference": 0.0
+        },
+        {
+          "leg": "p3.N800",
+          "field": "pressure",
+          "committed": 0.008994023222666417,
+          "rerun": 0.008994023222666417,
+          "relative_difference": 0.0
+        }
+      ],
+      "worst_relative_difference": 0.0,
+      "tolerance": 1e-09,
+      "skipped_legs": [],
+      "status": "PASS"
+    },
+    "dt_refinement": {
+      "per_leg": {
+        "p3.N400": {
+          "steps": [
+            5109,
+            10217,
+            20429
+          ],
+          "dt_mean": [
+            2.5445292620865142e-05,
+            1.2723891553293531e-05,
+            6.363502863576289e-06
+          ],
+          "step_ratios": [
+            1.9998042669798395,
+            1.9995106195556425
+          ],
+          "dt_mean_ratios": [
+            1.9998042669798395,
+            1.9995106195556425
+          ],
+          "band": [
+            1.9,
+            2.1
+          ],
+          "status": "PASS"
+        },
+        "p3.N800": {
+          "steps": [
+            10250,
+            20497,
+            40986
+          ],
+          "dt_mean": [
+            1.2682926829268293e-05,
+            6.342391569497976e-06,
+            3.1718147660176647e-06
+          ],
+          "step_ratios": [
+            1.9997073170731707,
+            1.9996096989803387
+          ],
+          "dt_mean_ratios": [
+            1.9997073170731707,
+            1.9996096989803387
+          ],
+          "band": [
+            1.9,
+            2.1
+          ],
+          "status": "PASS"
+        }
+      },
+      "status": "PASS"
+    }
+  },
+  "verdict": "PASS",
+  "wall_seconds": 1664.1717929840088,
+  "metrics_sha256": "60123ae7139612bfb1084f292aaa78a630aee757c737619e033faea3e0e89623",
+  "figures": [
+    "docs/benchmarks/results/lax_time_budget_certified/figures/lax_time_budget_l2_vs_cfl.png",
+    "docs/benchmarks/results/lax_time_budget_certified/figures/lax_time_budget_share.png",
+    "docs/benchmarks/results/lax_time_budget_certified/figures/lax_time_budget_profiles.png"
+  ],
+  "figures_note": "rendered from the committed profiles cache"
+}
