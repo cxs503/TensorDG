@@ -201,9 +201,14 @@ def _measure_inequality(hp: dict, rows: list, metrics: dict, reference: dict) ->
                   "tvd_degrees": list(hp["tvd_degrees"])})
     for degree in hp["tvd_degrees"]:
         strict = e3["cases"][f"p{degree}_strict_all"]
+        # rows 里同时留点值极值：第三方可用 100*max(0, pt_max-1, -pt_min) 独立重算
+        # 这条 raw（见 validation/repro_cks1998/hinge_audit.py），不必采信自述百分比。
         _emit(f"e3_overshoot_p{degree}", strict["overshoot_pointwise_pct"],
               {"case": "E3_tvd", "degree": int(degree),
-               "limiter": "strict_all", "ncells": int(hp["tvd_cells"])})
+               "limiter": "strict_all", "ncells": int(hp["tvd_cells"]),
+               "overshoot_pointwise_pct": float(strict["overshoot_pointwise_pct"]),
+               "avg_min": float(strict["avg_min"]), "avg_max": float(strict["avg_max"]),
+               "pt_min": float(strict["pt_min"]), "pt_max": float(strict["pt_max"])})
     # 非门例（对照/公开指示器）也进 rows：它们的越界必须**看得见**，但不参与锚点判定
     for tag, case in e3["cases"].items():
         if tag.endswith("strict_all"):
