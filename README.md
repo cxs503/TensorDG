@@ -20,7 +20,7 @@ feature set.
 | Smooth Burgers | P2 DG, Rusanov, SSP-RK3 | Exact characteristic solution | 0.001820% |
 | Burgers shock (Riemann) | P2 DG, Rusanov/Roe, SSP-RK3, TVB limiter | Exact entropy solution (Rankine--Hugoniot) | 1.523 % (TVB, 200 cells) |
 | 1D heat equation | P2 SIPG, Crank--Nicolson | Exact decaying sine mode | 0.003604% |
-| Euler Lax shock tube | P3 DG, HLLC, positivity fallback | Exact Riemann solution | max 2.769420% |
+| Euler Lax shock tube | P3 DG, HLLC, positivity fallback | Exact Riemann solution | 3.025% (quadrature-free; the 8-point rule reads 2.906%, i.e. the 3% bar is **not** met — see `docs/CASE-LAX-DG-documented-number-audit.md`) |
 | 2D isentropic vortex | P0 DG / finite volume, Rusanov | Analytical moving vortex | max 1.972990% |
 | 1D shallow water, Ritter dry-bed dam break | P1 DG, HLL, SSP-RK3 | Exact self-similar solution | 0.357053% |
 | 1D linear elastodynamics (bar) | P2 DG, upwind (characteristic) flux, SSP-RK3 | d'Alembert two-pulse / clamped-free eigenmode | 0.000284% (pulse, 400 cells) / 0.0000354% (eigenmode, 40 cells) |
