@@ -115,19 +115,21 @@ def _ladder_record(config, error, drift=1e-15, entropy=1e-6):
     C6 reconciles declared checkpoints with records, so gate tests must speak the
     ladder's own vocabulary instead of inventing keys the module never declares.
     """
-    family = (f"dg_d{config['degree']}_n{config['cells']}_cfl{config['cfl']:g}"
-              if config["task"] == "dg" else f"p0_n{config['cells']}")
-    record = _synthetic_record(family, config["final_time"], error,
+    record = _synthetic_record("", config["final_time"], error,
                                drift=drift, entropy=entropy)
     record["task_key"] = ec.task_key(config)
     record["config"] = dict(config)
-    # Real result files carry the configuration at top level, and C8/C9 read it
-    # there (degree / cells); a synthetic bundle missing it would grade as nan.
+    # Real result files carry the configuration at top level, and C8/C9/C10 read
+    # it there (degree / cells); a synthetic bundle missing it would grade as nan.
     record["task"] = config["task"]
     record["cells"] = config["cells"]
     record["cfl"] = config["cfl"]
     if config["task"] == "dg":
         record["degree"] = config["degree"]
+    # The family key is the module's own derivation (scheme x degree x mesh x CFL
+    # x direction); re-deriving it here by hand is what let a direction family be
+    # silently merged into the design family.
+    record["family"] = ec.family_key(record)
     return record
 
 
