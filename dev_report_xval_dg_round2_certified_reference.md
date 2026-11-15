@@ -122,8 +122,13 @@ post_platform.py → TensorBench 合同文档 → POST /tensor/bench/results
 
 ## 5. 注意点（踩过的坑/局限/适用范围）
 
-1. **N=6400 四级梯次数据**：已递交集群作业 `cj3224`（4 核，3600s 超时），当前排队中。
-   该数据到位后，`test_xval_dg_round2_ladder_extension.py` 的 7 个测试将从 SKIPPED 转为运行。
+1. **N=6400 四级梯次数据（本单已闭合）**：已落盘
+   `validation/repro_shu_osher/artifacts/raw_ext/fv_cfl0p3_n6400.npz`。
+   `test_xval_dg_round2_ladder_extension.py` 的 7 个测试已从 SKIPPED 转为 **7 PASSED**。
+   梯次扩展审计 L0-L4 全绿（`accepted=True`）：L0 相邻差严格递减
+   （2.308e-3 → 9.489e-4 → 4.198e-4）、L1 扩展梯次 CERTIFIED、L2 阶一致性
+   （|p4-p3|/p3=0.0825 ≤ 0.20）、L3 带覆盖（shift=0.0594% ≤ U3=0.0828%）、
+   L4 声明稳定（最坏腿 2.4484% < 3%，最大移动 0.0073pp ≤ 0.5pp）。
 2. **系统负载**：本机 load15 ≈ 109，重计算必须走集群调度，不可本地强跑。
 3. **Oracle 来源**：所有闭形式 Oracle 来自 `tensordg.cases.shock_entropy`（案例模块，非引擎），
    确保引擎缺陷不会悄悄移动 Oracle。
@@ -148,9 +153,16 @@ post_platform.py → TensorBench 合同文档 → POST /tensor/bench/results
 | test_xval_dg_round2_evidence.py | 13 | 0 | 0 |
 | test_xval_dg_round2_integration.py | 10 | 0 | 0 |
 | test_xval_dg_round2_adversarial.py | 9 | 0 | 0 |
-| test_xval_dg_round2_ladder_extension.py | 0 | 7 | 0 |
+| test_xval_dg_round2_ladder_extension.py | **7** | **0** | **0** |
 
-**总计：32 PASS, 7 SKIPPED（等待 N=6400 数据）, 0 FAIL**
+**总计：39 PASS, 0 SKIPPED（本单闭合）, 0 FAIL**
+
+> 本单（m21318）闭合：N=6400 四级数据已落盘（`validation/repro_shu_osher/artifacts/raw_ext/fv_cfl0p3_n6400.npz`），
+> 梯次扩展审计 L0-L4 全绿（`accepted=True`）。同时修复了
+> `test_successive_differences_independent` 的潜伏缺陷——该测试原将每个细级
+> 与最粗基（N=800）比较（非相邻差），数据到位后会与审计的相邻差语义矛盾、
+> 破坏 L0 单调证据；现改为将每级粗化到公共基网格后比较相邻对，与审计语义
+> 逐位一致。
 
 ## 8. 产物清单
 
