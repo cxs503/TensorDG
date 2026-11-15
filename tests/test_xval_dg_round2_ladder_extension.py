@@ -76,7 +76,9 @@ def test_successive_differences_independent():
     base = levels[0]["field"]
     rows = le.successive_differences(levels)
     for row, (i, lv) in zip(rows, enumerate(levels[1:])):
-        a = _cell_average(base, lv["field"].size // base.size)
+        # both profiles are coarsened to the SAME coarsest grid (base.size);
+        # coarsening `base` by the factor would give a different grid than `lv`
+        a = _cell_average(base, 1)
         b = _cell_average(lv["field"], lv["field"].size // base.size)
         assert row["rel_l1"] == pytest.approx(_rel_l1(a, b), rel=1e-12, abs=0.0)
 
