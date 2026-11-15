@@ -10,6 +10,8 @@ solver:
   between the case pool and the sweep);
 * the arm set is closed and pre-registered -- no arm can be dropped because it
   lost, and no winning arm can be added after the fact;
+* every recorded row is bound to its leg record on disk -- a stale artifact
+  (a measurement on disk reported as unknown) and a hand-edited number both fail;
 * each non-control arm changes exactly one knob;
 * the verdict is a pure function of the recorded rows (rule, not narrative);
 * the attainability budget is the projection-floor identity, computed from the
@@ -80,10 +82,33 @@ def test_arm_set_is_closed_and_pre_registered(metrics):
     assert tuple(metrics["config"]["variant_order"]) == study.VARIANT_ORDER
     recorded = [row["variant"] for row in metrics["rows"]]
     assert recorded == list(study.VARIANT_ORDER), "arms were added or dropped"
+
+
+def test_artifact_rows_are_bound_to_their_leg_records(metrics):
+    """Every recorded row must be backed by a leg file on disk -- both directions.
+
+    ``metrics.json`` is an aggregation of ``legs/<arm>.json``, so the two can only
+    disagree if the artifact is stale or hand-edited.  Both are failures here:
+
+    * a row reporting a finite measurement must have the leg record that produced
+      it and must match it key for key (no numbers without provenance);
+    * a leg record that exists on disk must never be reported as ``not_run`` --
+      that hides a measurement the study already paid for.
+    """
     for row in metrics["rows"]:
-        if study._failed(row):
-            # an arm that did not run has no leg record; it is recorded as unknown
-            assert (LEGS / f"{row['variant']}.json").exists() or row.get("not_run")
+        name = row["variant"]
+        leg = LEGS / f"{name}.json"
+        if leg.exists():
+            assert not row.get("not_run"), (
+                f"{name}: leg record exists on disk but the artifact reports it as "
+                "'not run' -- stale artifact, re-run --aggregate")
+            on_disk = json.loads(leg.read_text())
+            recorded = {k: v for k, v in row.items() if k != "decision"}
+            assert recorded == on_disk, (
+                f"{name}: artifact row is not the leg record it claims to summarise")
+        else:
+            assert row.get("not_run") is True, (
+                f"{name}: a measurement is reported but no leg record backs it")
 
 
 def test_each_non_control_arm_changes_exactly_one_knob(metrics):
@@ -132,6 +157,37 @@ def test_unknown_arms_are_recorded_and_never_admissible(metrics):
             assert row["decision"]["margin"] is None
     if not metrics["verdict"]["scope_complete"]:
         assert metrics["verdict"]["arms_not_run"] or metrics["verdict"]["arms_errored"]
+
+
+def test_temporal_probe_is_derived_from_the_cfl_arms(metrics):
+    """The spatial-vs-temporal reading must be a read-off of the CFL rows."""
+    probe = metrics.get("temporal_probe")
+    assert probe is not None, "the CFL arms were measured; the probe must be recorded"
+    rows = {row["variant"]: row for row in metrics["rows"]}
+    graded = [rows[a["variant"]] for a in probe["arms"]]
+    # the probe covers exactly the graded temporal-probe arms, ordered by dt
+    expected_arms = sorted(
+        (row for row in metrics["rows"]
+         if row.get("role") in ("control", "temporal probe") and not study._failed(row)),
+        key=lambda row: row["dt_mean"])
+    assert [a["variant"] for a in probe["arms"]] == [r["variant"] for r in expected_arms]
+    assert graded == expected_arms
+    finest = expected_arms[0]
+    assert probe["finest_dt_arm"] == finest["variant"]
+    assert probe["finest_dt"] == finest["dt_mean"]
+    assert probe["finest_dt_worst_l2"] == finest["worst_l2"]
+    tolerance = metrics["config"]["tolerance"]
+    assert probe["bar_met_at_finest_dt"] is (finest["worst_l2"] < tolerance)
+    assert probe["time_refinement_insufficient"] is (not probe["bar_met_at_finest_dt"])
+    worst = [row["worst_l2"] for row in expected_arms]
+    assert probe["error_grows_as_dt_shrinks"] is all(
+        worst[i] >= worst[i + 1] for i in range(len(worst) - 1))
+    # every number in the probe has a leg record as its font
+    for arm in probe["arms"]:
+        leg = json.loads((LEGS / f"{arm['variant']}.json").read_text())
+        assert arm["worst_l2"] == leg["worst_l2"]
+        assert arm["dt_mean"] == leg["dt_mean"]
+        assert arm["cfl"] == leg["cfl"]
 
 
 # ---------------------------------------------------------------- attainability
