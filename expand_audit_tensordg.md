@@ -109,7 +109,7 @@ max 场 = velocity = 2.517658%，与 README 声明 max 2.517658% **逐字一致*
 | 2D Poisson | `--cells 16 --degree 1` | 0.380026% | 0.380026% | ✅ 精确 |
 | Smooth Burgers | `--cells 64 --degree 2` | 0.001820% | 0.001820% | ✅ 精确 |
 | 1D Heat | `--cells 16 --degree 2` | 0.003604% | 0.003604% | ✅ 精确 |
-| Lax 激波管 | `--cells 400 --degree 3` | max 2.769420% (ρ) | max 2.769420% | ✅ 精确 |
+| Lax 激波管 | `--cells 400 --degree 3` | max 3.025% (ρ, 波对齐) | max 3.025% | ⚠️ 3 % 门未达（8 点规则虚高读 2.906%，见 `docs/CASE-LAX-DG-documented-number-audit.md`） |
 | 2D 等熵涡 | `--cells 192` | max 1.972990% (v_y) | max 1.972990% | ✅ 精确 |
 
 **结论：8/8 基准全部 PASS，数字与 README 声明逐字一致，无一条需要 honest FAIL。**
@@ -128,7 +128,7 @@ max 场 = velocity = 2.517658%，与 README 声明 max 2.517658% **逐字一致*
 | 4 | 2D Poisson | P1 SIPG | `tensordg/poisson_2d.py` | `tests/test_poisson_2d.py` | 0.380026% | ✅ |
 | 5 | Smooth Burgers | P2 DG, Rusanov, SSP-RK3 | `tensordg/burgers_1d.py` | `tests/test_burgers_1d.py` | 0.001820% | ✅ |
 | 6 | 1D Heat | P2 SIPG, Crank-Nicolson | `tensordg/heat_1d.py` | `tests/test_heat_1d.py` | 0.003604% | ✅ |
-| 7 | Euler Lax 激波管 | P3 DG, HLLC, positivity fallback | `tensordg/euler_dg_1d.py` | `tests/test_lax_1d.py` | max 2.769420% | ✅ |
+| 7 | Euler Lax 激波管 | P3 DG, HLLC, positivity fallback | `tensordg/euler_dg_1d.py` | `tests/test_lax_1d.py` | max 3.025% (ρ, 波对齐) | ⚠️ 差 0.8 % 未达 3 %（见 `docs/CASE-LAX-DG-documented-number-audit.md`） |
 | 8 | 2D 等熵涡 | P0 DG/FV, Rusanov | `tensordg/euler_2d.py` | `tests/test_vortex_2d.py` | max 1.972990% | ✅ |
 
 ### 3.2 Current scope 逐条对照

@@ -1,0 +1,171 @@
+{
+ "case": "CASE-LAX-DG",
+ "anchor": "CASE-LAX-DG",
+ "study": "provenance and ruler audit of the documented Lax number 2.769420 %",
+ "generated_at_utc": "2026-11-15T05:41:17Z",
+ "config": {
+  "ncells": 400,
+  "degree": 3,
+  "cfl": 0.35,
+  "final_time": 0.13,
+  "diaphragm": 0.5,
+  "domain": [
+   0.0,
+   1.0
+  ],
+  "quadrature_orders": [
+   4,
+   5,
+   6,
+   8,
+   10,
+   12,
+   16,
+   20,
+   24,
+   32
+  ],
+  "wave_subdivisions": [
+   40,
+   160,
+   640
+  ]
+ },
+ "tolerance": 0.03,
+ "leg": {
+  "steps": 5109,
+  "dt_mean": 2.5445292620865142e-05,
+  "wall_seconds": 84.60427808761597
+ },
+ "waves": {
+  "closed_form": {
+   "rarefaction_head": 0.15763654037219582,
+   "rarefaction_tail": 0.28722933252692573,
+   "contact": 0.6987339934622749,
+   "shock": 0.8223117925286793,
+   "pressure_star": 2.4660979192073564,
+   "velocity_star": 1.528723026632884
+  },
+  "detected": [
+   0.16013375000000002,
+   0.6987325000000001,
+   0.8223100000000001
+  ]
+ },
+ "metric_sweep": {
+  "4": {
+   "density": 0.033024587479646955,
+   "velocity": 0.026029791088577742,
+   "pressure": 0.014705020030386002
+  },
+  "5": {
+   "density": 0.033480069860303656,
+   "velocity": 0.022841264997419758,
+   "pressure": 0.01305940547117957
+  },
+  "6": {
+   "density": 0.02969593596766776,
+   "velocity": 0.021057554317788357,
+   "pressure": 0.012353433222206098
+  },
+  "8": {
+   "density": 0.02905815993632042,
+   "velocity": 0.01936459957437297,
+   "pressure": 0.01190544835215668
+  },
+  "10": {
+   "density": 0.03115561985348536,
+   "velocity": 0.022480536543055322,
+   "pressure": 0.01305013237552047
+  },
+  "12": {
+   "density": 0.03005037803730522,
+   "velocity": 0.020770932777491397,
+   "pressure": 0.01235948210258165
+  },
+  "16": {
+   "density": 0.030699506753340895,
+   "velocity": 0.021633295648289676,
+   "pressure": 0.01271017198477554
+  },
+  "20": {
+   "density": 0.029690074876247922,
+   "velocity": 0.019946813690073752,
+   "pressure": 0.012116361936734347
+  },
+  "24": {
+   "density": 0.030060258204929528,
+   "velocity": 0.02055919919737857,
+   "pressure": 0.012313081343005254
+  },
+  "32": {
+   "density": 0.02980612231356561,
+   "velocity": 0.020083317764671798,
+   "pressure": 0.01216424478589886
+  }
+ },
+ "converged": {
+  "40": {
+   "density": 0.030250737193075885,
+   "velocity": 0.020736991786961,
+   "pressure": 0.012384540663119023
+  },
+  "160": {
+   "density": 0.030250737193075944,
+   "velocity": 0.020736991786961218,
+   "pressure": 0.012384540663119073
+  },
+  "640": {
+   "density": 0.03025073719307572,
+   "velocity": 0.020736991786960902,
+   "pressure": 0.012384540663118958
+  },
+  "detected_breaks_640": {
+   "density": 0.030251104638503012,
+   "velocity": 0.020737792816702565,
+   "pressure": 0.01238482574066325
+  }
+ },
+ "documented_number": 0.0276942,
+ "documented_number_commit": "432bef057968a03199e3f70f4414e88a6ca0a159",
+ "historical_replay": {
+  "steps": 5087,
+  "readings": {
+   "8": {
+    "density": 0.027694203386353103,
+    "velocity": 0.016052703865463716,
+    "pressure": 0.009193692240376066
+   },
+   "10": {
+    "density": 0.029536906798151078,
+    "velocity": 0.01955096881005051,
+    "pressure": 0.010432831188507265
+   }
+  },
+  "commit": "432bef057968a03199e3f70f4414e88a6ca0a159"
+ },
+ "cross_check_quadrature_audit": 0.030250736120541084,
+ "findings": {
+  "default_rule_order": 8,
+  "default_rule_worst": "density",
+  "default_rule_worst_field": "density",
+  "default_rule_value": 0.02905815993632042,
+  "default_rule_pass": true,
+  "converged_worst_field": "density",
+  "converged_value": 0.03025073719307572,
+  "converged_pass": false,
+  "quadrature_spread_density": [
+   0.02905815993632042,
+   0.033480069860303656
+  ],
+  "quadrature_spread_density_pp": 0.44219099239832355,
+  "nearest_current_reading_to_documented": "8",
+  "nearest_current_reading_gap": 0.001363959936320422,
+  "documented_reproducible_from_main": false,
+  "converged_vs_committed_audit": 1.0725346340223485e-09
+ },
+ "figures": [
+  "figures/documented_number_provenance.png",
+  "figures/documented_number_verdict.png"
+ ]
+}
