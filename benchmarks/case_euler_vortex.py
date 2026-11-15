@@ -61,6 +61,13 @@ CONSERVATION_NAMES = ("mass", "x_momentum", "y_momentum", "energy")
 #: Case-pool tolerance: every field must be < 5 % relative L2.
 TOLERANCE = 0.05
 
+#: Conservation tolerance.  A conservative flux on a periodic domain leaves the
+#: four domain integrals unchanged, so the measured drift may only be round-off
+#: accumulated over the steps of the run (~1e-15 here, growing like sqrt(steps)
+#: at worst).  1e-12 sits three orders above that and three below any physical
+#: leak, so it separates "exactly conservative" from "slightly non-conservative".
+CONSERVATION_TOL = 1e-12
+
 #: Reference citation for both the exact solution and the tolerance.
 REFERENCE = (
     "C.-W. Shu, 'Essentially non-oscillatory and weighted essentially "
@@ -232,18 +239,77 @@ def run_residual():
 # one configuration per invocation
 # ---------------------------------------------------------------------------
 
+def conservation_totals(state, dx: float, dy: float):
+    """Domain integral of the four conserved quantities from cell averages.
+
+    ``state`` is ``(nx, ny, 4)`` cell averages, i.e. exactly the array a finite
+    volume scheme advects, so the trapezoidal/rectangle rule is exact here: this
+    *is* the discrete invariant the divergence theorem makes constant.
+    """
+    return state.sum(dim=(0, 1)) * (dx * dy)
+
+
+def conservation_drift_from_totals(initial, final) -> dict:
+    """Per-quantity relative drift ``|Q_f - Q_i| / |Q_i|``.
+
+    One implementation for every path (P0 observer samples, DG modal zero mode,
+    and the negative controls), so a report can never compare two definitions of
+    "drift" without saying so.
+    """
+    drift = {}
+    for i, name in enumerate(CONSERVATION_NAMES):
+        init_val = float(initial[i].item())
+        final_val = float(final[i].item())
+        drift[name] = abs(final_val - init_val) / max(abs(init_val), 1e-30)
+    return drift
+
+
+def conservation_summary(drift: dict) -> dict:
+    """Worst-case drift and the tolerance verdict for a drift dictionary."""
+    values = [float(v) for v in drift.values() if not math.isnan(float(v))]
+    return {
+        "max_conservation_drift": max(values) if values else float("nan"),
+        "conservation_tolerance": CONSERVATION_TOL,
+        "conservation_pass": bool(values) and all(v < CONSERVATION_TOL for v in values),
+    }
+
+
+def _finalize_record(record: dict) -> dict:
+    """Attach the derived fields every study entry point documents.
+
+    ``run_task`` used to be the only place that computed ``max_relative_l2`` /
+    ``gate_pass``, so calling ``run_dg`` or ``run_p0`` directly (as the
+    conservation tests and the report generator do) produced a record without
+    them.  The derivation lives here now and is idempotent, so the two entry
+    points cannot disagree.
+    """
+    record["max_relative_l2"] = max(record["errors"].values())
+    record["max_percent"] = 100.0 * record["max_relative_l2"]
+    record["gate_pass"] = record["max_relative_l2"] < TOLERANCE
+    return record
+
+
 def run_p0(config: dict):
     started = time.time()
     # Conservation tracking via observer hook
+    dx = (DOMAIN[0][1] - DOMAIN[0][0]) / config["cells"]
+    dy = (DOMAIN[1][1] - DOMAIN[1][0]) / config["cells"]
     _p0_totals_initial = None
     _p0_totals_final = None
+    _p0_step_ceiling = {"drift": 0.0, "name": "", "step": -1}
     def _p0_observer(t, steps, u):
         nonlocal _p0_totals_initial, _p0_totals_final
         # u shape: (nx, ny, 4) - sum over spatial dims, keep 4 components
-        cell_area = (10.0 / config["cells"]) ** 2
-        totals = (u.sum(dim=(0, 1)) * cell_area).clone()
+        totals = conservation_totals(u, dx, dy).clone()
         if steps == 0:
             _p0_totals_initial = totals
+        else:
+            # Ceiling over *every* step, not just the last one: an excursion
+            # that decays (or cancels) before the final time would otherwise be
+            # invisible to an endpoint-only audit.
+            for name, value in conservation_drift_from_totals(_p0_totals_initial, totals).items():
+                if value > _p0_step_ceiling["drift"]:
+                    _p0_step_ceiling.update(drift=value, name=name, step=int(steps))
         _p0_totals_final = totals
     x, y, fields, metadata = solve_isentropic_vortex(
         ncells=config["cells"], final_time=config["final_time"],
@@ -264,21 +330,19 @@ def run_p0(config: dict):
         "metric": "cell-average relative L2 (4x4 exact cell quadrature)",
         "fields_np": (fields["density"].cpu().numpy(), x.cpu().numpy(), y.cpu().numpy()),
     }
-    # Conservation drift
+    # Conservation drift (endpoint + per-step ceiling, one shared definition)
     if _p0_totals_initial is not None and _p0_totals_final is not None:
-        cons_drift = {}
-        for i, name in enumerate(CONSERVATION_NAMES):
-            init_val = float(_p0_totals_initial[i].item())
-            final_val = float(_p0_totals_final[i].item())
-            denom = max(abs(init_val), 1e-30)
-            cons_drift[name] = abs(final_val - init_val) / denom
-        record["conservation_drift"] = cons_drift
-        record["max_conservation_drift"] = max(cons_drift.values())
+        record["conservation_drift"] = conservation_drift_from_totals(
+            _p0_totals_initial, _p0_totals_final
+        )
     else:
         record["conservation_drift"] = {name: float("nan") for name in CONSERVATION_NAMES}
-        record["max_conservation_drift"] = float("nan")
+    record.update(conservation_summary(record["conservation_drift"]))
+    record["max_step_drift"] = _p0_step_ceiling["drift"]
+    record["max_step_drift_name"] = _p0_step_ceiling["name"]
+    record["max_step_drift_step"] = _p0_step_ceiling["step"]
     record["wall_seconds"] = wall
-    return record
+    return _finalize_record(record)
 
 
 def run_dg(config: dict):
@@ -311,14 +375,18 @@ def run_dg(config: dict):
                                   config["cells"])),
     }
     record["wall_seconds"] = wall
-    # Conservation drift from solver metadata
+    # Conservation drift from solver metadata.  The DG solver reports endpoint
+    # drift only (it exposes no per-step hook), so the ceiling is not defined on
+    # this path -- recorded as NaN rather than silently equal to the endpoint.
     cons_drift = metadata.get("conservation_drift", {})
-    record["conservation_drift"] = {name: cons_drift.get(name, float("nan")) for name in CONSERVATION_NAMES}
-    record["max_conservation_drift"] = max(
-        (v for v in record["conservation_drift"].values() if not isinstance(v, float) or not __import__("math").isnan(v)),
-        default=0.0,
-    )
-    return record
+    record["conservation_drift"] = {
+        name: cons_drift.get(name, float("nan")) for name in CONSERVATION_NAMES
+    }
+    record.update(conservation_summary(record["conservation_drift"]))
+    record["max_step_drift"] = float("nan")
+    record["max_step_drift_name"] = ""
+    record["max_step_drift_step"] = -1
+    return _finalize_record(record)
 
 
 def run_task(config: dict) -> dict:
@@ -328,9 +396,7 @@ def run_task(config: dict) -> dict:
     record = runner(config)
     for name in ("final_time", "cfl", "strength"):
         record[name] = config.get(name, STRENGTH if name == "strength" else None)
-    record["max_relative_l2"] = max(record["errors"].values())
-    record["max_percent"] = 100.0 * record["max_relative_l2"]
-    record["gate_pass"] = record["max_relative_l2"] < TOLERANCE
+    _finalize_record(record)
     record["reference"] = REFERENCE
     return record
 
