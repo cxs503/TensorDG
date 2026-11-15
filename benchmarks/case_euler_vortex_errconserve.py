@@ -417,6 +417,44 @@ def config_mismatch(record: dict, declared: dict) -> dict:
     return diffs
 
 
+def certificate_mismatch(record: dict, certificate: dict) -> dict:
+    """Fields where a replay certificate describes a *different* checkpoint.
+
+    ``tools/land_provenance_certificates.py`` applies the same filter before it
+    writes a certificate, but the gate must not depend on that: the certificate
+    bundle is a plain JSON file, so anything can put a claim in it.  C11
+    therefore re-derives the check from the record and the certificate alone.
+
+    A certificate is bound to a checkpoint by three things and all three are
+    re-checked here:
+
+    * the physics/discretisation fields (task/degree/cells/cfl/final_time/
+      strength) -- a certificate for another mesh is evidence for another problem;
+    * the checkpoint name the certificate says it replayed;
+    * the stored percentage it claims to reproduce -- a matching ``replay_delta``
+      attached to different absolute numbers is a mismatched pairing, not a
+      reproduction.
+    """
+    diffs = {}
+    got = canonical_config(record.get("config") or {})
+    want = canonical_config(certificate.get("config") or {})
+    for key in PROVENANCE_PHYSICS_FIELDS:
+        if key in want and got.get(key) != want[key]:
+            diffs[key] = {"record": got.get(key), "certificate": want[key]}
+    named = certificate.get("task_key")
+    if named is not None and named != record.get("task_key"):
+        diffs["task_key"] = {"record": record.get("task_key"), "certificate": named}
+    stored = certificate.get("stored_max_percent")
+    record_percent = record.get("max_percent")
+    if stored is not None and record_percent is not None:
+        relative = abs(stored - record_percent) / max(abs(record_percent), 1e-30)
+        if relative > PROVENANCE_REPLAY_TOLERANCE:
+            diffs["stored_max_percent"] = {"record": record_percent,
+                                           "certificate": stored,
+                                           "relative": relative}
+    return diffs
+
+
 def load_provenance_certificates(output_dir) -> dict:
     """Replay certificates on disk (``{}`` when none were produced yet)."""
     path = Path(output_dir) / PROVENANCE_CERTIFICATES
@@ -476,12 +514,18 @@ def provenance_audit(records: list, certificates: dict | None = None) -> dict:
                             f"aggregate is {REFERENCE_MODEL!r}")
         if delta is None or not np.isfinite(delta) or delta > PROVENANCE_REPLAY_TOLERANCE:
             problems.append(f"replay delta {delta!r} > {PROVENANCE_REPLAY_TOLERANCE:g}")
+        # The certificate must be about *this* checkpoint: the landing step checks
+        # it, and the gate cannot assume the landing step ran.
+        diffs = certificate_mismatch(record, certificate)
+        if diffs:
+            problems.append(f"certificate does not describe this checkpoint: {diffs}")
         row["certificate"] = {"reference_model": certificate.get("reference_model"),
                              "replay_delta": delta,
                              "wall_seconds": certificate.get("wall_seconds")}
         if problems:
             row["status"] = "certificate_rejected"
             row["problems"] = problems
+            row["certificate_mismatch"] = diffs
         else:
             row["status"] = "replayed"
         rows[key] = row
