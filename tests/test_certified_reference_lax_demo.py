@@ -24,11 +24,20 @@ class TestSyntheticProfile:
         assert rho.max() < 1.0
 
     def test_synthetic_converges(self):
-        """Higher resolution → smaller error against exact."""
+        """Higher resolution → smaller error against exact.
+
+        Both candidate resolutions are compared against the *same* exact
+        profile on a common grid: the 200-cell solution against the exact
+        coarsened to 200 cells, and the 400-cell solution against the exact on
+        its own 400-cell grid.  (The previous version coarsened ``r200`` and
+        ``exact`` by the same factor 2, which put them on different grids --
+        100 vs 200 cells -- and raised a broadcast error.)
+        """
         _, r200 = demo._synthetic(200, p=1.05, amp=0.08)
         _, r400 = demo._synthetic(400, p=1.05, amp=0.08)
         _, exact = demo._synthetic(400, p=1.05, amp=0.0)
-        e200 = np.sum(np.abs(coarsen(r200, 2) - coarsen(exact, 2))) / np.sum(np.abs(exact))
+        exact200 = coarsen(exact, 2)                       # 400 -> 200 cells
+        e200 = np.sum(np.abs(r200 - exact200)) / np.sum(np.abs(exact200))
         e400 = np.sum(np.abs(r400 - exact)) / np.sum(np.abs(exact))
         assert e400 < e200, "finer grid should have smaller error"
 
