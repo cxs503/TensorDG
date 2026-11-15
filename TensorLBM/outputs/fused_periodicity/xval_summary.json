@@ -1,0 +1,536 @@
+{
+  "anchor": "XVAL-LBM-MPI-GHOST-EXCHANGE-KERNEL-FUSED",
+  "upstream": "lssfau/lbmpy src/lbmpy/advanced_streaming/communication.py (LBMPeriodicityHandling / get_communication_slices)",
+  "environment": {
+    "python": "3.11.6",
+    "numpy": "2.4.6",
+    "machine": "loongarch64"
+  },
+  "arm_a_conformance": {
+    "available": true,
+    "rows": [
+      {
+        "lattice": "D2Q9",
+        "shape": [
+          3,
+          4
+        ],
+        "upstream_copy_entries": 16,
+        "upstream_seam_cells": 38,
+        "derived_seam_cells": 38,
+        "populations_mismatched": 0
+      },
+      {
+        "lattice": "D2Q9",
+        "shape": [
+          7,
+          5
+        ],
+        "upstream_copy_entries": 16,
+        "upstream_seam_cells": 68,
+        "derived_seam_cells": 68,
+        "populations_mismatched": 0
+      },
+      {
+        "lattice": "D3Q19",
+        "shape": [
+          4,
+          5,
+          3
+        ],
+        "upstream_copy_entries": 42,
+        "upstream_seam_cells": 422,
+        "derived_seam_cells": 422,
+        "populations_mismatched": 0
+      },
+      {
+        "lattice": "D3Q27",
+        "shape": [
+          3,
+          4,
+          2
+        ],
+        "upstream_copy_entries": 98,
+        "upstream_seam_cells": 368,
+        "derived_seam_cells": 368,
+        "populations_mismatched": 0
+      }
+    ],
+    "all_conform": true
+  },
+  "arm_b_exactness": {
+    "rows": [
+      {
+        "lattice": "D2Q9",
+        "shape": [
+          32,
+          40
+        ],
+        "max_abs_diff_fused_fullcopy": 0.0,
+        "max_abs_diff_fused_ghost": 0.0,
+        "bitwise_equal": true,
+        "fused": {
+          "mode": "fused",
+          "n_elem_total": 11520,
+          "n_elem_seam": 428,
+          "seam_fraction": 0.03715277777777778,
+          "bytes_written": 92160,
+          "bytes_seam": 3424,
+          "n_field_copies": 0,
+          "n_ghost_arrays": 0
+        },
+        "fullcopy": {
+          "mode": "fullcopy",
+          "n_elem_total": 23040,
+          "n_elem_seam": 428,
+          "seam_fraction": 0.01857638888888889,
+          "bytes_written": 184320,
+          "bytes_seam": 3424,
+          "n_field_copies": 9,
+          "n_ghost_arrays": 0
+        },
+        "ghost": {
+          "mode": "ghost",
+          "n_elem_total": 23040,
+          "n_elem_seam": 428,
+          "seam_fraction": 0.01857638888888889,
+          "bytes_written": 184320,
+          "bytes_seam": 3424,
+          "n_field_copies": 9,
+          "n_ghost_arrays": 9
+        },
+        "element_ratio_fused_over_fullcopy": 0.5
+      },
+      {
+        "lattice": "D3Q19",
+        "shape": [
+          12,
+          14,
+          10
+        ],
+        "max_abs_diff_fused_fullcopy": 0.0,
+        "max_abs_diff_fused_ghost": 0.0,
+        "bitwise_equal": true,
+        "fused": {
+          "mode": "fused",
+          "n_elem_total": 31920,
+          "n_elem_seam": 4136,
+          "seam_fraction": 0.12957393483709273,
+          "bytes_written": 255360,
+          "bytes_seam": 33088,
+          "n_field_copies": 0,
+          "n_ghost_arrays": 0
+        },
+        "fullcopy": {
+          "mode": "fullcopy",
+          "n_elem_total": 63840,
+          "n_elem_seam": 4136,
+          "seam_fraction": 0.06478696741854637,
+          "bytes_written": 510720,
+          "bytes_seam": 33088,
+          "n_field_copies": 19,
+          "n_ghost_arrays": 0
+        },
+        "ghost": {
+          "mode": "ghost",
+          "n_elem_total": 63840,
+          "n_elem_seam": 4136,
+          "seam_fraction": 0.06478696741854637,
+          "bytes_written": 510720,
+          "bytes_seam": 33088,
+          "n_field_copies": 19,
+          "n_ghost_arrays": 19
+        },
+        "element_ratio_fused_over_fullcopy": 0.5
+      },
+      {
+        "lattice": "D3Q27",
+        "shape": [
+          10,
+          12,
+          8
+        ],
+        "max_abs_diff_fused_fullcopy": 0.0,
+        "max_abs_diff_fused_ghost": 0.0,
+        "bitwise_equal": true,
+        "fused": {
+          "mode": "fused",
+          "n_elem_total": 25920,
+          "n_elem_seam": 4976,
+          "seam_fraction": 0.19197530864197532,
+          "bytes_written": 207360,
+          "bytes_seam": 39808,
+          "n_field_copies": 0,
+          "n_ghost_arrays": 0
+        },
+        "fullcopy": {
+          "mode": "fullcopy",
+          "n_elem_total": 51840,
+          "n_elem_seam": 4976,
+          "seam_fraction": 0.09598765432098766,
+          "bytes_written": 414720,
+          "bytes_seam": 39808,
+          "n_field_copies": 27,
+          "n_ghost_arrays": 0
+        },
+        "ghost": {
+          "mode": "ghost",
+          "n_elem_total": 51840,
+          "n_elem_seam": 4976,
+          "seam_fraction": 0.09598765432098766,
+          "bytes_written": 414720,
+          "bytes_seam": 39808,
+          "n_field_copies": 27,
+          "n_ghost_arrays": 27
+        },
+        "element_ratio_fused_over_fullcopy": 0.5
+      }
+    ],
+    "all_bitwise_equal": true
+  },
+  "arm_c_cost": {
+    "rows": [
+      {
+        "lattice": "D2Q9",
+        "n": 32,
+        "shape": [
+          32,
+          32
+        ],
+        "fused_s": 4.438851028680802e-05,
+        "fullcopy_s": 0.0002715060487389565,
+        "ghost_s": 0.0006302120164036751,
+        "speedup_vs_fullcopy": 6.116583930946796,
+        "speedup_vs_ghost": 14.19763836028014,
+        "seam_fraction": 0.04123263888888889,
+        "fused_elem": 9216,
+        "fullcopy_elem": 18432,
+        "ghost_elem": 18432,
+        "seam_bytes": 3040,
+        "fullcopy_bytes": 147456
+      },
+      {
+        "lattice": "D2Q9",
+        "n": 64,
+        "shape": [
+          64,
+          64
+        ],
+        "fused_s": 6.099650636315346e-05,
+        "fullcopy_s": 0.000308367982506752,
+        "ghost_s": 0.0006936268880963325,
+        "speedup_vs_fullcopy": 5.055502370428051,
+        "speedup_vs_ghost": 11.371583873455021,
+        "seam_fraction": 0.020724826388888888,
+        "fused_elem": 36864,
+        "fullcopy_elem": 73728,
+        "ghost_elem": 73728,
+        "seam_bytes": 6112,
+        "fullcopy_bytes": 589824
+      },
+      {
+        "lattice": "D2Q9",
+        "n": 128,
+        "shape": [
+          128,
+          128
+        ],
+        "fused_s": 0.00011140648275613785,
+        "fullcopy_s": 0.00042991004884243014,
+        "ghost_s": 0.0008280320093035698,
+        "speedup_vs_fullcopy": 3.85893206756628,
+        "speedup_vs_ghost": 7.432529856598045,
+        "seam_fraction": 0.010389539930555556,
+        "fused_elem": 147456,
+        "fullcopy_elem": 294912,
+        "ghost_elem": 294912,
+        "seam_bytes": 12256,
+        "fullcopy_bytes": 2359296
+      },
+      {
+        "lattice": "D2Q9",
+        "n": 256,
+        "shape": [
+          256,
+          256
+        ],
+        "fused_s": 0.0003381035290658474,
+        "fullcopy_s": 0.0008475329726934433,
+        "ghost_s": 0.001243544928729534,
+        "speedup_vs_fullcopy": 2.506726194296487,
+        "speedup_vs_ghost": 3.6780004401768527,
+        "seam_fraction": 0.005201551649305556,
+        "fused_elem": 589824,
+        "fullcopy_elem": 1179648,
+        "ghost_elem": 1179648,
+        "seam_bytes": 24544,
+        "fullcopy_bytes": 9437184
+      },
+      {
+        "lattice": "D3Q19",
+        "n": 16,
+        "shape": [
+          16,
+          16,
+          16
+        ],
+        "fused_s": 0.00014847051352262497,
+        "fullcopy_s": 0.0006835311651229858,
+        "ghost_s": 0.0018590530380606651,
+        "speedup_vs_fullcopy": 4.603817612706139,
+        "speedup_vs_ghost": 12.521361945564832,
+        "seam_fraction": 0.0962171052631579,
+        "fused_elem": 77824,
+        "fullcopy_elem": 155648,
+        "ghost_elem": 155648,
+        "seam_bytes": 59904,
+        "fullcopy_bytes": 1245184
+      },
+      {
+        "lattice": "D3Q19",
+        "n": 24,
+        "shape": [
+          24,
+          24,
+          24
+        ],
+        "fused_s": 0.00026096152141690253,
+        "fullcopy_s": 0.0009186629205942154,
+        "ghost_s": 0.0021410761401057243,
+        "speedup_vs_fullcopy": 3.520300294105786,
+        "speedup_vs_ghost": 8.20456643753705,
+        "seam_fraction": 0.06469298245614036,
+        "fused_elem": 262656,
+        "fullcopy_elem": 525312,
+        "ghost_elem": 525312,
+        "seam_bytes": 135936,
+        "fullcopy_bytes": 4202496
+      },
+      {
+        "lattice": "D3Q19",
+        "n": 32,
+        "shape": [
+          32,
+          32,
+          32
+        ],
+        "fused_s": 0.0004398380406200886,
+        "fullcopy_s": 0.0013436708599328996,
+        "ghost_s": 0.002630757912993431,
+        "speedup_vs_fullcopy": 3.054921893610151,
+        "speedup_vs_ghost": 5.981196872568273,
+        "seam_fraction": 0.04872532894736842,
+        "fused_elem": 622592,
+        "fullcopy_elem": 1245184,
+        "ghost_elem": 1245184,
+        "seam_bytes": 242688,
+        "fullcopy_bytes": 9961472
+      },
+      {
+        "lattice": "D3Q19",
+        "n": 48,
+        "shape": [
+          48,
+          48,
+          48
+        ],
+        "fused_s": 0.0022109029814600945,
+        "fullcopy_s": 0.003671284951269627,
+        "ghost_s": 0.005565699003636837,
+        "speedup_vs_fullcopy": 1.6605364333287418,
+        "speedup_vs_ghost": 2.5173872622674804,
+        "seam_fraction": 0.03262061403508772,
+        "fused_elem": 2101248,
+        "fullcopy_elem": 4202496,
+        "ghost_elem": 4202496,
+        "seam_bytes": 548352,
+        "fullcopy_bytes": 33619968
+      },
+      {
+        "lattice": "D3Q27",
+        "n": 16,
+        "shape": [
+          16,
+          16,
+          16
+        ],
+        "fused_s": 0.000258506927639246,
+        "fullcopy_s": 0.0010461021214723588,
+        "ghost_s": 0.0024966590106487276,
+        "speedup_vs_fullcopy": 4.046708268229565,
+        "speedup_vs_ghost": 9.657996532042223,
+        "seam_fraction": 0.11986400462962964,
+        "fused_elem": 110592,
+        "fullcopy_elem": 221184,
+        "ghost_elem": 221184,
+        "seam_bytes": 106048,
+        "fullcopy_bytes": 1769472
+      },
+      {
+        "lattice": "D3Q27",
+        "n": 24,
+        "shape": [
+          24,
+          24,
+          24
+        ],
+        "fused_s": 0.0004302634857594967,
+        "fullcopy_s": 0.0013889579102396965,
+        "ghost_s": 0.003006448969244957,
+        "speedup_vs_fullcopy": 3.228156597550736,
+        "speedup_vs_ghost": 6.987460169756223,
+        "seam_fraction": 0.08103995198902607,
+        "fused_elem": 373248,
+        "fullcopy_elem": 746496,
+        "ghost_elem": 746496,
+        "seam_bytes": 241984,
+        "fullcopy_bytes": 5971968
+      },
+      {
+        "lattice": "D3Q27",
+        "n": 32,
+        "shape": [
+          32,
+          32,
+          32
+        ],
+        "fused_s": 0.0007765590213239193,
+        "fullcopy_s": 0.0019604120403528213,
+        "ghost_s": 0.003931921906769276,
+        "speedup_vs_fullcopy": 2.524485565837103,
+        "speedup_vs_ghost": 5.063262158832338,
+        "seam_fraction": 0.061206958912037035,
+        "fused_elem": 884736,
+        "fullcopy_elem": 1769472,
+        "ghost_elem": 1769472,
+        "seam_bytes": 433216,
+        "fullcopy_bytes": 14155776
+      },
+      {
+        "lattice": "D3Q27",
+        "n": 48,
+        "shape": [
+          48,
+          48,
+          48
+        ],
+        "fused_s": 0.003529131505638361,
+        "fullcopy_s": 0.005222730897367,
+        "ghost_s": 0.007532110996544361,
+        "speedup_vs_fullcopy": 1.4798912675888782,
+        "speedup_vs_ghost": 2.134267590910282,
+        "seam_fraction": 0.04109064214677641,
+        "fused_elem": 2985984,
+        "fullcopy_elem": 5971968,
+        "ghost_elem": 5971968,
+        "seam_bytes": 981568,
+        "fullcopy_bytes": 47775744
+      }
+    ]
+  },
+  "arm_d_physics": {
+    "taylor_green_2d": [
+      {
+        "n": 48,
+        "steps": 936,
+        "measured_rate": -0.0017146292933407743,
+        "analytic_rate": -0.0017134729863002354,
+        "rel_error": 0.0006748323724878412
+      },
+      {
+        "n": 96,
+        "steps": 3783,
+        "measured_rate": -0.0004284210950955768,
+        "analytic_rate": -0.00042836824657505886,
+        "rel_error": 0.0001233717039965054
+      }
+    ],
+    "shear_wave_3d": [
+      {
+        "n": 24,
+        "steps": 350,
+        "measured_rate": -0.0034487038486231245,
+        "analytic_rate": -0.003426945972600471,
+        "rel_error": 0.006349057206216484,
+        "amp_trace": [
+          0.0033333333333333335,
+          0.002945884479489093,
+          0.002611280243521433,
+          0.0023146815694523723,
+          0.002051771647740616,
+          0.001818723987795964,
+          0.0016121467256977411,
+          0.0014290332577223982,
+          0.0012667184810941116,
+          0.001122840005069415,
+          0.0009953037678074243
+        ],
+        "times": [
+          0,
+          35,
+          70,
+          105,
+          140,
+          175,
+          210,
+          245,
+          280,
+          315,
+          350
+        ]
+      },
+      {
+        "n": 32,
+        "steps": 682,
+        "measured_rate": -0.0019343441549472184,
+        "analytic_rate": -0.0019276571095877652,
+        "rel_error": 0.00346900147655577,
+        "amp_trace": [
+          0.0033333333333333335,
+          0.002951842217119137,
+          0.0026184032322821996,
+          0.002322629389560354,
+          0.0020602660486893814,
+          0.0018275391719664701,
+          0.0016211010355660187,
+          0.0014379820732846197,
+          0.0012755481599985284,
+          0.0011314627203656243,
+          0.0010036531177142634,
+          0.0008902808396303481
+        ],
+        "times": [
+          0,
+          62,
+          124,
+          186,
+          248,
+          310,
+          372,
+          434,
+          496,
+          558,
+          620,
+          682
+        ]
+      }
+    ],
+    "mass_drift_500_steps": 4.285460875053104e-14,
+    "worst_physics_rel_error": 0.006349057206216484
+  },
+  "figures": [
+    {
+      "name": "fig_cost_scaling.png",
+      "caption": "Direction-selective seam traffic fraction and fused-vs-copy streaming time ratio versus grid size, for D2Q9 / D3Q19 / D3Q27."
+    },
+    {
+      "name": "fig_decay_validation.png",
+      "caption": "Measured mode decay of the fused-exchange solver against the analytic rates (3-D shear wave nu k^2; 2-D Taylor-Green 2 nu k^2) and the 3% / 15% error bands."
+    },
+    {
+      "name": "fig_seam_map_field.png",
+      "caption": "Per-node count of populations crossing the periodic seam (D2Q9, 24x32) next to the velocity field produced by the fused-exchange solver."
+    }
+  ],
+  "wall_seconds": 27.37659764289856
+}
