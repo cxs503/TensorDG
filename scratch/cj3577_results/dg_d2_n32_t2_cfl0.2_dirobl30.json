@@ -1,0 +1,73 @@
+{
+  "task": "dg",
+  "degree": 2,
+  "cells": 32,
+  "final_time": 2.0,
+  "cfl": 0.2,
+  "steps": 926,
+  "dt": 0.001728885779911371,
+  "dt_note": "final (clamped) step; steps*dt is not the elapsed time",
+  "dofs": 36864,
+  "errors": {
+    "density": 5.175005341462482e-05,
+    "velocity_x": 7.943416565814375e-05,
+    "velocity_y": 0.00013830697509705108,
+    "pressure": 7.182606382420916e-05
+  },
+  "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+  "reference_model": "min_image",
+  "reference_images": null,
+  "final": {
+    "invariants": {
+      "mass": 98.24174356018752,
+      "momentum_x": 120.32107158190793,
+      "momentum_y": 69.46740306699893,
+      "energy": 344.75932660101637,
+      "entropy": 100.00000462305454
+    },
+    "entropy_mean": 1024.0000473400787,
+    "density_min": 0.49495265970326213,
+    "pressure_min": 0.3734676655809442
+  },
+  "initial": {
+    "invariants": {
+      "mass": 98.24174356019091,
+      "momentum_x": 120.3210715819115,
+      "momentum_y": 69.46740306700082,
+      "energy": 344.75932660102967,
+      "entropy": 99.99999980551623
+    },
+    "entropy_mean": 1023.9999980084864,
+    "density_min": 0.4941244856711183,
+    "pressure_min": 0.3727192020976931
+  },
+  "wall_seconds": 64.45938467979431,
+  "task_key": "dg_d2_n32_t2_cfl0.2_dirobl30",
+  "config": {
+    "task": "dg",
+    "cells": 32,
+    "final_time": 2.0,
+    "cfl": 0.2,
+    "strength": 5.0,
+    "reference": "min_image",
+    "background_velocity": [
+      1.2247448713915892,
+      0.7071067811865475
+    ],
+    "degree": 2
+  },
+  "family": "dg_d2_n32_cfl0.2_dirobl30",
+  "max_relative_l2": 0.00013830697509705108,
+  "max_percent": 0.013830697509705107,
+  "invariant_drift": {
+    "mass": 3.4571803734859105e-14,
+    "momentum_x": 2.9645052912344054e-14,
+    "momentum_y": 2.720763399344197e-14,
+    "energy": 3.8581581373205264e-14,
+    "entropy": 4.817538320755091e-08
+  },
+  "entropy_production": 4.8175383238202585e-08,
+  "entropy_drift": 4.8175383238202585e-08,
+  "density_min_relative_error": 0.001676043297103633,
+  "gate_pass": true
+}

@@ -1,0 +1,73 @@
+{
+  "task": "dg",
+  "degree": 2,
+  "cells": 32,
+  "final_time": 1.0,
+  "cfl": 0.2,
+  "steps": 463,
+  "dt": 0.0019516491736232267,
+  "dt_note": "final (clamped) step; steps*dt is not the elapsed time",
+  "dofs": 36864,
+  "errors": {
+    "density": 4.941752680080242e-05,
+    "velocity_x": 7.63895528998095e-05,
+    "velocity_y": 0.000133947892405922,
+    "pressure": 6.906801457307958e-05
+  },
+  "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+  "reference_model": "min_image",
+  "reference_images": null,
+  "final": {
+    "invariants": {
+      "mass": 98.2417435601892,
+      "momentum_x": 120.3210715819097,
+      "momentum_y": 69.46740306699988,
+      "energy": 344.759326601023,
+      "entropy": 100.00000196764469
+    },
+    "entropy_mean": 1024.0000201486819,
+    "density_min": 0.4939173715239786,
+    "pressure_min": 0.372423575936567
+  },
+  "initial": {
+    "invariants": {
+      "mass": 98.24174356019091,
+      "momentum_x": 120.3210715819115,
+      "momentum_y": 69.46740306700082,
+      "energy": 344.75932660102967,
+      "entropy": 99.99999980551623
+    },
+    "entropy_mean": 1023.9999980084864,
+    "density_min": 0.4941244856711183,
+    "pressure_min": 0.3727192020976931
+  },
+  "wall_seconds": 35.16226935386658,
+  "task_key": "dg_d2_n32_t1_cfl0.2_dirobl30",
+  "config": {
+    "task": "dg",
+    "cells": 32,
+    "final_time": 1.0,
+    "cfl": 0.2,
+    "strength": 5.0,
+    "reference": "min_image",
+    "background_velocity": [
+      1.2247448713915892,
+      0.7071067811865475
+    ],
+    "degree": 2
+  },
+  "family": "dg_d2_n32_cfl0.2_dirobl30",
+  "max_relative_l2": 0.000133947892405922,
+  "max_percent": 0.013394789240592201,
+  "invariant_drift": {
+    "mass": 1.735822781666566e-14,
+    "momentum_x": 1.488158034643566e-14,
+    "momentum_y": 1.3501532658399776e-14,
+    "energy": 1.9290790686602632e-14,
+    "entropy": 2.1621284715806126e-08
+  },
+  "entropy_production": 2.1621284762574078e-08,
+  "entropy_drift": 2.1621284762574078e-08,
+  "density_min_relative_error": 0.00041915378238824936,
+  "gate_pass": true
+}

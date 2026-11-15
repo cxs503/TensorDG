@@ -1,0 +1,73 @@
+{
+  "task": "dg",
+  "degree": 1,
+  "cells": 32,
+  "final_time": 10.0,
+  "cfl": 0.2,
+  "steps": 2803,
+  "dt": 0.0010745948554138351,
+  "dt_note": "final (clamped) step; steps*dt is not the elapsed time",
+  "dofs": 16384,
+  "errors": {
+    "density": 0.002384707046982222,
+    "velocity_x": 0.005522729436542376,
+    "velocity_y": 0.005523139729681506,
+    "pressure": 0.003521182909286421
+  },
+  "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+  "reference_model": "min_image",
+  "reference_images": null,
+  "final": {
+    "invariants": {
+      "mass": 98.24174356018067,
+      "momentum_x": 98.24174356018081,
+      "momentum_y": 98.24174356018077,
+      "energy": 344.7593266009895,
+      "entropy": 100.04769910005858
+    },
+    "entropy_mean": 1024.4884387845996,
+    "density_min": 0.4749685731252011,
+    "pressure_min": 0.3552220674927248
+  },
+  "initial": {
+    "invariants": {
+      "mass": 98.24174356019101,
+      "momentum_x": 98.24174356019101,
+      "momentum_y": 98.24174356019101,
+      "energy": 344.75932660102984,
+      "entropy": 100.00003593465338
+    },
+    "entropy_mean": 1024.0003679708504,
+    "density_min": 0.4897777281678784,
+    "pressure_min": 0.365867538217181
+  },
+  "wall_seconds": 160.30367231369019,
+  "task_key": "dg_d1_n32_t10_cfl0.2",
+  "config": {
+    "task": "dg",
+    "cells": 32,
+    "final_time": 10.0,
+    "cfl": 0.2,
+    "strength": 5.0,
+    "reference": "min_image",
+    "background_velocity": [
+      1.0,
+      1.0
+    ],
+    "degree": 1
+  },
+  "family": "dg_d1_n32_cfl0.2",
+  "max_relative_l2": 0.005523139729681506,
+  "max_percent": 0.5523139729681505,
+  "invariant_drift": {
+    "mass": 1.0530658208777157e-13,
+    "momentum_x": 1.0386006310304944e-13,
+    "momentum_y": 1.0429401879846607e-13,
+    "energy": 1.170637725426313e-13,
+    "entropy": 0.0004766314827760998
+  },
+  "entropy_production": 0.000476631482775991,
+  "entropy_drift": 0.000476631482775991,
+  "density_min_relative_error": 0.03023648114436366,
+  "gate_pass": true
+}
