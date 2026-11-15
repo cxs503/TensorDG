@@ -37,9 +37,17 @@ C6 ladder    every checkpoint declared in ``LADDER`` has a result record --
    complete- a declared-but-missing run is a hard FAIL, never a silent PASS.
    ness
 C7 design-   C2's conclusion must survive a change of *design point*: every DG
-   space     family (mesh x CFL) with >= 3 checkpoints has alpha <= 1, and at
-   invariance least two such families must exist.  Without it C2 is a statement
-             about one 32^2 / CFL 0.2 run rather than about the scheme.
+   space     family (mesh x CFL x degree) with >= 3 checkpoints has alpha <= 1,
+   invariance and at least two such families must exist.  Without it C2 is a
+             statement about one 32^2 / CFL 0.2 run rather than about the scheme.
+C8 degree    the same bound must survive a change of *polynomial degree*: every
+   invariance degree in (1, 2, 3) with >= 3 checkpoints has alpha <= 1 and at
+             least two degrees are decidable.  C7 only moves the mesh and the
+             CFL, so without C8 "error conservation" is a claim about p = 2.
+C9 design    the long-time error must still fall at the design order: over
+   order     n = 32/64 the observed spatial order reaches 0.8 * (p + 1) for
+             p = 1 and p = 2 at both t = 1 and t = 10.  This is what turns
+             "the error is a grid property" into a measurement instead of a fit.
 ============ ==========================================================
 
 Two independent discrete families are measured, so the criteria are not
@@ -144,10 +152,11 @@ P0_QUADRATURE = 4
 ENTROPY_TOLERANCE = 1e-3
 
 #: Long-time transport ladder.  With |u_inf| = sqrt(2) and a period of 10,
-#: ``t = 10`` is one full box crossing per axis and the P0 family reaches
-#: ``t = 20`` (two crossings).  The high-order families are capped at ``t = 10``
-#: by the per-run budget of the compute gate; the report states that scope
-#: explicitly instead of extrapolating.
+#: ``t = 10`` is one full box crossing per axis; the P0 family and (round 7) the
+#: design DG family ``dg_d2_n32_cfl0.2`` reach ``t = 20`` (two crossings), the
+#: latter so C2's fit window is not silently pinned to a single crossing.  The
+#: remaining DG families are capped at ``t = 10`` by the per-run budget of the
+#: compute gate; the report states that scope explicitly instead of extrapolating.
 LADDER = (
     # design family: three checkpoints, so C2's accumulation exponent is decidable
     # (the earlier two-point ladder returned ``nan`` and left the whole case at
@@ -170,6 +179,24 @@ LADDER = (
       for cells in (64, 256)),
     *({"task": "p0", "cells": 64, "final_time": t, "cfl": 0.4}
       for t in (5.0, 10.0)),
+    # -- degree axis (round 7) -----------------------------------------------
+    # Every design point above holds the polynomial degree fixed at p = 2, so
+    # round 5/6 could only claim that error conservation holds *for that degree*.
+    # The two families below move the degree axis alone (mesh and CFL untouched),
+    # which turns "the error is a grid property, not a time property" into a
+    # statement about the DG scheme family instead of about one p = 2 run.
+    *({"task": "dg", "degree": degree, "cells": 32, "final_time": t, "cfl": 0.2}
+      for degree in (1, 3) for t in (1.0, 2.0, 5.0, 10.0)),
+    # spatial design order (C9): a second resolution per degree, at the snapshot
+    # and after one full box crossing, so the design order p+1 is measured rather
+    # than assumed.  Degree 2 reads its cells from the two families above; the
+    # p = 1 pair is given all four checkpoints so it is also a C7 design point
+    # (a two-point family would leave C7 blind on the refined p = 1 mesh).
+    *({"task": "dg", "degree": 1, "cells": 64, "final_time": t, "cfl": 0.2}
+      for t in (1.0, 2.0, 5.0, 10.0)),
+    # double box crossing on the design family: extends C2's fit window past the
+    # single crossing the previous rounds stopped at.
+    {"task": "dg", "degree": 2, "cells": 32, "final_time": 20.0, "cfl": 0.2},
 )
 
 #: Checkpoints that are declared in ``LADDER`` and whose run has been *submitted*
@@ -178,19 +205,47 @@ LADDER = (
 #: archive keeps them visible (a hole that is merely quiet is exactly the defect
 #: C6 was written for).  When a record arrives the entry is ignored automatically.
 PENDING_RUNS = {
-    "dg_d2_n32_t1_cfl0.4": "cj3182",
-    "dg_d2_n32_t2_cfl0.4": "cj3182",
-    "dg_d2_n32_t5_cfl0.4": "cj3182",
-    "dg_d2_n32_t10_cfl0.4": "cj3182",
-    "dg_d2_n64_t1_cfl0.2": "cj3183",
-    "dg_d2_n64_t2_cfl0.2": "cj3183",
-    "dg_d2_n64_t10_cfl0.2": "cj3181",
+    # round 7 (degree axis + design order + double box crossing) -- one job
+    # (13 shards, submitted through the compute gate; a landed record makes its
+    # entry here irrelevant automatically).
+    "dg_d1_n32_t1_cfl0.2": "cj3432",
+    "dg_d1_n32_t2_cfl0.2": "cj3432",
+    "dg_d1_n32_t5_cfl0.2": "cj3432",
+    "dg_d1_n32_t10_cfl0.2": "cj3432",
+    "dg_d3_n32_t1_cfl0.2": "cj3432",
+    "dg_d3_n32_t2_cfl0.2": "cj3432",
+    "dg_d3_n32_t5_cfl0.2": "cj3432",
+    "dg_d3_n32_t10_cfl0.2": "cj3432",
+    "dg_d1_n64_t1_cfl0.2": "cj3432",
+    "dg_d1_n64_t2_cfl0.2": "cj3432",
+    "dg_d1_n64_t5_cfl0.2": "cj3432",
+    "dg_d1_n64_t10_cfl0.2": "cj3432",
+    "dg_d2_n32_t20_cfl0.2": "cj3432",
 }
 
 #: Configuration carrying C2/C4 (same pair of meshes as the sibling entry's gate).
 #: The CFL is part of the family identity: ``dt`` follows it, so two CFLs on the
 #: same mesh are two different discretisations and must never share one fit.
 GATE_FAMILY = "dg_d2_n32_cfl0.2"
+#: C8 -- the degrees whose conservation conclusion must be decidable.  Round 6
+#: certified C2 on p = 2 only, which is a statement about one polynomial degree;
+#: at least ``MIN_DECIDABLE_DEGREES`` distinct degrees must clear the same bound.
+DEGREE_AXIS = (1, 2, 3)
+MIN_DECIDABLE_DEGREES = 2
+#: C9 -- observed spatial order must reach this fraction of the design order p+1.
+#: The 80 % convention is the one already used by C5 (0.8 of the theoretical 1.0),
+#: declared here so the threshold is a convention, not a number fitted to the run.
+ORDER_SLACK = 0.8
+#: C9 checkpoints: the snapshot, and one full box crossing (the long-time state
+#: whose error conservation C2 certifies).
+ORDER_CHECKPOINTS = (1.0, 10.0)
+#: C9 meshes per degree: the design mesh and one refinement.
+ORDER_CELLS = (32, 64)
+#: C9 holds the CFL at its design value: ``dt`` follows the CFL, so mixing two
+#: CFLs in one order fit would measure the time step, not the mesh.
+ORDER_CFL = 0.2
+#: C9 degrees: p = 1 (design order 2) and the design degree p = 2 (order 3).
+ORDER_FAMILIES = (1, 2)
 #: C7 -- minimum number of *decidable* DG design points (mesh x CFL) that must
 #: show error conservation.  One point is an anecdote: C2 lives on a single
 #: (32^2, CFL 0.2) run, so without C7 the criterion could be an artefact of that
@@ -591,6 +646,30 @@ def _observed_order(records, checkpoint: float):
     return float(-np.polyfit(np.log(cells), np.log(err), 1)[0]), [int(c) for c in cells]
 
 
+def _dg_order(records, degree: int, checkpoint: float, cells=ORDER_CELLS):
+    """Observed spatial order of one DG degree family at one checkpoint.
+
+    Least-squares slope of ``log e`` against ``log h`` over the meshes present.
+    Two resolutions are enough here (unlike C2's exponent, where a two-point fit
+    through a curve that starts at the projection floor says nothing): the slope
+    of a straight line through two points *is* the measured order, and the gate
+    asks only whether it reaches a predeclared fraction of ``p + 1``.  The CFL is
+    pinned to ``ORDER_CFL``: two CFLs on one mesh are two discretisations, and a
+    fit through both would measure the time step rather than the mesh.
+    """
+    rows = [r for r in records if r.get("task") == "dg"
+            and int(r.get("degree", -1)) == int(degree)
+            and abs(float(r.get("cfl", float("nan"))) - ORDER_CFL) < 1e-12
+            and int(r.get("cells", -1)) in set(cells)
+            and abs(r["final_time"] - checkpoint) < 1e-12]
+    rows.sort(key=lambda r: r["cells"])
+    used = np.array([r["cells"] for r in rows], dtype=float)
+    err = np.array([r["max_relative_l2"] for r in rows], dtype=float)
+    if len(rows) < 2 or np.any(err <= 0.0) or len(set(used)) < 2:
+        return float("nan"), [int(c) for c in used]
+    return float(-np.polyfit(np.log(used), np.log(err), 1)[0]), [int(c) for c in used]
+
+
 def design_space_spread(records: list) -> dict:
     """Cross-design-point errors at one box crossing (informational, C7x).
 
@@ -873,9 +952,9 @@ def evaluate_gates(records: list, exact: dict) -> dict:
     else:
         c7_status = "passed"
     gates["C7_design_space_invariance"] = {
-        "criterion": (f"every DG design point (mesh x CFL) with >= 3 checkpoints "
-                      f"satisfies alpha <= {MAX_GROWTH_EXPONENT}, and at least "
-                      f"{MIN_DECIDABLE_DESIGN_FAMILIES} such points exist"),
+        "criterion": (f"every DG design point (mesh x CFL x degree) with >= 3 "
+                      f"checkpoints satisfies alpha <= {MAX_GROWTH_EXPONENT}, and at "
+                      f"least {MIN_DECIDABLE_DESIGN_FAMILIES} such points exist"),
         "measured": max((v["exponent"] for v in evaluated.values()),
                         default=float("nan")),
         "worst_at": (max(evaluated, key=lambda k: evaluated[k]["exponent"])
@@ -885,6 +964,96 @@ def evaluate_gates(records: list, exact: dict) -> dict:
         "offenders": offenders,
         "passed": c7_status == "passed",
         "status": c7_status,
+    }
+
+    # -- C8: does the conservation conclusion survive a change of *degree*? ---
+    # C7 moves the mesh and the CFL, both of which leave the spatial operator's
+    # order untouched.  A reviewer can therefore still read C2 as "p = 2 happens
+    # to conserve its error".  C8 asks the same bound of every degree in
+    # ``DEGREE_AXIS`` that has a decidable exponent, and requires at least
+    # ``MIN_DECIDABLE_DEGREES`` such degrees: one degree is the anecdote C7 was
+    # written against, three is a statement about the DG family.
+    degree_rows = {}
+    for degree in DEGREE_AXIS:
+        family = f"dg_d{degree}_n32_cfl0.2"
+        rows = families.get(family, [])
+        exponent = exponents.get(family, float("nan"))
+        degree_rows[degree] = {
+            "family": family,
+            "checkpoints": len(rows),
+            "final_time_max": max((r["final_time"] for r in rows), default=None),
+            "exponent": exponent,
+            "passed": bool(np.isfinite(exponent)
+                           and exponent <= MAX_GROWTH_EXPONENT + 1e-9),
+        }
+    degrees_evaluated = [d for d, row in degree_rows.items()
+                         if np.isfinite(row["exponent"])]
+    degree_offenders = {d: row["exponent"] for d, row in degree_rows.items()
+                        if np.isfinite(row["exponent"]) and not row["passed"]}
+    if degree_offenders:
+        c8_status = "failed"
+    elif len(degrees_evaluated) < MIN_DECIDABLE_DEGREES:
+        c8_status = "not_evaluated"
+    else:
+        c8_status = "passed"
+    gates["C8_degree_invariance"] = {
+        "criterion": (f"every DG degree in {list(DEGREE_AXIS)} with >= 3 checkpoints "
+                      f"satisfies alpha <= {MAX_GROWTH_EXPONENT}, and at least "
+                      f"{MIN_DECIDABLE_DEGREES} distinct degrees are decidable"),
+        "measured": max((row["exponent"] for row in degree_rows.values()
+                         if np.isfinite(row["exponent"])), default=float("nan")),
+        "worst_at": (max((d for d in degrees_evaluated),
+                         key=lambda d: degree_rows[d]["exponent"])
+                     if degrees_evaluated else None),
+        "per_degree": degree_rows,
+        "degrees_evaluated": degrees_evaluated,
+        "offenders": degree_offenders,
+        "passed": c8_status == "passed",
+        "status": c8_status,
+    }
+
+    # -- C9: is the long-time error a *grid* property?  Measure the order. ----
+    # The claim C2 makes ("the error is a mesh property, not a time property") is
+    # only credible if the error still falls at the design order p + 1 after the
+    # vortex has crossed the box: a discretisation that accumulates a non-grid
+    # residue loses that slope.  Every (degree, checkpoint) pair with two meshes
+    # is graded against ``ORDER_SLACK * (p + 1)``.
+    order_rows = {}
+    order_failures = {}
+    for degree in ORDER_FAMILIES:
+        for checkpoint in ORDER_CHECKPOINTS:
+            order, cells = _dg_order(records, degree, checkpoint)
+            target = ORDER_SLACK * (degree + 1)
+            ok = bool(np.isfinite(order) and order + 1e-12 >= target)
+            key = f"dg_d{degree}_t{checkpoint:g}"
+            order_rows[key] = {
+                "degree": degree,
+                "checkpoint": checkpoint,
+                "cells": cells,
+                "order": order,
+                "target": target,
+                "passed": ok,
+            }
+            if np.isfinite(order) and not ok:
+                order_failures[key] = order
+    decidable = {k: v for k, v in order_rows.items() if np.isfinite(v["order"])}
+    if order_failures:
+        c9_status = "failed"
+    elif len(decidable) < len(ORDER_FAMILIES) * len(ORDER_CHECKPOINTS):
+        c9_status = "not_evaluated"
+    else:
+        c9_status = "passed"
+    gates["C9_design_order"] = {
+        "criterion": (f"observed spatial order over n={list(ORDER_CELLS)} reaches "
+                      f"{ORDER_SLACK:g} * (p + 1) for every degree in "
+                      f"{list(ORDER_FAMILIES)} at t in {list(ORDER_CHECKPOINTS)}"),
+        "measured": min((v["order"] for v in decidable.values()), default=float("nan")),
+        "worst_at": (min(decidable, key=lambda k: decidable[k]["order"])
+                     if decidable else None),
+        "per_case": order_rows,
+        "failures": order_failures,
+        "passed": c9_status == "passed",
+        "status": c9_status,
     }
 
     # -- C7x: informational spread / amplification prediction. ----------------
@@ -1055,7 +1224,41 @@ def _markdown(records: list, metrics: dict, exact: dict) -> str:
         f"（{gates['C7_design_space_invariance']['worst_at']}） | "
         f"{flag('C7_design_space_invariance')} |",
         "",
-        "## 设计空间（C7：网格轴 / CFL 轴，一轮动一个）",
+        "",
+        f"| C8 阶数不变性 | {list(DEGREE_AXIS)} 中每个有 >= 3 检查点的阶数都满足 "
+        f"alpha <= {MAX_GROWTH_EXPONENT}，且至少 {MIN_DECIDABLE_DEGREES} 个阶数可判 | 可判 "
+        f"{gates['C8_degree_invariance']['degrees_evaluated']}，最大 alpha "
+        f"{gates['C8_degree_invariance']['measured']:.3f}"
+        f"（p={gates['C8_degree_invariance']['worst_at']}） | "
+        f"{flag('C8_degree_invariance')} |",
+        f"| C9 设计阶 | n={list(ORDER_CELLS)} 的观测空间阶达到 "
+        f"{ORDER_SLACK:g}*(p+1)，对 p in {list(ORDER_FAMILIES)}、"
+        f"t in {list(ORDER_CHECKPOINTS)} 全部成立 | 最差 {gates['C9_design_order']['measured']:.3f}"
+        f"（{gates['C9_design_order']['worst_at']}） | "
+        f"{flag('C9_design_order')} |",
+        "",
+        "## 阶数轴（C8）与设计阶（C9）",
+        "",
+        "| 阶数 | 族 | 检查点数 | t_max | alpha | 判定 |",
+        "|---|---|---|---|---|---|",
+    ]
+    for degree, row in gates["C8_degree_invariance"]["per_degree"].items():
+        lines.append(
+            f"| p={degree} | {row['family']} | {row['checkpoints']} | "
+            f"{row['final_time_max'] if row['final_time_max'] is not None else '-'} | "
+            f"{row['exponent']:.3f} | {'通过' if row['passed'] else '未通过'} |")
+    lines += [
+        "",
+        "| 判据点 | 阶数 | 网格 | 观测阶 | 目标 | 判定 |",
+        "|---|---|---|---|---|---|",
+    ]
+    for key, row in gates["C9_design_order"]["per_case"].items():
+        lines.append(
+            f"| {key} | p={row['degree']} | {row['cells']} | {row['order']:.3f} | "
+            f">= {row['target']:.1f} | {'通过' if row['passed'] else '未通过'} |")
+    lines += [
+        "",
+        "## 设计空间（C7：网格轴 / CFL 轴 / 阶数轴，一轮动一个）",
         "",
         "| 设计点 | 检查点数 | CFL | alpha | t_max | 判定 |",
         "|---|---|---|---|---|---|",
