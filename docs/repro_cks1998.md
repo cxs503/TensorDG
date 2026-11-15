@@ -10,8 +10,11 @@
 - **产物**：
   - 复现驱动 `validation/repro_cks1998/repro_cks1998.py`（`--profile quick|full`）
   - 诊断 `validation/repro_cks1998/diagnose_sod_tvd.py`
-  - 机器产物 `validation/repro_cks1998/artifacts/quick/`、`validation/repro_cks1998/artifacts/full/`（`metrics.json` / 4×CSV /
-    3×PNG / `summary.md`）+ `validation/repro_cks1998/artifacts/diagnostics.json`
+  - 机器产物（入库）：`validation/repro_cks1998/artifacts/quick/`、`artifacts/full/` 的
+    `metrics.json` / 4×CSV / `summary.md`（sha256 清单见 `evidence.md`，只列 git 跟踪文件）。
+    3×PNG 由复现命令在本地生成、**未入库**（`evidence.md` 内单列声明）；
+    `artifacts/diagnostics.json` **未交付**——诊断扫描以 `diagnose_sod_tvd.py` 的输出与
+    `docs/` 数字为准（本条原为「声明了未交付」，m21336 已按实修正）。
   - 回归门 `tests/test_repro_cks1998.py`（8 条）
 - **复现命令**：
   ```bash
