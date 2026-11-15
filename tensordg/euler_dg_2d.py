@@ -40,6 +40,7 @@ import torch
 
 from .stepping import step_metadata
 from .euler_1d import GAMMA
+from .char_limiter import apply_characteristic_tvb_limiter_2d
 from .euler_2d import vortex_primitive
 from .limiters import _weno_weights
 from .tvb import troubled_from_differences
@@ -958,7 +959,11 @@ def solve_euler_dg_2d(
         refinement studies -- the caller is responsible for keeping the step
         inside the explicit stability limit.
     limiter : str or None
-        ``None`` (positivity fallback only), ``"tvb"`` or ``"weno"``.
+        ``None`` (positivity fallback only), ``"tvb"`` (componentwise
+        characteristic-free minmod), ``"char_tvb"`` (the same TVB test applied
+        to the local characteristic variables of the flux Jacobian, see
+        :func:`tensordg.char_limiter.apply_characteristic_tvb_limiter_2d`) or
+        ``"weno"``.
     tvb_constant : float
         TVB constant M; M=0 is strict TVD, larger M allows smooth extrema.
     limiter_stage : {"every", "final"}
@@ -1063,12 +1068,22 @@ def solve_euler_dg_2d(
             state = apply_tvb_limiter_2d(
                 state, dx, dy, tvb_constant, periodic_flags
             )
+        elif limiter == "char_tvb":
+            # Local characteristic decomposition: same Cockburn--Shu test and
+            # same mode-1 replacement, applied to the eigen-components of the
+            # flux Jacobian instead of to the conserved densities.  See
+            # ``tensordg/char_limiter.py`` and docs/CASE-DG-CKS1998-CHAR-LIMITER.md.
+            state = apply_characteristic_tvb_limiter_2d(
+                state, dx, dy, tvb_constant, periodic_flags
+            )
         elif limiter == "weno":
             state = apply_weno_limiter_2d(
                 state, dx, dy, tvb_constant, periodic_flags
             )
         elif limiter is not None:
-            raise ValueError("limiter must be None, 'tvb' or 'weno'")
+            raise ValueError(
+                "limiter must be None, 'tvb', 'char_tvb' or 'weno'"
+            )
         return state
 
     def impose(state):
