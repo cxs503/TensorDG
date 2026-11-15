@@ -71,7 +71,7 @@
   "source": "docs/benchmarks/results/lax_case_pool/metrics.json",
   "worst_relative_difference": 1.305070357343104e-06
  },
- "generated_at_utc": "2026-11-15T09:25:00Z",
+ "generated_at_utc": "2026-11-15T11:57:00Z",
  "question": "Does any admissible configuration of the existing scheme bring the pinned ledger leg p3.N400 under the registered 3 % whole-field relative-L2 bar without changing the degrees of freedom?",
  "rows": [
   {
@@ -126,24 +126,55 @@
   },
   {
    "cells": 400,
+   "cfl": 0.2,
    "decision": {
     "admissible": false,
-    "error": "not_run",
-    "margin": null,
+    "margin": 1.0881263506241619,
     "passes_tolerance": false,
-    "same_discretisation_budget": true,
-    "unknown": true
+    "same_discretisation_budget": true
    },
    "degree": 3,
+   "density_min": 0.3171813896188928,
    "dof": 1600,
+   "dt_mean": 1.4863937800137207e-05,
+   "flux": "hllc",
    "knob": {
     "cfl": 0.2
    },
-   "not_run": true,
+   "l1": {
+    "density": 0.008855776593181262,
+    "pressure": 0.007372920166630472,
+    "velocity": 0.012390088534099017
+   },
+   "l2": {
+    "density": 0.032643790518724854,
+    "pressure": 0.013200633488303042,
+    "velocity": 0.022732980507728467
+   },
+   "limiter": "local positivity fallback",
+   "positivity": "scale",
+   "positivity_stats": {
+    "cell_stages": 10495200,
+    "limited_cells": 2323,
+    "min_theta": 7.178359082806568e-298
+   },
+   "pressure_min": 0.42752455936007944,
    "role": "temporal probe",
+   "solver_kwargs": {
+    "cfl": 0.2,
+    "degree": 3,
+    "final_time": 0.13,
+    "limiter": null,
+    "limiter_stage": "every",
+    "ncells": 400,
+    "positivity": "scale"
+   },
+   "steps": 8746,
    "variant": "cfl020",
-   "wall_seconds": 0.0,
-   "why": "if the pinned deficit were dt-dominated, cutting the CFL by 1.75x would move the whole-field L2; otherwise the deficit is spatial"
+   "wall_seconds": 160.12179470062256,
+   "why": "if the pinned deficit were dt-dominated, cutting the CFL by 1.75x would move the whole-field L2; otherwise the deficit is spatial",
+   "worst_field": "density",
+   "worst_l2": 0.032643790518724854
   },
   {
    "cells": 400,
@@ -292,11 +323,47 @@
    "why": "hierarchical AO limiter, which keeps design order in troubled cells instead of collapsing them"
   }
  ],
+ "temporal_probe": {
+  "arms": [
+   {
+    "cfl": 0.2,
+    "dt_mean": 1.4863937800137207e-05,
+    "role": "temporal probe",
+    "variant": "cfl020",
+    "worst_l2": 0.032643790518724854
+   },
+   {
+    "cfl": 0.35,
+    "dt_mean": 2.5445292620865142e-05,
+    "role": "control",
+    "variant": "base",
+    "worst_l2": 0.03115561985348536
+   },
+   {
+    "cfl": 0.5,
+    "dt_mean": 3.633314700950252e-05,
+    "role": "temporal probe",
+    "variant": "cfl050",
+    "worst_l2": 0.030992491830553498
+   }
+  ],
+  "bar_met_at_finest_dt": false,
+  "coarsest_dt_arm": "cfl050",
+  "coarsest_dt_worst_l2": 0.030992491830553498,
+  "dt_span_ratio": 2.4443823365008384,
+  "error_grows_as_dt_shrinks": true,
+  "finest_dt": 1.4863937800137207e-05,
+  "finest_dt_arm": "cfl020",
+  "finest_dt_worst_l2": 0.032643790518724854,
+  "spread_over_tolerance": 0.05504328960571186,
+  "time_refinement_insufficient": true,
+  "worst_l2_spread": 0.0016512986881713557
+ },
  "tournament": {
   "ao": null,
   "av": 1.3195926791863453,
   "base": 1.0385206617828455,
-  "cfl020": null,
+  "cfl020": 1.0881263506241619,
   "cfl050": 1.03308306101845,
   "pos_none": null
  },
@@ -306,7 +373,6 @@
    "pos_none"
   ],
   "arms_not_run": [
-   "cfl020",
    "ao"
   ],
   "control_reproduced": true,
@@ -316,5 +382,5 @@
   "scope_complete": false,
   "verdict": "FAIL"
  },
- "wall_seconds": 246.8775622844696
+ "wall_seconds": 406.99935698509216
 }
