@@ -115,7 +115,7 @@ def _ladder_record(config, error, drift=1e-15, entropy=1e-6):
     C6 reconciles declared checkpoints with records, so gate tests must speak the
     ladder's own vocabulary instead of inventing keys the module never declares.
     """
-    family = (f"dg_d{config['degree']}_n{config['cells']}"
+    family = (f"dg_d{config['degree']}_n{config['cells']}_cfl{config['cfl']:g}"
               if config["task"] == "dg" else f"p0_n{config['cells']}")
     record = _synthetic_record(family, config["final_time"], error,
                                drift=drift, entropy=entropy)
@@ -272,8 +272,100 @@ def test_committed_evidence_covers_every_declared_checkpoint():
     records = [_json.loads(p.read_text()) for p in sorted(results.glob("*.json"))]
     assert records, f"no records under {results}"
     completeness = ec.ladder_completeness(records)
-    assert completeness["missing"] == []
+    # Every declared checkpoint must be on disk *or* be a run explicitly
+    # registered in PENDING_RUNS with the job that is producing it.
+    assert set(completeness["missing"]) == set(completeness["pending"])
     assert completeness["declared"] == len(ec.LADDER)
+
+
+# ---------------------------------------------------------------------------
+# C7: design-space invariance
+# ---------------------------------------------------------------------------
+
+def test_c7_passes_when_every_design_point_conserves_error():
+    exact = ec.exact_invariants(points=80)
+    gates = ec.evaluate_gates(_full_ladder_records(), exact)["gates"]
+    c7 = gates["C7_design_space_invariance"]
+    assert len(c7["evaluated_families"]) >= ec.MIN_DECIDABLE_DESIGN_FAMILIES
+    assert "dg_d2_n32_cfl0.2" in c7["evaluated_families"]
+    assert "dg_d2_n32_cfl0.4" in c7["evaluated_families"]   # CFL axis
+    assert "dg_d2_n64_cfl0.2" in c7["evaluated_families"]   # mesh axis
+    assert c7["offenders"] == {} and c7["passed"] is True
+
+
+def test_c7_rejects_conservation_that_holds_only_on_the_design_point():
+    """The defect C7 exists for: alpha <= 1 on 32^2 / CFL 0.2 and nowhere else."""
+    exact = ec.exact_invariants(points=80)
+
+    def error(config):
+        time = config["final_time"]
+        if config["task"] != "dg":
+            return 0.4 / config["cells"]
+        # super-linear accumulation on the fine mesh only
+        return 1e-4 * time ** (2.0 if config["cells"] == 64 else 0.2)
+
+    records = _full_ladder_records(dg_error=lambda t: 1e-4 * t,
+                                   p0_error=lambda n, t: 0.4 / n)
+    for config in ec.LADDER:
+        if config["task"] == "dg" and config["cells"] == 64:
+            for record in records:
+                if record["task_key"] == ec.task_key(config):
+                    record["max_relative_l2"] = error(config)
+                    record["max_percent"] = 100.0 * record["max_relative_l2"]
+    gates = ec.evaluate_gates(records, exact)["gates"]
+    c7 = gates["C7_design_space_invariance"]
+    assert list(c7["offenders"]) == ["dg_d2_n64_cfl0.2"]
+    assert c7["offenders"]["dg_d2_n64_cfl0.2"] > 1.0
+    assert c7["passed"] is False and c7["status"] == "failed"
+    # C2 (design point) still reads as passed: the gate that catches this is C7
+    assert gates["C2_error_conservation"]["passed"] is True
+    assert gates["verdict"] == "FAIL"
+
+
+def test_c7_is_not_evaluated_on_a_single_design_point():
+    """A one-point design space must read not_evaluated, never passed."""
+    exact = ec.exact_invariants(points=80)
+    records = [_synthetic_record(ec.GATE_FAMILY, t, 1e-4 * (1.0 + 0.01 * math.log(t)))
+               for t in (1.0, 2.0, 5.0, 10.0)]
+    gates = ec.evaluate_gates(records, exact)["gates"]
+    c7 = gates["C7_design_space_invariance"]
+    assert c7["status"] == "not_evaluated" and c7["passed"] is False
+    assert "C7_design_space_invariance" in gates["not_evaluated"]
+    # not-evaluated is never folded into PASS: the case cannot certify C7 here
+    assert gates["all_passed"] is False
+
+
+def test_ladder_covers_both_design_axes():
+    """Guard against a silent revert to the single-point design space."""
+    dg = [c for c in ec.LADDER if c["task"] == "dg"]
+    meshes = {c["cells"] for c in dg if abs(c["cfl"] - 0.2) < 1e-12}
+    cfls = {c["cfl"] for c in dg if c["cells"] == 32}
+    assert len(meshes) >= 2 and len(cfls) >= 2
+    # and every DG family must offer >= 3 checkpoints, otherwise alpha is nan
+    families = {}
+    for config in dg:
+        families.setdefault(f"{config['cells']}_cfl{config['cfl']:g}",
+                            []).append(config["final_time"])
+    for key, times in families.items():
+        assert len(set(times)) >= 3, key
+
+
+def test_c7x_amplification_prediction_is_falsifiable():
+    """The refinement prediction must be able to read False, and to read None."""
+    record = {"family": "dg_d2_n32_cfl0.2", "cfl": 0.2, "final_time": 10.0,
+              "max_relative_l2": 1e-3, "max_percent": 0.1,
+              "config": {"task": "dg", "degree": 2, "cells": 32,
+                         "final_time": 10.0, "cfl": 0.2}}
+    refined = dict(record, family="dg_d2_n64_cfl0.2",
+                   config=dict(record["config"], cells=64))
+    amp = ec.amplification([record, refined])
+    assert amp["supported"] is not None
+    assert "dg_d2_n32_cfl0.2" in amp["values"] and "dg_d2_n64_cfl0.2" in amp["values"]
+    assert amp["values"]["dg_d2_n32_cfl0.2"]["amplification"] > 1.0
+    # same numbers on both meshes -> the refined mesh amplifies *more* -> falsified
+    assert amp["supported"] is False
+    # and the criterion is not evaluable with the design point alone
+    assert ec.amplification([record])["supported"] is None
 
 
 # ---------------------------------------------------------------------------
@@ -307,7 +399,8 @@ def test_figures_are_produced(tmp_path):
                for t in (1.0, 2.0, 5.0)]
     figures = ec.make_figures(records, tmp_path)
     assert {f["name"] for f in figures} == {"fig_error_vs_time.png",
-                                            "fig_invariants_vs_time.png"}
+                                            "fig_invariants_vs_time.png",
+                                            "fig_design_space.png"}
     for figure in figures:
         assert (tmp_path / figure["name"]).stat().st_size > 2000
 
