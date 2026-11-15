@@ -92,3 +92,26 @@ def test_aggregate_flags_failure(tmp_path):
     assert metrics["overall_passed"] is False
     assert metrics["growth_factor"] > GROWTH_LIMIT
     assert metrics["growth_pass"] is False
+
+def test_report_is_data_driven_not_hardcoded(tmp_path):
+    """The generated report must not contain hardcoded error numbers from stale runs."""
+    results = tmp_path / "results"
+    results.mkdir(parents=True)
+    # Use realistic numbers matching the errconserve results
+    records = [
+        _fake("gate", 2, 32, PERIOD, 0.2, 0.000152, "dg_d2_n32_t10_cfl0.2"),
+        _fake("history", 2, 32, 1.0, 0.2, 0.000094, "dg_d2_n32_t1_cfl0.2"),
+        _fake("history", 2, 32, 5.0, 0.2, 0.000111, "dg_d2_n32_t5_cfl0.2"),
+        _fake("ladder", 2, 16, PERIOD, 0.2, 0.002, "dg_d2_n16_t10_cfl0.2"),
+    ]
+    for record in records:
+        (results / f"{record['config_id']}.json").write_text(json.dumps(record))
+    docs = tmp_path / "docs"
+    assert aggregate(tmp_path, docs) == 0
+    report = (docs / "CASE-DG-EULER-VORTEX-ERR.md").read_text()
+    # Must NOT contain the old hardcoded wrong numbers
+    assert "16.4%" not in report, "Report must not contain hardcoded 16.4% (was from coarse P3/8 mesh)"
+    assert "0.013%" not in report, "Report must not contain hardcoded 0.013%"
+    assert "~16%" not in report, "Report must not contain hardcoded ~16%"
+    # Must contain the actual data-driven numbers
+    assert "0.0094" in report or "0.0152" in report, "Report must contain actual computed error values"
