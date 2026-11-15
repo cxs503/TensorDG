@@ -1,0 +1,235 @@
+{
+  "cross_check_vs_engine": {
+    "all_agree": false,
+    "artifact": "/root/tp-agent/work/m21166/validation/xval_dg_round2/artifacts/ladder_extension.json",
+    "decisions_identical": true,
+    "max_rel_diff": 0.0,
+    "rows": [
+      {
+        "abs_diff": 0.0,
+        "agree": true,
+        "engine": 0.23083911384330436,
+        "independent": 0.23083911384330436,
+        "quantity": "L0.d1_percent",
+        "rel_diff": 0.0
+      },
+      {
+        "abs_diff": 0.0,
+        "agree": true,
+        "engine": 0.09489332553025007,
+        "independent": 0.09489332553025007,
+        "quantity": "L0.d2_percent",
+        "rel_diff": 0.0
+      },
+      {
+        "abs_diff": 0.0,
+        "agree": true,
+        "engine": 0.041976204690910957,
+        "independent": 0.041976204690910957,
+        "quantity": "L0.d3_percent",
+        "rel_diff": 0.0
+      },
+      {
+        "abs_diff": 0.0,
+        "agree": true,
+        "engine": 0.04162173159427086,
+        "independent": 0.04162173159427086,
+        "quantity": "L1.band_U4_percent",
+        "rel_diff": 0.0
+      },
+      {
+        "abs_diff": 0.0,
+        "agree": true,
+        "engine": 1.1767348864087728,
+        "independent": 1.1767348864087728,
+        "quantity": "L2.p4",
+        "rel_diff": 0.0
+      },
+      {
+        "abs_diff": 0.0,
+        "agree": true,
+        "engine": 0.05938674280373328,
+        "independent": 0.05938674280373328,
+        "quantity": "L3.shift_percent",
+        "rel_diff": 0.0
+      }
+    ],
+    "status": "compared",
+    "worst_leg_abs_diff_pp": 0.0008295195836000024
+  },
+  "independent": {
+    "L0_successive_differences": {
+      "criterion": "d(800->1600) > d(1600->3200) > d(3200->6400) (strict)",
+      "differences": [
+        {
+          "levels": [
+            800,
+            1600
+          ],
+          "rel_l1": 0.0023083911384330436,
+          "rel_l1_percent": 0.23083911384330436
+        },
+        {
+          "levels": [
+            1600,
+            3200
+          ],
+          "rel_l1": 0.0009489332553025006,
+          "rel_l1_percent": 0.09489332553025007
+        },
+        {
+          "levels": [
+            3200,
+            6400
+          ],
+          "rel_l1": 0.0004197620469091096,
+          "rel_l1_percent": 0.041976204690910957
+        }
+      ],
+      "pass": true,
+      "strictly_decreasing": true
+    },
+    "L1_extension_certified": {
+      "band_percent_U3": 0.08279718833081828,
+      "band_percent_U4": 0.04162173159427086,
+      "band_share_of_gate_U4": 8.324346318854171e-05,
+      "criterion": "four-level ladder is asymptotic (0 < p4 <= 8) and its band occupies <= 1/3 of the gate",
+      "p_four_levels": 1.1767348864087728,
+      "p_three_levels": 1.2825091761164593,
+      "pass": true,
+      "reference_ncells": 3200
+    },
+    "L2_order_consistency": {
+      "criterion": "|p4 - p3| / p3 <= 0.2",
+      "p_four_levels": 1.1767348864087728,
+      "p_three_levels": 1.2825091761164593,
+      "pass": true,
+      "relative_change": 0.0824744896001287,
+      "threshold": 0.2
+    },
+    "L3_band_covers_shift": {
+      "band_percent_U3": 0.08279718833081828,
+      "coverage_ratio": 0.7172555493847451,
+      "criterion": "rel L1(cert3, cert4) on the shared N=1600 grid <= U3",
+      "grid": 1600,
+      "pass": true,
+      "shift_percent": 0.05938674280373328,
+      "shift_rel_l1": 0.0005938674280373328
+    },
+    "L4_claim_stable": {
+      "all_legs_pass_strict": true,
+      "criterion": "every leg < 3.0 % against the 4-level reference and no leg moves by more than 0.5 pp",
+      "max_abs_move_pp": 0.007276250070784029,
+      "moves": [
+        {
+          "configuration": "DG P1 N=200 CFL=0.4",
+          "delta_pp": -0.007265057220343443,
+          "pass_strict_4level": true,
+          "rel_l1_percent_3level": 2.455700810957733,
+          "rel_l1_percent_4level": 2.4484357537373898
+        },
+        {
+          "configuration": "DG P2 N=200 CFL=0.4",
+          "delta_pp": -0.007205613985565573,
+          "pass_strict_4level": true,
+          "rel_l1_percent_3level": 2.420303578082888,
+          "rel_l1_percent_4level": 2.4130979640973225
+        },
+        {
+          "configuration": "DG P3 N=200 CFL=0.4",
+          "delta_pp": -0.007276250070784029,
+          "pass_strict_4level": true,
+          "rel_l1_percent_3level": 2.42662930821865,
+          "rel_l1_percent_4level": 2.4193530581478657
+        },
+        {
+          "configuration": "DG P1 N=400 CFL=0.4",
+          "delta_pp": -0.002436621266034729,
+          "pass_strict_4level": true,
+          "rel_l1_percent_3level": 1.547927698452007,
+          "rel_l1_percent_4level": 1.5454910771859722
+        },
+        {
+          "configuration": "DG P2 N=400 CFL=0.4",
+          "delta_pp": -0.0022544558785229235,
+          "pass_strict_4level": true,
+          "rel_l1_percent_3level": 1.516025516317413,
+          "rel_l1_percent_4level": 1.51377106043889
+        },
+        {
+          "configuration": "DG P3 N=400 CFL=0.4",
+          "delta_pp": -0.0014859800927528172,
+          "pass_strict_4level": true,
+          "rel_l1_percent_3level": 1.5221523374447026,
+          "rel_l1_percent_4level": 1.5206663573519499
+        },
+        {
+          "configuration": "DG P1 N=800 CFL=0.4",
+          "delta_pp": 0.001610909426963316,
+          "pass_strict_4level": true,
+          "rel_l1_percent_3level": 0.5786426612695335,
+          "rel_l1_percent_4level": 0.5802535706964967
+        },
+        {
+          "configuration": "DG P2 N=800 CFL=0.4",
+          "delta_pp": -0.0024853048734015115,
+          "pass_strict_4level": true,
+          "rel_l1_percent_3level": 0.5667191573590231,
+          "rel_l1_percent_4level": 0.5642338524856216
+        },
+        {
+          "configuration": "DG P3 N=800 CFL=0.4",
+          "delta_pp": -0.005127906910558366,
+          "pass_strict_4level": true,
+          "rel_l1_percent_3level": 0.6707024686122897,
+          "rel_l1_percent_4level": 0.6655745617017312
+        },
+        {
+          "configuration": "DG P2 N=400 CFL=0.1",
+          "delta_pp": -0.0025470291887277896,
+          "pass_strict_4level": true,
+          "rel_l1_percent_3level": 1.5197127102549806,
+          "rel_l1_percent_4level": 1.5171656810662526
+        },
+        {
+          "configuration": "DG P2 N=400 CFL=0.2",
+          "delta_pp": -0.0024584699282096875,
+          "pass_strict_4level": true,
+          "rel_l1_percent_3level": 1.5180917342199722,
+          "rel_l1_percent_4level": 1.5156332642917625
+        }
+      ],
+      "pass": true,
+      "worst_leg_4level": "DG P1 N=200 CFL=0.4",
+      "worst_rel_l1_percent_4level": 2.4484357537373898
+    },
+    "accepted": true,
+    "case": "Shu-Osher 1988 shock/entropy interaction (1D Euler, gamma=1.4, x in [-5,5], t=1.8, Mach-3 Hugoniot left state, transmissive ends)",
+    "decisions": {
+      "L0": true,
+      "L1": true,
+      "L2": true,
+      "L3": true,
+      "L4": true
+    },
+    "independent_of_engine": true,
+    "ladder": {
+      "levels": [
+        800,
+        1600,
+        3200,
+        6400
+      ],
+      "refinement": 2,
+      "scheme": "FV-WENO5-JS/HLLC(Davis)/SSP-RK3, CFL=0.3"
+    },
+    "rawdir": "/root/tp-agent/work/m21166/validation/repro_shu_osher/artifacts/raw",
+    "thresholds": {
+      "fs_gci": 1.25,
+      "gate_percent": 5.0,
+      "leg_stability_max_pp": 0.5,
+      "order_consistency_max": 0.2,
+      "strict_percent": 3.0
+    }
+  }
+}
