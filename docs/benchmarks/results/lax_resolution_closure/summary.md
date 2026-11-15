@@ -1,3 +1,18 @@
-# CASE-LAX-DG resolution closure
-verdict PASS, closure mesh 200
-see metrics.json / docs/CASE-LAX-DG-resolution-closure.md
+# CASE-LAX-DG resolution closure (p3 ladder to 3 %)
+
+generated: 2026-11-14T11:26:01Z  |  wall: 1385 s
+
+Verdict: **PASS**  (closure mesh = 800)
+
+| N (p3, no limiter) | rho L2 | u L2 | p L2 | rho L1 | rho band L1 |
+|---|---|---|---|---|---|
+| 200 | 4.2000% | 3.3902% | 1.6554% | 1.2147% | 0.7340% |
+| 400 | 3.1156% | 2.2481% | 1.3050% | 0.8686% | 0.6072% |
+| 800 | 2.3149% | 1.3826% | 0.8994% | 0.6165% | 0.4405% |
+| 1600 | 1.8750% | 1.4754% | 0.9167% | 0.4759% | 0.3628% |
+
+| limiter at N=400 | rho L2 | u L2 | p L2 |
+|---|---|---|---|
+| none | 3.1156% | 2.2481% | 1.3050% |
+| tvb | 7.0392% | 2.9805% | 1.4229% |
+| weno | 6.4432% | 2.9397% | 1.4144% |
