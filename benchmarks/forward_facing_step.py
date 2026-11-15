@@ -213,7 +213,8 @@ def _snap_to_face(value, dx, tol=1e-6):
 def gate_wall_reflection(ncells=(240, 1), degree=2, mach=2.0, cfl=0.12,
                          incident_mach=None, extra_time=0.08, limiter=None,
                          tvb_constant=1.0, front_buffer=3, wall_buffer=1,
-                         min_plateau_cells=3):
+                         min_plateau_cells=3, x_wall=1.0, x_shock=0.4,
+                         xmax=1.2, wall_mode="solid"):
     """G3: shock reflecting off an *internal* solid wall vs the exact two-shock solution.
 
     ``incident_mach`` defaults to ``mach``; it used to be written as a Python
@@ -238,14 +239,36 @@ def gate_wall_reflection(ncells=(240, 1), degree=2, mach=2.0, cfl=0.12,
     * whole-domain L1/L-infinity norms against the exact solution are reported for
       density and pressure, so mesh convergence can be measured independently of
       any sampling band.
+
+    ``wall_mode`` selects where the reflecting wall lives: ``"solid"`` (default)
+    puts an internal solid block behind the analytic wall -- the code path under
+    test -- while ``"boundary"`` truncates the mesh at ``x_wall`` and uses
+    ``bcs right="wall"``, i.e. the pre-existing boundary path.  Both arms are
+    scored against the same closed-form reference, so running the pair separates
+    "the embedded-wall flux is wrong" from "DG smears shocks on this mesh".
+    ``x_wall``/``x_shock``/``xmax`` are exposed so the ladder can shorten the
+    pre-reflection march, which dominates the cost (steps ~ t_end / dx).
     """
     if incident_mach is None:
         incident_mach = mach
     nx, ny = ncells
-    xmax, ymax = 1.2, 0.1
+    if wall_mode not in ("solid", "boundary"):
+        raise ValueError("wall_mode must be 'solid' or 'boundary'")
+    if extra_time <= 0.0:
+        # Before the incident shock reaches the wall there is no reflected
+        # plateau; sampling the band between the incident front and the wall
+        # would score pre-shock gas against the reflected state and report a
+        # meaningless FAIL.  Refuse instead of measuring nothing.
+        raise ValueError("extra_time must be > 0 (the reflected plateau does not "
+                         "exist before the incident shock reaches the wall)")
+    if wall_mode == "boundary":
+        # the domain must *end* at the analytic wall, otherwise the wall and the
+        # reference disagree by xmax - x_wall at every resolution
+        xmax = x_wall
+    ymax = 0.1
     dx = xmax / nx
-    x_wall_face, wall_offset_cells = _snap_to_face(1.0, dx)
-    x_shock_face, shock_offset_cells = _snap_to_face(0.4, dx)
+    x_wall_face, wall_offset_cells = _snap_to_face(x_wall, dx)
+    x_shock_face, shock_offset_cells = _snap_to_face(x_shock, dx)
     wr = WallReflection(x_shock=x_shock_face, x_wall=x_wall_face,
                         incident_mach=incident_mach)
     xc = (torch.arange(nx, dtype=torch.float64) + 0.5) * dx
@@ -259,6 +282,9 @@ def gate_wall_reflection(ncells=(240, 1), degree=2, mach=2.0, cfl=0.12,
     # discretisation disagree by O(1) cell -- an error no mesh refinement can
     # remove.
     solid[xc >= x_wall_face + 0.5 * dx - 1e-12] = True
+    if wall_mode == "boundary":
+        # no solid cells: the wall is the domain face x == xmax == x_wall_face
+        solid = None
     pre_rho, pre_u, pre_p = wr.pre
     post_rho, post_u, post_p = wr.post
 
@@ -283,7 +309,8 @@ def gate_wall_reflection(ncells=(240, 1), degree=2, mach=2.0, cfl=0.12,
     rho = avg[..., 0]
     pressure = _pressure(avg)
     exact_rho, exact_u, exact_p = wr.state(x, t_end)
-    fluid = ~solid[:, 0]
+    fluid = (torch.ones(nx, dtype=torch.bool) if solid is None
+             else ~solid[:, 0])
 
     # ---- whole-domain error norms (no sampling band involved) -------------
     exact_rho_t = torch.as_tensor(exact_rho, dtype=torch.float64)
@@ -326,6 +353,7 @@ def gate_wall_reflection(ncells=(240, 1), degree=2, mach=2.0, cfl=0.12,
         "limiter": limiter, "tvb_constant": tvb_constant,
         "incident_mach": incident_mach, "wall_time": wr.wall_time,
         "final_time": t_end, "dx": dx,
+        "wall_mode": wall_mode,
         "wall_x_face": x_wall_face, "wall_offset_cells": wall_offset_cells,
         "shock_x_face": x_shock_face, "shock_offset_cells": shock_offset_cells,
         "reflected_rho_exact": exact_rho5, "reflected_p_exact": exact_p5,
