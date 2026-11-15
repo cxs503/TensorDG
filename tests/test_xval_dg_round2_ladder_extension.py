@@ -73,13 +73,15 @@ def test_levels_nest_and_are_admissible():
 
 def test_successive_differences_independent():
     levels = [le.load_fv_level(RAW, n) for n in (*le.BASE_LEVELS, le.EXT_LEVEL)]
-    base = levels[0]["field"]
+    base = levels[0]["ncells"]
+    # coarsen EVERY level to the common base grid (independent of the engine
+    # helper); the audit's successive_differences compares ADJACENT levels, so
+    # the independent recomputation must too -- comparing each finer level
+    # against the coarsest base would measure a different (non-successive)
+    # quantity and silently break the L0 monotone evidence.
+    prof = [_cell_average(lv["field"], lv["field"].size // base) for lv in levels]
     rows = le.successive_differences(levels)
-    for row, (i, lv) in zip(rows, enumerate(levels[1:])):
-        # both profiles are coarsened to the SAME coarsest grid (base.size);
-        # coarsening `base` by the factor would give a different grid than `lv`
-        a = _cell_average(base, 1)
-        b = _cell_average(lv["field"], lv["field"].size // base.size)
+    for row, (a, b) in zip(rows, zip(prof, prof[1:])):
         assert row["rel_l1"] == pytest.approx(_rel_l1(a, b), rel=1e-12, abs=0.0)
 
 
