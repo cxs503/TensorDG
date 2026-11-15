@@ -1,0 +1,384 @@
+{
+  "tolerance_rel": 0.03,
+  "sigma_band": [
+    0.9,
+    1.1
+  ],
+  "time_fraction_max": 0.05,
+  "extrapolation_residual_max": 0.03,
+  "field": "density",
+  "norm": "L1",
+  "degrees": {
+    "p1": {
+      "ladder": [
+        {
+          "kind": "ladder",
+          "degree": 1,
+          "ncells": 16,
+          "cfl": null,
+          "h": 0.125,
+          "error": 0.006111182178835195,
+          "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+        },
+        {
+          "kind": "ladder",
+          "degree": 1,
+          "ncells": 24,
+          "cfl": null,
+          "h": 0.08333333333333333,
+          "error": 0.002736229438139193,
+          "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+        },
+        {
+          "kind": "ladder",
+          "degree": 1,
+          "ncells": 32,
+          "cfl": null,
+          "h": 0.0625,
+          "error": 0.0015423690030303442,
+          "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+        }
+      ],
+      "certification": {
+        "design_order": 2,
+        "verdict": "CERTIFIED",
+        "pairs": [
+          {
+            "h_coarse": 0.125,
+            "h_fine": 0.08333333333333333,
+            "ratio": 1.5,
+            "order": 1.9817719596845687,
+            "richardson_limit": -0.00401367604325281
+          },
+          {
+            "h_coarse": 0.08333333333333333,
+            "h_fine": 0.0625,
+            "ratio": 1.3333333333333333,
+            "order": 1.9926904107667154,
+            "richardson_limit": 2.168404344971009e-19,
+            "extrapolation_residual": 1.4058920664968447e-16
+          }
+        ],
+        "order_fine": 1.9926904107667154,
+        "order_next": 1.9817719596845687,
+        "estimators": {
+          "p_lsq_all": 1.9860060979451117,
+          "p_lsq_finest3": 1.9860060979451117,
+          "p_next_pair": 1.9817719596845687
+        },
+        "uncertainty": 0.01091845108214673,
+        "delta_rel": 0.0036547946166423095,
+        "delta_band_rel": 0.009114020157715674,
+        "asymptotic_ratio": 0.994520748921582,
+        "asymptotic_ok": true,
+        "tolerance_rel": 0.03,
+        "sigma_band": [
+          0.9,
+          1.1
+        ],
+        "extrapolation_residual": 1.4058920664968447e-16,
+        "extrapolation_consistent": true,
+        "richardson_limit": 2.168404344971009e-19,
+        "levels": [
+          {
+            "h": 0.125,
+            "error": 0.006111182178835195,
+            "ncells": 16
+          },
+          {
+            "h": 0.08333333333333333,
+            "error": 0.002736229438139193,
+            "ncells": 24
+          },
+          {
+            "h": 0.0625,
+            "error": 0.0015423690030303442,
+            "ncells": 32
+          }
+        ]
+      }
+    },
+    "p2": {
+      "ladder": [
+        {
+          "kind": "ladder",
+          "degree": 2,
+          "ncells": 12,
+          "cfl": null,
+          "h": 0.16666666666666666,
+          "error": 0.00042843091121509875,
+          "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+        },
+        {
+          "kind": "ladder",
+          "degree": 2,
+          "ncells": 16,
+          "cfl": null,
+          "h": 0.125,
+          "error": 0.00017942354248688802,
+          "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+        },
+        {
+          "kind": "ladder",
+          "degree": 2,
+          "ncells": 24,
+          "cfl": null,
+          "h": 0.08333333333333333,
+          "error": 5.28229441923185e-05,
+          "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+        }
+      ],
+      "certification": {
+        "design_order": 3,
+        "verdict": "CERTIFIED",
+        "pairs": [
+          {
+            "h_coarse": 0.16666666666666666,
+            "h_fine": 0.125,
+            "ratio": 1.3333333333333333,
+            "order": 3.0254937804933424,
+            "richardson_limit": -0.0005675985636977443
+          },
+          {
+            "h_coarse": 0.125,
+            "h_fine": 0.08333333333333333,
+            "ratio": 1.5,
+            "order": 3.0158045665734035,
+            "richardson_limit": -6.776263578034403e-21,
+            "extrapolation_residual": 1.2828258026215444e-16
+          }
+        ],
+        "order_fine": 3.0158045665734035,
+        "order_next": 3.0254937804933424,
+        "estimators": {
+          "p_lsq_all": 3.0195620108358114,
+          "p_lsq_finest3": 3.0195620108358114,
+          "p_next_pair": 3.0254937804933424
+        },
+        "uncertainty": 0.009689213919938933,
+        "delta_rel": 0.005268188857801152,
+        "delta_band_rel": 0.00849792683111413,
+        "asymptotic_ratio": 1.003212812271502,
+        "asymptotic_ok": true,
+        "tolerance_rel": 0.03,
+        "sigma_band": [
+          0.9,
+          1.1
+        ],
+        "extrapolation_residual": 1.2828258026215444e-16,
+        "extrapolation_consistent": true,
+        "richardson_limit": -6.776263578034403e-21,
+        "levels": [
+          {
+            "h": 0.16666666666666666,
+            "error": 0.00042843091121509875,
+            "ncells": 12
+          },
+          {
+            "h": 0.125,
+            "error": 0.00017942354248688802,
+            "ncells": 16
+          },
+          {
+            "h": 0.08333333333333333,
+            "error": 5.28229441923185e-05,
+            "ncells": 24
+          }
+        ]
+      }
+    },
+    "p3": {
+      "ladder": [
+        {
+          "kind": "ladder",
+          "degree": 3,
+          "ncells": 8,
+          "cfl": null,
+          "h": 0.25,
+          "error": 6.758086006176706e-05,
+          "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+        },
+        {
+          "kind": "ladder",
+          "degree": 3,
+          "ncells": 12,
+          "cfl": null,
+          "h": 0.16666666666666666,
+          "error": 1.3255642197232508e-05,
+          "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+        },
+        {
+          "kind": "ladder",
+          "degree": 3,
+          "ncells": 16,
+          "cfl": null,
+          "h": 0.125,
+          "error": 4.216006596986575e-06,
+          "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+        }
+      ],
+      "certification": {
+        "design_order": 4,
+        "verdict": "CERTIFIED",
+        "pairs": [
+          {
+            "h_coarse": 0.25,
+            "h_fine": 0.16666666666666666,
+            "ratio": 1.5,
+            "order": 4.017365458097272,
+            "richardson_limit": -9.53947935318366e-05
+          },
+          {
+            "h_coarse": 0.16666666666666666,
+            "h_fine": 0.125,
+            "ratio": 1.3333333333333333,
+            "order": 3.9819475097957033,
+            "richardson_limit": 8.470329472543003e-22,
+            "extrapolation_residual": 2.0090882871476628e-16
+          }
+        ],
+        "order_fine": 3.9819475097957033,
+        "order_next": 4.017365458097272,
+        "estimators": {
+          "p_lsq_all": 4.003630497993009,
+          "p_lsq_finest3": 4.003630497993009,
+          "p_next_pair": 4.017365458097272
+        },
+        "uncertainty": 0.035417948301568636,
+        "delta_rel": 0.004513122551074167,
+        "delta_band_rel": 0.013367609626466326,
+        "asymptotic_ratio": 1.008894629628954,
+        "asymptotic_ok": true,
+        "tolerance_rel": 0.03,
+        "sigma_band": [
+          0.9,
+          1.1
+        ],
+        "extrapolation_residual": 2.0090882871476628e-16,
+        "extrapolation_consistent": true,
+        "richardson_limit": 8.470329472543003e-22,
+        "levels": [
+          {
+            "h": 0.25,
+            "error": 6.758086006176706e-05,
+            "ncells": 8
+          },
+          {
+            "h": 0.16666666666666666,
+            "error": 1.3255642197232508e-05,
+            "ncells": 12
+          },
+          {
+            "h": 0.125,
+            "error": 4.216006596986575e-06,
+            "ncells": 16
+          }
+        ]
+      }
+    }
+  },
+  "runs": [
+    {
+      "kind": "ladder",
+      "degree": 1,
+      "ncells": 16,
+      "cfl": null,
+      "h": 0.125,
+      "error": 0.006111182178835195,
+      "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+    },
+    {
+      "kind": "ladder",
+      "degree": 1,
+      "ncells": 24,
+      "cfl": null,
+      "h": 0.08333333333333333,
+      "error": 0.002736229438139193,
+      "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+    },
+    {
+      "kind": "ladder",
+      "degree": 1,
+      "ncells": 32,
+      "cfl": null,
+      "h": 0.0625,
+      "error": 0.0015423690030303442,
+      "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+    },
+    {
+      "kind": "ladder",
+      "degree": 2,
+      "ncells": 12,
+      "cfl": null,
+      "h": 0.16666666666666666,
+      "error": 0.00042843091121509875,
+      "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+    },
+    {
+      "kind": "ladder",
+      "degree": 2,
+      "ncells": 16,
+      "cfl": null,
+      "h": 0.125,
+      "error": 0.00017942354248688802,
+      "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+    },
+    {
+      "kind": "ladder",
+      "degree": 2,
+      "ncells": 24,
+      "cfl": null,
+      "h": 0.08333333333333333,
+      "error": 5.28229441923185e-05,
+      "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+    },
+    {
+      "kind": "ladder",
+      "degree": 3,
+      "ncells": 8,
+      "cfl": null,
+      "h": 0.25,
+      "error": 6.758086006176706e-05,
+      "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+    },
+    {
+      "kind": "ladder",
+      "degree": 3,
+      "ncells": 12,
+      "cfl": null,
+      "h": 0.16666666666666666,
+      "error": 1.3255642197232508e-05,
+      "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+    },
+    {
+      "kind": "ladder",
+      "degree": 3,
+      "ncells": 16,
+      "cfl": null,
+      "h": 0.125,
+      "error": 4.216006596986575e-06,
+      "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt"
+    }
+  ],
+  "source": "/root/tp-agent/work/m21846/validation/repro_cks1998/artifacts/l4_2d/stdout.txt",
+  "platform_orders": {
+    "p1": {
+      "observed_order": 1.9860060979451106,
+      "design_order": 2,
+      "recomputed_lsq": 1.9860060979451117,
+      "reconciliation_rel": 5.59022968647421e-16
+    },
+    "p2": {
+      "observed_order": 3.0195620108358137,
+      "design_order": 3,
+      "recomputed_lsq": 3.0195620108358114,
+      "reconciliation_rel": 7.353536841708028e-16
+    },
+    "p3": {
+      "observed_order": 4.003630497993001,
+      "design_order": 4,
+      "recomputed_lsq": 4.003630497993009,
+      "reconciliation_rel": 1.996589290971852e-15
+    }
+  }
+}
