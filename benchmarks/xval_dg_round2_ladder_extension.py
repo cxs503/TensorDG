@@ -80,8 +80,23 @@ LEG_STABILITY_MAX_PP = 0.5       # L4(b), percentage points
 
 
 # --------------------------------------------------------------------- inputs
+#: The extension level lives in its OWN directory.  Reason (measured, not style):
+#: ``tests/test_certified_reference.py`` reproduces the shipped round-2 practice
+#: through ``legacy.load_fv_levels``, which *globs* the raw directory for
+#: ``fv_cfl0p3_n*.npz``.  Dropping ``N = 6400`` into that directory silently
+#: redefines the shipped reference (observed order 1.282509 -> 1.176735, worst DG
+#: leg 2.455701 % -> 2.448436 %), i.e. a directory listing would decide which
+#: reference the anchor stands on.  Keeping it beside the ladder makes the fourth
+#: level explicit for every caller instead.
+EXT_RAWDIR = Path("validation/repro_shu_osher/artifacts/raw_ext")
+
+
 def level_path(rawdir: Path | str, ncells: int) -> Path:
-    return Path(rawdir) / f"fv_cfl0p3_n{int(ncells)}.npz"
+    path = Path(rawdir) / f"fv_cfl0p3_n{int(ncells)}.npz"
+    if path.exists():
+        return path
+    alt = Path(rawdir).parent / "raw_ext" / f"fv_cfl0p3_n{int(ncells)}.npz"
+    return alt if alt.exists() else path
 
 
 def load_fv_level(rawdir: Path | str, ncells: int) -> dict:
