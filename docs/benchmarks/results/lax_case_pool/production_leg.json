@@ -1,0 +1,38 @@
+{
+  "case": "CASE-LAX-DG",
+  "leg": "p2.N800",
+  "cells": 800,
+  "degree": 2,
+  "registration": {
+    "source": "tensordg.cases.lax_1d.lax_parameters()",
+    "leg": {
+      "cells": 800,
+      "degree": 2
+    },
+    "tolerance": 0.03
+  },
+  "instrument": "benchmarks.lax_case_pool.measure_leg: modal DG fields on the element Gauss nodes, q = 10 Legendre weights, whole field, denominator = exact-solution norm",
+  "generated_at_utc": "2026-11-16T10:02:42Z",
+  "environment": {
+    "python": "3.11.6",
+    "machine": "loongarch64",
+    "processor": "loongarch64",
+    "torch": "2.7.1",
+    "torch_threads": 8
+  },
+  "steps": 7341,
+  "dt": 1.770875902465604e-05,
+  "wall_seconds": 134.63254070281982,
+  "density_min": 0.29216959616842664,
+  "errors": {
+    "density": 0.002548119707890901,
+    "velocity": 0.0007970658662110544,
+    "pressure": 0.0005447903392277652
+  },
+  "l2_errors": {
+    "density": 0.025703283359072474,
+    "velocity": 0.009102869534719631,
+    "pressure": 0.005498637481142983
+  },
+  "profiles": "docs/benchmarks/results/lax_case_pool/profiles_production.npz"
+}
