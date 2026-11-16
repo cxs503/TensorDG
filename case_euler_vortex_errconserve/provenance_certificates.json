@@ -1,5 +1,31 @@
 {
   "certificates": {
+    "dg_d2_n32_t10_cfl0.2": {
+      "absolute_delta": {
+        "density": 2.85009646092127e-17,
+        "pressure": 1.3041596882285011e-16,
+        "velocity_x": 1.7105999776390046e-16,
+        "velocity_y": 2.4882439858542327e-17
+      },
+      "certified_at": "2026-11-16T07:56:50",
+      "config": {
+        "cells": 32,
+        "cfl": 0.2,
+        "degree": 2,
+        "final_time": 10.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "dg"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 1.1281690302073432e-12,
+      "replayed_max_percent": 0.015162621307966128,
+      "steps": 4684,
+      "stored_max_percent": 0.015162621307949022,
+      "task_key": "dg_d2_n32_t10_cfl0.2",
+      "tolerance": 1e-09,
+      "wall_seconds": 329.747962474823
+    },
     "dg_d2_n32_t10_cfl0.4": {
       "absolute_delta": {
         "density": 0.0,
@@ -205,6 +231,32 @@
       "task_key": "dg_d2_n64_t1_cfl0.2",
       "tolerance": 1e-09,
       "wall_seconds": 170.4626271724701
+    },
+    "dg_d2_n64_t2_cfl0.2": {
+      "absolute_delta": {
+        "density": 0.0,
+        "pressure": 0.0,
+        "velocity_x": 0.0,
+        "velocity_y": 0.0
+      },
+      "certified_at": "2026-11-16T07:58:15",
+      "config": {
+        "cells": 64,
+        "cfl": 0.2,
+        "degree": 2,
+        "final_time": 2.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "dg"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 0.0,
+      "replayed_max_percent": 0.0011529982784080825,
+      "steps": 1874,
+      "stored_max_percent": 0.0011529982784080825,
+      "task_key": "dg_d2_n64_t2_cfl0.2",
+      "tolerance": 1e-09,
+      "wall_seconds": 414.8896279335022
     },
     "p0_n128_t10_cfl0.4": {
       "absolute_delta": {
