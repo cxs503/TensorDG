@@ -87,8 +87,17 @@ DESIGN = {
 # one DG Sod run -> the gate metric
 # ---------------------------------------------------------------------------
 def run_case(degree: int, ncells: int, cfl: float, tvb_constant: float) -> dict:
-    """Relative L2 of (rho, u, p) against the exact Riemann cell averages."""
-    from benchmarks.sod_exact import cell_averages
+    """Relative L2 of (rho, u, p) against the exact Riemann cell averages.
+
+    The gate number is scored against the breakpoint-split **exact** cell average
+    (``validation.repro_cks1998.station_reference.exact_cell_averages``).  The legacy
+    fixed 8-point Gauss rule -- what this function used to call, while the module
+    docstring already promised the exact reference -- is still evaluated on the *same*
+    numerical solution and recorded as ``*_legacy``, so every row carries its own
+    before/after and the instrument cannot change a verdict unobserved.
+    """
+    from validation.repro_cks1998.station_reference import (
+        exact_cell_averages, fixed_rule_cell_averages)
 
     t0 = time.time()
     x, coeff, meta = solve_euler_dg_1d(
@@ -100,18 +109,30 @@ def run_case(degree: int, ncells: int, cfl: float, tvb_constant: float) -> dict:
     rho = avg[:, 0]
     vel = avg[:, 1] / rho
     pre = (GAMMA - 1.0) * (avg[:, 2] - 0.5 * avg[:, 1] ** 2 / rho)
-    _, ref = cell_averages(ncells, SOD_T)
+    _, ref = exact_cell_averages(ncells, SOD_T)
+    _, ref_legacy = fixed_rule_cell_averages(ncells, SOD_T)
     got = {"density": rho.numpy(), "velocity": vel.numpy(), "pressure": pre.numpy()}
-    rel = {}
-    for key in ("density", "velocity", "pressure"):
-        diff = got[key] - ref[key]
-        rel[key] = float(np.sqrt(np.mean(diff ** 2)) / np.sqrt(np.mean(ref[key] ** 2)))
+
+    def _rel(reference):
+        out = {}
+        for key in ("density", "velocity", "pressure"):
+            diff = got[key] - reference[key]
+            out[key] = float(np.sqrt(np.mean(diff ** 2))
+                             / np.sqrt(np.mean(np.asarray(reference[key]) ** 2)))
+        return out
+
+    rel, rel_legacy = _rel(ref), _rel(ref_legacy)
     worst = max(rel.values())
+    worst_legacy = max(rel_legacy.values())
     return {
         "degree": degree, "ncells": ncells, "cfl": cfl,
         "tvb_constant": tvb_constant, "limiter": meta["limiter"],
         "steps": meta["steps"], "rel_l2": rel, "worst_rel_l2": worst,
         "pass": bool(worst < GATE_TOL),
+        "rel_l2_legacy": rel_legacy, "worst_rel_l2_legacy": worst_legacy,
+        "pass_legacy": bool(worst_legacy < GATE_TOL),
+        "instrument_delta_pp": 100.0 * (worst_legacy - worst),
+        "verdict_flip": bool((worst < GATE_TOL) != (worst_legacy < GATE_TOL)),
         "seconds": round(time.time() - t0, 2),
     }
 
@@ -223,6 +244,34 @@ def analyse_knob(payload: dict, knob: str) -> dict:
     }
 
 
+def instrument_block(ladder: dict, cfl: dict, tvb: dict) -> dict:
+    """Before/after of the reference-instrument swap, row by row (never hand-copied)."""
+    rows = list(ladder["rows"]) + list(cfl["rows"]) + list(tvb["rows"])
+    deltas = [(abs(r["instrument_delta_pp"]), r) for r in rows
+              if "instrument_delta_pp" in r]
+    flips = [r for r in rows if r.get("verdict_flip")]
+    worst = max(deltas)[1] if deltas else None
+    return {
+        "gate_reference": "breakpoint-split exact cell average "
+                          "(validation.repro_cks1998.station_reference)",
+        "legacy_reference": "fixed 8-point Gauss rule (benchmarks.riemann_exact)",
+        "rows": len(rows),
+        "rows_with_legacy": len(deltas),
+        "verdict_flips": [
+            {"degree": r["degree"], "ncells": r["ncells"], "cfl": r["cfl"],
+             "tvb_constant": r["tvb_constant"],
+             "worst_rel_l2": r["worst_rel_l2"],
+             "worst_rel_l2_legacy": r["worst_rel_l2_legacy"]} for r in flips],
+        "n_flips": len(flips),
+        "max_abs_delta_pp": None if worst is None else float(abs(worst["instrument_delta_pp"])),
+        "worst_row": None if worst is None else {
+            "degree": worst["degree"], "ncells": worst["ncells"],
+            "delta_pp": worst["instrument_delta_pp"],
+            "worst_rel_l2": worst["worst_rel_l2"],
+            "worst_rel_l2_legacy": worst["worst_rel_l2_legacy"]},
+    }
+
+
 def assemble(out: Path) -> dict:
     ladder = json.loads((out / "ladder.json").read_text())
     cfl = json.loads((out / "cfl.json").read_text())
@@ -235,6 +284,7 @@ def assemble(out: Path) -> dict:
         "ladder": {"rows": ladder["rows"], "by_degree": analyse_ladder(ladder)},
         "cfl_sensitivity": {**analyse_knob(cfl, "cfl"), "rows": cfl["rows"]},
         "tvb_sensitivity": {**analyse_knob(tvb, "tvb_constant"), "rows": tvb["rows"]},
+        "instrument": instrument_block(ladder, cfl, tvb),
         "environment": ladder["environment"],
         "wall_seconds": round(sum(r["seconds"] for p in (ladder, cfl, tvb)
                                   for r in p["rows"]), 1),
@@ -262,7 +312,7 @@ def assemble(out: Path) -> dict:
     with open(out / "ladder.csv", "w", newline="") as fh:
         keys = ["degree", "ncells", "cfl", "tvb_constant", "limiter", "steps",
                 "rel_l2_density", "rel_l2_velocity", "rel_l2_pressure",
-                "worst_rel_l2", "pass", "seconds"]
+                "worst_rel_l2", "pass", "worst_rel_l2_legacy", "pass_legacy", "seconds"]
         w = csv.DictWriter(fh, fieldnames=keys)
         w.writeheader()
         for r in ladder["rows"]:
@@ -271,6 +321,8 @@ def assemble(out: Path) -> dict:
                         "steps": r["steps"],
                         **{f"rel_l2_{k}": v for k, v in r["rel_l2"].items()},
                         "worst_rel_l2": r["worst_rel_l2"], "pass": r["pass"],
+                        "worst_rel_l2_legacy": r.get("worst_rel_l2_legacy"),
+                        "pass_legacy": r.get("pass_legacy"),
                         "seconds": r["seconds"]})
     with open(out / "knob_sensitivity.csv", "w", newline="") as fh:
         w = csv.writer(fh)
@@ -310,6 +362,17 @@ def render_summary(m: dict) -> str:
         lines.append(f"| {name} | {vals} | {errs} | "
                      f"{sum(blk['passes'])}/{len(blk['passes'])} | "
                      f"{blk['spread_pp']:.3f} pp | {blk['gate_holds_for_all_knob_values']} |")
+    inst = m.get("instrument") or {}
+    if inst:
+        lines += ["", "## Reference instrument (exact vs the legacy fixed rule)", "",
+                  f"rows scored: {inst['rows_with_legacy']} / {inst['rows']} · "
+                  f"verdict flips: {inst['n_flips']} · "
+                  f"max |delta| = {inst['max_abs_delta_pp']:.4f} pp", ""]
+        worst = inst.get("worst_row")
+        if worst:
+            lines.append(f"largest single-row shift: P{worst['degree']} N={worst['ncells']} "
+                         f"{worst['worst_rel_l2_legacy'] * 100:.4f} % (legacy) -> "
+                         f"{worst['worst_rel_l2'] * 100:.4f} % (exact)")
     lines += ["", "## Verdict (machine-derived)", "", "```json",
               json.dumps(m["verdict"], indent=2), "```", ""]
     return "\n".join(lines)

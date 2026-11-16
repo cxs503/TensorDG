@@ -196,7 +196,10 @@ def run_discontinuous_advection(profile: dict) -> dict:
 # E2: Sod shock tube via DG vs exact Riemann solution
 # ---------------------------------------------------------------------------
 def run_sod(profile: dict) -> dict:
-    from benchmarks.sod_exact import cell_averages
+    # reference *instrument*: breakpoint-split exact cell averages.  The fixed 8-point
+    # Gauss rule (``benchmarks.sod_exact.cell_averages``) documents itself as unfit for
+    # tolerance comparisons -- see docs/CASE-REPRO-DG-CKS1998-INSTRUMENT-CENSUS.md.
+    from validation.repro_cks1998.station_reference import exact_cell_averages
     from tensordg.euler_1d import GAMMA
 
     rows, summary = [], {}
@@ -214,7 +217,7 @@ def run_sod(profile: dict) -> dict:
         rho = avg[:, 0]
         vel = avg[:, 1] / rho
         pre = (GAMMA - 1.0) * (avg[:, 2] - 0.5 * avg[:, 1] ** 2 / rho)
-        _, ref = cell_averages(ncells, SOD_T)
+        _, ref = exact_cell_averages(ncells, SOD_T)
         got = {"density": rho.numpy(), "velocity": vel.numpy(), "pressure": pre.numpy()}
         # fixed x-stations -> literal ref (exact) vs got (cell average) numbers
         stations = []
@@ -374,7 +377,10 @@ def figure_sod(sod: dict, path: Path):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    from benchmarks.sod_exact import cell_averages
+    # reference *instrument*: breakpoint-split exact cell averages.  The fixed 8-point
+    # Gauss rule (``benchmarks.sod_exact.cell_averages``) documents itself as unfit for
+    # tolerance comparisons -- see docs/CASE-REPRO-DG-CKS1998-INSTRUMENT-CENSUS.md.
+    from validation.repro_cks1998.station_reference import exact_cell_averages
 
     # the plotted case is the gate case (finest mesh of the degree), taken from
     # the payload rather than from the module-global profile
@@ -388,7 +394,7 @@ def figure_sod(sod: dict, path: Path):
     )
     avg = coeff[:, 0]
     rho = avg[:, 0].numpy()
-    _, ref = cell_averages(ncells, SOD_T)
+    _, ref = exact_cell_averages(ncells, SOD_T)
     fig, ax = plt.subplots(figsize=(5.6, 4.0))
     ax.plot(x.numpy(), rho, "o", ms=2.5, label=f"DG P{degree}, N={ncells}")
     ax.plot(x.numpy(), ref["density"], "k-", lw=1.0, label="exact Riemann solution")
