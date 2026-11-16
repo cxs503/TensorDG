@@ -1,7 +1,7 @@
 {
   "case": "EULER-VORTEX-ERR",
   "ledger_slug": "CASE-DG-EULER-VORTEX-ERR",
-  "bundle": "/srv/tensor/agent/work/m22854/case_euler_vortex_errconserve",
+  "bundle": "/srv/tensor/agent/work/m23042/case_euler_vortex_errconserve",
   "record_count": 40,
   "certificate_count": 19,
   "tolerance_relative_l2": 0.06,
@@ -18,7 +18,8 @@
       "C8_degree_invariance": "passed",
       "C9_design_order": "passed",
       "C10_direction_invariance": "passed",
-      "C11_provenance_integrity": "passed"
+      "C11_provenance_integrity": "passed",
+      "C12_growth_statistic_robustness": "passed"
     }
   },
   "rows": [
@@ -40,7 +41,8 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "passed",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "failed"
+        "C11_provenance_integrity": "failed",
+        "C12_growth_statistic_robustness": "passed"
       },
       "changed": [
         "C11_provenance_integrity",
@@ -70,11 +72,13 @@
         "C8_degree_invariance": "failed",
         "C9_design_order": "passed",
         "C10_direction_invariance": "failed",
-        "C11_provenance_integrity": "failed"
+        "C11_provenance_integrity": "failed",
+        "C12_growth_statistic_robustness": "failed"
       },
       "changed": [
         "C10_direction_invariance",
         "C11_provenance_integrity",
+        "C12_growth_statistic_robustness",
         "C2_error_conservation",
         "C7_design_space_invariance",
         "C8_degree_invariance"
@@ -83,6 +87,7 @@
       "collateral": [
         "C10_direction_invariance",
         "C11_provenance_integrity",
+        "C12_growth_statistic_robustness",
         "C7_design_space_invariance",
         "C8_degree_invariance"
       ],
@@ -106,7 +111,8 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "passed",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "passed"
+        "C11_provenance_integrity": "passed",
+        "C12_growth_statistic_robustness": "passed"
       },
       "changed": [
         "C3_discrete_conservation"
@@ -133,7 +139,8 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "passed",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "passed"
+        "C11_provenance_integrity": "passed",
+        "C12_growth_statistic_robustness": "passed"
       },
       "changed": [
         "C4_entropy_budget"
@@ -160,7 +167,8 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "passed",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "failed"
+        "C11_provenance_integrity": "failed",
+        "C12_growth_statistic_robustness": "passed"
       },
       "changed": [
         "C11_provenance_integrity",
@@ -192,7 +200,8 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "not_evaluated",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "passed"
+        "C11_provenance_integrity": "passed",
+        "C12_growth_statistic_robustness": "passed"
       },
       "changed": [
         "C6_ladder_completeness",
@@ -222,16 +231,19 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "failed",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "failed"
+        "C11_provenance_integrity": "failed",
+        "C12_growth_statistic_robustness": "failed"
       },
       "changed": [
         "C11_provenance_integrity",
+        "C12_growth_statistic_robustness",
         "C7_design_space_invariance",
         "C9_design_order"
       ],
       "killed": true,
       "collateral": [
         "C11_provenance_integrity",
+        "C12_growth_statistic_robustness",
         "C9_design_order"
       ],
       "error": null
@@ -254,14 +266,17 @@
         "C8_degree_invariance": "failed",
         "C9_design_order": "passed",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "passed"
+        "C11_provenance_integrity": "passed",
+        "C12_growth_statistic_robustness": "failed"
       },
       "changed": [
+        "C12_growth_statistic_robustness",
         "C7_design_space_invariance",
         "C8_degree_invariance"
       ],
       "killed": true,
       "collateral": [
+        "C12_growth_statistic_robustness",
         "C7_design_space_invariance"
       ],
       "error": null
@@ -284,16 +299,19 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "failed",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "failed"
+        "C11_provenance_integrity": "failed",
+        "C12_growth_statistic_robustness": "failed"
       },
       "changed": [
         "C11_provenance_integrity",
+        "C12_growth_statistic_robustness",
         "C7_design_space_invariance",
         "C9_design_order"
       ],
       "killed": true,
       "collateral": [
         "C11_provenance_integrity",
+        "C12_growth_statistic_robustness",
         "C7_design_space_invariance"
       ],
       "error": null
@@ -316,14 +334,17 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "passed",
         "C10_direction_invariance": "failed",
-        "C11_provenance_integrity": "passed"
+        "C11_provenance_integrity": "passed",
+        "C12_growth_statistic_robustness": "failed"
       },
       "changed": [
         "C10_direction_invariance",
+        "C12_growth_statistic_robustness",
         "C7_design_space_invariance"
       ],
       "killed": true,
       "collateral": [
+        "C12_growth_statistic_robustness",
         "C7_design_space_invariance"
       ],
       "error": null
@@ -346,7 +367,8 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "passed",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "failed"
+        "C11_provenance_integrity": "failed",
+        "C12_growth_statistic_robustness": "passed"
       },
       "changed": [
         "C11_provenance_integrity"
@@ -373,13 +395,45 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "passed",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "not_evaluated"
+        "C11_provenance_integrity": "not_evaluated",
+        "C12_growth_statistic_robustness": "passed"
       },
       "changed": [
         "C11_provenance_integrity"
       ],
       "killed": true,
       "collateral": [],
+      "error": null
+    },
+    {
+      "id": "m13",
+      "target": "C12_growth_statistic_robustness",
+      "kind": "mutation",
+      "description": "late-onset growth: flat for one box crossing, then unstable (invisible to the whole-window least-squares slope)",
+      "detail": "late-onset growth on the design family, flat to t=10 then unstable (endpoint 1.300, OLS 0.992, robust 1.999); the whole-window regression still reads alpha=0.992 <= 1.0",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "passed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "failed",
+        "C12_growth_statistic_robustness": "failed"
+      },
+      "changed": [
+        "C11_provenance_integrity",
+        "C12_growth_statistic_robustness"
+      ],
+      "killed": true,
+      "collateral": [
+        "C11_provenance_integrity"
+      ],
       "error": null
     },
     {
@@ -400,7 +454,8 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "passed",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "passed"
+        "C11_provenance_integrity": "passed",
+        "C12_growth_statistic_robustness": "passed"
       },
       "changed": [],
       "killed": false,
@@ -425,7 +480,8 @@
         "C8_degree_invariance": "passed",
         "C9_design_order": "passed",
         "C10_direction_invariance": "passed",
-        "C11_provenance_integrity": "passed"
+        "C11_provenance_integrity": "passed",
+        "C12_growth_statistic_robustness": "passed"
       },
       "changed": [],
       "killed": false,
@@ -444,7 +500,8 @@
     "C8_degree_invariance",
     "C9_design_order",
     "C10_direction_invariance",
-    "C11_provenance_integrity"
+    "C11_provenance_integrity",
+    "C12_growth_statistic_robustness"
   ],
   "killed_by": {
     "C1_tolerance": [
@@ -480,10 +537,13 @@
     "C11_provenance_integrity": [
       "m11",
       "m12"
+    ],
+    "C12_growth_statistic_robustness": [
+      "m13"
     ]
   },
   "survivors": [],
   "control_inert": true,
-  "power": "11/11",
+  "power": "12/12",
   "sound": true
 }

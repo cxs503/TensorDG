@@ -177,6 +177,25 @@ DIRECTION_AXIS = (
 #: historical ``diag45`` group is a re-reading of C2, not a direction test.
 MIN_DECIDABLE_DIRECTIONS = 2
 
+#: C12 -- robustness of the growth *statistic* itself.  C2/C7/C8/C10 all speak
+#: about "the exponent of e ~ t^alpha", which on disk is a least-squares slope
+#: through three to five points.  Before C12 that number carried no uncertainty:
+#: a two-point family, an unlucky checkpoint set or a residual-bootstrap tail
+#: could all have moved it, and nobody could say by how much.  The alternatives
+#: below are the estimators the verdict has to survive; the conservative
+#: ``robust`` statistic of a family is the worst of them.
+BOOTSTRAP_TRIALS = 2000
+BOOTSTRAP_QUANTILE = 0.99
+BOOTSTRAP_SEED = 20261113
+#: log-log coefficient of determination below which the exponent describes a
+#: *window-bounded trend* rather than a verified power law.  Reported per family
+#: and never used to flip a verdict: alpha <= 1 keeps its meaning ("the error
+#: does not grow super-linearly over the window") whether or not a clean power
+#: law holds, but a reader has to be told which of the two was measured.
+POWER_LAW_FIT_FLOOR = 0.98
+#: at least this many families must carry a decidable robust statistic
+MIN_ROBUST_FAMILIES = 3
+
 
 def direction_label(background) -> str:
     """Label of the declared direction whose background velocity matches."""
@@ -861,6 +880,140 @@ def _fit_exponent(times, errors, t_min=T_REF):
     return float(np.polyfit(lt, le, 1)[0])
 
 
+def _fit_window(times, errors, t_min=T_REF):
+    """The (log t, log e) points every growth estimator is fitted to."""
+    points = [(t, e) for t, e in zip(times, errors) if t >= t_min and e > 0.0]
+    if len(points) < 3:
+        return None
+    return (np.log(np.array([p[0] for p in points], dtype=float)),
+            np.log(np.array([p[1] for p in points], dtype=float)))
+
+
+def _exponent_theil_sen(lt, le) -> float:
+    """Median of the pairwise slopes: one outlier checkpoint cannot move it."""
+    slopes = [(le[j] - le[i]) / (lt[j] - lt[i])
+              for i in range(len(lt)) for j in range(i + 1, len(lt))]
+    return float(np.median(slopes))
+
+
+def _exponent_endpoint(lt, le) -> float:
+    """Slope through the first and the last checkpoint only."""
+    return float((le[-1] - le[0]) / (lt[-1] - lt[0]))
+
+
+def _exponent_leave_one_out(lt, le) -> list:
+    """Refits with exactly one checkpoint removed (empty when < 4 points)."""
+    out = []
+    for drop in range(len(lt)):
+        keep = np.ones(len(lt), dtype=bool)
+        keep[drop] = False
+        if keep.sum() >= 3:
+            out.append(float(np.polyfit(lt[keep], le[keep], 1)[0]))
+    return out
+
+
+def _exponent_bootstrap(lt, le, trials=BOOTSTRAP_TRIALS, seed=BOOTSTRAP_SEED):
+    """Residual bootstrap of the slope: (``BOOTSTRAP_QUANTILE``, std).
+
+    Residuals (not pairs) are resampled because the checkpoints are a designed
+    ladder, not a random sample from a population: the times are held fixed and
+    only the deviation from the fitted line is treated as noise.
+    """
+    design = np.polyfit(lt, le, 1)
+    fitted = np.polyval(design, lt)
+    residuals = le - fitted
+    rng = np.random.default_rng(seed)
+    draws = np.empty(trials, dtype=float)
+    for k in range(trials):
+        resampled = residuals[rng.integers(0, len(residuals), len(residuals))]
+        draws[k] = np.polyfit(lt, fitted + resampled, 1)[0]
+    return float(np.quantile(draws, BOOTSTRAP_QUANTILE)), float(np.std(draws))
+
+
+def exponent_variants(times, errors, trials=BOOTSTRAP_TRIALS) -> dict:
+    """One family's growth statistic under every estimator C12 asks for.
+
+    ``robust`` is the conservative reading the gate applies: the largest of the
+    least-squares slope (the historical statistic), Theil-Sen, the endpoint
+    slope, the refits with one checkpoint removed and the bootstrap quantile.
+    ``nan`` entries are *undecidable variants* (a three-point family cannot be
+    refitted with one point removed), never silent zeros.
+    """
+    window = _fit_window(times, errors)
+    nan = float("nan")
+    if window is None:
+        return {"decidable": False, "points": len(times), "ols": nan,
+                "theil_sen": nan, "endpoint": nan, "drop_projection_floor": nan,
+                "leave_one_out": [], "leave_one_out_worst": nan,
+                "bootstrap_quantile": nan, "bootstrap_std": nan,
+                "r2": nan, "max_log_residual": nan, "robust": nan,
+                "robust_at": None, "undecidable_variants": [], "power_law": None}
+    lt, le = window
+    design = np.polyfit(lt, le, 1)
+    fitted = np.polyval(design, lt)
+    residuals = le - fitted
+    total = float(np.sum((le - le.mean()) ** 2))
+    r2 = float(1.0 - np.sum(residuals ** 2) / total) if total > 0.0 else nan
+    loo = _exponent_leave_one_out(lt, le)
+    quantile, spread = _exponent_bootstrap(lt, le, trials=trials)
+    drop_floor = (float(np.polyfit(lt[1:], le[1:], 1)[0])
+                  if len(lt) > 3 else nan)
+    variants = {
+        "ols": float(design[0]),
+        "theil_sen": _exponent_theil_sen(lt, le),
+        "endpoint": _exponent_endpoint(lt, le),
+        "drop_projection_floor": drop_floor,
+        "leave_one_out_worst": max(loo) if loo else nan,
+        "bootstrap_quantile": quantile,
+    }
+    finite = {k: v for k, v in variants.items() if np.isfinite(v)}
+    robust_at = max(finite, key=finite.get)
+    return {
+        "decidable": True,
+        "points": len(times),
+        "ols": variants["ols"],
+        "theil_sen": variants["theil_sen"],
+        "endpoint": variants["endpoint"],
+        "drop_projection_floor": drop_floor,
+        "leave_one_out": loo,
+        "leave_one_out_worst": variants["leave_one_out_worst"],
+        "bootstrap_quantile": quantile,
+        "bootstrap_std": spread,
+        "r2": r2,
+        "max_log_residual": float(np.max(np.abs(residuals))),
+        "robust": finite[robust_at],
+        "robust_at": robust_at,
+        "undecidable_variants": sorted(k for k in variants
+                                       if not np.isfinite(variants[k])),
+        # reported, never gated: is a clean power law actually what was measured?
+        "power_law": bool(np.isfinite(r2) and r2 >= POWER_LAW_FIT_FLOOR),
+    }
+
+
+def growth_statistic_robustness(families: dict) -> dict:
+    """C12's payload: every family's robust growth statistic and its fit quality."""
+    rows = {name: exponent_variants([r["final_time"] for r in records],
+                                    [r["max_relative_l2"] for r in records])
+            for name, records in families.items()}
+    decidable = {k: v for k, v in rows.items() if v["decidable"]}
+    offenders = sorted(k for k, v in decidable.items()
+                       if v["robust"] > MAX_GROWTH_EXPONENT + 1e-9)
+    trend_only = sorted(k for k, v in decidable.items() if not v["power_law"])
+    worst = max(decidable, key=lambda k: decidable[k]["robust"]) if decidable else None
+    return {
+        "per_family": rows,
+        "decidable": sorted(decidable),
+        "offenders": offenders,
+        "trend_only": trend_only,
+        "worst": decidable[worst]["robust"] if worst else float("nan"),
+        "worst_at": worst,
+        "worst_variant": decidable[worst]["robust_at"] if worst else None,
+        "fit_floor": POWER_LAW_FIT_FLOOR,
+        "bootstrap": {"trials": BOOTSTRAP_TRIALS, "quantile": BOOTSTRAP_QUANTILE,
+                      "seed": BOOTSTRAP_SEED},
+    }
+
+
 def _group(records):
     families = {}
     for record in records:
@@ -1456,6 +1609,68 @@ def evaluate_gates(records: list, exact: dict, certificates: dict | None = None)
         "status": c11_status,
     }
 
+    # -- C12: does the growth *statistic* support the verdict? ----------------
+    # C2, C7, C8 and C10 all read the same number: the least-squares slope of
+    # log e against log t over three to five checkpoints.  A verdict that rests
+    # on one estimator over one checkpoint set is a verdict about that set, so
+    # C12 re-reads every gate-carrying family with four further estimators
+    # (Theil-Sen, endpoint, leave-one-out refits, 99% residual bootstrap) and
+    # grades the *worst* of them.  Fit quality is reported alongside: with
+    # R^2 < ``POWER_LAW_FIT_FLOOR`` the exponent is a window-bounded trend, and
+    # the report says so instead of calling it a power law.
+    robust = growth_statistic_robustness(families)
+    gated_families = {name: row for name, row in robust["per_family"].items()
+                      if name.startswith("dg_") and row["decidable"]}
+    gated_offenders = sorted(name for name, row in gated_families.items()
+                             if row["robust"] > MAX_GROWTH_EXPONENT + 1e-9)
+    if len(gated_families) < MIN_ROBUST_FAMILIES:
+        c12_status = "not_evaluated"
+    elif gated_offenders:
+        c12_status = "failed"
+    else:
+        c12_status = "passed"
+    robust_worst = max((row["robust"] for row in gated_families.values()),
+                       default=float("nan"))
+    robust_worst_at = (max(gated_families, key=lambda k: gated_families[k]["robust"])
+                       if gated_families else None)
+    design_robust = robust["per_family"].get(GATE_FAMILY, {})
+    gates["C12_growth_statistic_robustness"] = {
+        "criterion": (
+            "for every DG family with >= 3 checkpoints the growth exponent stays "
+            f"<= {MAX_GROWTH_EXPONENT} under the conservative reading (worst of "
+            "least squares / Theil-Sen / endpoint / leave-one-out / "
+            f"{BOOTSTRAP_QUANTILE:.0%} residual bootstrap), so the C2/C7/C8/C10 "
+            "verdict is not an artefact of the estimator or of one checkpoint"),
+        "measured": robust_worst,
+        "worst_at": robust_worst_at,
+        "worst_variant": (gated_families[robust_worst_at]["robust_at"]
+                          if robust_worst_at else None),
+        "families_evaluated": sorted(gated_families),
+        "offenders": gated_offenders,
+        "per_family": {name: row for name, row in robust["per_family"].items()
+                       if row["decidable"]},
+        "undecidable": sorted(name for name, row in robust["per_family"].items()
+                              if not row["decidable"]),
+        "trend_not_power_law": robust["trend_only"],
+        "fit_floor": POWER_LAW_FIT_FLOOR,
+        "design_family": {
+            "family": GATE_FAMILY,
+            "ols": design_robust.get("ols", float("nan")),
+            "robust": design_robust.get("robust", float("nan")),
+            "robust_at": design_robust.get("robust_at"),
+            "strict_target": STRICT_ALPHA_TARGET,
+            "strict_passed": bool(np.isfinite(design_robust.get("robust", float("nan")))
+                                  and design_robust["robust"]
+                                  <= STRICT_ALPHA_TARGET + 1e-9),
+        },
+        "bootstrap": robust["bootstrap"],
+        "informational_crosscheck": {
+            name: row["robust"] for name, row in robust["per_family"].items()
+            if not name.startswith("dg_") and row["decidable"]},
+        "passed": c12_status == "passed",
+        "status": c12_status,
+    }
+
     gates["informational"] = ["C1x_crosscheck_raw", "C7x_design_space_spread",
                               "C7x_amplification_prediction"]
     acceptance = {k: v for k, v in gates.items()
@@ -1581,6 +1796,9 @@ def _markdown(records: list, metrics: dict, exact: dict) -> str:
     def flag(name):
         return "通过" if gates[name]["passed"] else "未通过"
 
+    def _fmt(value):
+        return "—" if value is None or not np.isfinite(value) else f"{value:.3f}"
+
     lines = [
         "# CASE-EULER-VORTEX-ERR：等熵涡移动的误差守恒",
         "",
@@ -1667,6 +1885,16 @@ def _markdown(records: list, metrics: dict, exact: dict) -> str:
            + ("…" if len(gates['C11_provenance_integrity']['unverified']) > 4 else "") + "）"
            if gates['C11_provenance_integrity']['unverified'] else "") + " | "
         f"{flag('C11_provenance_integrity')} |",
+        f"| C12 增长统计量稳健性 | 每个 DG 族的增长指数在保守读数（最小二乘 / "
+        f"Theil-Sen / 端点 / 留一 / {BOOTSTRAP_QUANTILE:.0%} 残差自助 的最坏者）下仍 "
+        f"<= {MAX_GROWTH_EXPONENT} | 可判 {len(gates['C12_growth_statistic_robustness']['families_evaluated'])} 族，"
+        f"最坏 {gates['C12_growth_statistic_robustness']['measured']:.3f}"
+        f"（{gates['C12_growth_statistic_robustness']['worst_at']}，"
+        f"{gates['C12_growth_statistic_robustness']['worst_variant']}）；"
+        f"R^2 < {POWER_LAW_FIT_FLOOR:g} 的族 "
+        f"{len(gates['C12_growth_statistic_robustness']['trend_not_power_law'])} 个"
+        f"（alpha 为窗口内趋势而非幂律） | "
+        f"{flag('C12_growth_statistic_robustness')} |",
         "",
         "## 阶数轴（C8）与设计阶（C9）",
         "",
@@ -1714,6 +1942,19 @@ def _markdown(records: list, metrics: dict, exact: dict) -> str:
         + ("（" + "，".join(f"{k} A={v['amplification']:.3f}"
                             for k, v in sorted(amp["values"].items())) + "）"
            if amp["values"] else ""),
+        "",
+        "## 增长统计量（C12：同一族在五种估计量下的指数）",
+        "",
+        "| 族 | 检查点 | OLS（历史统计量） | Theil-Sen | 端点 | 去掉 t=1 | 留一最坏 | "
+        "自助 99% | 保守读数 | R^2 | 幂律 |",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
+        *[f"| `{name}` | {row['points']} | {row['ols']:.3f} | {row['theil_sen']:.3f} | "
+          f"{row['endpoint']:.3f} | {_fmt(row['drop_projection_floor'])} | "
+          f"{_fmt(row['leave_one_out_worst'])} | {row['bootstrap_quantile']:.3f} | "
+          f"**{row['robust']:.3f}** | {row['r2']:.3f} | "
+          f"{'是' if row['power_law'] else '否（窗口内趋势）'} |"
+          for name, row in sorted(
+              gates['C12_growth_statistic_robustness']['per_family'].items())],
         "",
         "## 方向轴（C10）",
         "",
