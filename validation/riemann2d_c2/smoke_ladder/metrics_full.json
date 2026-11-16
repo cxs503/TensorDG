@@ -1,0 +1,288 @@
+{
+  "benchmark": "riemann_2d_cks1998",
+  "profile": "full",
+  "config": "Lax_Liu_1998_config_3",
+  "gates": {
+    "C1_positivity": "rho > 0, p > 0 at all volume quadrature points and cell averages",
+    "C2_self_convergence_l1": 0.05,
+    "C3_finite": "no NaN/Inf",
+    "C4_flux_balance_rel": 1e-10,
+    "C5_periodic_drift_rel": 1e-12,
+    "C6_mass_flux_safety": 5.0,
+    "C6_extremum_factor": 1.5
+  },
+  "final_time": 0.01,
+  "cfl": 0.2,
+  "degrees": [
+    1
+  ],
+  "meshes": [
+    32,
+    64
+  ],
+  "runs": [
+    {
+      "ncells": 32,
+      "degree": 1,
+      "final_time": 0.01,
+      "cfl": 0.2,
+      "periodic": [
+        false,
+        false
+      ],
+      "steps": 29,
+      "dt": 0.00033568689857785446,
+      "wall_seconds": 3.28,
+      "rho_min": 0.13799985355517475,
+      "rho_max": 1.5162862142939648,
+      "p_min": 0.2999992468948202,
+      "p_max": 1.5275060943711987,
+      "positivity": {
+        "rho_min": 0.13799733857776156,
+        "rho_max": 1.5177774183505317,
+        "p_min": 0.2999918994437727,
+        "p_max": 1.5295688269953227,
+        "rho_min_mean": 0.13799985355517475,
+        "p_min_mean": 0.2999992468948202,
+        "rho_positive": true,
+        "p_positive": true,
+        "rho_positive_mean": true,
+        "p_positive_mean": true,
+        "quadrature_nodes": 3
+      },
+      "total_mass": 0.6837538892167991,
+      "initial_mass": 0.67565,
+      "c6_bounds": {
+        "final_time": 0.01,
+        "mass0": 0.67565,
+        "rho_max0": 1.5,
+        "p_max0": 1.5,
+        "speed_max0": 3.4500983081992462,
+        "perimeter": 4.0,
+        "mass_flux_bound": 1.0350294924597738,
+        "rho_cap": 2.25,
+        "p_cap": 2.25
+      },
+      "conservation": {
+        "mass": {
+          "change": 0.008103889216799276,
+          "boundary_flux": 0.0081038892168,
+          "residual": -7.233796894823286e-16,
+          "relative_residual": 1.0706426248535909e-15
+        },
+        "x_momentum": {
+          "change": -0.00011781288545439916,
+          "boundary_flux": -0.00011781288545435883,
+          "residual": -4.0332320816460765e-17,
+          "relative_residual": 1.9957065246377784e-16
+        },
+        "y_momentum": {
+          "change": -0.00011781288545442692,
+          "boundary_flux": -0.0001178128854543597,
+          "residual": -6.722053469410127e-17,
+          "relative_residual": 3.3261775410629635e-16
+        },
+        "energy": {
+          "change": 0.032670534752344826,
+          "boundary_flux": 0.032670534752346186,
+          "residual": -1.3600232051658168e-15,
+          "relative_residual": 7.799518601623087e-16
+        }
+      },
+      "max_flux_balance_residual": 1.0706426248535909e-15,
+      "max_abs_conservation_change": 0.032670534752344826,
+      "finite": true,
+      "dofs": 16384,
+      "_leg": {
+        "json": "p1_32_t0.01_cfl0.2.json",
+        "arrays": "p1_32_t0.01_cfl0.2.npz",
+        "provenance": {
+          "command": null,
+          "stem": "p1_32_t0.01_cfl0.2",
+          "wall_seconds": 3.28,
+          "note": "C2 is recomputed from arrays/<stem>.npz by --merge-legs and by tests/test_riemann_2d_c2_full_record.py; the JSON never carries a self-convergence number of its own"
+        }
+      }
+    },
+    {
+      "ncells": 64,
+      "degree": 1,
+      "final_time": 0.01,
+      "cfl": 0.2,
+      "periodic": [
+        false,
+        false
+      ],
+      "steps": 59,
+      "dt": 0.00014244716557140422,
+      "wall_seconds": 15.03,
+      "rho_min": 0.13799987156275356,
+      "rho_max": 1.5230518777752011,
+      "p_min": 0.2999996091046516,
+      "p_max": 1.5422946874123356,
+      "positivity": {
+        "rho_min": 0.1379986085894154,
+        "rho_max": 1.5271896585804592,
+        "p_min": 0.29999576513514525,
+        "p_max": 1.5457869151194505,
+        "rho_min_mean": 0.13799987156275356,
+        "p_min_mean": 0.2999996091046516,
+        "rho_positive": true,
+        "p_positive": true,
+        "rho_positive_mean": true,
+        "p_positive_mean": true,
+        "quadrature_nodes": 3
+      },
+      "total_mass": 0.6837538892167989,
+      "initial_mass": 0.67565,
+      "c6_bounds": {
+        "final_time": 0.01,
+        "mass0": 0.67565,
+        "rho_max0": 1.5,
+        "p_max0": 1.5,
+        "speed_max0": 3.4500983081992462,
+        "perimeter": 4.0,
+        "mass_flux_bound": 1.0350294924597738,
+        "rho_cap": 2.25,
+        "p_cap": 2.25
+      },
+      "conservation": {
+        "mass": {
+          "change": 0.008103889216799054,
+          "boundary_flux": 0.008103889216800001,
+          "residual": -9.471590178833367e-16,
+          "relative_residual": 1.4018486167147733e-15
+        },
+        "x_momentum": {
+          "change": -0.00011480206023112283,
+          "boundary_flux": -0.0001148020602310198,
+          "residual": -1.0302631144043506e-16,
+          "relative_residual": 5.097903561927551e-16
+        },
+        "y_momentum": {
+          "change": -0.00011480206023115058,
+          "boundary_flux": -0.00011480206023102018,
+          "residual": -1.3040241629569405e-16,
+          "relative_residual": 6.45251618953787e-16
+        },
+        "energy": {
+          "change": 0.03266923354845708,
+          "boundary_flux": 0.03266923354845927,
+          "residual": -2.192690473634684e-15,
+          "relative_residual": 1.257473407200457e-15
+        }
+      },
+      "max_flux_balance_residual": 1.4018486167147733e-15,
+      "max_abs_conservation_change": 0.03266923354845708,
+      "finite": true,
+      "dofs": 65536,
+      "_leg": {
+        "json": "p1_64_t0.01_cfl0.2.json",
+        "arrays": "p1_64_t0.01_cfl0.2.npz",
+        "provenance": {
+          "command": null,
+          "stem": "p1_64_t0.01_cfl0.2",
+          "wall_seconds": 15.03,
+          "note": "C2 is recomputed from arrays/<stem>.npz by --merge-legs and by tests/test_riemann_2d_c2_full_record.py; the JSON never carries a self-convergence number of its own"
+        }
+      }
+    }
+  ],
+  "convergence": {
+    "p1_32_vs_64": 0.0015663619382650122
+  },
+  "self_convergence_by_degree": {
+    "p1": {
+      "32_vs_64": 0.0015663619382650122
+    }
+  },
+  "steps_by_leg": {
+    "p1_32": 29,
+    "p1_64": 59
+  },
+  "dt_by_leg": {
+    "p1_32": 0.00033568689857785446,
+    "p1_64": 0.00014244716557140422
+  },
+  "mesh_difference_l1_sums": [
+    {
+      "degree": 1,
+      "sum_abs_diff": [
+        1.096710212823
+      ]
+    }
+  ],
+  "verdicts": {
+    "C1_positivity": {
+      "passed": true,
+      "worst_rho_min": 0.13799733857776156,
+      "worst_p_min": 0.2999918994437727,
+      "detail": "rho > 0 and p > 0 at volume nodes and cell averages"
+    },
+    "C3_finite": {
+      "passed": true,
+      "detail": "no NaN/Inf"
+    },
+    "C4_flux_balance": {
+      "passed": true,
+      "worst_relative_residual": 1.4018486167147733e-15,
+      "tolerance": 1e-10,
+      "detail": "Q(t) - Q(0) equals the time-integrated boundary flux; the transmissive mass change itself is physical and is reported under 'mass change' rather than being scored as conservation"
+    },
+    "C5_periodic_drift": {
+      "passed": false,
+      "worst_relative_change": null,
+      "tolerance": 1e-12,
+      "detail": "NOT_RUN: no periodic control row in this profile",
+      "check_state": "not_run"
+    },
+    "C2_self_convergence": {
+      "passed": true,
+      "worst_relative_l1": 0.0015663619382650122,
+      "tolerance": 0.05,
+      "per_pair": {
+        "p1_32_vs_64": 0.0015663619382650122
+      }
+    },
+    "C6_physical_magnitude": {
+      "passed": true,
+      "worst_mass_bound_ratio": 0.007829621547826794,
+      "worst_extremum_factor": 1.0305246100796337,
+      "mass_tolerance": 1.0,
+      "extremum_tolerance": 1.5,
+      "per_row": {
+        "p1_32_open": {
+          "mass_bound_ratio": 0.007829621547826794,
+          "extremum_factor": 1.0197125513302152
+        },
+        "p1_64_open": {
+          "mass_bound_ratio": 0.00782962154782658,
+          "extremum_factor": 1.0305246100796337
+        }
+      },
+      "detail": "|mass(t)-mass(0)| must stay inside an a-priori flux bound (MASS_FLUX_SAFETY * rho_max0 * speed_max0 * perimeter * t) and max(rho,p) must stay within EXTREMUM_SAFETY x the initial extrema; bounds come from the initial data, not from a run"
+    }
+  },
+  "provenance": {
+    "command": "python -m benchmarks.riemann_2d_cks1998 --leg D N --time 0.25 --cfl 0.2  (each leg, then --merge-legs)",
+    "method": "sharded legs merged; C2 recomputed from legs/*.npz",
+    "legs": [
+      {
+        "stem": "p1_32_t0.01_cfl0.2",
+        "json": "p1_32_t0.01_cfl0.2.json",
+        "arrays": "p1_32_t0.01_cfl0.2.npz",
+        "wall_seconds": 3.28
+      },
+      {
+        "stem": "p1_64_t0.01_cfl0.2",
+        "json": "p1_64_t0.01_cfl0.2.json",
+        "arrays": "p1_64_t0.01_cfl0.2.npz",
+        "wall_seconds": 15.03
+      }
+    ],
+    "figure": null,
+    "kind": "smoke ladder (isomorphic, t=0.01) -- execution-path proof, NOT the case time"
+  },
+  "reference": "Lax & Liu (1998), SIAM J. Sci. Comput. 19(2), 319-340",
+  "notes": "Demonstrates leg -> checksummed transport -> merge -> C2 recomputation on a cheap isomorphic ladder (P1 32x32/64x64 at t=0.01). The production ladder (t=0.25, P1/P2) was submitted to the job queue as cj4312/cj4313/cj4314/cj4315 and had not started when this record was written; C2 for the case therefore remains NOT_RUN."
+}

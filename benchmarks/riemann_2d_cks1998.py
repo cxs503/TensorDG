@@ -541,6 +541,222 @@ def run_convergence_study(degrees=(1, 2), meshes=(32, 64), final_time=0.25,
 
 
 # ---------------------------------------------------------------------------
+# Sharded ``full`` profile: one leg = one (degree, ncells) solve
+# ---------------------------------------------------------------------------
+#
+# The ``full`` profile used to be a single process running four solves back to back
+# (P1/P2 x 32x32/64x64 at t=0.25).  Measured cost on one core is ~106 s + 499 s +
+# 468 s + 2587 s, i.e. about an hour in one command, so it exceeded the short-test
+# budget and was in practice never executed: the committed record kept C2 as
+# ``NOT_RUN``.  Splitting the same study into independently runnable legs makes
+# every piece queueable (and interruptible), and ``--merge-legs`` recomputes C2
+# from the *stored cell-mean arrays* of the legs, so the merged record cannot
+# state a self-convergence number that its own leg artifacts do not support.
+
+LEGS_DIRNAME = "legs"
+FULL_RECORD_NAME = "metrics_full.json"
+
+
+def leg_stem(degree, ncells, final_time, cfl):
+    """Stable file stem of one leg; encodes the whole configuration."""
+    return (f"p{int(degree)}_{int(ncells)}"
+            f"_t{float(final_time):g}_cfl{float(cfl):g}")
+
+
+def leg_paths(output_dir, degree, ncells, final_time, cfl):
+    directory = Path(output_dir) / LEGS_DIRNAME
+    stem = leg_stem(degree, ncells, final_time, cfl)
+    return directory / f"{stem}.json", directory / f"{stem}.npz"
+
+
+def _as_numpy(value, dtype):
+    if hasattr(value, "detach"):
+        value = value.detach().cpu().numpy()
+    return np.asarray(value, dtype=dtype)
+
+
+def write_leg(record, output_dir, command=None):
+    """Persist one leg: slim JSON record + the raw arrays C2 is recomputed from.
+
+    The arrays are stored separately on purpose.  The JSON record can be read and
+    quoted, but ``--merge-legs`` and the regression test derive the self-
+    convergence number by folding ``cell_means_rho`` themselves, so a hand-edited
+    L1 value is not a way to make the gate pass.
+    """
+    json_path, npz_path = leg_paths(output_dir, record["degree"], record["ncells"],
+                                    record["final_time"], record["cfl"])
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        npz_path,
+        cell_means_rho=_as_numpy(record["cell_means_rho"], np.float64),
+        x=_as_numpy(record["x"], np.float32),
+        y=_as_numpy(record["y"], np.float32),
+        coeff=_as_numpy(record["coeff"], np.float32),
+    )
+    payload = {
+        "record": _slim(record),
+        "arrays": npz_path.name,
+        "provenance": {
+            "command": command,
+            "stem": leg_stem(record["degree"], record["ncells"],
+                             record["final_time"], record["cfl"]),
+            "wall_seconds": record["wall_seconds"],
+            "note": ("C2 is recomputed from arrays/<stem>.npz by --merge-legs and "
+                     "by tests/test_riemann_2d_c2_full_record.py; the JSON never "
+                     "carries a self-convergence number of its own"),
+        },
+    }
+    json_path.write_text(json.dumps(payload, indent=2, default=str),
+                         encoding="utf-8")
+    return json_path, npz_path
+
+
+def load_leg(output_dir, degree, ncells, final_time, cfl):
+    """Read one leg back as a *full* record (arrays restored as torch tensors)."""
+    json_path, npz_path = leg_paths(output_dir, degree, ncells, final_time, cfl)
+    if not (json_path.is_file() and npz_path.is_file()):
+        return None
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    arrays = np.load(npz_path)
+    record = dict(payload["record"])
+    record["cell_means_rho"] = torch.from_numpy(arrays["cell_means_rho"])
+    record["x"] = torch.from_numpy(arrays["x"])
+    record["y"] = torch.from_numpy(arrays["y"])
+    record["coeff"] = torch.from_numpy(arrays["coeff"])
+    record["_leg"] = {
+        "json": json_path.name,
+        "arrays": npz_path.name,
+        "provenance": payload.get("provenance", {}),
+    }
+    return record
+
+
+def run_leg(degree, ncells, final_time=0.25, cfl=0.2, output_dir=None,
+            device="cpu", command=None):
+    """Run one leg, persist it, and echo a self-describing summary."""
+    record = run_riemann_2d(ncells=ncells, degree=degree, final_time=final_time,
+                           cfl=cfl, device=device)
+    if output_dir is not None:
+        json_path, npz_path = write_leg(record, output_dir, command=command)
+        print(f"  leg written: {json_path} + {npz_path.name}", flush=True)
+    print(f"  leg P{degree} {ncells}x{ncells} t={final_time:g} CFL={cfl:g}: "
+          f"steps={record['steps']} cfl_dt={record['dt']:.3e} "
+          f"wall={record['wall_seconds']:.1f}s "
+          f"rho=[{record['positivity']['rho_min']:.6e}, "
+          f"{record['positivity']['rho_max']:.6f}]", flush=True)
+    return record
+
+
+def merge_legs(output_dir, final_time=0.25, cfl=0.2, degrees=(1, 2),
+               meshes=(32, 64), gates=None):
+    """Merge leg artifacts into the ``full`` record, recomputing C2 from arrays.
+
+    Raises ``FileNotFoundError`` listing exactly which legs are missing: a merged
+    record is never produced from a partial ladder, because "worst over the pairs
+    that happened to exist" would silently weaken the gate.
+    """
+    gates = GATES if gates is None else gates
+    legs = {}
+    missing = []
+    for degree in degrees:
+        for ncells in meshes:
+            record = load_leg(output_dir, degree, ncells, final_time, cfl)
+            if record is None:
+                missing.append(leg_stem(degree, ncells, final_time, cfl))
+            else:
+                legs[(int(degree), int(ncells))] = record
+    if missing:
+        raise FileNotFoundError(
+            "merge_legs: missing leg artifacts: " + ", ".join(sorted(missing))
+        )
+
+    convergence = {}
+    rows = []
+    for degree in degrees:
+        ladder = [legs[(int(degree), int(ncells))] for ncells in meshes]
+        for coarse, fine in zip(ladder, ladder[1:]):
+            # Degree-qualified on purpose.  The inherited full-profile code keyed
+            # these as "32_vs_64" for *both* degrees, so the second degree
+            # overwrote the first and ``max(convergence.values())`` -- the number
+            # C2 is scored on -- only ever saw one of the two ladders.  With the
+            # degree in the key the "worst over pairs" claim is what it says.
+            key = f"p{int(degree)}_{coarse['ncells']}_vs_{fine['ncells']}"
+            convergence[key] = self_convergence_l1(coarse["cell_means_rho"],
+                                                   fine["cell_means_rho"])
+        rows.extend(_slim(record) for record in ladder)
+
+    def _cfl_dt(degree, ncells):
+        return legs[(int(degree), int(ncells))]["dt"]
+
+    cfl_dt = {f"p{int(degree)}_{int(ncells)}": _cfl_dt(degree, ncells)
+              for degree in degrees for ncells in meshes}
+    steps = {f"p{int(degree)}_{int(ncells)}": legs[(int(degree), int(ncells))]["steps"]
+             for degree in degrees for ncells in meshes}
+    stairs = []
+    for degree in degrees:
+        l1 = []
+        for ncells in meshes:
+            fine = legs[(int(degree), int(ncells))]["cell_means_rho"]
+            if len(meshes) > 1 and ncells == meshes[-1]:
+                # The finest mesh has no finer partner in the ladder; its own
+                # self-distance is undefined (not zero) and is left out.
+                continue
+            finer = legs[(int(degree), meshes[meshes.index(ncells) + 1])]
+            l1.append(round(float(torch.abs(
+                block_average(finer["cell_means_rho"],
+                              int(finer["ncells"]) // int(ncells))
+                - fine).sum()), 12))
+        stairs.append({"degree": int(degree), "sum_abs_diff": l1})
+
+    verdicts = judge(rows, convergence=convergence, gates=gates)
+    return {
+        "benchmark": "riemann_2d_cks1998",
+        "profile": "full",
+        "config": "Lax_Liu_1998_config_3",
+        "gates": gates,
+        "final_time": float(final_time),
+        "cfl": float(cfl),
+        "degrees": [int(d) for d in degrees],
+        "meshes": [int(n) for n in meshes],
+        "runs": rows,
+        "convergence": convergence,
+        "self_convergence_by_degree": {
+            f"p{int(degree)}": {
+                f"{coarse}_vs_{fine}": convergence[
+                    f"p{int(degree)}_{coarse}_vs_{fine}"]
+                for coarse, fine in zip(meshes, meshes[1:])
+            }
+            for degree in degrees
+        },
+        "steps_by_leg": steps,
+        "dt_by_leg": cfl_dt,
+        "mesh_difference_l1_sums": stairs,
+        "verdicts": verdicts,
+        "provenance": {
+            "command": ("python -m benchmarks.riemann_2d_cks1998 --leg D N "
+                        "--time 0.25 --cfl 0.2  (each leg, then --merge-legs)"),
+            "method": "sharded legs merged; C2 recomputed from legs/*.npz",
+            "legs": [
+                {"stem": leg_stem(d, n, final_time, cfl),
+                 "json": legs[(int(d), int(n))]["_leg"]["json"],
+                 "arrays": legs[(int(d), int(n))]["_leg"]["arrays"],
+                 "wall_seconds": legs[(int(d), int(n))]["wall_seconds"]}
+                for d in degrees for n in meshes
+            ],
+            "figure": None,
+        },
+        "reference": "Lax & Liu (1998), SIAM J. Sci. Comput. 19(2), 319-340",
+        "notes": (
+            "No closed-form solution exists for this 2-D Riemann problem, so C2 "
+            "compares the coarse mesh against the block-averaged fine mesh under "
+            "the same final time. C5 (periodic control) is NOT_RUN here because "
+            "the full profile has no periodic row; it stays scored by the quick "
+            "profile record."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Figures
 # ---------------------------------------------------------------------------
 
@@ -712,6 +928,91 @@ def sync_document(record, doc_path):
     return False
 
 
+# ``full`` profile document block: same discipline as the quick one above, but
+# for the merged C2 ladder.  Separate markers on purpose -- the quick record
+# (smoke, seconds) and the full record (hour of cluster time) are different
+# artifacts and must not overwrite each other's block.
+DOC_BLOCK_FULL_BEGIN = "<!-- DOC-NUMBERS-FULL:BEGIN"
+DOC_BLOCK_FULL_END = "<!-- DOC-NUMBERS-FULL:END -->"
+
+DOC_NUMBER_FIELDS_FULL = (
+    ("profile", "profile", "str"),
+    ("final_time", "final_time", "num"),
+    ("cfl", "cfl", "num"),
+    ("网格梯次（degrees）", "degrees", "list"),
+    ("网格梯次（meshes）", "meshes", "list"),
+    ("P1 32x32 时间步数", "steps_by_leg.p1_32", "int"),
+    ("P1 64x64 时间步数", "steps_by_leg.p1_64", "int"),
+    ("P2 32x32 时间步数", "steps_by_leg.p2_32", "int"),
+    ("P2 64x64 时间步数", "steps_by_leg.p2_64", "int"),
+    ("C2 P1 自收敛相对 L1（32x32 vs 块平均 64x64）",
+     "verdicts.C2_self_convergence.per_pair.p1_32_vs_64", "sci"),
+    ("C2 P2 自收敛相对 L1（32x32 vs 块平均 64x64）",
+     "verdicts.C2_self_convergence.per_pair.p2_32_vs_64", "sci"),
+    ("C2 最坏相对 L1", "verdicts.C2_self_convergence.worst_relative_l1", "sci"),
+    ("C2 容差", "verdicts.C2_self_convergence.tolerance", "num"),
+    ("C2 判定", "verdicts.C2_self_convergence", "verdict"),
+    ("C1 最坏 rho_min", "verdicts.C1_positivity.worst_rho_min", "sci"),
+    ("C1 判定", "verdicts.C1_positivity", "verdict"),
+    ("C3 判定", "verdicts.C3_finite", "verdict"),
+    ("C4 最坏通量平衡相对残差",
+     "verdicts.C4_flux_balance.worst_relative_residual", "sci"),
+    ("C4 判定", "verdicts.C4_flux_balance", "verdict"),
+    ("C5 判定", "verdicts.C5_periodic_drift", "verdict"),
+    ("C6 最坏质量界比",
+     "verdicts.C6_physical_magnitude.worst_mass_bound_ratio", "sci"),
+    ("C6 最坏极值因子",
+     "verdicts.C6_physical_magnitude.worst_extremum_factor", "num"),
+    ("C6 判定", "verdicts.C6_physical_magnitude", "verdict"),
+)
+
+
+def doc_number_rows_full(record):
+    """``(label, path, rendered value)`` triples for the merged full record."""
+    rows = []
+    for label, path, kind in DOC_NUMBER_FIELDS_FULL:
+        try:
+            value = _resolve(record, path)
+        except (KeyError, IndexError, TypeError):
+            rows.append((label, path, "NOT RECORDED"))
+            continue
+        if kind == "list":
+            rows.append((label, path, ", ".join(str(int(v)) for v in value)))
+            continue
+        rows.append((label, path, _format_value(value, kind)))
+    return rows
+
+
+def render_doc_numbers_block_full(record):
+    """Markdown block for the ``full`` profile, rendered from ``record``."""
+    header = (
+        DOC_BLOCK_FULL_BEGIN
+        + " (由 `python -m benchmarks.riemann_2d_cks1998 --merge-legs`"
+        + " 从 metrics_full.json 渲染，禁止手改) -->"
+    )
+    lines = [header, DOC_VALUES_HEADER, "|---|---:|:---:|"]
+    for label, path, text in doc_number_rows_full(record):
+        lines.append(f"| {label} | `{path}` | {text} |")
+    lines.append(DOC_BLOCK_FULL_END)
+    return "\n".join(lines)
+
+
+def sync_document_full(record, doc_path):
+    """Replace the ``DOC-NUMBERS-FULL`` block of ``doc_path`` (if present)."""
+    doc_path = Path(doc_path)
+    text = doc_path.read_text(encoding="utf-8")
+    start = text.find(DOC_BLOCK_FULL_BEGIN)
+    end = text.find(DOC_BLOCK_FULL_END)
+    if start < 0 or end < 0 or end < start:
+        return False
+    end += len(DOC_BLOCK_FULL_END)
+    updated = text[:start] + render_doc_numbers_block_full(record) + text[end:]
+    if updated != text:
+        doc_path.write_text(updated, encoding="utf-8")
+        return True
+    return False
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -727,6 +1028,16 @@ def main():
                         help="rewrite the DOC-NUMBERS block of the case document "
                              "from the record just produced")
     parser.add_argument("--doc", default=str(REPO / "docs" / "CASE-DG-CKS1998-2D-RIEMANN.md"))
+    parser.add_argument("--leg", nargs=2, type=int, metavar=("DEGREE", "NCELLS"),
+                        help="run and persist ONE convergence leg (sharded full "
+                             "profile); combine with --time/--cfl")
+    parser.add_argument("--merge-legs", action="store_true",
+                        help="merge persisted legs into metrics_full.json, "
+                             "recomputing C2 from the stored cell-mean arrays")
+    parser.add_argument("--full-record",
+                        default=None,
+                        help="path of the merged full record "
+                             "(default: <output-dir>/metrics_full.json)")
     args = parser.parse_args()
 
     torch.set_num_threads(int(os.environ.get("TORCH_THREADS", "1")))
@@ -741,6 +1052,49 @@ def main():
         print(f"    {name}: {state}")
     print(f"  Gates: {GATES}")
     print()
+
+    if args.leg:
+        degree, ncells = args.leg
+        print(f"[Leg] P{degree} {ncells}x{ncells}, t={args.time}, CFL={args.cfl} ...")
+        run_leg(degree, ncells, final_time=args.time, cfl=args.cfl,
+                output_dir=output, device=args.device,
+                command=(f"python -m benchmarks.riemann_2d_cks1998 --leg "
+                         f"{degree} {ncells} --time {args.time:g} --cfl {args.cfl:g}"))
+        sys.exit(0)
+
+    if args.merge_legs:
+        print(f"[Merge] legs from {output / LEGS_DIRNAME}, t={args.time}, "
+              f"CFL={args.cfl} ...")
+        record = merge_legs(output, final_time=args.time, cfl=args.cfl)
+        figure_row = load_leg(output, 1, record["meshes"][0], args.time, args.cfl)
+        figure_name = (f"riemann_2d_density_p{figure_row['degree']}_"
+                       f"{figure_row['ncells']}.png")
+        plot_density_field(figure_row["x"], figure_row["y"], figure_row["coeff"],
+                           figure_row["degree"], figure_row["ncells"],
+                           output / figure_name)
+        record["provenance"]["figure"] = figure_name
+        full_path = Path(args.full_record) if args.full_record else (
+            output / FULL_RECORD_NAME)
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_text(json.dumps(record, indent=2, default=str),
+                            encoding="utf-8")
+        print(f"  full record written: {full_path}", flush=True)
+        if args.sync_doc:
+            changed = sync_document_full(record, Path(args.doc))
+            print(f"  full doc block {'updated' if changed else 'not found/unchanged'}",
+                  flush=True)
+        all_pass = True
+        for gate, row in record["verdicts"].items():
+            if row.get("check_state") == "not_run":
+                status = "NOT_RUN"
+            else:
+                status = "PASS" if row["passed"] else "FAIL"
+                all_pass = all_pass and row["passed"]
+            print(f"  {gate}: {status}  "
+                  f"{json.dumps({k: v for k, v in row.items() if k != 'detail'})}")
+        print(f"\nAll scored gates (full profile): "
+              f"{'PASS' if all_pass else 'FAIL'}")
+        sys.exit(0 if all_pass else 1)
 
     if args.quick:
         config = QUICK_CONFIG
