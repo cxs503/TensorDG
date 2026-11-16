@@ -239,10 +239,38 @@ def build_report(published: dict, lattice: dict, rerun: dict | None = None,
         "exponents": exponents,
         "exponent_shift": exponent_shift,
         "criterion_invariance": criterion_invariance,
+        "coverage": coverage_block(rows),
         "verdict": ("no_material_reference_effect" if not material
                     else "material_reference_effect"),
     }
     return payload
+
+
+def coverage_block(rows) -> dict:
+    """Which checkpoints carry a *controlled* (rerun) measurement of the effect.
+
+    ``lattice_vs_published`` conflates the reference defect with the solver
+    round-off between the published run and the rerun, so it can only overstate
+    the effect.  ``lattice_vs_rerun`` isolates it.  Without this block the
+    headline "worst measured effect" silently describes the controlled subset
+    only -- the same failure mode the floor artifact had before coverage became
+    a gate (see ``docs/CASE-DG-EULER-VORTEX-ERR-round20-reference-floor-coverage.md``).
+    """
+    measured = [row for row in rows if "measured_reference_effect" in row or
+                "effect_source" in row]
+    controlled = [row["task_key"] for row in measured
+                  if row.get("effect_source") == "lattice_vs_rerun"]
+    uncontrolled = [row["task_key"] for row in measured
+                    if row.get("effect_source") != "lattice_vs_rerun"]
+    return {
+        "measured_checkpoints": len(measured),
+        "controlled": sorted(controlled),
+        "uncontrolled": sorted(uncontrolled),
+        "controlled_fraction": (len(controlled) / len(measured)) if measured else None,
+        "fully_controlled": not uncontrolled,
+        "uncontrolled_reading": ("upper bound only (reference defect + solver "
+                                 "round-off)"),
+    }
 
 
 def _fmt(value, scale=1.0, digits=3, suffix=""):
@@ -289,6 +317,20 @@ def markdown(payload: dict) -> str:
     else:
         lines.append("* 全部检查点的实测参考效应都落在其地板上界之内 ⇒ 地板是**可靠上界**。")
     lines.append("* 只有速度场有可测位移；密度/压力位移量级见上表（应为 `O(tail^2)`）。")
+    coverage = payload.get("coverage") or {}
+    if coverage:
+        lines += ["", "## 覆盖面（受控 vs 仅上界）", ""]
+        lines.append(
+            f"* 已量测检查点 {coverage['measured_checkpoints']} 个，其中受控（`lattice_vs_rerun`）"
+            f"{len(coverage['controlled'])} 个，未受控 {len(coverage['uncontrolled'])} 个"
+            f"（受控比例 {_fmt(coverage['controlled_fraction'], 100.0, 1, '%')}）。")
+        if coverage["uncontrolled"]:
+            lines.append(
+                "* **未受控**（读数只能当上界，因为 `lattice_vs_published` 把参考缺陷与求解器"
+                f"舍入混在一起）：{', '.join(f'`{k}`' for k in coverage['uncontrolled'])}。"
+                "补这些检查点的重跑控制后，本节标题的“实测”才是同条件实测。")
+        else:
+            lines.append("* 全部已量测检查点都有同条件重跑控制 ⇒ 本节读数是实测而非上界。")
 
     shift = payload.get("exponent_shift") or {}
     invariance = payload.get("criterion_invariance") or {}
@@ -373,6 +415,9 @@ def main(argv=None) -> int:
     parser.add_argument("--markdown", default=None)
     parser.add_argument("--figures", action="store_true")
     parser.add_argument("--figure", default=None)
+    parser.add_argument("--strict-coverage", action="store_true",
+                        help="exit non-zero if any measured checkpoint lacks a "
+                             "rerun control (its reading is then only an upper bound)")
     args = parser.parse_args(argv)
 
     published = load_records(args.published_dir)
@@ -402,6 +447,11 @@ def main(argv=None) -> int:
         make_figure(payload, figure)
         print(f"wrote {figure}")
     print(text)
+    coverage = payload.get("coverage") or {}
+    if args.strict_coverage and not coverage.get("fully_controlled", False):
+        print("uncontrolled checkpoints: " + ", ".join(coverage.get("uncontrolled", [])),
+              file=__import__("sys").stderr)
+        return 1
     return 0
 
 
