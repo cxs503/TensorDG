@@ -25,7 +25,10 @@ from .limiters import apply_limiter
 from .runge_kutta import TABLEAUS, rk_step
 
 # Tableaus driven by the generic stage loop; ``"rk4"`` and ``"ssp_rk3"``
-# keep their original hand-coded branches (bit-for-bit unchanged).
+# keep their original hand-coded branches (bit-for-bit unchanged).  Those two
+# names are registered in :data:`tensordg.runge_kutta.TABLEAUS` as well, so the
+# order/stage metadata below is read from the tableau instead of being repeated
+# as literals -- one description of the scheme, not two.
 _GENERIC_TABLEAUS = ("euler", "rk2", "rk3", "ssp_rk54", "rk5")
 
 # The quadrature order is ``max(2*degree + 3, 4)`` and float64 Legendre
@@ -176,6 +179,8 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
     )
     tableau = (TABLEAUS[time_integrator]
                if time_integrator in _GENERIC_TABLEAUS else None)
+    # Hand-coded branch: same scheme, described by its registered tableau.
+    reported = tableau if tableau is not None else TABLEAUS[time_integrator]
     for _ in range(steps):
         if tableau is not None:
             coeff = rk_step(
@@ -202,10 +207,7 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
             "speed": speed, "dt": dt, "steps": steps, "device": str(dev),
             "limiter": limiter or "none", "tvb_constant": tvb_constant,
             "time_integrator": time_integrator, "troubled_policy": troubled_policy,
-            "rk_order": (tableau.order if tableau is not None else
-                         3 if time_integrator == "ssp_rk3" else 4),
-            "rk_stages": (tableau.stages if tableau is not None else
-                          3 if time_integrator == "ssp_rk3" else 4)}
+            "rk_order": reported.order, "rk_stages": reported.stages}
     return centers, coeff, meta
 
 
