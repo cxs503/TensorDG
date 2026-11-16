@@ -1,0 +1,115 @@
+{
+  "note": "Where each committed solver profile comes from. The readings in metrics.json are re-scored locally from these profiles; nothing is re-run at scoring time.",
+  "profiles": {
+    "sod-1d-p0-n400.npz": {
+      "sha256": "65cca535e383103e73198d595ac14550d6bb361f4b1a47c7570f0e5b684b7c00",
+      "bytes": 11560,
+      "origin": "local (m23056 worktree)",
+      "solver_meta": {
+        "ncells": 400,
+        "final_time": 0.2,
+        "steps": 431,
+        "dt": 0.0002580464305807495,
+        "dt_last": 0.0002580464305807495,
+        "dt_mean": 0.0004640371229698376,
+        "diaphragm": 0.5,
+        "cfl": 0.4,
+        "flux": "rusanov",
+        "hllc_wave_speed": "davis",
+        "device": "cpu"
+      }
+    },
+    "sod-1d-p0-n800.npz": {
+      "sha256": "1ba6c268c7e354ecc956ef78de26680593a1cd981b8e603001cc7983e7fa6b11",
+      "bytes": 21164,
+      "origin": "local (m23056 worktree)",
+      "solver_meta": {
+        "ncells": 800,
+        "final_time": 0.2,
+        "steps": 869,
+        "dt": 0.0002037547150575414,
+        "dt_last": 0.0002037547150575414,
+        "dt_mean": 0.00023014959723820485,
+        "diaphragm": 0.5,
+        "cfl": 0.4,
+        "flux": "rusanov",
+        "hllc_wave_speed": "davis",
+        "device": "cpu"
+      }
+    },
+    "sod-1d-p0-n1600.npz": {
+      "sha256": "38bce83c785d045e883de120363468cdc8faf9956fe34dafac8cf34d9eac6571",
+      "bytes": 40360,
+      "origin": "local (m23056 worktree)",
+      "solver_meta": {
+        "ncells": 1600,
+        "final_time": 0.2,
+        "steps": 1746,
+        "dt": 5.81568896280138e-05,
+        "dt_last": 5.81568896280138e-05,
+        "dt_mean": 0.0001145475372279496,
+        "diaphragm": 0.5,
+        "cfl": 0.4,
+        "flux": "rusanov",
+        "hllc_wave_speed": "davis",
+        "device": "cpu"
+      }
+    },
+    "sod-1d-p0-n3200.npz": {
+      "sha256": "ca126edf06e9803bcc50e12e090b2a1858bab5616dfd4d07143b76391a6da0b5",
+      "bytes": 78768,
+      "origin": "local (m23056 worktree); bitwise reproduced by the same driver at m23056",
+      "solver_meta": {
+        "ncells": 3200,
+        "final_time": 0.2,
+        "steps": 3499,
+        "dt": 4.250867492255894e-05,
+        "dt_last": 4.250867492255894e-05,
+        "dt_mean": 5.715918833952558e-05,
+        "diaphragm": 0.5,
+        "cfl": 0.4,
+        "flux": "rusanov",
+        "hllc_wave_speed": "davis",
+        "device": "cpu"
+      }
+    },
+    "sod-2d-p0-n3200.npz": {
+      "sha256": "98f4ac201a2cf296a2ffd3ab0156525e2b359bc666976e1c10463d2f9cc58aae",
+      "bytes": 78648,
+      "origin": "cluster job cj3966 (node n315, rc=0, submitted 11-15 18:05, fetched 11-16)",
+      "solver_meta": {
+        "degree": 0,
+        "final_time": 0.2,
+        "steps": 3501,
+        "dt": 4.5963979952712286e-07,
+        "dt_last": 4.5963979952712286e-07,
+        "dt_mean": 5.712653527563554e-05,
+        "cfl": 0.4,
+        "quadrature": 4,
+        "flux": "rusanov",
+        "device": "cpu"
+      }
+    },
+    "sod-dg-p2-n400.npz": {
+      "sha256": "eb8c0ee1baeb64ebbec4e6561f7d2efac122f067bcd0081d658d635ba194d5f6",
+      "bytes": 11764,
+      "origin": "cluster job cj3966 (node n315, rc=0, submitted 11-15 18:05, fetched 11-16)",
+      "solver_meta": {
+        "ncells": 400,
+        "degree": 2,
+        "final_time": 0.2,
+        "steps": 7281,
+        "dt": 2.194687930007211e-05,
+        "dt_last": 2.194687930007211e-05,
+        "dt_mean": 2.746875429199286e-05,
+        "diaphragm": 0.5,
+        "cfl": 0.12,
+        "flux": "hllc",
+        "limiter": "tvb",
+        "device": "cpu",
+        "limiter_stage": "final",
+        "positivity": "scale"
+      }
+    }
+  }
+}
