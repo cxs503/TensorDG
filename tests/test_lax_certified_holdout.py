@@ -234,3 +234,57 @@ def test_artifacts_and_doc_present(metrics):
     assert DOC.exists()
     for figure in metrics["figures"]:
         assert (ROOT / figure).exists(), figure
+
+# ------------------------------------------------- pre-registration guard
+def test_run_refuses_a_preregistration_that_does_not_predate(predictions,
+                                                            monkeypatch, tmp_path):
+    """``--run`` must refuse *before* solving if the pre-registration is younger.
+
+    The module docstring states this contract; this test pins it to behaviour
+    instead of prose, and pins the ordering (refusal happens before the solver).
+    """
+    import benchmarks.lax_certified_holdout as driver
+
+    future = dict(predictions)
+    future["registered_at_utc"] = "2999-01-01T00:00:00Z"
+    staged = tmp_path / "predictions.json"
+    staged.write_text(json.dumps(future))
+    monkeypatch.setattr(driver, "PREDICTIONS", staged)
+
+    def must_not_solve(*args, **kwargs):
+        raise AssertionError("solver ran despite a non-predating pre-registration")
+
+    monkeypatch.setattr(driver, "run_holdout", must_not_solve)
+    with pytest.raises(SystemExit):
+        driver.main(["--run"])
+
+
+def test_render_failure_does_not_lose_the_measurement(predictions, metrics,
+                                                      monkeypatch, tmp_path):
+    """A node without matplotlib must still persist the numbers it paid for.
+
+    ``write_outputs`` renders figures before writing; if that import fails the
+    solve used to be lost.  Now the metrics are written with an explicit
+    ``figures_deferred_reason`` so ``--figures-only`` can finish the job.
+    """
+    import benchmarks.lax_certified_holdout as driver
+
+    def no_matplotlib(*args, **kwargs):
+        raise ImportError("No module named 'matplotlib'")
+
+    monkeypatch.setattr(driver, "render_figures", no_matplotlib)
+    monkeypatch.setattr(driver, "OUT", tmp_path)
+    monkeypatch.setattr(driver, "FIG", tmp_path / "figures")
+    monkeypatch.setattr(driver, "METRICS", tmp_path / "metrics.json")
+    monkeypatch.setattr(driver, "SUMMARY", tmp_path / "summary.md")
+    monkeypatch.setattr(driver, "DOC", tmp_path / "doc.md")
+
+    evaluation = driver.evaluate(predictions, metrics["legs"])
+    front = driver.frontier(predictions["enumerated_legs"], metrics["legs"])
+    written = driver.write_outputs(predictions, metrics["legs"], evaluation, front)
+
+    assert written["figures"] == []
+    assert "matplotlib" in written["figures_deferred_reason"]
+    assert (tmp_path / "metrics.json").exists()
+    assert (tmp_path / "summary.md").exists()
+    assert (tmp_path / "doc.md").exists()
