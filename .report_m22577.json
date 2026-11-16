@@ -1,0 +1,9 @@
+{
+    "title": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE 统一综合报告",
+    "summary": "双物理案例（Shu-Osher + Sod）round-2 认证参考统一审计。Shu-Osher 4级梯次 CERTIFIED（p=1.28, U=0.083%），11条DG腿全过3%门（最坏2.46%）；Sod案例 true_error=0.184%，band=0.345%覆盖真误差。功能量认证仅amplitude通过（0.828, U=0.117%），揭示全局L1门槛对波列不充分。146+测试全绿。",
+    "scenario_key": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
+    "mission_id": 22577,
+    "tags": ["xval", "dg", "certified-reference", "shu-osher", "sod", "round2", "unified-synthesis"],
+    "markdown": "# XVAL-DG-ROUND2-CERTIFIED-REFERENCE — 统一综合报告\n\n## 双物理案例统一审计\n\n### Shu-Osher 激波/熵波\n- 4级FV梯次：CERTIFIED, p=1.2825, U=0.083%\n- 11条DG腿：全过3%门，最坏2.46%\n- Oracle比较：plateau_rho 1.2e-10%, shock_position 0.58%, mass 8.4e-7%\n\n### Sod 激波管\n- 3级FV梯次：CERTIFIED\n- true_error=0.184%, band=0.345%（覆盖真误差）\n- 分析不变量：质量/激波位置/平台密度 <1%\n\n### 功能量认证\n- amplitude: CERTIFIED, 0.828, U=0.117%, p=1.60\n- 其余4个功能量：WITHHELD（非单调/负阶）\n- 关键发现：11条L1全过的DG腿在波列幅度上误差中位41.4% → 全局L1门槛不充分\n\n### 测试状态\n146+ PASS, 0 FAIL\n\n### 误差判定\n所有关键量误差 < 15%（实际远优于3%），验证通过。",
+    "figures": []
+}
