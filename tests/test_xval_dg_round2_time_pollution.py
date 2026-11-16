@@ -22,6 +22,8 @@ Run: ``pytest -q tests/test_xval_dg_round2_time_pollution.py``
 """
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 
 import numpy as np
@@ -155,7 +157,7 @@ requires_cfl_profiles = pytest.mark.skipif(
 def test_committed_audit_runs_end_to_end():
     res = tp.audit(RAW)
     assert res["verdict"] in ("TIME_CLEAN", "TIME_MARGINAL", "TIME_POLLUTED")
-    assert set(res["criteria"]) == {"T0", "T1", "T2", "T3", "T4"}
+    assert set(res["criteria"]) == {"T0", "T1", "T2", "T3", "T4", "T5"}
     # every grid in the CFL series must report a real temporal difference
     for row in res["grids"]:
         assert row["delta_t"] > 0.0 and np.isfinite(row["delta_t"])
@@ -234,9 +236,14 @@ def _synthetic_rawdir(root: Path, k_time: float, *, p_time: float = 2.0,
             f = field(n, cfl)
             np.savez(tp.level_path(root, n, cfl), x=np.arange(n, dtype=float),
                      rho=f, rho_u=f, rho_e=f, meta="{}")
-    # DG legs: same block structure, half the spatial error, on the shipped grids
+    # DG legs: same block structure, half the spatial error, on the shipped grids.
+    # Each leg gets its *own* block weight: eleven legs that differ only by the
+    # configuration label would be one profile counted eleven times, and T5
+    # refuses to call "no decision flip across eleven legs" evidence for that.
     for degree, ncells, cfl in tp.xval.DG_LEGS:
-        wsel = _block_field(w, np.arange(ncells))
+        phase = 1e-3 * (int(degree) + 10.0 * float(cfl))
+        w_leg = 1.0 + 0.3 * np.sin(2.0 * np.pi * idx / BLOCK_GRID + phase)
+        wsel = _block_field(w_leg, np.arange(ncells))
         x = (np.arange(ncells) + 0.5) * (10.0 / ncells) - 5.0
         f = 1.0 + 0.2 * x + 0.5 * a_space * (ncells / BLOCK_GRID) ** (-p_space) * wsel
         np.savez(Path(root) / tp.xval.leg_filename(degree, ncells, cfl),
@@ -332,3 +339,101 @@ def test_present_levels_are_used_in_coarse_to_fine_order(tmp_path):
     assert [s["cfl"] for s in series] == [0.3, 0.075]
     rep = tp.temporal_report(series)
     assert rep["differences"][0]["ratio"] == pytest.approx(4.0)
+
+
+# --------------------------------------------------- evidence integrity (T5 etc.)
+def test_missing_inputs_carry_their_producer_command(tmp_path):
+    """Every hard input that is absent must come with the command that makes it."""
+    miss = tp.missing_inputs(tmp_path)
+    assert miss, "an empty rawdir must report missing inputs"
+    assert all(row["required"] for row in miss)
+    for row in miss:
+        assert "gen_cfl_ladder.py --ncells" in row["generator"]
+        assert f"--cfl {row['cfl']:g}" in row["generator"]
+        assert not Path(row["path"]).exists()
+    # optional coarse partners are reported but never counted as missing
+    all_rows = tp.required_inputs(tmp_path)
+    assert any(not r["required"] for r in all_rows)
+
+
+def test_audit_or_withheld_never_crashes_and_claims_nothing(tmp_path):
+    res = tp.audit_or_withheld(tmp_path)
+    assert res["verdict"] == tp.WITHHELD_MISSING_INPUTS
+    assert res["accepted"] is False
+    assert "criteria" not in res          # nothing was measured, nothing is claimed
+    assert len(res["missing"]) == len(tp.missing_inputs(tmp_path))
+    md = tp.markdown(res)
+    assert tp.WITHHELD_MISSING_INPUTS in md
+    assert "TIME_CLEAN" not in md
+    for row in res["missing"]:
+        assert Path(row["path"]).name in md
+
+
+def test_leg_distinctness_flags_duplicate_profiles():
+    """T5: a leg table with repeated profiles makes T4's claim vacuous."""
+    f = np.linspace(1.0, 3.0, 64)
+    g = f + 1e-3 * np.sin(np.arange(64))
+    same = [{"configuration": "DG P1 N=200", "ncells": 200, "field": f},
+            {"configuration": "DG P2 N=200", "ncells": 200, "field": f.copy()}]
+    res = tp.leg_distinctness(same)
+    assert res["pass"] is False
+    assert len(res["duplicates"]) == 1
+    assert res["min_pair_rel_l1"] == 0.0
+
+    mixed = same + [{"configuration": "DG P3 N=200", "ncells": 200, "field": g}]
+    res = tp.leg_distinctness(mixed)
+    assert res["pass"] is False           # the P1/P2 pair is still a duplicate
+    assert res["n_pairs"] == 3
+    assert tp.leg_distinctness(mixed[:1] + mixed[2:])["pass"] is True
+
+
+def test_committed_dg_legs_are_pairwise_distinct():
+    """The shipped eleven legs must be eleven *different* discretisations."""
+    res = tp.leg_distinctness(tp.leg_profiles(RAW))
+    assert res["n_legs"] == 11
+    assert res["n_groups"] == 3           # N = 200 / 400 / 800
+    assert res["n_pairs"] == 3 + 10 + 3
+    assert res["pass"] is True, res["duplicates"]
+    assert res["min_pair_rel_l1"] > 1e-6
+
+
+def test_provenance_detects_a_changed_profile(tmp_path):
+    """The sha256 stamp is what makes a stale artifact detectable."""
+    src = RAW / "fv_cfl0p3_n800.npz"
+    copydir = tmp_path
+    (copydir / src.name).write_bytes(src.read_bytes())
+    prov = tp.input_provenance(copydir)
+    assert prov["files"][src.name]["sha256"] == hashlib.sha256(
+        src.read_bytes()).hexdigest()
+
+    blob = np.load(src)
+    np.savez(copydir / src.name, x=blob["x"], rho=blob["rho"] + 1e-6,
+             rho_u=blob["rho_u"], rho_e=blob["rho_e"], meta=str(blob["meta"]))
+    tampered = tp.input_provenance(copydir)
+    assert tampered["files"][src.name]["sha256"] != prov["files"][src.name]["sha256"]
+
+
+def test_committed_artifact_is_not_stale():
+    """The artifact on disk must equal what the code computes *now*.
+
+    This is the gate that was missing when ``time_pollution.json`` shipped a
+    ``TIME_CLEAN`` verdict computed on CFL profiles that were never committed:
+    the end-to-end tests skipped (inputs absent) and nothing compared the stored
+    artifact against the code, so a claim outlived its evidence.
+    """
+    art = Path(tp.DEFAULT_OUT) / "time_pollution.json"
+    assert art.exists(), "the artifact must be committed"
+    stored = json.loads(art.read_text())
+    fresh = tp._jsonable(tp.audit_or_withheld(RAW))
+    assert stored["verdict"] == fresh["verdict"], (
+        f"committed verdict {stored['verdict']} != recomputed {fresh['verdict']}")
+    if fresh["verdict"] == tp.WITHHELD_MISSING_INPUTS:
+        assert "criteria" not in stored
+        assert [r["path"] for r in stored["missing"]] == [r["path"] for r in fresh["missing"]]
+        md = (Path(tp.DEFAULT_OUT) / "time_pollution.md").read_text()
+        assert "TIME_CLEAN" not in md
+    else:
+        assert stored["criteria"].keys() == fresh["criteria"].keys()
+        assert stored["provenance"]["files"] == fresh["provenance"]["files"]
+        if stored["accepted"]:
+            assert stored["verdict"] == "TIME_CLEAN"
