@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 import numpy as np
@@ -36,8 +37,9 @@ import torch
 
 import tensordg.euler_dg_2d as dg2
 from benchmarks.case_euler_vortex_errconserve import (
-    BACKGROUND, DOMAIN, LADDER, P0_QUADRATURE, PERIOD, REFERENCE_LATTICE,
-    REFERENCE_MIN_IMAGE, STRENGTH, T_REF, reference_images, task_key,
+    BACKGROUND, DIRECTION_AXIS, DIRECTION_SPEED, DOMAIN, LADDER, P0_QUADRATURE,
+    PERIOD, REFERENCE_LATTICE, REFERENCE_MIN_IMAGE, STRENGTH, T_REF,
+    reference_images, task_key,
 )
 from tensordg.euler_2d import vortex_primitive
 
@@ -87,8 +89,10 @@ def floor_at(config: dict, images=None) -> dict:
     if images is None:
         images = reference_images(final_time)
     xq, yq, weight = quadrature_grid(config)
-    fold = reference_fields(xq, yq, final_time, None)
-    lattice = reference_fields(xq, yq, final_time, images)
+    strength = config.get("strength", STRENGTH)
+    background = tuple(config.get("background_velocity", BACKGROUND))
+    fold = reference_fields(xq, yq, final_time, None, strength, background)
+    lattice = reference_fields(xq, yq, final_time, images, strength, background)
     per_field = {name: weighted_relative_l2(fold[i], lattice[i], weight)
                  for i, name in enumerate(FIELDS)}
     return {
@@ -98,6 +102,8 @@ def floor_at(config: dict, images=None) -> dict:
         "cells": config["cells"],
         "final_time": final_time,
         "cfl": config.get("cfl"),
+        "background_velocity": list(config.get("background_velocity", BACKGROUND)),
+        "direction": config.get("direction", "diag45"),
         "images": images,
         "floor_relative_l2": per_field,
         "floor_percent": {name: 100.0 * value for name, value in per_field.items()},
@@ -137,6 +143,62 @@ def compare_with_published(floors: list, results_dir: Path) -> list:
     return rows
 
 
+def configs_from_results(results_dir: Path) -> list:
+    """One config per *published* record, taken from the record's own config block.
+
+    The floor is a property of (checkpoint, direction).  Iterating ``LADDER``
+    alone silently skips two families that the gate actually grades: the C10
+    direction axis (``*_diraxis0`` / ``*_dirobl30``) and the long-time
+    ``dg_d2_n32_t20`` checkpoint.  Each record carries the config it was produced
+    with, so the floor is rebuilt from that authority instead of from a hardcoded
+    list -- and the direction is part of it, because the fold of the reference
+    depends on where the vortex sits at time ``t``.
+    """
+    configs, seen = [], set()
+    for path in sorted((results_dir / "results").glob("*.json")):
+        record = json.loads(path.read_text())
+        config = dict(record.get("config") or {})
+        config.setdefault("task", record.get("task", "dg"))
+        config.setdefault("cells", record["cells"])
+        config.setdefault("final_time", record["final_time"])
+        config.setdefault("cfl", record.get("cfl"))
+        config.setdefault("strength", STRENGTH)
+        config.setdefault("background_velocity", BACKGROUND)
+        if config["task"] == "dg":
+            config.setdefault("degree", record.get("degree", 2))
+        key = task_key(config)
+        if key in seen:
+            continue
+        seen.add(key)
+        configs.append(config)
+    return configs
+
+
+def direction_label_of(config: dict) -> str:
+    """Name the advection direction carried by a config (``diag45`` / ...)."""
+    background = tuple(config.get("background_velocity", BACKGROUND))
+    speed = float(np.hypot(*background))
+    if abs(speed - DIRECTION_SPEED) > 1e-9:
+        return f"speed{speed:.6g}"
+    angle = math.degrees(math.atan2(background[1], background[0])) % 360.0
+    for label, declared in DIRECTION_AXIS:
+        declared_angle = math.degrees(math.atan2(declared[1], declared[0])) % 360.0
+        if abs(angle - declared_angle) < 1e-6:
+            return label
+    return f"angle{angle:.3f}"
+
+
+def coverage(configs: list, rows: list) -> dict:
+    """Which published records still have no reference bound?"""
+    compared = {row["task_key"] for row in rows if row["published_errors"] is not None}
+    expected = [task_key(config) for config in configs]
+    return {
+        "records_with_config": len(expected),
+        "compared": len(compared),
+        "uncovered": sorted(set(expected) - compared),
+    }
+
+
 def markdown(rows: list, results_dir: Path) -> str:
     measured = [r for r in rows if r["published_errors"] is not None]
     worst = max(measured, key=lambda r: r["worst_floor_over_error"]) if measured else None
@@ -147,9 +209,9 @@ def markdown(rows: list, results_dir: Path) -> str:
         f"用**与算例门禁相同的求积网格与加权相对 L2**（分母 = lattice 参考）。"
         f"结果目录：`{results_dir}`。",
         "",
-        "| 检查点 | t | 像半宽 K | 密度地板 | u 地板 | v 地板 | p 地板 | "
+        "| 检查点 | 方向 | t | 像半宽 K | 密度地板 | u 地板 | v 地板 | p 地板 | "
         "实测最大误差 | 地板/误差 | 主导场 |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for row in rows:
         f = row["floor_percent"]
@@ -160,7 +222,8 @@ def markdown(rows: list, results_dir: Path) -> str:
                     f"{row['worst_floor_over_error']:.3f} | "
                     f"{row['worst_floor_over_error_field']} |")
         lines.append(
-            f"| {row['task_key']} | {row['final_time']:g} | {row['images']} | "
+            f"| {row['task_key']} | {row.get('direction', '-')} | "
+            f"{row['final_time']:g} | {row['images']} | "
             f"{f['density']:.3e}% | {f['velocity_x']:.3e}% | {f['velocity_y']:.3e}% | "
             f"{f['pressure']:.3e}% | " + tail)
     lines += ["", "## 判读", ""]
@@ -219,9 +282,16 @@ def main(argv=None) -> int:
     parser.add_argument("--markdown", default=None)
     parser.add_argument("--figure", default=None)
     parser.add_argument("--figures", action="store_true")
+    parser.add_argument("--configs", choices=("results", "ladder"), default="results",
+                        help="checkpoint set: every published record (default) or "
+                             "the hardcoded LADDER only")
     args = parser.parse_args(argv)
     results_dir = Path(args.results_dir)
-    floors = [floor_at(dict(config)) for config in LADDER]
+    configs = (configs_from_results(results_dir) if args.configs == "results"
+               else [dict(config) for config in LADDER])
+    for config in configs:
+        config["direction"] = direction_label_of(config)
+    floors = [floor_at(dict(config)) for config in configs]
     rows = compare_with_published(floors, results_dir)
     payload = {
         "case": "EULER-VORTEX-ERR",
@@ -233,6 +303,8 @@ def main(argv=None) -> int:
         "strength": STRENGTH,
         "background_velocity": list(BACKGROUND),
         "t_ref": T_REF,
+        "config_source": args.configs,
+        "coverage": coverage(configs, rows),
         "checkpoints": rows,
         "worst": (min(rows, key=lambda r: -(r["worst_floor_over_error"] or 0.0))["task_key"]
                   if rows else None),
