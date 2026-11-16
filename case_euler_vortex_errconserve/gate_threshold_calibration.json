@@ -136,6 +136,28 @@
       "brackets": true
     },
     {
+      "id": "k12",
+      "criterion": "C12_growth_statistic_robustness",
+      "threshold": 1.0,
+      "threshold_source": "MAX_GROWTH_EXPONENT (conservative statistic)",
+      "direction": "fails above",
+      "readings": {
+        "inside": {
+          "magnitude": 0.999,
+          "detail": "late-onset exponent 0.649727 -> robust statistic 0.998988",
+          "status": "passed",
+          "verdict": "FAIL"
+        },
+        "outside": {
+          "magnitude": 1.001,
+          "detail": "late-onset exponent 0.651031 -> robust statistic 1.000994",
+          "status": "failed",
+          "verdict": "FAIL"
+        }
+      },
+      "brackets": true
+    },
+    {
       "id": "k11",
       "criterion": "C11_provenance_integrity",
       "threshold": 1e-09,
@@ -165,6 +187,7 @@
     "C4_entropy_budget",
     "C5_crosscheck_order",
     "C9_design_order",
+    "C12_growth_statistic_robustness",
     "C11_provenance_integrity"
   ],
   "miscalibrated": [],

@@ -1216,6 +1216,286 @@
       "passed": true,
       "status": "passed"
     },
+    "C12_growth_statistic_robustness": {
+      "criterion": "for every DG family with >= 3 checkpoints the growth exponent stays <= 1.0 under the conservative reading (worst of least squares / Theil-Sen / endpoint / leave-one-out / 99% residual bootstrap), so the C2/C7/C8/C10 verdict is not an artefact of the estimator or of one checkpoint",
+      "measured": 0.5338682588283528,
+      "worst_at": "dg_d1_n32_cfl0.2",
+      "worst_variant": "drop_projection_floor",
+      "families_evaluated": [
+        "dg_d1_n32_cfl0.2",
+        "dg_d1_n64_cfl0.2",
+        "dg_d2_n32_cfl0.2",
+        "dg_d2_n32_cfl0.2_diraxis0",
+        "dg_d2_n32_cfl0.2_dirobl30",
+        "dg_d2_n32_cfl0.4",
+        "dg_d2_n64_cfl0.2",
+        "dg_d3_n32_cfl0.2"
+      ],
+      "offenders": [],
+      "per_family": {
+        "dg_d1_n32_cfl0.2": {
+          "decidable": true,
+          "points": 4,
+          "ols": 0.4400714990253468,
+          "theil_sen": 0.4430025515169672,
+          "endpoint": 0.438968537153712,
+          "drop_projection_floor": 0.5338682588283528,
+          "leave_one_out": [
+            0.5338682588283528,
+            0.42221861981551556,
+            0.4565274973463154,
+            0.34926568285261367
+          ],
+          "leave_one_out_worst": 0.5338682588283528,
+          "bootstrap_quantile": 0.5236127955266282,
+          "bootstrap_std": 0.04436728979886167,
+          "r2": 0.9602864255301621,
+          "max_log_residual": 0.08156568242758588,
+          "robust": 0.5338682588283528,
+          "robust_at": "drop_projection_floor",
+          "undecidable_variants": [],
+          "power_law": false
+        },
+        "dg_d1_n64_cfl0.2": {
+          "decidable": true,
+          "points": 4,
+          "ols": 0.3117233842409501,
+          "theil_sen": 0.29628496398020077,
+          "endpoint": 0.3175328977022517,
+          "drop_projection_floor": 0.41048298261060473,
+          "leave_one_out": [
+            0.41048298261060473,
+            0.295583522258404,
+            0.33522088798462013,
+            0.19720990740191144
+          ],
+          "leave_one_out_worst": 0.41048298261060473,
+          "bootstrap_quantile": 0.4139378329664496,
+          "bootstrap_std": 0.051698628605716605,
+          "r2": 0.89919937030896,
+          "max_log_residual": 0.1073546684358977,
+          "robust": 0.4139378329664496,
+          "robust_at": "bootstrap_quantile",
+          "undecidable_variants": [],
+          "power_law": false
+        },
+        "dg_d2_n32_cfl0.2": {
+          "decidable": true,
+          "points": 5,
+          "ols": 0.3128785604386497,
+          "theil_sen": 0.3029358074382742,
+          "endpoint": 0.32765721717665774,
+          "drop_projection_floor": 0.4082884898932727,
+          "leave_one_out": [
+            0.4082884898932727,
+            0.30365714008630373,
+            0.31658289311826615,
+            0.3323002601489084,
+            0.19871721658331432
+          ],
+          "leave_one_out_worst": 0.4082884898932727,
+          "bootstrap_quantile": 0.4432587626656681,
+          "bootstrap_std": 0.05979503865260587,
+          "r2": 0.8423251857795209,
+          "max_log_residual": 0.19198181716626372,
+          "robust": 0.4432587626656681,
+          "robust_at": "bootstrap_quantile",
+          "undecidable_variants": [],
+          "power_law": false
+        },
+        "dg_d2_n32_cfl0.2_diraxis0": {
+          "decidable": true,
+          "points": 4,
+          "ols": 0.1660981276688663,
+          "theil_sen": 0.14943479330439527,
+          "endpoint": 0.17236857915713505,
+          "drop_projection_floor": 0.22629993321534403,
+          "leave_one_out": [
+            0.22629993321534403,
+            0.15730006571043584,
+            0.18283760090700377,
+            0.08889250048527127
+          ],
+          "leave_one_out_worst": 0.22629993321534403,
+          "bootstrap_quantile": 0.23512851615711108,
+          "bootstrap_std": 0.03389871458814288,
+          "r2": 0.854929001216602,
+          "max_log_residual": 0.07647878765658778,
+          "robust": 0.23512851615711108,
+          "robust_at": "bootstrap_quantile",
+          "undecidable_variants": [],
+          "power_law": false
+        },
+        "dg_d2_n32_cfl0.2_dirobl30": {
+          "decidable": true,
+          "points": 4,
+          "ols": 0.1905122458734397,
+          "theil_sen": 0.1719285463917401,
+          "endpoint": 0.19750533522301378,
+          "drop_projection_floor": 0.2565861424245248,
+          "leave_one_out": [
+            0.2565861424245248,
+            0.18089834517475684,
+            0.2089827653889029,
+            0.10547492312967771
+          ],
+          "leave_one_out_worst": 0.2565861424245248,
+          "bootstrap_quantile": 0.2665493354634198,
+          "bootstrap_std": 0.037308106371644015,
+          "r2": 0.864880703168858,
+          "max_log_residual": 0.08438753835524615,
+          "robust": 0.2665493354634198,
+          "robust_at": "bootstrap_quantile",
+          "undecidable_variants": [],
+          "power_law": false
+        },
+        "dg_d2_n32_cfl0.4": {
+          "decidable": true,
+          "points": 4,
+          "ols": 0.19890142843159025,
+          "theil_sen": 0.17898759912732315,
+          "endpoint": 0.20639504872791795,
+          "drop_projection_floor": 0.27182094230074116,
+          "leave_one_out": [
+            0.27182094230074116,
+            0.18820607852317747,
+            0.219087310378795,
+            0.1056611795765486
+          ],
+          "leave_one_out_worst": 0.27182094230074116,
+          "bootstrap_quantile": 0.2822646183323754,
+          "bootstrap_std": 0.040966130437266574,
+          "r2": 0.8526445659348212,
+          "max_log_residual": 0.092224633185225,
+          "robust": 0.2822646183323754,
+          "robust_at": "bootstrap_quantile",
+          "undecidable_variants": [],
+          "power_law": false
+        },
+        "dg_d2_n64_cfl0.2": {
+          "decidable": true,
+          "points": 3,
+          "ols": 0.029322048158809108,
+          "theil_sen": 0.027597334787148396,
+          "endpoint": 0.027597334787148396,
+          "drop_projection_floor": NaN,
+          "leave_one_out": [],
+          "leave_one_out_worst": NaN,
+          "bootstrap_quantile": 0.03724413554395754,
+          "bootstrap_std": 0.004373852103373941,
+          "r2": 0.9384879765976176,
+          "max_log_residual": 0.009979643194279575,
+          "robust": 0.03724413554395754,
+          "robust_at": "bootstrap_quantile",
+          "undecidable_variants": [
+            "drop_projection_floor",
+            "leave_one_out_worst"
+          ],
+          "power_law": false
+        },
+        "dg_d3_n32_cfl0.2": {
+          "decidable": true,
+          "points": 4,
+          "ols": 0.024914808273363915,
+          "theil_sen": 0.022824660444821964,
+          "endpoint": 0.02570133576392946,
+          "drop_projection_floor": 0.03281560371282951,
+          "leave_one_out": [
+            0.03281560371282951,
+            0.023746287295973785,
+            0.027079451826143897,
+            0.014881156342251255
+          ],
+          "leave_one_out_worst": 0.03281560371282951,
+          "bootstrap_quantile": 0.033884596433826804,
+          "bootstrap_std": 0.004415320945139417,
+          "r2": 0.8865603312068276,
+          "max_log_residual": 0.009889756521621607,
+          "robust": 0.033884596433826804,
+          "robust_at": "bootstrap_quantile",
+          "undecidable_variants": [],
+          "power_law": false
+        },
+        "p0_n128": {
+          "decidable": true,
+          "points": 4,
+          "ols": 0.6353940009057978,
+          "theil_sen": 0.6431922109184994,
+          "endpoint": 0.6324595163356344,
+          "drop_projection_floor": 0.5686982803890135,
+          "leave_one_out": [
+            0.5686982803890135,
+            0.6466708080178447,
+            0.6204007231521658,
+            0.710047274769615
+          ],
+          "leave_one_out_worst": 0.710047274769615,
+          "bootstrap_quantile": 0.7020022475057341,
+          "bootstrap_std": 0.03412439100621663,
+          "r2": 0.9883822545989261,
+          "max_log_residual": 0.06850082372864552,
+          "robust": 0.710047274769615,
+          "robust_at": "leave_one_out_worst",
+          "undecidable_variants": [],
+          "power_law": true
+        },
+        "p0_n64": {
+          "decidable": true,
+          "points": 3,
+          "ols": 0.4790904891383289,
+          "theil_sen": 0.4629823894723562,
+          "endpoint": 0.4629823894723562,
+          "drop_projection_floor": NaN,
+          "leave_one_out": [],
+          "leave_one_out_worst": NaN,
+          "bootstrap_quantile": 0.5530794633407725,
+          "bootstrap_std": 0.04049033200786844,
+          "r2": 0.9790329717601117,
+          "max_log_residual": 0.09320568266333851,
+          "robust": 0.5530794633407725,
+          "robust_at": "bootstrap_quantile",
+          "undecidable_variants": [
+            "drop_projection_floor",
+            "leave_one_out_worst"
+          ],
+          "power_law": false
+        }
+      },
+      "undecidable": [
+        "p0_n256"
+      ],
+      "trend_not_power_law": [
+        "dg_d1_n32_cfl0.2",
+        "dg_d1_n64_cfl0.2",
+        "dg_d2_n32_cfl0.2",
+        "dg_d2_n32_cfl0.2_diraxis0",
+        "dg_d2_n32_cfl0.2_dirobl30",
+        "dg_d2_n32_cfl0.4",
+        "dg_d2_n64_cfl0.2",
+        "dg_d3_n32_cfl0.2",
+        "p0_n64"
+      ],
+      "fit_floor": 0.98,
+      "design_family": {
+        "family": "dg_d2_n32_cfl0.2",
+        "ols": 0.3128785604386497,
+        "robust": 0.4432587626656681,
+        "robust_at": "bootstrap_quantile",
+        "strict_target": 0.5,
+        "strict_passed": true
+      },
+      "bootstrap": {
+        "trials": 2000,
+        "quantile": 0.99,
+        "seed": 20261113
+      },
+      "informational_crosscheck": {
+        "p0_n128": 0.710047274769615,
+        "p0_n64": 0.5530794633407725
+      },
+      "passed": true,
+      "status": "passed"
+    },
     "informational": [
       "C1x_crosscheck_raw",
       "C7x_design_space_spread",
