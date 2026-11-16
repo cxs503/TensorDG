@@ -35,13 +35,13 @@
     "10": {
       "density": 6.865663293069625,
       "velocity_x": 16.146703991265866,
-      "velocity_y": 16.146705908963295,
+      "velocity_y": 16.1467059089633,
       "pressure": 8.929505526562927
     },
     "20": {
       "density": 6.865663293069625,
       "velocity_x": 16.146703991265866,
-      "velocity_y": 16.146705908963295,
+      "velocity_y": 16.1467059089633,
       "pressure": 8.929505526562927
     }
   },
@@ -363,8 +363,8 @@
     "replay_tolerance": 1e-09,
     "counts": {
       "recorded": 21,
-      "unverified": 3,
-      "replayed": 16
+      "replayed": 18,
+      "unverified": 1
     },
     "rows": {
       "dg_d1_n32_t10_cfl0.2": {
@@ -419,7 +419,12 @@
         "family": "dg_d2_n32_cfl0.2",
         "recorded_reference_model": null,
         "wall_seconds": 474.3131642341614,
-        "status": "unverified"
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 1.1281690302073432e-12,
+          "wall_seconds": 329.747962474823
+        },
+        "status": "replayed"
       },
       "dg_d2_n32_t10_cfl0.2_diraxis0": {
         "family": "dg_d2_n32_cfl0.2_diraxis0",
@@ -573,7 +578,12 @@
         "family": "dg_d2_n64_cfl0.2",
         "recorded_reference_model": null,
         "wall_seconds": 405.41865134239197,
-        "status": "unverified"
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 0.0,
+          "wall_seconds": 414.8896279335022
+        },
+        "status": "replayed"
       },
       "dg_d3_n32_t10_cfl0.2": {
         "family": "dg_d3_n32_cfl0.2",
@@ -692,10 +702,10 @@
   },
   "exact_invariants": {
     "mass": 98.24174356019108,
-    "momentum_x": 98.2417435601911,
+    "momentum_x": 98.24174356019108,
     "momentum_y": 98.24174356019108,
     "energy": 344.75932660103024,
-    "entropy": 100.0,
+    "entropy": 99.99999999999999,
     "density_min": 0.49429067988713943,
     "core_density": 0.49380732389534654
   },
@@ -818,7 +828,7 @@
     "C4_entropy_budget": {
       "criterion": "dg_d2_n32_cfl0.2: |Delta S|/S(0) < 0.001 (S = int p rho^-gamma)",
       "measured": 6.336131836981451e-07,
-      "exact_entropy": 100.0,
+      "exact_entropy": 99.99999999999999,
       "passed": true,
       "status": "passed"
     },
@@ -1111,58 +1121,58 @@
         "dg_d1_n32_cfl0.2": {
           "cells": 32,
           "cfl": 0.2,
-          "e0_percent": 0.11298312632267331,
+          "e0_percent": 0.11298312632267327,
           "e_crossing_percent": 0.552313972968226,
-          "amplification": 4.8884642419156386
+          "amplification": 4.88846424191564
         },
         "dg_d1_n64_cfl0.2": {
           "cells": 64,
           "cfl": 0.2,
-          "e0_percent": 0.028289657488079427,
+          "e0_percent": 0.02828965748807943,
           "e_crossing_percent": 0.10137122289766365,
-          "amplification": 3.583331574105449
+          "amplification": 3.583331574105448
         },
         "dg_d2_n32_cfl0.2": {
           "cells": 32,
           "cfl": 0.2,
-          "e0_percent": 0.005491765932359561,
+          "e0_percent": 0.005491765932359679,
           "e_crossing_percent": 0.015162621307949022,
-          "amplification": 2.7609737003911845
+          "amplification": 2.760973700391126
         },
         "dg_d2_n32_cfl0.2_diraxis0": {
           "cells": 32,
           "cfl": 0.2,
-          "e0_percent": 0.005491765932359561,
+          "e0_percent": 0.005491765932359679,
           "e_crossing_percent": 0.08874643637459365,
-          "amplification": 16.159908755700254
+          "amplification": 16.15990875569991
         },
         "dg_d2_n32_cfl0.2_dirobl30": {
           "cells": 32,
           "cfl": 0.2,
-          "e0_percent": 0.005491765932359561,
+          "e0_percent": 0.005491765932359679,
           "e_crossing_percent": 0.021107714913386835,
-          "amplification": 3.8435204947487285
+          "amplification": 3.8435204947486463
         },
         "dg_d2_n32_cfl0.4": {
           "cells": 32,
           "cfl": 0.4,
-          "e0_percent": 0.005491765932359561,
+          "e0_percent": 0.005491765932359679,
           "e_crossing_percent": 0.015169321142605365,
-          "amplification": 2.7621936785801426
+          "amplification": 2.7621936785800836
         },
         "dg_d2_n64_cfl0.2": {
           "cells": 64,
           "cfl": 0.2,
-          "e0_percent": 0.0006899000058690318,
+          "e0_percent": 0.0006899000058689734,
           "e_crossing_percent": 0.0012245109983286514,
-          "amplification": 1.7749108391239934
+          "amplification": 1.7749108391241437
         },
         "dg_d3_n32_cfl0.2": {
           "cells": 32,
           "cfl": 0.2,
-          "e0_percent": 0.00035003590187841673,
+          "e0_percent": 0.0003500359018783095,
           "e_crossing_percent": 0.0006195392746390414,
-          "amplification": 1.7699306594391435
+          "amplification": 1.7699306594396857
         }
       },
       "supported": true,
@@ -1175,11 +1185,12 @@
       "worst_at": "dg_d2_n32_t5_cfl0.4",
       "counts": {
         "recorded": 21,
-        "unverified": 3,
-        "replayed": 16
+        "replayed": 18,
+        "unverified": 1
       },
       "present": 40,
       "replayed": {
+        "dg_d2_n32_t10_cfl0.2": 1.1281690302073432e-12,
         "dg_d2_n32_t10_cfl0.4": 0.0,
         "dg_d2_n32_t1_cfl0.2": 0.0,
         "dg_d2_n32_t1_cfl0.4": 1.5124161064817206e-13,
@@ -1188,6 +1199,7 @@
         "dg_d2_n32_t5_cfl0.2": 0.0,
         "dg_d2_n32_t5_cfl0.4": 1.1334673056073137e-12,
         "dg_d2_n64_t1_cfl0.2": 9.753498921567536e-13,
+        "dg_d2_n64_t2_cfl0.2": 0.0,
         "p0_n128_t10_cfl0.4": 3.4451555256475413e-16,
         "p0_n128_t1_cfl0.4": 0.0,
         "p0_n128_t2_cfl0.4": 0.0,
@@ -1198,13 +1210,11 @@
         "p0_n64_t5_cfl0.4": 0.0
       },
       "unverified": [
-        "dg_d2_n32_t10_cfl0.2",
-        "dg_d2_n64_t10_cfl0.2",
-        "dg_d2_n64_t2_cfl0.2"
+        "dg_d2_n64_t10_cfl0.2"
       ],
       "config_mismatch": [],
       "certificate_rejected": [],
-      "certificates_on_disk": 16,
+      "certificates_on_disk": 18,
       "passed": false,
       "status": "not_evaluated"
     },
