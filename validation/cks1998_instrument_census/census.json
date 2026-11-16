@@ -1,0 +1,974 @@
+{
+  "fixed_rule": "benchmarks.riemann_exact.cell_averages",
+  "exact_rule": "benchmarks.shock_reference_quadrature.cell_averages",
+  "roots": [
+    "benchmarks",
+    "validation",
+    "tools",
+    "tensordg",
+    "tests",
+    "examples",
+    "scripts"
+  ],
+  "files": 31,
+  "calls": 40,
+  "by_role": {
+    "diagnostic": 6,
+    "gating": 21,
+    "instrument_measurement": 2,
+    "plot": 2
+  },
+  "switched": [
+    {
+      "path": "validation/repro_cks1998/sod_gate_margin.py",
+      "was": "E2 gate-margin study: its docstring already promised 'exact Riemann cell averages' while the code called the fixed rule",
+      "now": "gate numbers from station_reference.exact_cell_averages; the legacy rule is still evaluated on the same solution and recorded as *_legacy, so every row keeps its own before/after and nothing can flip unobserved"
+    },
+    {
+      "path": "validation/repro_cks1998/repro_cks1998.py",
+      "was": "E2 Sod section: per-degree relative L2 and the station table, both scored at 3 %",
+      "now": "station_reference.exact_cell_averages"
+    },
+    {
+      "path": "validation/repro_cks1998/sod_l1_ladder.py",
+      "was": "the gated quantity is the observed L1 *order*; a reference that does not converge contaminates the order itself, not just one error value",
+      "now": "station_reference.exact_cell_averages for the cell-average L1 leg"
+    }
+  ],
+  "gating_at_risk_legacy": [
+    "benchmarks/artificial_viscosity_verification.py",
+    "benchmarks/audit_gate_power.py",
+    "benchmarks/char_limiter_2d.py",
+    "benchmarks/in31_hp_ladder.py",
+    "benchmarks/lax_reference_crosscheck.py",
+    "benchmarks/riemann_vacuum_1d.py",
+    "benchmarks/sod_dg_benchmark.py",
+    "benchmarks/verification_ladder.py",
+    "benchmarks/verify_euler_2d_p0.py",
+    "benchmarks/verify_euler_dg_2d.py",
+    "benchmarks/verify_sod_density_peak.py",
+    "tests/test_euler_2d_p0_verification.py",
+    "tests/test_euler_dg_2d.py",
+    "tests/test_euler_sod_1d.py",
+    "tests/test_euler_verification_chain.py",
+    "tests/test_lax_reference_crosscheck.py",
+    "tests/test_limiter_2d.py",
+    "tests/test_repro_cks1998.py",
+    "tests/test_sod_l1_ladder.py",
+    "tests/test_verification_ladder.py",
+    "validation/verification_chain/shock_tube_refinement.py"
+  ],
+  "declared_without_site": [],
+  "sites": [
+    {
+      "path": "benchmarks/artificial_viscosity_verification.py",
+      "lines": [
+        156
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "AV verification compares relative L2 against a tolerance",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/audit_gate_power.py",
+      "lines": [
+        119
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "gate-power audit: the gate under audit is a 3 % Sod gate",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/av_independent_check.py",
+      "lines": [
+        200,
+        211
+      ],
+      "calls": 2,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "diagnostic",
+      "status": "n/a",
+      "note": "independent check, prints both sides",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/certified_reference_sod.py",
+      "lines": [
+        172
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "instrument_measurement",
+      "status": "n/a",
+      "note": "builds the certified Sod reference: uses the exact instrument and this one to compare",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/char_limiter_2d.py",
+      "lines": [
+        118
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "2-D characteristic limiter gate on Sod",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/compare_euler_sod_1d.py",
+      "lines": [
+        34
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "plot",
+      "status": "n/a",
+      "note": "comparison figure only",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/in31_hp_ladder.py",
+      "lines": [
+        372,
+        944
+      ],
+      "calls": 2,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "hp ladder error norms feed observed orders",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/lax_reference_crosscheck.py",
+      "lines": [
+        276
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "Lax (Toro test 2) cross-check vs tolerance",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/report_euler_dg_2d_verification.py",
+      "lines": [
+        28
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "plot",
+      "status": "n/a",
+      "note": "report figure assembly",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/riemann_vacuum_1d.py",
+      "lines": [
+        157
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "vacuum Riemann case (its waves differ)",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/sod_dg_benchmark.py",
+      "lines": [
+        41,
+        226
+      ],
+      "calls": 2,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "TOLERANCE = 3 % on max relative error",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/validate_limiter_reconstruction.py",
+      "lines": [
+        230
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "diagnostic",
+      "status": "n/a",
+      "note": "limiter-reconstruction study; NOTE the import aliases the *fixed* rule to a name that says 'exact' (line 44: `cell_averages as exact_cell_averages`) -- a naming defect this census records but does not rename",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/verification_ladder.py",
+      "lines": [
+        272,
+        409,
+        810
+      ],
+      "calls": 3,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "order / shock-position / monotonicity criteria are asserted against tolerances",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/verify_euler_2d_p0.py",
+      "lines": [
+        100,
+        108
+      ],
+      "calls": 2,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "GATE = 3 %",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/verify_euler_dg_2d.py",
+      "lines": [
+        177
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "THREE_PERCENT = 3 %",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/verify_euler_dg_2d_limiter.py",
+      "lines": [
+        160
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "diagnostic",
+      "status": "n/a",
+      "note": "limiter comparison rows, no verdict",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/verify_limiter_2d.py",
+      "lines": [
+        106
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "diagnostic",
+      "status": "n/a",
+      "note": "limiter probe, no verdict",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/verify_limiter_2d_m2596.py",
+      "lines": [
+        271
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "diagnostic",
+      "status": "n/a",
+      "note": "extruded Sod probe, no verdict",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "benchmarks/verify_sod_density_peak.py",
+      "lines": [
+        144
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "L2_TOLERANCE = 3 %, position 4 %",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "tests/test_euler_2d_p0_verification.py",
+      "lines": [
+        87,
+        231
+      ],
+      "calls": 2,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "extruded 2-D P0 Sod gate: the tightest recorded margin of the family (~0.5 pp)",
+      "recorded_margin_pp": 0.5,
+      "margin_source": "benchmarks/shock_reference_quadrature.py docstring: 'the limiting field of the extruded-2D gate sits at 2.5 % of a 3 % bar'"
+    },
+    {
+      "path": "tests/test_euler_dg_2d.py",
+      "lines": [
+        126
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "2-D vs 1-D DG agreement asserted at 2.5e-3",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "tests/test_euler_sod_1d.py",
+      "lines": [
+        41
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "1-D P0 Sod gate",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "tests/test_euler_verification_chain.py",
+      "lines": [
+        104,
+        188,
+        392
+      ],
+      "calls": 3,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "per-field pinned regression guards (recorded value x 1.10)",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "tests/test_lax_reference_crosscheck.py",
+      "lines": [
+        161
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "Lax cross-check gate",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "tests/test_limiter_2d.py",
+      "lines": [
+        147
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "`test_weno_limited_squeezed_sod_meets_the_three_percent_gate`",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "tests/test_repro_cks1998.py",
+      "lines": [
+        140
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "the anchor's own DG P2 N=400 Sod gate",
+      "recorded_margin_pp": 0.6319999999999999,
+      "margin_source": "docs/CASE-REPRO-DG-CKS1998-... gate margin study: DG P2 N=400 Sod reproduces 2.368 % against the 3 % bar"
+    },
+    {
+      "path": "tests/test_sod_l1_ladder.py",
+      "lines": [
+        93
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "re-asserts the pre-registered ladder criteria",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "tests/test_verification_ladder.py",
+      "lines": [
+        130
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "order criterion asserted at 15 %",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "validation/repro_cks1998/diagnose_sod_tvd.py",
+      "lines": [
+        54
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "diagnostic",
+      "status": "n/a",
+      "note": "TVD diagnosis print-out, no tolerance attached",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "validation/repro_cks1998/station_reference.py",
+      "lines": [
+        85
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "instrument_measurement",
+      "status": "n/a",
+      "note": "the E2 station instrument: keeps the legacy rule on purpose to measure its bias",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    },
+    {
+      "path": "validation/verification_chain/shock_tube_refinement.py",
+      "lines": [
+        54
+      ],
+      "calls": 1,
+      "symbol": "benchmarks.riemann_exact.cell_averages",
+      "role": "gating",
+      "status": "at_risk_legacy",
+      "note": "relative-L2 refinement ladder: the non-convergent reference is in the order",
+      "recorded_margin_pp": null,
+      "margin_source": null
+    }
+  ],
+  "bias": [
+    {
+      "ncells": 48,
+      "cells_with_wave": 4,
+      "fields": {
+        "density": {
+          "rel_l2": 0.001724628073179729,
+          "max_abs": 0.0073686767767716654,
+          "max_rel_cell": 0.01793673969173673
+        },
+        "velocity": {
+          "rel_l2": 0.003827879858792958,
+          "max_abs": 0.01623059441286867,
+          "max_rel_cell": 0.021323617851008666
+        },
+        "pressure": {
+          "rel_l2": 0.0008265655592055566,
+          "max_abs": 0.0035548161293459946,
+          "max_rel_cell": 0.013328498213538587
+        }
+      },
+      "worst_field": "velocity",
+      "worst_rel_l2": 0.003827879858792958,
+      "worst_shift_pp": 0.3827879858792958
+    },
+    {
+      "ncells": 100,
+      "cells_with_wave": 4,
+      "fields": {
+        "density": {
+          "rel_l2": 0.001223458313363152,
+          "max_abs": 0.007884963340097917,
+          "max_rel_cell": 0.022284512821568406
+        },
+        "velocity": {
+          "rel_l2": 0.0011330429318912628,
+          "max_abs": 0.0069555492128652655,
+          "max_rel_cell": 0.17394619174901474
+        },
+        "pressure": {
+          "rel_l2": 0.000245579864838116,
+          "max_abs": 0.001523400677842443,
+          "max_rel_cell": 0.01400726653641423
+        }
+      },
+      "worst_field": "density",
+      "worst_rel_l2": 0.001223458313363152,
+      "worst_shift_pp": 0.1223458313363152
+    },
+    {
+      "ncells": 200,
+      "cells_with_wave": 4,
+      "fields": {
+        "density": {
+          "rel_l2": 0.0009926940686695155,
+          "max_abs": 0.007633899883425166,
+          "max_rel_cell": 0.03651164856320726
+        },
+        "velocity": {
+          "rel_l2": 0.003804022534721119,
+          "max_abs": 0.03303123717736383,
+          "max_rel_cell": 0.4130269041253415
+        },
+        "pressure": {
+          "rel_l2": 0.000823761975116172,
+          "max_abs": 0.007234483944543638,
+          "max_rel_cell": 0.06156181413810603
+        }
+      },
+      "worst_field": "velocity",
+      "worst_rel_l2": 0.003804022534721119,
+      "worst_shift_pp": 0.38040225347211193
+    },
+    {
+      "ncells": 300,
+      "cells_with_wave": 4,
+      "fields": {
+        "density": {
+          "rel_l2": 0.0006341632788063167,
+          "max_abs": 0.005495042285879881,
+          "max_rel_cell": 0.031869458149072195
+        },
+        "velocity": {
+          "rel_l2": 0.002830821933281522,
+          "max_abs": 0.030105912958854855,
+          "max_rel_cell": 0.25096551199886563
+        },
+        "pressure": {
+          "rel_l2": 0.0006130240751814164,
+          "max_abs": 0.006593780994855136,
+          "max_rel_cell": 0.05221818481463063
+        }
+      },
+      "worst_field": "velocity",
+      "worst_rel_l2": 0.002830821933281522,
+      "worst_shift_pp": 0.28308219332815215
+    },
+    {
+      "ncells": 400,
+      "cells_with_wave": 4,
+      "fields": {
+        "density": {
+          "rel_l2": 0.00044054664957758556,
+          "max_abs": 0.00553042720699215,
+          "max_rel_cell": 0.018613849575563383
+        },
+        "velocity": {
+          "rel_l2": 0.0008045941454425327,
+          "max_abs": 0.00988087343135366,
+          "max_rel_cell": 0.06177586600060926
+        },
+        "pressure": {
+          "rel_l2": 0.0001742438262447676,
+          "max_abs": 0.0021641036275242,
+          "max_rel_cell": 0.016026653119200877
+        }
+      },
+      "worst_field": "velocity",
+      "worst_rel_l2": 0.0008045941454425327,
+      "worst_shift_pp": 0.08045941454425327
+    },
+    {
+      "ncells": 600,
+      "cells_with_wave": 4,
+      "fields": {
+        "density": {
+          "rel_l2": 0.0005834847939272999,
+          "max_abs": 0.008430242699345142,
+          "max_rel_cell": 0.05224340985716772
+        },
+        "velocity": {
+          "rel_l2": 0.0036978071407200923,
+          "max_abs": 0.0556195791112748,
+          "max_rel_cell": 0.2318248273670195
+        },
+        "pressure": {
+          "rel_l2": 0.0008008222479688387,
+          "max_abs": 0.012181770544113513,
+          "max_rel_cell": 0.07985569017925598
+        }
+      },
+      "worst_field": "velocity",
+      "worst_rel_l2": 0.0036978071407200923,
+      "worst_shift_pp": 0.36978071407200924
+    },
+    {
+      "ncells": 800,
+      "cells_with_wave": 4,
+      "fields": {
+        "density": {
+          "rel_l2": 0.0006751547253452024,
+          "max_abs": 0.011856780790361676,
+          "max_rel_cell": 0.03607685216585812
+        },
+        "velocity": {
+          "rel_l2": 0.0014021638809565572,
+          "max_abs": 0.024353993669286367,
+          "max_rel_cell": 0.07613137947497327
+        },
+        "pressure": {
+          "rel_l2": 0.0003036748200172441,
+          "max_abs": 0.005333998700681186,
+          "max_rel_cell": 0.03136482530735023
+        }
+      },
+      "worst_field": "velocity",
+      "worst_rel_l2": 0.0014021638809565572,
+      "worst_shift_pp": 0.1402163880956557
+    },
+    {
+      "ncells": 3200,
+      "cells_with_wave": 4,
+      "fields": {
+        "density": {
+          "rel_l2": 0.00038347844108926215,
+          "max_abs": 0.01120025217331988,
+          "max_rel_cell": 0.04808201666347267
+        },
+        "velocity": {
+          "rel_l2": 0.0016285099082710343,
+          "max_abs": 0.05658424698618403,
+          "max_rel_cell": 0.1606938450608438
+        },
+        "pressure": {
+          "rel_l2": 0.00035277563896543953,
+          "max_abs": 0.012393051587411746,
+          "max_rel_cell": 0.0699689620760355
+        }
+      },
+      "worst_field": "velocity",
+      "worst_rel_l2": 0.0016285099082710343,
+      "worst_shift_pp": 0.16285099082710344
+    }
+  ],
+  "bias_meshes": [
+    48,
+    100,
+    200,
+    300,
+    400,
+    600,
+    800,
+    3200
+  ],
+  "sod": {
+    "left": [
+      1.0,
+      0.0,
+      1.0
+    ],
+    "right": [
+      0.125,
+      0.0,
+      0.1
+    ],
+    "final_time": 0.2
+  },
+  "gating_bound": {
+    "tolerance_3pct_pp": 3.0,
+    "worst_bias_pp": 0.3827879858792958,
+    "claim": "any 3 % gate with a margin > 0.38 pp cannot be flipped by the reference instrument; tighter margins must be run",
+    "gating_sites": {
+      "benchmarks/artificial_viscosity_verification.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "benchmarks/audit_gate_power.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "benchmarks/char_limiter_2d.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "benchmarks/in31_hp_ladder.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "benchmarks/lax_reference_crosscheck.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "benchmarks/riemann_vacuum_1d.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "benchmarks/sod_dg_benchmark.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "benchmarks/verification_ladder.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "benchmarks/verify_euler_2d_p0.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "benchmarks/verify_euler_dg_2d.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "benchmarks/verify_sod_density_peak.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "tests/test_euler_2d_p0_verification.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": 0.5,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": 0.1172120141207042,
+          "at_risk": false,
+          "bias_share_of_margin": 0.7655759717585916,
+          "verdict": "cannot_flip"
+        },
+        "margin_source": "benchmarks/shock_reference_quadrature.py docstring: 'the limiting field of the extruded-2D gate sits at 2.5 % of a 3 % bar'"
+      },
+      "tests/test_euler_dg_2d.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "tests/test_euler_sod_1d.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "tests/test_euler_verification_chain.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "tests/test_lax_reference_crosscheck.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "tests/test_limiter_2d.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "tests/test_repro_cks1998.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": 0.6319999999999999,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": 0.2492120141207041,
+          "at_risk": false,
+          "bias_share_of_margin": 0.6056771928469872,
+          "verdict": "cannot_flip"
+        },
+        "margin_source": "docs/CASE-REPRO-DG-CKS1998-... gate margin study: DG P2 N=400 Sod reproduces 2.368 % against the 3 % bar"
+      },
+      "tests/test_sod_l1_ladder.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "tests/test_verification_ladder.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      },
+      "validation/verification_chain/shock_tube_refinement.py": {
+        "status": "at_risk_legacy",
+        "risk": {
+          "margin_pp": null,
+          "bias_pp": 0.3827879858792958,
+          "margin_with_exact_pp": null,
+          "at_risk": null,
+          "bias_share_of_margin": null,
+          "verdict": "unknown_margin"
+        },
+        "margin_source": null
+      }
+    },
+    "at_risk": [],
+    "unknown_margin": [
+      "benchmarks/artificial_viscosity_verification.py",
+      "benchmarks/audit_gate_power.py",
+      "benchmarks/char_limiter_2d.py",
+      "benchmarks/in31_hp_ladder.py",
+      "benchmarks/lax_reference_crosscheck.py",
+      "benchmarks/riemann_vacuum_1d.py",
+      "benchmarks/sod_dg_benchmark.py",
+      "benchmarks/verification_ladder.py",
+      "benchmarks/verify_euler_2d_p0.py",
+      "benchmarks/verify_euler_dg_2d.py",
+      "benchmarks/verify_sod_density_peak.py",
+      "tests/test_euler_dg_2d.py",
+      "tests/test_euler_sod_1d.py",
+      "tests/test_euler_verification_chain.py",
+      "tests/test_lax_reference_crosscheck.py",
+      "tests/test_limiter_2d.py",
+      "tests/test_sod_l1_ladder.py",
+      "tests/test_verification_ladder.py",
+      "validation/verification_chain/shock_tube_refinement.py"
+    ]
+  }
+}
