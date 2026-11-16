@@ -1,0 +1,26 @@
+{
+  "impl_files": ["/srv/tensor/agent/work/m24010/tensordg/registry.py"],
+  "entry": "/srv/tensor/agent/work/m24010/tensordg/registry.py",
+  "entry_pointer": "tensordg/registry.py:364 def main() (CLI); :79 def capability() decorator; :134 scan_package_static; :252 validate_capability",
+  "run_artifacts": [],
+  "run_artifacts_note": "NONE: m24010 worktree has no runs/ dir and no persisted stdout/JSON artifact; mission result git_status='?? tensordg/registry.py' (untracked at finish, fail_stage=budget_exhausted+forced_finish). Static replay on audit host produced total_count=0 (not persisted as a mission artifact).",
+  "tests": [],
+  "tests_note": "NONE: no test in tests/ targets tensordg/registry.py (test_oss_inventory_dg_registry.py is the OSS-inventory registry, a different object).",
+  "integration_callers": [],
+  "integration_note": "NONE: platform /api/v1/tensor/capabilities?repo=TensorDG -> count 0 (capability_sync never received data); /sync was coordinator's job and did not land; feature_ledger CAP-REG-DG id=612 still in_progress.",
+  "benchmark": "tensor_benchmark_cases WHERE anchor_slug='CAP-REG-DG' -> 0 rows: no referee band registered for this anchor, L4 unreachable by definition (same as CAP-REG-DEM precedent). Independent replay: --static total_count=0, --parity static_count=0 import_count=0 parity=true (empty-set trivial).",
+  "repro_cmd": "cd /srv/tensor/agent/work/m24010 && python3 tensordg/registry.py --static  -> exit 0, stdout json.loads OK, summary.total_count=0, problems=0; python3 tensordg/registry.py --parity -> exit 0, parity 0=0; python -m tensordg.registry --help -> exit 0",
+  "external_anchor": "feature_ledger CAP-REG-DG id=612 status=in_progress; PR #786 merged to main (be21cda1, commit 0ff7732e); tensor_reports WHERE mission_id=24010 -> 0 rows (no report published); docs/m24010/REGISTRY_AUDIT.md MISSING (goal item 5 unmet); dual-pilot spec (m23186) decorator signature deviated (name/category vs id/kind; missing module_path/entry/params/wired/tested/test_path; no REGISTRY singleton).",
+  "acceptance_recheck": {
+    "C001_static_exit0_json": "PASS (independently replayed, exit 0, json.loads OK)",
+    "C002_parity": "PASS but vacuous (0=0 empty-set trivial; both modes find 0 capabilities)",
+    "C003_count_gt0_discipline_audit_doc": "FAIL: total_count=0 (not >0); REGISTRY_AUDIT.md absent (docs/m24010/ does not exist)",
+    "C004_pr_merged": "PASS (PR #786 merged)"
+  },
+  "level_rationale": "L1: registry.py is 455 lines of real code (CLI dual-mode + AST scan + discipline validation) that runs at the unit/CLI level (C001 PASS, C002 vacuously PASS). NOT L2: run_artifacts missing AND the core function (full-repo capability inventory) is hollow - 0 capabilities registered because no module uses @capability, so C003 (entry count > 0) fails. No tests, no audit doc, no report, no platform sync. Level = functional substance, not report polish.",
+  "checks_not_run": [
+    "import-mode scan under a torch environment (import mode replayed torch-free, returned 0)",
+    "field-by-field spec conformance vs m23186 pilot decorator signature (only signature-level diff noted, not a full conformance matrix)",
+    "full tensordg package solver-case rerun (out of scope for a registry audit)"
+  ]
+}
