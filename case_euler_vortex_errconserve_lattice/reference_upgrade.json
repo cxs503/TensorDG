@@ -172,10 +172,36 @@
         "max_percent_shift": 0.002782240122187758
       },
       "floor_bound": 0.12665532863509044,
-      "effect_source": "lattice_vs_published",
-      "effect_max": 0.0027849969907672353,
+      "measured_reference_effect": {
+        "per_field": {
+          "density": -8.521999526554418e-12,
+          "velocity_x": 0.002782240122187752,
+          "velocity_y": 0.0027849969907672353,
+          "pressure": -8.308105346802675e-12
+        },
+        "max_relative_shift": 0.0027849969907672353,
+        "worst_field": "velocity_y",
+        "max_percent_baseline": 0.0011529982784080825,
+        "max_percent_candidate": 0.001156206196479083,
+        "max_percent_shift": 0.002782240122187758
+      },
+      "rerun_noise": {
+        "per_field": {
+          "density": 0.0,
+          "velocity_x": 0.0,
+          "velocity_y": 0.0,
+          "pressure": 0.0
+        },
+        "max_relative_shift": 0.0,
+        "worst_field": "density",
+        "max_percent_baseline": 0.0011529982784080825,
+        "max_percent_candidate": 0.0011529982784080825,
+        "max_percent_shift": 0.0
+      },
       "bound_materialised": 0.021988786581503838,
-      "bound_is_sound": true
+      "bound_is_sound": true,
+      "effect_source": "lattice_vs_rerun",
+      "effect_max": 0.0027849969907672353
     },
     {
       "task_key": "dg_d3_n32_t10_cfl0.2",
@@ -196,10 +222,36 @@
         "max_percent_shift": 0.0019075492351603924
       },
       "floor_bound": 0.2382849738859014,
-      "effect_source": "lattice_vs_published",
-      "effect_max": 0.0019340868394758656,
+      "measured_reference_effect": {
+        "per_field": {
+          "density": 1.013890103653787e-09,
+          "velocity_x": 0.0019340868394758656,
+          "velocity_y": 0.0019075492351604143,
+          "pressure": 1.032338305107353e-09
+        },
+        "max_relative_shift": 0.0019340868394758656,
+        "worst_field": "velocity_x",
+        "max_percent_baseline": 0.0006195392746390414,
+        "max_percent_candidate": 0.000620721076308531,
+        "max_percent_shift": 0.0019075492351603924
+      },
+      "rerun_noise": {
+        "per_field": {
+          "density": 0.0,
+          "velocity_x": 0.0,
+          "velocity_y": 0.0,
+          "pressure": 0.0
+        },
+        "max_relative_shift": 0.0,
+        "worst_field": "density",
+        "max_percent_baseline": 0.0006195392746390414,
+        "max_percent_candidate": 0.0006195392746390414,
+        "max_percent_shift": 0.0
+      },
       "bound_materialised": 0.0081166966088343,
-      "bound_is_sound": true
+      "bound_is_sound": true,
+      "effect_source": "lattice_vs_rerun",
+      "effect_max": 0.0019340868394758656
     },
     {
       "task_key": "dg_d3_n32_t1_cfl0.2",
@@ -270,10 +322,36 @@
         "max_percent_shift": 0.00819939468274022
       },
       "floor_bound": 0.24774377078823157,
-      "effect_source": "lattice_vs_published",
-      "effect_max": 0.008262788156604665,
+      "measured_reference_effect": {
+        "per_field": {
+          "density": 1.2785404139404338e-11,
+          "velocity_x": 0.008199394682740233,
+          "velocity_y": 0.008262788156604665,
+          "pressure": 1.2878137905238434e-11
+        },
+        "max_relative_shift": 0.008262788156604665,
+        "worst_field": "velocity_y",
+        "max_percent_baseline": 0.0005869964687824517,
+        "max_percent_candidate": 0.0005918094845073738,
+        "max_percent_shift": 0.00819939468274022
+      },
+      "rerun_noise": {
+        "per_field": {
+          "density": 0.0,
+          "velocity_x": 0.0,
+          "velocity_y": 0.0,
+          "pressure": 0.0
+        },
+        "max_relative_shift": 0.0,
+        "worst_field": "density",
+        "max_percent_baseline": 0.0005869964687824517,
+        "max_percent_candidate": 0.0005869964687824517,
+        "max_percent_shift": 0.0
+      },
       "bound_materialised": 0.033352153034223404,
-      "bound_is_sound": true
+      "bound_is_sound": true,
+      "effect_source": "lattice_vs_rerun",
+      "effect_max": 0.008262788156604665
     },
     {
       "task_key": "dg_d3_n32_t5_cfl0.2",
@@ -294,10 +372,36 @@
         "max_percent_shift": 0.0042385391443931515
       },
       "floor_bound": 0.24615478910243258,
-      "effect_source": "lattice_vs_published",
-      "effect_max": 0.0043278702991363,
+      "measured_reference_effect": {
+        "per_field": {
+          "density": 1.7452873586801983e-09,
+          "velocity_x": 0.0043278702991363,
+          "velocity_y": 0.004238539144393209,
+          "pressure": 1.7385441655433842e-09
+        },
+        "max_relative_shift": 0.0043278702991363,
+        "worst_field": "velocity_x",
+        "max_percent_baseline": 0.0005978243358259727,
+        "max_percent_candidate": 0.0006003582376748419,
+        "max_percent_shift": 0.0042385391443931515
+      },
+      "rerun_noise": {
+        "per_field": {
+          "density": 0.0,
+          "velocity_x": 0.0,
+          "velocity_y": 0.0,
+          "pressure": 0.0
+        },
+        "max_relative_shift": 0.0,
+        "worst_field": "density",
+        "max_percent_baseline": 0.0005978243358259727,
+        "max_percent_candidate": 0.0005978243358259727,
+        "max_percent_shift": 0.0
+      },
       "bound_materialised": 0.017581905738731494,
-      "bound_is_sound": true
+      "bound_is_sound": true,
+      "effect_source": "lattice_vs_rerun",
+      "effect_max": 0.0043278702991363
     }
   ],
   "measured_effect_max": 0.008366091855398588,
@@ -472,16 +576,15 @@
       "dg_d1_n32_t1_cfl0.2",
       "dg_d2_n64_t10_cfl0.2",
       "dg_d2_n64_t1_cfl0.2",
-      "dg_d3_n32_t1_cfl0.2"
-    ],
-    "uncontrolled": [
       "dg_d2_n64_t2_cfl0.2",
       "dg_d3_n32_t10_cfl0.2",
+      "dg_d3_n32_t1_cfl0.2",
       "dg_d3_n32_t2_cfl0.2",
       "dg_d3_n32_t5_cfl0.2"
     ],
-    "controlled_fraction": 0.5,
-    "fully_controlled": false,
+    "uncontrolled": [],
+    "controlled_fraction": 1.0,
+    "fully_controlled": true,
     "uncontrolled_reading": "upper bound only (reference defect + solver round-off)"
   },
   "verdict": "no_material_reference_effect"
