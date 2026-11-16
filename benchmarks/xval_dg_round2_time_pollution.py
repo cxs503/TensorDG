@@ -68,6 +68,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -88,6 +89,8 @@ __all__ = [
     "BAND_SHIFT_MAX", "LEG_STABILITY_MAX_PP", "P_MIN_T",
     "cfl_tag", "level_path", "load_level", "temporal_series", "temporal_report",
     "time_corrected_levels", "classify_pollution", "audit", "markdown", "main",
+    "required_inputs", "missing_inputs", "audit_or_withheld", "leg_profiles",
+    "leg_distinctness", "input_provenance", "markdown_withheld",
 ]
 
 #: coarse -> fine time-step settings; ratio 2 so orders are directly comparable
@@ -115,6 +118,16 @@ POLLUTION_MARGINAL = 0.25   # T1, upper band still reported as MARGINAL
 P_MIN_T = 0.5               # T2, temporal order floor for a usable correction
 BAND_SHIFT_MAX = 0.25       # T3, relative change of the published band
 LEG_STABILITY_MAX_PP = 0.5  # T4(b), percentage points
+#: T5: two DG legs count as the *same* profile when their relative L1 difference
+#: is at or below this floor.  ``T4`` claims that the reference choice flips no
+#: shipped verdict across eleven legs; that claim is only evidence if the eleven
+#: legs are eleven *different* discretisations.  A leg table whose P1/P2/P3 rows
+#: are bit-identical makes T4 pass vacuously, which this gate refuses.
+LEG_DISTINCT_EPS = 1e-12
+
+#: Verdict of :func:`audit_or_withheld` when inputs are absent (never overwritten
+#: by a stale measurement).
+WITHHELD_MISSING_INPUTS = "WITHHELD_MISSING_INPUTS"
 
 
 # --------------------------------------------------------------------- inputs
@@ -179,6 +192,96 @@ def temporal_series(rawdir: Path | str, ncells: int,
             f"`python validation/xval_dg_round2/gen_fv_level.py --ncells {ncells} "
             f"--cfl {first:g} --out {level_path(rawdir, ncells, first)}`")
     return [load_level(rawdir, ncells, c) for c in present]
+
+# ------------------------------------------------------------------ provenance
+def required_inputs(rawdir: Path | str = DEFAULT_RAW) -> list[dict]:
+    """Every profile the audit reads, with the command that produces it.
+
+    ``required=True`` rows are hard inputs: without them the real-data branch has
+    no numbers at all.  ``required=False`` rows are the coarse partner of a grid
+    row's spatial pair -- if one is absent that row simply reports no pollution
+    ratio ``R`` instead of killing the audit.
+    """
+    rows = []
+    for n in (*BASE_LEVELS, *EXTRA_RATIO_LEVELS):
+        cfls = CFL_LEVELS if n in BASE_LEVELS else CFL_LEVELS[:2]
+        for c in cfls:
+            rows.append({
+                "ncells": int(n), "cfl": float(c),
+                "path": str(level_path(rawdir, n, c)),
+                "required": True, "role": "time-series member",
+                "generator": (f"python validation/xval_dg_round2/gen_cfl_ladder.py "
+                              f"--ncells {int(n)} --cfl {float(c):g} --rawdir {rawdir}")})
+    for n in (*BASE_LEVELS, *EXTRA_RATIO_LEVELS):
+        coarse = int(n) // 2
+        rows.append({
+            "ncells": coarse, "cfl": 0.3,
+            "path": str(level_path(rawdir, coarse, 0.3)),
+            "required": False,
+            "role": f"coarse partner of the N={n} spatial pair",
+            "generator": (f"python validation/xval_dg_round2/gen_fv_level.py "
+                          f"--ncells {coarse} --cfl 0.3 --out "
+                          f"{level_path(rawdir, coarse, 0.3)}")})
+    seen, unique = set(), []
+    for row in rows:
+        if row["path"] in seen:
+            continue
+        seen.add(row["path"])
+        unique.append(row)
+    return unique
+
+
+def missing_inputs(rawdir: Path | str = DEFAULT_RAW) -> list[dict]:
+    """Hard inputs absent from the repository, each with its producer command."""
+    return [row for row in required_inputs(rawdir)
+            if row["required"] and not Path(row["path"]).exists()]
+
+
+def input_provenance(rawdir: Path | str = DEFAULT_RAW) -> dict:
+    """``sha256`` of every profile the audit consumes (anti-staleness stamp)."""
+    raw = Path(rawdir)
+    paths = [Path(r["path"]) for r in required_inputs(rawdir)]
+    paths += [raw / xval.leg_filename(d, n, c) for d, n, c in xval.DG_LEGS]
+    files = {}
+    for path in sorted({q for q in paths if q.exists()}):
+        data = path.read_bytes()
+        files[path.name] = {"sha256": hashlib.sha256(data).hexdigest(),
+                            "bytes": len(data)}
+    return {"rawdir": str(rawdir), "files": files}
+
+
+def audit_or_withheld(rawdir: Path | str = DEFAULT_RAW, **kwargs) -> dict:
+    """``audit`` when its inputs exist, else an explicit ``WITHHELD`` result.
+
+    The missing-input case used to be a bare ``FileNotFoundError`` -- correct for
+    a function, wrong for a *published artifact*: the file on disk then keeps
+    whatever verdict it last carried, and a reader cannot tell a measured
+    ``TIME_CLEAN`` from a stale one.  This wrapper turns "no numbers yet" into a
+    first-class, renderable verdict that names every missing profile and the
+    command that produces it, so a stale claim cannot outlive its inputs.
+    """
+    missing = missing_inputs(rawdir)
+    if not missing:
+        return audit(rawdir, **kwargs)
+    return {
+        "question": "is the round-2 certified reference polluted by its time step?",
+        "verdict": WITHHELD_MISSING_INPUTS,
+        "accepted": False,
+        "reason": (f"{len(missing)} of the CFL-refined FV-WENO5 profiles this audit "
+                   "consumes are not in the repository, so the real-data branch has no "
+                   "numbers and no pollution verdict is claimed; a verdict stored "
+                   "earlier in this artifact must not be read as current"),
+        "missing": missing,
+        "cfl_levels": [float(c) for c in CFL_LEVELS],
+        "base_levels": [int(n) for n in BASE_LEVELS],
+        "extra_ratio_levels": [int(n) for n in EXTRA_RATIO_LEVELS],
+        "reference_grid": int(REFERENCE_GRID),
+        "gate_percent": float(GATE_PERCENT),
+        "strict_percent": float(STRICT_PERCENT),
+        "rawdir": str(rawdir),
+        "headline": {"state": WITHHELD_MISSING_INPUTS, "pollution_ratio": None},
+    }
+
 
 # ---------------------------------------------------------------- time leg math
 def temporal_report(series: list[dict]) -> dict:
@@ -301,6 +404,60 @@ def _leg_table(cert: dict, rawdir: Path | str = DEFAULT_RAW) -> list[dict]:
             "decision_3pct": res3["decision"],
         })
     return rows
+
+
+def leg_profiles(rawdir: Path | str = DEFAULT_RAW) -> list[dict]:
+    """The eleven shipped DG leg profiles, as arrays (needed for T5)."""
+    raw = Path(rawdir)
+    legs = []
+    for degree, ncells, cfl in xval.DG_LEGS:
+        name = xval.leg_filename(degree, ncells, cfl)
+        with np.load(raw / name, allow_pickle=False) as blob:
+            field = np.asarray(blob["rho"], dtype=float)
+        legs.append({"configuration": f"DG P{degree} N={ncells} CFL={cfl}",
+                     "degree": int(degree), "ncells": int(ncells), "cfl": float(cfl),
+                     "file": name, "field": field})
+    return legs
+
+
+def leg_distinctness(legs: list[dict]) -> dict:
+    """T5 -- are the legs the leg table claims actually different profiles?
+
+    Only legs on the same grid are compared: ``rel L1`` between an N=200 and an
+    N=800 field is not defined without an interpolation the audit does not want
+    to introduce.  Duplicate profiles inside one grid group are the failure mode
+    seen in a stale artifact (nine legs collapsing to three distinct errors).
+    """
+    groups: dict[int, list[dict]] = {}
+    for leg in legs:
+        groups.setdefault(int(leg["ncells"]), []).append(leg)
+    pairs, duplicates = [], []
+    for n in sorted(groups):
+        members = groups[n]
+        for i in range(len(members)):
+            for j in range(i + 1, len(members)):
+                d = rel_l1(members[i]["field"], members[j]["field"])
+                pair = {"ncells": int(n),
+                        "a": members[i]["configuration"],
+                        "b": members[j]["configuration"],
+                        "rel_l1": float(d)}
+                pairs.append(pair)
+                if not (d > LEG_DISTINCT_EPS):
+                    duplicates.append(pair)
+    smallest = min((p["rel_l1"] for p in pairs), default=None)
+    return {
+        "criterion": ("no two DG legs on the same grid are the same profile "
+                      f"(rel L1 > {LEG_DISTINCT_EPS:g}): otherwise T4 'no decision "
+                      "flip across eleven legs' is a claim about fewer legs"),
+        "n_legs": len(legs),
+        "n_groups": len(groups),
+        "n_pairs": len(pairs),
+        "eps": LEG_DISTINCT_EPS,
+        "min_pair_rel_l1": smallest,
+        "duplicates": duplicates,
+        "pairs": pairs,
+        "pass": bool(legs) and not duplicates,
+    }
 
 
 def audit(rawdir: Path | str = DEFAULT_RAW) -> dict:
@@ -444,10 +601,21 @@ def audit(rawdir: Path | str = DEFAULT_RAW) -> dict:
                      and max_move is not None and max_move <= LEG_STABILITY_MAX_PP),
     }
 
-    criteria = {"T0": t0, "T1": t1, "T2": t2, "T3": t3, "T4": t4}
+    # ---- T5: non-vacuity precondition of T4
+    t5 = leg_distinctness(leg_profiles(rawdir))
+    if not t5["pass"]:
+        t4["pass"] = False
+        t4["downgraded_by"] = "T5"
+        t4["downgrade_reason"] = (
+            "identical DG leg profiles: 'no decision flip across eleven legs' would "
+            "be a claim about fewer distinct discretisations than it names")
+
+    criteria = {"T0": t0, "T1": t1, "T2": t2, "T3": t3, "T4": t4, "T5": t5}
     accepted = bool(all(c["pass"] for c in criteria.values()))
     if accepted:
         verdict = "TIME_CLEAN"
+    elif not t5["pass"]:
+        verdict = "AUDIT_INVALID_LEGS"
     elif t1["state"] == "MARGINAL":
         verdict = "TIME_MARGINAL"
     else:
@@ -464,6 +632,7 @@ def audit(rawdir: Path | str = DEFAULT_RAW) -> dict:
         "strict_percent": float(STRICT_PERCENT),
         "grids": grid_rows,
         "criteria": criteria,
+        "provenance": input_provenance(rawdir),
         "rawdir": str(rawdir),
         "headline": {
             "pollution_ratio": ratio,
@@ -477,7 +646,42 @@ def audit(rawdir: Path | str = DEFAULT_RAW) -> dict:
 
 
 # ------------------------------------------------------------------- rendering
+def markdown_withheld(result: dict) -> str:
+    """Render the ``WITHHELD_MISSING_INPUTS`` result (no verdict is claimed)."""
+    lines = [
+        "# XVAL-DG-ROUND2-CERTIFIED-REFERENCE — time-discretisation pollution audit",
+        "",
+        f"**Verdict: `{result['verdict']}`** (accepted = False) — question: "
+        "*is the published certified reference polluted by the time step it was "
+        "generated at?*",
+        "",
+        "**No pollution verdict is claimed.** " + str(result["reason"]) + ".",
+        "",
+        f"CFL series {result['cfl_levels']} (ratio 2, fixed grids), reference grid "
+        f"N = {result['reference_grid']}, band = Roache GCI with Fs = {FS_GCI}.",
+        "",
+        "## Missing inputs",
+        "",
+        "| grid | CFL | file | producer command |",
+        "|---|---|---|---|",
+    ]
+    for row in result["missing"]:
+        lines.append(f"| {row['ncells']} | {row['cfl']:g} | `{Path(row['path']).name}` | "
+                     f"`{row['generator']}` |")
+    lines += [
+        "",
+        "The eleven shipped DG legs and the CFL = 0.3 ladder are committed, so the "
+        "audit can say *what* it would compute -- it cannot say *what the answer is* "
+        "until the profiles above exist. Total cost of the table: ~1.2 CPU-hours "
+        "(see `validation/xval_dg_round2/gen_cfl_ladder.py`, shardable).",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def markdown(result: dict) -> str:
+    if "criteria" not in result:
+        return markdown_withheld(result)
     h = result["headline"]
     c = result["criteria"]
     lines = [
@@ -504,6 +708,10 @@ def markdown(result: dict) -> str:
         f"| T4 | no 3 % decision flip, leg move <= {LEG_STABILITY_MAX_PP} pp | "
         f"{c['T4']['n_flips']} flips, max move {c['T4']['max_abs_move_pp']} pp | "
         f"{c['T4']['pass']} |",
+        (f"| T5 | legs pairwise distinct (T4 not vacuous) | "
+         f"{c['T5']['n_pairs']} pairs, min rel L1 "
+         f"{c['T5']['min_pair_rel_l1']:.3e} | {c['T5']['pass']} |"
+         if "T5" in c else "| T5 | legs pairwise distinct | (not evaluated) | - |"),
         "",
         "## Time leg per grid",
         "",
@@ -558,6 +766,12 @@ def markdown(result: dict) -> str:
         corr_dec = "-" if b is None else b["decision_3pct"]
         lines.append(f"| {a['configuration']} | {a['rel_l1_percent']:.6f} | "
                      f"{corr_err} | {a['decision_3pct']} | {corr_dec} |")
+    prov = result.get("provenance") or {}
+    if prov.get("files"):
+        lines += ["", "## Input provenance (sha256)", "",
+                  "| file | sha256 (16) | bytes |", "|---|---|---|"]
+        for name, meta in sorted(prov["files"].items()):
+            lines.append(f"| `{name}` | `{meta['sha256'][:16]}` | {meta['bytes']} |")
     lines += ["", "## Thresholds (predeclared)", "",
               f"* `POLLUTION_MAX = {POLLUTION_MAX}` (CLEAN), "
               f"`POLLUTION_MARGINAL = {POLLUTION_MARGINAL}` (MARGINAL ceiling)",
@@ -689,10 +903,10 @@ def main(argv=None) -> int:
     ap.add_argument("--require-accepted", action="store_true")
     args = ap.parse_args(argv)
 
-    result = audit(args.rawdir)
+    result = audit_or_withheld(args.rawdir)
     paths = write_artifacts(result, args.outdir)
     payload = _jsonable(result)
-    if args.figures:
+    if args.figures and "criteria" in result:
         payload["figures"] = figures(result, args.rawdir, args.outdir)
     payload["artifacts"] = paths
     if args.json_stdout:
