@@ -189,3 +189,7 @@ cj3224 完成后，需执行：
 python -m benchmarks.xval_dg_round2_ladder_extension --figures
 python -m pytest tests/test_xval_dg_round2_ladder_extension.py -v
 ```
+1. **N=6400 四级梯次数据**：已递交集群作业 `cj3224`（4 核，3600s 超时），当前排队中。
+   该数据到位后，`test_xval_dg_round2_ladder_extension.py` 的 7 个测试将从 SKIPPED 转为运行。
+| test_xval_dg_round2_ladder_extension.py | 0 | 7 | 0 |
+**总计：32 PASS, 7 SKIPPED（等待 N=6400 数据）, 0 FAIL**
