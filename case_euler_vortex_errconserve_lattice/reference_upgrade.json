@@ -22,10 +22,36 @@
         "max_percent_shift": -3.704105028014288e-07
       },
       "floor_bound": 0.0007176186036448359,
-      "effect_source": "lattice_vs_published",
-      "effect_max": 3.7041050287046915e-07,
-      "bound_materialised": 0.0005161662490202008,
-      "bound_is_sound": true
+      "measured_reference_effect": {
+        "per_field": {
+          "density": 5.472157451688655e-14,
+          "velocity_x": -3.704105076169889e-07,
+          "velocity_y": -3.1538210855031337e-07,
+          "pressure": 7.947927882854026e-14
+        },
+        "max_relative_shift": 3.704105076169889e-07,
+        "worst_field": "velocity_x",
+        "max_percent_baseline": 0.20100992123961917,
+        "max_percent_candidate": 0.20100984678343223,
+        "max_percent_shift": -3.704105074961683e-07
+      },
+      "rerun_noise": {
+        "per_field": {
+          "density": -2.338528825507967e-15,
+          "velocity_x": 4.746521494577826e-15,
+          "velocity_y": 7.579310773659922e-15,
+          "pressure": -1.5801049468894661e-15
+        },
+        "max_relative_shift": 7.579310773659922e-15,
+        "worst_field": "velocity_y",
+        "max_percent_baseline": 0.20100992123961822,
+        "max_percent_candidate": 0.20100992123961917,
+        "max_percent_shift": 4.694741260091523e-15
+      },
+      "bound_materialised": 0.000516166255634466,
+      "bound_is_sound": true,
+      "effect_source": "lattice_vs_rerun",
+      "effect_max": 3.704105076169889e-07
     },
     {
       "task_key": "dg_d2_n64_t10_cfl0.2",
@@ -194,10 +220,36 @@
         "max_percent_shift": 0.008350099806748746
       },
       "floor_bound": 0.25308744521788246,
-      "effect_source": "lattice_vs_published",
-      "effect_max": 0.008366091856471032,
-      "bound_materialised": 0.03305613144606474,
-      "bound_is_sound": true
+      "measured_reference_effect": {
+        "per_field": {
+          "density": 3.936682626141112e-13,
+          "velocity_x": 0.008366091855398588,
+          "velocity_y": 0.008350099806854087,
+          "pressure": 1.094376566699072e-12
+        },
+        "max_relative_shift": 0.008366091855398588,
+        "worst_field": "velocity_x",
+        "max_percent_baseline": 0.0005839390341373348,
+        "max_percent_candidate": 0.0005888149833534995,
+        "max_percent_shift": 0.008350099806854151
+      },
+      "rerun_noise": {
+        "per_field": {
+          "density": -4.776484778495409e-13,
+          "velocity_x": 1.0635454973634875e-12,
+          "velocity_y": -1.0443962235269933e-13,
+          "pressure": -7.77449094795962e-13
+        },
+        "max_relative_shift": 1.0635454973634875e-12,
+        "worst_field": "velocity_x",
+        "max_percent_baseline": 0.0005839390341373958,
+        "max_percent_candidate": 0.0005839390341373348,
+        "max_percent_shift": -1.045324575725684e-13
+      },
+      "bound_materialised": 0.0330561314418273,
+      "bound_is_sound": true,
+      "effect_source": "lattice_vs_rerun",
+      "effect_max": 0.008366091855398588
     },
     {
       "task_key": "dg_d3_n32_t2_cfl0.2",
@@ -248,7 +300,7 @@
       "bound_is_sound": true
     }
   ],
-  "measured_effect_max": 0.008366091856471032,
+  "measured_effect_max": 0.008366091855398588,
   "material_checkpoints": [],
   "exponents": {
     "published": {
@@ -413,6 +465,24 @@
     "max_lattice_alpha": 0.02827300710839596,
     "conservation_holds_under_both": true,
     "exponent_invariant": true
+  },
+  "coverage": {
+    "measured_checkpoints": 8,
+    "controlled": [
+      "dg_d1_n32_t1_cfl0.2",
+      "dg_d2_n64_t10_cfl0.2",
+      "dg_d2_n64_t1_cfl0.2",
+      "dg_d3_n32_t1_cfl0.2"
+    ],
+    "uncontrolled": [
+      "dg_d2_n64_t2_cfl0.2",
+      "dg_d3_n32_t10_cfl0.2",
+      "dg_d3_n32_t2_cfl0.2",
+      "dg_d3_n32_t5_cfl0.2"
+    ],
+    "controlled_fraction": 0.5,
+    "fully_controlled": false,
+    "uncontrolled_reading": "upper bound only (reference defect + solver round-off)"
   },
   "verdict": "no_material_reference_effect"
 }

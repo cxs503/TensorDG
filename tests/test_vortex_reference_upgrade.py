@@ -341,3 +341,58 @@ def test_reference_effect_is_velocity_only_in_the_committed_records():
         assert abs(fields["pressure"]) < 1.0e-6
         assert abs(fields["velocity_x"]) > 1.0e-4
         assert abs(fields["velocity_y"]) > 1.0e-4
+
+
+# ---------------------------------------------------------------------------
+# coverage of the *measurement instrument*: controlled vs upper-bound readings
+# ---------------------------------------------------------------------------
+
+def test_coverage_block_separates_controlled_from_upper_bound_rows():
+    """A row without a rerun control is an upper bound, and must be named."""
+    rows = [
+        {"task_key": "a", "effect_source": "lattice_vs_rerun",
+         "measured_reference_effect": {"max_relative_shift": 1.0e-6}},
+        {"task_key": "b", "effect_source": "lattice_vs_published",
+         "measured_reference_effect": None},
+    ]
+    coverage = ru.coverage_block(rows)
+    assert coverage["controlled"] == ["a"]
+    assert coverage["uncontrolled"] == ["b"]
+    assert coverage["controlled_fraction"] == pytest.approx(0.5)
+    assert coverage["fully_controlled"] is False
+    assert "upper bound" in coverage["uncontrolled_reading"]
+
+
+def test_coverage_block_is_green_when_every_row_is_controlled():
+    rows = [{"task_key": key, "effect_source": "lattice_vs_rerun"}
+            for key in ("a", "b", "c")]
+    coverage = ru.coverage_block(rows)
+    assert coverage["uncontrolled"] == []
+    assert coverage["controlled_fraction"] == pytest.approx(1.0)
+    assert coverage["fully_controlled"] is True
+
+
+@needs_upgrade
+def test_committed_upgrade_measurement_carries_no_uncontrolled_checkpoint():
+    """The round-21 debt (p=3 leg read off published records, i.e. an upper
+    bound) is closed by same-condition reruns; this test is the gate.
+
+    ``lattice_vs_published`` mixes the reference defect with the solver/rebuild
+    round-off of the published run, so a headline quoted from those rows is a
+    bound, not a measurement.  Coverage therefore has to be asserted, exactly as
+    for the floor artifact (``test_floor_artifact_covers_every_published_record``).
+    """
+    payload = json.loads(UPGRADE_JSON.read_text())
+    coverage = payload.get("coverage")
+    assert coverage is not None, "artifact carries no coverage block"
+    assert coverage["measured_checkpoints"] == len(payload["checkpoints"])
+    assert coverage["uncontrolled"] == [], (
+        "checkpoints still measured only against the published record: "
+        f"{coverage['uncontrolled']}")
+    assert coverage["fully_controlled"] is True
+    rows = {row["task_key"]: row for row in payload["checkpoints"]}
+    for key in HIGH_ORDER:
+        assert rows[key]["effect_source"] == "lattice_vs_rerun"
+        # a same-condition rerun must agree with the published record to solver
+        # round-off, otherwise the "control" is not controlling anything
+        assert rows[key]["rerun_noise"]["max_relative_shift"] < 1.0e-6
