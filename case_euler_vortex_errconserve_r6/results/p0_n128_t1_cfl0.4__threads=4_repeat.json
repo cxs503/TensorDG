@@ -1,0 +1,71 @@
+{
+  "task": "p0",
+  "degree": 0,
+  "cells": 128,
+  "final_time": 1.0,
+  "cfl": 0.4,
+  "steps": 183,
+  "dt": 0.0007164987660497335,
+  "dofs": 65536,
+  "errors": {
+    "density": 0.012797130016822143,
+    "velocity_x": 0.028022018710014935,
+    "velocity_y": 0.028169111512511225,
+    "pressure": 0.02025827918419001
+  },
+  "metric": "exact cell-average relative L2 (P0 finite volume)",
+  "reference_model": "min_image",
+  "reference_images": null,
+  "final": {
+    "invariants": {
+      "mass": 98.24174356018983,
+      "momentum_x": 98.24174356018985,
+      "momentum_y": 98.24174356018983,
+      "energy": 344.7593266010256,
+      "entropy": 100.35213098990931
+    },
+    "entropy_mean": 1.0035213098990932,
+    "density_min": 0.5894448834104361,
+    "pressure_min": 0.5202473706307986
+  },
+  "initial": {
+    "invariants": {
+      "mass": 98.24174356019093,
+      "momentum_x": 98.24174356019093,
+      "momentum_y": 98.24174356019093,
+      "energy": 344.7593266010297,
+      "entropy": 100.00143757755976
+    },
+    "entropy_mean": 1.0000143757755975,
+    "density_min": 0.49544303496873254,
+    "pressure_min": 0.37427574548719306
+  },
+  "wall_seconds": 6.22651481628418,
+  "task_key": "p0_n128_t1_cfl0.4",
+  "config": {
+    "task": "p0",
+    "cells": 128,
+    "final_time": 1.0,
+    "cfl": 0.4,
+    "strength": 5.0,
+    "reference": "min_image",
+    "background_velocity": [
+      1.0,
+      1.0
+    ]
+  },
+  "family": "p0_n128",
+  "max_relative_l2": 0.028169111512511225,
+  "max_percent": 2.8169111512511225,
+  "invariant_drift": {
+    "mass": 1.1138196182360464e-14,
+    "momentum_x": 1.099354428388825e-14,
+    "momentum_y": 1.1138196182360464e-14,
+    "energy": 1.2036134360017024e-14,
+    "entropy": 0.0035068837093223167
+  },
+  "entropy_production": 0.003506883709322395,
+  "entropy_drift": 0.003506883709322395,
+  "density_min_relative_error": 0.18973290934978232,
+  "gate_pass": true
+}

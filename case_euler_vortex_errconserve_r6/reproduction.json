@@ -180,35 +180,35 @@
     "coverage": {
       "declared_ladder_entries": 40,
       "missing": [],
-      "reproduced": 2
+      "reproduced": 4
     },
     "criterion": "re-solve the declared checkpoint in a fresh process and compare every published scalar with results/*.json; |fresh - stored| / |stored| > 1e-09 means the bundle is stale",
-    "envelope": 6.26742683741277e-13,
-    "envelope_at": "dg_d2_n32_t1_cfl0.2/density_min_relative_error",
+    "envelope": 9.479566580944527e-09,
+    "envelope_at": "dg_d2_n32_t1_cfl0.2/entropy_drift",
     "harness_control": {
       "deviations": {
-        "density_min_relative_error": 6.26742683741277e-13,
-        "entropy_drift": 0.0,
-        "entropy_production": 0.0,
-        "errors.density": 2.1743074714570358e-13,
-        "errors.pressure": 1.9142419840283516e-13,
-        "errors.velocity_x": 1.4386064937397775e-15,
-        "errors.velocity_y": 1.8034179170801817e-13,
-        "final.energy": 0.0,
+        "density_min_relative_error": 1.8333200748939227e-12,
+        "entropy_drift": 9.479566580944527e-09,
+        "entropy_production": 9.479566580944527e-09,
+        "errors.density": 1.8500086226619966e-13,
+        "errors.pressure": 1.7508310829527607e-15,
+        "errors.velocity_x": 6.200393988018441e-14,
+        "errors.velocity_y": 1.1639589743704759e-13,
+        "final.energy": 4.94635658630846e-16,
         "final.entropy": 2.842170881994379e-16,
-        "final.mass": 0.0,
-        "final.momentum_x": 1.4465189847221629e-16,
-        "final.momentum_y": 1.446518984722163e-16,
-        "max_relative_l2": 1.8034179170801817e-13
+        "final.mass": 4.3395569541664886e-16,
+        "final.momentum_x": 5.786075938888651e-16,
+        "final.momentum_y": 4.339556954166489e-16,
+        "max_relative_l2": 1.1639589743704759e-13
       },
       "note": "pinned vs inherited OMP/MKL environment: a harness that changes the answer is not measuring the bundle",
-      "worst": 6.26742683741277e-13
+      "worst": 9.479566580944527e-09
     },
     "intrinsic": 0.0,
     "intrinsic_at": null,
     "limit": 1e-09,
-    "margin_kept": true,
-    "passed": true,
+    "margin_kept": false,
+    "passed": false,
     "probes": {
       "clean_run": "threads=1",
       "flip_point": "magnitude_1e-09",
@@ -245,46 +245,100 @@
           "kind": "stored slot holds dg_d2_n32_t2_cfl0.2 instead of dg_d2_n32_t1_cfl0.2"
         },
         "wrong_family": {
-          "deviation": 0.9966519303592725,
+          "deviation": 0.37799576243545335,
           "flagged": true,
-          "kind": "stored slot holds p0_n128_t1_cfl0.4 instead of dg_d2_n32_t1_cfl0.2"
+          "kind": "stored slot holds dg_d2_n32_t10_cfl0.2 instead of dg_d2_n32_t1_cfl0.2"
         }
       },
       "reading": "max_relative_l2",
       "target": "dg_d2_n32_t1_cfl0.2"
     },
-    "ratio": 0.0006267426837412769,
+    "ratio": 9.479566580944526,
     "repeated_targets": [
       "dg_d2_n32_t1_cfl0.2",
+      "dg_d3_n32_t1_cfl0.2",
       "p0_n128_t1_cfl0.4"
     ],
     "steps_identical": true,
     "targets": {
+      "dg_d2_n32_t10_cfl0.2": {
+        "role": "\u6700\u957f\u68af\u7ea7\uff084684 \u6b65\uff0c\u68c0\u9a8c\u504f\u5dee\u662f\u5426\u968f\u6b65\u6570\u589e\u957f\uff09",
+        "runs": {
+          "threads=1": {
+            "deviations": {
+              "density_min_relative_error": 4.5211191679735036e-11,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 4.654507311008513e-13,
+              "errors.pressure": 1.531360747727547e-12,
+              "errors.velocity_x": 1.1281690302073432e-12,
+              "errors.velocity_y": 1.649234761184506e-13,
+              "final.energy": 6.595142115079105e-16,
+              "final.entropy": 2.842170101527641e-16,
+              "final.mass": 5.786075938889567e-16,
+              "final.momentum_x": 1.44651898472239e-16,
+              "final.momentum_y": 2.89303796944478e-16,
+              "max_relative_l2": 1.1281690302073432e-12
+            },
+            "steps_match": true,
+            "steps_reproduced": 4684,
+            "steps_stored": 4684,
+            "wall_seconds": 313.2391972541809,
+            "worst": 4.5211191679735036e-11,
+            "worst_metric": "density_min_relative_error"
+          },
+          "threads=4": {
+            "deviations": {
+              "density_min_relative_error": 4.5211191679735036e-11,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 4.654507311008513e-13,
+              "errors.pressure": 1.531360747727547e-12,
+              "errors.velocity_x": 1.1281690302073432e-12,
+              "errors.velocity_y": 1.649234761184506e-13,
+              "final.energy": 6.595142115079105e-16,
+              "final.entropy": 2.842170101527641e-16,
+              "final.mass": 5.786075938889567e-16,
+              "final.momentum_x": 1.44651898472239e-16,
+              "final.momentum_y": 2.89303796944478e-16,
+              "max_relative_l2": 1.1281690302073432e-12
+            },
+            "steps_match": true,
+            "steps_reproduced": 4684,
+            "steps_stored": 4684,
+            "wall_seconds": 305.5911467075348,
+            "worst": 4.5211191679735036e-11,
+            "worst_metric": "density_min_relative_error"
+          }
+        },
+        "steps": 4684,
+        "stored_wall_seconds": 474.3131642341614
+      },
       "dg_d2_n32_t1_cfl0.2": {
         "role": "C1/C2 \u95e8\u7981\u5224\u5b9a\u70b9\uff08\u8bbe\u8ba1\u65cf\u5feb\u7167\uff09",
         "runs": {
           "threads=1": {
             "deviations": {
-              "density_min_relative_error": 6.26742683741277e-13,
-              "entropy_drift": 0.0,
-              "entropy_production": 0.0,
-              "errors.density": 2.1743074714570358e-13,
-              "errors.pressure": 1.9142419840283516e-13,
-              "errors.velocity_x": 1.4386064937397775e-15,
-              "errors.velocity_y": 1.8034179170801817e-13,
-              "final.energy": 0.0,
+              "density_min_relative_error": 1.8333200748939227e-12,
+              "entropy_drift": 9.479566580944527e-09,
+              "entropy_production": 9.479566580944527e-09,
+              "errors.density": 1.8500086226619966e-13,
+              "errors.pressure": 1.7508310829527607e-15,
+              "errors.velocity_x": 6.200393988018441e-14,
+              "errors.velocity_y": 1.1639589743704759e-13,
+              "final.energy": 4.94635658630846e-16,
               "final.entropy": 2.842170881994379e-16,
-              "final.mass": 0.0,
-              "final.momentum_x": 1.4465189847221629e-16,
-              "final.momentum_y": 1.446518984722163e-16,
-              "max_relative_l2": 1.8034179170801817e-13
+              "final.mass": 4.3395569541664886e-16,
+              "final.momentum_x": 5.786075938888651e-16,
+              "final.momentum_y": 4.339556954166489e-16,
+              "max_relative_l2": 1.1639589743704759e-13
             },
             "steps_match": true,
             "steps_reproduced": 469,
             "steps_stored": 469,
-            "wall_seconds": 42.16945028305054,
-            "worst": 6.26742683741277e-13,
-            "worst_metric": "density_min_relative_error"
+            "wall_seconds": 32.134066343307495,
+            "worst": 9.479566580944527e-09,
+            "worst_metric": "entropy_drift"
           },
           "threads=1_repeat": {
             "against": "another fresh process at identical settings",
@@ -304,39 +358,61 @@
               "max_relative_l2": 0.0
             },
             "steps_match": true,
-            "wall_seconds": 51.618006467819214,
+            "wall_seconds": 31.910537719726562,
             "worst": 0.0,
             "worst_metric": "max_relative_l2"
           },
           "threads=4": {
             "deviations": {
-              "density_min_relative_error": 6.26742683741277e-13,
-              "entropy_drift": 0.0,
-              "entropy_production": 0.0,
-              "errors.density": 2.1743074714570358e-13,
-              "errors.pressure": 1.9142419840283516e-13,
-              "errors.velocity_x": 1.4386064937397775e-15,
-              "errors.velocity_y": 1.8034179170801817e-13,
-              "final.energy": 0.0,
+              "density_min_relative_error": 1.8333200748939227e-12,
+              "entropy_drift": 9.479566580944527e-09,
+              "entropy_production": 9.479566580944527e-09,
+              "errors.density": 1.8500086226619966e-13,
+              "errors.pressure": 1.7508310829527607e-15,
+              "errors.velocity_x": 6.200393988018441e-14,
+              "errors.velocity_y": 1.1639589743704759e-13,
+              "final.energy": 4.94635658630846e-16,
               "final.entropy": 2.842170881994379e-16,
-              "final.mass": 0.0,
-              "final.momentum_x": 1.4465189847221629e-16,
-              "final.momentum_y": 1.446518984722163e-16,
-              "max_relative_l2": 1.8034179170801817e-13
+              "final.mass": 4.3395569541664886e-16,
+              "final.momentum_x": 5.786075938888651e-16,
+              "final.momentum_y": 4.339556954166489e-16,
+              "max_relative_l2": 1.1639589743704759e-13
             },
             "steps_match": true,
             "steps_reproduced": 469,
             "steps_stored": 469,
-            "wall_seconds": 42.16945028305054,
-            "worst": 6.26742683741277e-13,
-            "worst_metric": "density_min_relative_error"
+            "wall_seconds": 30.05070471763611,
+            "worst": 9.479566580944527e-09,
+            "worst_metric": "entropy_drift"
+          },
+          "threads=4_repeat": {
+            "against": "another fresh process at identical settings",
+            "deviations": {
+              "density_min_relative_error": 0.0,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 0.0,
+              "errors.pressure": 0.0,
+              "errors.velocity_x": 0.0,
+              "errors.velocity_y": 0.0,
+              "final.energy": 0.0,
+              "final.entropy": 0.0,
+              "final.mass": 0.0,
+              "final.momentum_x": 0.0,
+              "final.momentum_y": 0.0,
+              "max_relative_l2": 0.0
+            },
+            "steps_match": true,
+            "wall_seconds": 31.530256509780884,
+            "worst": 0.0,
+            "worst_metric": "max_relative_l2"
           }
         },
         "steps": 469,
         "stored_wall_seconds": 46.749340295791626
       },
-      "p0_n128_t1_cfl0.4": {
-        "role": "C5 \u7b2c\u4e8c\u6761\u4ee3\u7801\u8def\u5f84\uff08P0 \u6709\u9650\u4f53\u79ef\uff09",
+      "dg_d3_n32_t1_cfl0.2": {
+        "role": "C8 \u6700\u9ad8\u9636\u65cf\u5feb\u7167",
         "runs": {
           "threads=1": {
             "deviations": {
@@ -355,9 +431,9 @@
               "max_relative_l2": 0.0
             },
             "steps_match": true,
-            "steps_reproduced": 183,
-            "steps_stored": 183,
-            "wall_seconds": 7.472647190093994,
+            "steps_reproduced": 656,
+            "steps_stored": 656,
+            "wall_seconds": 58.932098388671875,
             "worst": 0.0,
             "worst_metric": "max_relative_l2"
           },
@@ -379,7 +455,7 @@
               "max_relative_l2": 0.0
             },
             "steps_match": true,
-            "wall_seconds": 8.940999746322632,
+            "wall_seconds": 60.46470665931702,
             "worst": 0.0,
             "worst_metric": "max_relative_l2"
           },
@@ -400,9 +476,9 @@
               "max_relative_l2": 0.0
             },
             "steps_match": true,
-            "steps_reproduced": 183,
-            "steps_stored": 183,
-            "wall_seconds": 7.472647190093994,
+            "steps_reproduced": 656,
+            "steps_stored": 656,
+            "wall_seconds": 50.42340040206909,
             "worst": 0.0,
             "worst_metric": "max_relative_l2"
           },
@@ -424,7 +500,104 @@
               "max_relative_l2": 0.0
             },
             "steps_match": true,
-            "wall_seconds": 8.80520749092102,
+            "wall_seconds": 48.84031057357788,
+            "worst": 0.0,
+            "worst_metric": "max_relative_l2"
+          }
+        },
+        "steps": 656,
+        "stored_wall_seconds": 61.31007504463196
+      },
+      "p0_n128_t1_cfl0.4": {
+        "role": "C5 \u7b2c\u4e8c\u6761\u4ee3\u7801\u8def\u5f84\uff08P0 \u6709\u9650\u4f53\u79ef\uff09",
+        "runs": {
+          "threads=1": {
+            "deviations": {
+              "density_min_relative_error": 3.36461524438325e-15,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 8.133339930264687e-16,
+              "errors.pressure": 1.7126069398141394e-16,
+              "errors.velocity_x": 1.2381145654983259e-15,
+              "errors.velocity_y": 1.7243091712629026e-15,
+              "final.energy": 4.946356586308423e-16,
+              "final.entropy": 0.0,
+              "final.mass": 2.893037969444308e-16,
+              "final.momentum_x": 1.446518984722154e-16,
+              "final.momentum_y": 2.893037969444308e-16,
+              "max_relative_l2": 1.7243091712629026e-15
+            },
+            "steps_match": true,
+            "steps_reproduced": 183,
+            "steps_stored": 183,
+            "wall_seconds": 5.915123462677002,
+            "worst": 3.36461524438325e-15,
+            "worst_metric": "density_min_relative_error"
+          },
+          "threads=1_repeat": {
+            "against": "another fresh process at identical settings",
+            "deviations": {
+              "density_min_relative_error": 0.0,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 0.0,
+              "errors.pressure": 0.0,
+              "errors.velocity_x": 0.0,
+              "errors.velocity_y": 0.0,
+              "final.energy": 0.0,
+              "final.entropy": 0.0,
+              "final.mass": 0.0,
+              "final.momentum_x": 0.0,
+              "final.momentum_y": 0.0,
+              "max_relative_l2": 0.0
+            },
+            "steps_match": true,
+            "wall_seconds": 5.945016384124756,
+            "worst": 0.0,
+            "worst_metric": "max_relative_l2"
+          },
+          "threads=4": {
+            "deviations": {
+              "density_min_relative_error": 3.36461524438325e-15,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 8.133339930264687e-16,
+              "errors.pressure": 1.7126069398141394e-16,
+              "errors.velocity_x": 1.2381145654983259e-15,
+              "errors.velocity_y": 1.7243091712629026e-15,
+              "final.energy": 4.946356586308423e-16,
+              "final.entropy": 0.0,
+              "final.mass": 2.893037969444308e-16,
+              "final.momentum_x": 1.446518984722154e-16,
+              "final.momentum_y": 2.893037969444308e-16,
+              "max_relative_l2": 1.7243091712629026e-15
+            },
+            "steps_match": true,
+            "steps_reproduced": 183,
+            "steps_stored": 183,
+            "wall_seconds": 5.779663562774658,
+            "worst": 3.36461524438325e-15,
+            "worst_metric": "density_min_relative_error"
+          },
+          "threads=4_repeat": {
+            "against": "another fresh process at identical settings",
+            "deviations": {
+              "density_min_relative_error": 0.0,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 0.0,
+              "errors.pressure": 0.0,
+              "errors.velocity_x": 0.0,
+              "errors.velocity_y": 0.0,
+              "final.energy": 0.0,
+              "final.entropy": 0.0,
+              "final.mass": 0.0,
+              "final.momentum_x": 0.0,
+              "final.momentum_y": 0.0,
+              "max_relative_l2": 0.0
+            },
+            "steps_match": true,
+            "wall_seconds": 6.22651481628418,
             "worst": 0.0,
             "worst_metric": "max_relative_l2"
           }
@@ -437,8 +610,8 @@
       1,
       4
     ],
-    "worst": 6.26742683741277e-13,
-    "worst_at": "dg_d2_n32_t1_cfl0.2/threads=1/density_min_relative_error"
+    "worst": 9.479566580944527e-09,
+    "worst_at": "dg_d2_n32_t1_cfl0.2/threads=1/entropy_drift"
   },
   "case": "CASE-DG-EULER-VORTEX-ERR",
   "margin": 10.0,
@@ -447,8 +620,10 @@
   "verdict": {
     "certificates": 5,
     "controls_passed": true,
-    "failed": [],
-    "status": "CERTIFIED"
+    "failed": [
+      "R6_reproduction"
+    ],
+    "status": "INSTRUMENT-LIMITED"
   },
-  "wall_seconds": 14.28214955329895
+  "wall_seconds": 1055.9147262573242
 }
