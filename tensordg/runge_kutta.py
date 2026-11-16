@@ -164,8 +164,27 @@ def _ssp_rk54_tableau() -> RKTableau:
 
 SSP_RK54 = _ssp_rk54_tableau()
 
+#: Butcher form of the TVD-RK3 scheme that :func:`tensordg.advection_1d.solve_advection`
+#: implements inline for ``time_integrator="ssp_rk3"`` (Cockburn & Shu 1998,
+#: eq. (2.18)).  Registering it changes nothing about how the solver runs that
+#: branch -- it exists so that the *same* object describes the scheme to any
+#: consumer that needs a tableau (stability analysis in
+#: :mod:`tensordg.rk_stability`, order conditions), instead of a second,
+#: hand-written copy of the stages.  ``b`` equals the last stage row because the
+#: scheme's final update *is* its third stage.
+SSP_RK3 = RKTableau(
+    name="ssp_rk3", order=3, stages=3,
+    a=((), (1.0,), (0.25, 0.25)),
+    b=(1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0),
+    c=(0.0, 1.0, 0.5),
+    reference="Shu & Osher (1988) / Cockburn & Shu (1998), TVD-RK3",
+).check()
+
+#: Insertion order matters for :func:`tableau_for_degree`, which breaks an
+#: order tie by position: ``SSP_RK3`` must come *after* :data:`RK3` so that the
+#: matched-stage ladder keeps using Kutta-3 (unchanged behaviour).
 TABLEAUS: dict[str, RKTableau] = {
-    tab.name: tab for tab in (EULER, RK2, RK3, RK4, SSP_RK54, RK5)
+    tab.name: tab for tab in (EULER, RK2, RK3, RK4, SSP_RK54, RK5, SSP_RK3)
 }
 
 
@@ -238,8 +257,10 @@ def tableau_for_degree(degree: int) -> RKTableau:
     * ``p = 4``     :data:`SSP_RK54` -- five stages, *fourth* order.  Order 5
       with five stages is impossible for an explicit method (Butcher barrier),
       which is exactly why the reference column is called ``RK5DG4``: five
-      stages, degree 4.  The time error stays far below the spatial one at the
-      CFL used by the accuracy study (measured share <= 1 %), so the observed
+      stages, degree 4.  The time error stays below the spatial one at the CFL
+      used by the accuracy study (measured shares ``E_time / E_total`` of
+      6.73 % / 0.34 % / 0.012 % / 0.10 % for ``p = 1..4``, see
+      ``validation/advection_order_matched_rk/metrics.json``), so the observed
       rate is the spatial order ``p + 1 = 5``.
     * ``p >= 5``    no registered tableau has that many stages; the highest
       order available is used (documented cap, not silently extrapolated).
