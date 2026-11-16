@@ -1,0 +1,21 @@
+{
+ "superseded_artefact": "metrics_yee.json",
+ "slug": "CASE-DG-EULER-VORTEX-ERR",
+ "current_artefact": "case_euler_vortex_yee/metrics.json",
+ "current_percent": 0.015162621307949022,
+ "current_verdict": "PASS",
+ "superseded_percent": 16.443284529115328,
+ "superseded_verdict": "FAIL",
+ "reference_model_of_superseded": "free_space (pre min-image fix)",
+ "reason": "pre-min-image aggregation left behind when the case moved to case_euler_vortex_yee/; no tracked script writes this path, and every one of its numbers reproduces the free-space vs periodic reference discrepancy (see certificate) rather than a scheme error",
+ "certificate": {
+  "certificate_time": 10.0,
+  "predicted_percent": 16.443615586256506,
+  "observed_percent": 16.443284529115328,
+  "relative_difference": 2.01328679475327e-05,
+  "matched": true
+ },
+ "producers": [],
+ "adjudicator": "tools/verdict_reconcile.py",
+ "note": "kept in the tree as historical evidence; NOT the current verdict. Read the authoritative artefact for the ledger value."
+}
