@@ -239,7 +239,7 @@ DG 腿对认证参考的既有结论（< 3% 门槛逐腿判定）不受本单修
 ## 7. 复现
 
 ```bash
-# 生成 CFL 细化剖面（已在集群完成：cj4305-cj4308）
+# 生成 CFL 细化剖面（cluster cj4464；idempotent，已落盘的级自动跳过）
 python validation/xval_dg_round2/gen_fv_level.py --ncells 3200 --cfl 0.15 \\
     --out validation/repro_shu_osher/artifacts/raw/fv_cfl0p15_n3200.npz
 # 审计 + 图
@@ -281,7 +281,7 @@ def post(title: str, summary: str, md: str, fig_paths) -> str:
         "title": title,
         "summary": summary,
         "scenario_key": "CASE-SHU-OSHER",
-        "mission_id": 22686,
+        "mission_id": int(os.environ.get("MISSION_ID", "22895")),
         "tags": ["TensorDG", "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
                  "time-discretisation", "certified-reference", "GCI", "verification"],
         "markdown": md,
