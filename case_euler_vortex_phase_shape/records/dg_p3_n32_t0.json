@@ -1,0 +1,17 @@
+{
+  "key": "dg_p3_n32_t0",
+  "config": {
+    "task": "dg",
+    "degree": 3,
+    "cells": 32,
+    "cfl": 0.2,
+    "final_time": 0.0
+  },
+  "per_cell": 8,
+  "grid": 256,
+  "dx": 0.3125,
+  "steps": 0,
+  "reference_model": "min_image periodic map",
+  "sampling": "uniform nodes, degree+1 polynomial value evaluation",
+  "wall_seconds": 0.35927510261535645
+}

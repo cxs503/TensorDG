@@ -1,0 +1,24 @@
+{
+  "key": "p0_n64_t10",
+  "config": {
+    "task": "p0",
+    "cells": 64,
+    "cfl": 0.4,
+    "final_time": 10.0
+  },
+  "per_cell": 1,
+  "grid": 64,
+  "dx": 0.15625,
+  "steps": 778,
+  "reference_model": "min_image periodic map",
+  "sampling": "cell centres",
+  "harness_metric_fields": {
+    "density": 0.06018659250087452,
+    "velocity_x": 0.14304321900509545,
+    "velocity_y": 0.14304740633914417,
+    "pressure": 0.0835866097701307
+  },
+  "harness_metric_percent": 14.304740633914417,
+  "harness_metric": "cell-average relative L2",
+  "wall_seconds": 13.465671062469482
+}

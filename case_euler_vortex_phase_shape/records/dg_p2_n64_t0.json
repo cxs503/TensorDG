@@ -1,0 +1,17 @@
+{
+  "key": "dg_p2_n64_t0",
+  "config": {
+    "task": "dg",
+    "degree": 2,
+    "cells": 64,
+    "cfl": 0.2,
+    "final_time": 0.0
+  },
+  "per_cell": 8,
+  "grid": 512,
+  "dx": 0.15625,
+  "steps": 0,
+  "reference_model": "min_image periodic map",
+  "sampling": "uniform nodes, degree+1 polynomial value evaluation",
+  "wall_seconds": 1.3781394958496094
+}
