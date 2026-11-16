@@ -13,35 +13,35 @@
   },
   "runs": [
     {
-      "ncells": 16,
+      "ncells": 32,
       "degree": 1,
       "final_time": 0.1,
-      "cfl": 0.1,
+      "cfl": 0.2,
       "periodic": [
         false,
         false
       ],
-      "steps": 300,
-      "dt": 8.038646902913671e-05,
-      "wall_seconds": 23.59,
-      "rho_min": 0.137999812473641,
-      "rho_max": 1.5510443663985818,
-      "p_min": 0.2999757081157923,
-      "p_max": 1.5887786150568317,
+      "steps": 301,
+      "dt": 0.00010386461579596495,
+      "wall_seconds": 31.94,
+      "rho_min": 0.13799716865904485,
+      "rho_max": 1.6633217846868562,
+      "p_min": 0.2999897163477013,
+      "p_max": 1.7571878239760412,
       "positivity": {
-        "rho_min": 0.13798765466728577,
-        "rho_max": 1.569326122229234,
-        "p_min": 0.2999465730114033,
-        "p_max": 1.6190279439205846,
-        "rho_min_mean": 0.137999812473641,
-        "p_min_mean": 0.2999757081157923,
+        "rho_min": 0.13799094390260314,
+        "rho_max": 1.6875282622025785,
+        "p_min": 0.2997336437761871,
+        "p_max": 1.7898318906433979,
+        "rho_min_mean": 0.13799716865904485,
+        "p_min_mean": 0.2999897163477013,
         "rho_positive": true,
         "p_positive": true,
         "rho_positive_mean": true,
         "p_positive_mean": true,
         "quadrature_nodes": 3
       },
-      "total_mass": 0.7584953369041143,
+      "total_mass": 0.758495300630793,
       "initial_mass": 0.67565,
       "c6_bounds": {
         "final_time": 0.1,
@@ -56,58 +56,58 @@
       },
       "conservation": {
         "mass": {
-          "change": 0.08284533690411444,
-          "boundary_flux": 0.08284533690412262,
-          "residual": -8.174017018802715e-15,
-          "relative_residual": 1.2098004912014678e-14
+          "change": 0.0828453006307931,
+          "boundary_flux": 0.08284530063080066,
+          "residual": -7.563394355258879e-15,
+          "relative_residual": 1.1194249027246179e-14
         },
         "x_momentum": {
-          "change": -0.00020998541105876622,
-          "boundary_flux": -0.00020998541105696675,
-          "residual": -1.799477450728504e-15,
-          "relative_residual": 8.90409680538827e-15
+          "change": -9.381595120933062e-05,
+          "boundary_flux": -9.381595120758974e-05,
+          "residual": -1.7408763233056623e-15,
+          "relative_residual": 8.614129231042379e-15
         },
         "y_momentum": {
-          "change": -0.00020998541105876622,
-          "boundary_flux": -0.00020998541105695834,
-          "residual": -1.8078800175652665e-15,
-          "relative_residual": 8.945674024651555e-15
+          "change": -9.381595120938613e-05,
+          "boundary_flux": -9.381595120761904e-05,
+          "residual": -1.7670869108254994e-15,
+          "relative_residual": 8.743823331131405e-15
         },
         "energy": {
-          "change": 0.34941814686325934,
-          "boundary_flux": 0.3494181468632809,
-          "residual": -2.1538326677728037e-14,
-          "relative_residual": 1.2351890683386769e-14
+          "change": 0.34932159134917207,
+          "boundary_flux": 0.34932159134919305,
+          "residual": -2.098321516541546e-14,
+          "relative_residual": 1.2033542985361334e-14
         }
       },
-      "max_flux_balance_residual": 1.2351890683386769e-14,
-      "max_abs_conservation_change": 0.34941814686325934,
+      "max_flux_balance_residual": 1.2033542985361334e-14,
+      "max_abs_conservation_change": 0.34932159134917207,
       "finite": true,
-      "dofs": 4096
+      "dofs": 16384
     },
     {
-      "ncells": 16,
+      "ncells": 32,
       "degree": 1,
       "final_time": 0.1,
-      "cfl": 0.1,
+      "cfl": 0.2,
       "periodic": [
         true,
         true
       ],
-      "steps": 293,
-      "dt": 0.00015297937525683702,
-      "wall_seconds": 14.13,
-      "rho_min": 0.0851082548797486,
-      "rho_max": 1.5520074993719528,
-      "p_min": 0.10543928528351151,
-      "p_max": 1.5899209616048542,
+      "steps": 299,
+      "dt": 0.00030951100808299103,
+      "wall_seconds": 23.88,
+      "rho_min": 0.06944231484551654,
+      "rho_max": 1.6633748719388355,
+      "p_min": 0.07980815536235153,
+      "p_max": 1.7573886442196787,
       "positivity": {
-        "rho_min": 0.08460363048845626,
-        "rho_max": 1.5710429086662265,
-        "p_min": 0.0955629525706199,
-        "p_max": 1.6221097300275034,
-        "rho_min_mean": 0.0851082548797486,
-        "p_min_mean": 0.10543928528351151,
+        "rho_min": 0.06808082046886223,
+        "rho_max": 1.6873898393089835,
+        "p_min": 0.07300312581395808,
+        "p_max": 1.790411329748711,
+        "rho_min_mean": 0.06944231484551654,
+        "p_min_mean": 0.07980815536235153,
         "rho_positive": true,
         "p_positive": true,
         "rho_positive_mean": true,
@@ -129,41 +129,41 @@
       },
       "conservation": {
         "mass": {
-          "change": -6.8833827526759706e-15,
+          "change": -6.772360450213455e-15,
           "boundary_flux": 0.0,
-          "residual": -6.8833827526759706e-15,
-          "relative_residual": 1.0187793610117622e-14
+          "residual": -6.772360450213455e-15,
+          "relative_residual": 1.0023474358341532e-14
         },
         "x_momentum": {
-          "change": -1.887379141862766e-15,
+          "change": -1.915134717478395e-15,
           "boundary_flux": 0.0,
-          "residual": -1.887379141862766e-15,
-          "relative_residual": 9.339048166907107e-15
+          "residual": -1.915134717478395e-15,
+          "relative_residual": 9.476387110538096e-15
         },
         "y_momentum": {
           "change": -1.915134717478395e-15,
           "boundary_flux": 0.0,
           "residual": -1.915134717478395e-15,
-          "relative_residual": 9.476387110538093e-15
+          "relative_residual": 9.476387110538095e-15
         },
         "energy": {
-          "change": -1.84297022087776e-14,
+          "change": -1.9539925233402755e-14,
           "boundary_flux": 0.0,
-          "residual": -1.84297022087776e-14,
-          "relative_residual": 1.0569143574444348e-14
+          "residual": -1.9539925233402755e-14,
+          "relative_residual": 1.1205838970495209e-14
         }
       },
-      "max_flux_balance_residual": 1.0569143574444348e-14,
-      "max_abs_conservation_change": 1.84297022087776e-14,
+      "max_flux_balance_residual": 1.1205838970495209e-14,
+      "max_abs_conservation_change": 1.9539925233402755e-14,
       "finite": true,
-      "dofs": 4096
+      "dofs": 16384
     }
   ],
   "verdicts": {
     "C1_positivity": {
       "passed": true,
-      "worst_rho_min": 0.08460363048845626,
-      "worst_p_min": 0.0955629525706199,
+      "worst_rho_min": 0.06808082046886223,
+      "worst_p_min": 0.07300312581395808,
       "detail": "rho > 0 and p > 0 at volume nodes and cell averages"
     },
     "C3_finite": {
@@ -172,13 +172,13 @@
     },
     "C4_flux_balance": {
       "passed": true,
-      "worst_relative_residual": 1.2351890683386769e-14,
+      "worst_relative_residual": 1.2033542985361334e-14,
       "tolerance": 1e-10,
       "detail": "Q(t) - Q(0) equals the time-integrated boundary flux; the transmissive mass change itself is physical and is reported under 'mass change' rather than being scored as conservation"
     },
     "C5_periodic_drift": {
       "passed": true,
-      "worst_relative_change": 2.7276995794831333e-14,
+      "worst_relative_change": 2.892018831259226e-14,
       "tolerance": 1e-12,
       "detail": "periodic control: no boundary flux is possible"
     },
@@ -191,22 +191,34 @@
     },
     "C6_physical_magnitude": {
       "passed": true,
-      "worst_mass_bound_ratio": 0.008004152297847126,
-      "worst_extremum_factor": 1.0814064866850022,
+      "worst_mass_bound_ratio": 0.00800414879327826,
+      "worst_extremum_factor": 1.1936075531658072,
       "mass_tolerance": 1.0,
       "extremum_tolerance": 1.5,
       "per_row": {
-        "p1_16_open": {
-          "mass_bound_ratio": 0.008004152297847126,
-          "extremum_factor": 1.0793519626137231
+        "p1_32_open": {
+          "mass_bound_ratio": 0.00800414879327826,
+          "extremum_factor": 1.1932212604289318
         },
-        "p1_16_periodic": {
-          "mass_bound_ratio": 6.650421850605857e-16,
-          "extremum_factor": 1.0814064866850022
+        "p1_32_periodic": {
+          "mass_bound_ratio": 6.543156982047697e-16,
+          "extremum_factor": 1.1936075531658072
         }
       },
       "detail": "|mass(t)-mass(0)| must stay inside an a-priori flux bound (MASS_FLUX_SAFETY * rho_max0 * speed_max0 * perimeter * t) and max(rho,p) must stay within EXTREMUM_SAFETY x the initial extrema; bounds come from the initial data, not from a run"
     }
+  },
+  "provenance": {
+    "command": "python -m benchmarks.riemann_2d_cks1998 --quick",
+    "quick_config": {
+      "ncells": 32,
+      "degree": 1,
+      "final_time": 0.1,
+      "cfl": 0.2
+    },
+    "figure": "riemann_2d_density_p1_32.png",
+    "figure_source_row": 0,
+    "note": "figure and rows come from the same solves; no row is recomputed for plotting"
   },
   "reference": "Lax & Liu (1998), SIAM J. Sci. Comput. 19(2), 319-340",
   "notes": "The transmissive mass change is a physical boundary flux, not a conservation error; C4 scores the flux-balance identity instead."

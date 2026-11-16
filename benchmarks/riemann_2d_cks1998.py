@@ -50,7 +50,10 @@ Quantitative gates (pre-declared, before any run):
         momentum and energy to |change| / scale < 1e-12.
 
 Usage:
-    OMP_NUM_THREADS=1 python -m benchmarks.riemann_2d_cks1998 --quick
+    # smoke profile = QUICK_CONFIG (32x32 P1, t=0.1) + periodic control + figure,
+    # then render the case document's number table from the record
+    OMP_NUM_THREADS=1 python -m benchmarks.riemann_2d_cks1998 --quick --sync-doc
+    # full case time t=0.25 with the 32x32/64x64 self-convergence (C2) ladder
     OMP_NUM_THREADS=1 python -m benchmarks.riemann_2d_cks1998
 """
 from __future__ import annotations
@@ -59,6 +62,7 @@ import argparse
 import json
 import math
 import os
+import re
 import sys
 import time
 from pathlib import Path
@@ -101,6 +105,20 @@ GATES = {
 #     "the discrete solution stays within 50 % of the initial extrema".
 MASS_FLUX_SAFETY = 5.0
 EXTREMUM_SAFETY = 1.5
+
+# The ``--quick`` profile is a *smoke* configuration and is declared here rather
+# than assembled from CLI defaults: the committed record, the case document and
+# the doc-binding test all quote this one dict, so "quick" cannot mean two things.
+# 32x32 P1 at ``t = 0.1`` keeps the whole profile (physical run + periodic control
+# + figure) inside a *single* bounded command (a minute of CPU on one core); the
+# full case time ``t = 0.25`` is what the ``full`` profile runs, together with the
+# 32x32/64x64 self-convergence ladder (C2).
+QUICK_CONFIG = {
+    "ncells": 32,
+    "degree": 1,
+    "final_time": 0.1,
+    "cfl": 0.2,
+}
 
 CONSERVED = ("mass", "x_momentum", "y_momentum", "energy")
 
@@ -516,6 +534,7 @@ def run_convergence_study(degrees=(1, 2), meshes=(32, 64), final_time=0.25,
             )
         results[f"p{degree}"] = {
             "rows": [_slim(r) for r in rows],
+            "full_rows": rows,
             "self_convergence_l1": convergence,
         }
     return results
@@ -566,6 +585,134 @@ def plot_density_field(x, y, coeff, degree, ncells, output_path):
 
 
 # ---------------------------------------------------------------------------
+# Document binding: the case document quotes only numbers rendered from the record
+# ---------------------------------------------------------------------------
+#
+# The failure this closes: ``docs/CASE-DG-CKS1998-2D-RIEMANN.md`` used to quote a
+# transmissive mass change of ``0.3494`` while ``metrics.json`` in the same
+# directory said ``0.0828``, and a 16x16 configuration that the documented
+# reproduce command no longer produced (the driver had moved to 32x32, t=0.25).
+# Nothing failed, because every number in the document was typed by hand.
+#
+# Here the document's number table is *rendered* from the record.  ``--sync-doc``
+# writes it into the document, and
+# ``tests/test_riemann_2d_cks1998_doc_binding.py`` compares the two byte for byte,
+# so a hand edit, a record regenerated at another configuration, or a record whose
+# verdicts no longer follow from its own rows all fail the build.
+
+DOC_BLOCK_BEGIN = "<!-- DOC-NUMBERS:BEGIN"
+DOC_BLOCK_END = "<!-- DOC-NUMBERS:END -->"
+DOC_VALUES_HEADER = "| 量 | metrics.json 路径 | 值 |"
+
+# ``(label, dotted path into metrics.json, formatting)``.  Paths are explicit so
+# the document states where every number comes from.
+DOC_NUMBER_FIELDS = (
+    ("profile", "profile", "str"),
+    ("物理构型 ncells", "runs[0].ncells", "int"),
+    ("物理构型 degree", "runs[0].degree", "int"),
+    ("物理构型 final_time", "runs[0].final_time", "num"),
+    ("物理构型 cfl", "runs[0].cfl", "num"),
+    ("物理构型 时间步数", "runs[0].steps", "int"),
+    ("C1 rho_min（格点最低值，含周期控制行）",
+     "verdicts.C1_positivity.worst_rho_min", "sci"),
+    ("C1 p_min（格点最低值，含周期控制行）",
+     "verdicts.C1_positivity.worst_p_min", "sci"),
+    ("C1 判定", "verdicts.C1_positivity", "verdict"),
+    ("C3 判定", "verdicts.C3_finite", "verdict"),
+    ("物理构型 初始质量", "runs[0].initial_mass", "num"),
+    ("物理构型 末态质量", "runs[0].total_mass", "num"),
+    ("物理构型 质量变化（物理边界通量，不是守恒误差）",
+     "runs[0].conservation.mass.change", "num"),
+    ("C4 通量平衡最坏相对残差",
+     "verdicts.C4_flux_balance.worst_relative_residual", "sci"),
+    ("C4 判定", "verdicts.C4_flux_balance", "verdict"),
+    ("周期控制 时间步数", "runs[1].steps", "int"),
+    ("C5 周期控制最坏相对漂移",
+     "verdicts.C5_periodic_drift.worst_relative_change", "sci"),
+    ("C5 判定", "verdicts.C5_periodic_drift", "verdict"),
+    ("C6 最坏质量界比（|dM| / 先验通量界）",
+     "verdicts.C6_physical_magnitude.worst_mass_bound_ratio", "sci"),
+    ("C6 最坏极值因子（max(rho,p) / 初值极值）",
+     "verdicts.C6_physical_magnitude.worst_extremum_factor", "num"),
+    ("C6 判定", "verdicts.C6_physical_magnitude", "verdict"),
+    ("C2 判定", "verdicts.C2_self_convergence", "verdict"),
+    ("结果图文件", "provenance.figure", "str"),
+    ("结果图取自的记录行", "provenance.figure_source_row", "int"),
+)
+
+_PATH_TOKEN = re.compile(r"([^.\[\]]+)(?:\[(\d+)\])?")
+
+
+def _resolve(record, path):
+    """Dotted-path lookup with ``[i]`` indices; ``KeyError`` when absent."""
+    node = record
+    for name, index in _PATH_TOKEN.findall(path):
+        node = node[int(name)] if isinstance(node, list) else node[name]
+        if index:
+            node = node[int(index)]
+    return node
+
+
+def _format_value(value, kind):
+    if kind == "verdict":
+        if value.get("check_state") == "not_run":
+            return "NOT_RUN"
+        return "PASS" if value.get("passed") else "FAIL"
+    if kind == "int":
+        return str(int(value))
+    if kind == "num":
+        return f"{float(value):.6g}"
+    if kind == "sci":
+        return f"{float(value):.3e}"
+    return str(value)
+
+
+def doc_number_rows(record):
+    """``(label, path, rendered value)`` triples quoted by the case document."""
+    rows = []
+    for label, path, kind in DOC_NUMBER_FIELDS:
+        try:
+            value = _resolve(record, path)
+        except (KeyError, IndexError, TypeError):
+            # A profile that legitimately lacks a row (no periodic control, no
+            # convergence study) says so instead of silently dropping the line.
+            rows.append((label, path, "NOT RECORDED"))
+            continue
+        rows.append((label, path, _format_value(value, kind)))
+    return rows
+
+
+def render_doc_numbers_block(record):
+    """Markdown block the case document must contain, rendered from ``record``."""
+    header = (
+        DOC_BLOCK_BEGIN
+        + " (由 `python -m benchmarks.riemann_2d_cks1998 --quick --sync-doc`"
+        + " 从 metrics.json 渲染，禁止手改) -->"
+    )
+    lines = [header, DOC_VALUES_HEADER, "|---|---:|:---:|"]
+    for label, path, text in doc_number_rows(record):
+        lines.append(f"| {label} | `{path}` | {text} |")
+    lines.append(DOC_BLOCK_END)
+    return "\n".join(lines)
+
+
+def sync_document(record, doc_path):
+    """Replace the ``DOC-NUMBERS`` block of ``doc_path`` with the rendered one."""
+    doc_path = Path(doc_path)
+    text = doc_path.read_text(encoding="utf-8")
+    start = text.find(DOC_BLOCK_BEGIN)
+    end = text.find(DOC_BLOCK_END)
+    if start < 0 or end < 0 or end < start:
+        raise ValueError(f"{doc_path}: DOC-NUMBERS markers not found")
+    end += len(DOC_BLOCK_END)
+    updated = text[:start] + render_doc_numbers_block(record) + text[end:]
+    if updated != text:
+        doc_path.write_text(updated, encoding="utf-8")
+        return True
+    return False
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -576,6 +723,10 @@ def main():
     parser.add_argument("--cfl", type=float, default=0.2)
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--output-dir", default="docs/benchmarks/results/riemann_2d_cks1998")
+    parser.add_argument("--sync-doc", action="store_true",
+                        help="rewrite the DOC-NUMBERS block of the case document "
+                             "from the record just produced")
+    parser.add_argument("--doc", default=str(REPO / "docs" / "CASE-DG-CKS1998-2D-RIEMANN.md"))
     args = parser.parse_args()
 
     torch.set_num_threads(int(os.environ.get("TORCH_THREADS", "1")))
@@ -592,15 +743,30 @@ def main():
     print()
 
     if args.quick:
-        print("[Quick] 32x32 P1 (physical, transmissive) + periodic control ...")
-        physical = run_riemann_2d(ncells=32, degree=1, final_time=args.time,
-                                  cfl=args.cfl, device=args.device)
-        control = run_riemann_2d(ncells=32, degree=1, final_time=args.time,
-                                 cfl=args.cfl, device=args.device,
-                                 periodic=(True, True))
+        config = QUICK_CONFIG
+        print(f"[Quick] {config['ncells']}x{config['ncells']} P{config['degree']}, "
+              f"t={config['final_time']}, CFL={config['cfl']}: physical "
+              "(transmissive) + periodic control ...")
+        if (args.time, args.cfl) != (QUICK_CONFIG["final_time"], QUICK_CONFIG["cfl"]):
+            print("  note: --time/--cfl apply to the full profile; the quick "
+                  "profile is fixed by QUICK_CONFIG", flush=True)
+        physical = run_riemann_2d(ncells=config["ncells"], degree=config["degree"],
+                                  final_time=config["final_time"], cfl=config["cfl"],
+                                  device=args.device)
+        control = run_riemann_2d(ncells=config["ncells"], degree=config["degree"],
+                                 final_time=config["final_time"], cfl=config["cfl"],
+                                 device=args.device, periodic=(True, True))
         rows = [physical, control]
         convergence = None
         profile = "quick"
+        quick_config = {
+            "ncells": physical["ncells"],
+            "degree": physical["degree"],
+            "final_time": physical["final_time"],
+            "cfl": physical["cfl"],
+        }
+        figure_row = physical
+        command = "python -m benchmarks.riemann_2d_cks1998 --quick"
     else:
         print("[Full] convergence study P1/P2, 32x32 and 64x64 ...")
         conv = run_convergence_study(degrees=(1, 2), meshes=(32, 64),
@@ -611,11 +777,29 @@ def main():
         for deg in conv.values():
             convergence.update(deg["self_convergence_l1"])
         profile = "full"
+        quick_config = None
+        figure_row = next(r for r in conv["p1"]["full_rows"] if r["ncells"] == 32)
+        command = "python -m benchmarks.riemann_2d_cks1998"
 
-    positivity = run_riemann_2d(ncells=32, degree=1, final_time=args.time,
-                                cfl=args.cfl, device=args.device)
-    plot_density_field(positivity["x"], positivity["y"], positivity["coeff"], 1, 32,
-                       output / "riemann_2d_density_p1_32.png")
+    # The figure is drawn from an *already measured* row: the previous version
+    # re-solved the same configuration a third time just to plot it, which both
+    # wasted a full solve and made the picture and the recorded row two different
+    # trajectories.
+    figure_name = (
+        f"riemann_2d_density_p{figure_row['degree']}_{figure_row['ncells']}.png"
+    )
+    figure_row_index = next(
+        index
+        for index, row in enumerate(rows)
+        if row["ncells"] == figure_row["ncells"]
+        and row["degree"] == figure_row["degree"]
+        and tuple(row["periodic"]) != (True, True)
+    )
+    plot_density_field(figure_row["x"], figure_row["y"], figure_row["coeff"],
+                       figure_row["degree"], figure_row["ncells"],
+                       output / figure_name)
+    print(f"  figure: {output / figure_name} (from runs[{figure_row_index}], "
+          f"not a duplicate solve)", flush=True)
 
     verdicts = judge(rows, convergence=convergence)
 
@@ -626,6 +810,16 @@ def main():
         "gates": GATES,
         "runs": [_slim(r) for r in rows],
         "verdicts": verdicts,
+        "provenance": {
+            "command": command,
+            "quick_config": quick_config,
+            "figure": figure_name,
+            "figure_source_row": figure_row_index,
+            "note": (
+                "figure and rows come from the same solves; no row is "
+                "recomputed for plotting"
+            ),
+        },
         "reference": "Lax & Liu (1998), SIAM J. Sci. Comput. 19(2), 319-340",
         "notes": (
             "The transmissive mass change is a physical boundary flux, not a "
@@ -634,6 +828,11 @@ def main():
     }
     with open(output / "metrics.json", "w") as handle:
         json.dump(record, handle, indent=2, default=str)
+
+    if args.sync_doc:
+        doc_path = Path(args.doc)
+        changed = sync_document(record, doc_path)
+        print(f"\n  case document {'updated' if changed else 'already in sync'}: {doc_path}")
 
     print()
     print("Verdicts:")
