@@ -663,7 +663,15 @@ Lax (1954) / Toro test 2 激波管：`[0,1]`、隔膜 `x0 = 0.5`、γ = 1.4、�
 def write_outputs(predictions, legs, evaluation, frontier_rows):
     OUT.mkdir(parents=True, exist_ok=True)
     FIG.mkdir(parents=True, exist_ok=True)
-    figures = render_figures(predictions, evaluation, frontier_rows)
+    # A compute node may have no matplotlib.  The *numbers* are the artifact that
+    # costs wall clock to obtain; never lose them to a rendering dependency -- the
+    # figures are re-rendered from the committed metrics.json by ``--figures-only``.
+    deferred = None
+    try:
+        figures = render_figures(predictions, evaluation, frontier_rows)
+    except ImportError as exc:          # pragma: no cover - node-dependent
+        figures = []
+        deferred = f"{type(exc).__name__}: {exc}"
     metrics = {
         "case": "CASE-LAX-DG",
         "anchor": "CASE-LAX-DG",
@@ -677,6 +685,7 @@ def write_outputs(predictions, legs, evaluation, frontier_rows):
         "evaluation": evaluation,
         "frontier": frontier_rows,
         "figures": [str(p.relative_to(HERE)) for p in figures],
+        "figures_deferred_reason": deferred,
     }
     METRICS.write_text(json.dumps(metrics, indent=1) + "\n")
     SUMMARY.write_text(render_summary(metrics))
@@ -720,6 +729,13 @@ def main(argv=None):
         raise SystemExit("refusing to run: predictions.json is missing "
                          "(pre-registration must exist before measurement)")
     predictions = json.loads(PREDICTIONS.read_text())
+    # The pre-registration is structural only if it is provably older than the
+    # measurement; enforce the contract the module docstring states.
+    registered = datetime.strptime(predictions["registered_at_utc"],
+                                  "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    if registered >= datetime.now(timezone.utc):
+        raise SystemExit("refusing to run: predictions.json does not predate this "
+                         f"run (registered {predictions['registered_at_utc']})")
     legs = run_holdout()
     evaluation = evaluate(predictions, legs)
     frontier_rows = frontier(predictions["enumerated_legs"], legs)
