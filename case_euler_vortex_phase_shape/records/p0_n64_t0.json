@@ -1,0 +1,16 @@
+{
+  "key": "p0_n64_t0",
+  "config": {
+    "task": "p0",
+    "cells": 64,
+    "cfl": 0.4,
+    "final_time": 0.0
+  },
+  "per_cell": 1,
+  "grid": 64,
+  "dx": 0.15625,
+  "steps": 0,
+  "reference_model": "min_image periodic map",
+  "sampling": "cell centres",
+  "wall_seconds": 0.04495549201965332
+}
