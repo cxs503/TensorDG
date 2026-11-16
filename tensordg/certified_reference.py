@@ -113,6 +113,7 @@ __all__ = [
     "SUPERCONVERGENCE_SLACK",
     "ROUNDOFF_FLOOR",
     "coarsen",
+    "nesting_factor",
     "rel_l1",
     "observed_order",
     "richardson_extrapolate",
@@ -166,16 +167,56 @@ WITHHELD = "WITHHELD"
 
 # ------------------------------------------------------------------ primitives
 def coarsen(values, factor: int) -> np.ndarray:
-    """Cell-average a fine cell-centred profile down to a coarser grid."""
+    """Cell-average a fine cell-centred field down to a coarser grid.
+
+    ``factor`` is the refinement factor **per direction**.  A 1-D profile is
+    handled exactly as shipped; a multi-dimensional field (``(nx, ny, ...)``) is
+    block-averaged along *every* axis, which is what ``h -> h*factor`` means for
+    a structured grid.  Supporting the multi-dimensional case is what lets the
+    same engine certify 2-D references (:func:`certify` passes the per-direction
+    resolution ratio as ``factor``, so the ``ncells`` in a ladder entry is the
+    number of cells *per direction*, not the total cell count).
+    """
     v = np.asarray(values, dtype=float)
     factor = int(factor)
     if factor <= 0:
         raise ValueError("coarsening factor must be positive")
     if factor == 1:
         return v
-    if v.size % factor:
-        raise ValueError(f"size {v.size} not divisible by coarsening factor {factor}")
-    return v.reshape(-1, factor).mean(axis=1)
+    if v.ndim <= 1:
+        if v.size % factor:
+            raise ValueError(f"size {v.size} not divisible by coarsening factor {factor}")
+        return v.reshape(-1, factor).mean(axis=1)
+    if any(int(n) % factor for n in v.shape):
+        raise ValueError(f"shape {v.shape} not divisible by coarsening factor "
+                         f"{factor} in every direction")
+    blocks = []
+    for n in v.shape:
+        blocks.extend([int(n) // factor, factor])
+    return v.reshape(blocks).mean(axis=tuple(range(1, 2 * v.ndim, 2)))
+
+
+def nesting_factor(fine, coarse) -> int | None:
+    """Per-direction refinement factor of ``fine`` over ``coarse``, else ``None``.
+
+    ``None`` means the two grids do not nest by a single integer factor in every
+    direction.  The check is done on **shapes**, not on element counts: for a
+    2-D pair (``2nx x 2ny``) vs (``nx x ny``) the count ratio is 4 while the
+    refinement factor is 2, and using the count ratio there would coarsen by two
+    cells per direction twice over -- i.e. silently certify the wrong grid.
+    """
+    fs, cs = np.shape(np.asarray(fine)), np.shape(np.asarray(coarse))
+    if len(fs) != len(cs) or not len(fs):
+        return None
+    ratios = set()
+    for f, c in zip(fs, cs):
+        f, c = int(f), int(c)
+        if c <= 0 or f < c or f % c:
+            return None
+        ratios.add(f // c)
+    if len(ratios) != 1:
+        return None
+    return ratios.pop()
 
 
 def rel_l1(a, b) -> float:
@@ -203,7 +244,9 @@ def richardson_extrapolate(fine, coarse, p: float, r: float = 2.0) -> np.ndarray
     """Richardson estimate of the continuum profile, on the *fine* grid."""
     fine = np.asarray(fine, dtype=float)
     coarse = np.asarray(coarse, dtype=float)
-    factor = int(round(fine.size / coarse.size))
+    factor = nesting_factor(fine, coarse)
+    if factor is None:
+        raise ValueError(f"cannot align {fine.shape} with {np.asarray(coarse).shape}")
     sub = coarsen(coarse, factor)
     if sub.shape != fine.shape:
         raise ValueError(f"cannot align {fine.shape} with {np.asarray(coarse).shape}")
@@ -454,17 +497,14 @@ def judge(candidate, certification: dict, *, tolerance_percent: float | None = N
         return {"decision": WITHHELD, "reason": certification["verdict"],
                 "rel_l1_percent": None, "tolerance_percent": tau}
     cand = np.asarray(candidate, dtype=float)
-    if cand.size >= ref.size:
-        factor = int(round(cand.size / ref.size))
-        if factor * ref.size != cand.size:
+    f_up = nesting_factor(cand, ref)
+    if f_up is not None:
+        cand_on_ref = coarsen(cand, f_up)
+    else:
+        factor = nesting_factor(ref, cand)
+        if factor is None:
             raise ValueError(f"candidate size {cand.size} is not a nesting multiple "
                              f"of the reference grid {ref.size}")
-        cand_on_ref = coarsen(cand, factor)
-    else:
-        factor = int(round(ref.size / cand.size))
-        if factor * cand.size != ref.size:
-            raise ValueError(f"reference size {ref.size} is not a nesting multiple "
-                             f"of the candidate grid {cand.size}")
         cand_on_ref = cand
         ref = coarsen(ref, factor)
     err = rel_l1(cand_on_ref, ref)
