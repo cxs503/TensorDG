@@ -203,3 +203,141 @@ def test_lattice_reference_moves_velocity_and_not_density():
     # and the whole move stays inside the worst-case floor bound of this point
     floor = rf.floor_at(dict(config))
     assert shift["max_relative_shift"] < 1.5 * floor["max_floor_percent"] / fold["max_percent"]
+
+# ---------------------------------------------------------------------------
+# family labels and criterion invariance (round 21)
+# ---------------------------------------------------------------------------
+
+def test_family_label_matches_the_record():
+    """The record's own ``family`` field is the label -- never a doubled one.
+
+    The first version of ``ru.family`` re-appended the direction tag to a freshly
+    built label, so the exponent table of the artifact was keyed by
+    ``dg_d2_n64_cfl0.2dg_d2_n64_cfl0.2``: a key that matches no record and no
+    other artifact in the repo.
+    """
+    record = _record(1.0, cells=64, degree=2, task_key="dg_d2_n64_t1_cfl0.2")
+    record["family"] = "dg_d2_n64_cfl0.2"
+    assert ru.family(record) == "dg_d2_n64_cfl0.2"
+    # a record without the field still gets the constructed label
+    del record["family"]
+    assert ru.family(record) == "dg_d2_n64_cfl0.2"
+    # and a direction family keeps its tag exactly once
+    oblique = _record(1.0, task_key="dg_d2_n32_t1_cfl0.2_dirobl30",
+                      background=ec.DIRECTION_AXIS[2][1])
+    oblique["family"] = "dg_d2_n32_cfl0.2_dirobl30"
+    assert ru.family(oblique) == "dg_d2_n32_cfl0.2_dirobl30"
+
+
+def _exponent_records(alpha_by_reference, scale=1.0e-4):
+    """Two references of one 4-point family with a prescribed exponent each."""
+    published, lattice = {}, {}
+    for reference, alpha in alpha_by_reference.items():
+        bucket = published if reference == "published" else lattice
+        for index, time in enumerate((1.0, 2.0, 5.0, 10.0)):
+            record = _record(scale * 100.0 * time ** alpha, final_time=time,
+                             cells=64, task_key=f"{reference}_{index}")
+            record["max_relative_l2"] = scale * time ** alpha
+            record["errors"] = {name: record["max_relative_l2"] for name in ru.FIELDS}
+            record["family"] = "dg_d2_n64_cfl0.2"
+            bucket[record["task_key"]] = record
+    return published, lattice
+
+
+def test_exponent_invariance_is_measured_not_assumed():
+    """``alpha <= 1`` must survive the reference change; a big move is flagged."""
+    published, lattice = _exponent_records({"published": 0.20, "lattice": 0.21})
+    payload = ru.build_report(published, lattice)
+    invariance = payload["criterion_invariance"]
+    assert invariance["max_abs_delta_alpha"] == pytest.approx(0.01, abs=1e-9)
+    assert invariance["exponent_invariant"] is True
+    assert invariance["conservation_holds_under_both"] is True
+
+    # a reference change that moves the exponent by more than the tolerance is
+    # reported as breaking the invariance -- not silently absorbed
+    published, lattice = _exponent_records({"published": 0.20, "lattice": 0.55})
+    invariance = ru.build_report(published, lattice)["criterion_invariance"]
+    assert invariance["max_abs_delta_alpha"] == pytest.approx(0.35, abs=1e-9)
+    assert invariance["exponent_invariant"] is False
+
+
+# ---------------------------------------------------------------------------
+# the committed production measurement: the round-20 debt
+# ---------------------------------------------------------------------------
+
+UPGRADE_JSON = LATTICE_DIR / "reference_upgrade.json"
+#: The checkpoints the lattice re-run had to cover: the two families that carry
+#: the largest worst-case floor bound (``dg_d3_n32`` 25.3 %, ``dg_d2_n64`` 12.7 %).
+#: Before round 21 only ``dg_d1_n32_t1`` had ever been re-referenced, i.e. the
+#: *lowest* floor ratio in the ladder.
+HIGH_ORDER = ("dg_d2_n64_t1_cfl0.2", "dg_d2_n64_t2_cfl0.2", "dg_d2_n64_t10_cfl0.2",
+              "dg_d3_n32_t1_cfl0.2", "dg_d3_n32_t2_cfl0.2",
+              "dg_d3_n32_t5_cfl0.2", "dg_d3_n32_t10_cfl0.2")
+
+needs_upgrade = pytest.mark.skipif(not UPGRADE_JSON.exists(),
+                                   reason="reference upgrade artifact not present")
+
+
+@needs_upgrade
+def test_upgrade_artifact_covers_the_high_order_families():
+    payload = json.loads(UPGRADE_JSON.read_text())
+    rows = {row["task_key"]: row for row in payload["checkpoints"]}
+    missing = [key for key in HIGH_ORDER if key not in rows]
+    assert missing == []
+    # The effect is measured per checkpoint; where a same-condition min_image
+    # control exists it is the baseline (``lattice_vs_rerun``), otherwise the
+    # published record is, which can only *overstate* the effect by the solver
+    # round-off -- never hide it.  The n64 controls pinned that round-off at
+    # exactly 0.0 (``rerun_noise == 0``), i.e. the solver is bit-reproducible, so
+    # a missing control cannot bias the p=3 readings in either direction.
+    for key in HIGH_ORDER:
+        assert rows[key]["effect_source"] in ("lattice_vs_rerun", "lattice_vs_published")
+    controlled = [key for key in HIGH_ORDER if rows[key]["effect_source"] == "lattice_vs_rerun"]
+    assert controlled, "no checkpoint has a same-condition control at all"
+    for key in controlled:
+        assert rows[key]["rerun_noise"]["max_relative_shift"] < 1.0e-9
+
+
+@needs_upgrade
+def test_measured_shift_is_immaterial_and_inside_its_bound():
+    """The 25 % bound at ``dg_d3_n32`` is a bound, not the effect."""
+    payload = json.loads(UPGRADE_JSON.read_text())
+    rows = {row["task_key"]: row for row in payload["checkpoints"]}
+    assert payload["material_checkpoints"] == []
+    assert payload["verdict"] == "no_material_reference_effect"
+    for key in HIGH_ORDER:
+        row = rows[key]
+        assert row["bound_is_sound"] is True
+        # ``effect_max`` is the unified field: the controlled measurement where a
+        # control exists, the published baseline otherwise
+        assert row["effect_max"] < ru.MATERIAL_SHIFT
+    # the worst-case point of the ladder: the bound is pessimistic by > 20x
+    worst = rows["dg_d3_n32_t1_cfl0.2"]
+    factor = worst["floor_bound"] / worst["effect_max"]
+    assert factor > 20.0
+
+
+@needs_upgrade
+def test_reference_change_does_not_move_the_conservation_exponent():
+    payload = json.loads(UPGRADE_JSON.read_text())
+    invariance = payload["criterion_invariance"]
+    assert invariance["conservation_holds_under_both"] is True
+    assert invariance["exponent_invariant"] is True
+    assert invariance["max_abs_delta_alpha"] < 5.0e-3
+    shift = payload["exponent_shift"]
+    assert {"dg_d2_n64_cfl0.2", "dg_d3_n32_cfl0.2"} <= set(shift)
+    # no doubled labels in the artifact's exponent table
+    assert all(name.count("dg_d") == 1 and name.count("_cfl") == 1 for name in shift)
+
+
+@needs_upgrade
+def test_reference_effect_is_velocity_only_in_the_committed_records():
+    """Field selectivity: ``O(tail)`` in velocity, ``O(tail^2)`` in rho/p."""
+    payload = json.loads(UPGRADE_JSON.read_text())
+    rows = {row["task_key"]: row for row in payload["checkpoints"]}
+    for key in HIGH_ORDER:
+        fields = rows[key]["lattice_vs_published"]["per_field"]
+        assert abs(fields["density"]) < 1.0e-6
+        assert abs(fields["pressure"]) < 1.0e-6
+        assert abs(fields["velocity_x"]) > 1.0e-4
+        assert abs(fields["velocity_y"]) > 1.0e-4
