@@ -1,0 +1,364 @@
+{
+ "field": "density",
+ "norm": "L1_rel",
+ "beta": 4,
+ "beta2": 16,
+ "eta_max": 0.05,
+ "drift_max": 0.01,
+ "production_cfl": 0.2,
+ "admissible_cfl_max": 0.5,
+ "fit_cfls": [
+  0.05,
+  0.1,
+  0.2,
+  0.4
+ ],
+ "degrees": {
+  "p1": {
+   "fine_mesh": 10,
+   "envelope": {
+    "status": "OK",
+    "reference_cfl": 0.2,
+    "reference_error": 0.004140564315274795,
+    "blowup_factor": 1000.0,
+    "stable_cfl_max": 0.5,
+    "stable": [
+     {
+      "cfl": 0.05,
+      "error": 0.004140572105338447
+     },
+     {
+      "cfl": 0.1,
+      "error": 0.004140570886646051
+     },
+     {
+      "cfl": 0.2,
+      "error": 0.004140564315274795
+     },
+     {
+      "cfl": 0.4,
+      "error": 0.004140515873705745
+     },
+     {
+      "cfl": 0.5,
+      "error": 0.004140461945758997
+     }
+    ],
+    "lost": []
+   },
+   "eta_samples": [
+    {
+     "cfl": 0.2,
+     "cfl_refined": 0.05,
+     "error": 0.004140564315274795,
+     "error_refined": 0.004140572105338447,
+     "eta": 1.8814014366836037e-06,
+     "leg": "SILENT",
+     "production_cfl": true
+    },
+    {
+     "cfl": 0.4,
+     "cfl_refined": 0.1,
+     "error": 0.004140515873705745,
+     "error_refined": 0.004140570886646051,
+     "eta": 1.3286494239967545e-05,
+     "leg": "SILENT",
+     "production_cfl": false
+    }
+   ],
+   "scaling": {
+    "status": "OK",
+    "amplitude": 0.00017604893805242265,
+    "exponent": 2.8200808706307514,
+    "r2": 1.0,
+    "eta_max": 0.05,
+    "cfl_at_eta_max": 7.412292821767958,
+    "n_points": 2
+   },
+   "verdict": "GATE_VACUOUS_IN_ENVELOPE",
+   "positive_control": {
+    "status": "OK",
+    "runs": [
+     {
+      "dt_multiple": 1,
+      "effective_cfl": 0.2,
+      "steps": 113,
+      "error": 0.0041405694121826025,
+      "eta": null,
+      "leg": "NOT_MEASURABLE",
+      "finite": true
+     },
+     {
+      "dt_multiple": 2,
+      "effective_cfl": 0.4,
+      "steps": 57,
+      "error": 0.004140544256483191,
+      "eta": null,
+      "leg": "NOT_MEASURABLE",
+      "finite": true
+     },
+     {
+      "dt_multiple": 4,
+      "effective_cfl": 0.8,
+      "steps": 29,
+      "error": 0.004140381044571865,
+      "eta": 4.5495235513343843e-05,
+      "leg": "SILENT",
+      "finite": true
+     },
+     {
+      "dt_multiple": 8,
+      "effective_cfl": 1.6,
+      "steps": 15,
+      "error": 0.004139423729385073,
+      "eta": 0.00027069639915421344,
+      "leg": "SILENT",
+      "finite": true
+     },
+     {
+      "dt_multiple": 16,
+      "effective_cfl": 3.2,
+      "steps": 8,
+      "error": 0.012812444121153788,
+      "eta": 0.6768468993565441,
+      "leg": "FIRE",
+      "finite": true
+     },
+     {
+      "dt_multiple": 32,
+      "effective_cfl": 6.4,
+      "steps": null,
+      "error": NaN,
+      "eta": null,
+      "leg": "NOT_MEASURABLE",
+      "finite": false
+     }
+    ],
+    "fired": true,
+    "first_firing_effective_cfl": 3.2,
+    "detection_demonstrated": true
+   },
+   "refused_probes": [
+    {
+     "cfl": 0.6,
+     "reason": "invalid cells, final_time or CFL"
+    }
+   ],
+   "production_eta": 1.8814014366836037e-06,
+   "production_leg": "SILENT",
+   "second_refinement": {
+    "status": "INSUFFICIENT_LEVELS",
+    "available": [
+     "base",
+     "refined"
+    ]
+   },
+   "drift_leg": {
+    "status": "NON_FINITE",
+    "design_order": 2
+   },
+   "runs": [
+    {
+     "degree": 1,
+     "mesh": 8,
+     "h": 1.25,
+     "cfl": 0.05,
+     "kind": "ladder",
+     "steps": 280,
+     "dt": 0.002350128281090602,
+     "error": 0.006221925526183769,
+     "wall_seconds": 10.91,
+     "dofs": 1024,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 8,
+     "h": 1.25,
+     "cfl": 0.2,
+     "kind": "ladder",
+     "steps": 70,
+     "dt": 0.013632253763202096,
+     "error": 0.006221904711262971,
+     "wall_seconds": 2.73,
+     "dofs": 1024,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "h": 1.0,
+     "cfl": 0.05,
+     "kind": "ladder",
+     "steps": 352,
+     "dt": 0.00037340809766173155,
+     "error": 0.004140572105338447,
+     "wall_seconds": 13.03,
+     "dofs": 1600,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "h": 1.0,
+     "cfl": 0.1,
+     "kind": "ladder",
+     "steps": 176,
+     "dt": 0.0031985957457325576,
+     "error": 0.004140570886646051,
+     "wall_seconds": 6.47,
+     "dofs": 1600,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "h": 1.0,
+     "cfl": 0.2,
+     "kind": "ladder",
+     "steps": 88,
+     "dt": 0.008851755034085862,
+     "error": 0.004140564315274795,
+     "wall_seconds": 3.23,
+     "dofs": 1600,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "h": 1.0,
+     "cfl": 0.2,
+     "kind": "dt_control",
+     "steps": 113,
+     "dt": 0.008851755034085862,
+     "dt_multiple": 1,
+     "effective_cfl": 0.2,
+     "error": 0.0041405694121826025,
+     "dofs": 1600,
+     "wall_seconds": 4.54,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "h": 1.0,
+     "cfl": 0.2,
+     "kind": "dt_control",
+     "steps": 57,
+     "dt": 0.017703510068171724,
+     "dt_multiple": 2,
+     "effective_cfl": 0.4,
+     "error": 0.004140544256483191,
+     "dofs": 1600,
+     "wall_seconds": 2.31,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "h": 1.0,
+     "cfl": 0.2,
+     "kind": "dt_control",
+     "steps": 29,
+     "dt": 0.03540702013634345,
+     "dt_multiple": 4,
+     "effective_cfl": 0.8,
+     "error": 0.004140381044571865,
+     "dofs": 1600,
+     "wall_seconds": 1.17,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "h": 1.0,
+     "cfl": 0.2,
+     "kind": "dt_control",
+     "steps": 15,
+     "dt": 0.0708140402726869,
+     "dt_multiple": 8,
+     "effective_cfl": 1.6,
+     "error": 0.004139423729385073,
+     "dofs": 1600,
+     "wall_seconds": 0.61,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "h": 1.0,
+     "cfl": 0.2,
+     "kind": "dt_control",
+     "steps": 8,
+     "dt": 0.1416280805453738,
+     "dt_multiple": 16,
+     "effective_cfl": 3.2,
+     "error": 0.012812444121153788,
+     "dofs": 1600,
+     "wall_seconds": 0.33,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "cfl": 0.2,
+     "kind": "dt_control",
+     "dt": 0.2832561610907476,
+     "dt_multiple": 32,
+     "effective_cfl": 6.4,
+     "error": NaN,
+     "unstable": true,
+     "reason": "nonphysical cell average in 2-D DG; reduce the CFL number"
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "h": 1.0,
+     "cfl": 0.4,
+     "kind": "ladder",
+     "steps": 44,
+     "dt": 0.020177645606196726,
+     "error": 0.004140515873705745,
+     "wall_seconds": 1.62,
+     "dofs": 1600,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "h": 1.0,
+     "cfl": 0.5,
+     "kind": "ladder",
+     "steps": 36,
+     "dt": 0.0032215674012086026,
+     "error": 0.004140461945758997,
+     "wall_seconds": 1.34,
+     "dofs": 1600,
+     "unstable": false
+    },
+    {
+     "degree": 1,
+     "mesh": 10,
+     "cfl": 0.6,
+     "kind": "refused_probe",
+     "rejected": true,
+     "reason": "invalid cells, final_time or CFL",
+     "unstable": false
+    }
+   ]
+  }
+ },
+ "verdicts": {
+  "p1": "GATE_VACUOUS_IN_ENVELOPE"
+ },
+ "run_scope": {
+  "deg": 1,
+  "meshes": [
+   8,
+   10
+  ],
+  "note": "local worktree sweep under the 120 s shell budget; production-mesh (24/32) shard = cluster job cj4273 (queued at submit time)",
+  "cluster_job": "cj4273",
+  "beta2_arm": "NOT_RUN locally (pending cj4273)"
+ }
+}
