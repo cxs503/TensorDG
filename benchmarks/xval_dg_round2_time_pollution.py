@@ -91,6 +91,9 @@ __all__ = [
     "time_corrected_levels", "classify_pollution", "audit", "markdown", "main",
     "required_inputs", "missing_inputs", "audit_or_withheld", "leg_profiles",
     "leg_distinctness", "input_provenance", "markdown_withheld",
+    "dg_temporal_axis", "markdown_dg_axis", "DG_TIME_CFLS",
+    "DG_AXIS_CLEAN", "DG_AXIS_MARGINAL", "DG_AXIS_POLLUTED",
+    "DG_AXIS_WITHHELD",
 ]
 
 #: coarse -> fine time-step settings; ratio 2 so orders are directly comparable
@@ -124,6 +127,18 @@ LEG_STABILITY_MAX_PP = 0.5  # T4(b), percentage points
 #: legs are eleven *different* discretisations.  A leg table whose P1/P2/P3 rows
 #: are bit-identical makes T4 pass vacuously, which this gate refuses.
 LEG_DISTINCT_EPS = 1e-12
+
+#: T-DG axis: the three shipped DG legs that differ *only* in time step.
+#: They are already three of the eleven round-2 legs (P2, N=400 at CFL 0.4/0.2/0.1),
+#: so the DG-side temporal question costs no new computation: the axes separate
+#: exactly because the grid, the degree and the limiter are held fixed.
+DG_TIME_DEGREE = 2
+DG_TIME_GRID = 400
+DG_TIME_CFLS = (0.4, 0.2, 0.1)
+DG_AXIS_CLEAN = "DG_AXIS_CLEAN"
+DG_AXIS_MARGINAL = "DG_AXIS_MARGINAL"
+DG_AXIS_POLLUTED = "DG_AXIS_POLLUTED"
+DG_AXIS_WITHHELD = "DG_AXIS_WITHHELD_MISSING_INPUTS"
 
 #: Verdict of :func:`audit_or_withheld` when inputs are absent (never overwritten
 #: by a stale measurement).
@@ -280,6 +295,10 @@ def audit_or_withheld(rawdir: Path | str = DEFAULT_RAW, **kwargs) -> dict:
         "strict_percent": float(STRICT_PERCENT),
         "rawdir": str(rawdir),
         "headline": {"state": WITHHELD_MISSING_INPUTS, "pollution_ratio": None},
+        # the DG-side axis reads only committed profiles (CFL=0.3 ladder + the three
+        # shipped P2/N=400 legs), so it is *not* blocked by the missing FV levels:
+        # withholding the FV claim must not also withhold a measurement that exists
+        "dg_temporal_axis": _dg_axis_or_withheld(rawdir),
     }
 
 
@@ -611,6 +630,10 @@ def audit(rawdir: Path | str = DEFAULT_RAW) -> dict:
             "be a claim about fewer distinct discretisations than it names")
 
     criteria = {"T0": t0, "T1": t1, "T2": t2, "T3": t3, "T4": t4, "T5": t5}
+    try:
+        dg_axis = dg_temporal_axis(rawdir, cert_raw4)
+    except (FileNotFoundError, ValueError) as exc:  # never a silent zero
+        dg_axis = {"state": DG_AXIS_WITHHELD, "accepted": False, "refusal": str(exc)}
     accepted = bool(all(c["pass"] for c in criteria.values()))
     if accepted:
         verdict = "TIME_CLEAN"
@@ -632,6 +655,7 @@ def audit(rawdir: Path | str = DEFAULT_RAW) -> dict:
         "strict_percent": float(STRICT_PERCENT),
         "grids": grid_rows,
         "criteria": criteria,
+        "dg_temporal_axis": dg_axis,
         "provenance": input_provenance(rawdir),
         "rawdir": str(rawdir),
         "headline": {
@@ -641,7 +665,148 @@ def audit(rawdir: Path | str = DEFAULT_RAW) -> dict:
             "raw_band_percent": band_raw,
             "band_shift_relative": band_shift,
             "n_decision_flips": len(flips),
+            "dg_time_state": dg_axis["state"],
+            "dg_time_ratio": (dg_axis["criteria"]["D1"]["ratio"]
+                              if "criteria" in dg_axis else None),
         },
+    }
+
+
+def _dg_axis_or_withheld(rawdir: Path | str = DEFAULT_RAW) -> dict:
+    """The DG time axis, or an explicit withheld record -- never a silent zero."""
+    try:
+        return dg_temporal_axis(rawdir)
+    except (FileNotFoundError, ValueError) as exc:
+        return {"state": DG_AXIS_WITHHELD, "accepted": False, "refusal": str(exc)}
+
+
+# ------------------------------------------------------------- DG time axis
+def dg_temporal_axis(rawdir: Path | str = DEFAULT_RAW, cert: dict | None = None,
+                     *, degree: int = DG_TIME_DEGREE, ncells: int = DG_TIME_GRID,
+                     cfls=DG_TIME_CFLS,
+                     tolerance_percent: float = STRICT_PERCENT) -> dict:
+    """D0-D2 -- is a shipped DG leg's error time-converged at its declared CFL?
+
+    The T0-T5 audit asks whether the *reference* is polluted by its time step.
+    The published DG legs carry a second, independent time error that the leg
+    table never shows: nine legs are quoted at CFL=0.4 and nothing states that
+    the quoted number is a space error rather than a space *plus* time error.
+    Three of those legs -- P2, N=400, at CFL 0.4/0.2/0.1 -- differ **only** in the
+    time step, so the two axes are separable without a single new run.
+
+    All three quantities below are measured on the leg's own grid against the
+    same certified reference, so no interpolation enters.
+
+    ``D0`` *resolvable*: the finest temporal difference ``rel L1(0.2, 0.1)``
+           exceeds the certified band ``U``.  If it does not, the time error of
+           this ladder is below the reference's own uncertainty -- it can be
+           *bounded* (``<= U``) but never *measured*, so ``D1``'s ratio is an
+           upper bound and the temporal order is refused rather than quoted.
+    ``D1`` *pollution ratio*: ``R_leg = delta_t / err`` -- the finest temporal
+           difference over the leg error -- ``<= POLLUTION_MAX``.
+    ``D2`` *claim stability*: the three CFL legs agree in decision at
+           ``tolerance_percent`` and none moves more than
+           ``LEG_STABILITY_MAX_PP`` percentage points from the finest.
+
+    Raises ``FileNotFoundError`` (never a silent zero) when a leg is absent.
+    """
+    raw = Path(rawdir)
+    if cert is None:
+        cert = certify([load_level(raw, n, 0.3)
+                        for n in (*BASE_LEVELS, *EXTRA_RATIO_LEVELS)],
+                       tolerance_percent=GATE_PERCENT)
+    order_cfls = [float(c) for c in sorted(cfls, reverse=True)]  # coarse -> fine
+    legs = []
+    for cfl in order_cfls:
+        name = xval.leg_filename(int(degree), int(ncells), float(cfl))
+        path = raw / name
+        if not path.exists():
+            raise FileNotFoundError(
+                f"missing DG leg {path}; the DG time axis needs the shipped legs "
+                f"P{degree} N={ncells} at CFL {order_cfls} (see xval.DG_LEGS)")
+        with np.load(path, allow_pickle=False) as blob:
+            field = np.asarray(blob["rho"], dtype=float)
+        res = judge(field, cert, tolerance_percent=tolerance_percent)
+        legs.append({"configuration": f"DG P{degree} N={ncells} CFL={cfl:g}",
+                     "cfl": float(cfl), "file": name, "field": field,
+                     "rel_l1_percent": res["rel_l1_percent"],
+                     "decision": res["decision"]})
+
+    diffs = []
+    for a, b in zip(legs, legs[1:]):
+        diffs.append({"pair": [a["cfl"], b["cfl"]],
+                      "rel_l1_percent": 100.0 * rel_l1(b["field"], a["field"])})
+
+    finest = legs[-1]
+    band = cert.get("band_percent")
+    delta_t = diffs[-1]["rel_l1_percent"] if diffs else None
+    # D0: is the temporal step change above the reference's own band?
+    resolvable = (None if (delta_t is None or band is None) else bool(delta_t > band))
+    ratio = (None if (delta_t is None or not finest["rel_l1_percent"])
+             else delta_t / finest["rel_l1_percent"])
+
+    # the temporal ladder is only readable if both the differences *and* the
+    # errors move monotonically: an anti-monotone error sequence (error growing
+    # as dt shrinks) is round-off/limiter interaction, not a convergence rate
+    diffs_monotone = bool(len(diffs) >= 2 and diffs[0]["rel_l1_percent"]
+                          > diffs[1]["rel_l1_percent"])
+    errs_monotone = bool(all(a["rel_l1_percent"] > b["rel_l1_percent"]
+                             for a, b in zip(legs, legs[1:])))
+    p_t = None
+    # a zero finest difference (two identical CFL levels) has no rate to report:
+    # dividing by it is how this line crashed on a synthetic tree before the guard
+    if diffs_monotone and len(diffs) >= 2 and diffs[1]["rel_l1_percent"] > 0.0:
+        p_t = float(np.log(diffs[0]["rel_l1_percent"] / diffs[1]["rel_l1_percent"])
+                    / np.log(2.0))
+    order_usable = bool(p_t is not None and np.isfinite(p_t) and p_t >= P_MIN_T
+                        and errs_monotone)
+
+    d0 = {"criterion": "finest temporal difference exceeds the certified band "
+                       "(the time error is measurable, not merely bounded)",
+          "delta_t_percent": delta_t, "band_percent": band,
+          "resolvable": resolvable,
+          "note": (None if resolvable is None else
+                   ("time error measurable on this ladder" if resolvable else
+                    f"time error below the band: bounded by {band:.6f} %, not measurable"))}
+    d1 = {"criterion": f"R_leg = delta_t / err <= {POLLUTION_MAX}",
+          "delta_t_percent": delta_t, "err_percent": finest["rel_l1_percent"],
+          "ratio": ratio, "state": classify_pollution(ratio),
+          "bound_only": bool(resolvable is False),
+          "pass": bool(ratio is not None and np.isfinite(ratio)
+                       and ratio <= POLLUTION_MAX)}
+    moves = [abs(lg["rel_l1_percent"] - finest["rel_l1_percent"]) for lg in legs]
+    d2 = {"criterion": f"same decision at {tolerance_percent:g} % for every CFL and "
+                       f"|err - err_finest| <= {LEG_STABILITY_MAX_PP} pp",
+          "decisions": {f"{lg['cfl']:g}": lg["decision"] for lg in legs},
+          "max_abs_move_pp": float(max(moves)) if moves else None,
+          "threshold_pp": float(LEG_STABILITY_MAX_PP),
+          "pass": bool(len({lg["decision"] for lg in legs}) == 1
+                       and moves and max(moves) <= LEG_STABILITY_MAX_PP)}
+    d3 = {"criterion": "temporal order usable (differences and errors both monotone)",
+          "temporal_order": p_t, "differences_monotone": diffs_monotone,
+          "errors_monotone_in_cfl": errs_monotone, "usable": order_usable}
+
+    if d1["state"] == "POLLUTED" or not d2["pass"]:
+        state = DG_AXIS_POLLUTED
+    elif d1["state"] == "MARGINAL":
+        state = DG_AXIS_MARGINAL
+    elif d1["pass"]:
+        state = DG_AXIS_CLEAN
+    else:
+        state = DG_AXIS_WITHHELD
+    return {
+        "question": f"is the shipped DG P{degree} N={ncells} leg error at CFL="
+                    f"{order_cfls[0]:g} time-converged?",
+        "state": state,
+        "accepted": bool(state == DG_AXIS_CLEAN),
+        "degree": int(degree), "ncells": int(ncells), "cfls": order_cfls,
+        "tolerance_percent": float(tolerance_percent),
+        "reference": {k: cert.get(k) for k in
+                      ("verdict", "observed_order_used", "band_percent",
+                       "reference_ncells")},
+        "legs": [{k: v for k, v in lg.items() if k != "field"} for lg in legs],
+        "differences": diffs,
+        "criteria": {"D0": d0, "D1": d1, "D2": d2, "D3": d3},
     }
 
 
@@ -675,7 +840,14 @@ def markdown_withheld(result: dict) -> str:
         "until the profiles above exist. Total cost of the table: ~1.2 CPU-hours "
         "(see `validation/xval_dg_round2/gen_cfl_ladder.py`, shardable).",
         "",
+        "The DG-side axis below needs none of the missing FV levels (the CFL = 0.3 "
+        "ladder and the three shipped P2/N=400 legs are committed), so it is "
+        "reported even while the FV-side claim is withheld.",
+        "",
     ]
+    axis = result.get("dg_temporal_axis")
+    if axis:
+        lines += [markdown_dg_axis(axis)]
     return "\n".join(lines)
 
 
@@ -766,6 +938,9 @@ def markdown(result: dict) -> str:
         corr_dec = "-" if b is None else b["decision_3pct"]
         lines.append(f"| {a['configuration']} | {a['rel_l1_percent']:.6f} | "
                      f"{corr_err} | {a['decision_3pct']} | {corr_dec} |")
+    axis = result.get("dg_temporal_axis")
+    if axis:
+        lines += ["", markdown_dg_axis(axis)]
     prov = result.get("provenance") or {}
     if prov.get("files"):
         lines += ["", "## Input provenance (sha256)", "",
@@ -780,6 +955,52 @@ def markdown(result: dict) -> str:
     return "\n".join(lines)
 
 
+def markdown_dg_axis(axis: dict) -> str:
+    """Render the DG-side time axis (D0-D3) as a markdown section."""
+    head = ["## DG legs: is the shipped leg error time-converged?", ""]
+    if "criteria" not in axis:
+        return "\n".join(head + ["withheld: `%s`" % axis.get("refusal", axis["state"]), ""])
+    c = axis["criteria"]
+    ref = axis["reference"]
+    cfl_list = ", ".join("CFL=%g" % lg["cfl"] for lg in axis["legs"])
+    lines = head + [
+        "Legs compared: **%s** (DG P%d N=%d), judged against the certified "
+        "reference (verdict %s, U = %.6f %%, stored on N=%d)."
+        % (cfl_list, axis["degree"], axis["ncells"], ref["verdict"],
+           ref["band_percent"], ref["reference_ncells"]),
+        "",
+        "| CFL | err vs certified ref %% | decision (%g %%) |" % axis["tolerance_percent"],
+        "|---|---|---|",
+    ]
+    for lg in axis["legs"]:
+        lines.append("| %g | %.6f | %s |" % (lg["cfl"], lg["rel_l1_percent"],
+                                             lg["decision"]))
+    lines += ["", "| temporal pair | rel L1 % |", "|---|---|"]
+    for d in axis["differences"]:
+        lines.append("| %g -> %g | %.6e |" % (d["pair"][0], d["pair"][1],
+                                              d["rel_l1_percent"]))
+    ratio = c["D1"]["ratio"]
+    move = c["D2"]["max_abs_move_pp"]
+    p_t = c["D3"]["temporal_order"]
+    lines += [
+        "",
+        "* **D0** resolvable: `%s` -- %s" % (c["D0"]["resolvable"], c["D0"]["note"]),
+        "* **D1** R_leg = delta_t / err = %s (state %s, bound-only %s)"
+        % ("—" if ratio is None else "%.6f" % ratio, c["D1"]["state"],
+           c["D1"]["bound_only"]),
+        "* **D2** decisions %s, max move %s pp"
+        % (c["D2"]["decisions"], "—" if move is None else "%.6f" % move),
+        "* **D3** temporal order %s (usable %s: differences monotone %s, errors "
+        "monotone %s)" % ("—" if p_t is None else "%.4f" % p_t, c["D3"]["usable"],
+                          c["D3"]["differences_monotone"],
+                          c["D3"]["errors_monotone_in_cfl"]),
+        "",
+        "**%s** -- accepted = `%s`" % (axis["state"], axis["accepted"]),
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def _jsonable(obj):
     if isinstance(obj, dict):
         return {str(k): _jsonable(v) for k, v in obj.items()}
@@ -788,10 +1009,10 @@ def _jsonable(obj):
     if isinstance(obj, (np.floating, float)):
         v = float(obj)
         return None if not np.isfinite(v) else v
+    if isinstance(obj, (np.bool_, bool)):   # before int: bool *is* an int
+        return bool(obj)
     if isinstance(obj, (np.integer, int)):
         return int(obj)
-    if isinstance(obj, (np.bool_, bool)):
-        return bool(obj)
     if isinstance(obj, np.ndarray):
         return _jsonable(obj.tolist())
     return obj
