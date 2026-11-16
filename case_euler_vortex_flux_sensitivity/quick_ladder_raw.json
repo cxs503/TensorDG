@@ -1,0 +1,158 @@
+{
+ "cells": 8,
+ "times": [
+  1.0,
+  2.0,
+  5.0
+ ],
+ "ladder": {
+  "hllc": [
+   {
+    "final_time": 1.0,
+    "steps": 117,
+    "max_error_percent": 0.5619325374104908,
+    "per_field_percent": {
+     "density": 0.3275074532796022,
+     "velocity_x": 0.5619325374104908,
+     "velocity_y": 0.5492758801667524,
+     "pressure": 0.4287230979330543
+    },
+    "wall_seconds": 4.504076242446899
+   },
+   {
+    "final_time": 1.0,
+    "steps": 117,
+    "max_error_percent": 0.5619325374104908,
+    "per_field_percent": {
+     "density": 0.3275074532796022,
+     "velocity_x": 0.5619325374104908,
+     "velocity_y": 0.5492758801667524,
+     "pressure": 0.4287230979330543
+    },
+    "wall_seconds": 4.50415563583374
+   },
+   {
+    "final_time": 2.0,
+    "steps": 233,
+    "max_error_percent": 0.7457321437927726,
+    "per_field_percent": {
+     "density": 0.2979592099726323,
+     "velocity_x": 0.7457321437927726,
+     "velocity_y": 0.7231948056621605,
+     "pressure": 0.3498975134165354
+    },
+    "wall_seconds": 8.90289568901062
+   },
+   {
+    "final_time": 2.0,
+    "steps": 233,
+    "max_error_percent": 0.7457321437927726,
+    "per_field_percent": {
+     "density": 0.2979592099726323,
+     "velocity_x": 0.7457321437927726,
+     "velocity_y": 0.7231948056621605,
+     "pressure": 0.3498975134165354
+    },
+    "wall_seconds": 8.903005123138428
+   },
+   {
+    "final_time": 5.0,
+    "steps": 580,
+    "max_error_percent": 1.0868905585930149,
+    "per_field_percent": {
+     "density": 0.49743433268789866,
+     "velocity_x": 1.0858860872021308,
+     "velocity_y": 1.0868905585930149,
+     "pressure": 0.6385254320267146
+    },
+    "wall_seconds": 21.943220376968384
+   },
+   {
+    "final_time": 5.0,
+    "steps": 580,
+    "max_error_percent": 1.0868905585930149,
+    "per_field_percent": {
+     "density": 0.49743433268789866,
+     "velocity_x": 1.0858860872021308,
+     "velocity_y": 1.0868905585930149,
+     "pressure": 0.6385254320267146
+    },
+    "wall_seconds": 21.94329333305359
+   }
+  ],
+  "rusanov": [
+   {
+    "final_time": 1.0,
+    "steps": 117,
+    "max_error_percent": 0.5740580114114231,
+    "per_field_percent": {
+     "density": 0.30848385694588704,
+     "velocity_x": 0.5740580114114231,
+     "velocity_y": 0.5572128404259674,
+     "pressure": 0.4253730190457676
+    },
+    "wall_seconds": 3.729525327682495
+   },
+   {
+    "final_time": 1.0,
+    "steps": 117,
+    "max_error_percent": 0.5740580114114231,
+    "per_field_percent": {
+     "density": 0.30848385694588704,
+     "velocity_x": 0.5740580114114231,
+     "velocity_y": 0.5572128404259674,
+     "pressure": 0.4253730190457676
+    },
+    "wall_seconds": 3.729583740234375
+   },
+   {
+    "final_time": 2.0,
+    "steps": 233,
+    "max_error_percent": 0.7119632214899174,
+    "per_field_percent": {
+     "density": 0.27211777393394204,
+     "velocity_x": 0.7048295982930007,
+     "velocity_y": 0.7119632214899174,
+     "pressure": 0.33274403751169457
+    },
+    "wall_seconds": 7.41048002243042
+   },
+   {
+    "final_time": 2.0,
+    "steps": 233,
+    "max_error_percent": 0.7119632214899174,
+    "per_field_percent": {
+     "density": 0.27211777393394204,
+     "velocity_x": 0.7048295982930007,
+     "velocity_y": 0.7119632214899174,
+     "pressure": 0.33274403751169457
+    },
+    "wall_seconds": 7.410548210144043
+   },
+   {
+    "final_time": 5.0,
+    "steps": 580,
+    "max_error_percent": 1.0598986130944974,
+    "per_field_percent": {
+     "density": 0.4925156013107952,
+     "velocity_x": 1.0598986130944974,
+     "velocity_y": 1.0417547860068932,
+     "pressure": 0.6271613699823183
+    },
+    "wall_seconds": 18.616127967834473
+   },
+   {
+    "final_time": 5.0,
+    "steps": 580,
+    "max_error_percent": 1.0598986130944974,
+    "per_field_percent": {
+     "density": 0.4925156013107952,
+     "velocity_x": 1.0598986130944974,
+     "velocity_y": 1.0417547860068932,
+     "pressure": 0.6271613699823183
+    },
+    "wall_seconds": 18.616206645965576
+   }
+  ]
+ }
+}
