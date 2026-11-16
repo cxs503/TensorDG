@@ -1,0 +1,812 @@
+{
+ "anchor": "REPRO-DG-CKS1998",
+ "instrument": "tvb_criterion_ab",
+ "profile": "smoke",
+ "sine_curvature_max": 39.47841760435743,
+ "final_time": 0.5,
+ "cfl": 0.3,
+ "time_integrator": "ssp_rk3",
+ "gates": {
+  "G1_inert_above_curvature": {
+   "p1": {
+    "satisfied": true,
+    "observed_order": 2.0088868630897476,
+    "order_floor": 1.5,
+    "troubled_fraction": 0.0,
+    "max_abs_diff": 0.0
+   },
+   "p2": {
+    "satisfied": true,
+    "observed_order": 2.9998836815708163,
+    "order_floor": 2.5,
+    "troubled_fraction": 0.0,
+    "max_abs_diff": 0.0
+   }
+  },
+  "G2_indicator_fires_below_half_curvature": {
+   "p1": {
+    "satisfied": true,
+    "troubled_fraction": 0.85
+   },
+   "p2": {
+    "satisfied": true,
+    "troubled_fraction": 0.85
+   }
+  },
+  "C1_paper_form_is_stricter": {
+   "p1_m0.25": {
+    "shipped_fraction": 0.85,
+    "paper_fraction": 0.95,
+    "satisfied": true
+   },
+   "p1_m0.5": {
+    "shipped_fraction": 0.7,
+    "paper_fraction": 0.95,
+    "satisfied": true
+   },
+   "p1_m1": {
+    "shipped_fraction": 0.0,
+    "paper_fraction": 0.9,
+    "satisfied": true
+   },
+   "p1_m2": {
+    "shipped_fraction": 0.0,
+    "paper_fraction": 0.85,
+    "satisfied": true
+   },
+   "p2_m0.25": {
+    "shipped_fraction": 0.85,
+    "paper_fraction": 0.95,
+    "satisfied": true
+   },
+   "p2_m0.5": {
+    "shipped_fraction": 0.7,
+    "paper_fraction": 0.95,
+    "satisfied": true
+   },
+   "p2_m1": {
+    "shipped_fraction": 0.0,
+    "paper_fraction": 0.9,
+    "satisfied": true
+   },
+   "p2_m2": {
+    "shipped_fraction": 0.0,
+    "paper_fraction": 0.85,
+    "satisfied": true
+   }
+  },
+  "D1_public_default_constant": {
+   "p1": {
+    "satisfied": true,
+    "observed_order": 1.5240588683553944,
+    "theory_order": 2,
+    "order_loss": 0.4759411316446056,
+    "troubled_fraction": 1.0
+   },
+   "p2": {
+    "satisfied": true,
+    "observed_order": 1.5241732805266146,
+    "theory_order": 3,
+    "order_loss": 1.4758267194733854,
+    "troubled_fraction": 1.0
+   }
+  }
+ },
+ "gate_definitions": {
+  "G1_inert_above_curvature": {
+   "claim": "M = max|u''| => indicator flags 0 cells, solution is bit-identical to unlimited, observed order >= p + 1/2",
+   "measure": "rows at m_over_curvature == 1.0, criterion == shipped"
+  },
+  "G2_indicator_fires_below_half_curvature": {
+   "claim": "M = max|u''|/4 => indicator flags a non-zero fraction of cells, so G1 cannot be met by a switched-off limiter",
+   "measure": "rows at m_over_curvature == 0.25, criterion == shipped"
+  },
+  "D1_public_default_constant": {
+   "claim": "the public default tvb_constant=1.0 (``solve_advection``) is an absolute M, not tied to the solution's curvature; for sin(2*pi*x) (max|u''|=39.5) it flags ~all cells -- behaving exactly like M=0 -- and the observed order falls at least a quarter order below the theoretical p+1",
+   "measure": "rows with criterion == shipped_default, order vs floor"
+  },
+  "C1_paper_form_is_stricter": {
+   "claim": "the literal Cockburn-Shu test flags at least as many cells as the shipped test at the same M (the shipped test is the permissive one)",
+   "measure": "paired troubled_fraction_initial, paper vs shipped"
+  }
+ },
+ "all_pass": true,
+ "rows": [
+  {
+   "degree": 1,
+   "criterion": "unlimited",
+   "tvb_constant": null,
+   "m_over_curvature": null,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.004303814345837313,
+    0.0010655941975995212,
+    0.00026569484080851837
+   ],
+   "observed_order": 2.0088868630897476,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "degree": 1,
+   "criterion": "shipped_default",
+   "tvb_constant": 1.0,
+   "m_over_curvature": 0.025330295910584444,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.08173293995925567,
+    0.030649848016695357,
+    0.009881485821753548
+   ],
+   "observed_order": 1.5240588683553944,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.14352147654969283,
+    0.0636574402709037,
+    0.02694249629030332
+   ]
+  },
+  {
+   "degree": 1,
+   "criterion": "shipped",
+   "tvb_constant": 0.0,
+   "m_over_curvature": 0.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.08172702342201998,
+    0.030646943507308767,
+    0.00988107483137825
+   ],
+   "observed_order": 1.5240366519737454,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.14353138572864332,
+    0.06365751289945454,
+    0.02694249631968315
+   ]
+  },
+  {
+   "degree": 1,
+   "criterion": "paper",
+   "tvb_constant": 0.0,
+   "m_over_curvature": 0.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.08172702342201998,
+    0.030646943507308767,
+    0.00988107483137825
+   ],
+   "observed_order": 1.5240366519737454,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    0.9,
+    1.0,
+    0.975
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.14353138572864332,
+    0.06365751289945454,
+    0.02694249631968315
+   ]
+  },
+  {
+   "degree": 1,
+   "criterion": "shipped",
+   "tvb_constant": 9.869604401089358,
+   "m_over_curvature": 0.25,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.08215421927940714,
+    0.030946382979780945,
+    0.009961227134280862
+   ],
+   "observed_order": 1.5219696427777774,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    0.8,
+    0.8,
+    0.85
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.1423514557426392,
+    0.06344067735181558,
+    0.02684122035237657
+   ]
+  },
+  {
+   "degree": 1,
+   "criterion": "paper",
+   "tvb_constant": 9.869604401089358,
+   "m_over_curvature": 0.25,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.0702824180975836,
+    0.028145593609952738,
+    0.009249525828240988
+   ],
+   "observed_order": 1.462856257537425,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    0.8,
+    0.9,
+    0.95
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.11856883608661228,
+    0.05562187555293463,
+    0.024308785645687725
+   ]
+  },
+  {
+   "degree": 1,
+   "criterion": "shipped",
+   "tvb_constant": 19.739208802178716,
+   "m_over_curvature": 0.5,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.07706316767225854,
+    0.030286823146698807,
+    0.0095644631602845
+   ],
+   "observed_order": 1.5051427947436484,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    0.6,
+    0.7,
+    0.65
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.12960360176787677,
+    0.05768143343451604,
+    0.02433570622496739
+   ]
+  },
+  {
+   "degree": 1,
+   "criterion": "paper",
+   "tvb_constant": 19.739208802178716,
+   "m_over_curvature": 0.5,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.05971746679209321,
+    0.025817542824027866,
+    0.008669705699588087
+   ],
+   "observed_order": 1.3920490209578675,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    0.8,
+    0.9,
+    0.95
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.0909942190586015,
+    0.04574395501912054,
+    0.021294237549750905
+   ]
+  },
+  {
+   "degree": 1,
+   "criterion": "shipped",
+   "tvb_constant": 39.47841760435743,
+   "m_over_curvature": 1.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.004303814345837313,
+    0.0010655941975995212,
+    0.00026569484080851837
+   ],
+   "observed_order": 2.0088868630897476,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "degree": 1,
+   "criterion": "paper",
+   "tvb_constant": 39.47841760435743,
+   "m_over_curvature": 1.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.04589245067882358,
+    0.02254719075252439,
+    0.00781484136562174
+   ],
+   "observed_order": 1.276984178106575,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    0.6,
+    0.8,
+    0.9
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.072201782762499,
+    0.038862754078150985,
+    0.01837345529337253
+   ]
+  },
+  {
+   "degree": 1,
+   "criterion": "shipped",
+   "tvb_constant": 78.95683520871486,
+   "m_over_curvature": 2.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.004303814345837313,
+    0.0010655941975995212,
+    0.00026569484080851837
+   ],
+   "observed_order": 2.0088868630897476,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "degree": 1,
+   "criterion": "paper",
+   "tvb_constant": 78.95683520871486,
+   "m_over_curvature": 2.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.03208593888225978,
+    0.019618546420000025,
+    0.007051529053015862
+   ],
+   "observed_order": 1.0929665844075536,
+   "theory_order": 2,
+   "order_floor": 1.5,
+   "troubled_fraction_initial": [
+    0.4,
+    0.7,
+    0.85
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.05226608359110507,
+    0.034590561261705455,
+    0.0157654667237086
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "unlimited",
+   "tvb_constant": null,
+   "m_over_curvature": null,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.000106965232067498,
+    1.3372382950860682e-05,
+    1.6716012776745543e-06
+   ],
+   "observed_order": 2.9998836815708163,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "shipped_default",
+   "tvb_constant": 1.0,
+   "m_over_curvature": 0.025330295910584444,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.08175560987523767,
+    0.030654180926357487,
+    0.009882659004751604
+   ],
+   "observed_order": 1.5241732805266146,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.14480118549154253,
+    0.06383605739521192,
+    0.026967191252478817
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "shipped",
+   "tvb_constant": 0.0,
+   "m_over_curvature": 0.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.08176575327612867,
+    0.030657054570961875,
+    0.009882848386590556
+   ],
+   "observed_order": 1.5242489493239233,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    1.0,
+    1.0,
+    1.0
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.1447910537041549,
+    0.06383600139113232,
+    0.02696719125150837
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "paper",
+   "tvb_constant": 0.0,
+   "m_over_curvature": 0.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.08176575327612867,
+    0.030657054570961875,
+    0.009882848386590556
+   ],
+   "observed_order": 1.5242489493239233,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    0.9,
+    0.9,
+    0.95
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.1447910537041549,
+    0.06383600139113232,
+    0.02696719125150837
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "shipped",
+   "tvb_constant": 9.869604401089358,
+   "m_over_curvature": 0.25,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.08218272267760715,
+    0.030916196219404862,
+    0.009953359879720838
+   ],
+   "observed_order": 1.5227898073077242,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    0.8,
+    0.8,
+    0.85
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.14407586200342748,
+    0.06367644811849216,
+    0.026896016837834158
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "paper",
+   "tvb_constant": 9.869604401089358,
+   "m_over_curvature": 0.25,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.0714819051106258,
+    0.028308464879981364,
+    0.009283362261693077
+   ],
+   "observed_order": 1.472429381293161,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    0.8,
+    0.9,
+    0.95
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.12552999499819784,
+    0.05706915731985629,
+    0.024635614471144707
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "shipped",
+   "tvb_constant": 19.739208802178716,
+   "m_over_curvature": 0.5,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.07525727428640867,
+    0.030509786889557314,
+    0.009595063241373306
+   ],
+   "observed_order": 1.4857334087668979,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    0.6,
+    0.7,
+    0.65
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.13192199668177051,
+    0.058267550163448645,
+    0.024392065002255436
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "paper",
+   "tvb_constant": 19.739208802178716,
+   "m_over_curvature": 0.5,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.05970533888500768,
+    0.02577278231582803,
+    0.008653461360101347
+   ],
+   "observed_order": 1.393255358306425,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    0.8,
+    0.9,
+    0.95
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.09656882321344695,
+    0.0481765684839639,
+    0.02180379798551757
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "shipped",
+   "tvb_constant": 39.47841760435743,
+   "m_over_curvature": 1.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.000106965232067498,
+    1.3372382950860682e-05,
+    1.6716012776745543e-06
+   ],
+   "observed_order": 2.9998836815708163,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "paper",
+   "tvb_constant": 39.47841760435743,
+   "m_over_curvature": 1.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.046589949355778947,
+    0.02240102357289753,
+    0.007717892741234726
+   ],
+   "observed_order": 1.2968699314051442,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    0.6,
+    0.8,
+    0.9
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.07757072376700003,
+    0.039850516564933214,
+    0.018442104902414824
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "shipped",
+   "tvb_constant": 78.95683520871486,
+   "m_over_curvature": 2.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.000106965232067498,
+    1.3372382950860682e-05,
+    1.6716012776745543e-06
+   ],
+   "observed_order": 2.9998836815708163,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "degree": 2,
+   "criterion": "paper",
+   "tvb_constant": 78.95683520871486,
+   "m_over_curvature": 2.0,
+   "cells": [
+    20,
+    40,
+    80
+   ],
+   "l2": [
+    0.032815317596803346,
+    0.01996677702704832,
+    0.007242112984528626
+   ],
+   "observed_order": 1.0899434031828736,
+   "theory_order": 3,
+   "order_floor": 2.5,
+   "troubled_fraction_initial": [
+    0.4,
+    0.7,
+    0.85
+   ],
+   "max_abs_diff_vs_unlimited": [
+    0.055891895492205745,
+    0.0357681305028823,
+    0.016593791154575044
+   ]
+  }
+ ]
+}
