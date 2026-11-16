@@ -105,8 +105,10 @@ def _verdict_from_evidence(gid, ev):
     if gid == "G5":
         return 0.5 <= ev["ratio_finest_over_coarsest"] <= 2.0
     if gid == "G6":
-        e_c = abs(ev[coarse["grid"][0]]["rel_error_rho"])
-        e_f = abs(ev[fine["grid"][0]]["rel_error_rho"])
+        # evidence keys are the grid labels as *strings* (e.g. "64"); the
+        # run grid is an int tuple -- coerce to str so the lookup is exact.
+        e_c = abs(ev[str(coarse["grid"][0])]["rel_error_rho"])
+        e_f = abs(ev[str(fine["grid"][0])]["rel_error_rho"])
         return e_f < e_c and e_f <= 0.03
     if gid == "G7":
         return ev["rate"] is not None and ev["rate"] >= 0.5
