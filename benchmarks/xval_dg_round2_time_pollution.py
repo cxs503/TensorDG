@@ -153,10 +153,32 @@ def load_level(rawdir: Path | str, ncells: int, cfl: float = 0.3) -> dict:
 
 
 def temporal_series(rawdir: Path | str, ncells: int,
-                    cfls=CFL_LEVELS) -> list[dict]:
-    """The fixed-grid CFL series, coarse to fine."""
-    return [load_level(rawdir, ncells, c) for c in sorted(cfls, reverse=True)]
+                    cfls=CFL_LEVELS, require: int = 2) -> list[dict]:
+    """The CFL series present on disk at one grid, coarse to fine.
 
+    ``require`` is the number of members the *caller* needs: the three-level
+    correction (``p_t`` from two successive temporal differences) needs all of
+    ``cfls``, while the pollution ratio ``R`` only needs the coarsest pair.  A
+    grid that carries fewer than ``require`` members is refused loudly -- an
+    absent level must never be silently replaced by a two-member series that
+    would report ``p_t = None`` where the audit expects a correction.
+
+    Partial series are the documented norm here, not a workaround: the finest
+    grid of the ladder (``EXTRA_RATIO_LEVELS``) only has to supply ``R``, and
+    each extra level costs 20+ CPU-minutes.
+    """
+    present = [float(c) for c in sorted(cfls, reverse=True)
+               if level_path(rawdir, ncells, c).exists()]
+    if len(present) < max(int(require), 2):
+        missing = [c for c in sorted(cfls, reverse=True) if float(c) not in present]
+        first = missing[0]
+        raise FileNotFoundError(
+            f"grid {ncells} has {len(present)} of {len(cfls)} CFL levels "
+            f"(need {max(int(require), 2)}); missing e.g. "
+            f"{level_path(rawdir, ncells, first)}; generate it with "
+            f"`python validation/xval_dg_round2/gen_fv_level.py --ncells {ncells} "
+            f"--cfl {first:g} --out {level_path(rawdir, ncells, first)}`")
+    return [load_level(rawdir, ncells, c) for c in present]
 
 # ---------------------------------------------------------------- time leg math
 def temporal_report(series: list[dict]) -> dict:
@@ -196,6 +218,7 @@ def temporal_report(series: list[dict]) -> dict:
     return {
         "ncells": int(base["ncells"]),
         "cfls": [float(s["cfl"]) for s in series],
+        "levels_present": len(series),
         "differences": rows,
         # leading-order estimate of the *coarsest* (published) time-step error:
         # for order >= 1 the difference to the next finer level is an upper
@@ -286,11 +309,15 @@ def audit(rawdir: Path | str = DEFAULT_RAW) -> dict:
     # ---- per-grid time leg (T0) and spatial difference it is compared against
     grid_rows = []
     for n in (*BASE_LEVELS, *EXTRA_RATIO_LEVELS):
-        src = temporal_series(rawdir, n)
+        # a grid inside the corrected spatial ladder needs a usable p_t, i.e. all
+        # CFL levels; the extra ratio grid only has to supply the pollution ratio
+        need = len(CFL_LEVELS) if n in BASE_LEVELS else 2
+        src = temporal_series(rawdir, n, require=need)
         rep = temporal_report(src)
         row = {"ncells": int(n), **{k: rep[k] for k in
                                     ("differences", "delta_t", "delta_t_percent",
-                                     "temporal_order", "monotone", "files")}}
+                                     "temporal_order", "monotone", "files",
+                                     "levels_present")}}
         # spatial difference that sets the band at this level: the finest
         # successive difference of the *committed* CFL=0.3 ladder, measured on
         # the coarser grid exactly as ``certify`` measures it
