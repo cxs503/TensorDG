@@ -401,6 +401,7 @@
     "band_percent": 0.04162173159427086,
     "band_share_of_gate": 0.008324346318854172,
     "classification": "monotonic",
+    "design_order": null,
     "differences": [
       {
         "levels": [
@@ -444,6 +445,8 @@
     ],
     "min_resolvable_error_percent": 0.04162173159427086,
     "observed_order_used": 1.1767348864087728,
+    "order_ceiling": null,
+    "order_rate_expected": null,
     "orders": [
       {
         "levels": [
@@ -470,6 +473,7 @@
     "reference_grid_size": 3200,
     "reference_ncells": 3200,
     "refinement_fine": 2.0,
+    "superconvergent": false,
     "tolerance_percent": 5.0,
     "u_share_max": 0.3333333333333333,
     "verdict": "CERTIFIED"
@@ -479,6 +483,7 @@
     "band_percent": 0.08279718833081827,
     "band_share_of_gate": 0.016559437666163655,
     "classification": "monotonic",
+    "design_order": null,
     "differences": [
       {
         "levels": [
@@ -512,6 +517,8 @@
     ],
     "min_resolvable_error_percent": 0.08279718833081827,
     "observed_order_used": 1.2825091761164593,
+    "order_ceiling": null,
+    "order_rate_expected": null,
     "orders": [
       {
         "levels": [
@@ -529,6 +536,7 @@
     "reference_grid_size": 1600,
     "reference_ncells": 1600,
     "refinement_fine": 2.0,
+    "superconvergent": false,
     "tolerance_percent": 5.0,
     "u_share_max": 0.3333333333333333,
     "verdict": "CERTIFIED"

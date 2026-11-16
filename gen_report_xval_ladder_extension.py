@@ -1,11 +1,22 @@
 #!/usr/bin/env python3
-"""Publish the m21210 XVAL-DG-ROUND2-CERTIFIED-REFERENCE ladder-extension report.
+"""Publish the XVAL-DG-ROUND2-CERTIFIED-REFERENCE ladder-extension report.
 
 Runs the L0-L4 ladder-extension audit (3 -> 4 levels) on the committed raw
 profiles, generates the two figures, runs the 7 ladder-extension tests, and
 builds the paper-grade report JSON.  All numbers are read from the audit
 artifact -- nothing is hand-typed into the markdown body.
+
+The report is mission-stamped: ``--mission-id`` (default 21210, the mission
+that first delivered the ladder extension) and ``--out`` (default
+``.m21210_xval_ladder_report.json``) let a follow-up "see-it-through" round
+re-publish the same audit under its own mission id without touching the
+audit itself.
+
+The audit is invoked with *relative* raw/out directories (the module's own
+``DEFAULT_RAW``/``DEFAULT_OUT`` convention) so the committed artifact stores
+a reproducible path, not the invoker's worktree.
 """
+import argparse
 import base64
 import json
 import os
@@ -14,8 +25,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-RAW = ROOT / "validation" / "repro_shu_osher" / "artifacts" / "raw"
-ART = ROOT / "validation" / "xval_dg_round2" / "artifacts"
+RAW = Path("validation") / "repro_shu_osher" / "artifacts" / "raw"
+ART = Path("validation") / "xval_dg_round2" / "artifacts"
 
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -150,7 +161,18 @@ max |Δ| = {l4['max_abs_move_pp']:.6f} pp
     return md
 
 
-def main() -> int:
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--mission-id", type=int, default=21210,
+                    help="mission id stamped into the report (default 21210)")
+    ap.add_argument("--out", default=".m21210_xval_ladder_report.json",
+                    help="report JSON path (default .m21210_xval_ladder_report.json)")
+    args = ap.parse_args(argv)
+
+    # Resolve the audit against the repo root so the committed artifact stores
+    # a relative, reproducible rawdir (not the invoker's worktree path).
+    os.chdir(ROOT)
+
     out, figs = run_audit()
     pytest_summary = run_tests()
     md = build_md(out)
@@ -162,11 +184,11 @@ def main() -> int:
         "title": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE · 四级梯次扩展闭合（验证欠账）",
         "summary": ("TensorDG round2-certified-reference 补上第四级 FV 参考 N=6400，"
                     "把三级带 U 变成可证伪声明：L0-L4 五判据全部 PASS，accepted=True，"
-                    "7 条梯次扩展测试从 SKIPPED 转绿。"),
+                    "7 条梯次扩展测试全绿。"),
         "scenario_key": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE",
-        "mission_id": 21210,
+        "mission_id": args.mission_id,
         "tags": ["tensordg", "xval", "certified-reference", "ladder-extension",
-                 "shu-osher", "verification-debt", "gci"],
+                  "shu-osher", "verification-debt", "gci"],
         "markdown": md,
         "figures": [
             {"name": "fig_ladder_extension_profiles.png",
@@ -177,7 +199,9 @@ def main() -> int:
              "png_base64": b64(figs["fig2"])},
         ],
     }
-    outpath = ROOT / ".m21210_xval_ladder_report.json"
+    outpath = Path(args.out)
+    if not outpath.is_absolute():
+        outpath = ROOT / outpath
     outpath.write_text(json.dumps(report, indent=2))
     print("pytest:", pytest_summary)
     print("accepted:", out["accepted"])
