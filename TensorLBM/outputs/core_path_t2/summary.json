@@ -1,0 +1,473 @@
+{
+  "anchor": "GAP-LBM-T2-GPU-COREPATH",
+  "case": {
+    "t3_row": "taylor-green-2d",
+    "analytic": "amplitude ~ exp(-2 nu k^2 t), u0=0.01, nu=0.05",
+    "protocol": {
+      "steps": 600,
+      "record_every": 100,
+      "repeat": 1
+    },
+    "timing": "min over repeat blocks after one warm-up block; single core"
+  },
+  "preregistered_gates": {
+    "accuracy_tol": 0.02,
+    "consistency_tol_float64": 1e-10,
+    "consistency_tol_by_dtype": {
+      "float64": 1e-10,
+      "float32": 1e-05
+    },
+    "rule": "perf number admissible iff accuracy AND consistency gates pass"
+  },
+  "backends": {
+    "numpy": {
+      "name": "numpy",
+      "kind": "cpu",
+      "available": true,
+      "reason": "numpy 2.4.6"
+    },
+    "torch-cpu": {
+      "name": "torch-cpu",
+      "kind": "cpu",
+      "available": true,
+      "reason": "torch 2.7.1"
+    },
+    "torch-cuda": {
+      "name": "torch-cuda",
+      "kind": "gpu",
+      "available": false,
+      "reason": "torch.cuda.is_available() == False"
+    },
+    "cupy": {
+      "name": "cupy",
+      "kind": "gpu",
+      "available": false,
+      "reason": "cupy not installed"
+    }
+  },
+  "withheld": [
+    {
+      "backend": "torch-cuda",
+      "kind": "gpu",
+      "reason": "torch.cuda.is_available() == False",
+      "grade": "WITHHELD",
+      "note": "GPU core-path arm not executed: no device on this host; no CPU fallback used as a stand-in"
+    },
+    {
+      "backend": "cupy",
+      "kind": "gpu",
+      "reason": "cupy not installed",
+      "grade": "WITHHELD",
+      "note": "GPU core-path arm not executed: no device on this host; no CPU fallback used as a stand-in"
+    }
+  ],
+  "machine": {
+    "host": "ec6ae0b42a0c",
+    "platform": "Linux-6.6.52-1.7.lns23.loongarch64-loongarch64-with-glibc2.38",
+    "python": "3.11.6",
+    "numpy": "2.4.6",
+    "nproc_affinity": 128,
+    "loadavg": [
+      63.34,
+      64.26,
+      66.07
+    ]
+  },
+  "arms": [
+    {
+      "steps": 600,
+      "seconds": 0.7169352192431688,
+      "steps_per_second": 836.8956969827606,
+      "mlups": 3.4279247748413875,
+      "decay_rate_fit": 0.000965446472325464,
+      "decay_rate_analytic": 0.0009638285547938826,
+      "accuracy_rel_err": 0.001678636229995694,
+      "consistency_rel_diff": null,
+      "consistency_tol": null,
+      "declared_live_bytes": 1343488,
+      "measured_peak_bytes": 2725654,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": null,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          64,
+          64
+        ],
+        "nu": 0.05,
+        "kernel": "reference",
+        "backend": "numpy",
+        "dtype": "float64",
+        "n_nodes": 4096
+      }
+    },
+    {
+      "steps": 600,
+      "seconds": 0.7244531102478504,
+      "steps_per_second": 828.2109518374868,
+      "mlups": 3.3923520587263463,
+      "decay_rate_fit": 0.000965446472325464,
+      "decay_rate_analytic": 0.0009638285547938826,
+      "accuracy_rel_err": 0.001678636229995694,
+      "consistency_rel_diff": 0.0,
+      "consistency_tol": 1e-10,
+      "declared_live_bytes": 753664,
+      "measured_peak_bytes": 2134174,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": true,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          64,
+          64
+        ],
+        "nu": 0.05,
+        "kernel": "fused",
+        "backend": "numpy",
+        "dtype": "float64",
+        "n_nodes": 4096
+      }
+    },
+    {
+      "steps": 600,
+      "seconds": 0.5690140705555677,
+      "steps_per_second": 1054.4554713984112,
+      "mlups": 4.319049610847892,
+      "decay_rate_fit": 0.000965446472325464,
+      "decay_rate_analytic": 0.0009638285547938826,
+      "accuracy_rel_err": 0.001678636229995694,
+      "consistency_rel_diff": 0.0,
+      "consistency_tol": 1e-10,
+      "declared_live_bytes": 753664,
+      "measured_peak_bytes": 2142894,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": true,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          64,
+          64
+        ],
+        "nu": 0.05,
+        "kernel": "fused_slices",
+        "backend": "numpy",
+        "dtype": "float64",
+        "n_nodes": 4096
+      }
+    },
+    {
+      "steps": 600,
+      "seconds": 0.5555194709450006,
+      "steps_per_second": 1080.07015303952,
+      "mlups": 4.4239673468498735,
+      "decay_rate_fit": 0.0009654425525648286,
+      "decay_rate_analytic": 0.0009638285547938826,
+      "accuracy_rel_err": 0.0016745693649750063,
+      "consistency_rel_diff": null,
+      "consistency_tol": null,
+      "declared_live_bytes": 671744,
+      "measured_peak_bytes": 2036390,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": null,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          64,
+          64
+        ],
+        "nu": 0.05,
+        "kernel": "reference",
+        "backend": "numpy",
+        "dtype": "float32",
+        "n_nodes": 4096
+      }
+    },
+    {
+      "steps": 600,
+      "seconds": 0.5894466899335384,
+      "steps_per_second": 1017.9037566020627,
+      "mlups": 4.169333787042048,
+      "decay_rate_fit": 0.0009654425525648286,
+      "decay_rate_analytic": 0.0009638285547938826,
+      "accuracy_rel_err": 0.0016745693649750063,
+      "consistency_rel_diff": 0.0,
+      "consistency_tol": 1e-05,
+      "declared_live_bytes": 376832,
+      "measured_peak_bytes": 1740878,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": true,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          64,
+          64
+        ],
+        "nu": 0.05,
+        "kernel": "fused",
+        "backend": "numpy",
+        "dtype": "float32",
+        "n_nodes": 4096
+      }
+    },
+    {
+      "steps": 600,
+      "seconds": 0.4425714798271656,
+      "steps_per_second": 1355.7132064504335,
+      "mlups": 5.553001293620976,
+      "decay_rate_fit": 0.0009654425525648286,
+      "decay_rate_analytic": 0.0009638285547938826,
+      "accuracy_rel_err": 0.0016745693649750063,
+      "consistency_rel_diff": 0.0,
+      "consistency_tol": 1e-05,
+      "declared_live_bytes": 376832,
+      "measured_peak_bytes": 1747886,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": true,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          64,
+          64
+        ],
+        "nu": 0.05,
+        "kernel": "fused_slices",
+        "backend": "numpy",
+        "dtype": "float32",
+        "n_nodes": 4096
+      }
+    },
+    {
+      "steps": 600,
+      "seconds": 5.824909010902047,
+      "steps_per_second": 103.00590084360542,
+      "mlups": 0.4219121698554078,
+      "decay_rate_fit": 0.000965446472325464,
+      "decay_rate_analytic": 0.0009638285547938826,
+      "accuracy_rel_err": 0.001678636229995694,
+      "consistency_rel_diff": null,
+      "consistency_tol": null,
+      "declared_live_bytes": 1343488,
+      "measured_peak_bytes": 1347848,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": null,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          64,
+          64
+        ],
+        "nu": 0.05,
+        "kernel": "reference",
+        "backend": "torch-cpu",
+        "dtype": "float64",
+        "n_nodes": 4096
+      }
+    },
+    {
+      "steps": 600,
+      "seconds": 3.026326099410653,
+      "steps_per_second": 198.2601941399653,
+      "mlups": 0.8120737551972979,
+      "decay_rate_fit": 0.000965446472325464,
+      "decay_rate_analytic": 0.0009638285547938826,
+      "accuracy_rel_err": 0.001678636229995694,
+      "consistency_rel_diff": 0.0,
+      "consistency_tol": 1e-10,
+      "declared_live_bytes": 753664,
+      "measured_peak_bytes": 1347528,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": true,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          64,
+          64
+        ],
+        "nu": 0.05,
+        "kernel": "fused",
+        "backend": "torch-cpu",
+        "dtype": "float64",
+        "n_nodes": 4096
+      }
+    },
+    {
+      "steps": 600,
+      "seconds": 3.35890587978065,
+      "steps_per_second": 178.62959590852913,
+      "mlups": 0.7316668248413353,
+      "decay_rate_fit": 0.000965446472325464,
+      "decay_rate_analytic": 0.0009638285547938826,
+      "accuracy_rel_err": 0.001678636229995694,
+      "consistency_rel_diff": 0.0,
+      "consistency_tol": 1e-10,
+      "declared_live_bytes": 753664,
+      "measured_peak_bytes": 1354696,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": true,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          64,
+          64
+        ],
+        "nu": 0.05,
+        "kernel": "fused_slices",
+        "backend": "torch-cpu",
+        "dtype": "float64",
+        "n_nodes": 4096
+      }
+    },
+    {
+      "steps": 300,
+      "seconds": 0.9351558089256287,
+      "steps_per_second": 320.80215632158735,
+      "mlups": 5.2560225291728875,
+      "decay_rate_fit": 0.00024219911282869145,
+      "decay_rate_analytic": 0.00024095713869847065,
+      "accuracy_rel_err": 0.005154336314455399,
+      "consistency_rel_diff": null,
+      "consistency_tol": null,
+      "declared_live_bytes": 5373952,
+      "measured_peak_bytes": 10621390,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": null,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          128,
+          128
+        ],
+        "nu": 0.05,
+        "kernel": "reference",
+        "backend": "numpy",
+        "dtype": "float64",
+        "n_nodes": 16384
+      }
+    },
+    {
+      "steps": 300,
+      "seconds": 0.9285772703588009,
+      "steps_per_second": 323.07489056250586,
+      "mlups": 5.293259006976096,
+      "decay_rate_fit": 0.00024219911282869145,
+      "decay_rate_analytic": 0.00024095713869847065,
+      "accuracy_rel_err": 0.005154336314455399,
+      "consistency_rel_diff": 0.0,
+      "consistency_tol": 1e-10,
+      "declared_live_bytes": 3014656,
+      "measured_peak_bytes": 8261662,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": true,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          128,
+          128
+        ],
+        "nu": 0.05,
+        "kernel": "fused",
+        "backend": "numpy",
+        "dtype": "float64",
+        "n_nodes": 16384
+      }
+    },
+    {
+      "steps": 300,
+      "seconds": 0.8084144406020641,
+      "steps_per_second": 371.09678517936413,
+      "mlups": 6.080049728378702,
+      "decay_rate_fit": 0.00024219911282869145,
+      "decay_rate_analytic": 0.00024095713869847065,
+      "accuracy_rel_err": 0.005154336314455399,
+      "consistency_rel_diff": 0.0,
+      "consistency_tol": 1e-10,
+      "declared_live_bytes": 3014656,
+      "measured_peak_bytes": 8268662,
+      "steady_state_allocations": 0,
+      "accuracy_pass": true,
+      "consistency_pass": true,
+      "perf_admissible": true,
+      "verdict": "ADMISSIBLE",
+      "reasons": [],
+      "config": {
+        "stencil": "D2Q9",
+        "shape": [
+          128,
+          128
+        ],
+        "nu": 0.05,
+        "kernel": "fused_slices",
+        "backend": "numpy",
+        "dtype": "float64",
+        "n_nodes": 16384
+      }
+    }
+  ],
+  "ratios": {
+    "fused_over_reference_mlups_64": 0.9896,
+    "fused_over_reference_live_bytes_64": 0.561,
+    "fused_over_reference_peak_bytes_64": 0.783,
+    "fused_slices_over_reference_mlups_64": 1.26,
+    "fused_slices_over_reference_live_bytes_64": 0.561,
+    "fused_slices_over_reference_peak_bytes_64": 0.7862,
+    "fused_over_reference_mlups_128": 1.0071,
+    "fused_over_reference_live_bytes_128": 0.561,
+    "fused_over_reference_peak_bytes_128": 0.7778,
+    "fused_slices_over_reference_mlups_128": 1.1568,
+    "fused_slices_over_reference_live_bytes_128": 0.561,
+    "fused_slices_over_reference_peak_bytes_128": 0.7785,
+    "float32_over_float64_mlups_reference": 1.2906,
+    "float32_over_float64_peak_bytes_reference": 0.7471,
+    "float32_accuracy_rel_err_reference": 0.0016745693649750063,
+    "float32_over_float64_mlups_fused": 1.229,
+    "float32_over_float64_peak_bytes_fused": 0.8157,
+    "float32_accuracy_rel_err_fused": 0.0016745693649750063,
+    "float32_over_float64_mlups_fused_slices": 1.2857,
+    "float32_over_float64_peak_bytes_fused_slices": 0.8157,
+    "float32_accuracy_rel_err_fused_slices": 0.0016745693649750063
+  }
+}
