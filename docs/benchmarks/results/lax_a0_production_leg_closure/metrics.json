@@ -1,0 +1,159 @@
+{
+  "case": "CASE-LAX-DG",
+  "anchor": "CASE-LAX-DG",
+  "generated_at_utc": "2026-11-16T06:48:06Z",
+  "tolerance": 0.03,
+  "metric": "whole-field relative L2 vs exact Riemann solution, worst field, 10-node Legendre-Gauss (imported from benchmarks.lax_case_pool.run_ladder)",
+  "old_production_leg": {
+    "leg": "p3.N400",
+    "dof": 1600,
+    "worst_l2": 0.031155618811580767,
+    "worst_field": "density",
+    "verdict": "FAIL",
+    "margin": 0.9629081733677132
+  },
+  "new_production_leg": {
+    "leg": "p2.N800",
+    "dof": 2400,
+    "worst_l2": 0.025703283359080602,
+    "worst_field": "density",
+    "verdict": "PASS",
+    "margin": 1.167166061272924
+  },
+  "minimal_dof_passing": {
+    "leg": "p2.N800",
+    "dof": 2400,
+    "worst_l2": 0.025703283359080602
+  },
+  "honest_fail_preserved": {
+    "leg": "p3.N400",
+    "worst_l2": 0.031155618811580767,
+    "note": "p3.N400 whole-field L2 is discontinuity-dominated and sits above the 3 % bar; it is recorded as-is and not re-labelled by the p2.N800 PASS."
+  },
+  "closure": {
+    "recommendation": "re-point the production leg at the certified configuration p2.N800 (minimal DOF that passes the < 3 % bar)",
+    "implemented": true,
+    "a0_verdict": "PASS"
+  },
+  "legs": [
+    {
+      "leg": "p1.N100",
+      "cells": 100,
+      "degree": 1,
+      "worst_l2": 0.08752838063353746,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p2.N100",
+      "cells": 100,
+      "degree": 2,
+      "worst_l2": 0.06337237297597012,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p1.N200",
+      "cells": 200,
+      "degree": 1,
+      "worst_l2": 0.0663200386130461,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p3.N100",
+      "cells": 100,
+      "degree": 3,
+      "worst_l2": 0.05306209063838311,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p2.N200",
+      "cells": 200,
+      "degree": 2,
+      "worst_l2": 0.04834352436734389,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p1.N400",
+      "cells": 400,
+      "degree": 1,
+      "worst_l2": 0.04934864082420773,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p1.N400",
+      "cells": 400,
+      "degree": 1,
+      "worst_l2": 0.04934864082420773,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p3.N200",
+      "cells": 200,
+      "degree": 3,
+      "worst_l2": 0.04199979591491615,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p2.N400",
+      "cells": 400,
+      "degree": 2,
+      "worst_l2": 0.03525871011266807,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p2.N400",
+      "cells": 400,
+      "degree": 2,
+      "worst_l2": 0.03525871011266807,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p1.N800",
+      "cells": 800,
+      "degree": 1,
+      "worst_l2": 0.03771262015879683,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p3.N400",
+      "cells": 400,
+      "degree": 3,
+      "worst_l2": 0.031155618811580767,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p3.N400",
+      "cells": 400,
+      "degree": 3,
+      "worst_l2": 0.031155618811580767,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p2.N800",
+      "cells": 800,
+      "degree": 2,
+      "worst_l2": 0.025703283359080602,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p2.N1000",
+      "cells": 1000,
+      "degree": 2,
+      "worst_l2": 0.02368268254860656,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p1.N1600",
+      "cells": 1600,
+      "degree": 1,
+      "worst_l2": 0.029540109282639455,
+      "worst_field": "density"
+    },
+    {
+      "leg": "p3.N800",
+      "cells": 800,
+      "degree": 3,
+      "worst_l2": 0.023148994624927942,
+      "worst_field": "density"
+    }
+  ]
+}
