@@ -1,0 +1,73 @@
+{
+  "task": "dg",
+  "degree": 2,
+  "cells": 32,
+  "final_time": 10.0,
+  "cfl": 0.2,
+  "steps": 4684,
+  "dt": 0.00017000205647121902,
+  "dt_note": "final (clamped) step; steps*dt is not the elapsed time",
+  "dofs": 36864,
+  "errors": {
+    "density": 6.12330429512721e-05,
+    "velocity_x": 0.00015162621307966128,
+    "velocity_y": 0.0001508726376872342,
+    "pressure": 8.516345284191186e-05
+  },
+  "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+  "reference_model": "min_image",
+  "reference_images": null,
+  "final": {
+    "invariants": {
+      "mass": 98.24174356017366,
+      "momentum_x": 98.24174356017382,
+      "momentum_y": 98.2417435601738,
+      "energy": 344.7593266009624,
+      "entropy": 100.0000296081068
+    },
+    "entropy_mean": 1024.000303187014,
+    "density_min": 0.4939955676523767,
+    "pressure_min": 0.37193832187284886
+  },
+  "initial": {
+    "invariants": {
+      "mass": 98.24174356019091,
+      "momentum_x": 98.24174356019091,
+      "momentum_y": 98.24174356019091,
+      "energy": 344.75932660102967,
+      "entropy": 99.99999980551623
+    },
+    "entropy_mean": 1023.9999980084864,
+    "density_min": 0.4941244856711183,
+    "pressure_min": 0.37271920209769316
+  },
+  "wall_seconds": 305.5911467075348,
+  "task_key": "dg_d2_n32_t10_cfl0.2",
+  "config": {
+    "task": "dg",
+    "cells": 32,
+    "final_time": 10.0,
+    "cfl": 0.2,
+    "strength": 5.0,
+    "reference": "min_image",
+    "background_velocity": [
+      1.0,
+      1.0
+    ],
+    "degree": 2
+  },
+  "family": "dg_d2_n32_cfl0.2",
+  "max_relative_l2": 0.00015162621307966128,
+  "max_percent": 0.015162621307966128,
+  "invariant_drift": {
+    "mass": 1.756074047452676e-13,
+    "momentum_x": 1.7401623386207325e-13,
+    "momentum_y": 1.7416088576054547e-13,
+    "energy": 1.950513280534266e-13,
+    "entropy": 2.98025906329067e-07
+  },
+  "entropy_production": 2.980259063978252e-07,
+  "entropy_drift": 2.980259063978252e-07,
+  "density_min_relative_error": 0.0002609019032248548,
+  "gate_pass": true
+}
