@@ -14,7 +14,7 @@
       "pressure": 0.021143921551037736
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 2.714709520339966,
+    "wall_seconds": 2.6691575050354004,
     "conservation_drift": {
       "mass": 2.6037424447494053e-15,
       "x_momentum": 2.6037424447494053e-15,
@@ -47,7 +47,7 @@
       "pressure": 0.0054992133539637075
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 6.666068077087402,
+    "wall_seconds": 6.331661701202393,
     "conservation_drift": {
       "mass": 5.3521202398279745e-15,
       "x_momentum": 5.207468341454245e-15,
@@ -80,7 +80,7 @@
       "pressure": 0.004287231014401712
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 4.852799415588379,
+    "wall_seconds": 4.385689973831177,
     "conservation_drift": {
       "mass": 4.3395562842205034e-15,
       "x_momentum": 4.62886003650187e-15,
@@ -113,7 +113,7 @@
       "pressure": 0.0005624651741025694
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 11.693114280700684,
+    "wall_seconds": 11.466374635696411,
     "conservation_drift": {
       "mass": 8.679113908613846e-15,
       "x_momentum": 8.679113908613846e-15,
@@ -146,7 +146,7 @@
       "pressure": 0.0024138915292922945
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 4.673730373382568,
+    "wall_seconds": 4.482875823974609,
     "conservation_drift": {
       "mass": 4.6288602783970946e-15,
       "x_momentum": 4.773512162097003e-15,
@@ -179,7 +179,7 @@
       "pressure": 0.0001751581826771661
     },
     "metric": "volume-quadrature relative L2 (L2-projected modal state)",
-    "wall_seconds": 11.71663784980774,
+    "wall_seconds": 10.94293212890625,
     "conservation_drift": {
       "mass": 8.968417706386291e-15,
       "x_momentum": 8.968417706386292e-15,
@@ -223,7 +223,7 @@
     "max_step_drift": 1.4839069767036357e-15,
     "max_step_drift_name": "energy",
     "max_step_drift_step": 18,
-    "wall_seconds": 0.19077277183532715,
+    "wall_seconds": 0.18120574951171875,
     "max_relative_l2": 0.10593213971725648,
     "max_percent": 10.593213971725648,
     "gate_pass": false,
@@ -255,7 +255,7 @@
     "max_step_drift": 2.802935398908073e-15,
     "max_step_drift_name": "energy",
     "max_step_drift_step": 42,
-    "wall_seconds": 0.4588477611541748,
+    "wall_seconds": 0.43900179862976074,
     "max_relative_l2": 0.07799898324635561,
     "max_percent": 7.799898324635561,
     "gate_pass": false,
