@@ -100,7 +100,7 @@ def test_remaining_skips_already_certified(tmp_path, monkeypatch):
 
     attempted = []
 
-    def fake_replay(rec):
+    def fake_replay(rec, threads=None):
         attempted.append(rec["task_key"])
         return {"task_key": rec["task_key"], "reference_model": "min_image",
                 "config": rec["config"], "stored_max_percent": 0.0,
