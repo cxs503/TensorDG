@@ -1,0 +1,75 @@
+{
+  "n800": {
+    "cfls": [
+      0.3,
+      0.15
+    ],
+    "delta_t_percent": 0.01059644906310277,
+    "spatial_difference_percent": 0.2308391349874757,
+    "pollution_ratio": 0.04590404076708088,
+    "state": "CLEAN",
+    "temporal_order": null,
+    "levels_present": 2
+  },
+  "n400_probe": {
+    "cfls": [
+      0.3,
+      0.15,
+      0.075
+    ],
+    "differences": [
+      {
+        "cfls": [
+          0.3,
+          0.15
+        ],
+        "ratio": 2.0,
+        "rel_l1": 5.274843530476976e-05,
+        "rel_l1_percent": 0.005274843530476976,
+        "steps": [
+          1148,
+          2295
+        ]
+      },
+      {
+        "cfls": [
+          0.15,
+          0.075
+        ],
+        "ratio": 2.0,
+        "rel_l1": 5.189434881101017e-06,
+        "rel_l1_percent": 0.0005189434881101017,
+        "steps": [
+          2295,
+          4591
+        ]
+      }
+    ],
+    "delta_t_percent": 0.005274843530476976,
+    "temporal_order": 3.34547895359332,
+    "monotone": true,
+    "spatial_difference_percent": 0.6145773251867586,
+    "pollution_ratio": 0.00858288015893533,
+    "state": "CLEAN"
+  },
+  "ladder": {
+    "finest_successive_difference_percent": 0.10097494715834454,
+    "reference_grid": 3200,
+    "gate_percent": 5.0
+  },
+  "thresholds": {
+    "POLLUTION_MAX": 0.1,
+    "POLLUTION_MARGINAL": 0.25,
+    "P_MIN_T": 0.5,
+    "BAND_SHIFT_MAX": 0.25
+  },
+  "pending": {
+    "grids": [
+      1600,
+      3200,
+      6400
+    ],
+    "job": "cj4464",
+    "reason": "CFL 0.15/0.075 \u7ea7\u5728\u961f\u5217\u4e2d\u6392\u961f\uff08\u5355\u6838 6 \u5206\u7247\uff09\uff0c\u672c\u5355\u672a\u53d6\u56de\uff1b\u7f3a\u5b83\u4eec\u53ea\u80fd\u6d4b N=800 \u7684 R\uff0c\u65e0\u6cd5\u505a\u65f6\u95f4\u4fee\u6b63\u91cd\u8ba4\u8bc1"
+  }
+}
