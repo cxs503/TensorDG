@@ -228,8 +228,12 @@ DOI {m['reference']['citation']['doi']}，表 `{m['reference']['citation']['tabl
             f"「$E_{{time}}$ 随 $\\Delta t^{{p+1}}$ 迅速衰减」外推，未逐网格做稠密矩阵。",
             f"- **局限 3（网格阶梯）**：各阶阶梯为 {ladder_txt}"
             f"（{'全阶同阶梯' if shared_ladder else '并非全阶同阶梯，逐阶记录在碎片里'}）。",
-            "- **局限 4（双路径）**：`solve_advection` 的 `rk4`/`ssp_rk3` 分支为保持逐位兼容未并入通用驱动器，"
-            "两条路径的等价性由阶测试与回归测试间接覆盖，未做逐位等价断言。", "",
+            "- **局限 4（双路径，已闭合）**：`solve_advection` 的 `rk4`/`ssp_rk3` 分支为保持逐位兼容"
+            "未并入通用驱动器。本轮补上逐位等价断言：无限制器时两条路径在 float64 圆整内一致"
+            "（注册表即手写核所跑的格式），非线性限制器（WENO/AO）下两者重组方式不同、差异可测"
+            "——这就是两条路径保留的原因。实测见 `benchmarks/advorder_rk_path_equivalence.py`、"
+            "`docs/CASE-DG-ADVECT-ORDER-round2-limitation4.md`，断言见 "
+            "`tests/test_case_dg_advect_order_matched_rk.py`。", "",
             "## 6. 本轮修订（重开轮）", "",
             "1. **渲染器可用性**：本脚本曾含 f-string 内复用同引号的写法，在 "
             "`requires-python >= 3.10` 下是 **SyntaxError**（Python 3.11 实测无法 import），"
