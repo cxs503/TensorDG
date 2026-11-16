@@ -210,6 +210,15 @@ def exact_solution_3d(
     )
 
 
+from .registry import capability
+@capability(
+    name="advection-3d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-ADVECT-ORDER"},
+    description="3D advection DG; p-order convergence",
+    tags=['advection', '3d', 'dg']
+)
 def solve_advection_3d(
     ncells: int | tuple[int, int, int] = 8,
     degree: int = 1,

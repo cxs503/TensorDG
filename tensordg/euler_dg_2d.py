@@ -960,6 +960,15 @@ def _initial_coefficients(initial, x, y, dx, dy, nodes, weights, basis, device, 
     ) * projected
 
 
+from .registry import capability
+@capability(
+    name="euler-dg-2d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-EULER-VORTEX"},
+    description="2D Euler DG (isentropic vortex, Riemann, Sod)",
+    tags=['euler', '2d']
+)
 def solve_euler_dg_2d(
     initial,
     ncells=32,

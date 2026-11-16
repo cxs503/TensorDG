@@ -1,0 +1,915 @@
+{
+  "source_commit": "375183574098ecdf0ee71198b3c55b419c706cfe",
+  "mode": "parity",
+  "static_capabilities": [
+    {
+      "name": "acoustics-2d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D acoustic pulse DG",
+      "tags": [
+        "acoustics",
+        "2d",
+        "wave"
+      ],
+      "function": "acoustics.solve_acoustic_2d",
+      "source_file": "tensordg/acoustics.py",
+      "evidence": {
+        "feature_ledger": "CASE-ACOUSTIC-PULSE"
+      }
+    },
+    {
+      "name": "advection-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D linear advection DG (periodic/Dirichlet); p-order convergence re-measured",
+      "tags": [
+        "advection",
+        "1d",
+        "dg"
+      ],
+      "function": "advection_1d.solve_advection",
+      "source_file": "tensordg/advection_1d.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "advection-2d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D advection DG (solid-body rotation / deformational flow)",
+      "tags": [
+        "advection",
+        "2d",
+        "dg"
+      ],
+      "function": "advection_2d.solve_advection_2d",
+      "source_file": "tensordg/advection_2d.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-SOLID-BODY-ROTATION-2D"
+      }
+    },
+    {
+      "name": "advection-3d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "3D advection DG; p-order convergence",
+      "tags": [
+        "advection",
+        "3d",
+        "dg"
+      ],
+      "function": "advection_3d.solve_advection_3d",
+      "source_file": "tensordg/advection_3d.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "advection-diffusion-2d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D advection-diffusion DG",
+      "tags": [
+        "advection-diffusion",
+        "2d"
+      ],
+      "function": "advection_diffusion.solve",
+      "source_file": "tensordg/advection_diffusion.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-SOLID-BODY-ROTATION-2D"
+      }
+    },
+    {
+      "name": "advection-diffusion-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D advection-diffusion DG (Peclet sweep)",
+      "tags": [
+        "advection-diffusion",
+        "1d"
+      ],
+      "function": "advection_diffusion_1d.solve_advection_diffusion_1d",
+      "source_file": "tensordg/advection_diffusion_1d.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "artificial-viscosity",
+      "category": "limiter",
+      "maturity": "planned",
+      "description": "Artificial-viscosity sensor + exponential filter",
+      "tags": [
+        "artificial-viscosity",
+        "shock"
+      ],
+      "function": "artificial_viscosity.av_sensor",
+      "source_file": "tensordg/artificial_viscosity.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-BLASTWAVE-PERSSON"
+      }
+    },
+    {
+      "name": "burgers-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D Burgers DG (sin initial, steepening)",
+      "tags": [
+        "burgers",
+        "1d",
+        "shock"
+      ],
+      "function": "burgers_1d.solve_burgers",
+      "source_file": "tensordg/burgers_1d.py",
+      "evidence": {
+        "feature_ledger": "CASE-BURGERS-SIN"
+      }
+    },
+    {
+      "name": "burgers-shock-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D Burgers shock-tube DG",
+      "tags": [
+        "burgers",
+        "shock",
+        "1d"
+      ],
+      "function": "burgers_shock_1d.solve_burgers_shock",
+      "source_file": "tensordg/burgers_shock_1d.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-SOD-SHOCK"
+      }
+    },
+    {
+      "name": "certified-reference",
+      "category": "analysis",
+      "maturity": "mature",
+      "description": "Certified-reference audit (Shu-Osher, CLI)",
+      "tags": [
+        "certified-reference",
+        "xvalue"
+      ],
+      "function": "certified_reference.main",
+      "source_file": "tensordg/certified_reference.py",
+      "endpoint": {
+        "wired": true,
+        "cli": "cli:python -m tensordg.certified_reference"
+      },
+      "verified": {
+        "level": "XVALUE",
+        "reference": "Shu-Osher certified reference (m17539)"
+      }
+    },
+    {
+      "name": "char-limiter-2d",
+      "category": "limiter",
+      "maturity": "planned",
+      "description": "2D characteristic TVB limiter",
+      "tags": [
+        "limiter",
+        "characteristic",
+        "2d"
+      ],
+      "function": "char_limiter.apply_characteristic_tvb_limiter_2d",
+      "source_file": "tensordg/char_limiter.py",
+      "evidence": {
+        "feature_ledger": "CASE-SHU-OSHER-DG"
+      }
+    },
+    {
+      "name": "convergence-study",
+      "category": "analysis",
+      "maturity": "planned",
+      "description": "Convergence order / GCI / Richardson extrapolation",
+      "tags": [
+        "convergence",
+        "gci"
+      ],
+      "function": "convergence.observed_order",
+      "source_file": "tensordg/convergence.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "curved-geometry",
+      "category": "geometry",
+      "maturity": "planned",
+      "description": "Curved/isoparametric geometry (GLL nodes/weights)",
+      "tags": [
+        "geometry",
+        "curved",
+        "gll"
+      ],
+      "function": "curved_geometry.gll_nodes_weights",
+      "source_file": "tensordg/curved_geometry.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "dispersion-analysis",
+      "category": "analysis",
+      "maturity": "mature",
+      "description": "Dispersion/dissipation analysis vs closed form (CLI)",
+      "tags": [
+        "dispersion",
+        "analysis",
+        "analytic"
+      ],
+      "function": "dispersion_analysis.main",
+      "source_file": "tensordg/dispersion_analysis.py",
+      "endpoint": {
+        "wired": true,
+        "cli": "cli:python -m tensordg.dispersion_analysis"
+      },
+      "verified": {
+        "level": "ANALYTIC",
+        "reference": "p0 closed-form dispersion relation (max|lambda-closed|=0)"
+      }
+    },
+    {
+      "name": "elastic-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D elastic rod wave DG (d'Alembert exact)",
+      "tags": [
+        "elastic",
+        "1d",
+        "wave"
+      ],
+      "function": "elastic_1d.solve_elastic_1d",
+      "source_file": "tensordg/elastic_1d.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-DALEMBERT-ELASTIC-1D"
+      }
+    },
+    {
+      "name": "euler-dg-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D Euler DG (Sod shock tube, shock-entropy check)",
+      "tags": [
+        "euler",
+        "1d",
+        "shock"
+      ],
+      "function": "euler_dg_1d.solve_euler_dg_1d",
+      "source_file": "tensordg/euler_dg_1d.py",
+      "evidence": {
+        "feature_ledger": "CASE-SOD-DG"
+      }
+    },
+    {
+      "name": "euler-dg-2d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D Euler DG (isentropic vortex, Riemann, Sod)",
+      "tags": [
+        "euler",
+        "2d"
+      ],
+      "function": "euler_dg_2d.solve_euler_dg_2d",
+      "source_file": "tensordg/euler_dg_2d.py",
+      "evidence": {
+        "feature_ledger": "CASE-EULER-VORTEX"
+      }
+    },
+    {
+      "name": "heat-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D heat equation DG",
+      "tags": [
+        "heat",
+        "1d",
+        "parabolic"
+      ],
+      "function": "heat_1d.solve_heat_1d",
+      "source_file": "tensordg/heat_1d.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "kovasznay-ns",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "Kovasznay steady Navier-Stokes DG",
+      "tags": [
+        "ns",
+        "kovasznay",
+        "steady"
+      ],
+      "function": "kovasznay.solve_kovasznay_dg_2d",
+      "source_file": "tensordg/kovasznay.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-KOVASZNAY-NS"
+      }
+    },
+    {
+      "name": "ldg-dirichlet-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D LDG with Dirichlet BC",
+      "tags": [
+        "ldg",
+        "1d",
+        "elliptic"
+      ],
+      "function": "ldg_dirichlet_1d.solve_ldg_dirichlet_1d",
+      "source_file": "tensordg/ldg_dirichlet_1d.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-LDG-POISSON"
+      }
+    },
+    {
+      "name": "tvb-weno-limiters",
+      "category": "limiter",
+      "maturity": "planned",
+      "description": "TVB/WENO limiters (minmod/superbee/WENO) dispatch",
+      "tags": [
+        "limiter",
+        "tvb",
+        "weno"
+      ],
+      "function": "limiters.apply_limiter",
+      "source_file": "tensordg/limiters.py",
+      "evidence": {
+        "feature_ledger": "CASE-SHU-OSHER-DG"
+      }
+    },
+    {
+      "name": "poisson-2d-ldg",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D Poisson LDG; convergence order",
+      "tags": [
+        "poisson",
+        "ldg",
+        "elliptic"
+      ],
+      "function": "poisson_2d_ldg.solve_poisson_2d_ldg",
+      "source_file": "tensordg/poisson_2d_ldg.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-LDG-POISSON"
+      }
+    },
+    {
+      "name": "capability-registry",
+      "category": "infrastructure",
+      "maturity": "planned",
+      "description": "Capability registry (self-registration + dual-mode CLI)",
+      "tags": [
+        "registry",
+        "infrastructure"
+      ],
+      "function": "registry.main",
+      "source_file": "tensordg/registry.py",
+      "evidence": {
+        "feature_ledger": "CAP-REG-DG"
+      }
+    },
+    {
+      "name": "rk-stability",
+      "category": "time_integration",
+      "maturity": "planned",
+      "description": "RK stability function / polynomial analysis",
+      "tags": [
+        "rk",
+        "stability"
+      ],
+      "function": "rk_stability.stability_function",
+      "source_file": "tensordg/rk_stability.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "runge-kutta",
+      "category": "time_integration",
+      "maturity": "planned",
+      "description": "Explicit RK tableaus + step",
+      "tags": [
+        "rk",
+        "time-integration"
+      ],
+      "function": "runge_kutta.rk_step",
+      "source_file": "tensordg/runge_kutta.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "swe-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D shallow-water DG (Ritter dam-break exact)",
+      "tags": [
+        "swe",
+        "1d",
+        "dam-break"
+      ],
+      "function": "swe_1d.solve_swe_1d",
+      "source_file": "tensordg/swe_1d.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-RITTER-DAMBREAK-SWE"
+      }
+    },
+    {
+      "name": "swe-2d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D shallow-water DG",
+      "tags": [
+        "swe",
+        "2d"
+      ],
+      "function": "swe_2d.solve_swe_2d",
+      "source_file": "tensordg/swe_2d.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-RITTER-DAMBREAK-SWE"
+      }
+    },
+    {
+      "name": "wall-flux-extrapolation",
+      "category": "geometry",
+      "maturity": "planned",
+      "description": "Wall heat-flux extrapolation",
+      "tags": [
+        "wall",
+        "flux",
+        "extrapolation"
+      ],
+      "function": "wall_flux_extrapolation.wall_heat_flux_extrapolated",
+      "source_file": "tensordg/wall_flux_extrapolation.py",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "xfamily-order",
+      "category": "analysis",
+      "maturity": "planned",
+      "description": "Cross-family (DG vs FVM/LBM) order comparison",
+      "tags": [
+        "xfamily",
+        "order",
+        "xval"
+      ],
+      "function": "xfamily_order.cross_family_difference",
+      "source_file": "tensordg/xfamily_order.py",
+      "evidence": {
+        "feature_ledger": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE"
+      }
+    }
+  ],
+  "import_capabilities": [
+    {
+      "name": "capability-registry",
+      "category": "infrastructure",
+      "maturity": "planned",
+      "description": "Capability registry (self-registration + dual-mode CLI)",
+      "tags": [
+        "registry",
+        "infrastructure"
+      ],
+      "function": "tensordg.registry.main",
+      "evidence": {
+        "feature_ledger": "CAP-REG-DG"
+      }
+    },
+    {
+      "name": "acoustics-2d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D acoustic pulse DG",
+      "tags": [
+        "acoustics",
+        "2d",
+        "wave"
+      ],
+      "function": "tensordg.acoustics.solve_acoustic_2d",
+      "evidence": {
+        "feature_ledger": "CASE-ACOUSTIC-PULSE"
+      }
+    },
+    {
+      "name": "artificial-viscosity",
+      "category": "limiter",
+      "maturity": "planned",
+      "description": "Artificial-viscosity sensor + exponential filter",
+      "tags": [
+        "artificial-viscosity",
+        "shock"
+      ],
+      "function": "tensordg.artificial_viscosity.av_sensor",
+      "evidence": {
+        "feature_ledger": "CASE-DG-BLASTWAVE-PERSSON"
+      }
+    },
+    {
+      "name": "tvb-weno-limiters",
+      "category": "limiter",
+      "maturity": "planned",
+      "description": "TVB/WENO limiters (minmod/superbee/WENO) dispatch",
+      "tags": [
+        "limiter",
+        "tvb",
+        "weno"
+      ],
+      "function": "tensordg.limiters.apply_limiter",
+      "evidence": {
+        "feature_ledger": "CASE-SHU-OSHER-DG"
+      }
+    },
+    {
+      "name": "runge-kutta",
+      "category": "time_integration",
+      "maturity": "planned",
+      "description": "Explicit RK tableaus + step",
+      "tags": [
+        "rk",
+        "time-integration"
+      ],
+      "function": "tensordg.runge_kutta.rk_step",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "advection-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D linear advection DG (periodic/Dirichlet); p-order convergence re-measured",
+      "tags": [
+        "advection",
+        "1d",
+        "dg"
+      ],
+      "function": "tensordg.advection_1d.solve_advection",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "advection-2d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D advection DG (solid-body rotation / deformational flow)",
+      "tags": [
+        "advection",
+        "2d",
+        "dg"
+      ],
+      "function": "tensordg.advection_2d.solve_advection_2d",
+      "evidence": {
+        "feature_ledger": "CASE-DG-SOLID-BODY-ROTATION-2D"
+      }
+    },
+    {
+      "name": "advection-3d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "3D advection DG; p-order convergence",
+      "tags": [
+        "advection",
+        "3d",
+        "dg"
+      ],
+      "function": "tensordg.advection_3d.solve_advection_3d",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "advection-diffusion-2d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D advection-diffusion DG",
+      "tags": [
+        "advection-diffusion",
+        "2d"
+      ],
+      "function": "tensordg.advection_diffusion.solve",
+      "evidence": {
+        "feature_ledger": "CASE-DG-SOLID-BODY-ROTATION-2D"
+      }
+    },
+    {
+      "name": "advection-diffusion-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D advection-diffusion DG (Peclet sweep)",
+      "tags": [
+        "advection-diffusion",
+        "1d"
+      ],
+      "function": "tensordg.advection_diffusion_1d.solve_advection_diffusion_1d",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "burgers-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D Burgers DG (sin initial, steepening)",
+      "tags": [
+        "burgers",
+        "1d",
+        "shock"
+      ],
+      "function": "tensordg.burgers_1d.solve_burgers",
+      "evidence": {
+        "feature_ledger": "CASE-BURGERS-SIN"
+      }
+    },
+    {
+      "name": "burgers-shock-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D Burgers shock-tube DG",
+      "tags": [
+        "burgers",
+        "shock",
+        "1d"
+      ],
+      "function": "tensordg.burgers_shock_1d.solve_burgers_shock",
+      "evidence": {
+        "feature_ledger": "CASE-DG-SOD-SHOCK"
+      }
+    },
+    {
+      "name": "elastic-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D elastic rod wave DG (d'Alembert exact)",
+      "tags": [
+        "elastic",
+        "1d",
+        "wave"
+      ],
+      "function": "tensordg.elastic_1d.solve_elastic_1d",
+      "evidence": {
+        "feature_ledger": "CASE-DG-DALEMBERT-ELASTIC-1D"
+      }
+    },
+    {
+      "name": "euler-dg-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D Euler DG (Sod shock tube, shock-entropy check)",
+      "tags": [
+        "euler",
+        "1d",
+        "shock"
+      ],
+      "function": "tensordg.euler_dg_1d.solve_euler_dg_1d",
+      "evidence": {
+        "feature_ledger": "CASE-SOD-DG"
+      }
+    },
+    {
+      "name": "convergence-study",
+      "category": "analysis",
+      "maturity": "planned",
+      "description": "Convergence order / GCI / Richardson extrapolation",
+      "tags": [
+        "convergence",
+        "gci"
+      ],
+      "function": "tensordg.convergence.observed_order",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "heat-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D heat equation DG",
+      "tags": [
+        "heat",
+        "1d",
+        "parabolic"
+      ],
+      "function": "tensordg.heat_1d.solve_heat_1d",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "certified-reference",
+      "category": "analysis",
+      "maturity": "mature",
+      "description": "Certified-reference audit (Shu-Osher, CLI)",
+      "tags": [
+        "certified-reference",
+        "xvalue"
+      ],
+      "function": "tensordg.certified_reference.main",
+      "endpoint": {
+        "wired": true,
+        "cli": "cli:python -m tensordg.certified_reference"
+      },
+      "verified": {
+        "level": "XVALUE",
+        "reference": "Shu-Osher certified reference (m17539)"
+      }
+    },
+    {
+      "name": "curved-geometry",
+      "category": "geometry",
+      "maturity": "planned",
+      "description": "Curved/isoparametric geometry (GLL nodes/weights)",
+      "tags": [
+        "geometry",
+        "curved",
+        "gll"
+      ],
+      "function": "tensordg.curved_geometry.gll_nodes_weights",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "char-limiter-2d",
+      "category": "limiter",
+      "maturity": "planned",
+      "description": "2D characteristic TVB limiter",
+      "tags": [
+        "limiter",
+        "characteristic",
+        "2d"
+      ],
+      "function": "tensordg.char_limiter.apply_characteristic_tvb_limiter_2d",
+      "evidence": {
+        "feature_ledger": "CASE-SHU-OSHER-DG"
+      }
+    },
+    {
+      "name": "euler-dg-2d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D Euler DG (isentropic vortex, Riemann, Sod)",
+      "tags": [
+        "euler",
+        "2d"
+      ],
+      "function": "tensordg.euler_dg_2d.solve_euler_dg_2d",
+      "evidence": {
+        "feature_ledger": "CASE-EULER-VORTEX"
+      }
+    },
+    {
+      "name": "dispersion-analysis",
+      "category": "analysis",
+      "maturity": "mature",
+      "description": "Dispersion/dissipation analysis vs closed form (CLI)",
+      "tags": [
+        "dispersion",
+        "analysis",
+        "analytic"
+      ],
+      "function": "tensordg.dispersion_analysis.main",
+      "endpoint": {
+        "wired": true,
+        "cli": "cli:python -m tensordg.dispersion_analysis"
+      },
+      "verified": {
+        "level": "ANALYTIC",
+        "reference": "p0 closed-form dispersion relation (max|lambda-closed|=0)"
+      }
+    },
+    {
+      "name": "kovasznay-ns",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "Kovasznay steady Navier-Stokes DG",
+      "tags": [
+        "ns",
+        "kovasznay",
+        "steady"
+      ],
+      "function": "tensordg.kovasznay.solve_kovasznay_dg_2d",
+      "evidence": {
+        "feature_ledger": "CASE-DG-KOVASZNAY-NS"
+      }
+    },
+    {
+      "name": "ldg-dirichlet-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D LDG with Dirichlet BC",
+      "tags": [
+        "ldg",
+        "1d",
+        "elliptic"
+      ],
+      "function": "tensordg.ldg_dirichlet_1d.solve_ldg_dirichlet_1d",
+      "evidence": {
+        "feature_ledger": "CASE-DG-LDG-POISSON"
+      }
+    },
+    {
+      "name": "poisson-2d-ldg",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D Poisson LDG; convergence order",
+      "tags": [
+        "poisson",
+        "ldg",
+        "elliptic"
+      ],
+      "function": "tensordg.poisson_2d_ldg.solve_poisson_2d_ldg",
+      "evidence": {
+        "feature_ledger": "CASE-DG-LDG-POISSON"
+      }
+    },
+    {
+      "name": "swe-1d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "1D shallow-water DG (Ritter dam-break exact)",
+      "tags": [
+        "swe",
+        "1d",
+        "dam-break"
+      ],
+      "function": "tensordg.swe_1d.solve_swe_1d",
+      "evidence": {
+        "feature_ledger": "CASE-DG-RITTER-DAMBREAK-SWE"
+      }
+    },
+    {
+      "name": "swe-2d",
+      "category": "solver",
+      "maturity": "planned",
+      "description": "2D shallow-water DG",
+      "tags": [
+        "swe",
+        "2d"
+      ],
+      "function": "tensordg.swe_2d.solve_swe_2d",
+      "evidence": {
+        "feature_ledger": "CASE-DG-RITTER-DAMBREAK-SWE"
+      }
+    },
+    {
+      "name": "wall-flux-extrapolation",
+      "category": "geometry",
+      "maturity": "planned",
+      "description": "Wall heat-flux extrapolation",
+      "tags": [
+        "wall",
+        "flux",
+        "extrapolation"
+      ],
+      "function": "tensordg.wall_flux_extrapolation.wall_heat_flux_extrapolated",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "rk-stability",
+      "category": "time_integration",
+      "maturity": "planned",
+      "description": "RK stability function / polynomial analysis",
+      "tags": [
+        "rk",
+        "stability"
+      ],
+      "function": "tensordg.rk_stability.stability_function",
+      "evidence": {
+        "feature_ledger": "CASE-DG-ADVECT-ORDER"
+      }
+    },
+    {
+      "name": "xfamily-order",
+      "category": "analysis",
+      "maturity": "planned",
+      "description": "Cross-family (DG vs FVM/LBM) order comparison",
+      "tags": [
+        "xfamily",
+        "order",
+        "xval"
+      ],
+      "function": "tensordg.xfamily_order.cross_family_difference",
+      "evidence": {
+        "feature_ledger": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE"
+      }
+    }
+  ],
+  "parity_check": {
+    "static_count": 29,
+    "import_count": 29,
+    "static_only": [],
+    "import_only": [],
+    "parity": true
+  },
+  "problems": []
+}

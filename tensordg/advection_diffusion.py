@@ -345,6 +345,15 @@ def _max_speed(velocity, t, geo, domain, device, dtype, ops):
     return float(torch.max(torch.hypot(ax, ay)).item())
 
 
+from .registry import capability
+@capability(
+    name="advection-diffusion-2d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-SOLID-BODY-ROTATION-2D"},
+    description="2D advection-diffusion DG",
+    tags=['advection-diffusion', '2d']
+)
 def solve(nx: int = 32, ny: int | None = None, degree: int = 1,
           final_time: float = 1.0, velocity: Velocity | None = None,
           initial: ScalarField | None = None, nu: float = 0.0,

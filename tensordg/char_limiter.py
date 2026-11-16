@@ -184,6 +184,15 @@ def _transform(matrix: torch.Tensor, coeff: torch.Tensor) -> torch.Tensor:
     return torch.einsum("...ij,...klj->...kli", matrix, coeff)
 
 
+from .registry import capability
+@capability(
+    name="char-limiter-2d",
+    category="limiter",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-SHU-OSHER-DG"},
+    description="2D characteristic TVB limiter",
+    tags=['limiter', 'characteristic', '2d']
+)
 def apply_characteristic_tvb_limiter_2d(
     coeff: torch.Tensor,
     dx: float,

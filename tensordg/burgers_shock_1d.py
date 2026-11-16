@@ -565,6 +565,15 @@ def _prepare(
     return x, dx, coeff, dev
 
 
+from .registry import capability
+@capability(
+    name="burgers-shock-1d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-SOD-SHOCK"},
+    description="1D Burgers shock-tube DG",
+    tags=['burgers', 'shock', '1d']
+)
 def solve_burgers_shock(
     ncells: int = 200,
     degree: int = 2,

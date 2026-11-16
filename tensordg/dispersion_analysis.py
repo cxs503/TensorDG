@@ -358,6 +358,16 @@ def _git_sha() -> str:
         return "unknown"
 
 
+from .registry import capability
+@capability(
+    name="dispersion-analysis",
+    category="analysis",
+    maturity="mature",
+    verified={'level': 'ANALYTIC', 'reference': 'p0 closed-form dispersion relation (max|lambda-closed|=0)'},
+    endpoint={'wired': True, 'cli': 'cli:python -m tensordg.dispersion_analysis'},
+    description="Dispersion/dissipation analysis vs closed form (CLI)",
+    tags=['dispersion', 'analysis', 'analytic']
+)
 def main() -> int:
     out_dir = Path("validation/dispersion_analysis")
     out_dir.mkdir(parents=True, exist_ok=True)
