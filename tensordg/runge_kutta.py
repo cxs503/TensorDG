@@ -226,23 +226,61 @@ def rk_step(rhs: Callable[[torch.Tensor], torch.Tensor], u: torch.Tensor,
     return project(out) if project is not None else out
 
 
-#: Largest order attainable by an explicit RK method with ``s`` stages
-#: (Butcher's order barrier: order ``<= s`` for every explicit method, and
-#: order 5 is impossible with ``s = 5`` -- it needs at least six stages).
-#: Consulted wherever a stage-matched scheme must state what accuracy it can
-#: promise, so no claim is made that no scheme of that size can honour.
-MAX_ORDER_FOR_STAGES: dict[int, int] = {
-    1: 1, 2: 2, 3: 3, 4: 4, 5: 4, 6: 5, 7: 6, 8: 6, 9: 7, 10: 7,
+#: Smallest number of stages with which an explicit RK method of the given
+#: order is *known to exist*: ``s_min(p) = 1, 2, 3, 4, 6, 7, 9, 11`` for
+#: ``p = 1..8`` (Butcher 1964, 1965) continued by ``s_min(9, 10, 11) = 13, 15,
+#: 17`` (Butcher 1985; Hairer & Wanner, *Solving ODEs II*, sec. II.5).
+#: No minimal-stage count above order 11 is published, which is why the table
+#: stops there instead of being extrapolated.
+MIN_STAGES_FOR_ORDER: dict[int, int] = {
+    1: 1, 2: 2, 3: 3, 4: 4, 5: 6, 6: 7, 7: 9, 8: 11, 9: 13, 10: 15, 11: 17,
 }
 
 
+def _max_order_table(max_stages: int = 17) -> dict[int, int]:
+    """Invert :data:`MIN_STAGES_FOR_ORDER` into ``stages -> order``."""
+    return {
+        s: max((p for p, need in MIN_STAGES_FOR_ORDER.items() if need <= s),
+               default=0)
+        for s in range(1, max_stages + 1)
+    }
+
+
+#: Largest order an explicit RK method with ``s`` stages can *promise*, i.e.
+#: the largest ``p`` whose minimal-stage count ``s_min(p)`` is at most ``s``.
+#: This is the quantity consulted wherever a stage-matched scheme must state
+#: what accuracy it can honour, so every value in it is backed by an existence
+#: result -- not by a bound weaker than the truth:
+#:
+#: * ``s = 5`` cannot reach order 5 (Butcher 1965) -> ``4``; that is exactly
+#:   why the reference column ``RK5DG4`` is five stages advancing a degree-4
+#:   space, i.e. :data:`SSP_RK54`.
+#: * ``s = 7`` reaches order 6, ``s = 9`` order 7, ``s = 11`` order 8,
+#:   ``s = 13`` order 9, ``s = 15`` order 10, ``s = 17`` order 11.
+#:
+#: The table is *derived* from :data:`MIN_STAGES_FOR_ORDER` (single source of
+#: truth) rather than transcribed, so the two can never disagree.
+MAX_ORDER_FOR_STAGES: dict[int, int] = _max_order_table()
+
+
 def max_order_for_stages(stages: int) -> int:
-    """Butcher-barrier bound on the order of an explicit ``stages``-stage RK."""
+    """Largest order an explicit ``stages``-stage RK method can promise.
+
+    ``stages`` above :data:`MAX_ORDER_FOR_STAGES`'s range (17 stages, order 11)
+    is refused rather than extrapolated: past that point no minimal-stage count
+    is published, so any number returned here would be a guess that a caller
+    could mistake for a certified cap.
+    """
     if stages < 1:
         raise ValueError("stages must be >= 1")
-    if stages in MAX_ORDER_FOR_STAGES:
+    try:
         return MAX_ORDER_FOR_STAGES[stages]
-    return stages // 2 + 1 if stages % 2 == 0 else (stages + 1) // 2 + 1
+    except KeyError:
+        raise ValueError(
+            f"no published minimal-stage count for {stages} stages: the table "
+            f"is certified up to {max(MAX_ORDER_FOR_STAGES)} stages (order "
+            f"{max(MAX_ORDER_FOR_STAGES.values())}); refusing to extrapolate"
+        ) from None
 
 
 def tableau_for_degree(degree: int) -> RKTableau:
@@ -262,8 +300,20 @@ def tableau_for_degree(degree: int) -> RKTableau:
       6.73 % / 0.34 % / 0.012 % / 0.10 % for ``p = 1..4``, see
       ``validation/advection_order_matched_rk/metrics.json``), so the observed
       rate is the spatial order ``p + 1 = 5``.
-    * ``p >= 5``    no registered tableau has that many stages; the highest
-      order available is used (documented cap, not silently extrapolated).
+    * ``p = 5``     :data:`RK5` -- six stages, fifth order: order and stage
+      count agree once more (six is the minimal stage count for order 5).
+    * ``p >= 6``    no registered tableau has that many stages (seven would be
+      needed at ``p = 6``); the highest-order tableau is used.  This cap is
+      *measured*, not merely declared: at the accuracy case's ``cfl = 0.2`` the
+      degree-6 rung advanced with the six-stage :data:`RK5` still shows the
+      spatial order ``7`` (fitted ``6.993``), because the case's CFL convention
+      ``dt = cfl / ((2p + 1) N)`` shrinks ``dt`` as ``p`` grows and the time
+      error stays far below the spatial one (shares ``E_time / E_total`` of
+      ``0.102 %`` / ``0.001 %`` / ``0.064 %`` for
+      ``p = 4, 5, 6`` at ``N = 16``, versus ``6.73 %`` at ``p = 1``).
+      See
+      ``validation/advection_order_stage_cap/metrics.json`` for the CFL window
+      of every rung.
     """
     if degree < 0:
         raise ValueError("degree must be >= 0")
