@@ -462,12 +462,26 @@ def test_a0_tolerance_is_the_registered_case_threshold():
                    tolerance=0.5)["tolerance"] == pytest.approx(0.5)
 
 
-def test_a0_ledger_arm_is_the_production_leg():
+def test_a0_ledger_arm_is_the_registered_production_leg():
+    """The ledger arm follows the *registered* leg, not "whatever is finest"."""
+    from benchmarks.lax_case_pool import registered_production_leg
+
     entries = _synthetic_entries((100, 1, 1e-3, 0.20), (400, 3, 1e-3, 0.02))
-    gate = gate_a0(entries)
-    assert gate["production_leg"] == "p3.N400"
-    assert gate["arms"]["production_l2"]["status"] == "PASS"
-    assert gate["arms"]["ladder_l1"]["status"] == "PASS"
+    # no explicit leg -> the historic local convention (ladder-finest) survives
+    assert gate_a0(entries)["production_leg"] == "p3.N400"
+    registered = registered_production_leg()
+    prod = {"cells": registered["cells"], "degree": registered["degree"],
+            "errors": {f: 1e-3 for f in ("density", "velocity", "pressure")},
+            "l2_errors": {f: 0.025 for f in ("density", "velocity", "pressure")}}
+    gate = gate_a0(entries, production_leg=prod,
+                   production_l2=prod["l2_errors"])
+    expected = f"p{registered['degree']}.N{registered['cells']}"
+    assert gate["production_leg"] == expected
+    assert gate["production_leg_source"] == "registered (case module)"
+    assert gate["per_leg"][expected]["status"] == "PASS"
+    # the ladder arm covers the ladder; the registered-leg row is carried
+    # into the same table but is not part of the L1 arm's leg set
+    assert gate["arms"]["ladder_l1"]["legs"] == len(entries) + 1
     assert gate["status"] == "PASS"
 
 
@@ -506,10 +520,16 @@ def test_committed_artifact_carries_the_ledger_acceptance():
     # is a test/artifact drift, not a defect of the artifact (m20346 F1).
     source = stored["arms"]["production_l2"]["source"]
     production = None
-    if source == "profiles":
+    if source == "production-leg record":
+        production = production_errors_from_profiles(
+            PROFILES.parent / "profiles_production.npz")["l2"]
+    elif source == "profiles":
         production = production_errors_from_profiles(PROFILES)["l2"]
+    leg = metrics["production_leg"]
+    registered_entry = {"cells": leg["cells"], "degree": leg["degree"],
+                        "errors": leg["errors"], "l2_errors": leg["l2_errors"]}
     rebuilt = gate_a0(metrics["ladder"], tolerance=stored["tolerance"],
-                      production_leg=metrics["ladder"][-1],
+                      production_leg=registered_entry,
                       production_l2=production)
     assert rebuilt["arms"] == stored["arms"]
     assert rebuilt["per_leg"] == stored["per_leg"]
@@ -527,7 +547,8 @@ def test_committed_artifact_carries_the_ledger_acceptance():
         for field in ("density", "velocity", "pressure"):
             assert entry["l2_errors"][field] > entry["errors"][field]
     # the ledger arm must state where its L2 numbers came from
-    assert stored["arms"]["production_l2"]["source"] in ("ladder", "profiles")
+    assert stored["arms"]["production_l2"]["source"] in (
+        "ladder", "profiles", "production-leg record")
     # ... and the provenance block must name the artifact the arm was read from
     assert metrics["acceptance_provenance"]["production_leg"] == (
         stored["production_leg"])

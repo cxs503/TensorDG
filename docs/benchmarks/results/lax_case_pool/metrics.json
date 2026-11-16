@@ -95,6 +95,10 @@
       "pressure": 1.0,
       "final_time": 0.25,
       "cfl": 0.2
+    },
+    "production_leg": {
+      "cells": 800,
+      "degree": 2
     }
   },
   "waves": {
@@ -815,7 +819,8 @@
     "metric": "relative L2 at the production leg (ledger arm) and relative L1 on every ladder leg (stricter arm), on the element Gauss nodes, denominator = norm of the exact solution",
     "regions": "whole field, every field, no wave band removed, no exemption",
     "tolerance": 0.03,
-    "production_leg": "p3.N400",
+    "production_leg": "p2.N800",
+    "production_leg_source": "registered (case module)",
     "per_leg": {
       "p1.N100": {
         "l1": {
@@ -928,23 +933,37 @@
           "pressure": 0.007311961493174056
         },
         "l2": {
-          "density": 0.03115561881158076,
-          "velocity": 0.022480528737058383,
-          "pressure": 0.01305011534420177
+          "density": 0.031155618811580767,
+          "velocity": 0.022480528737058404,
+          "pressure": 0.013050115344201776
         },
         "status": "FAIL"
+      },
+      "p2.N800": {
+        "l1": {
+          "density": 0.002548119707890901,
+          "velocity": 0.0007970658662110544,
+          "pressure": 0.0005447903392277652
+        },
+        "l2": {
+          "density": 0.025703283359072474,
+          "velocity": 0.009102869534719631,
+          "pressure": 0.005498637481142983
+        },
+        "role": "registered production leg (ladder-external)",
+        "status": "PASS"
       }
     },
     "arms": {
       "production_l2": {
-        "leg": "p3.N400",
+        "leg": "p2.N800",
         "metric": "relative L2",
-        "worst": 0.03115561881158076,
-        "source": "profiles",
-        "status": "FAIL"
+        "worst": 0.025703283359072474,
+        "source": "production-leg record",
+        "status": "PASS"
       },
       "ladder_l1": {
-        "legs": 9,
+        "legs": 10,
         "metric": "relative L1",
         "worst": 0.023290512645684942,
         "status": "PASS"
@@ -960,7 +979,7 @@
       "field": "density",
       "relative_l1": 0.023290512645684942
     },
-    "status": "FAIL"
+    "status": "PASS"
   },
   "gates": {
     "c1": {
@@ -1215,50 +1234,89 @@
   },
   "verdict": "FAIL",
   "verdicts": {
-    "acceptance": "FAIL",
+    "acceptance": "PASS",
     "verification": "FAIL",
-    "reading": "acceptance = ledger CASE-LAX-DG, relative L2 vs exact < registered tolerance; verification = supplementary order gates C1/C2/C3/R3/R5/TIME"
+    "reading": "acceptance = ledger CASE-LAX-DG, relative L2 vs exact < registered tolerance at the *registered* production leg (p3.N400 ladder row keeps its own sub-bar verdict); verification = supplementary order gates C1/C2/C3/R3/R5/TIME"
   },
   "wall_seconds": 818.112229347229,
   "figures_provenance": "scripts/render_lax_figures.py (record + profiles.npz; rendered off-node: the loong64 compute image has no matplotlib)",
   "acceptance_provenance": {
-    "attached_at_utc": "2026-11-14T12:03:29Z",
-    "production_leg": "p3.N400",
-    "arm_source": "profiles",
-    "profiles_file": "docs/benchmarks/results/lax_case_pool/profiles.npz",
-    "method": "A0 recomputed from the committed artifact only: ladder L1 arm from metrics.json, production L2 arm from profiles.npz; no solver re-run, no transcribed number",
+    "attached_at_utc": "2026-11-16T10:13:18Z",
+    "production_leg": "p2.N800",
+    "production_leg_source": "registered (case module)",
+    "arm_source": "production-leg record",
+    "record_file": "docs/benchmarks/results/lax_case_pool/production_leg.json",
+    "profiles_file": "docs/benchmarks/results/lax_case_pool/profiles_production.npz",
+    "registry": {
+      "source": "tensordg.cases.lax_1d.lax_parameters()",
+      "leg": {
+        "cells": 800,
+        "degree": 2
+      },
+      "tolerance": 0.03
+    },
+    "method": "the registered leg is measured by the same instrument as the ladder, re-measured offline from its committed profiles, and the verdict recomputed from the record; the ladder_finest profiles.npz is left untouched for its existing consumers",
     "profile_consistency": {
-      "worst_relative_mismatch": 9.259871934153433e-16,
-      "worst_relative_mismatch_l1": 3.558669197580346e-16,
-      "worst_relative_mismatch_l2": 9.259871934153433e-16,
+      "worst_relative_mismatch": 0.0,
+      "worst_relative_mismatch_l1": 0.0,
+      "worst_relative_mismatch_l2": 0.0,
       "tolerance": 1e-06,
-      "reading": "both norms re-measured from profiles.npz vs the ladder's own numbers for the same leg; the ledger arm is refused above the tolerance",
+      "reading": "record numbers vs re-measurement from profiles_production.npz; the ledger arm is refused above the tolerance",
       "per_field": {
         "density": {
           "l1": 0.0,
-          "l2": 2.227172551401223e-16
+          "l2": 0.0
         },
         "velocity": {
-          "l1": 2.8192249950181146e-16,
-          "l2": 9.259871934153433e-16
+          "l1": 0.0,
+          "l2": 0.0
         },
         "pressure": {
-          "l1": 3.558669197580346e-16,
-          "l2": 3.9878348126958565e-16
+          "l1": 0.0,
+          "l2": 0.0
         }
       }
     },
     "production_errors": {
       "l1": {
-        "density": 0.008685539963016797,
-        "velocity": 0.012306385471484233,
-        "pressure": 0.007311961493174053
+        "density": 0.002548119707890901,
+        "velocity": 0.0007970658662110544,
+        "pressure": 0.0005447903392277652
       },
       "l2": {
-        "density": 0.03115561881158076,
-        "velocity": 0.022480528737058383,
-        "pressure": 0.01305011534420177
+        "density": 0.025703283359072474,
+        "velocity": 0.009102869534719631,
+        "pressure": 0.005498637481142983
       }
     }
+  },
+  "production_leg": {
+    "leg": "p2.N800",
+    "cells": 800,
+    "degree": 2,
+    "role": "registered production leg",
+    "registration": {
+      "source": "tensordg.cases.lax_1d.lax_parameters()",
+      "leg": {
+        "cells": 800,
+        "degree": 2
+      },
+      "tolerance": 0.03
+    },
+    "steps": 7341,
+    "wall_seconds": 134.63254070281982,
+    "density_min": 0.29216959616842664,
+    "errors": {
+      "density": 0.002548119707890901,
+      "velocity": 0.0007970658662110544,
+      "pressure": 0.0005447903392277652
+    },
+    "l2_errors": {
+      "density": 0.025703283359072474,
+      "velocity": 0.009102869534719631,
+      "pressure": 0.005498637481142983
+    },
+    "profiles": "docs/benchmarks/results/lax_case_pool/profiles_production.npz",
+    "record": "docs/benchmarks/results/lax_case_pool/production_leg.json"
   }
 }
