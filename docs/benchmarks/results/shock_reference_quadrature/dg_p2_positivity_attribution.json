@@ -1,0 +1,239 @@
+{
+ "attribution": {
+  "fingerprint_tolerance_pp": 0.5,
+  "matching_candidates": [],
+  "rule": "R3: exactly one candidate must reproduce the published number; zero -> unattributed, several -> ambiguous",
+  "status": "unattributed"
+ },
+ "candidates": [
+  {
+   "config": {
+    "cfl": 0.12,
+    "degree": 2,
+    "final_time": 0.2,
+    "limiter": "tvb",
+    "limiter_stage": "final",
+    "ncells": 400,
+    "positivity": "scale",
+    "tvb_constant": 1.0
+   },
+   "id": "registered_scale",
+   "label": "registered gate config, current default (Zhang-Shu scaling)",
+   "measurement": {
+    "fields": {
+     "density": {
+      "delta_pp": 0.014236668042348632,
+      "exact_rel_l2": 0.01165699406432606,
+      "legacy_rel_l2": 0.011799360744749547,
+      "margin_exact_pp": 1.8343005935673937,
+      "pass_exact": true,
+      "pass_legacy": true
+     },
+     "pressure": {
+      "delta_pp": 0.010294893725670308,
+      "exact_rel_l2": 0.008433408204672482,
+      "legacy_rel_l2": 0.008536357141929185,
+      "margin_exact_pp": 2.1566591795327517,
+      "pass_exact": true,
+      "pass_legacy": true
+     },
+     "velocity": {
+      "delta_pp": 0.06813511616822199,
+      "exact_rel_l2": 0.037702151175819876,
+      "legacy_rel_l2": 0.038383502337502096,
+      "margin_exact_pp": -0.7702151175819877,
+      "pass_exact": false,
+      "pass_legacy": false
+     }
+    },
+    "flip": false,
+    "worst_exact": 0.037702151175819876,
+    "worst_field_exact": "velocity",
+    "worst_field_legacy": "velocity",
+    "worst_legacy": 0.038383502337502096
+   },
+   "published_delta_pp": 1.4703502337502097,
+   "reproduces_published": false,
+   "reproduces_published_exact_instrument": false,
+   "role": "registered",
+   "steps": 7281
+  },
+  {
+   "config": {
+    "cfl": 0.12,
+    "degree": 2,
+    "final_time": 0.2,
+    "limiter": "tvb",
+    "limiter_stage": "final",
+    "ncells": 400,
+    "positivity": "collapse",
+    "tvb_constant": 1.0
+   },
+   "id": "historic_collapse",
+   "label": "pre-change policy (first-order collapse of offending cells)",
+   "measurement": {
+    "fields": {
+     "density": {
+      "delta_pp": 0.014236668042348632,
+      "exact_rel_l2": 0.01165699406432606,
+      "legacy_rel_l2": 0.011799360744749547,
+      "margin_exact_pp": 1.8343005935673937,
+      "pass_exact": true,
+      "pass_legacy": true
+     },
+     "pressure": {
+      "delta_pp": 0.010294893725670308,
+      "exact_rel_l2": 0.008433408204672482,
+      "legacy_rel_l2": 0.008536357141929185,
+      "margin_exact_pp": 2.1566591795327517,
+      "pass_exact": true,
+      "pass_legacy": true
+     },
+     "velocity": {
+      "delta_pp": 0.06813511616822199,
+      "exact_rel_l2": 0.037702151175819876,
+      "legacy_rel_l2": 0.038383502337502096,
+      "margin_exact_pp": -0.7702151175819877,
+      "pass_exact": false,
+      "pass_legacy": false
+     }
+    },
+    "flip": false,
+    "worst_exact": 0.037702151175819876,
+    "worst_field_exact": "velocity",
+    "worst_field_legacy": "velocity",
+    "worst_legacy": 0.038383502337502096
+   },
+   "published_delta_pp": 1.4703502337502097,
+   "reproduces_published": false,
+   "reproduces_published_exact_instrument": false,
+   "role": "historic",
+   "steps": 7281
+  },
+  {
+   "config": {
+    "cfl": 0.12,
+    "degree": 2,
+    "final_time": 0.2,
+    "limiter": "tvb",
+    "limiter_stage": "every",
+    "ncells": 400,
+    "positivity": "scale",
+    "tvb_constant": 1.0
+   },
+   "id": "every_scale",
+   "label": "limiter on every RK stage, current default positivity",
+   "measurement": {
+    "fields": {
+     "density": {
+      "delta_pp": 0.014500084400007746,
+      "exact_rel_l2": 0.011595281660913316,
+      "legacy_rel_l2": 0.011740282504913394,
+      "margin_exact_pp": 1.8404718339086683,
+      "pass_exact": true,
+      "pass_legacy": true
+     },
+     "pressure": {
+      "delta_pp": 0.010471162057027437,
+      "exact_rel_l2": 0.008376591934856655,
+      "legacy_rel_l2": 0.00848130355542693,
+      "margin_exact_pp": 2.162340806514335,
+      "pass_exact": true,
+      "pass_legacy": true
+     },
+     "velocity": {
+      "delta_pp": 0.06881201026971775,
+      "exact_rel_l2": 0.03764044222056042,
+      "legacy_rel_l2": 0.0383285623232576,
+      "margin_exact_pp": -0.7640442220560422,
+      "pass_exact": false,
+      "pass_legacy": false
+     }
+    },
+    "flip": false,
+    "worst_exact": 0.03764044222056042,
+    "worst_field_exact": "velocity",
+    "worst_field_legacy": "velocity",
+    "worst_legacy": 0.0383285623232576
+   },
+   "published_delta_pp": 1.46485623232576,
+   "reproduces_published": false,
+   "reproduces_published_exact_instrument": false,
+   "role": "control",
+   "steps": 7282
+  },
+  {
+   "config": {
+    "cfl": 0.12,
+    "degree": 2,
+    "final_time": 0.2,
+    "limiter": "tvb",
+    "limiter_stage": "every",
+    "ncells": 400,
+    "positivity": "collapse",
+    "tvb_constant": 1.0
+   },
+   "id": "every_collapse",
+   "label": "limiter on every RK stage, first-order collapse",
+   "measurement": {
+    "fields": {
+     "density": {
+      "delta_pp": 0.014500084400007746,
+      "exact_rel_l2": 0.011595281660913316,
+      "legacy_rel_l2": 0.011740282504913394,
+      "margin_exact_pp": 1.8404718339086683,
+      "pass_exact": true,
+      "pass_legacy": true
+     },
+     "pressure": {
+      "delta_pp": 0.010471162057027437,
+      "exact_rel_l2": 0.008376591934856655,
+      "legacy_rel_l2": 0.00848130355542693,
+      "margin_exact_pp": 2.162340806514335,
+      "pass_exact": true,
+      "pass_legacy": true
+     },
+     "velocity": {
+      "delta_pp": 0.06881201026971775,
+      "exact_rel_l2": 0.03764044222056042,
+      "legacy_rel_l2": 0.0383285623232576,
+      "margin_exact_pp": -0.7640442220560422,
+      "pass_exact": false,
+      "pass_legacy": false
+     }
+    },
+    "flip": false,
+    "worst_exact": 0.03764044222056042,
+    "worst_field_exact": "velocity",
+    "worst_field_legacy": "velocity",
+    "worst_legacy": 0.0383285623232576
+   },
+   "published_delta_pp": 1.46485623232576,
+   "reproduces_published": false,
+   "reproduces_published_exact_instrument": false,
+   "role": "control",
+   "steps": 7282
+  }
+ ],
+ "case": "Sod / Toro test 1, t=0.2, 3 % gate (CKS1998 E2 p2_n400)",
+ "environment": {
+  "git": "db04255c94b5",
+  "host": "ec6ae0b42a0c",
+  "machine": "loongarch64",
+  "python": "3.11.6"
+ },
+ "legacy_quadrature_order": 8,
+ "published": {
+  "git": "103e778f8c77",
+  "rel_l2": 0.02368,
+  "source": "docs/CKS1998-round2-results.md (E2 p2_n400); docs/AUDIT_m15345_REPRO-DG-CKS1998.md"
+ },
+ "question": "which code state produces the published 2.368 % reading, and what does the registered gate configuration read on current code",
+ "rules": {
+  "R1": "registered gate configuration executed as declared; positivity is the only free variable",
+  "R2": "a candidate reproduces the published number iff |delta| <= 0.5 pp",
+  "R3": "attributed iff exactly one candidate reproduces it",
+  "R4": "no tolerance, published number or registered expectation is edited"
+ },
+ "tolerance": 0.03
+}
