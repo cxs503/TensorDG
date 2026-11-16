@@ -1,0 +1,657 @@
+{
+  "accepted": 1,
+  "cfl_levels": [
+    0.3,
+    0.15,
+    0.075
+  ],
+  "criteria": {
+    "T0": {
+      "criterion": "successive temporal differences strictly decrease on every grid with a full CFL series",
+      "monotone": {
+        "1600": 1,
+        "3200": 1,
+        "6400": 1,
+        "800": 1
+      },
+      "pass": 1,
+      "rows": {
+        "1600": [
+          {
+            "cfls": [
+              0.3,
+              0.15
+            ],
+            "ratio": 2.0,
+            "rel_l1": 0.0010459695373402163,
+            "rel_l1_percent": 0.10459695373402163,
+            "steps": [
+              -1,
+              -1
+            ]
+          },
+          {
+            "cfls": [
+              0.15,
+              0.075
+            ],
+            "ratio": 2.0,
+            "rel_l1": 0.00026149238433504013,
+            "rel_l1_percent": 0.026149238433504012,
+            "steps": [
+              -1,
+              -1
+            ]
+          }
+        ],
+        "3200": [
+          {
+            "cfls": [
+              0.3,
+              0.15
+            ],
+            "ratio": 2.0,
+            "rel_l1": 0.0002627230101227605,
+            "rel_l1_percent": 0.02627230101227605,
+            "steps": [
+              -1,
+              -1
+            ]
+          },
+          {
+            "cfls": [
+              0.15,
+              0.075
+            ],
+            "ratio": 2.0,
+            "rel_l1": 6.56807525306972e-05,
+            "rel_l1_percent": 0.00656807525306972,
+            "steps": [
+              -1,
+              -1
+            ]
+          }
+        ],
+        "6400": [
+          {
+            "cfls": [
+              0.3,
+              0.15
+            ],
+            "ratio": 2.0,
+            "rel_l1": 6.581477163798192e-05,
+            "rel_l1_percent": 0.0065814771637981925,
+            "steps": [
+              -1,
+              -1
+            ]
+          },
+          {
+            "cfls": [
+              0.15,
+              0.075
+            ],
+            "ratio": 2.0,
+            "rel_l1": 1.645369290949716e-05,
+            "rel_l1_percent": 0.0016453692909497162,
+            "steps": [
+              -1,
+              -1
+            ]
+          }
+        ],
+        "800": [
+          {
+            "cfls": [
+              0.3,
+              0.15
+            ],
+            "ratio": 2.0,
+            "rel_l1": 0.004138877854126135,
+            "rel_l1_percent": 0.4138877854126135,
+            "steps": [
+              -1,
+              -1
+            ]
+          },
+          {
+            "cfls": [
+              0.15,
+              0.075
+            ],
+            "ratio": 2.0,
+            "rel_l1": 0.0010347194635315412,
+            "rel_l1_percent": 0.10347194635315413,
+            "steps": [
+              -1,
+              -1
+            ]
+          }
+        ]
+      }
+    },
+    "T1": {
+      "by_grid": {
+        "1600": 0.07183605237041484,
+        "3200": 0.04643949427538337,
+        "6400": 0.028842587527907353,
+        "800": 0.10642971253428989
+      },
+      "criterion": "delta_t / d_fine <= 0.1 on N=3200",
+      "d_fine_percent": 0.5657318500602723,
+      "delta_t_percent": 0.02627230101227605,
+      "legacy_pollution_ratio": 0.07183605237041484,
+      "legacy_reference_grid": 1600,
+      "pass": 1,
+      "pollution_ratio": 0.04643949427538337,
+      "reference_grid": 3200,
+      "state": "CLEAN"
+    },
+    "T2": {
+      "by_grid": {
+        "1600": 2.000000000000077,
+        "3200": 1.9999999999998446,
+        "6400": 1.9999999999998526,
+        "800": 1.9999999999999898
+      },
+      "criterion": "temporal order on N=3200 >= 0.5",
+      "pass": 1,
+      "temporal_order": 1.9999999999998446
+    },
+    "T3": {
+      "band_shift_relative": 0.01227217461252886,
+      "criterion": "|U_t - U|/U <= 0.25 and the corrected ladder is CERTIFIED",
+      "order_shift_relative": 0.13329436502950504,
+      "pass": 1,
+      "raw": {
+        "band_percent": 0.4453274366117238,
+        "classification": "monotonic",
+        "differences": [
+          {
+            "levels": [
+              800,
+              1600
+            ],
+            "refinement": 2,
+            "rel_l1": 0.014775650705292255,
+            "rel_l1_percent": 1.4775650705292254
+          },
+          {
+            "levels": [
+              1600,
+              3200
+            ],
+            "refinement": 2,
+            "rel_l1": 0.005689505847291902,
+            "rel_l1_percent": 0.5689505847291901
+          }
+        ],
+        "observed_order_used": 1.3768464065171246,
+        "reference_ncells": 1600,
+        "verdict": "CERTIFIED"
+      },
+      "raw_four_level": {
+        "band_percent": 0.19216924484257836,
+        "classification": "monotonic",
+        "observed_order_used": 1.3147967390176534,
+        "reference_ncells": 3200,
+        "verdict": "CERTIFIED"
+      },
+      "refusal": null,
+      "temporal_orders_used": {
+        "1600": {
+          "delta_t_percent": 0.10459695373402163,
+          "temporal_order": 2.000000000000077
+        },
+        "3200": {
+          "delta_t_percent": 0.02627230101227605,
+          "temporal_order": 1.9999999999998446
+        },
+        "800": {
+          "delta_t_percent": 0.4138877854126135,
+          "temporal_order": 1.9999999999999898
+        }
+      },
+      "threshold": 0.25,
+      "time_corrected": {
+        "band_percent": 0.45079257267357276,
+        "classification": "monotonic",
+        "differences": [
+          {
+            "levels": [
+              800,
+              1600
+            ],
+            "refinement": 2,
+            "rel_l1": 0.01061201614373122,
+            "rel_l1_percent": 1.061201614373122
+          },
+          {
+            "levels": [
+              1600,
+              3200
+            ],
+            "refinement": 2,
+            "rel_l1": 0.004640583860942098,
+            "rel_l1_percent": 0.4640583860942098
+          }
+        ],
+        "observed_order_used": 1.1933205390172688,
+        "reference_ncells": 1600,
+        "verdict": "CERTIFIED"
+      }
+    },
+    "T4": {
+      "criterion": "no decision flip at 3 % and every leg moves <= 0.5 pp",
+      "flips": [],
+      "legs_raw": [
+        {
+          "cfl": 0.4,
+          "configuration": "DG P1 N=200 CFL=0.4",
+          "decision_3pct": "FAIL",
+          "decision_5pct": "PASS_MARGINAL",
+          "degree": 1,
+          "ncells": 200,
+          "rel_l1_percent": 4.96173260956182
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P1 N=400 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 1,
+          "ncells": 400,
+          "rel_l1_percent": 2.1391380911967635
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P1 N=800 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 1,
+          "ncells": 800,
+          "rel_l1_percent": 0.9105324672371358
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P2 N=200 CFL=0.4",
+          "decision_3pct": "FAIL",
+          "decision_5pct": "PASS_MARGINAL",
+          "degree": 2,
+          "ncells": 200,
+          "rel_l1_percent": 4.96173260956182
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P2 N=400 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 2,
+          "ncells": 400,
+          "rel_l1_percent": 2.1391380911967635
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P2 N=800 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 2,
+          "ncells": 800,
+          "rel_l1_percent": 0.9105324672371358
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P3 N=200 CFL=0.4",
+          "decision_3pct": "FAIL",
+          "decision_5pct": "PASS_MARGINAL",
+          "degree": 3,
+          "ncells": 200,
+          "rel_l1_percent": 4.96173260956182
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P3 N=400 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 3,
+          "ncells": 400,
+          "rel_l1_percent": 2.1391380911967635
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P3 N=800 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 3,
+          "ncells": 800,
+          "rel_l1_percent": 0.9105324672371358
+        },
+        {
+          "cfl": 0.1,
+          "configuration": "DG P2 N=400 CFL=0.1",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 2,
+          "ncells": 400,
+          "rel_l1_percent": 2.1391380911967635
+        },
+        {
+          "cfl": 0.2,
+          "configuration": "DG P2 N=400 CFL=0.2",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 2,
+          "ncells": 400,
+          "rel_l1_percent": 2.1391380911967635
+        }
+      ],
+      "legs_time_corrected": [
+        {
+          "cfl": 0.4,
+          "configuration": "DG P1 N=200 CFL=0.4",
+          "decision_3pct": "FAIL",
+          "decision_5pct": "FAIL",
+          "degree": 1,
+          "ncells": 200,
+          "rel_l1_percent": 5.00310849513831
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P1 N=400 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 1,
+          "ncells": 400,
+          "rel_l1_percent": 2.179401310805217
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P1 N=800 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 1,
+          "ncells": 800,
+          "rel_l1_percent": 0.9503113708529732
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P2 N=200 CFL=0.4",
+          "decision_3pct": "FAIL",
+          "decision_5pct": "FAIL",
+          "degree": 2,
+          "ncells": 200,
+          "rel_l1_percent": 5.00310849513831
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P2 N=400 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 2,
+          "ncells": 400,
+          "rel_l1_percent": 2.179401310805217
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P2 N=800 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 2,
+          "ncells": 800,
+          "rel_l1_percent": 0.9503113708529732
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P3 N=200 CFL=0.4",
+          "decision_3pct": "FAIL",
+          "decision_5pct": "FAIL",
+          "degree": 3,
+          "ncells": 200,
+          "rel_l1_percent": 5.00310849513831
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P3 N=400 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 3,
+          "ncells": 400,
+          "rel_l1_percent": 2.179401310805217
+        },
+        {
+          "cfl": 0.4,
+          "configuration": "DG P3 N=800 CFL=0.4",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 3,
+          "ncells": 800,
+          "rel_l1_percent": 0.9503113708529732
+        },
+        {
+          "cfl": 0.1,
+          "configuration": "DG P2 N=400 CFL=0.1",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 2,
+          "ncells": 400,
+          "rel_l1_percent": 2.179401310805217
+        },
+        {
+          "cfl": 0.2,
+          "configuration": "DG P2 N=400 CFL=0.2",
+          "decision_3pct": "PASS",
+          "decision_5pct": "PASS",
+          "degree": 2,
+          "ncells": 400,
+          "rel_l1_percent": 2.179401310805217
+        }
+      ],
+      "max_abs_move_pp": 0.04137588557648986,
+      "n_flips": 0,
+      "pass": 1,
+      "threshold_pp": 0.5
+    }
+  },
+  "fs_gci": 1.25,
+  "gate_percent": 5.0,
+  "grids": [
+    {
+      "delta_t": 0.004138877854126135,
+      "delta_t_percent": 0.4138877854126135,
+      "differences": [
+        {
+          "cfls": [
+            0.3,
+            0.15
+          ],
+          "ratio": 2.0,
+          "rel_l1": 0.004138877854126135,
+          "rel_l1_percent": 0.4138877854126135,
+          "steps": [
+            -1,
+            -1
+          ]
+        },
+        {
+          "cfls": [
+            0.15,
+            0.075
+          ],
+          "ratio": 2.0,
+          "rel_l1": 0.0010347194635315412,
+          "rel_l1_percent": 0.10347194635315413,
+          "steps": [
+            -1,
+            -1
+          ]
+        }
+      ],
+      "files": [
+        "fv_cfl0p3_n800.npz",
+        "fv_cfl0p15_n800.npz",
+        "fv_cfl0p075_n800.npz"
+      ],
+      "monotone": 1,
+      "ncells": 800,
+      "pollution_ratio": 0.10642971253428989,
+      "spatial_difference": 0.03888836825329823,
+      "spatial_pair": [
+        400,
+        800
+      ],
+      "temporal_order": 1.9999999999999898
+    },
+    {
+      "delta_t": 0.0010459695373402163,
+      "delta_t_percent": 0.10459695373402163,
+      "differences": [
+        {
+          "cfls": [
+            0.3,
+            0.15
+          ],
+          "ratio": 2.0,
+          "rel_l1": 0.0010459695373402163,
+          "rel_l1_percent": 0.10459695373402163,
+          "steps": [
+            -1,
+            -1
+          ]
+        },
+        {
+          "cfls": [
+            0.15,
+            0.075
+          ],
+          "ratio": 2.0,
+          "rel_l1": 0.00026149238433504013,
+          "rel_l1_percent": 0.026149238433504012,
+          "steps": [
+            -1,
+            -1
+          ]
+        }
+      ],
+      "files": [
+        "fv_cfl0p3_n1600.npz",
+        "fv_cfl0p15_n1600.npz",
+        "fv_cfl0p075_n1600.npz"
+      ],
+      "monotone": 1,
+      "ncells": 1600,
+      "pollution_ratio": 0.07183605237041484,
+      "spatial_difference": 0.01456050969987587,
+      "spatial_pair": [
+        800,
+        1600
+      ],
+      "temporal_order": 2.000000000000077
+    },
+    {
+      "delta_t": 0.0002627230101227605,
+      "delta_t_percent": 0.02627230101227605,
+      "differences": [
+        {
+          "cfls": [
+            0.3,
+            0.15
+          ],
+          "ratio": 2.0,
+          "rel_l1": 0.0002627230101227605,
+          "rel_l1_percent": 0.02627230101227605,
+          "steps": [
+            -1,
+            -1
+          ]
+        },
+        {
+          "cfls": [
+            0.15,
+            0.075
+          ],
+          "ratio": 2.0,
+          "rel_l1": 6.56807525306972e-05,
+          "rel_l1_percent": 0.00656807525306972,
+          "steps": [
+            -1,
+            -1
+          ]
+        }
+      ],
+      "files": [
+        "fv_cfl0p3_n3200.npz",
+        "fv_cfl0p15_n3200.npz",
+        "fv_cfl0p075_n3200.npz"
+      ],
+      "monotone": 1,
+      "ncells": 3200,
+      "pollution_ratio": 0.04643949427538337,
+      "spatial_difference": 0.005657318500602722,
+      "spatial_pair": [
+        1600,
+        3200
+      ],
+      "temporal_order": 1.9999999999998446
+    },
+    {
+      "delta_t": 6.581477163798192e-05,
+      "delta_t_percent": 0.0065814771637981925,
+      "differences": [
+        {
+          "cfls": [
+            0.3,
+            0.15
+          ],
+          "ratio": 2.0,
+          "rel_l1": 6.581477163798192e-05,
+          "rel_l1_percent": 0.0065814771637981925,
+          "steps": [
+            -1,
+            -1
+          ]
+        },
+        {
+          "cfls": [
+            0.15,
+            0.075
+          ],
+          "ratio": 2.0,
+          "rel_l1": 1.645369290949716e-05,
+          "rel_l1_percent": 0.0016453692909497162,
+          "steps": [
+            -1,
+            -1
+          ]
+        }
+      ],
+      "files": [
+        "fv_cfl0p3_n6400.npz",
+        "fv_cfl0p15_n6400.npz",
+        "fv_cfl0p075_n6400.npz"
+      ],
+      "monotone": 1,
+      "ncells": 6400,
+      "pollution_ratio": 0.028842587527907353,
+      "spatial_difference": 0.002281860861973678,
+      "spatial_pair": [
+        3200,
+        6400
+      ],
+      "temporal_order": 1.9999999999998526
+    }
+  ],
+  "headline": {
+    "band_shift_relative": 0.01227217461252886,
+    "n_decision_flips": 0,
+    "pollution_ratio": 0.04643949427538337,
+    "raw_band_percent": 0.4453274366117238,
+    "state": "CLEAN",
+    "time_corrected_band_percent": 0.45079257267357276
+  },
+  "p_min_spatial": 0.5,
+  "question": "is the round-2 certified reference polluted by its time step?",
+  "rawdir": "/tmp/xval_time_pollution_d53_a690/raw",
+  "reference_grid": 3200,
+  "strict_percent": 3.0,
+  "verdict": "TIME_CLEAN"
+}

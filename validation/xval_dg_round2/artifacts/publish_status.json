@@ -1,0 +1,16 @@
+{
+  "real_data": false,
+  "branch_label": "\u5408\u6210\u57fa\u51c6\u6811\uff08\u771f\u503c\u5df2\u77e5\uff1b\u771f\u5b9e\u6570\u636e\u5728\u96c6\u7fa4\u6392\u961f\uff09",
+  "verdict": "TIME_CLEAN",
+  "accepted": true,
+  "jobs": "cj4305 (N=800), cj4306 (N=1600), cj4307 (N=3200), cj4308 (N=6400 CFL=0.15)",
+  "headline": {
+    "pollution_ratio": 0.04643949427538337,
+    "state": "CLEAN",
+    "time_corrected_band_percent": 0.45079257267357276,
+    "raw_band_percent": 0.4453274366117238,
+    "band_shift_relative": 0.01227217461252886,
+    "n_decision_flips": 0
+  },
+  "tests": "rc=4"
+}
