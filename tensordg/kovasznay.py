@@ -328,6 +328,15 @@ def velocity_l2_error(coeff, ncells=24, degree=3, domain=None,
 # Solver driver
 # ---------------------------------------------------------------------------
 
+from .registry import capability
+@capability(
+    name="kovasznay-ns",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-KOVASZNAY-NS"},
+    description="Kovasznay steady Navier-Stokes DG",
+    tags=['ns', 'kovasznay', 'steady']
+)
 def solve_kovasznay_dg_2d(
     ncells=24,
     degree=3,

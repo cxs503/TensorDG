@@ -99,6 +99,15 @@ def _rhs(
     return out
 
 
+from .registry import capability
+@capability(
+    name="burgers-1d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-BURGERS-SIN"},
+    description="1D Burgers DG (sin initial, steepening)",
+    tags=['burgers', '1d', 'shock']
+)
 def solve_burgers(
     ncells: int = 64,
     degree: int = 2,

@@ -493,6 +493,15 @@ def _positivity_filter(coeff: torch.Tensor, check_points: torch.Tensor,
     return torch.where(feasible[:, None, None], scaled, average_only)
 
 
+from .registry import capability
+@capability(
+    name="swe-1d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-RITTER-DAMBREAK-SWE"},
+    description="1D shallow-water DG (Ritter dam-break exact)",
+    tags=['swe', '1d', 'dam-break']
+)
 def solve_swe_1d(
     initial_h: Callable[[torch.Tensor], torch.Tensor],
     initial_u: Callable[[torch.Tensor], torch.Tensor],

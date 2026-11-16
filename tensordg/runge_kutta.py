@@ -198,6 +198,15 @@ def get_tableau(name: str) -> RKTableau:
         ) from None
 
 
+from .registry import capability
+@capability(
+    name="runge-kutta",
+    category="time_integration",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-ADVECT-ORDER"},
+    description="Explicit RK tableaus + step",
+    tags=['rk', 'time-integration']
+)
 def rk_step(rhs: Callable[[torch.Tensor], torch.Tensor], u: torch.Tensor,
             dt: float, tableau: RKTableau,
             project: Callable[[torch.Tensor], torch.Tensor] | None = None,

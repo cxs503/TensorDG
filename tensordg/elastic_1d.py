@@ -407,6 +407,15 @@ def _project(profile: Callable[[torch.Tensor], torch.Tensor],
     return coeff
 
 
+from .registry import capability
+@capability(
+    name="elastic-1d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-DALEMBERT-ELASTIC-1D"},
+    description="1D elastic rod wave DG (d'Alembert exact)",
+    tags=['elastic', '1d', 'wave']
+)
 def solve_elastic_1d(ncells: int = 100, degree: int = 2,
                      final_time: float = 0.2, length: float = 1.0,
                      rho: float = 1.0, young: float = 1.0, cfl: float = 0.3,

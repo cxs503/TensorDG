@@ -95,6 +95,15 @@ def legendre_derivative_matrix(degree: int) -> np.ndarray:
     return D
 
 
+from .registry import capability
+@capability(
+    name="curved-geometry",
+    category="geometry",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-ADVECT-ORDER"},
+    description="Curved/isoparametric geometry (GLL nodes/weights)",
+    tags=['geometry', 'curved', 'gll']
+)
 def gll_nodes_weights(degree: int):
     """Legendre-Gauss-Lobatto nodes/weights (exactness ``2*degree - 1``)."""
     if degree == 0:
