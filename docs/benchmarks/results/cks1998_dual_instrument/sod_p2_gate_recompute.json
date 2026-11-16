@@ -1,0 +1,329 @@
+{
+  "case": "Sod / Toro test 1, DG P2 TVB, N=400, t=0.2, gate tolerance 3 %",
+  "question": "does the current tree read the published 2.368 % or the cached 3.8384 %?",
+  "published_velocity_rel_l2": 0.02368,
+  "cached_velocity_rel_l2": 0.03838350233770419,
+  "tolerance": 0.03,
+  "git": {
+    "head": null,
+    "branch": null,
+    "dirty": false
+  },
+  "environment": {
+    "machine": "loongarch64",
+    "python": "3.11.6",
+    "torch": "2.13.0",
+    "torch_threads": 1
+  },
+  "runs": [
+    {
+      "config": {
+        "tag": "documented",
+        "degree": 2,
+        "ncells": 400,
+        "cfl": 0.12,
+        "limiter": "tvb",
+        "tvb_constant": 1.0,
+        "limiter_stage": "final",
+        "positivity": "scale"
+      },
+      "steps": 7281,
+      "seconds": 95.29,
+      "fields": {
+        "density": {
+          "legacy_rel_l2": 0.011799360744750154,
+          "exact_rel_l2": 0.011656994064326714,
+          "delta_pp": 0.014236668042343949,
+          "pass_legacy": true,
+          "pass_exact": true
+        },
+        "velocity": {
+          "legacy_rel_l2": 0.038383502337704184,
+          "exact_rel_l2": 0.037702151176021596,
+          "delta_pp": 0.06813511616825876,
+          "pass_legacy": false,
+          "pass_exact": false
+        },
+        "pressure": {
+          "legacy_rel_l2": 0.00853635714193548,
+          "exact_rel_l2": 0.008433408204678923,
+          "delta_pp": 0.010294893725655736,
+          "pass_legacy": true,
+          "pass_exact": true
+        }
+      },
+      "worst_field_legacy": "velocity",
+      "worst_field_exact": "velocity",
+      "worst_legacy": 0.038383502337704184,
+      "worst_exact": 0.037702151176021596,
+      "gap_to_published_pp": 1.4703502337704184,
+      "reproduces_published": false
+    },
+    {
+      "config": {
+        "tag": "limiter_stage=every",
+        "degree": 2,
+        "ncells": 400,
+        "cfl": 0.12,
+        "limiter": "tvb",
+        "tvb_constant": 1.0,
+        "limiter_stage": "every",
+        "positivity": "scale"
+      },
+      "steps": 7282,
+      "seconds": 103.38,
+      "fields": {
+        "density": {
+          "legacy_rel_l2": 0.011740282504913687,
+          "exact_rel_l2": 0.011595281660913651,
+          "delta_pp": 0.014500084400003582,
+          "pass_legacy": true,
+          "pass_exact": true
+        },
+        "velocity": {
+          "legacy_rel_l2": 0.03832856232341199,
+          "exact_rel_l2": 0.03764044222071454,
+          "delta_pp": 0.06881201026974482,
+          "pass_legacy": false,
+          "pass_exact": false
+        },
+        "pressure": {
+          "legacy_rel_l2": 0.008481303555432123,
+          "exact_rel_l2": 0.008376591934861942,
+          "delta_pp": 0.01047116205701807,
+          "pass_legacy": true,
+          "pass_exact": true
+        }
+      },
+      "worst_field_legacy": "velocity",
+      "worst_field_exact": "velocity",
+      "worst_legacy": 0.03832856232341199,
+      "worst_exact": 0.03764044222071454,
+      "gap_to_published_pp": 1.4648562323411989,
+      "reproduces_published": false
+    },
+    {
+      "config": {
+        "tag": "positivity=collapse",
+        "degree": 2,
+        "ncells": 400,
+        "cfl": 0.12,
+        "limiter": "tvb",
+        "tvb_constant": 1.0,
+        "limiter_stage": "final",
+        "positivity": "collapse"
+      },
+      "steps": 7281,
+      "seconds": 84.03,
+      "fields": {
+        "density": {
+          "legacy_rel_l2": 0.011799360744750154,
+          "exact_rel_l2": 0.011656994064326714,
+          "delta_pp": 0.014236668042343949,
+          "pass_legacy": true,
+          "pass_exact": true
+        },
+        "velocity": {
+          "legacy_rel_l2": 0.038383502337704184,
+          "exact_rel_l2": 0.037702151176021596,
+          "delta_pp": 0.06813511616825876,
+          "pass_legacy": false,
+          "pass_exact": false
+        },
+        "pressure": {
+          "legacy_rel_l2": 0.00853635714193548,
+          "exact_rel_l2": 0.008433408204678923,
+          "delta_pp": 0.010294893725655736,
+          "pass_legacy": true,
+          "pass_exact": true
+        }
+      },
+      "worst_field_legacy": "velocity",
+      "worst_field_exact": "velocity",
+      "worst_legacy": 0.038383502337704184,
+      "worst_exact": 0.037702151176021596,
+      "gap_to_published_pp": 1.4703502337704184,
+      "reproduces_published": false
+    },
+    {
+      "config": {
+        "tag": "tvb_constant=0",
+        "degree": 2,
+        "ncells": 400,
+        "cfl": 0.12,
+        "limiter": "tvb",
+        "tvb_constant": 0.0,
+        "limiter_stage": "final",
+        "positivity": "scale"
+      },
+      "steps": 7281,
+      "seconds": 95.43,
+      "fields": {
+        "density": {
+          "legacy_rel_l2": 0.011799315445625796,
+          "exact_rel_l2": 0.011656948755190761,
+          "delta_pp": 0.01423666904350352,
+          "pass_legacy": true,
+          "pass_exact": true
+        },
+        "velocity": {
+          "legacy_rel_l2": 0.03838379310353283,
+          "exact_rel_l2": 0.03770244153405488,
+          "delta_pp": 0.06813515694779476,
+          "pass_legacy": false,
+          "pass_exact": false
+        },
+        "pressure": {
+          "legacy_rel_l2": 0.008536406929463343,
+          "exact_rel_l2": 0.008433457340271547,
+          "delta_pp": 0.01029495891917958,
+          "pass_legacy": true,
+          "pass_exact": true
+        }
+      },
+      "worst_field_legacy": "velocity",
+      "worst_field_exact": "velocity",
+      "worst_legacy": 0.03838379310353283,
+      "worst_exact": 0.03770244153405488,
+      "gap_to_published_pp": 1.4703793103532827,
+      "reproduces_published": false
+    },
+    {
+      "config": {
+        "tag": "cfl=0.3",
+        "degree": 2,
+        "ncells": 400,
+        "cfl": 0.3,
+        "limiter": "tvb",
+        "tvb_constant": 1.0,
+        "limiter_stage": "final",
+        "positivity": "scale"
+      },
+      "steps": 2912,
+      "seconds": 38.81,
+      "fields": {
+        "density": {
+          "legacy_rel_l2": 0.011857460779958827,
+          "exact_rel_l2": 0.011718094118783308,
+          "delta_pp": 0.013936666117551899,
+          "pass_legacy": true,
+          "pass_exact": true
+        },
+        "velocity": {
+          "legacy_rel_l2": 0.03828842232987589,
+          "exact_rel_l2": 0.03761473283709057,
+          "delta_pp": 0.06736894927853246,
+          "pass_legacy": false,
+          "pass_exact": false
+        },
+        "pressure": {
+          "legacy_rel_l2": 0.00856384252206564,
+          "exact_rel_l2": 0.008463061728555562,
+          "delta_pp": 0.010078079351007706,
+          "pass_legacy": true,
+          "pass_exact": true
+        }
+      },
+      "worst_field_legacy": "velocity",
+      "worst_field_exact": "velocity",
+      "worst_legacy": 0.03828842232987589,
+      "worst_exact": 0.03761473283709057,
+      "gap_to_published_pp": 1.4608422329875894,
+      "reproduces_published": false
+    },
+    {
+      "config": {
+        "tag": "cfl=0.05",
+        "degree": 2,
+        "ncells": 400,
+        "cfl": 0.05,
+        "limiter": "tvb",
+        "tvb_constant": 1.0,
+        "limiter_stage": "final",
+        "positivity": "scale"
+      },
+      "steps": 17476,
+      "seconds": 238.83,
+      "fields": {
+        "density": {
+          "legacy_rel_l2": 0.011766844912971818,
+          "exact_rel_l2": 0.011622993719706525,
+          "delta_pp": 0.014385119326529305,
+          "pass_legacy": true,
+          "pass_exact": true
+        },
+        "velocity": {
+          "legacy_rel_l2": 0.03836169643619495,
+          "exact_rel_l2": 0.03767656017161417,
+          "delta_pp": 0.06851362645807768,
+          "pass_legacy": false,
+          "pass_exact": false
+        },
+        "pressure": {
+          "legacy_rel_l2": 0.008507677854832325,
+          "exact_rel_l2": 0.00840373497192026,
+          "delta_pp": 0.010394288291206387,
+          "pass_legacy": true,
+          "pass_exact": true
+        }
+      },
+      "worst_field_legacy": "velocity",
+      "worst_field_exact": "velocity",
+      "worst_legacy": 0.03836169643619495,
+      "worst_exact": 0.03767656017161417,
+      "gap_to_published_pp": 1.4681696436194949,
+      "reproduces_published": false
+    },
+    {
+      "config": {
+        "tag": "p3_n400",
+        "degree": 3,
+        "ncells": 400,
+        "cfl": 0.12,
+        "limiter": "tvb",
+        "tvb_constant": 1.0,
+        "limiter_stage": "final",
+        "positivity": "scale"
+      },
+      "steps": 10197,
+      "seconds": 141.87,
+      "fields": {
+        "density": {
+          "legacy_rel_l2": 0.01159878751421871,
+          "exact_rel_l2": 0.011450316910685484,
+          "delta_pp": 0.014847060353322637,
+          "pass_legacy": true,
+          "pass_exact": true
+        },
+        "velocity": {
+          "legacy_rel_l2": 0.03767338026906785,
+          "exact_rel_l2": 0.03697600477427604,
+          "delta_pp": 0.06973754947918118,
+          "pass_legacy": false,
+          "pass_exact": false
+        },
+        "pressure": {
+          "legacy_rel_l2": 0.008271179797471022,
+          "exact_rel_l2": 0.008164241909117862,
+          "delta_pp": 0.010693788835315979,
+          "pass_legacy": true,
+          "pass_exact": true
+        }
+      },
+      "worst_field_legacy": "velocity",
+      "worst_field_exact": "velocity",
+      "worst_legacy": 0.03767338026906785,
+      "worst_exact": 0.03697600477427604,
+      "gap_to_published_pp": 1.399338026906785,
+      "reproduces_published": false
+    }
+  ],
+  "verdict": {
+    "current_code_worst_legacy_pct": 3.8383502337704183,
+    "current_code_gate_passes": false,
+    "current_code_margin_pp": -0.7702151176021598,
+    "agrees_with_cached_profile": true,
+    "configs_reproducing_published": [],
+    "attribution": "no neighbouring configuration reproduces the published reading => code-state mismatch, the published 2.368 % is stale"
+  }
+}
