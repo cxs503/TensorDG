@@ -1,0 +1,94 @@
+{
+  "accepted": true,
+  "cfls": [
+    0.4,
+    0.2,
+    0.1
+  ],
+  "criteria": {
+    "D0": {
+      "band_percent": 0.04162173159427086,
+      "criterion": "finest temporal difference exceeds the certified band (the time error is measurable, not merely bounded)",
+      "delta_t_percent": 0.0025015538732027364,
+      "note": "time error below the band: bounded by 0.041622 %, not measurable",
+      "resolvable": false
+    },
+    "D1": {
+      "bound_only": true,
+      "criterion": "R_leg = delta_t / err <= 0.1",
+      "delta_t_percent": 0.0025015538732027364,
+      "err_percent": 1.5171656768803217,
+      "pass": true,
+      "ratio": 0.0016488336846286736,
+      "state": "CLEAN"
+    },
+    "D2": {
+      "criterion": "same decision at 3 % for every CFL and |err - err_finest| <= 0.5 pp",
+      "decisions": {
+        "0.1": "PASS",
+        "0.2": "PASS",
+        "0.4": "PASS"
+      },
+      "max_abs_move_pp": 0.0033946207449362387,
+      "pass": true,
+      "threshold_pp": 0.5
+    },
+    "D3": {
+      "criterion": "temporal order usable (differences and errors both monotone)",
+      "differences_monotone": true,
+      "errors_monotone_in_cfl": false,
+      "temporal_order": 1.017774117636713,
+      "usable": false
+    }
+  },
+  "degree": 2,
+  "differences": [
+    {
+      "pair": [
+        0.4,
+        0.2
+      ],
+      "rel_l1_percent": 0.005065127692587586
+    },
+    {
+      "pair": [
+        0.2,
+        0.1
+      ],
+      "rel_l1_percent": 0.0025015538732027364
+    }
+  ],
+  "legs": [
+    {
+      "cfl": 0.4,
+      "configuration": "DG P2 N=400 CFL=0.4",
+      "decision": "PASS",
+      "file": "dg_cfl0p4_limweno_n400_p2.npz",
+      "rel_l1_percent": 1.5137710561353854
+    },
+    {
+      "cfl": 0.2,
+      "configuration": "DG P2 N=400 CFL=0.2",
+      "decision": "PASS",
+      "file": "dg_cfl0p2_limweno_n400_p2.npz",
+      "rel_l1_percent": 1.5156332600080202
+    },
+    {
+      "cfl": 0.1,
+      "configuration": "DG P2 N=400 CFL=0.1",
+      "decision": "PASS",
+      "file": "dg_cfl0p1_limweno_n400_p2.npz",
+      "rel_l1_percent": 1.5171656768803217
+    }
+  ],
+  "ncells": 400,
+  "question": "is the shipped DG P2 N=400 leg error at CFL=0.4 time-converged?",
+  "reference": {
+    "band_percent": 0.04162173159427086,
+    "observed_order_used": 1.1767348864087728,
+    "reference_ncells": 3200,
+    "verdict": "CERTIFIED"
+  },
+  "state": "DG_AXIS_CLEAN",
+  "tolerance_percent": 3.0
+}
