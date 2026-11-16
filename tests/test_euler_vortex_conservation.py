@@ -286,7 +286,7 @@ class TestConservationVsSolutionError:
 
     def test_fine_mesh_conservation_still_exact(self):
         """On a fine mesh where solution error is tiny, conservation is still exact."""
-        record = run_dg({"task": "dg", "degree": 2, "cells": 32, "final_time": 1.0, "cfl": 0.2})
+        record = run_dg({"task": "dg", "degree": 2, "cells": 16, "final_time": 1.0, "cfl": 0.2})
         # Solution error is tiny
         assert record["max_relative_l2"] < 0.001, "Solution error should be tiny on fine mesh"
         # Conservation is still exact
