@@ -1,0 +1,22 @@
+{
+ "label": "t_G2.2_om1.0",
+ "kind": "tensorlbm-mcmp",
+ "params": {
+  "G": -2.2,
+  "psi": "linear",
+  "ny": 64,
+  "nx": 4,
+  "steps": 4000,
+  "omega": 1.0,
+  "tau": 1.0,
+  "width": 6.0,
+  "avg_steps": 1000,
+  "rho_bar": 0.5
+ },
+ "wall_seconds": 26.700684309005737,
+ "diverged": true,
+ "diverged_at_step": 3100,
+ "n_averaged_samples": 0,
+ "verdict": "FAIL",
+ "fail_stage": "divergence"
+}
