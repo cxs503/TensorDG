@@ -1,0 +1,2 @@
+family,final_time,steps,max_percent,mass_drift,momentum_x_drift,momentum_y_drift,energy_drift,entropy_drift,density_min_relative_error
+dg_d1_n32_cfl0.2,1,282,0.201010,1.056e-14,1.041e-14,1.070e-14,1.171e-14,4.468e-05,1.447536e-02
