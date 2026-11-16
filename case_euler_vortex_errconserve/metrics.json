@@ -363,8 +363,7 @@
     "replay_tolerance": 1e-09,
     "counts": {
       "recorded": 21,
-      "replayed": 18,
-      "unverified": 1
+      "replayed": 19
     },
     "rows": {
       "dg_d1_n32_t10_cfl0.2": {
@@ -561,7 +560,12 @@
         "family": "dg_d2_n64_cfl0.2",
         "recorded_reference_model": null,
         "wall_seconds": 2665.5340604782104,
-        "status": "unverified"
+        "certificate": {
+          "reference_model": "min_image",
+          "replay_delta": 0.0,
+          "wall_seconds": 2084.3729989528656
+        },
+        "status": "replayed"
       },
       "dg_d2_n64_t1_cfl0.2": {
         "family": "dg_d2_n64_cfl0.2",
@@ -1185,8 +1189,7 @@
       "worst_at": "dg_d2_n32_t5_cfl0.4",
       "counts": {
         "recorded": 21,
-        "replayed": 18,
-        "unverified": 1
+        "replayed": 19
       },
       "present": 40,
       "replayed": {
@@ -1198,6 +1201,7 @@
         "dg_d2_n32_t2_cfl0.4": 4.4194977682856375e-13,
         "dg_d2_n32_t5_cfl0.2": 0.0,
         "dg_d2_n32_t5_cfl0.4": 1.1334673056073137e-12,
+        "dg_d2_n64_t10_cfl0.2": 0.0,
         "dg_d2_n64_t1_cfl0.2": 9.753498921567536e-13,
         "dg_d2_n64_t2_cfl0.2": 0.0,
         "p0_n128_t10_cfl0.4": 3.4451555256475413e-16,
@@ -1209,26 +1213,22 @@
         "p0_n64_t1_cfl0.4": 0.0,
         "p0_n64_t5_cfl0.4": 0.0
       },
-      "unverified": [
-        "dg_d2_n64_t10_cfl0.2"
-      ],
+      "unverified": [],
       "config_mismatch": [],
       "certificate_rejected": [],
-      "certificates_on_disk": 18,
-      "passed": false,
-      "status": "not_evaluated"
+      "certificates_on_disk": 19,
+      "passed": true,
+      "status": "passed"
     },
     "informational": [
       "C1x_crosscheck_raw",
       "C7x_design_space_spread",
       "C7x_amplification_prediction"
     ],
-    "all_passed": false,
-    "not_evaluated": [
-      "C11_provenance_integrity"
-    ],
+    "all_passed": true,
+    "not_evaluated": [],
     "failed": [],
-    "verdict": "INCOMPLETE"
+    "verdict": "PASS"
   },
   "family_count": {
     "dg_d1_n32_cfl0.2": 4,

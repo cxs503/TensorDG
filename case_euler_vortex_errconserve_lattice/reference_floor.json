@@ -13,727 +13,54 @@
     1.0
   ],
   "t_ref": 1.0,
+  "config_source": "results",
+  "coverage": {
+    "records_with_config": 40,
+    "compared": 40,
+    "uncovered": []
+  },
   "checkpoints": [
     {
-      "task_key": "dg_d2_n32_t1_cfl0.2",
+      "task_key": "dg_d1_n32_t10_cfl0.2",
       "task": "dg",
-      "degree": 2,
-      "cells": 32,
-      "final_time": 1.0,
-      "cfl": 0.2,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.092898292772523e-13,
-        "velocity_x": 1.4459333532913848e-06,
-        "velocity_y": 1.4459333532909416e-06,
-        "pressure": 5.754280555502847e-13
-      },
-      "floor_percent": {
-        "density": 4.092898292772523e-11,
-        "velocity_x": 0.00014459333532913847,
-        "velocity_y": 0.00014459333532909415,
-        "pressure": 5.7542805555028465e-11
-      },
-      "max_floor_percent": 0.00014459333532913847,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 4.95214359829303e-05,
-        "velocity_x": 9.42059361961997e-05,
-        "velocity_y": 9.431214706130781e-05,
-        "pressure": 6.966562656570692e-05
-      },
-      "published_max_percent": 0.00943121470613078,
-      "floor_over_published": {
-        "density": 8.264902282283004e-09,
-        "velocity_x": 0.015348643744487455,
-        "velocity_y": 0.015331358667415446,
-        "pressure": 8.259856171788752e-09
-      },
-      "worst_floor_over_error": 0.015348643744487455,
-      "worst_floor_over_error_field": "velocity_x"
-    },
-    {
-      "task_key": "dg_d2_n32_t2_cfl0.2",
-      "task": "dg",
-      "degree": 2,
-      "cells": 32,
-      "final_time": 2.0,
-      "cfl": 0.2,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.293636868744538e-13,
-        "velocity_x": 1.4620783144221081e-06,
-        "velocity_y": 1.4620783144227673e-06,
-        "pressure": 6.036501779965349e-13
-      },
-      "floor_percent": {
-        "density": 4.293636868744538e-11,
-        "velocity_x": 0.00014620783144221082,
-        "velocity_y": 0.00014620783144227674,
-        "pressure": 6.03650177996535e-11
-      },
-      "max_floor_percent": 0.00014620783144227674,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 5.0679581571519614e-05,
-        "velocity_x": 9.689709783192219e-05,
-        "velocity_y": 9.649487726342877e-05,
-        "pressure": 7.145799106406075e-05
-      },
-      "published_max_percent": 0.009689709783192219,
-      "floor_over_published": {
-        "density": 8.472123753992143e-09,
-        "velocity_x": 0.015088979413586058,
-        "velocity_y": 0.015151874958411807,
-        "pressure": 8.447623128046993e-09
-      },
-      "worst_floor_over_error": 0.015151874958411807,
-      "worst_floor_over_error_field": "velocity_y"
-    },
-    {
-      "task_key": "dg_d2_n32_t5_cfl0.2",
-      "task": "dg",
-      "degree": 2,
-      "cells": 32,
-      "final_time": 5.0,
-      "cfl": 0.2,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.3193822623397567e-13,
-        "velocity_x": 1.46417715590413e-06,
-        "velocity_y": 1.4641771559041445e-06,
-        "pressure": 6.072696272245313e-13
-      },
-      "floor_percent": {
-        "density": 4.3193822623397564e-11,
-        "velocity_x": 0.00014641771559041302,
-        "velocity_y": 0.00014641771559041446,
-        "pressure": 6.072696272245313e-11
-      },
-      "max_floor_percent": 0.00014641771559041446,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 5.36515484444988e-05,
-        "velocity_x": 0.00011131861013866376,
-        "velocity_y": 0.00011099177795480814,
-        "pressure": 7.523052753980554e-05
-      },
-      "published_max_percent": 0.011131861013866377,
-      "floor_over_published": {
-        "density": 8.050806337505899e-09,
-        "velocity_x": 0.013153031232426287,
-        "velocity_y": 0.013191762334866866,
-        "pressure": 8.072117092402633e-09
-      },
-      "worst_floor_over_error": 0.013191762334866866,
-      "worst_floor_over_error_field": "velocity_y"
-    },
-    {
-      "task_key": "dg_d2_n32_t10_cfl0.2",
-      "task": "dg",
-      "degree": 2,
+      "degree": 1,
       "cells": 32,
       "final_time": 10.0,
       "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
       "images": 3,
       "floor_relative_l2": {
-        "density": 4.319382262339756e-13,
-        "velocity_x": 1.464177155904132e-06,
-        "velocity_y": 1.4641771559041445e-06,
-        "pressure": 6.07269627223636e-13
+        "density": 4.2972301501668044e-13,
+        "velocity_x": 1.4640074356904554e-06,
+        "velocity_y": 1.4640074356904397e-06,
+        "pressure": 6.041551177750901e-13
       },
       "floor_percent": {
-        "density": 4.3193822623397564e-11,
-        "velocity_x": 0.0001464177155904132,
-        "velocity_y": 0.00014641771559041446,
-        "pressure": 6.072696272236359e-11
+        "density": 4.2972301501668044e-11,
+        "velocity_x": 0.00014640074356904554,
+        "velocity_y": 0.00014640074356904396,
+        "pressure": 6.041551177750901e-11
       },
-      "max_floor_percent": 0.00014641771559041446,
+      "max_floor_percent": 0.00014640074356904554,
       "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
       "published_errors": {
-        "density": 6.12330429513006e-05,
-        "velocity_x": 0.00015162621307949022,
-        "velocity_y": 0.0001508726376872591,
-        "pressure": 8.516345284178145e-05
+        "density": 0.0023847070469818826,
+        "velocity_x": 0.005522729436541994,
+        "velocity_y": 0.005523139729682261,
+        "pressure": 0.0035211829092861384
       },
-      "published_max_percent": 0.015162621307949022,
+      "published_max_percent": 0.552313972968226,
       "floor_over_published": {
-        "density": 7.0540055730612875e-09,
-        "velocity_x": 0.009656490960019791,
-        "velocity_y": 0.009704722992509804,
-        "pressure": 7.130636522591856e-09
+        "density": 1.8019949895335935e-10,
+        "velocity_x": 0.00026508766227141664,
+        "velocity_y": 0.0002650679699125885,
+        "pressure": 1.7157731743551278e-10
       },
-      "worst_floor_over_error": 0.009704722992509804,
-      "worst_floor_over_error_field": "velocity_y"
-    },
-    {
-      "task_key": "p0_n128_t1_cfl0.4",
-      "task": "p0",
-      "degree": 0,
-      "cells": 128,
-      "final_time": 1.0,
-      "cfl": 0.4,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.3058653337835243e-13,
-        "velocity_x": 1.4630368847104902e-06,
-        "velocity_y": 1.4630368847106242e-06,
-        "pressure": 6.053692712858707e-13
-      },
-      "floor_percent": {
-        "density": 4.305865333783524e-11,
-        "velocity_x": 0.00014630368847104902,
-        "velocity_y": 0.0001463036884710624,
-        "pressure": 6.053692712858707e-11
-      },
-      "max_floor_percent": 0.0001463036884710624,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 0.012797130016822153,
-        "velocity_x": 0.02802201871001497,
-        "velocity_y": 0.028169111512511273,
-        "pressure": 0.020258279184190014
-      },
-      "published_max_percent": 2.8169111512511273,
-      "floor_over_published": {
-        "density": 3.364711719052127e-11,
-        "velocity_x": 5.2210260076216636e-05,
-        "velocity_y": 5.1937629770850894e-05,
-        "pressure": 2.988256138548596e-11
-      },
-      "worst_floor_over_error": 5.2210260076216636e-05,
-      "worst_floor_over_error_field": "velocity_x"
-    },
-    {
-      "task_key": "p0_n128_t2_cfl0.4",
-      "task": "p0",
-      "degree": 0,
-      "cells": 128,
-      "final_time": 2.0,
-      "cfl": 0.4,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.318612463510717e-13,
-        "velocity_x": 1.4640451559596905e-06,
-        "velocity_y": 1.4640451559591965e-06,
-        "pressure": 6.071613729316592e-13
-      },
-      "floor_percent": {
-        "density": 4.3186124635107174e-11,
-        "velocity_x": 0.00014640451559596907,
-        "velocity_y": 0.00014640451559591965,
-        "pressure": 6.071613729316593e-11
-      },
-      "max_floor_percent": 0.00014640451559596907,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 0.025325364108770773,
-        "velocity_x": 0.04861721326808966,
-        "velocity_y": 0.04875468300660123,
-        "pressure": 0.03956139506508547
-      },
-      "published_max_percent": 4.875468300660122,
-      "floor_over_published": {
-        "density": 1.7052518751408905e-11,
-        "velocity_x": 3.0113720173275122e-05,
-        "velocity_y": 3.002881088901695e-05,
-        "pressure": 1.5347319575883806e-11
-      },
-      "worst_floor_over_error": 3.0113720173275122e-05,
-      "worst_floor_over_error_field": "velocity_x"
-    },
-    {
-      "task_key": "p0_n128_t5_cfl0.4",
-      "task": "p0",
-      "degree": 0,
-      "cells": 128,
-      "final_time": 5.0,
-      "cfl": 0.4,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.32028897987467e-13,
-        "velocity_x": 1.46417847611637e-06,
-        "velocity_y": 1.4641784761163761e-06,
-        "pressure": 6.073970189742279e-13
-      },
-      "floor_percent": {
-        "density": 4.3202889798746696e-11,
-        "velocity_x": 0.000146417847611637,
-        "velocity_y": 0.00014641784761163762,
-        "pressure": 6.073970189742279e-11
-      },
-      "max_floor_percent": 0.00014641784761163762,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 0.045336651146094364,
-        "velocity_x": 0.08874939714897016,
-        "velocity_y": 0.08876448131193004,
-        "pressure": 0.07006939801940298
-      },
-      "published_max_percent": 8.876448131193005,
-      "floor_over_published": {
-        "density": 9.529351795201687e-12,
-        "velocity_x": 1.6497897711447836e-05,
-        "velocity_y": 1.6495094146622238e-05,
-        "pressure": 8.668506311500392e-12
-      },
-      "worst_floor_over_error": 1.6497897711447836e-05,
-      "worst_floor_over_error_field": "velocity_x"
-    },
-    {
-      "task_key": "p0_n128_t10_cfl0.4",
-      "task": "p0",
-      "degree": 0,
-      "cells": 128,
-      "final_time": 10.0,
-      "cfl": 0.4,
-      "images": 3,
-      "floor_relative_l2": {
-        "density": 4.3202889798730624e-13,
-        "velocity_x": 1.464178476116385e-06,
-        "velocity_y": 1.4641784761163761e-06,
-        "pressure": 6.073970189728157e-13
-      },
-      "floor_percent": {
-        "density": 4.3202889798730624e-11,
-        "velocity_x": 0.00014641784761163851,
-        "velocity_y": 0.00014641784761163762,
-        "pressure": 6.073970189728158e-11
-      },
-      "max_floor_percent": 0.00014641784761163851,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 0.05421643154279739,
-        "velocity_x": 0.12083560382810407,
-        "velocity_y": 0.12084610727586263,
-        "pressure": 0.07900366258271696
-      },
-      "published_max_percent": 12.084610727586263,
-      "floor_over_published": {
-        "density": 7.968597078291128e-12,
-        "velocity_x": 1.2117111428509656e-05,
-        "velocity_y": 1.2116058258906167e-05,
-        "pressure": 7.6882134209521e-12
-      },
-      "worst_floor_over_error": 1.2117111428509656e-05,
-      "worst_floor_over_error_field": "velocity_x"
-    },
-    {
-      "task_key": "dg_d2_n32_t1_cfl0.4",
-      "task": "dg",
-      "degree": 2,
-      "cells": 32,
-      "final_time": 1.0,
-      "cfl": 0.4,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.092898292772523e-13,
-        "velocity_x": 1.4459333532913848e-06,
-        "velocity_y": 1.4459333532909416e-06,
-        "pressure": 5.754280555502847e-13
-      },
-      "floor_percent": {
-        "density": 4.092898292772523e-11,
-        "velocity_x": 0.00014459333532913847,
-        "velocity_y": 0.00014459333532909415,
-        "pressure": 5.7542805555028465e-11
-      },
-      "max_floor_percent": 0.00014459333532913847,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 4.9521773320890785e-05,
-        "velocity_x": 9.420698053046868e-05,
-        "velocity_y": 9.431289954286675e-05,
-        "pressure": 6.966599423057191e-05
-      },
-      "published_max_percent": 0.009431289954286675,
-      "floor_over_published": {
-        "density": 8.264845982496212e-09,
-        "velocity_x": 0.015348473596643266,
-        "velocity_y": 0.015331236345180346,
-        "pressure": 8.259812580091858e-09
-      },
-      "worst_floor_over_error": 0.015348473596643266,
-      "worst_floor_over_error_field": "velocity_x"
-    },
-    {
-      "task_key": "dg_d2_n32_t2_cfl0.4",
-      "task": "dg",
-      "degree": 2,
-      "cells": 32,
-      "final_time": 2.0,
-      "cfl": 0.4,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.293636868744538e-13,
-        "velocity_x": 1.4620783144221081e-06,
-        "velocity_y": 1.4620783144227673e-06,
-        "pressure": 6.036501779965349e-13
-      },
-      "floor_percent": {
-        "density": 4.293636868744538e-11,
-        "velocity_x": 0.00014620783144221082,
-        "velocity_y": 0.00014620783144227674,
-        "pressure": 6.03650177996535e-11
-      },
-      "max_floor_percent": 0.00014620783144227674,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 5.068021041747933e-05,
-        "velocity_x": 9.690238135314187e-05,
-        "velocity_y": 9.649779586160562e-05,
-        "pressure": 7.145880516375104e-05
-      },
-      "published_max_percent": 0.009690238135314187,
-      "floor_over_published": {
-        "density": 8.47201863089283e-09,
-        "velocity_x": 0.015088156699615546,
-        "velocity_y": 0.015151416686445754,
-        "pressure": 8.447526887879578e-09
-      },
-      "worst_floor_over_error": 0.015151416686445754,
-      "worst_floor_over_error_field": "velocity_y"
-    },
-    {
-      "task_key": "dg_d2_n32_t5_cfl0.4",
-      "task": "dg",
-      "degree": 2,
-      "cells": 32,
-      "final_time": 5.0,
-      "cfl": 0.4,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.3193822623397567e-13,
-        "velocity_x": 1.46417715590413e-06,
-        "velocity_y": 1.4641771559041445e-06,
-        "pressure": 6.072696272245313e-13
-      },
-      "floor_percent": {
-        "density": 4.3193822623397564e-11,
-        "velocity_x": 0.00014641771559041302,
-        "velocity_y": 0.00014641771559041446,
-        "pressure": 6.072696272245313e-11
-      },
-      "max_floor_percent": 0.00014641771559041446,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 5.365595524416049e-05,
-        "velocity_x": 0.00011134077908819252,
-        "velocity_y": 0.0001110131782160478,
-        "pressure": 7.523582971925535e-05
-      },
-      "published_max_percent": 0.011134077908819252,
-      "floor_over_published": {
-        "density": 8.050145119371155e-09,
-        "velocity_x": 0.013150412345726108,
-        "velocity_y": 0.013189219329029953,
-        "pressure": 8.071548216994154e-09
-      },
-      "worst_floor_over_error": 0.013189219329029953,
-      "worst_floor_over_error_field": "velocity_y"
-    },
-    {
-      "task_key": "dg_d2_n32_t10_cfl0.4",
-      "task": "dg",
-      "degree": 2,
-      "cells": 32,
-      "final_time": 10.0,
-      "cfl": 0.4,
-      "images": 3,
-      "floor_relative_l2": {
-        "density": 4.319382262339756e-13,
-        "velocity_x": 1.464177155904132e-06,
-        "velocity_y": 1.4641771559041445e-06,
-        "pressure": 6.07269627223636e-13
-      },
-      "floor_percent": {
-        "density": 4.3193822623397564e-11,
-        "velocity_x": 0.0001464177155904132,
-        "velocity_y": 0.00014641771559041446,
-        "pressure": 6.072696272236359e-11
-      },
-      "max_floor_percent": 0.00014641771559041446,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 6.124838585394743e-05,
-        "velocity_x": 0.00015169321142605364,
-        "velocity_y": 0.0001509319072800648,
-        "pressure": 8.518229325426584e-05
-      },
-      "published_max_percent": 0.015169321142605365,
-      "floor_over_published": {
-        "density": 7.052238523705313e-09,
-        "velocity_x": 0.009652225977283624,
-        "velocity_y": 0.009700912035698724,
-        "pressure": 7.129059385745341e-09
-      },
-      "worst_floor_over_error": 0.009700912035698724,
-      "worst_floor_over_error_field": "velocity_y"
-    },
-    {
-      "task_key": "dg_d2_n64_t1_cfl0.2",
-      "task": "dg",
-      "degree": 2,
-      "cells": 64,
-      "final_time": 1.0,
-      "cfl": 0.2,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.3136607292142095e-13,
-        "velocity_x": 1.4636473056549483e-06,
-        "velocity_y": 1.4636473056555421e-06,
-        "pressure": 6.064652345978425e-13
-      },
-      "floor_percent": {
-        "density": 4.3136607292142096e-11,
-        "velocity_x": 0.00014636473056549483,
-        "velocity_y": 0.00014636473056555422,
-        "pressure": 6.064652345978425e-11
-      },
-      "max_floor_percent": 0.00014636473056555422,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 5.898946868239216e-06,
-        "velocity_x": 1.1491199259052786e-05,
-        "velocity_y": 1.1487894109436742e-05,
-        "pressure": 8.36133382380212e-06
-      },
-      "published_max_percent": 0.0011491199259052785,
-      "floor_over_published": {
-        "density": 7.312594647087912e-08,
-        "velocity_x": 0.12737115358102286,
-        "velocity_y": 0.12740779917645895,
-        "pressure": 7.253211597310281e-08
-      },
-      "worst_floor_over_error": 0.12740779917645895,
-      "worst_floor_over_error_field": "velocity_y"
-    },
-    {
-      "task_key": "dg_d2_n64_t2_cfl0.2",
-      "task": "dg",
-      "degree": 2,
-      "cells": 64,
-      "final_time": 2.0,
-      "cfl": 0.2,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.262668656276011e-13,
-        "velocity_x": 1.4596126681899028e-06,
-        "velocity_y": 1.459612668189604e-06,
-        "pressure": 5.992961733042951e-13
-      },
-      "floor_percent": {
-        "density": 4.262668656276011e-11,
-        "velocity_x": 0.00014596126681899028,
-        "velocity_y": 0.0001459612668189604,
-        "pressure": 5.992961733042951e-11
-      },
-      "max_floor_percent": 0.00014596126681899028,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 5.949706059552273e-06,
-        "velocity_x": 1.1529982784080826e-05,
-        "velocity_y": 1.1524289454847396e-05,
-        "pressure": 8.431072270057154e-06
-      },
-      "published_max_percent": 0.0011529982784080825,
-      "floor_over_published": {
-        "density": 7.164502941170148e-08,
-        "velocity_x": 0.1265927881700878,
-        "velocity_y": 0.12665532863509044,
-        "pressure": 7.108184512101596e-08
-      },
-      "worst_floor_over_error": 0.12665532863509044,
-      "worst_floor_over_error_field": "velocity_y"
-    },
-    {
-      "task_key": "dg_d2_n64_t10_cfl0.2",
-      "task": "dg",
-      "degree": 2,
-      "cells": 64,
-      "final_time": 10.0,
-      "cfl": 0.2,
-      "images": 3,
-      "floor_relative_l2": {
-        "density": 4.320284625697643e-13,
-        "velocity_x": 1.4641784701688483e-06,
-        "velocity_y": 1.4641784701688549e-06,
-        "pressure": 6.073965592630046e-13
-      },
-      "floor_percent": {
-        "density": 4.3202846256976425e-11,
-        "velocity_x": 0.00014641784701688483,
-        "velocity_y": 0.00014641784701688548,
-        "pressure": 6.073965592630047e-11
-      },
-      "max_floor_percent": 0.00014641784701688548,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 6.0804903948027595e-06,
-        "velocity_x": 1.2245109983286513e-05,
-        "velocity_y": 1.2238443233458051e-05,
-        "pressure": 8.583393883816162e-06
-      },
-      "published_max_percent": 0.0012245109983286514,
-      "floor_over_published": {
-        "density": 7.105158211236325e-08,
-        "velocity_x": 0.11957250462979277,
-        "velocity_y": 0.1196376403631152,
-        "pressure": 7.076414848073559e-08
-      },
-      "worst_floor_over_error": 0.1196376403631152,
-      "worst_floor_over_error_field": "velocity_y"
-    },
-    {
-      "task_key": "p0_n64_t1_cfl0.4",
-      "task": "p0",
-      "degree": 0,
-      "cells": 64,
-      "final_time": 1.0,
-      "cfl": 0.4,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.3136607292142095e-13,
-        "velocity_x": 1.4636473056549483e-06,
-        "velocity_y": 1.4636473056555421e-06,
-        "pressure": 6.064652345978425e-13
-      },
-      "floor_percent": {
-        "density": 4.3136607292142096e-11,
-        "velocity_x": 0.00014636473056549483,
-        "velocity_y": 0.00014636473056555422,
-        "pressure": 6.064652345978425e-11
-      },
-      "max_floor_percent": 0.00014636473056555422,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 0.022037888804151466,
-        "velocity_x": 0.04919058603539243,
-        "velocity_y": 0.04926036192305211,
-        "pressure": 0.034387611465351554
-      },
-      "published_max_percent": 4.926036192305211,
-      "floor_over_published": {
-        "density": 1.9573838345175825e-11,
-        "velocity_x": 2.975462224828669e-05,
-        "velocity_y": 2.9712475680585832e-05,
-        "pressure": 1.7636154671833133e-11
-      },
-      "worst_floor_over_error": 2.975462224828669e-05,
-      "worst_floor_over_error_field": "velocity_x"
-    },
-    {
-      "task_key": "p0_n256_t1_cfl0.4",
-      "task": "p0",
-      "degree": 0,
-      "cells": 256,
-      "final_time": 1.0,
-      "cfl": 0.4,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.319868161681919e-13,
-        "velocity_x": 1.4641451105410644e-06,
-        "velocity_y": 1.464145110541155e-06,
-        "pressure": 6.07337896897326e-13
-      },
-      "floor_percent": {
-        "density": 4.319868161681919e-11,
-        "velocity_x": 0.00014641451105410643,
-        "velocity_y": 0.0001464145110541155,
-        "pressure": 6.07337896897326e-11
-      },
-      "max_floor_percent": 0.0001464145110541155,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 0.006932598940904834,
-        "velocity_x": 0.01504285983042485,
-        "velocity_y": 0.01518646310926804,
-        "pressure": 0.01103948970065621
-      },
-      "published_max_percent": 1.518646310926804,
-      "floor_over_published": {
-        "density": 6.231239104563137e-11,
-        "velocity_x": 9.733156640732409e-05,
-        "velocity_y": 9.641119857905638e-05,
-        "pressure": 5.5015033608050254e-11
-      },
-      "worst_floor_over_error": 9.733156640732409e-05,
-      "worst_floor_over_error_field": "velocity_x"
-    },
-    {
-      "task_key": "p0_n64_t5_cfl0.4",
-      "task": "p0",
-      "degree": 0,
-      "cells": 64,
-      "final_time": 5.0,
-      "cfl": 0.4,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.3202846257112663e-13,
-        "velocity_x": 1.46417847016886e-06,
-        "velocity_y": 1.464178470168865e-06,
-        "pressure": 6.07396559263105e-13
-      },
-      "floor_percent": {
-        "density": 4.3202846257112664e-11,
-        "velocity_x": 0.000146417847016886,
-        "velocity_y": 0.0001464178470168865,
-        "pressure": 6.07396559263105e-11
-      },
-      "max_floor_percent": 0.0001464178470168865,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 0.057256871780877704,
-        "velocity_x": 0.120235164048954,
-        "velocity_y": 0.12022628930303392,
-        "pressure": 0.08475816979753498
-      },
-      "published_max_percent": 12.0235164048954,
-      "floor_over_published": {
-        "density": 7.545443003321967e-12,
-        "velocity_x": 1.2177622759118261e-05,
-        "velocity_y": 1.2178521674892252e-05,
-        "pressure": 7.166230237321263e-12
-      },
-      "worst_floor_over_error": 1.2178521674892252e-05,
-      "worst_floor_over_error_field": "velocity_y"
-    },
-    {
-      "task_key": "p0_n64_t10_cfl0.4",
-      "task": "p0",
-      "degree": 0,
-      "cells": 64,
-      "final_time": 10.0,
-      "cfl": 0.4,
-      "images": 3,
-      "floor_relative_l2": {
-        "density": 4.320284625697643e-13,
-        "velocity_x": 1.4641784701688483e-06,
-        "velocity_y": 1.4641784701688549e-06,
-        "pressure": 6.073965592630046e-13
-      },
-      "floor_percent": {
-        "density": 4.3202846256976425e-11,
-        "velocity_x": 0.00014641784701688483,
-        "velocity_y": 0.00014641784701688548,
-        "pressure": 6.073965592630047e-11
-      },
-      "max_floor_percent": 0.00014641784701688548,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": {
-        "density": 0.060186592500874526,
-        "velocity_x": 0.14304321900509542,
-        "velocity_y": 0.1430474063391442,
-        "pressure": 0.08358660977013066
-      },
-      "published_max_percent": 14.30474063391442,
-      "floor_over_published": {
-        "density": 7.1781512230234135e-12,
-        "velocity_x": 1.0235916671566877e-05,
-        "velocity_y": 1.0235617042209802e-05,
-        "pressure": 7.2666729866588675e-12
-      },
-      "worst_floor_over_error": 1.0235916671566877e-05,
+      "worst_floor_over_error": 0.00026508766227141664,
       "worst_floor_over_error_field": "velocity_x"
     },
     {
@@ -743,6 +70,11 @@
       "cells": 32,
       "final_time": 1.0,
       "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
       "images": 2,
       "floor_relative_l2": {
         "density": 4.032153105212584e-13,
@@ -781,6 +113,11 @@
       "cells": 32,
       "final_time": 2.0,
       "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
       "images": 2,
       "floor_relative_l2": {
         "density": 4.2792032180468944e-13,
@@ -819,6 +156,11 @@
       "cells": 32,
       "final_time": 5.0,
       "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
       "images": 2,
       "floor_relative_l2": {
         "density": 4.2972301501668044e-13,
@@ -834,226 +176,21 @@
       },
       "max_floor_percent": 0.00014640074356904556,
       "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": null,
-      "floor_over_published": null,
-      "worst_floor_over_error": null,
-      "worst_floor_over_error_field": null
-    },
-    {
-      "task_key": "dg_d1_n32_t10_cfl0.2",
-      "task": "dg",
-      "degree": 1,
-      "cells": 32,
-      "final_time": 10.0,
-      "cfl": 0.2,
-      "images": 3,
-      "floor_relative_l2": {
-        "density": 4.2972301501668044e-13,
-        "velocity_x": 1.4640074356904554e-06,
-        "velocity_y": 1.4640074356904397e-06,
-        "pressure": 6.041551177750901e-13
+      "published_errors": {
+        "density": 0.001491123329344656,
+        "velocity_x": 0.0034960147526116887,
+        "velocity_y": 0.003494225689916055,
+        "pressure": 0.002179152989937882
       },
-      "floor_percent": {
-        "density": 4.2972301501668044e-11,
-        "velocity_x": 0.00014640074356904554,
-        "velocity_y": 0.00014640074356904396,
-        "pressure": 6.041551177750901e-11
+      "published_max_percent": 0.34960147526116886,
+      "floor_over_published": {
+        "density": 2.8818744000574543e-10,
+        "velocity_x": 0.000418764661847257,
+        "velocity_y": 0.0004189790716482343,
+        "pressure": 2.7724309424980416e-10
       },
-      "max_floor_percent": 0.00014640074356904554,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": null,
-      "floor_over_published": null,
-      "worst_floor_over_error": null,
-      "worst_floor_over_error_field": null
-    },
-    {
-      "task_key": "dg_d3_n32_t1_cfl0.2",
-      "task": "dg",
-      "degree": 3,
-      "cells": 32,
-      "final_time": 1.0,
-      "cfl": 0.2,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.464020127601064e-13,
-        "velocity_x": 1.476462636390404e-06,
-        "velocity_y": 1.4764626363905076e-06,
-        "pressure": 6.276043703744236e-13
-      },
-      "floor_percent": {
-        "density": 4.464020127601064e-11,
-        "velocity_x": 0.0001476462636390404,
-        "velocity_y": 0.00014764626363905075,
-        "pressure": 6.276043703744235e-11
-      },
-      "max_floor_percent": 0.00014764626363905075,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": null,
-      "floor_over_published": null,
-      "worst_floor_over_error": null,
-      "worst_floor_over_error_field": null
-    },
-    {
-      "task_key": "dg_d3_n32_t2_cfl0.2",
-      "task": "dg",
-      "degree": 3,
-      "cells": 32,
-      "final_time": 2.0,
-      "cfl": 0.2,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.1305942312131393e-13,
-        "velocity_x": 1.4486333313469274e-06,
-        "velocity_y": 1.4486333313462996e-06,
-        "pressure": 5.807273939678406e-13
-      },
-      "floor_percent": {
-        "density": 4.130594231213139e-11,
-        "velocity_x": 0.00014486333313469275,
-        "velocity_y": 0.00014486333313462995,
-        "pressure": 5.807273939678406e-11
-      },
-      "max_floor_percent": 0.00014486333313469275,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": null,
-      "floor_over_published": null,
-      "worst_floor_over_error": null,
-      "worst_floor_over_error_field": null
-    },
-    {
-      "task_key": "dg_d3_n32_t5_cfl0.2",
-      "task": "dg",
-      "degree": 3,
-      "cells": 32,
-      "final_time": 5.0,
-      "cfl": 0.2,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.320262048707814e-13,
-        "velocity_x": 1.4641784707028615e-06,
-        "velocity_y": 1.4641784707028518e-06,
-        "pressure": 6.073933257374986e-13
-      },
-      "floor_percent": {
-        "density": 4.320262048707814e-11,
-        "velocity_x": 0.00014641784707028615,
-        "velocity_y": 0.00014641784707028518,
-        "pressure": 6.073933257374986e-11
-      },
-      "max_floor_percent": 0.00014641784707028615,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": null,
-      "floor_over_published": null,
-      "worst_floor_over_error": null,
-      "worst_floor_over_error_field": null
-    },
-    {
-      "task_key": "dg_d3_n32_t10_cfl0.2",
-      "task": "dg",
-      "degree": 3,
-      "cells": 32,
-      "final_time": 10.0,
-      "cfl": 0.2,
-      "images": 3,
-      "floor_relative_l2": {
-        "density": 4.320262048713986e-13,
-        "velocity_x": 1.464178470702862e-06,
-        "velocity_y": 1.4641784707028522e-06,
-        "pressure": 6.07393325737348e-13
-      },
-      "floor_percent": {
-        "density": 4.320262048713986e-11,
-        "velocity_x": 0.0001464178470702862,
-        "velocity_y": 0.00014641784707028523,
-        "pressure": 6.07393325737348e-11
-      },
-      "max_floor_percent": 0.0001464178470702862,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": null,
-      "floor_over_published": null,
-      "worst_floor_over_error": null,
-      "worst_floor_over_error_field": null
-    },
-    {
-      "task_key": "dg_d1_n64_t1_cfl0.2",
-      "task": "dg",
-      "degree": 1,
-      "cells": 64,
-      "final_time": 1.0,
-      "cfl": 0.2,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.319149047561766e-13,
-        "velocity_x": 1.4644007522094195e-06,
-        "velocity_y": 1.4644007522091135e-06,
-        "pressure": 6.072368465723692e-13
-      },
-      "floor_percent": {
-        "density": 4.319149047561766e-11,
-        "velocity_x": 0.00014644007522094196,
-        "velocity_y": 0.00014644007522091136,
-        "pressure": 6.072368465723692e-11
-      },
-      "max_floor_percent": 0.00014644007522094196,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": null,
-      "floor_over_published": null,
-      "worst_floor_over_error": null,
-      "worst_floor_over_error_field": null
-    },
-    {
-      "task_key": "dg_d1_n64_t2_cfl0.2",
-      "task": "dg",
-      "degree": 1,
-      "cells": 64,
-      "final_time": 2.0,
-      "cfl": 0.2,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.2354943995885624e-13,
-        "velocity_x": 1.4571234593671323e-06,
-        "velocity_y": 1.4571234593669394e-06,
-        "pressure": 5.954756283372824e-13
-      },
-      "floor_percent": {
-        "density": 4.235494399588562e-11,
-        "velocity_x": 0.00014571234593671324,
-        "velocity_y": 0.00014571234593669394,
-        "pressure": 5.954756283372824e-11
-      },
-      "max_floor_percent": 0.00014571234593671324,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": null,
-      "floor_over_published": null,
-      "worst_floor_over_error": null,
-      "worst_floor_over_error_field": null
-    },
-    {
-      "task_key": "dg_d1_n64_t5_cfl0.2",
-      "task": "dg",
-      "degree": 1,
-      "cells": 64,
-      "final_time": 5.0,
-      "cfl": 0.2,
-      "images": 2,
-      "floor_relative_l2": {
-        "density": 4.3196083360233145e-13,
-        "velocity_x": 1.464175335098141e-06,
-        "velocity_y": 1.4641753350981454e-06,
-        "pressure": 6.073013976352833e-13
-      },
-      "floor_percent": {
-        "density": 4.319608336023315e-11,
-        "velocity_x": 0.0001464175335098141,
-        "velocity_y": 0.00014641753350981454,
-        "pressure": 6.073013976352833e-11
-      },
-      "max_floor_percent": 0.00014641753350981454,
-      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": null,
-      "floor_over_published": null,
-      "worst_floor_over_error": null,
-      "worst_floor_over_error_field": null
+      "worst_floor_over_error": 0.0004189790716482343,
+      "worst_floor_over_error_field": "velocity_y"
     },
     {
       "task_key": "dg_d1_n64_t10_cfl0.2",
@@ -1062,6 +199,11 @@
       "cells": 64,
       "final_time": 10.0,
       "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
       "images": 3,
       "floor_relative_l2": {
         "density": 4.3196083360233145e-13,
@@ -1077,10 +219,494 @@
       },
       "max_floor_percent": 0.0001464175335098145,
       "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": null,
-      "floor_over_published": null,
-      "worst_floor_over_error": null,
-      "worst_floor_over_error_field": null
+      "published_errors": {
+        "density": 0.00041178886028992085,
+        "velocity_x": 0.0010137122289766364,
+        "velocity_y": 0.0010137068634273525,
+        "pressure": 0.0005894592860452325
+      },
+      "published_max_percent": 0.10137122289766365,
+      "floor_over_published": {
+        "density": 1.04898620447918e-09,
+        "velocity_x": 0.001444369805596857,
+        "velocity_y": 0.0014443774506446118,
+        "pressure": 1.0302686072006027e-09
+      },
+      "worst_floor_over_error": 0.0014443774506446118,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d1_n64_t1_cfl0.2",
+      "task": "dg",
+      "degree": 1,
+      "cells": 64,
+      "final_time": 1.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.319149047561766e-13,
+        "velocity_x": 1.4644007522094195e-06,
+        "velocity_y": 1.4644007522091135e-06,
+        "pressure": 6.072368465723692e-13
+      },
+      "floor_percent": {
+        "density": 4.319149047561766e-11,
+        "velocity_x": 0.00014644007522094196,
+        "velocity_y": 0.00014644007522091136,
+        "pressure": 6.072368465723692e-11
+      },
+      "max_floor_percent": 0.00014644007522094196,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.00022647186930663867,
+        "velocity_x": 0.00048795726448172316,
+        "velocity_y": 0.0004876181104411154,
+        "pressure": 0.0003399787992494302
+      },
+      "published_max_percent": 0.048795726448172316,
+      "floor_over_published": {
+        "density": 1.907145934188285e-09,
+        "velocity_x": 0.003001084026825201,
+        "velocity_y": 0.0030031713770523583,
+        "pressure": 1.7861020978748189e-09
+      },
+      "worst_floor_over_error": 0.0030031713770523583,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d1_n64_t2_cfl0.2",
+      "task": "dg",
+      "degree": 1,
+      "cells": 64,
+      "final_time": 2.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.2354943995885624e-13,
+        "velocity_x": 1.4571234593671323e-06,
+        "velocity_y": 1.4571234593669394e-06,
+        "pressure": 5.954756283372824e-13
+      },
+      "floor_percent": {
+        "density": 4.235494399588562e-11,
+        "velocity_x": 0.00014571234593671324,
+        "velocity_y": 0.00014571234593669394,
+        "pressure": 5.954756283372824e-11
+      },
+      "max_floor_percent": 0.00014571234593671324,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.0002325160449399869,
+        "velocity_x": 0.0005153565801506251,
+        "velocity_y": 0.000517339936590854,
+        "pressure": 0.0003499444908509266
+      },
+      "published_max_percent": 0.0517339936590854,
+      "floor_over_published": {
+        "density": 1.8215923123420393e-09,
+        "velocity_x": 0.0028274082751427246,
+        "velocity_y": 0.00281656867430153,
+        "pressure": 1.7016288122991197e-09
+      },
+      "worst_floor_over_error": 0.0028274082751427246,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d1_n64_t5_cfl0.2",
+      "task": "dg",
+      "degree": 1,
+      "cells": 64,
+      "final_time": 5.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.3196083360233145e-13,
+        "velocity_x": 1.464175335098141e-06,
+        "velocity_y": 1.4641753350981454e-06,
+        "pressure": 6.073013976352833e-13
+      },
+      "floor_percent": {
+        "density": 4.319608336023315e-11,
+        "velocity_x": 0.0001464175335098141,
+        "velocity_y": 0.00014641753350981454,
+        "pressure": 6.073013976352833e-11
+      },
+      "max_floor_percent": 0.00014641753350981454,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.00028462648684451404,
+        "velocity_x": 0.0006640347429162604,
+        "velocity_y": 0.0006656167522066924,
+        "pressure": 0.00041782570529903183
+      },
+      "published_max_percent": 0.06656167522066923,
+      "floor_over_published": {
+        "density": 1.5176410262840482e-09,
+        "velocity_x": 0.002204967963977126,
+        "velocity_y": 0.0021997272908832657,
+        "pressure": 1.453480218984245e-09
+      },
+      "worst_floor_over_error": 0.002204967963977126,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d2_n32_t10_cfl0.2",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 10.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 3,
+      "floor_relative_l2": {
+        "density": 4.319382262339756e-13,
+        "velocity_x": 1.464177155904132e-06,
+        "velocity_y": 1.4641771559041445e-06,
+        "pressure": 6.07269627223636e-13
+      },
+      "floor_percent": {
+        "density": 4.3193822623397564e-11,
+        "velocity_x": 0.0001464177155904132,
+        "velocity_y": 0.00014641771559041446,
+        "pressure": 6.072696272236359e-11
+      },
+      "max_floor_percent": 0.00014641771559041446,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 6.12330429513006e-05,
+        "velocity_x": 0.00015162621307949022,
+        "velocity_y": 0.0001508726376872591,
+        "pressure": 8.516345284178145e-05
+      },
+      "published_max_percent": 0.015162621307949022,
+      "floor_over_published": {
+        "density": 7.0540055730612875e-09,
+        "velocity_x": 0.009656490960019791,
+        "velocity_y": 0.009704722992509804,
+        "pressure": 7.130636522591856e-09
+      },
+      "worst_floor_over_error": 0.009704722992509804,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d2_n32_t10_cfl0.2_diraxis0",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 10.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.4142135623730951,
+        0.0
+      ],
+      "direction": "axis0",
+      "images": 3,
+      "floor_relative_l2": {
+        "density": 4.3178266193443603e-13,
+        "velocity_x": 1.0422262692889111e-06,
+        "velocity_y": 9.029991922800489e-06,
+        "pressure": 6.070508686653427e-13
+      },
+      "floor_percent": {
+        "density": 4.3178266193443605e-11,
+        "velocity_x": 0.00010422262692889112,
+        "velocity_y": 0.0009029991922800489,
+        "pressure": 6.070508686653427e-11
+      },
+      "max_floor_percent": 0.0009029991922800489,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 5.596520244518049e-05,
+        "velocity_x": 0.00010537684588311677,
+        "velocity_y": 0.0008874643637459364,
+        "pressure": 7.868067341772208e-05
+      },
+      "published_max_percent": 0.08874643637459365,
+      "floor_over_published": {
+        "density": 7.715198785484238e-09,
+        "velocity_x": 0.00989046749838139,
+        "velocity_y": 0.010175047350279406,
+        "pressure": 7.71537459323029e-09
+      },
+      "worst_floor_over_error": 0.010175047350279406,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d2_n32_t10_cfl0.2_dirobl30",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 10.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.2247448713915892,
+        0.7071067811865475
+      ],
+      "direction": "obl30",
+      "images": 3,
+      "floor_relative_l2": {
+        "density": 4.3092771717257663e-13,
+        "velocity_x": 1.2151378452678983e-06,
+        "velocity_y": 2.017921871319526e-06,
+        "pressure": 6.058488976000059e-13
+      },
+      "floor_percent": {
+        "density": 4.309277171725766e-11,
+        "velocity_x": 0.00012151378452678983,
+        "velocity_y": 0.00020179218713195257,
+        "pressure": 6.05848897600006e-11
+      },
+      "max_floor_percent": 0.00020179218713195257,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 6.327569117187208e-05,
+        "velocity_x": 0.0001231772757953865,
+        "velocity_y": 0.00021107714913386834,
+        "pressure": 8.725997144646967e-05
+      },
+      "published_max_percent": 0.021107714913386835,
+      "floor_over_published": {
+        "density": 6.810320190767617e-09,
+        "velocity_x": 0.0098649514484019,
+        "velocity_y": 0.00956011524506487,
+        "pressure": 6.943033415632835e-09
+      },
+      "worst_floor_over_error": 0.0098649514484019,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d2_n32_t10_cfl0.4",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 10.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 3,
+      "floor_relative_l2": {
+        "density": 4.319382262339756e-13,
+        "velocity_x": 1.464177155904132e-06,
+        "velocity_y": 1.4641771559041445e-06,
+        "pressure": 6.07269627223636e-13
+      },
+      "floor_percent": {
+        "density": 4.3193822623397564e-11,
+        "velocity_x": 0.0001464177155904132,
+        "velocity_y": 0.00014641771559041446,
+        "pressure": 6.072696272236359e-11
+      },
+      "max_floor_percent": 0.00014641771559041446,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 6.124838585394743e-05,
+        "velocity_x": 0.00015169321142605364,
+        "velocity_y": 0.0001509319072800648,
+        "pressure": 8.518229325426584e-05
+      },
+      "published_max_percent": 0.015169321142605365,
+      "floor_over_published": {
+        "density": 7.052238523705313e-09,
+        "velocity_x": 0.009652225977283624,
+        "velocity_y": 0.009700912035698724,
+        "pressure": 7.129059385745341e-09
+      },
+      "worst_floor_over_error": 0.009700912035698724,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d2_n32_t1_cfl0.2",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 1.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.092898292772523e-13,
+        "velocity_x": 1.4459333532913848e-06,
+        "velocity_y": 1.4459333532909416e-06,
+        "pressure": 5.754280555502847e-13
+      },
+      "floor_percent": {
+        "density": 4.092898292772523e-11,
+        "velocity_x": 0.00014459333532913847,
+        "velocity_y": 0.00014459333532909415,
+        "pressure": 5.7542805555028465e-11
+      },
+      "max_floor_percent": 0.00014459333532913847,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 4.95214359829303e-05,
+        "velocity_x": 9.42059361961997e-05,
+        "velocity_y": 9.431214706130781e-05,
+        "pressure": 6.966562656570692e-05
+      },
+      "published_max_percent": 0.00943121470613078,
+      "floor_over_published": {
+        "density": 8.264902282283004e-09,
+        "velocity_x": 0.015348643744487455,
+        "velocity_y": 0.015331358667415446,
+        "pressure": 8.259856171788752e-09
+      },
+      "worst_floor_over_error": 0.015348643744487455,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d2_n32_t1_cfl0.2_diraxis0",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 1.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.4142135623730951,
+        0.0
+      ],
+      "direction": "axis0",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.1323752255233223e-13,
+        "velocity_x": 1.041741563945768e-06,
+        "velocity_y": 8.82552624593674e-06,
+        "pressure": 5.809778705537122e-13
+      },
+      "floor_percent": {
+        "density": 4.132375225523322e-11,
+        "velocity_x": 0.0001041741563945768,
+        "velocity_y": 0.000882552624593674,
+        "pressure": 5.809778705537122e-11
+      },
+      "max_floor_percent": 0.000882552624593674,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 4.748498235292016e-05,
+        "velocity_x": 6.664991392636339e-05,
+        "velocity_y": 0.0005967361441814153,
+        "pressure": 6.587251816846127e-05
+      },
+      "published_max_percent": 0.059673614418141535,
+      "floor_over_published": {
+        "density": 8.702488704345482e-09,
+        "velocity_x": 0.015630051152004668,
+        "velocity_y": 0.014789662620559595,
+        "pressure": 8.819730696615075e-09
+      },
+      "worst_floor_over_error": 0.015630051152004668,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d2_n32_t1_cfl0.2_dirobl30",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 1.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.2247448713915892,
+        0.7071067811865475
+      ],
+      "direction": "obl30",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.400497635316795e-13,
+        "velocity_x": 1.205290786542196e-06,
+        "velocity_y": 2.0560323348543916e-06,
+        "pressure": 6.186735110602511e-13
+      },
+      "floor_percent": {
+        "density": 4.400497635316795e-11,
+        "velocity_x": 0.0001205290786542196,
+        "velocity_y": 0.00020560323348543916,
+        "pressure": 6.186735110602511e-11
+      },
+      "max_floor_percent": 0.00020560323348543916,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 4.941752680080242e-05,
+        "velocity_x": 7.63895528998095e-05,
+        "velocity_y": 0.000133947892405922,
+        "pressure": 6.906801457307958e-05
+      },
+      "published_max_percent": 0.013394789240592201,
+      "floor_over_published": {
+        "density": 8.904730609151694e-09,
+        "velocity_x": 0.01577821496249655,
+        "velocity_y": 0.015349493731664655,
+        "pressure": 8.957453242059596e-09
+      },
+      "worst_floor_over_error": 0.01577821496249655,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d2_n32_t1_cfl0.4",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 1.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.092898292772523e-13,
+        "velocity_x": 1.4459333532913848e-06,
+        "velocity_y": 1.4459333532909416e-06,
+        "pressure": 5.754280555502847e-13
+      },
+      "floor_percent": {
+        "density": 4.092898292772523e-11,
+        "velocity_x": 0.00014459333532913847,
+        "velocity_y": 0.00014459333532909415,
+        "pressure": 5.7542805555028465e-11
+      },
+      "max_floor_percent": 0.00014459333532913847,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 4.9521773320890785e-05,
+        "velocity_x": 9.420698053046868e-05,
+        "velocity_y": 9.431289954286675e-05,
+        "pressure": 6.966599423057191e-05
+      },
+      "published_max_percent": 0.009431289954286675,
+      "floor_over_published": {
+        "density": 8.264845982496212e-09,
+        "velocity_x": 0.015348473596643266,
+        "velocity_y": 0.015331236345180346,
+        "pressure": 8.259812580091858e-09
+      },
+      "worst_floor_over_error": 0.015348473596643266,
+      "worst_floor_over_error_field": "velocity_x"
     },
     {
       "task_key": "dg_d2_n32_t20_cfl0.2",
@@ -1089,6 +715,11 @@
       "cells": 32,
       "final_time": 20.0,
       "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
       "images": 4,
       "floor_relative_l2": {
         "density": 4.319382262339756e-13,
@@ -1104,12 +735,1012 @@
       },
       "max_floor_percent": 0.00014641771559041465,
       "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
-      "published_errors": null,
-      "floor_over_published": null,
-      "worst_floor_over_error": null,
-      "worst_floor_over_error_field": null
+      "published_errors": {
+        "density": 8.363121985607223e-05,
+        "velocity_x": 0.0002516862556204019,
+        "velocity_y": 0.0002515377797389233,
+        "pressure": 0.00011645221101625715
+      },
+      "published_max_percent": 0.02516862556204019,
+      "floor_over_published": {
+        "density": 5.164796435796742e-09,
+        "velocity_x": 0.005817469659973934,
+        "velocity_y": 0.005820903553429822,
+        "pressure": 5.2147539486769635e-09
+      },
+      "worst_floor_over_error": 0.005820903553429822,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d2_n32_t2_cfl0.2",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 2.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.293636868744538e-13,
+        "velocity_x": 1.4620783144221081e-06,
+        "velocity_y": 1.4620783144227673e-06,
+        "pressure": 6.036501779965349e-13
+      },
+      "floor_percent": {
+        "density": 4.293636868744538e-11,
+        "velocity_x": 0.00014620783144221082,
+        "velocity_y": 0.00014620783144227674,
+        "pressure": 6.03650177996535e-11
+      },
+      "max_floor_percent": 0.00014620783144227674,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 5.0679581571519614e-05,
+        "velocity_x": 9.689709783192219e-05,
+        "velocity_y": 9.649487726342877e-05,
+        "pressure": 7.145799106406075e-05
+      },
+      "published_max_percent": 0.009689709783192219,
+      "floor_over_published": {
+        "density": 8.472123753992143e-09,
+        "velocity_x": 0.015088979413586058,
+        "velocity_y": 0.015151874958411807,
+        "pressure": 8.447623128046993e-09
+      },
+      "worst_floor_over_error": 0.015151874958411807,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d2_n32_t2_cfl0.2_diraxis0",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 2.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.4142135623730951,
+        0.0
+      ],
+      "direction": "axis0",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.3748224829356583e-13,
+        "velocity_x": 1.0423394413378367e-06,
+        "velocity_y": 9.07661311541091e-06,
+        "pressure": 6.150641244189502e-13
+      },
+      "floor_percent": {
+        "density": 4.374822482935658e-11,
+        "velocity_x": 0.00010423394413378368,
+        "velocity_y": 0.000907661311541091,
+        "pressure": 6.150641244189502e-11
+      },
+      "max_floor_percent": 0.000907661311541091,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 4.823584751087278e-05,
+        "velocity_x": 6.946979968169693e-05,
+        "velocity_y": 0.0006111184208380837,
+        "pressure": 6.672511766716901e-05
+      },
+      "published_max_percent": 0.06111184208380837,
+      "floor_over_published": {
+        "density": 9.069649873881733e-09,
+        "velocity_x": 0.015004209686996691,
+        "velocity_y": 0.01485246198758549,
+        "pressure": 9.217879951698944e-09
+      },
+      "worst_floor_over_error": 0.015004209686996691,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d2_n32_t2_cfl0.2_dirobl30",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 2.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.2247448713915892,
+        0.7071067811865475
+      ],
+      "direction": "obl30",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.008422395074089e-13,
+        "velocity_x": 1.1740543646539481e-06,
+        "velocity_y": 2.0158491947658764e-06,
+        "pressure": 5.635513159403223e-13
+      },
+      "floor_percent": {
+        "density": 4.008422395074089e-11,
+        "velocity_x": 0.00011740543646539481,
+        "velocity_y": 0.00020158491947658763,
+        "pressure": 5.6355131594032235e-11
+      },
+      "max_floor_percent": 0.00020158491947658763,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 5.175005341462482e-05,
+        "velocity_x": 7.943416565814375e-05,
+        "velocity_y": 0.00013830697509705108,
+        "pressure": 7.182606382420916e-05
+      },
+      "published_max_percent": 0.013830697509705107,
+      "floor_over_published": {
+        "density": 7.745735763707036e-09,
+        "velocity_x": 0.014780219001816653,
+        "velocity_y": 0.014575180993954493,
+        "pressure": 7.846055957062984e-09
+      },
+      "worst_floor_over_error": 0.014780219001816653,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d2_n32_t2_cfl0.4",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 2.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.293636868744538e-13,
+        "velocity_x": 1.4620783144221081e-06,
+        "velocity_y": 1.4620783144227673e-06,
+        "pressure": 6.036501779965349e-13
+      },
+      "floor_percent": {
+        "density": 4.293636868744538e-11,
+        "velocity_x": 0.00014620783144221082,
+        "velocity_y": 0.00014620783144227674,
+        "pressure": 6.03650177996535e-11
+      },
+      "max_floor_percent": 0.00014620783144227674,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 5.068021041747933e-05,
+        "velocity_x": 9.690238135314187e-05,
+        "velocity_y": 9.649779586160562e-05,
+        "pressure": 7.145880516375104e-05
+      },
+      "published_max_percent": 0.009690238135314187,
+      "floor_over_published": {
+        "density": 8.47201863089283e-09,
+        "velocity_x": 0.015088156699615546,
+        "velocity_y": 0.015151416686445754,
+        "pressure": 8.447526887879578e-09
+      },
+      "worst_floor_over_error": 0.015151416686445754,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d2_n32_t5_cfl0.2",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 5.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.3193822623397567e-13,
+        "velocity_x": 1.46417715590413e-06,
+        "velocity_y": 1.4641771559041445e-06,
+        "pressure": 6.072696272245313e-13
+      },
+      "floor_percent": {
+        "density": 4.3193822623397564e-11,
+        "velocity_x": 0.00014641771559041302,
+        "velocity_y": 0.00014641771559041446,
+        "pressure": 6.072696272245313e-11
+      },
+      "max_floor_percent": 0.00014641771559041446,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 5.36515484444988e-05,
+        "velocity_x": 0.00011131861013866376,
+        "velocity_y": 0.00011099177795480814,
+        "pressure": 7.523052753980554e-05
+      },
+      "published_max_percent": 0.011131861013866377,
+      "floor_over_published": {
+        "density": 8.050806337505899e-09,
+        "velocity_x": 0.013153031232426287,
+        "velocity_y": 0.013191762334866866,
+        "pressure": 8.072117092402633e-09
+      },
+      "worst_floor_over_error": 0.013191762334866866,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d2_n32_t5_cfl0.2_diraxis0",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 5.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.4142135623730951,
+        0.0
+      ],
+      "direction": "axis0",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.4243604793186507e-13,
+        "velocity_x": 1.0424783706553503e-06,
+        "velocity_y": 9.13412906485725e-06,
+        "pressure": 6.220287838104497e-13
+      },
+      "floor_percent": {
+        "density": 4.424360479318651e-11,
+        "velocity_x": 0.00010424783706553503,
+        "velocity_y": 0.0009134129064857251,
+        "pressure": 6.220287838104497e-11
+      },
+      "max_floor_percent": 0.0009134129064857251,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 5.0120199851563556e-05,
+        "velocity_x": 7.940379688479747e-05,
+        "velocity_y": 0.000686222868312084,
+        "pressure": 6.943583553164554e-05
+      },
+      "published_max_percent": 0.0686222868312084,
+      "floor_over_published": {
+        "density": 8.827499675623555e-09,
+        "velocity_x": 0.013128822695567364,
+        "velocity_y": 0.013310732542802965,
+        "pressure": 8.958325035592876e-09
+      },
+      "worst_floor_over_error": 0.013310732542802965,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d2_n32_t5_cfl0.2_dirobl30",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 5.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.2247448713915892,
+        0.7071067811865475
+      ],
+      "direction": "obl30",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.545294510186849e-13,
+        "velocity_x": 1.2357447105916602e-06,
+        "velocity_y": 2.0387368167646355e-06,
+        "pressure": 6.390309080287564e-13
+      },
+      "floor_percent": {
+        "density": 4.545294510186849e-11,
+        "velocity_x": 0.00012357447105916603,
+        "velocity_y": 0.00020387368167646354,
+        "pressure": 6.390309080287564e-11
+      },
+      "max_floor_percent": 0.00020387368167646354,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 5.573255450615939e-05,
+        "velocity_x": 9.085502242387687e-05,
+        "velocity_y": 0.00015815513699068674,
+        "pressure": 7.709193075860937e-05
+      },
+      "published_max_percent": 0.015815513699068674,
+      "floor_over_published": {
+        "density": 8.15554670059941e-09,
+        "velocity_x": 0.013601281223908478,
+        "velocity_y": 0.012890740418281135,
+        "pressure": 8.289206169056695e-09
+      },
+      "worst_floor_over_error": 0.013601281223908478,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d2_n32_t5_cfl0.4",
+      "task": "dg",
+      "degree": 2,
+      "cells": 32,
+      "final_time": 5.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.3193822623397567e-13,
+        "velocity_x": 1.46417715590413e-06,
+        "velocity_y": 1.4641771559041445e-06,
+        "pressure": 6.072696272245313e-13
+      },
+      "floor_percent": {
+        "density": 4.3193822623397564e-11,
+        "velocity_x": 0.00014641771559041302,
+        "velocity_y": 0.00014641771559041446,
+        "pressure": 6.072696272245313e-11
+      },
+      "max_floor_percent": 0.00014641771559041446,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 5.365595524416049e-05,
+        "velocity_x": 0.00011134077908819252,
+        "velocity_y": 0.0001110131782160478,
+        "pressure": 7.523582971925535e-05
+      },
+      "published_max_percent": 0.011134077908819252,
+      "floor_over_published": {
+        "density": 8.050145119371155e-09,
+        "velocity_x": 0.013150412345726108,
+        "velocity_y": 0.013189219329029953,
+        "pressure": 8.071548216994154e-09
+      },
+      "worst_floor_over_error": 0.013189219329029953,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d2_n64_t10_cfl0.2",
+      "task": "dg",
+      "degree": 2,
+      "cells": 64,
+      "final_time": 10.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 3,
+      "floor_relative_l2": {
+        "density": 4.320284625697643e-13,
+        "velocity_x": 1.4641784701688483e-06,
+        "velocity_y": 1.4641784701688549e-06,
+        "pressure": 6.073965592630046e-13
+      },
+      "floor_percent": {
+        "density": 4.3202846256976425e-11,
+        "velocity_x": 0.00014641784701688483,
+        "velocity_y": 0.00014641784701688548,
+        "pressure": 6.073965592630047e-11
+      },
+      "max_floor_percent": 0.00014641784701688548,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 6.0804903948027595e-06,
+        "velocity_x": 1.2245109983286513e-05,
+        "velocity_y": 1.2238443233458051e-05,
+        "pressure": 8.583393883816162e-06
+      },
+      "published_max_percent": 0.0012245109983286514,
+      "floor_over_published": {
+        "density": 7.105158211236325e-08,
+        "velocity_x": 0.11957250462979277,
+        "velocity_y": 0.1196376403631152,
+        "pressure": 7.076414848073559e-08
+      },
+      "worst_floor_over_error": 0.1196376403631152,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d2_n64_t1_cfl0.2",
+      "task": "dg",
+      "degree": 2,
+      "cells": 64,
+      "final_time": 1.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.3136607292142095e-13,
+        "velocity_x": 1.4636473056549483e-06,
+        "velocity_y": 1.4636473056555421e-06,
+        "pressure": 6.064652345978425e-13
+      },
+      "floor_percent": {
+        "density": 4.3136607292142096e-11,
+        "velocity_x": 0.00014636473056549483,
+        "velocity_y": 0.00014636473056555422,
+        "pressure": 6.064652345978425e-11
+      },
+      "max_floor_percent": 0.00014636473056555422,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 5.898946868239216e-06,
+        "velocity_x": 1.1491199259052786e-05,
+        "velocity_y": 1.1487894109436742e-05,
+        "pressure": 8.36133382380212e-06
+      },
+      "published_max_percent": 0.0011491199259052785,
+      "floor_over_published": {
+        "density": 7.312594647087912e-08,
+        "velocity_x": 0.12737115358102286,
+        "velocity_y": 0.12740779917645895,
+        "pressure": 7.253211597310281e-08
+      },
+      "worst_floor_over_error": 0.12740779917645895,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d2_n64_t2_cfl0.2",
+      "task": "dg",
+      "degree": 2,
+      "cells": 64,
+      "final_time": 2.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.262668656276011e-13,
+        "velocity_x": 1.4596126681899028e-06,
+        "velocity_y": 1.459612668189604e-06,
+        "pressure": 5.992961733042951e-13
+      },
+      "floor_percent": {
+        "density": 4.262668656276011e-11,
+        "velocity_x": 0.00014596126681899028,
+        "velocity_y": 0.0001459612668189604,
+        "pressure": 5.992961733042951e-11
+      },
+      "max_floor_percent": 0.00014596126681899028,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 5.949706059552273e-06,
+        "velocity_x": 1.1529982784080826e-05,
+        "velocity_y": 1.1524289454847396e-05,
+        "pressure": 8.431072270057154e-06
+      },
+      "published_max_percent": 0.0011529982784080825,
+      "floor_over_published": {
+        "density": 7.164502941170148e-08,
+        "velocity_x": 0.1265927881700878,
+        "velocity_y": 0.12665532863509044,
+        "pressure": 7.108184512101596e-08
+      },
+      "worst_floor_over_error": 0.12665532863509044,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d3_n32_t10_cfl0.2",
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 10.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 3,
+      "floor_relative_l2": {
+        "density": 4.320262048713986e-13,
+        "velocity_x": 1.464178470702862e-06,
+        "velocity_y": 1.4641784707028522e-06,
+        "pressure": 6.07393325737348e-13
+      },
+      "floor_percent": {
+        "density": 4.320262048713986e-11,
+        "velocity_x": 0.0001464178470702862,
+        "velocity_y": 0.00014641784707028523,
+        "pressure": 6.07393325737348e-11
+      },
+      "max_floor_percent": 0.0001464178470702862,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 3.0973721603741023e-06,
+        "velocity_x": 6.144652962481631e-06,
+        "velocity_y": 6.195392746390414e-06,
+        "pressure": 4.3158308818726234e-06
+      },
+      "published_max_percent": 0.0006195392746390414,
+      "floor_over_published": {
+        "density": 1.3948152901949575e-07,
+        "velocity_x": 0.2382849738859014,
+        "velocity_y": 0.2363334385145991,
+        "pressure": 1.4073612761068207e-07
+      },
+      "worst_floor_over_error": 0.2382849738859014,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d3_n32_t1_cfl0.2",
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 1.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.464020127601064e-13,
+        "velocity_x": 1.476462636390404e-06,
+        "velocity_y": 1.4764626363905076e-06,
+        "pressure": 6.276043703744236e-13
+      },
+      "floor_percent": {
+        "density": 4.464020127601064e-11,
+        "velocity_x": 0.0001476462636390404,
+        "velocity_y": 0.00014764626363905075,
+        "pressure": 6.276043703744235e-11
+      },
+      "max_floor_percent": 0.00014764626363905075,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 2.40553512935593e-06,
+        "velocity_x": 5.8338043403113905e-06,
+        "velocity_y": 5.839390341373958e-06,
+        "pressure": 3.403606673330682e-06
+      },
+      "published_max_percent": 0.0005839390341373958,
+      "floor_over_published": {
+        "density": 1.8557285125976452e-07,
+        "velocity_x": 0.25308744521788246,
+        "velocity_y": 0.2528453400227923,
+        "pressure": 1.8439391816101538e-07
+      },
+      "worst_floor_over_error": 0.25308744521788246,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "dg_d3_n32_t2_cfl0.2",
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 2.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.1305942312131393e-13,
+        "velocity_x": 1.4486333313469274e-06,
+        "velocity_y": 1.4486333313462996e-06,
+        "pressure": 5.807273939678406e-13
+      },
+      "floor_percent": {
+        "density": 4.130594231213139e-11,
+        "velocity_x": 0.00014486333313469275,
+        "velocity_y": 0.00014486333313462995,
+        "pressure": 5.807273939678406e-11
+      },
+      "max_floor_percent": 0.00014486333313469275,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 2.5240585206049712e-06,
+        "velocity_x": 5.869964687824516e-06,
+        "velocity_y": 5.847304764665805e-06,
+        "pressure": 3.574200031240258e-06
+      },
+      "published_max_percent": 0.0005869964687824517,
+      "floor_over_published": {
+        "density": 1.636489089889687e-07,
+        "velocity_x": 0.24678740135382474,
+        "velocity_y": 0.24774377078823157,
+        "pressure": 1.6247758628280422e-07
+      },
+      "worst_floor_over_error": 0.24774377078823157,
+      "worst_floor_over_error_field": "velocity_y"
+    },
+    {
+      "task_key": "dg_d3_n32_t5_cfl0.2",
+      "task": "dg",
+      "degree": 3,
+      "cells": 32,
+      "final_time": 5.0,
+      "cfl": 0.2,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.320262048707814e-13,
+        "velocity_x": 1.4641784707028615e-06,
+        "velocity_y": 1.4641784707028518e-06,
+        "pressure": 6.073933257374986e-13
+      },
+      "floor_percent": {
+        "density": 4.320262048707814e-11,
+        "velocity_x": 0.00014641784707028615,
+        "velocity_y": 0.00014641784707028518,
+        "pressure": 6.073933257374986e-11
+      },
+      "max_floor_percent": 0.00014641784707028615,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 2.8139142571233905e-06,
+        "velocity_x": 5.9482022512817e-06,
+        "velocity_y": 5.978243358259726e-06,
+        "pressure": 3.9644461306477294e-06
+      },
+      "published_max_percent": 0.0005978243358259727,
+      "floor_over_published": {
+        "density": 1.5353211412789577e-07,
+        "velocity_x": 0.24615478910243258,
+        "velocity_y": 0.2449178434129647,
+        "pressure": 1.532101347126288e-07
+      },
+      "worst_floor_over_error": 0.24615478910243258,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "p0_n128_t10_cfl0.4",
+      "task": "p0",
+      "degree": 0,
+      "cells": 128,
+      "final_time": 10.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 3,
+      "floor_relative_l2": {
+        "density": 4.3202889798730624e-13,
+        "velocity_x": 1.464178476116385e-06,
+        "velocity_y": 1.4641784761163761e-06,
+        "pressure": 6.073970189728157e-13
+      },
+      "floor_percent": {
+        "density": 4.3202889798730624e-11,
+        "velocity_x": 0.00014641784761163851,
+        "velocity_y": 0.00014641784761163762,
+        "pressure": 6.073970189728158e-11
+      },
+      "max_floor_percent": 0.00014641784761163851,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.05421643154279739,
+        "velocity_x": 0.12083560382810407,
+        "velocity_y": 0.12084610727586263,
+        "pressure": 0.07900366258271696
+      },
+      "published_max_percent": 12.084610727586263,
+      "floor_over_published": {
+        "density": 7.968597078291128e-12,
+        "velocity_x": 1.2117111428509656e-05,
+        "velocity_y": 1.2116058258906167e-05,
+        "pressure": 7.6882134209521e-12
+      },
+      "worst_floor_over_error": 1.2117111428509656e-05,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "p0_n128_t1_cfl0.4",
+      "task": "p0",
+      "degree": 0,
+      "cells": 128,
+      "final_time": 1.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.3058653337835243e-13,
+        "velocity_x": 1.4630368847104902e-06,
+        "velocity_y": 1.4630368847106242e-06,
+        "pressure": 6.053692712858707e-13
+      },
+      "floor_percent": {
+        "density": 4.305865333783524e-11,
+        "velocity_x": 0.00014630368847104902,
+        "velocity_y": 0.0001463036884710624,
+        "pressure": 6.053692712858707e-11
+      },
+      "max_floor_percent": 0.0001463036884710624,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.012797130016822153,
+        "velocity_x": 0.02802201871001497,
+        "velocity_y": 0.028169111512511273,
+        "pressure": 0.020258279184190014
+      },
+      "published_max_percent": 2.8169111512511273,
+      "floor_over_published": {
+        "density": 3.364711719052127e-11,
+        "velocity_x": 5.2210260076216636e-05,
+        "velocity_y": 5.1937629770850894e-05,
+        "pressure": 2.988256138548596e-11
+      },
+      "worst_floor_over_error": 5.2210260076216636e-05,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "p0_n128_t2_cfl0.4",
+      "task": "p0",
+      "degree": 0,
+      "cells": 128,
+      "final_time": 2.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.318612463510717e-13,
+        "velocity_x": 1.4640451559596905e-06,
+        "velocity_y": 1.4640451559591965e-06,
+        "pressure": 6.071613729316592e-13
+      },
+      "floor_percent": {
+        "density": 4.3186124635107174e-11,
+        "velocity_x": 0.00014640451559596907,
+        "velocity_y": 0.00014640451559591965,
+        "pressure": 6.071613729316593e-11
+      },
+      "max_floor_percent": 0.00014640451559596907,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.025325364108770773,
+        "velocity_x": 0.04861721326808966,
+        "velocity_y": 0.04875468300660123,
+        "pressure": 0.03956139506508547
+      },
+      "published_max_percent": 4.875468300660122,
+      "floor_over_published": {
+        "density": 1.7052518751408905e-11,
+        "velocity_x": 3.0113720173275122e-05,
+        "velocity_y": 3.002881088901695e-05,
+        "pressure": 1.5347319575883806e-11
+      },
+      "worst_floor_over_error": 3.0113720173275122e-05,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "p0_n128_t5_cfl0.4",
+      "task": "p0",
+      "degree": 0,
+      "cells": 128,
+      "final_time": 5.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.32028897987467e-13,
+        "velocity_x": 1.46417847611637e-06,
+        "velocity_y": 1.4641784761163761e-06,
+        "pressure": 6.073970189742279e-13
+      },
+      "floor_percent": {
+        "density": 4.3202889798746696e-11,
+        "velocity_x": 0.000146417847611637,
+        "velocity_y": 0.00014641784761163762,
+        "pressure": 6.073970189742279e-11
+      },
+      "max_floor_percent": 0.00014641784761163762,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.045336651146094364,
+        "velocity_x": 0.08874939714897016,
+        "velocity_y": 0.08876448131193004,
+        "pressure": 0.07006939801940298
+      },
+      "published_max_percent": 8.876448131193005,
+      "floor_over_published": {
+        "density": 9.529351795201687e-12,
+        "velocity_x": 1.6497897711447836e-05,
+        "velocity_y": 1.6495094146622238e-05,
+        "pressure": 8.668506311500392e-12
+      },
+      "worst_floor_over_error": 1.6497897711447836e-05,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "p0_n256_t1_cfl0.4",
+      "task": "p0",
+      "degree": 0,
+      "cells": 256,
+      "final_time": 1.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.319868161681919e-13,
+        "velocity_x": 1.4641451105410644e-06,
+        "velocity_y": 1.464145110541155e-06,
+        "pressure": 6.07337896897326e-13
+      },
+      "floor_percent": {
+        "density": 4.319868161681919e-11,
+        "velocity_x": 0.00014641451105410643,
+        "velocity_y": 0.0001464145110541155,
+        "pressure": 6.07337896897326e-11
+      },
+      "max_floor_percent": 0.0001464145110541155,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.006932598940904834,
+        "velocity_x": 0.01504285983042485,
+        "velocity_y": 0.01518646310926804,
+        "pressure": 0.01103948970065621
+      },
+      "published_max_percent": 1.518646310926804,
+      "floor_over_published": {
+        "density": 6.231239104563137e-11,
+        "velocity_x": 9.733156640732409e-05,
+        "velocity_y": 9.641119857905638e-05,
+        "pressure": 5.5015033608050254e-11
+      },
+      "worst_floor_over_error": 9.733156640732409e-05,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "p0_n64_t10_cfl0.4",
+      "task": "p0",
+      "degree": 0,
+      "cells": 64,
+      "final_time": 10.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 3,
+      "floor_relative_l2": {
+        "density": 4.320284625697643e-13,
+        "velocity_x": 1.4641784701688483e-06,
+        "velocity_y": 1.4641784701688549e-06,
+        "pressure": 6.073965592630046e-13
+      },
+      "floor_percent": {
+        "density": 4.3202846256976425e-11,
+        "velocity_x": 0.00014641784701688483,
+        "velocity_y": 0.00014641784701688548,
+        "pressure": 6.073965592630047e-11
+      },
+      "max_floor_percent": 0.00014641784701688548,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.060186592500874526,
+        "velocity_x": 0.14304321900509542,
+        "velocity_y": 0.1430474063391442,
+        "pressure": 0.08358660977013066
+      },
+      "published_max_percent": 14.30474063391442,
+      "floor_over_published": {
+        "density": 7.1781512230234135e-12,
+        "velocity_x": 1.0235916671566877e-05,
+        "velocity_y": 1.0235617042209802e-05,
+        "pressure": 7.2666729866588675e-12
+      },
+      "worst_floor_over_error": 1.0235916671566877e-05,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "p0_n64_t1_cfl0.4",
+      "task": "p0",
+      "degree": 0,
+      "cells": 64,
+      "final_time": 1.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.3136607292142095e-13,
+        "velocity_x": 1.4636473056549483e-06,
+        "velocity_y": 1.4636473056555421e-06,
+        "pressure": 6.064652345978425e-13
+      },
+      "floor_percent": {
+        "density": 4.3136607292142096e-11,
+        "velocity_x": 0.00014636473056549483,
+        "velocity_y": 0.00014636473056555422,
+        "pressure": 6.064652345978425e-11
+      },
+      "max_floor_percent": 0.00014636473056555422,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.022037888804151466,
+        "velocity_x": 0.04919058603539243,
+        "velocity_y": 0.04926036192305211,
+        "pressure": 0.034387611465351554
+      },
+      "published_max_percent": 4.926036192305211,
+      "floor_over_published": {
+        "density": 1.9573838345175825e-11,
+        "velocity_x": 2.975462224828669e-05,
+        "velocity_y": 2.9712475680585832e-05,
+        "pressure": 1.7636154671833133e-11
+      },
+      "worst_floor_over_error": 2.975462224828669e-05,
+      "worst_floor_over_error_field": "velocity_x"
+    },
+    {
+      "task_key": "p0_n64_t5_cfl0.4",
+      "task": "p0",
+      "degree": 0,
+      "cells": 64,
+      "final_time": 5.0,
+      "cfl": 0.4,
+      "background_velocity": [
+        1.0,
+        1.0
+      ],
+      "direction": "diag45",
+      "images": 2,
+      "floor_relative_l2": {
+        "density": 4.3202846257112663e-13,
+        "velocity_x": 1.46417847016886e-06,
+        "velocity_y": 1.464178470168865e-06,
+        "pressure": 6.07396559263105e-13
+      },
+      "floor_percent": {
+        "density": 4.3202846257112664e-11,
+        "velocity_x": 0.000146417847016886,
+        "velocity_y": 0.0001464178470168865,
+        "pressure": 6.07396559263105e-11
+      },
+      "max_floor_percent": 0.0001464178470168865,
+      "metric": "same quadrature grid and weighted relative L2 as the case gate; denominator = lattice reference",
+      "published_errors": {
+        "density": 0.057256871780877704,
+        "velocity_x": 0.120235164048954,
+        "velocity_y": 0.12022628930303392,
+        "pressure": 0.08475816979753498
+      },
+      "published_max_percent": 12.0235164048954,
+      "floor_over_published": {
+        "density": 7.545443003321967e-12,
+        "velocity_x": 1.2177622759118261e-05,
+        "velocity_y": 1.2178521674892252e-05,
+        "pressure": 7.166230237321263e-12
+      },
+      "worst_floor_over_error": 1.2178521674892252e-05,
+      "worst_floor_over_error_field": "velocity_y"
     }
   ],
-  "worst": "dg_d2_n64_t1_cfl0.2",
-  "max_floor_over_error": 0.12740779917645895
+  "worst": "dg_d3_n32_t1_cfl0.2",
+  "max_floor_over_error": 0.25308744521788246
 }
