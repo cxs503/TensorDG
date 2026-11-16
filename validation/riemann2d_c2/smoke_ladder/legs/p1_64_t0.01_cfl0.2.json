@@ -1,0 +1,82 @@
+{
+  "record": {
+    "ncells": 64,
+    "degree": 1,
+    "final_time": 0.01,
+    "cfl": 0.2,
+    "periodic": [
+      false,
+      false
+    ],
+    "steps": 59,
+    "dt": 0.00014244716557140422,
+    "wall_seconds": 15.03,
+    "rho_min": 0.13799987156275356,
+    "rho_max": 1.5230518777752011,
+    "p_min": 0.2999996091046516,
+    "p_max": 1.5422946874123356,
+    "positivity": {
+      "rho_min": 0.1379986085894154,
+      "rho_max": 1.5271896585804592,
+      "p_min": 0.29999576513514525,
+      "p_max": 1.5457869151194505,
+      "rho_min_mean": 0.13799987156275356,
+      "p_min_mean": 0.2999996091046516,
+      "rho_positive": true,
+      "p_positive": true,
+      "rho_positive_mean": true,
+      "p_positive_mean": true,
+      "quadrature_nodes": 3
+    },
+    "total_mass": 0.6837538892167989,
+    "initial_mass": 0.67565,
+    "c6_bounds": {
+      "final_time": 0.01,
+      "mass0": 0.67565,
+      "rho_max0": 1.5,
+      "p_max0": 1.5,
+      "speed_max0": 3.4500983081992462,
+      "perimeter": 4.0,
+      "mass_flux_bound": 1.0350294924597738,
+      "rho_cap": 2.25,
+      "p_cap": 2.25
+    },
+    "conservation": {
+      "mass": {
+        "change": 0.008103889216799054,
+        "boundary_flux": 0.008103889216800001,
+        "residual": -9.471590178833367e-16,
+        "relative_residual": 1.4018486167147733e-15
+      },
+      "x_momentum": {
+        "change": -0.00011480206023112283,
+        "boundary_flux": -0.0001148020602310198,
+        "residual": -1.0302631144043506e-16,
+        "relative_residual": 5.097903561927551e-16
+      },
+      "y_momentum": {
+        "change": -0.00011480206023115058,
+        "boundary_flux": -0.00011480206023102018,
+        "residual": -1.3040241629569405e-16,
+        "relative_residual": 6.45251618953787e-16
+      },
+      "energy": {
+        "change": 0.03266923354845708,
+        "boundary_flux": 0.03266923354845927,
+        "residual": -2.192690473634684e-15,
+        "relative_residual": 1.257473407200457e-15
+      }
+    },
+    "max_flux_balance_residual": 1.4018486167147733e-15,
+    "max_abs_conservation_change": 0.03266923354845708,
+    "finite": true,
+    "dofs": 65536
+  },
+  "arrays": "p1_64_t0.01_cfl0.2.npz",
+  "provenance": {
+    "command": null,
+    "stem": "p1_64_t0.01_cfl0.2",
+    "wall_seconds": 15.03,
+    "note": "C2 is recomputed from arrays/<stem>.npz by --merge-legs and by tests/test_riemann_2d_c2_full_record.py; the JSON never carries a self-convergence number of its own"
+  }
+}

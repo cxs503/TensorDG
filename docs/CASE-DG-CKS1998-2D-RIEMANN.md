@@ -179,6 +179,83 @@ Lax & Liu 1998 Config 3 在 $t>0$ 没有闭式解，CKS1998 论文给出的也�
 （`metrics.json.gates`），所以"跑完再调容差"在结构上做不到。
 
 **C2 的现状**：`quick` 构型只有一套网格，C2 记录为 `NOT_RUN`（不是 PASS）。
+
+### C2 网格自收敛：把「跑不动的一小时命令」拆成分片作业
+
+**欠账的结构性原因**（本单的诊断）：`full` 构型原先是**一条**命令里跑四个解
+（P1/P2 × 32×32/64×64，$t=0.25$）。本单在单核上实测每步成本后外推：
+
+| 分片 | 时间步 | 单核墙钟（外推/实测） |
+|---|---:|---:|
+| P1 32×32 | 878 | ~106 s |
+| P2 32×32 | 3516 | ~499 s |
+| P1 64×64 | 1756 | ~468 s |
+| P2 64×64 | 7031 | ~2587 s |
+| **合计** | — | **~1 h** |
+
+一小时的单命令既进不了短测预算，也进不了单次作业的稳妥范围，于是 C2 常年 `NOT_RUN`。
+**注意这不是"数值没收敛"，而是"判据从未被执行"**——两者在证据等级上完全不同。
+
+**本单的做法**（只动执行/取证路径，不动求解器与判据）：
+
+1. `--leg DEGREE NCELLS`：把一个分片跑完即落盘，写
+   `legs/<stem>.json`（slim 记录 + provenance）与 `legs/<stem>.npz`
+   （`cell_means_rho` / `x` / `y` / `coeff`，分片自证所需的原始数组）。
+   `<stem> = p{degree}_{ncells}_t{final_time}_cfl{cfl}`，配置编码在文件名里。
+2. 集群作业经 `scripts/c2_leg_job.py` 跑分片，产物以
+   `LEG_JSON/LEG_NPZ_B64:<stem>:<sha256>` + base64 回传；
+   `scripts/c2_leg_ingest.py` 解码并**核对 sha256** 后才写入 `legs/`——
+   截断/篡改的抓取会直接报错，不会变成判据的证据。
+3. `--merge-legs`：读回分片，**从 `legs/*.npz` 的单元平均密度重新计算** C2
+   （`self_convergence_l1`：细网格块平均后与粗网格的相对 $L1$），再交给
+   `judge()` 评分，写 `metrics_full.json` 并同步本文档的 `DOC-NUMBERS-FULL` 块。
+   分片不全时 `merge_legs` **抛 `FileNotFoundError` 并列出缺失的分片**，
+   而不是"对碰巧存在的对儿取最坏值"。
+
+**顺带修掉的一处真缺陷（会被掩盖的判据弱化）**：原 `run_convergence_study` 的
+自收敛键对两个阶都写成 `"32_vs_64"`，`main()` 里 `convergence.update(...)` 让
+P2 **覆盖** P1，于是 `max(convergence.values())`（即 C2 评分量）永远只看到**一个**
+阶梯，"两阶最坏"名不副实。本单在 `merge_legs` 里把键改为 `p{deg}_{coarse}_vs_{fine}`，
+C2 的 `worst_relative_l1` 才真的是两阶最大值；`per_pair` 两个键都在记录里可见。
+
+**证据等级（honest）**：分片执行路径已在本机用 $t=0.01$ 的**同构小阶梯**
+（P1 32×32 / 64×64，各 29 / 59 步）端到端验证过：分片落盘 → 回传 → 校验 → 合并 →
+重算 C2 = 1.5664e-03（与记录逐位一致）→ 判决由 `judge()` 从 rows 复现。
+生产档（$t=0.25$，P1/P2 × 32/64）的四分片已递交集群队列（`cj4312`/`cj4313`/
+`cj4314`/`cj4315`），**本段落地时仍在排队**，因此：
+
+> **C2 在 `quick` 记录里仍是 `NOT_RUN`（该构型只有一套网格，这是设计如此）；
+> 在 `full` 记录里，只有四个分片全部回传并合并后才会有数——本单不预支这个数。**
+
+回归门 `tests/test_riemann_2d_c2_full_record.py` 在 `metrics_full.json` 缺席时
+**skip**（不是 pass），出现后则强制：数组重算 = 记录值、`judge()` 复现 verdicts、
+C2 非 `not_run` 且 `passed == (worst < tolerance)`、两阶都在 `per_pair` 里、
+文档块与记录逐字节一致、分片不全时合并必须报错、校验和不符时 ingest 必须报错。
+
+<!-- DOC-NUMBERS-FULL:BEGIN (占位；`python -m benchmarks.riemann_2d_cks1998 --merge-legs --sync-doc` 会整体替换此块) -->
+| 量 | metrics_full.json 路径 | 值 |
+|---|---:|:---:|
+| C2 判定 | `verdicts.C2_self_convergence` | NOT_RUN |
+<!-- DOC-NUMBERS-FULL:END -->
+
+**复现命令**：
+
+```bash
+# 一个分片（可独立递交集群；配置编码在文件名里）
+OMP_NUM_THREADS=1 python -m benchmarks.riemann_2d_cks1998 --leg 2 64 \
+    --time 0.25 --cfl 0.2
+# 或经作业封装（回传带 sha256），再在本地校验落盘
+OMP_NUM_THREADS=1 python -m scripts.c2_leg_job --degree 2 --cells 64 --time 0.25
+python -m scripts.c2_leg_ingest <job-stdout.log> \
+    --output-dir docs/benchmarks/results/riemann_2d_cks1998
+# 四分片齐了之后：重算 C2、写 metrics_full.json、同步本文档
+OMP_NUM_THREADS=1 python -m benchmarks.riemann_2d_cks1998 --merge-legs --sync-doc
+# 回归
+python -m pytest tests/test_riemann_2d_c2_full_record.py \
+    tests/test_riemann_2d_cks1998.py tests/test_riemann_2d_cks1998_doc_binding.py -q
+```
+
+
 真自收敛需要 32×32 与 64×64 两套网格，下面的完整命令实现了它，但那是分钟级计算，
 必须递交计算队列：
 
