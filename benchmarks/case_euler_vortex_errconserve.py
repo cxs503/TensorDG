@@ -896,6 +896,19 @@ def _observed_order(records, checkpoint: float):
     return float(-np.polyfit(np.log(cells), np.log(err), 1)[0]), [int(c) for c in cells]
 
 
+def record_direction(record: dict) -> str:
+    """Declared advection direction of one record (``diag45`` when unrecorded).
+
+    Result files written before the direction axis existed carry no
+    ``background_velocity``; those are the historical ``diag45`` legs, so an
+    absent field means the baseline rather than "unknown".
+    """
+    background = (record.get("config") or {}).get("background_velocity")
+    if background is None:
+        return DIRECTION_BASELINE
+    return direction_label(tuple(background))
+
+
 def _dg_order(records, degree: int, checkpoint: float, cells=ORDER_CELLS):
     """Observed spatial order of one DG degree family at one checkpoint.
 
@@ -905,11 +918,18 @@ def _dg_order(records, degree: int, checkpoint: float, cells=ORDER_CELLS):
     of a straight line through two points *is* the measured order, and the gate
     asks only whether it reaches a predeclared fraction of ``p + 1``.  The CFL is
     pinned to ``ORDER_CFL``: two CFLs on one mesh are two discretisations, and a
-    fit through both would measure the time step rather than the mesh.
+    fit through both would measure the time step rather than the mesh.  The
+    advection direction is pinned for the same reason -- and that pin was a real
+    defect: once the C10 axis landed, the p = 2 fit ran through *four* points (the
+    three 32-cell legs ``diag45``/``axis0``/``obl30`` plus one 64-cell leg), so the
+    published slope (4.09 at t = 1, 4.64 at t = 10) was mostly the spread between
+    directions, not the mesh.  DG-P2 cannot beat p + 1 = 3 in the asymptotic range,
+    which is what gave it away.  Rotated legs are graded by C10, not here.
     """
     rows = [r for r in records if r.get("task") == "dg"
             and int(r.get("degree", -1)) == int(degree)
             and abs(float(r.get("cfl", float("nan"))) - ORDER_CFL) < 1e-12
+            and record_direction(r) == DIRECTION_BASELINE
             and int(r.get("cells", -1)) in set(cells)
             and abs(r["final_time"] - checkpoint) < 1e-12]
     rows.sort(key=lambda r: r["cells"])

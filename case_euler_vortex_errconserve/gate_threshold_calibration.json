@@ -1,0 +1,172 @@
+{
+  "case": "EULER-VORTEX-ERR",
+  "ledger_slug": "CASE-DG-EULER-VORTEX-ERR",
+  "slack": 0.001,
+  "rows": [
+    {
+      "id": "k01",
+      "criterion": "C1_tolerance",
+      "threshold": 0.06,
+      "threshold_source": "TOLERANCE",
+      "direction": "fails above",
+      "readings": {
+        "inside": {
+          "magnitude": 0.05994,
+          "detail": "snapshot error 5.9940% at t=1",
+          "status": "passed",
+          "verdict": "FAIL"
+        },
+        "outside": {
+          "magnitude": 0.06005999999999999,
+          "detail": "snapshot error 6.0060% at t=1",
+          "status": "failed",
+          "verdict": "FAIL"
+        }
+      },
+      "brackets": true
+    },
+    {
+      "id": "k02",
+      "criterion": "C2_error_conservation",
+      "threshold": 1.0,
+      "threshold_source": "MAX_GROWTH_EXPONENT",
+      "direction": "fails above",
+      "readings": {
+        "inside": {
+          "magnitude": 0.999,
+          "detail": "design family exponent -> dg_d2_n32_t10_cfl0.2, dg_d2_n32_t1_cfl0.2, dg_d2_n32_t20_cfl0.2, dg_d2_n32_t2_cfl0.2, dg_d2_n32_t5_cfl0.2",
+          "status": "passed",
+          "verdict": "FAIL"
+        },
+        "outside": {
+          "magnitude": 1.001,
+          "detail": "design family exponent -> dg_d2_n32_t10_cfl0.2, dg_d2_n32_t1_cfl0.2, dg_d2_n32_t20_cfl0.2, dg_d2_n32_t2_cfl0.2, dg_d2_n32_t5_cfl0.2",
+          "status": "failed",
+          "verdict": "FAIL"
+        }
+      },
+      "brackets": true
+    },
+    {
+      "id": "k03",
+      "criterion": "C3_discrete_conservation",
+      "threshold": 1e-10,
+      "threshold_source": "INVARIANT_TOLERANCE",
+      "direction": "fails above",
+      "readings": {
+        "inside": {
+          "magnitude": 9.99e-11,
+          "detail": "mass drift 9.990e-11",
+          "status": "passed",
+          "verdict": "PASS"
+        },
+        "outside": {
+          "magnitude": 1.001e-10,
+          "detail": "mass drift 1.001e-10",
+          "status": "failed",
+          "verdict": "FAIL"
+        }
+      },
+      "brackets": true
+    },
+    {
+      "id": "k04",
+      "criterion": "C4_entropy_budget",
+      "threshold": 0.001,
+      "threshold_source": "ENTROPY_TOLERANCE",
+      "direction": "fails above",
+      "readings": {
+        "inside": {
+          "magnitude": 0.000999,
+          "detail": "entropy drift 9.990e-04 on dg_d2_n32_t10_cfl0.2",
+          "status": "passed",
+          "verdict": "PASS"
+        },
+        "outside": {
+          "magnitude": 0.001001,
+          "detail": "entropy drift 1.001e-03 on dg_d2_n32_t10_cfl0.2",
+          "status": "failed",
+          "verdict": "FAIL"
+        }
+      },
+      "brackets": true
+    },
+    {
+      "id": "k05",
+      "criterion": "C5_crosscheck_order",
+      "threshold": 0.8,
+      "threshold_source": "0.8 (literal in evaluate_gates)",
+      "direction": "fails below",
+      "readings": {
+        "inside": {
+          "magnitude": 0.8008,
+          "detail": "P0 t=1 errors ~ n^-0.8008",
+          "status": "passed",
+          "verdict": "FAIL"
+        },
+        "outside": {
+          "magnitude": 0.7992,
+          "detail": "P0 t=1 errors ~ n^-0.7992",
+          "status": "failed",
+          "verdict": "FAIL"
+        }
+      },
+      "brackets": true
+    },
+    {
+      "id": "k09",
+      "criterion": "C9_design_order",
+      "threshold": 2.4000000000000004,
+      "threshold_source": "ORDER_SLACK*(p+1), p=2",
+      "direction": "fails below",
+      "readings": {
+        "inside": {
+          "magnitude": 2.4024,
+          "detail": "dg_d2_n64_t1_cfl0.2 set to 1.784e-05 (2.4024-th order against n=32); dg_d2_n64_t10_cfl0.2 set to 2.868e-05 (2.4024-th order against n=32)",
+          "status": "passed",
+          "verdict": "FAIL"
+        },
+        "outside": {
+          "magnitude": 2.3976,
+          "detail": "dg_d2_n64_t1_cfl0.2 set to 1.790e-05 (2.3976-th order against n=32); dg_d2_n64_t10_cfl0.2 set to 2.878e-05 (2.3976-th order against n=32)",
+          "status": "failed",
+          "verdict": "FAIL"
+        }
+      },
+      "brackets": true
+    },
+    {
+      "id": "k11",
+      "criterion": "C11_provenance_integrity",
+      "threshold": 1e-09,
+      "threshold_source": "PROVENANCE_REPLAY_TOLERANCE",
+      "direction": "fails above",
+      "readings": {
+        "inside": {
+          "magnitude": 9.99e-10,
+          "detail": "certificate deviation dg_d2_n32_t1_cfl0.2",
+          "status": "passed",
+          "verdict": "PASS"
+        },
+        "outside": {
+          "magnitude": 1.001e-09,
+          "detail": "certificate deviation dg_d2_n32_t1_cfl0.2",
+          "status": "failed",
+          "verdict": "FAIL"
+        }
+      },
+      "brackets": true
+    }
+  ],
+  "calibrated": [
+    "C1_tolerance",
+    "C2_error_conservation",
+    "C3_discrete_conservation",
+    "C4_entropy_budget",
+    "C5_crosscheck_order",
+    "C9_design_order",
+    "C11_provenance_integrity"
+  ],
+  "miscalibrated": [],
+  "all_bracketed": true
+}
