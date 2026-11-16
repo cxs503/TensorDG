@@ -46,6 +46,22 @@ LEGACY_ORDER = 8
 BIAS_MESHES = (100, 200, 400, 800, 1600, 3200)
 REFINE_MESHES = (400, 800, 1600, 3200)
 CACHE = OUT / "cache"
+PROVENANCE = CACHE / "PROVENANCE.json"
+
+#: Readings this repository has already published for each gate (worst field, legacy
+#: instrument).  A cached profile that no longer reproduces them within
+#: ``FINGERPRINT_TOL`` is *not* evidence about the gate -- it is evidence that the
+#: profile came from a different code state.  Reusing such a profile silently would
+#: let a stale cache flip (or un-flip) a verdict.
+GATE_EXPECTATIONS = {
+    "sod-1d-p0-n3200": {"worst_field": "velocity", "legacy_rel_l2": 0.025177,
+                        "source": "REFERENCE-QUADRATURE-INSTRUMENT-AUDIT.md 3.3"},
+    "sod-2d-p0-extruded-n3200": {"worst_field": "velocity", "legacy_rel_l2": 0.025177,
+                                 "source": "same 1-D reading (extruded 2-D collapse, see 3.5)"},
+    "sod-dg-p2-tvb-n400": {"worst_field": "velocity", "legacy_rel_l2": 0.02368,
+                           "source": "CKS1998-round2-results.md / AUDIT_m15345: 2.368 %"},
+}
+FINGERPRINT_TOL = 0.005  # 0.5 pp: wider than any instrument delta seen so far (<=0.07 pp)
 
 
 def cached(name: str, runner):
@@ -149,6 +165,35 @@ GATES = (
 
 
 # --------------------------------------------------------------------------- #
+# provenance + fingerprint
+# --------------------------------------------------------------------------- #
+def load_provenance():
+    """Committed record of where each cached profile came from (job, host, sha256)."""
+    if not PROVENANCE.exists():
+        return None
+    return json.loads(PROVENANCE.read_text())
+
+
+def fingerprint(gate: dict) -> dict:
+    """Compare a measured gate reading with the number this repository published."""
+    expected = GATE_EXPECTATIONS.get(gate["key"])
+    if gate.get("status") != "measured" or expected is None:
+        return {"status": "not_compared"}
+    field = gate["fields"][expected["worst_field"]]
+    delta_pp = 100.0 * (field["legacy_rel_l2"] - expected["legacy_rel_l2"])
+    return {
+        "status": "match" if abs(delta_pp) / 100.0 <= FINGERPRINT_TOL else "mismatch",
+        "registered_rel_l2": expected["legacy_rel_l2"],
+        "measured_rel_l2": field["legacy_rel_l2"],
+        "delta_pp": delta_pp,
+        "registered_source": expected["source"],
+        "tolerance": FINGERPRINT_TOL,
+        "note": ("a mismatch means the cached profile does not reproduce the registered "
+                 "gate reading; re-run the configuration before using it as evidence"),
+    }
+
+
+# --------------------------------------------------------------------------- #
 # audit pieces
 # --------------------------------------------------------------------------- #
 def measure_gate(gate: dict) -> dict:
@@ -157,7 +202,8 @@ def measure_gate(gate: dict) -> dict:
         numerical, meta = gate["runner"]()
     except Exception as error:  # pragma: no cover - reported, never silently dropped
         return {"key": gate["key"], "label": gate["label"], "config": gate["config"],
-                "ncells": gate["ncells"], "status": "not_run", "reason": str(error)}
+                "ncells": gate["ncells"], "status": "not_run", "reason": str(error),
+                "fingerprint": {"status": "not_compared"}}
     n = gate["ncells"]
     _, exact = srq.cell_averages(n, SOD_TIME, *SOD)
     _, legacy = legacy_cell_averages(n, SOD_TIME, quadrature_order=LEGACY_ORDER)
@@ -185,6 +231,8 @@ def measure_gate(gate: dict) -> dict:
         "fields": fields,
         "worst_field_legacy": worst_legacy, "worst_field_exact": worst_exact,
         "flip": any(fields[k]["pass_legacy"] != fields[k]["pass_exact"] for k in fields),
+        "fingerprint": fingerprint({"key": gate["key"], "status": "measured",
+                                    "fields": fields}),
     }
 
 
@@ -266,6 +314,7 @@ def build_metrics() -> dict:
         "gates": [measure_gate(gate) for gate in GATES],
     }
     metrics["refinement"] = refinement_study()
+    metrics["profile_provenance"] = load_provenance()
     metrics["verdict"] = summarise(metrics)
     return metrics
 
@@ -300,6 +349,14 @@ def summarise(metrics: dict) -> dict:
         "bias_still_above_1e-3_at": [
             row["ncells"] for row in bias["sod"]
             if row["fields"]["velocity"]["rms_rel"] > 1e-3
+        ],
+        "fingerprint_mismatches": [
+            g["key"] for g in measured
+            if g.get("fingerprint", {}).get("status") == "mismatch"
+        ],
+        "gates_failing_exact": [
+            f"{g['key']}:{key}" for g in measured for key in srq.FIELDS
+            if not g["fields"][key]["pass_exact"]
         ],
     }
 
@@ -475,6 +532,21 @@ def render_doc(metrics: dict, figures: list) -> str:
                 f"{'PASS' if field['pass_legacy'] else 'FAIL'} | "
                 f"{'PASS' if field['pass_exact'] else 'FAIL'} | {field['margin_exact_pp']:+.4f} |")
     add("")
+    add("")
+    add("**指纹核对**（每条读数是否复现本仓已公布的那个数，容差 "
+        f"{FINGERPRINT_TOL * 100:.1f} pp）：")
+    add("")
+    add("| 门 | 已公布 rel L2 | 本次实测 rel L2 | 差 [pp] | 核对 | 来源 |")
+    add("|---|---:|---:|---:|:--:|---|")
+    for gate in metrics["gates"]:
+        mark = gate.get("fingerprint", {"status": "not_compared"})
+        if mark.get("status") == "not_compared":
+            add(f"| {gate['key']} | — | — | — | **未核对** | — |")
+            continue
+        add(f"| {gate['key']} | {100 * mark['registered_rel_l2']:.4f} % | "
+            f"{100 * mark['measured_rel_l2']:.4f} % | {mark['delta_pp']:+.4f} | "
+            f"**{mark['status']}** | {mark['registered_source']} |")
+    add("")
     add(f"判决翻转：**{verdict['verdict_flips'] if verdict['verdict_flips'] else '无'}**；"
         f"最紧的一道门在精确基准下仍余 {verdict['tightest_gate_margin_pp']:.4f} pp；"
         f"单场量的最大位移 {verdict['largest_gate_shift_pp']:.4f} pp。")
@@ -519,7 +591,7 @@ def render_doc(metrics: dict, figures: list) -> str:
     add("")
     add("1. **不改台账判决**：`CASE-LAX-DG` 钉扎腿的诚实 FAIL（波对齐收敛读数 ρ = 3.0251 %）原样保留；"
         "本轮只把**另一台仪表**（单元平均基准）的偏差量化并给出修正件。")
-    add("2. **判决没有翻转**：三道 Sod 门在精确基准下仍然 PASS，"
+    add("2. **判决没有翻转**：除下表指纹不合的那一门外，Sod 门在精确基准下判决与旧基准一致，"
         f"最紧裕度 {verdict['tightest_gate_margin_pp']:.4f} pp。所以本单的价值不是「推翻」，而是"
         "把裕度里由基准贡献的那一部分**抠出来并贴上数字**，并把不可加密消除的偏差换成可加密消除的。")
     add("3. **断点依赖闭式波速**：断点来自 `star_state` + Rankine-Hugoniot/等熵关系；"
@@ -549,10 +621,24 @@ def render_doc(metrics: dict, figures: list) -> str:
             f"{100 * field['legacy_rel_l2']:.4f} % | "
             f"{'是' if field['pass_legacy'] else '否'} |")
     add("")
-    add(f"结论：三道 Sod 门在**精确基准**下仍全部 < 3 %（最紧裕度 "
-        f"{verdict['tightest_gate_margin_pp']:.4f} pp），判决不翻转；"
-        f"但基准偏差本身在 N=3200 达到 Sod 速度 {100 * metrics['bias']['sod'][-1]['fields']['velocity']['rms_rel']:.4f} %，"
-        "且**不随加密消失**——这是本轮入账的仪表缺陷。")
+    failing = verdict.get("gates_failing_exact") or []
+    add(f"结论：在**精确基准**下，{len(failing)} 处读数越界"
+        f"（{'、'.join(failing) if failing else '无'}）；最紧裕度 "
+        f"{verdict['tightest_gate_margin_pp']:.4f} pp，判决翻转 "
+        f"{verdict['verdict_flips'] if verdict['verdict_flips'] else '无'}——"
+        "即仪表换不换都不改变判决，越界的那一项是求解器/门的问题，不是基准的问题。"
+        f"基准偏差本身在 N=3200 达到 Sod 速度 "
+        f"{100 * metrics['bias']['sod'][-1]['fields']['velocity']['rms_rel']:.4f} %，"
+        "且**不随加密消失**——这是入账的仪表缺陷。")
+    add("")
+    mism = verdict.get("fingerprint_mismatches") or []
+    if mism:
+        add(f"**未闭合项（honest）**：{'、'.join(mism)} 的实测读数与已公布值差 "
+            f"{next(g for g in metrics['gates'] if g['key'] == mism[0])['fingerprint']['delta_pp']:.4f} pp，"
+            "超过指纹容差，说明这份缓存剖面**不是**那个已公布门读数的复现（代码状态不同），"
+            "因此本表对该门的「不翻转」结论只说明仪器一致性，**不说明求解器现状**；"
+            "必须在当前代码上重跑该配置后才能引用。重跑作业见 "
+            "`docs/CASE-REPRO-DG-CKS1998-DUAL-INSTRUMENT-GATES.md`。")
     add("")
     return "\n".join(lines)
 

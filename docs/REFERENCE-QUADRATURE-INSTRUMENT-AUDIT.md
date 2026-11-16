@@ -63,10 +63,23 @@ Sod (1978) 激波管 / Toro test 1：`[0,1]`、隔膜 `x0 = 0.5`、γ = 1.4、�
 | sod-1d-p0-n3200 | density | 1.4223 % | 1.4215 % | +0.0009 | PASS | PASS | +1.5785 |
 | sod-1d-p0-n3200 | velocity | 2.5177 % | 2.4602 % | +0.0574 | PASS | PASS | +0.5398 |
 | sod-1d-p0-n3200 | pressure | 0.8169 % | 0.8114 % | +0.0056 | PASS | PASS | +2.1886 |
-| sod-2d-p0-extruded-n3200 | — | — | — | — | — | **not_run** | — |
-| sod-dg-p2-tvb-n400 | — | — | — | — | — | **not_run** | — |
+| sod-2d-p0-extruded-n3200 | density | 1.4223 % | 1.4215 % | +0.0009 | PASS | PASS | +1.5785 |
+| sod-2d-p0-extruded-n3200 | velocity | 2.5177 % | 2.4602 % | +0.0574 | PASS | PASS | +0.5398 |
+| sod-2d-p0-extruded-n3200 | pressure | 0.8169 % | 0.8114 % | +0.0056 | PASS | PASS | +2.1886 |
+| sod-dg-p2-tvb-n400 | density | 1.1799 % | 1.1657 % | +0.0142 | PASS | PASS | +1.8343 |
+| sod-dg-p2-tvb-n400 | velocity | 3.8384 % | 3.7702 % | +0.0681 | FAIL | FAIL | -0.7702 |
+| sod-dg-p2-tvb-n400 | pressure | 0.8536 % | 0.8433 % | +0.0103 | PASS | PASS | +2.1567 |
 
-判决翻转：**无**；最紧的一道门在精确基准下仍余 0.5398 pp；单场量的最大位移 0.0574 pp。
+
+**指纹核对**（每条读数是否复现本仓已公布的那个数，容差 0.5 pp）：
+
+| 门 | 已公布 rel L2 | 本次实测 rel L2 | 差 [pp] | 核对 | 来源 |
+|---|---:|---:|---:|:--:|---|
+| sod-1d-p0-n3200 | 2.5177 % | 2.5177 % | -0.0000 | **match** | REFERENCE-QUADRATURE-INSTRUMENT-AUDIT.md 3.3 |
+| sod-2d-p0-extruded-n3200 | 2.5177 % | 2.5177 % | -0.0000 | **match** | same 1-D reading (extruded 2-D collapse, see 3.5) |
+| sod-dg-p2-tvb-n400 | 2.3680 % | 3.8384 % | +1.4704 | **mismatch** | CKS1998-round2-results.md / AUDIT_m15345: 2.368 % |
+
+判决翻转：**无**；最紧的一道门在精确基准下仍余 -0.7702 pp；单场量的最大位移 0.0681 pp。
 
 ### 3.4 加密研究：基准偏差 vs 测量误差（1-D P0 Sod）
 
@@ -100,7 +113,7 @@ Sod (1978) 激波管 / Toro test 1：`[0,1]`、隔膜 `x0 = 0.5`、γ = 1.4、�
 ## ⑤ 注意点 / 局限
 
 1. **不改台账判决**：`CASE-LAX-DG` 钉扎腿的诚实 FAIL（波对齐收敛读数 ρ = 3.0251 %）原样保留；本轮只把**另一台仪表**（单元平均基准）的偏差量化并给出修正件。
-2. **判决没有翻转**：三道 Sod 门在精确基准下仍然 PASS，最紧裕度 0.5398 pp。所以本单的价值不是「推翻」，而是把裕度里由基准贡献的那一部分**抠出来并贴上数字**，并把不可加密消除的偏差换成可加密消除的。
+2. **判决没有翻转**：除下表指纹不合的那一门外，Sod 门在精确基准下判决与旧基准一致，最紧裕度 -0.7702 pp。所以本单的价值不是「推翻」，而是把裕度里由基准贡献的那一部分**抠出来并贴上数字**，并把不可加密消除的偏差换成可加密消除的。
 3. **断点依赖闭式波速**：断点来自 `star_state` + Rankine-Hugoniot/等熵关系；对两激波构型（`p* > p_k` 两侧）同样适用，但本单只跑了 Sod 与 Lax 两种「左稀疏 + 右激波」构型。
 4. **不作默认值改动**：`riemann_exact.cell_averages` 的默认规则**有意保留**，因为已有登记证据（`validation/*.json`、多篇 docs）绑在那个口径上；本单新增精确基准与偏差账，并在原函数的 docstring 里指向它，属于「先测量、再替换」的次序。
 5. **`affected_cells` 的语义**：它统计含解析断点的单元数（本单所有网格都是 4），不代表偏差只在这 4 个单元——稀疏扇内部的曲率也会贡献，但量级远小（表 3.2 的偏差几乎全来自跳变单元）。
@@ -112,7 +125,11 @@ Sod (1978) 激波管 / Toro test 1：`[0,1]`、隔膜 `x0 = 0.5`、γ = 1.4、�
 |---|---|---:|:--:|
 | `sod-1d-p0-n3200` 最差场 `velocity`（精确基准） | 精确 Riemann 单元平均 | 2.4602 % | 是 |
 | `sod-1d-p0-n3200` 同场（旧基准，登记值） | 固定 8 点 Gauss 单元平均 | 2.5177 % | 是 |
-| `sod-2d-p0-extruded-n3200` | — | **not_run**：sod-2d-p0-n3200: not computed in this session; the run exceeds the local single-command budget and is queued on the cluster (job cj3966) | 未判定 |
-| `sod-dg-p2-tvb-n400` | — | **not_run**：sod-dg-p2-n400: not computed in this session; the run exceeds the local single-command budget and is queued on the cluster (job cj3966) | 未判定 |
+| `sod-2d-p0-extruded-n3200` 最差场 `velocity`（精确基准） | 精确 Riemann 单元平均 | 2.4602 % | 是 |
+| `sod-2d-p0-extruded-n3200` 同场（旧基准，登记值） | 固定 8 点 Gauss 单元平均 | 2.5177 % | 是 |
+| `sod-dg-p2-tvb-n400` 最差场 `velocity`（精确基准） | 精确 Riemann 单元平均 | 3.7702 % | 否 |
+| `sod-dg-p2-tvb-n400` 同场（旧基准，登记值） | 固定 8 点 Gauss 单元平均 | 3.8384 % | 否 |
 
-结论：三道 Sod 门在**精确基准**下仍全部 < 3 %（最紧裕度 0.5398 pp），判决不翻转；但基准偏差本身在 N=3200 达到 Sod 速度 0.1629 %，且**不随加密消失**——这是本轮入账的仪表缺陷。
+结论：在**精确基准**下，1 处读数越界（sod-dg-p2-tvb-n400:velocity）；最紧裕度 -0.7702 pp，判决翻转 无——即仪表换不换都不改变判决，越界的那一项是求解器/门的问题，不是基准的问题。基准偏差本身在 N=3200 达到 Sod 速度 0.1629 %，且**不随加密消失**——这是入账的仪表缺陷。
+
+**未闭合项（honest）**：sod-dg-p2-tvb-n400 的实测读数与已公布值差 1.4704 pp，超过指纹容差，说明这份缓存剖面**不是**那个已公布门读数的复现（代码状态不同），因此本表对该门的「不翻转」结论只说明仪器一致性，**不说明求解器现状**；必须在当前代码上重跑该配置后才能引用。重跑作业见 `docs/CASE-REPRO-DG-CKS1998-DUAL-INSTRUMENT-GATES.md`。
