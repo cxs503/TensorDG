@@ -54,6 +54,12 @@ FIELDS = ("density", "velocity_x", "velocity_y", "pressure")
 #: tolerance -- three orders of magnitude of headroom against the gate.
 MATERIAL_SHIFT = 1.0e-2
 
+#: The case's conservation criterion is ``alpha <= 1`` on ``e ~ t^alpha``; the
+#: largest exponent any published family reports is 0.44.  A reference change
+#: that moves ``alpha`` by less than this therefore cannot flip the criterion --
+#: the headroom to 1 is more than five times the allowed move.
+ALPHA_SHIFT_TOL = 1.0e-1
+
 
 def load_records(directory: Path | str) -> dict:
     """``task_key -> record`` for every JSON record under ``directory/results``."""
@@ -94,14 +100,26 @@ def _fit_exponent(rows: list) -> float:
 
 
 def family(record: dict) -> str:
+    """Family label of one record.
+
+    The record's own ``family`` field is authoritative: the benchmark writes it
+    at run time and it already carries the direction tag (``..._diraxis0``).  The
+    first version of this function re-appended that tag to a freshly built label,
+    so the artifact's exponent table was keyed by
+    ``dg_d2_n64_cfl0.2dg_d2_n64_cfl0.2`` -- a label that matches no record and no
+    other artifact.  Pinned by
+    ``tests/test_vortex_reference_upgrade.py::test_family_label_matches_the_record``.
+    """
+    label = record.get("family")
+    if label:
+        return str(label)
     config = record.get("config") or {}
-    direction = record.get("family") or ""
     task = config.get("task", record.get("task", "dg"))
     if task == "p0":
         return f"p0_n{config.get('cells', record['cells'])}"
     return (f"dg_d{config.get('degree', record.get('degree'))}"
-            f"_n{config.get('cells', record['cells'])}_cfl{config.get('cfl', record.get('cfl'))}"
-            f"{direction}")
+            f"_n{config.get('cells', record['cells'])}"
+            f"_cfl{config.get('cfl', record.get('cfl'))}")
 
 
 def family_exponents(records: dict) -> dict:
@@ -158,6 +176,36 @@ def build_report(published: dict, lattice: dict, rerun: dict | None = None,
 
     exponents = {"published": family_exponents(published),
                  "lattice": family_exponents(lattice)}
+    # Judgement invariance: the criterion C2/C7/C8 reads is ``alpha <= 1`` on the
+    # published (truncated-reference) errors.  Removing the reference defect must
+    # not move that exponent enough to change the verdict, otherwise "the error
+    # is conserved" would be a statement about the reference, not the scheme.
+    exponent_shift = {}
+    for name, published_entry in exponents["published"].items():
+        lattice_entry = exponents["lattice"].get(name)
+        if lattice_entry is None:
+            continue
+        exponent_shift[name] = {
+            "checkpoints": published_entry["checkpoints"],
+            "published_alpha": published_entry["alpha"],
+            "lattice_alpha": lattice_entry["alpha"],
+            "delta_alpha": lattice_entry["alpha"] - published_entry["alpha"],
+            "published_amplification": published_entry["amplification"],
+            "lattice_amplification": lattice_entry["amplification"],
+        }
+    deltas = [abs(entry["delta_alpha"]) for entry in exponent_shift.values()
+              if np.isfinite(entry["delta_alpha"])]
+    alphas = [entry["lattice_alpha"] for entry in exponent_shift.values()
+              if np.isfinite(entry["lattice_alpha"])]
+    criterion_invariance = {
+        "alpha_shift_tolerance": ALPHA_SHIFT_TOL,
+        "families_compared": sorted(exponent_shift),
+        "max_abs_delta_alpha": max(deltas) if deltas else None,
+        "max_lattice_alpha": max(alphas) if alphas else None,
+        "conservation_holds_under_both": (
+            all(alpha < 1.0 for alpha in alphas) if alphas else None),
+        "exponent_invariant": (max(deltas) < ALPHA_SHIFT_TOL) if deltas else None,
+    }
     # Materiality of the reference effect.  A rerun control is the clean
     # measurement (same code, same reference, fresh process); without one the
     # lattice-vs-published difference is used instead, which can only *overstate*
@@ -169,6 +217,15 @@ def build_report(published: dict, lattice: dict, rerun: dict | None = None,
         else:
             row["effect_source"] = "lattice_vs_published"
             row["effect_max"] = row["lattice_vs_published"]["max_relative_shift"]
+    # The bound check must not disappear where no control run exists: the effect
+    # used for the row (controlled or not) is always compared with its floor
+    # bound, so a missing control can only make the check *more* conservative.
+    for row in rows:
+        bound = row["floor_bound"]
+        if bound:
+            row.setdefault("bound_materialised", row["effect_max"] / bound)
+            row.setdefault("bound_is_sound",
+                           bool(row["effect_max"] <= bound + 1.0e-12))
     effect = [row["effect_max"] for row in rows]
     material = [row["task_key"] for row in rows if row["effect_max"] > MATERIAL_SHIFT]
     payload = {
@@ -180,6 +237,8 @@ def build_report(published: dict, lattice: dict, rerun: dict | None = None,
         "measured_effect_max": max(effect) if effect else None,
         "material_checkpoints": material,
         "exponents": exponents,
+        "exponent_shift": exponent_shift,
+        "criterion_invariance": criterion_invariance,
         "verdict": ("no_material_reference_effect" if not material
                     else "material_reference_effect"),
     }
@@ -230,6 +289,28 @@ def markdown(payload: dict) -> str:
     else:
         lines.append("* 全部检查点的实测参考效应都落在其地板上界之内 ⇒ 地板是**可靠上界**。")
     lines.append("* 只有速度场有可测位移；密度/压力位移量级见上表（应为 `O(tail^2)`）。")
+
+    shift = payload.get("exponent_shift") or {}
+    invariance = payload.get("criterion_invariance") or {}
+    if shift:
+        lines += ["", "## 判据不变性（换参考不改判据）", "",
+                  "| 族 | 检查点数 | α（已发布） | α（lattice） | Δα | A（已发布） | A（lattice） |",
+                  "|---|---|---|---|---|---|---|"]
+        for name, entry in sorted(shift.items()):
+            lines.append(
+                f"| {name} | {entry['checkpoints']} | {_fmt(entry['published_alpha'], 1.0, 4)} | "
+                f"{_fmt(entry['lattice_alpha'], 1.0, 4)} | "
+                f"{entry['delta_alpha']:+.4f} | "
+                f"{_fmt(entry['published_amplification'], 1.0, 4)} | "
+                f"{_fmt(entry['lattice_amplification'], 1.0, 4)} |")
+        lines.append("")
+        lines.append(
+            f"* 最大 |Δα| = {_fmt(invariance.get('max_abs_delta_alpha'), 1.0, 4)}"
+            f"（容差 {invariance.get('alpha_shift_tolerance')}）；"
+            f"lattice 参考下的最大 α = {_fmt(invariance.get('max_lattice_alpha'), 1.0, 4)}"
+            f" ⇒ 两套参考下「误差守恒」（α ≤ 1）都成立："
+            f"`{invariance.get('conservation_holds_under_both')}`，"
+            f"指数不变：`{invariance.get('exponent_invariant')}`。")
     return "\n".join(lines) + "\n"
 
 
