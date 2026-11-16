@@ -1,0 +1,244 @@
+{
+  "case": "CASE-DG-EULER-VORTEX-ERR",
+  "predict_time": 40.0,
+  "archive_time_cap": 20.0,
+  "archive_dir": "case_euler_vortex_errconserve/results",
+  "archive_digest_sha256": "3e02a7a95a7c37a7f511d28aeebff81c1133f86d73b9dafc5d13d4cca0700dd5",
+  "archive_files": [
+    "dg_d1_n32_t10_cfl0.2.json",
+    "dg_d1_n32_t1_cfl0.2.json",
+    "dg_d1_n32_t2_cfl0.2.json",
+    "dg_d1_n32_t5_cfl0.2.json",
+    "dg_d1_n64_t10_cfl0.2.json",
+    "dg_d1_n64_t1_cfl0.2.json",
+    "dg_d1_n64_t2_cfl0.2.json",
+    "dg_d1_n64_t5_cfl0.2.json",
+    "dg_d2_n32_t10_cfl0.2.json",
+    "dg_d2_n32_t10_cfl0.2_diraxis0.json",
+    "dg_d2_n32_t10_cfl0.2_dirobl30.json",
+    "dg_d2_n32_t10_cfl0.4.json",
+    "dg_d2_n32_t1_cfl0.2.json",
+    "dg_d2_n32_t1_cfl0.2_diraxis0.json",
+    "dg_d2_n32_t1_cfl0.2_dirobl30.json",
+    "dg_d2_n32_t1_cfl0.4.json",
+    "dg_d2_n32_t20_cfl0.2.json",
+    "dg_d2_n32_t2_cfl0.2.json",
+    "dg_d2_n32_t2_cfl0.2_diraxis0.json",
+    "dg_d2_n32_t2_cfl0.2_dirobl30.json",
+    "dg_d2_n32_t2_cfl0.4.json",
+    "dg_d2_n32_t5_cfl0.2.json",
+    "dg_d2_n32_t5_cfl0.2_diraxis0.json",
+    "dg_d2_n32_t5_cfl0.2_dirobl30.json",
+    "dg_d2_n32_t5_cfl0.4.json",
+    "dg_d2_n64_t10_cfl0.2.json",
+    "dg_d2_n64_t1_cfl0.2.json",
+    "dg_d2_n64_t2_cfl0.2.json",
+    "dg_d3_n32_t10_cfl0.2.json",
+    "dg_d3_n32_t1_cfl0.2.json",
+    "dg_d3_n32_t2_cfl0.2.json",
+    "dg_d3_n32_t5_cfl0.2.json",
+    "p0_n128_t10_cfl0.4.json",
+    "p0_n128_t1_cfl0.4.json",
+    "p0_n128_t2_cfl0.4.json",
+    "p0_n128_t5_cfl0.4.json",
+    "p0_n256_t1_cfl0.4.json",
+    "p0_n64_t10_cfl0.4.json",
+    "p0_n64_t1_cfl0.4.json",
+    "p0_n64_t5_cfl0.4.json"
+  ],
+  "frozen_before_runs": true,
+  "families": {
+    "dg_d2_n32_cfl0.2": {
+      "role": "design family (C2 gate family, p=2, 32^2)",
+      "archive_times": [
+        1.0,
+        2.0,
+        5.0,
+        10.0,
+        20.0
+      ],
+      "archive_errors_percent": [
+        0.00943121470613078,
+        0.009689709783192219,
+        0.011131861013866377,
+        0.015162621307949022,
+        0.02516862556204019
+      ],
+      "anchor_time": 20.0,
+      "anchor_percent": 0.02516862556204019,
+      "models": {
+        "ols_window": {
+          "alpha": 0.3128785604386482,
+          "note": "least squares over the whole archived window",
+          "predicted_percent": 0.03126405682628981,
+          "predicted_growth_ratio_vs_anchor": 1.2421837159611477
+        },
+        "robust_window": {
+          "alpha": 0.44325876266566705,
+          "note": "worst robust variant (bootstrap_quantile), the number C2 gates on",
+          "predicted_percent": 0.034221077762051785,
+          "predicted_growth_ratio_vs_anchor": 1.3596720916562357
+        },
+        "tail_local": {
+          "alpha": 0.7311072466430494,
+          "note": "two-point slope of the last archived pair",
+          "predicted_percent": 0.04177771770571694,
+          "predicted_growth_ratio_vs_anchor": 1.6599125606893255
+        },
+        "linear_bound": {
+          "alpha": 1.0,
+          "note": "e proportional to elapsed time (the alpha = 1 bound C2 permits)",
+          "predicted_percent": 0.05033725112408038,
+          "predicted_growth_ratio_vs_anchor": 2.0
+        }
+      },
+      "prediction_spread_percent": [
+        0.03126405682628981,
+        0.05033725112408038
+      ],
+      "tolerance_percent": 6.0
+    },
+    "dg_d1_n32_cfl0.2": {
+      "role": "degree axis p=1 (32^2)",
+      "archive_times": [
+        1.0,
+        2.0,
+        5.0,
+        10.0
+      ],
+      "archive_errors_percent": [
+        0.20100992123961822,
+        0.23210234148808806,
+        0.34960147526116886,
+        0.552313972968226
+      ],
+      "anchor_time": 10.0,
+      "anchor_percent": 0.552313972968226,
+      "models": {
+        "ols_window": {
+          "alpha": 0.44007149902534576,
+          "note": "least squares over the whole archived window",
+          "predicted_percent": 1.0165657500635785,
+          "predicted_growth_ratio_vs_anchor": 1.8405577258898362
+        },
+        "robust_window": {
+          "alpha": 0.5338682588283516,
+          "note": "worst robust variant (drop_projection_floor), the number C2 gates on",
+          "predicted_percent": 1.1577285674896785,
+          "predicted_growth_ratio_vs_anchor": 2.09614209336015
+        },
+        "tail_local": {
+          "alpha": 0.6597773537635229,
+          "note": "two-point slope of the last archived pair",
+          "predicted_percent": 1.378515261235611,
+          "predicted_growth_ratio_vs_anchor": 2.4958906142229997
+        },
+        "linear_bound": {
+          "alpha": 1.0,
+          "note": "e proportional to elapsed time (the alpha = 1 bound C2 permits)",
+          "predicted_percent": 2.209255891872904,
+          "predicted_growth_ratio_vs_anchor": 4.0
+        }
+      },
+      "prediction_spread_percent": [
+        1.0165657500635785,
+        2.209255891872904
+      ],
+      "tolerance_percent": 6.0
+    },
+    "dg_d3_n32_cfl0.2": {
+      "role": "degree axis p=3 (32^2)",
+      "archive_times": [
+        1.0,
+        2.0,
+        5.0,
+        10.0
+      ],
+      "archive_errors_percent": [
+        0.0005839390341373958,
+        0.0005869964687824517,
+        0.0005978243358259727,
+        0.0006195392746390414
+      ],
+      "anchor_time": 10.0,
+      "anchor_percent": 0.0006195392746390414,
+      "models": {
+        "ols_window": {
+          "alpha": 0.024914808273362104,
+          "note": "least squares over the whole archived window",
+          "predicted_percent": 0.000641311536091274,
+          "predicted_growth_ratio_vs_anchor": 1.0351426654345968
+        },
+        "robust_window": {
+          "alpha": 0.03388459643382487,
+          "note": "worst robust variant (bootstrap_quantile), the number C2 gates on",
+          "predicted_percent": 0.0006493358824971164,
+          "predicted_growth_ratio_vs_anchor": 1.048094784427404
+        },
+        "tail_local": {
+          "alpha": 0.05147411600559583,
+          "note": "two-point slope of the last archived pair",
+          "predicted_percent": 0.0006653640757285921,
+          "predicted_growth_ratio_vs_anchor": 1.073965933985782
+        },
+        "linear_bound": {
+          "alpha": 1.0,
+          "note": "e proportional to elapsed time (the alpha = 1 bound C2 permits)",
+          "predicted_percent": 0.0024781570985561658,
+          "predicted_growth_ratio_vs_anchor": 4.0
+        }
+      },
+      "prediction_spread_percent": [
+        0.000641311536091274,
+        0.0024781570985561658
+      ],
+      "tolerance_percent": 6.0
+    },
+    "p0_n64": {
+      "role": "first-order cross-check control (64^2)",
+      "archive_times": [
+        1.0,
+        5.0,
+        10.0
+      ],
+      "archive_errors_percent": [
+        4.926036192305211,
+        12.0235164048954,
+        14.30474063391442
+      ],
+      "anchor_time": 10.0,
+      "anchor_percent": 14.30474063391442,
+      "models": {
+        "ols_window": {
+          "alpha": 0.4790904891383299,
+          "note": "least squares over the whole archived window",
+          "predicted_percent": 27.792089747423404,
+          "predicted_growth_ratio_vs_anchor": 1.942858696894684
+        },
+        "robust_window": {
+          "alpha": 0.5530794633407751,
+          "note": "worst robust variant (bootstrap_quantile), the number C2 gates on",
+          "predicted_percent": 30.79406376401833,
+          "predicted_growth_ratio_vs_anchor": 2.1527173789512943
+        },
+        "tail_local": {
+          "alpha": 0.2506344504789044,
+          "note": "two-point slope of the last archived pair",
+          "predicted_percent": 20.247758996520954,
+          "predicted_growth_ratio_vs_anchor": 1.4154579600357464
+        },
+        "linear_bound": {
+          "alpha": 1.0,
+          "note": "e proportional to elapsed time (the alpha = 1 bound C2 permits)",
+          "predicted_percent": 57.21896253565768,
+          "predicted_growth_ratio_vs_anchor": 4.0
+        }
+      },
+      "prediction_spread_percent": [
+        20.247758996520954,
+        57.21896253565768
+      ],
+      "tolerance_percent": 6.0
+    }
+  }
+}
