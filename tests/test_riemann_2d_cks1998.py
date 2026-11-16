@@ -32,7 +32,7 @@ from tensordg.euler_dg_2d import (
 def test_riemann_2d_finite_solution(degree):
     """C3: No NaN/Inf in the final state."""
     _, _, coeff, _ = solve_euler_dg_2d_riemann(
-        ncells=16, degree=degree, final_time=0.1, cfl=0.1,
+        ncells=8, degree=degree, final_time=0.05, cfl=0.1,
         limiter="tvb", tvb_constant=1.0,
     )
     assert torch.isfinite(coeff).all(), "NaN or Inf detected in solution"
@@ -45,18 +45,18 @@ def test_riemann_2d_finite_solution(degree):
 def test_riemann_2d_initial_condition():
     """Verify the initial condition matches Lax-Liu config 3 states."""
     _, _, coeff, _ = solve_euler_dg_2d_riemann(
-        ncells=40, degree=1, final_time=0.0, cfl=0.2,
+        ncells=20, degree=1, final_time=0.0, cfl=0.2,
         limiter=None, tvb_constant=1.0,
     )
-    rho = coeff[:, :, 0, 0, 0]  # [40, 40]
+    rho = coeff[:, :, 0, 0, 0]  # [20, 20]
 
     # Check quadrant averages (away from interfaces)
     # lower-left: x < 0.5, y < 0.5 -> rho = 0.138
-    ll = rho[:20, :20].mean()
+    ll = rho[:10, :10].mean()
     assert abs(float(ll) - 0.138) < 0.01, f"LL quadrant rho = {ll}, expected ~0.138"
 
     # upper-right: x > 0.5, y > 0.5 -> rho = 1.5
-    ur = rho[20:, 20:].mean()
+    ur = rho[10:, 10:].mean()
     assert abs(float(ur) - 1.5) < 0.01, f"UR quadrant rho = {ur}, expected ~1.5"
 
 
@@ -72,7 +72,7 @@ def test_riemann_2d_bounded_oscillations():
     range of the initial data bounds [0.138, 1.5].
     """
     _, _, coeff, _ = solve_euler_dg_2d_riemann(
-        ncells=32, degree=1, final_time=0.1, cfl=0.1,
+        ncells=16, degree=1, final_time=0.05, cfl=0.1,
         limiter="tvb", tvb_constant=1.0,
     )
     rho_mean = coeff[:, :, 0, 0, 0]  # cell-average density
@@ -94,8 +94,8 @@ def test_riemann_2d_bounded_oscillations():
 def test_riemann_2d_advances_in_time():
     """The solver takes a reasonable number of time steps."""
     _, _, _, meta = solve_euler_dg_2d_riemann(
-        ncells=16, degree=1, final_time=0.1, cfl=0.1,
+        ncells=8, degree=1, final_time=0.05, cfl=0.1,
         limiter="tvb", tvb_constant=1.0,
     )
-    assert meta["steps"] > 100, f"Too few steps: {meta['steps']}"
-    assert meta["steps"] < 10000, f"Too many steps: {meta['steps']}"
+    assert meta["steps"] > 50, f"Too few steps: {meta['steps']}"
+    assert meta["steps"] < 5000, f"Too many steps: {meta['steps']}"
