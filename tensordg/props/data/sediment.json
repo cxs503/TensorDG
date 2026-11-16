@@ -1,0 +1,463 @@
+{
+  "schema_version": "1.0",
+  "domain": "sediment transport / seabed boundary conditions (swe, bed-load, scour)",
+  "substances": [
+    {
+      "name": "medium_sand",
+      "class": "sediment",
+      "state": "granular",
+      "aliases": ["sand", "quartz_sand", "medium sand"],
+      "notes": "Non-cohesive medium quartz sand (d50 = 0.3 mm), the standard bed material for coastal/estuarine transport benchmarks.",
+      "properties": {
+        "grain_density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "constant",
+          "value": 2650.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Soulsby (1997) Dynamics of Marine Sands, Table 2 (quartz grain density rho_s = 2650 kg/m^3)",
+            "type": "constant",
+            "note": "quartz specific gravity 2.65"
+          },
+          "accuracy": "+/- 1%",
+          "applicability": "0-40 degC, quartz sands"
+        },
+        "dry_bulk_density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "constant",
+          "value": 1600.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Soulsby (1997) Dynamics of Marine Sands, Sec. 2.2 (medium sand porosity 0.4)",
+            "type": "constant",
+            "note": "rho_d = rho_s (1-n) = 2650 x 0.6"
+          },
+          "accuracy": "derived from porosity 0.40 +/- 0.04",
+          "applicability": "medium sand, loosely to medium densely packed"
+        },
+        "porosity": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.4,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Soulsby (1997) Dynamics of Marine Sands, Table 2.3 (porosity of well sorted medium sand)",
+            "type": "constant",
+            "note": "range 0.36-0.44"
+          },
+          "accuracy": "+/- 0.04",
+          "applicability": "well-sorted sands"
+        },
+        "median_grain_size": {
+          "dimension": "length",
+          "unit": "mm",
+          "mode": "constant",
+          "value": 0.3,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Soulsby (1997) Dynamics of Marine Sands, Sec. 2.1 (medium sand classification 0.25-0.50 mm)",
+            "type": "constant",
+            "note": "0.3 mm = 300 um, mid-class of medium sand"
+          },
+          "accuracy": "class midpoint",
+          "applicability": "medium sand class"
+        },
+        "settling_velocity": {
+          "dimension": "velocity",
+          "unit": "m/s",
+          "mode": "constant",
+          "value": 0.038,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Soulsby (1997) Dynamics of Marine Sands, Fig. 2.5 / Eq. 2.28 (settling velocity, d = 0.3 mm, 15 degC)",
+            "type": "constant",
+            "note": "0.038 m/s for quartz sand in fresh water at 15 degC"
+          },
+          "accuracy": "+/- 10%",
+          "applicability": "dilute suspension, fresh water 15 degC"
+        },
+        "friction_angle": {
+          "dimension": "angle",
+          "unit": "deg",
+          "mode": "constant",
+          "value": 32.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Soulsby (1997) Dynamics of Marine Sands / van Rijn (1993) Principles of Sediment Transport: medium sand friction angle 30-34 deg",
+            "type": "constant",
+            "note": "nominal 32 deg for medium dense medium sand"
+          },
+          "accuracy": "+/- 2 deg",
+          "applicability": "non-cohesive sands"
+        },
+        "cohesion": {
+          "dimension": "stress",
+          "unit": "kPa",
+          "mode": "constant",
+          "value": 0.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Soulsby (1997) Dynamics of Marine Sands (non-cohesive sand, c = 0)",
+            "type": "constant",
+            "note": "Mohr-Coulomb cohesion of clean sand"
+          },
+          "accuracy": "constitutive assumption",
+          "applicability": "clean, non-cohesive sand"
+        },
+        "manning_n": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.03,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Chow (1959) Open-Channel Hydraulics, Table 5-6 (natural sand bed, n = 0.025-0.033)",
+            "type": "constant",
+            "note": "nominal 0.030 for a medium sand bed"
+          },
+          "accuracy": "+/- 0.005",
+          "applicability": "shallow-water bed friction closure"
+        },
+        "critical_shields": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.045,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Soulsby & Whitehouse (1997) / Soulsby (1997) Sec. 3 (threshold Shields parameter for medium sand)",
+            "type": "constant",
+            "note": "0.045 at the asymptotic flat-bed value, valid for d > 0.2 mm"
+          },
+          "accuracy": "+/- 15%",
+          "applicability": "initiation of motion on a flat bed"
+        }
+      }
+    },
+    {
+      "name": "gravel",
+      "class": "sediment",
+      "state": "granular",
+      "aliases": ["coarse_gravel", "pebbles"],
+      "notes": "Non-cohesive gravel (d50 = 10 mm), high permeability bed of river/coastal engineering practice.",
+      "properties": {
+        "grain_density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "constant",
+          "value": 2650.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Dynamics of Marine Sands, Table 2", "type": "constant", "note": "quartz grains"},
+          "accuracy": "+/- 1%",
+          "applicability": "0-40 degC"
+        },
+        "dry_bulk_density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "constant",
+          "value": 1700.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Sec. 2.2 (gravel porosity 0.36)", "type": "constant", "note": "2650 x (1 - 0.36)"},
+          "accuracy": "+/- 50 kg/m^3",
+          "applicability": "gravel beds"
+        },
+        "porosity": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.36,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Table 2.3 (uniform gravel porosity 0.34-0.38)", "type": "constant", "note": "mid-band value"},
+          "accuracy": "+/- 0.02",
+          "applicability": "uniform gravel"
+        },
+        "median_grain_size": {
+          "dimension": "length",
+          "unit": "mm",
+          "mode": "constant",
+          "value": 10.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Sec. 2.1 (gravel 2-64 mm classification)", "type": "constant", "note": "10 mm within the gravel class"},
+          "accuracy": "class value",
+          "applicability": "gravel beds"
+        },
+        "settling_velocity": {
+          "dimension": "velocity",
+          "unit": "m/s",
+          "mode": "constant",
+          "value": 0.45,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Eq. 2.28 (settling velocity, d = 10 mm, 15 degC)", "type": "constant", "note": "Newton-regime settling"},
+          "accuracy": "+/- 10%",
+          "applicability": "dilute suspension, 15 degC"
+        },
+        "friction_angle": {
+          "dimension": "angle",
+          "unit": "deg",
+          "mode": "constant",
+          "value": 36.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "van Rijn (1993) Principles of Sediment Transport, gravel friction angle 35-40 deg", "type": "constant", "note": "nominal 36 deg"},
+          "accuracy": "+/- 2 deg",
+          "applicability": "non-cohesive gravel"
+        },
+        "cohesion": {
+          "dimension": "stress",
+          "unit": "kPa",
+          "mode": "constant",
+          "value": 0.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) (non-cohesive bed)", "type": "constant", "note": "c = 0"},
+          "accuracy": "constitutive assumption",
+          "applicability": "clean gravel"
+        },
+        "manning_n": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.028,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Chow (1959) Table 5-6 (gravel bed n = 0.025-0.030)", "type": "constant", "note": "nominal 0.028"},
+          "accuracy": "+/- 0.003",
+          "applicability": "gravel-bed channels"
+        },
+        "critical_shields": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.047,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby & Whitehouse (1997) threshold Shields curve (d > 2 mm asymptote 0.045-0.05)", "type": "constant", "note": "0.047 for 10 mm gravel"},
+          "accuracy": "+/- 15%",
+          "applicability": "initiation of motion, flat bed"
+        }
+      }
+    },
+    {
+      "name": "silt",
+      "class": "sediment",
+      "state": "granular",
+      "aliases": ["fine_silt", "cohesive_silt"],
+      "notes": "Fine silt (d50 = 30 um): transitional between non-cohesive sand and cohesive mud. Settling in the Stokes regime, weak apparent cohesion.",
+      "properties": {
+        "grain_density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "constant",
+          "value": 2650.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Table 2", "type": "constant", "note": "quartz silt"},
+          "accuracy": "+/- 1%",
+          "applicability": "0-40 degC"
+        },
+        "dry_bulk_density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "constant",
+          "value": 1300.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Sec. 2.2 (silt porosity ~0.50)", "type": "constant", "note": "2650 x 0.5"},
+          "accuracy": "+/- 100 kg/m^3",
+          "applicability": "loosely deposited silt"
+        },
+        "porosity": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.5,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Table 2.3 (silt porosity 0.45-0.55)", "type": "constant", "note": "mid-band"},
+          "accuracy": "+/- 0.05",
+          "applicability": "silty beds"
+        },
+        "median_grain_size": {
+          "dimension": "length",
+          "unit": "mm",
+          "mode": "constant",
+          "value": 0.03,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Sec. 2.1 (silt 2-63 um classification)", "type": "constant", "note": "30 um within the silt class"},
+          "accuracy": "class value",
+          "applicability": "silt beds"
+        },
+        "settling_velocity": {
+          "dimension": "velocity",
+          "unit": "m/s",
+          "mode": "constant",
+          "value": 0.0007,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Eq. 2.28 / Stokes law for d = 30 um at 15 degC", "type": "constant", "note": "0.7 mm/s"},
+          "accuracy": "+/- 10%",
+          "applicability": "dilute suspension"
+        },
+        "friction_angle": {
+          "dimension": "angle",
+          "unit": "deg",
+          "mode": "constant",
+          "value": 28.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "van Rijn (1993) silt effective friction angle 26-30 deg", "type": "constant", "note": "nominal 28 deg"},
+          "accuracy": "+/- 2 deg",
+          "applicability": "silty beds"
+        },
+        "cohesion": {
+          "dimension": "stress",
+          "unit": "kPa",
+          "mode": "constant",
+          "value": 1.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "van Rijn (1993) / Soulsby (1997): weak apparent cohesion of silt 0.5-2 kPa", "type": "constant", "note": "nominal 1 kPa"},
+          "accuracy": "+/- 50%",
+          "applicability": "silty beds, no consolidation history"
+        },
+        "manning_n": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.025,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Chow (1959) Table 5-6 (silt bed n = 0.022-0.028)", "type": "constant", "note": "nominal 0.025"},
+          "accuracy": "+/- 0.003",
+          "applicability": "silt-bed channels"
+        },
+        "critical_shields": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.05,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby & Whitehouse (1997) threshold Shields curve with lower d limit", "type": "constant", "note": "cohesionless-equivalent value; cohesive silt requires a site-specific erosion law"},
+          "accuracy": "+/- 30%",
+          "applicability": "initiation of motion approximation only"
+        }
+      }
+    },
+    {
+      "name": "soft_clay",
+      "class": "sediment",
+      "state": "cohesive",
+      "aliases": ["clay", "mud", "soft mud"],
+      "notes": "Soft cohesive clay/mud (d50 = 2 um). Undrained shear strength and critical shear stress dominate; values are order-of-magnitude only.",
+      "properties": {
+        "grain_density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "constant",
+          "value": 2700.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Table 2 (clay mineral grain density 2600-2750 kg/m^3)", "type": "constant", "note": "nominal 2700"},
+          "accuracy": "+/- 3%",
+          "applicability": "clay minerals"
+        },
+        "dry_bulk_density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "constant",
+          "value": 1400.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Sec. 2.2 (clay porosity 0.5-0.6)", "type": "constant", "note": "2700 x (1 - 0.48)"},
+          "accuracy": "+/- 200 kg/m^3",
+          "applicability": "soft, recently deposited clay"
+        },
+        "porosity": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.48,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Table 2.3 (clay/mud porosity 0.45-0.60)", "type": "constant", "note": "lower half of the band"},
+          "accuracy": "+/- 0.06",
+          "applicability": "soft clay beds"
+        },
+        "median_grain_size": {
+          "dimension": "length",
+          "unit": "mm",
+          "mode": "constant",
+          "value": 0.002,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Soulsby (1997) Sec. 2.1 (clay < 2 um)", "type": "constant", "note": "2 um upper bound of the clay class"},
+          "accuracy": "class value",
+          "applicability": "clay/mud beds"
+        },
+        "settling_velocity": {
+          "dimension": "velocity",
+          "unit": "m/s",
+          "mode": "constant",
+          "value": 2.8e-06,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Stokes law with d = 2 um, rho_s = 2700 kg/m^3, water 15 degC (Soulsby 1997 Eq. 2.26)", "type": "constant", "note": "flocculation typically raises this by an order of magnitude"},
+          "accuracy": "+/- factor 10 in-situ (flocculation)",
+          "applicability": "dispersed, non-flocculated clay"
+        },
+        "friction_angle": {
+          "dimension": "angle",
+          "unit": "deg",
+          "mode": "constant",
+          "value": 22.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "van Rijn (1993) / typical geotechnical values for soft clay (phi' 20-25 deg)", "type": "constant", "note": "effective friction angle"},
+          "accuracy": "+/- 3 deg",
+          "applicability": "normally consolidated clay"
+        },
+        "cohesion": {
+          "dimension": "stress",
+          "unit": "kPa",
+          "mode": "constant",
+          "value": 5.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "typical soft-clay undrained shear strength 2-10 kPa (van Rijn 1993; Soulsby 1997 Ch. 6)", "type": "constant", "note": "undrained c_u nominal 5 kPa"},
+          "accuracy": "+/- factor 2; strongly site dependent",
+          "applicability": "soft, normally consolidated clay"
+        },
+        "manning_n": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.02,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 40.0], "P": [1000.0, 1000000.0]},
+          "source": {"ref": "Chow (1959) Table 5-6 (smooth mud bed n = 0.018-0.022)", "type": "constant", "note": "nominal 0.020"},
+          "accuracy": "+/- 0.003",
+          "applicability": "smooth mud-bed channels"
+        }
+      }
+    }
+  ]
+}

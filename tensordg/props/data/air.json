@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0",
+  "domain": "aerodynamics / airborne acoustics / wind load working fluid",
+  "substances": [
+    {
+      "name": "air",
+      "class": "gas",
+      "state": "gas",
+      "aliases": ["dry_air", "atmosphere", "dry air"],
+      "notes": "Dry air treated as an ideal gas with constant composition. Density from the ideal-gas law (R = 287.05287 J/(kg K), ISO 2533), dynamic viscosity from Sutherland's law, sound speed from the isentropic relation.",
+      "properties": {
+        "density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "correlation",
+          "model": "ideal_gas_density",
+          "params": {"R": 287.05287},
+          "extra_inputs": ["P"],
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-50.0, 50.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Ideal-gas law with the ISO 2533 standard-atmosphere gas constant R = 287.05287 J/(kg K)",
+            "type": "correlation",
+            "note": "rho = P / (R T); at 15 degC and 101325 Pa returns 1.225 kg/m^3, the ISA sea-level density"
+          },
+          "accuracy": "<0.1% versus ISA tables for 1 atm dry air (real-gas compressibility Z=0.9996 at 1 atm)",
+          "applicability": "-50 to 50 degC, 1-1000 kPa; dry air, ideal-gas regime"
+        },
+        "viscosity_dynamic": {
+          "dimension": "viscosity_dynamic",
+          "unit": "Pa*s",
+          "mode": "correlation",
+          "model": "sutherland_gas",
+          "params": {"mu_ref": 1.716e-05, "T_ref": 273.15, "S": 110.4},
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-50.0, 50.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Sutherland law, constants of White, Viscous Fluid Flow (3rd ed.), Table 1-2 (air: mu_ref = 1.716e-05 Pa*s at 273.15 K, S = 110.4 K)",
+            "type": "correlation",
+            "note": "pressure independent to first order; returns 1.789e-05 Pa*s at 15 degC"
+          },
+          "accuracy": "<0.2% versus tabulated air viscosity for 250-350 K",
+          "applicability": "-50 to 50 degC, low pressure"
+        },
+        "viscosity_kinematic": {
+          "dimension": "viscosity_kinematic",
+          "unit": "m^2/s",
+          "mode": "derived",
+          "expr": "viscosity_dynamic / density",
+          "extra_inputs": ["P"],
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-50.0, 50.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "derived identity nu = mu / rho",
+            "type": "derived",
+            "note": "inherits the Sutherland and ideal-gas provenance"
+          },
+          "accuracy": "1.46e-05 m^2/s at 15 degC, 1 atm (literature 1.46e-05 within 0.5%)",
+          "applicability": "-50 to 50 degC, 1-1000 kPa"
+        },
+        "speed_of_sound": {
+          "dimension": "velocity",
+          "unit": "m/s",
+          "mode": "correlation",
+          "model": "ideal_gas_sound_speed",
+          "params": {"gamma": 1.4, "R": 287.05287},
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-50.0, 50.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "Isentropic sound speed a = sqrt(gamma R T), gamma = 1.4 for diatomic air (ISO 2533 / ideal gas)",
+            "type": "correlation",
+            "note": "340.3 m/s at 15 degC"
+          },
+          "accuracy": "<0.3% versus ISA tabulated sound speed",
+          "applicability": "-50 to 50 degC, ideal gas"
+        },
+        "specific_heat_capacity": {
+          "dimension": "specific_heat",
+          "unit": "J/(kg*K)",
+          "mode": "constant",
+          "value": 1005.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-50.0, 50.0], "P": [1000.0, 1000000.0]},
+          "source": {
+            "ref": "ISO 2533 standard atmosphere, cp = 1005 J/(kg K) for dry air",
+            "type": "constant",
+            "note": "constant over the stated temperature band (<0.3% variation)"
+          },
+          "accuracy": "0.3%",
+          "applicability": "-50 to 50 degC"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,219 @@
+{
+  "schema_version": "1.0",
+  "domain": "ice mechanics for ice-class ships and ice-structure interaction",
+  "substances": [
+    {
+      "name": "sea_ice",
+      "class": "ice",
+      "state": "solid",
+      "aliases": ["ice", "marine_ice", "first_year_ice"],
+      "notes": "First-year columnar sea ice, salinity 4-10 g/kg. Mechanical values are engineering nominals: all of them depend strongly on temperature, salinity, porosity, grain structure and strain rate, so the nominal value must always be quoted together with its literature range.",
+      "properties": {
+        "density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "constant",
+          "value": 900.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "Timco & Weeks (2010) A review of the engineering properties of sea ice, Cold Reg. Sci. Tech. 60:107-129, Sec. 3",
+            "type": "constant",
+            "note": "nominal 900 kg/m^3; measured range 720-940 kg/m^3 (desalinated / bubbly ice at the lower end)"
+          },
+          "accuracy": "nominal value; +/- 10% within the literature range",
+          "applicability": "-30 to 0 degC, first-year sea ice"
+        },
+        "youngs_modulus": {
+          "dimension": "stress",
+          "unit": "GPa",
+          "mode": "constant",
+          "value": 8.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "Timco & Weeks (2010), Sec. 4 (elastic modulus of sea ice)",
+            "type": "constant",
+            "note": "E depends on strain rate and porosity; reported range 1-10 GPa, 8 GPa recommended for elastic ice-load models"
+          },
+          "accuracy": "order-of-magnitude property; use only inside its 1-10 GPa range",
+          "applicability": "elastic ice-load estimation, -30 to 0 degC"
+        },
+        "poisson_ratio": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.31,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "Timco & Weeks (2010), Sec. 4; range 0.29-0.33",
+            "type": "constant",
+            "note": "mid-range value of the reported 0.29-0.33 band"
+          },
+          "accuracy": "+/- 0.02",
+          "applicability": "-30 to 0 degC"
+        },
+        "flexural_strength": {
+          "dimension": "stress",
+          "unit": "MPa",
+          "mode": "constant",
+          "value": 0.9,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "Timco & Weeks (2010), Sec. 6 / Timco & O'Brien (1994) flexural strength compilation",
+            "type": "constant",
+            "note": "nominal 0.9 MPa; measured range 0.5-1.5 MPa, increasing as temperature falls"
+          },
+          "accuracy": "+/- 40% (inherent scatter of ice strength data)",
+          "applicability": "-30 to 0 degC, first-year ice sheets (ISO 19906 flexural-strength route)"
+        },
+        "compressive_strength": {
+          "dimension": "stress",
+          "unit": "MPa",
+          "mode": "constant",
+          "value": 6.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "Timco & Weeks (2010), Sec. 7 (compressive strength vs strain rate and temperature)",
+            "type": "constant",
+            "note": "nominal for ductile/brittle transition strain rates; range 1-25 MPa"
+          },
+          "accuracy": "order-of-magnitude property, strongly strain-rate dependent",
+          "applicability": "-30 to 0 degC; must be paired with a strain-rate dependent strength model"
+        },
+        "tensile_strength": {
+          "dimension": "stress",
+          "unit": "MPa",
+          "mode": "constant",
+          "value": 0.8,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "Timco & Weeks (2010), Sec. 8 (tensile strength)",
+            "type": "constant",
+            "note": "nominal 0.8 MPa; measured range 0.3-1.1 MPa"
+          },
+          "accuracy": "+/- 50%",
+          "applicability": "-30 to 0 degC"
+        },
+        "ice_steel_friction": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.1,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "ISO 19906:2019 Petroleum and natural gas industries - Arctic offshore structures, Annex (ice-steel friction)",
+            "type": "constant",
+            "note": "nominal 0.1 for ice sliding on painted/coated steel; range 0.05-0.15"
+          },
+          "accuracy": "+/- 0.05",
+          "applicability": "-30 to 0 degC, sliding ice against steel"
+        }
+      }
+    },
+    {
+      "name": "fresh_ice",
+      "class": "ice",
+      "state": "solid",
+      "aliases": ["lake_ice", "river_ice", "fresh water ice"],
+      "notes": "Lake/river (fresh-water) ice, S < 0.5 g/kg. Less porous than sea ice and correspondingly stronger.",
+      "properties": {
+        "density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "constant",
+          "value": 917.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "Michel (1978) Ice Mechanics; ISO 19906:2019 Annex B (fresh-water ice density 917 kg/m^3 at 0 degC)",
+            "type": "constant",
+            "note": "bubble-free fresh ice"
+          },
+          "accuracy": "+/- 5 kg/m^3",
+          "applicability": "-30 to 0 degC, fresh water"
+        },
+        "youngs_modulus": {
+          "dimension": "stress",
+          "unit": "GPa",
+          "mode": "constant",
+          "value": 9.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "Michel (1978) Ice Mechanics, Ch. 3; range 5-10 GPa for fresh ice",
+            "type": "constant",
+            "note": "upper half of the 5-10 GPa band used for fresh ice"
+          },
+          "accuracy": "+/- 30%",
+          "applicability": "-30 to 0 degC"
+        },
+        "poisson_ratio": {
+          "dimension": "dimensionless",
+          "unit": "1",
+          "mode": "constant",
+          "value": 0.33,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "Michel (1978) Ice Mechanics, Ch. 3 (isotropic fresh ice, nu = 0.33)",
+            "type": "constant",
+            "note": "single-crystal/isotropic value"
+          },
+          "accuracy": "+/- 0.03",
+          "applicability": "-30 to 0 degC"
+        },
+        "flexural_strength": {
+          "dimension": "stress",
+          "unit": "MPa",
+          "mode": "constant",
+          "value": 1.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "ISO 19906:2019 Annex B / Michel (1978): fresh-water ice flexural strength 0.7-1.5 MPa",
+            "type": "constant",
+            "note": "nominal 1.0 MPa for -10 degC, S < 0.5"
+          },
+          "accuracy": "+/- 40%",
+          "applicability": "-30 to 0 degC"
+        },
+        "compressive_strength": {
+          "dimension": "stress",
+          "unit": "MPa",
+          "mode": "constant",
+          "value": 8.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "Michel (1978) Ice Mechanics, Ch. 4 (fresh ice unconfined compressive strength 5-12 MPa)",
+            "type": "constant",
+            "note": "strain-rate dependent, nominal at 1e-3 1/s"
+          },
+          "accuracy": "order-of-magnitude property",
+          "applicability": "-30 to 0 degC"
+        },
+        "tensile_strength": {
+          "dimension": "stress",
+          "unit": "MPa",
+          "mode": "constant",
+          "value": 1.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-30.0, 0.0], "P": [1000.0, 10000000.0]},
+          "source": {
+            "ref": "ISO 19906:2019 Annex B (fresh-water ice tensile strength 0.5-1.5 MPa)",
+            "type": "constant",
+            "note": "nominal 1.0 MPa"
+          },
+          "accuracy": "+/- 50%",
+          "applicability": "-30 to 0 degC"
+        }
+      }
+    }
+  ]
+}
