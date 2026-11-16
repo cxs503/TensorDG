@@ -290,7 +290,8 @@ def measure(profile: dict) -> dict:
         log(f"A1 p{degree}: order={order:.4f} (theory {degree + 1})")
 
     # ---- E2：Sod 激波管，DG vs 精确 Riemann 解 ----
-    from benchmarks.sod_exact import cell_averages
+    from validation.repro_cks1998.station_reference import (
+        assert_station_cells_wave_free, exact_cell_averages, station_cell)
     from tensordg.euler_1d import GAMMA
 
     degree, ncells = profile["sod"]
@@ -302,10 +303,20 @@ def measure(profile: dict) -> dict:
     vel = avg[:, 1] / rho
     pre = (GAMMA - 1.0) * (avg[:, 2] - 0.5 * avg[:, 1] ** 2 / rho)
     got = {"density": rho, "velocity": vel, "pressure": pre}
-    _, ref = cell_averages(ncells, SOD_T)
+    # Reference-instrument policy (``station_reference``): the *exact* breakpoint-split
+    # cell average.  ``benchmarks.riemann_exact.cell_averages`` -- the fixed Gauss rule
+    # used before -- documents itself as unfit for tolerance comparisons (a cell that
+    # straddles a wave is integrated inexactly, bias ``rho_q * jump``, no refinement
+    # cure).  The guard makes the invariant it relied on explicit: every station cell
+    # must be wave-free at this resolution.
+    station_diag = assert_station_cells_wave_free(ncells, SOD_STATIONS)
+    _, ref = exact_cell_averages(ncells, SOD_T)
 
     for key, (field, xs) in SOD_STATIONS.items():
-        idx = min(int(xs * ncells), ncells - 1)
+        # Station -> cell is decided by one documented rule (``station_cell``), not by
+        # ``int(x * ncells)``: that expression scores the left cell or the right one
+        # depending on the last bit of the product for stations sitting on a face.
+        idx = station_cell(ncells, xs)["index"]
         metrics[key] = {"value": float(got[field][idx]), "unit": "-"}
         reference[key] = float(ref[field][idx])
         rows.append({"section": "E2_station", "metric": key, "x": float((idx + 0.5) / ncells),
@@ -327,8 +338,20 @@ def measure(profile: dict) -> dict:
               for f in ("density", "velocity", "pressure")}
     detail = {"sod": {"degree": degree, "ncells": ncells, "steps": meta["steps"],
                       "limiter": meta["limiter"], "rel_l2": rel_l2,
-                      "worst_rel_l2": max(rel_l2.values())}}
-    log(f"E2 Sod p{degree} n{ncells}: worst rel L2 = {detail['sod']['worst_rel_l2']:.4%}")
+                      "worst_rel_l2": max(rel_l2.values()),
+                      "stations": [
+                          {"metric": row["metric"], "index": row["index"],
+                           "x_left": row["x_left"], "x_right": row["x_right"],
+                           "x_centre": row["x_centre"],
+                           "gap_to_breakpoint_dx": row["gap_to_breakpoint_dx"],
+                           "ref_exact": row["ref_exact"],
+                           "ref_fixed_rule": row["ref_fixed_rule"],
+                           "instrument_rel_delta": row["instrument_rel_delta"]}
+                          for row in station_diag]}}
+    log(f"E2 Sod p{degree} n{ncells}: worst rel L2 = {detail['sod']['worst_rel_l2']:.4%}; "
+        f"tightest station margin = {min(r['gap_to_breakpoint_dx'] for r in station_diag):.3f} dx, "
+        f"worst reference-instrument delta = "
+        f"{max(r['instrument_rel_delta'] for r in station_diag):.2e}")
 
     # ---- A2/E3：不等式判据（hinge 编码进平台规格）------------------------
     if profile.get("inequality"):
