@@ -206,6 +206,32 @@
       "tolerance": 1e-09,
       "wall_seconds": 100.69470810890198
     },
+    "dg_d2_n64_t10_cfl0.2": {
+      "absolute_delta": {
+        "density": 0.0,
+        "pressure": 0.0,
+        "velocity_x": 0.0,
+        "velocity_y": 0.0
+      },
+      "certified_at": "2026-11-16T10:00:49",
+      "config": {
+        "cells": 64,
+        "cfl": 0.2,
+        "degree": 2,
+        "final_time": 10.0,
+        "reference": "min_image",
+        "strength": 5.0,
+        "task": "dg"
+      },
+      "reference_model": "min_image",
+      "replay_delta": 0.0,
+      "replayed_max_percent": 0.0012245109983286514,
+      "steps": 9369,
+      "stored_max_percent": 0.0012245109983286514,
+      "task_key": "dg_d2_n64_t10_cfl0.2",
+      "tolerance": 1e-09,
+      "wall_seconds": 2084.3729989528656
+    },
     "dg_d2_n64_t1_cfl0.2": {
       "absolute_delta": {
         "density": 1.7186298499789754e-18,
