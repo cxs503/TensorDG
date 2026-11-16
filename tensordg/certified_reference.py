@@ -876,6 +876,16 @@ def _markdown(audit: dict) -> str:
     return "\n".join(lines)
 
 
+from .registry import capability
+@capability(
+    name="certified-reference",
+    category="analysis",
+    maturity="mature",
+    verified={'level': 'XVALUE', 'reference': 'Shu-Osher certified reference (m17539)'},
+    endpoint={'wired': True, 'cli': 'cli:python -m tensordg.certified_reference'},
+    description="Certified-reference audit (Shu-Osher, CLI)",
+    tags=['certified-reference', 'xvalue']
+)
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--rawdir", default="validation/repro_shu_osher/artifacts/raw")

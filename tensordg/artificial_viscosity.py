@@ -170,6 +170,15 @@ def _neighbour_max(values: torch.Tensor, passes: int, periodic: bool) -> torch.T
     return out
 
 
+from .registry import capability
+@capability(
+    name="artificial-viscosity",
+    category="limiter",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-BLASTWAVE-PERSSON"},
+    description="Artificial-viscosity sensor + exponential filter",
+    tags=['artificial-viscosity', 'shock']
+)
 def av_sensor(
     coeff: torch.Tensor,
     variables=None,

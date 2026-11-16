@@ -537,6 +537,15 @@ class Acoustic2DResult:
                                                self.ops["weights"]))
 
 
+from .registry import capability
+@capability(
+    name="acoustics-2d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-ACOUSTIC-PULSE"},
+    description="2D acoustic pulse DG",
+    tags=['acoustics', '2d', 'wave']
+)
 def solve_acoustic_2d(initial_state: Callable, *, nx: int = 16,
                       ny: Optional[int] = None, degree: int = 2,
                       final_time: float = 0.3, length_x: float = 2.0,

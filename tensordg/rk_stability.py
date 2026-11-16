@@ -70,6 +70,15 @@ def stability_polynomial(tableau: RKTableau) -> np.ndarray:
     return np.asarray(coeffs)
 
 
+from .registry import capability
+@capability(
+    name="rk-stability",
+    category="time_integration",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-ADVECT-ORDER"},
+    description="RK stability function / polynomial analysis",
+    tags=['rk', 'stability']
+)
 def stability_function(tableau: RKTableau, z) -> np.ndarray:
     """``R(z)`` of eq. (1), vectorised over an array of complex ``z``."""
     coeffs = stability_polynomial(tableau)

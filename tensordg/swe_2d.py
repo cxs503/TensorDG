@@ -338,6 +338,15 @@ def _positivity_filter_2d(coeff, check_points, h_min=1e-12):
     return torch.where(valid_cell[:, :, None, None, None], coeff, average_only)
 
 
+from .registry import capability
+@capability(
+    name="swe-2d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-RITTER-DAMBREAK-SWE"},
+    description="2D shallow-water DG",
+    tags=['swe', '2d']
+)
 def solve_swe_2d(
     initial_h: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],
     initial_u: Callable[[torch.Tensor, torch.Tensor], torch.Tensor],

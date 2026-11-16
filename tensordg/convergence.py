@@ -81,6 +81,15 @@ def pairwise_orders(resolutions: Iterable[float], errors: Iterable[float]) -> li
     ]
 
 
+from .registry import capability
+@capability(
+    name="convergence-study",
+    category="analysis",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-ADVECT-ORDER"},
+    description="Convergence order / GCI / Richardson extrapolation",
+    tags=['convergence', 'gci']
+)
 def observed_order(resolutions: Iterable[float], errors: Iterable[float]) -> float:
     """Least-squares observed order of accuracy over all refinement levels.
 

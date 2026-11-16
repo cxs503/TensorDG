@@ -143,6 +143,15 @@ def assemble_sipg_1d(
     }
 
 
+from .registry import capability
+@capability(
+    name="heat-1d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-ADVECT-ORDER"},
+    description="1D heat equation DG",
+    tags=['heat', '1d', 'parabolic']
+)
 def solve_heat_1d(
     ncells: int = 16,
     degree: int = 2,

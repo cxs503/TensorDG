@@ -74,6 +74,15 @@ def _face_values(projected, axis, index, norm0):
     return face[..., 0, 3] / norm0
 
 
+from .registry import capability
+@capability(
+    name="wall-flux-extrapolation",
+    category="geometry",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-ADVECT-ORDER"},
+    description="Wall heat-flux extrapolation",
+    tags=['wall', 'flux', 'extrapolation']
+)
 def wall_heat_flux_extrapolated(coeff, basis, derivative, signs, weights, dx, dy,
                                 boundary, mu, kappa, penalty,
                                 wall_gradient="face", wall_penalty=None,

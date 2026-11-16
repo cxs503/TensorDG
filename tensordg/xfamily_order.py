@@ -144,6 +144,15 @@ def max_point_error(
     return error / scale
 
 
+from .registry import capability
+@capability(
+    name="xfamily-order",
+    category="analysis",
+    maturity="planned",
+    evidence={"feature_ledger": "XVAL-DG-ROUND2-CERTIFIED-REFERENCE"},
+    description="Cross-family (DG vs FVM/LBM) order comparison",
+    tags=['xfamily', 'order', 'xval']
+)
 def cross_family_difference(field_a, field_b, *, interior: bool = False) -> float:
     """``max`` norm of ``A - B`` on the shared node set (no reference used)."""
     a = _trim(_as_field(field_a, "field_a"), interior)

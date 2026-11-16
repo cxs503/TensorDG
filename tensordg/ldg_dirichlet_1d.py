@@ -149,6 +149,15 @@ def assemble_ldg_dirichlet_1d(n_cells: int, degree: int, rhs, g_left: float,
     return A, b, meta
 
 
+from .registry import capability
+@capability(
+    name="ldg-dirichlet-1d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-LDG-POISSON"},
+    description="1D LDG with Dirichlet BC",
+    tags=['ldg', '1d', 'elliptic']
+)
 def solve_ldg_dirichlet_1d(n_cells: int, degree: int, rhs, g_left: float,
                            g_right: float, sigma: float = DEFAULT_SIGMA) -> dict:
     """Solve ``-u'' = f`` with Dirichlet data at both ends.

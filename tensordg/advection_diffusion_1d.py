@@ -94,6 +94,15 @@ def _operators(degree: int, device: torch.device, dtype: torch.dtype):
     )
 
 
+from .registry import capability
+@capability(
+    name="advection-diffusion-1d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-ADVECT-ORDER"},
+    description="1D advection-diffusion DG (Peclet sweep)",
+    tags=['advection-diffusion', '1d']
+)
 def solve_advection_diffusion_1d(
     ncells: int = 32,
     degree: int = 2,
