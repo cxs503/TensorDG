@@ -1,0 +1,436 @@
+{
+ "anchor": "CASE-LAX-DG",
+ "audited": [
+  {
+   "leg": "p3.N400",
+   "source": "docs/benchmarks/results/lax_case_pool/profiles.npz"
+  },
+  {
+   "leg": "p2.N800",
+   "source": "docs/benchmarks/results/lax_certified_configuration/profiles.npz"
+  },
+  {
+   "leg": "p3.N800",
+   "source": "docs/benchmarks/results/lax_resolution_requirement/profiles.npz"
+  },
+  {
+   "leg": "p3_N400_d1",
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz"
+  },
+  {
+   "leg": "p3_N400_d2",
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz"
+  },
+  {
+   "leg": "p3_N400_d4",
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz"
+  },
+  {
+   "leg": "p3_N800_d1",
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz"
+  },
+  {
+   "leg": "p3_N800_d2",
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz"
+  },
+  {
+   "leg": "p3_N800_d4",
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz"
+  }
+ ],
+ "case": "CASE-LAX-DG",
+ "committed_legs": {
+  "p2.N800": {
+   "admissible": true,
+   "cells": 800,
+   "exact_min_density": 0.34456847418960945,
+   "exact_min_pressure": 0.571,
+   "max_velocity": 1.613780385769495,
+   "min_density": 0.29216959616843496,
+   "min_pressure": 0.4410471864198975,
+   "min_velocity": -0.1983041341748404,
+   "nodes": 8000,
+   "nonpositive_density_nodes": 0,
+   "nonpositive_pressure_nodes": 0,
+   "quadrature_order": 10,
+   "source": "docs/benchmarks/results/lax_certified_configuration/profiles.npz",
+   "tv_ratio_density": 2.4518254908833397,
+   "tv_ratio_pressure": 2.842846569735739,
+   "tv_ratio_velocity": 2.308353821307406,
+   "undershoot_density": 0.1520710162019651,
+   "undershoot_pressure": 0.22758811485131783
+  },
+  "p3.N400": {
+   "admissible": true,
+   "cells": 400,
+   "exact_min_density": 0.34456847418960945,
+   "exact_min_pressure": 0.571,
+   "max_velocity": 1.6048136201038241,
+   "min_density": 0.2971308846053502,
+   "min_pressure": 0.429366279223538,
+   "min_velocity": -0.28312616775707977,
+   "nodes": 4000,
+   "nonpositive_density_nodes": 0,
+   "nonpositive_pressure_nodes": 0,
+   "quadrature_order": 10,
+   "source": "docs/benchmarks/results/lax_case_pool/profiles.npz",
+   "tv_ratio_density": 5.393410405335157,
+   "tv_ratio_pressure": 11.099463112498764,
+   "tv_ratio_velocity": 9.702956752094742,
+   "undershoot_density": 0.13767246030220182,
+   "undershoot_pressure": 0.24804504514266545
+  },
+  "p3.N800": {
+   "admissible": true,
+   "cells": 800,
+   "exact_min_density": 0.34456847418960945,
+   "exact_min_pressure": 0.571,
+   "max_velocity": 1.602478945235703,
+   "min_density": 0.20792989567471107,
+   "min_pressure": 0.24399079623626743,
+   "min_velocity": -0.6501993606421149,
+   "nodes": 8000,
+   "nonpositive_density_nodes": 0,
+   "nonpositive_pressure_nodes": 0,
+   "quadrature_order": 10,
+   "source": "docs/benchmarks/results/lax_resolution_requirement/profiles.npz",
+   "tv_ratio_density": 7.764120916424996,
+   "tv_ratio_pressure": 15.561505736425664,
+   "tv_ratio_velocity": 13.2233795801256,
+   "undershoot_density": 0.39654985510865043,
+   "undershoot_pressure": 0.5726956283077629
+  },
+  "p3_N400_d1": {
+   "admissible": true,
+   "cells": 400,
+   "exact_min_density": 0.34456847418960945,
+   "exact_min_pressure": 0.571,
+   "max_velocity": 1.6048136201038241,
+   "min_density": 0.2971308846053502,
+   "min_pressure": 0.429366279223538,
+   "min_velocity": -0.28312616775707977,
+   "nodes": 4000,
+   "nonpositive_density_nodes": 0,
+   "nonpositive_pressure_nodes": 0,
+   "quadrature_order": 10,
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz",
+   "tv_ratio_density": 5.393410405335157,
+   "tv_ratio_pressure": 11.099463112498764,
+   "tv_ratio_velocity": 9.702956752094742,
+   "undershoot_density": 0.13767246030220182,
+   "undershoot_pressure": 0.24804504514266545
+  },
+  "p3_N400_d2": {
+   "admissible": true,
+   "cells": 400,
+   "exact_min_density": 0.34456847418960945,
+   "exact_min_pressure": 0.571,
+   "max_velocity": 1.6064038756953263,
+   "min_density": 0.2971718582667452,
+   "min_pressure": 0.4267826446344814,
+   "min_velocity": -0.2890184604462988,
+   "nodes": 4000,
+   "nonpositive_density_nodes": 0,
+   "nonpositive_pressure_nodes": 0,
+   "quadrature_order": 10,
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz",
+   "tv_ratio_density": 5.461397860358766,
+   "tv_ratio_pressure": 11.275981303129665,
+   "tv_ratio_velocity": 9.852948598916939,
+   "undershoot_density": 0.137553547329994,
+   "undershoot_pressure": 0.2525697992390868
+  },
+  "p3_N400_d4": {
+   "admissible": true,
+   "cells": 400,
+   "exact_min_density": 0.34456847418960945,
+   "exact_min_pressure": 0.571,
+   "max_velocity": 1.6065210506284295,
+   "min_density": 0.29731456830722264,
+   "min_pressure": 0.4254944068157849,
+   "min_velocity": -0.29150151230731525,
+   "nodes": 4000,
+   "nonpositive_density_nodes": 0,
+   "nonpositive_pressure_nodes": 0,
+   "quadrature_order": 10,
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz",
+   "tv_ratio_density": 5.48201214755404,
+   "tv_ratio_pressure": 11.336543568216413,
+   "tv_ratio_velocity": 9.904374033777069,
+   "undershoot_density": 0.1371393769947273,
+   "undershoot_pressure": 0.25482590750300366
+  },
+  "p3_N800_d1": {
+   "admissible": true,
+   "cells": 800,
+   "exact_min_density": 0.34456847418960945,
+   "exact_min_pressure": 0.571,
+   "max_velocity": 1.602478945235703,
+   "min_density": 0.20792989567471107,
+   "min_pressure": 0.24399079623626743,
+   "min_velocity": -0.6501993606421149,
+   "nodes": 8000,
+   "nonpositive_density_nodes": 0,
+   "nonpositive_pressure_nodes": 0,
+   "quadrature_order": 10,
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz",
+   "tv_ratio_density": 7.764120916424996,
+   "tv_ratio_pressure": 15.561505736425664,
+   "tv_ratio_velocity": 13.2233795801256,
+   "undershoot_density": 0.39654985510865043,
+   "undershoot_pressure": 0.5726956283077629
+  },
+  "p3_N800_d2": {
+   "admissible": true,
+   "cells": 800,
+   "exact_min_density": 0.34456847418960945,
+   "exact_min_pressure": 0.571,
+   "max_velocity": 1.6037806511102715,
+   "min_density": 0.20811974239617553,
+   "min_pressure": 0.24754131447538397,
+   "min_velocity": -0.6281493405472572,
+   "nodes": 8000,
+   "nonpositive_density_nodes": 0,
+   "nonpositive_pressure_nodes": 0,
+   "quadrature_order": 10,
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz",
+   "tv_ratio_density": 7.8812010604204135,
+   "tv_ratio_pressure": 15.806759580291272,
+   "tv_ratio_velocity": 13.404390153870873,
+   "undershoot_density": 0.3959988856042262,
+   "undershoot_pressure": 0.5664775578364554
+  },
+  "p3_N800_d4": {
+   "admissible": true,
+   "cells": 800,
+   "exact_min_density": 0.34456847418960945,
+   "exact_min_pressure": 0.571,
+   "max_velocity": 1.6042634026652653,
+   "min_density": 0.21011372223989805,
+   "min_pressure": 0.25214015551173485,
+   "min_velocity": -0.6084088967158121,
+   "nodes": 8000,
+   "nonpositive_density_nodes": 0,
+   "nonpositive_pressure_nodes": 0,
+   "quadrature_order": 10,
+   "source": "docs/benchmarks/results/lax_time_budget_certified/profiles.npz",
+   "tv_ratio_density": 7.917020399531946,
+   "tv_ratio_pressure": 15.886145476511112,
+   "tv_ratio_velocity": 13.453858367636398,
+   "undershoot_density": 0.3902119956445102,
+   "undershoot_pressure": 0.5584235455135992
+  }
+ },
+ "config": {
+  "cfl": 0.35,
+  "committed_sources": [
+   "docs/benchmarks/results/lax_case_pool/profiles.npz",
+   "docs/benchmarks/results/lax_certified_configuration/profiles.npz",
+   "docs/benchmarks/results/lax_resolution_requirement/profiles.npz",
+   "docs/benchmarks/results/lax_time_budget_certified/profiles.npz"
+  ],
+  "final_time": 0.13,
+  "fresh_legs": [
+   "p2.N800",
+   "p3.N400"
+  ],
+  "fresh_positivity": [
+   "scale",
+   "none"
+  ],
+  "gamma": 1.4,
+  "left_state": [
+   0.445,
+   0.698,
+   3.528
+  ],
+  "quadrature_order": 10,
+  "right_state": [
+   0.5,
+   0.0,
+   0.571
+  ],
+  "thresholds": {
+   "scaling_delta": 0.05,
+   "tv_ratio": 1.1,
+   "undershoot": 0.05
+  },
+  "tolerance": 0.03
+ },
+ "error_verdicts": [
+  {
+   "measured": "0.6035（`p3.N800`）",
+   "quantity": "节点级最小密度 / 精确解最小密度（最紧腿）",
+   "reference": "1.0（精确解下界）；判据是 >0 即物理可容许",
+   "verdict": "✅ 未跌破精确下界（比值 >1），无「负密度/负压」节点"
+  },
+  {
+   "measured": "7.9170（`p3_N800_d4`）",
+   "quantity": "采样全变差比 TV(ρ)（最坏腿）",
+   "reference": "1.00（无伪振荡），预注册上限 1.10",
+   "verdict": "❌ 否（超上限，如实记录）"
+  },
+  {
+   "measured": "不可定义：两次求解均被内核的非物理检查中止",
+   "quantity": "关闭正性缩放后的最差场相对 L2（p2.N800 / p3.N400）",
+   "reference": "已提交的 scale 侧数值（2.57033e-02 / 3.11556e-02）",
+   "verdict": "❌ 否（无缩放即不可运行；该项不适用 3% 比较，如实声明）"
+  }
+ ],
+ "figures": [
+  {
+   "caption": "每个审计腿的高斯节点级最小值与精确解最小值之比；红色 0 线即真空/零压边界，1.0 线为精确解下限。所有比值均 >1 表示节点上没有跌破精确解的物理下界。",
+   "name": "admissibility_margins.png"
+  },
+  {
+   "caption": "各腿的采样全变差比 TV(num)/TV(exact)；1.0 = 与精确解同变差，红色虚线为预注册上限 1.10。",
+   "name": "tv_ratio.png"
+  }
+ ],
+ "fresh_runs": {
+  "p2.N800": {
+   "none": {
+    "detail": "Nonphysical high-order Euler state; reduce CFL",
+    "evidence": "run in this mission under the compute gate; the kernel raised FloatingPointError on a nonphysical element average",
+    "positivity": "none",
+    "status": "aborted",
+    "wall_seconds": null
+   }
+  },
+  "p3.N400": {
+   "none": {
+    "detail": "Nonphysical high-order Euler state; reduce CFL",
+    "evidence": "run in this mission under the compute gate; the kernel raised FloatingPointError on a nonphysical element average",
+    "positivity": "none",
+    "status": "aborted",
+    "wall_seconds": null
+   }
+  }
+ },
+ "gates": {
+  "G1": {
+   "gate": "G1",
+   "per_leg": {
+    "p2.N800": true,
+    "p3.N400": true,
+    "p3.N800": true,
+    "p3_N400_d1": true,
+    "p3_N400_d2": true,
+    "p3_N400_d4": true,
+    "p3_N800_d1": true,
+    "p3_N800_d2": true,
+    "p3_N800_d4": true
+   },
+   "rule": "min rho > 0 and min p > 0 at every Gauss node",
+   "status": "PASS"
+  },
+  "G2": {
+   "gate": "G2",
+   "per_leg": {
+    "p2.N800": {
+     "tv_ratio_density": false,
+     "tv_ratio_pressure": false,
+     "tv_ratio_velocity": false,
+     "undershoot_density": false,
+     "undershoot_pressure": false
+    },
+    "p3.N400": {
+     "tv_ratio_density": false,
+     "tv_ratio_pressure": false,
+     "tv_ratio_velocity": false,
+     "undershoot_density": false,
+     "undershoot_pressure": false
+    },
+    "p3.N800": {
+     "tv_ratio_density": false,
+     "tv_ratio_pressure": false,
+     "tv_ratio_velocity": false,
+     "undershoot_density": false,
+     "undershoot_pressure": false
+    },
+    "p3_N400_d1": {
+     "tv_ratio_density": false,
+     "tv_ratio_pressure": false,
+     "tv_ratio_velocity": false,
+     "undershoot_density": false,
+     "undershoot_pressure": false
+    },
+    "p3_N400_d2": {
+     "tv_ratio_density": false,
+     "tv_ratio_pressure": false,
+     "tv_ratio_velocity": false,
+     "undershoot_density": false,
+     "undershoot_pressure": false
+    },
+    "p3_N400_d4": {
+     "tv_ratio_density": false,
+     "tv_ratio_pressure": false,
+     "tv_ratio_velocity": false,
+     "undershoot_density": false,
+     "undershoot_pressure": false
+    },
+    "p3_N800_d1": {
+     "tv_ratio_density": false,
+     "tv_ratio_pressure": false,
+     "tv_ratio_velocity": false,
+     "undershoot_density": false,
+     "undershoot_pressure": false
+    },
+    "p3_N800_d2": {
+     "tv_ratio_density": false,
+     "tv_ratio_pressure": false,
+     "tv_ratio_velocity": false,
+     "undershoot_density": false,
+     "undershoot_pressure": false
+    },
+    "p3_N800_d4": {
+     "tv_ratio_density": false,
+     "tv_ratio_pressure": false,
+     "tv_ratio_velocity": false,
+     "undershoot_density": false,
+     "undershoot_pressure": false
+    }
+   },
+   "rule": "undershoot <= 5% (density, pressure) and tv_ratio <= 1.10 (all fields)",
+   "status": "FAIL",
+   "thresholds": {
+    "tv_ratio": 1.1,
+    "undershoot": 0.05
+   }
+  },
+  "G3": {
+   "gate": "G3",
+   "per_leg": {
+    "p2.N800": {
+     "detail": "positivity='none' aborted: Nonphysical high-order Euler state; reduce CFL",
+     "status": "load_bearing",
+     "wall_seconds": null
+    },
+    "p3.N400": {
+     "detail": "positivity='none' aborted: Nonphysical high-order Euler state; reduce CFL",
+     "status": "load_bearing",
+     "wall_seconds": null
+    }
+   },
+   "rule": "|rel L2(scale) - rel L2(none)| / rel L2(scale) <= 5% on every fresh leg; a leg whose 'none' run aborts is reported as load_bearing",
+   "status": "INFO",
+   "threshold": 0.05
+  }
+ },
+ "generated_at_utc": "2026-11-16T00:25:35Z",
+ "metrics_sha256": "c64415ae598dca0173a85eb5ced5e5bb0865c1da58581c16869e246e306e9e18",
+ "notes": [
+  "节点级最小值此前从未被测量：已提交工件里的 `density_min`/`pressure_min` 是**单元平均值**，单元内部多项式可以跌破 0 而平均值仍为正；本审计第一次报出节点级数值。",
+  "TV 比是**采样**全变差（同一批 Gauss 节点顺序展平），间断处采样点若同时落在跳跃两侧则捕获到跳跃量；它是一个振荡指数，不是误差范数，不与 <3% 台账判据互相比大小。",
+  "本单新跑腿只完成了 `positivity='none'` 一侧：两条腿（p2.N800、p3.N400）均在核内的单元平均非物理检查处中止（FloatingPointError），因此 `scale` 一侧直接引用已提交工件（`lax_certified_configuration` 与 `lax_case_pool`）的数值，未在本单重跑——调度队列在任务窗口内未排到，如实记录。",
+  "结论因此更强而非更弱：**关闭 Zhang-Shu 正性缩放后，本案例在盯扎腿与认证腿上都不再可运行**，说明所有已提交的 Lax 数值隐式携带该缩放器，`<3 %` 认证是「带正性保持的 DG-P2/P3」的认证。",
+  "跌破深度 `undershoot` 以精确解的全局最小值（左稀疏波尾部）为下界，因此它衡量的是「数值解冲到比真实解最低点还低多少」，对激波后的 Gibbs 下冲敏感。",
+  "`positivity=none` 的中止判据在内核里是**单元平均值**非物理（`FloatingPointError`），节点级负值不会触发它；因此 `none` 腿即使跑完也可能在节点上不可容许，这正是 G1 要抓的。",
+  "本审计不改写任何已提交数字：`p3.N400` 的 3.11556e-02 FAIL 与 `p2.N800` 的 2.57033e-02 PASS 原样保留；认证配置腿的 re-run 只用于 G3 的 scale/none 对照。",
+  "适用范围：1D Euler 激波管、float64 CPU、CFL 固定；未覆盖多维、正性保持高阶限制器选型、以及 P>3（内核限定 degree ∈ {1,2,3}）。"
+ ],
+ "question": "is the Lax DG solution admissible at the Gauss nodes, does the spurious-oscillation budget hold, and is the certified <3 % margin propped up by the Zhang-Shu positivity scaling?",
+ "skipped": [],
+ "verdict": "FAIL（G2 振荡预算未达预注册门限，如实保留；G1 通过、G3 记录为 load_bearing）",
+ "verdict_detail": "节点级最小值最紧的腿与伪振荡最严重的腿见 3.1/3.2；台账容差 3% 与 p2.N800 认证值未被本审计改写。G3 的两条腿在关闭正性缩放后直接中止，故「认证裕度是否被缩放托着」的答案是：不是被托着，而是**没有它就跑不起来**。"
+}
