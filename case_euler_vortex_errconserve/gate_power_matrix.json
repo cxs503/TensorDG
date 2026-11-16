@@ -1,0 +1,489 @@
+{
+  "case": "EULER-VORTEX-ERR",
+  "ledger_slug": "CASE-DG-EULER-VORTEX-ERR",
+  "bundle": "/srv/tensor/agent/work/m22854/case_euler_vortex_errconserve",
+  "record_count": 40,
+  "certificate_count": 19,
+  "tolerance_relative_l2": 0.06,
+  "baseline": {
+    "verdict": "PASS",
+    "statuses": {
+      "C1_tolerance": "passed",
+      "C2_error_conservation": "passed",
+      "C3_discrete_conservation": "passed",
+      "C4_entropy_budget": "passed",
+      "C5_crosscheck_order": "passed",
+      "C6_ladder_completeness": "passed",
+      "C7_design_space_invariance": "passed",
+      "C8_degree_invariance": "passed",
+      "C9_design_order": "passed",
+      "C10_direction_invariance": "passed",
+      "C11_provenance_integrity": "passed"
+    }
+  },
+  "rows": [
+    {
+      "id": "m01",
+      "target": "C1_tolerance",
+      "kind": "mutation",
+      "description": "checkpoint above the 6% acceptance",
+      "detail": "dg_d2_n32_t1_cfl0.2 errors 0.0094% -> 7.00% (above the 6% acceptance)",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "failed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "passed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "failed"
+      },
+      "changed": [
+        "C11_provenance_integrity",
+        "C1_tolerance"
+      ],
+      "killed": true,
+      "collateral": [
+        "C11_provenance_integrity"
+      ],
+      "error": null
+    },
+    {
+      "id": "m02",
+      "target": "C2_error_conservation",
+      "kind": "mutation",
+      "description": "super-linear accumulation, design family",
+      "detail": "design family errors reshaped to e ~ t^3: dg_d2_n32_t10_cfl0.2, dg_d2_n32_t1_cfl0.2, dg_d2_n32_t20_cfl0.2, dg_d2_n32_t2_cfl0.2, dg_d2_n32_t5_cfl0.2",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "failed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "failed",
+        "C8_degree_invariance": "failed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "failed",
+        "C11_provenance_integrity": "failed"
+      },
+      "changed": [
+        "C10_direction_invariance",
+        "C11_provenance_integrity",
+        "C2_error_conservation",
+        "C7_design_space_invariance",
+        "C8_degree_invariance"
+      ],
+      "killed": true,
+      "collateral": [
+        "C10_direction_invariance",
+        "C11_provenance_integrity",
+        "C7_design_space_invariance",
+        "C8_degree_invariance"
+      ],
+      "error": null
+    },
+    {
+      "id": "m03",
+      "target": "C3_discrete_conservation",
+      "kind": "mutation",
+      "description": "mass leak of 1%",
+      "detail": "dg_d2_n32_t1_cfl0.2 final mass +1%",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "failed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "passed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "passed"
+      },
+      "changed": [
+        "C3_discrete_conservation"
+      ],
+      "killed": true,
+      "collateral": [],
+      "error": null
+    },
+    {
+      "id": "m04",
+      "target": "C4_entropy_budget",
+      "kind": "mutation",
+      "description": "entropy budget overrun",
+      "detail": "dg_d2_n32_t10_cfl0.2 |dS|/S 3e-7 -> 2e-3 (2x the 1e-3 budget)",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "failed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "passed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "passed"
+      },
+      "changed": [
+        "C4_entropy_budget"
+      ],
+      "killed": true,
+      "collateral": [],
+      "error": null
+    },
+    {
+      "id": "m05",
+      "target": "C5_crosscheck_order",
+      "kind": "mutation",
+      "description": "cross-check path stops converging",
+      "detail": "P0 n=64/128/256 at t=1 all set to the n=64 error (observed order 0)",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "failed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "failed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "passed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "failed"
+      },
+      "changed": [
+        "C11_provenance_integrity",
+        "C1_tolerance",
+        "C5_crosscheck_order"
+      ],
+      "killed": true,
+      "collateral": [
+        "C11_provenance_integrity",
+        "C1_tolerance"
+      ],
+      "error": null
+    },
+    {
+      "id": "m06",
+      "target": "C6_ladder_completeness",
+      "kind": "mutation",
+      "description": "checkpoint evidence missing",
+      "detail": "dg_d2_n64_t10_cfl0.2 removed from the bundle",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "failed",
+        "C7_design_space_invariance": "passed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "not_evaluated",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "passed"
+      },
+      "changed": [
+        "C6_ladder_completeness",
+        "C9_design_order"
+      ],
+      "killed": true,
+      "collateral": [
+        "C9_design_order"
+      ],
+      "error": null
+    },
+    {
+      "id": "m07",
+      "target": "C7_design_space_invariance",
+      "kind": "mutation",
+      "description": "growth off the design point",
+      "detail": "non-design point dg_d2_n64_cfl0.2 errors reshaped to e ~ t^3: dg_d2_n64_t10_cfl0.2, dg_d2_n64_t1_cfl0.2, dg_d2_n64_t2_cfl0.2",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "failed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "failed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "failed"
+      },
+      "changed": [
+        "C11_provenance_integrity",
+        "C7_design_space_invariance",
+        "C9_design_order"
+      ],
+      "killed": true,
+      "collateral": [
+        "C11_provenance_integrity",
+        "C9_design_order"
+      ],
+      "error": null
+    },
+    {
+      "id": "m08",
+      "target": "C8_degree_invariance",
+      "kind": "mutation",
+      "description": "growth at a non-design degree",
+      "detail": "degree p=3 family errors reshaped to e ~ t^3: dg_d3_n32_t10_cfl0.2, dg_d3_n32_t1_cfl0.2, dg_d3_n32_t2_cfl0.2, dg_d3_n32_t5_cfl0.2",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "failed",
+        "C8_degree_invariance": "failed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "passed"
+      },
+      "changed": [
+        "C7_design_space_invariance",
+        "C8_degree_invariance"
+      ],
+      "killed": true,
+      "collateral": [
+        "C7_design_space_invariance"
+      ],
+      "error": null
+    },
+    {
+      "id": "m09",
+      "target": "C9_design_order",
+      "kind": "mutation",
+      "description": "refinement stops buying accuracy",
+      "detail": "dg_d2_n64_t10 error forced to the n=32 value (observed order 0)",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "failed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "failed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "failed"
+      },
+      "changed": [
+        "C11_provenance_integrity",
+        "C7_design_space_invariance",
+        "C9_design_order"
+      ],
+      "killed": true,
+      "collateral": [
+        "C11_provenance_integrity",
+        "C7_design_space_invariance"
+      ],
+      "error": null
+    },
+    {
+      "id": "m10",
+      "target": "C10_direction_invariance",
+      "kind": "mutation",
+      "description": "growth on a rotated direction",
+      "detail": "rotated-direction family dg_d2_n32_cfl0.2_dirobl30 errors reshaped to e ~ t^3: dg_d2_n32_t10_cfl0.2_dirobl30, dg_d2_n32_t1_cfl0.2_dirobl30, dg_d2_n32_t2_cfl0.2_dirobl30, dg_d2_n32_t5_cfl0.2_dirobl30",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "failed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "failed",
+        "C11_provenance_integrity": "passed"
+      },
+      "changed": [
+        "C10_direction_invariance",
+        "C7_design_space_invariance"
+      ],
+      "killed": true,
+      "collateral": [
+        "C7_design_space_invariance"
+      ],
+      "error": null
+    },
+    {
+      "id": "m11",
+      "target": "C11_provenance_integrity",
+      "kind": "mutation",
+      "description": "certificate no longer reproduces",
+      "detail": "dg_d2_n32_t1_cfl0.2 certificate stored_max_percent inflated 50% (replay no longer reproduces)",
+      "verdict": "FAIL",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "passed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "failed"
+      },
+      "changed": [
+        "C11_provenance_integrity"
+      ],
+      "killed": true,
+      "collateral": [],
+      "error": null
+    },
+    {
+      "id": "m12",
+      "target": "C11_provenance_integrity",
+      "kind": "mutation",
+      "description": "legacy record left unverified",
+      "detail": "dg_d2_n32_t10_cfl0.2 certificate removed (evidence provenance unknown)",
+      "verdict": "INCOMPLETE",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "passed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "not_evaluated"
+      },
+      "changed": [
+        "C11_provenance_integrity"
+      ],
+      "killed": true,
+      "collateral": [],
+      "error": null
+    },
+    {
+      "id": "c01",
+      "target": null,
+      "kind": "control",
+      "description": "control: timing metadata",
+      "detail": "every wall_seconds x10",
+      "verdict": "PASS",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "passed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "passed"
+      },
+      "changed": [],
+      "killed": false,
+      "collateral": [],
+      "error": null
+    },
+    {
+      "id": "c02",
+      "target": null,
+      "kind": "control",
+      "description": "control: iteration counters",
+      "detail": "every steps x3",
+      "verdict": "PASS",
+      "statuses": {
+        "C1_tolerance": "passed",
+        "C2_error_conservation": "passed",
+        "C3_discrete_conservation": "passed",
+        "C4_entropy_budget": "passed",
+        "C5_crosscheck_order": "passed",
+        "C6_ladder_completeness": "passed",
+        "C7_design_space_invariance": "passed",
+        "C8_degree_invariance": "passed",
+        "C9_design_order": "passed",
+        "C10_direction_invariance": "passed",
+        "C11_provenance_integrity": "passed"
+      },
+      "changed": [],
+      "killed": false,
+      "collateral": [],
+      "error": null
+    }
+  ],
+  "acceptance": [
+    "C1_tolerance",
+    "C2_error_conservation",
+    "C3_discrete_conservation",
+    "C4_entropy_budget",
+    "C5_crosscheck_order",
+    "C6_ladder_completeness",
+    "C7_design_space_invariance",
+    "C8_degree_invariance",
+    "C9_design_order",
+    "C10_direction_invariance",
+    "C11_provenance_integrity"
+  ],
+  "killed_by": {
+    "C1_tolerance": [
+      "m01"
+    ],
+    "C2_error_conservation": [
+      "m02"
+    ],
+    "C3_discrete_conservation": [
+      "m03"
+    ],
+    "C4_entropy_budget": [
+      "m04"
+    ],
+    "C5_crosscheck_order": [
+      "m05"
+    ],
+    "C6_ladder_completeness": [
+      "m06"
+    ],
+    "C7_design_space_invariance": [
+      "m07"
+    ],
+    "C8_degree_invariance": [
+      "m08"
+    ],
+    "C9_design_order": [
+      "m09"
+    ],
+    "C10_direction_invariance": [
+      "m10"
+    ],
+    "C11_provenance_integrity": [
+      "m11",
+      "m12"
+    ]
+  },
+  "survivors": [],
+  "control_inert": true,
+  "power": "11/11",
+  "sound": true
+}
