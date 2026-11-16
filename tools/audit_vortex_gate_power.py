@@ -70,6 +70,7 @@ ACCEPTANCE = (
     "C9_design_order",
     "C10_direction_invariance",
     "C11_provenance_integrity",
+    "C12_growth_statistic_robustness",
 )
 
 
@@ -272,6 +273,85 @@ def mutation_c11_unverified(records, certificates):
     return f"{dropped} certificate removed (evidence provenance unknown)"
 
 
+#: the five checkpoints of the design family, in transport order
+DESIGN_FAMILY_KEYS = ("dg_d2_n32_t1_cfl0.2", "dg_d2_n32_t2_cfl0.2",
+                      "dg_d2_n32_t5_cfl0.2", "dg_d2_n32_t10_cfl0.2",
+                      "dg_d2_n32_t20_cfl0.2")
+
+
+def late_onset_rows(records):
+    rows = [record_by_key(records, key) for key in DESIGN_FAMILY_KEYS]
+    rows.sort(key=lambda r: r["final_time"])
+    return rows
+
+
+def robust_statistic_of(rows) -> float:
+    """The C12 reading a given set of design-family rows would produce."""
+    rows = sorted(rows, key=lambda r: r["final_time"])
+    variant = ec.exponent_variants([float(r["final_time"]) for r in rows],
+                                   [float(r["max_relative_l2"]) for r in rows])
+    return float(variant["robust"])
+
+
+def apply_late_onset(records, exponent: float):
+    """Flat early checkpoints, then the last one at ``e(1) * (t_last / 1) ** exponent``.
+
+    This is the *late-onset* defect: the error sits at its projection floor for the
+    first box crossing and only then starts to grow.  The least-squares slope over
+    the whole window is diluted by the flat part, so C2/C7/C8 stay green; the
+    endpoint (and leave-one-out) reading sees it.  It is exactly the shape C12 was
+    written for -- a run that is steady early and unstable late is the one a
+    whole-window regression hides.
+    """
+    rows = late_onset_rows(records)
+    base = float(rows[0]["max_relative_l2"])
+    last_time = float(rows[-1]["final_time"])
+    for row in rows[:-1]:
+        set_errors(row, base)
+    set_errors(rows[-1], base * last_time ** exponent)
+    return rows
+
+
+def solve_late_onset(records, magnitude: float) -> float:
+    """Late-onset exponent whose C12 reading reaches ``magnitude`` (bisection).
+
+    The probe uses the *full* bootstrap, so the number this returns is the number
+    ``evaluate`` reports: a calibration probe built on a cheaper statistic would
+    bracket one quantity and grade another (which is exactly how a threshold
+    calibration can look right and be wrong).
+    """
+    low, high = 0.0, 3.0
+    for _ in range(18):
+        middle = 0.5 * (low + high)
+        if robust_statistic_of(apply_late_onset(records, middle)) < magnitude:
+            low = middle
+        else:
+            high = middle
+    return high
+
+
+def mutation_c12(records, certificates):
+    rows = apply_late_onset(records, 1.3)
+    variant = ec.exponent_variants([float(r["final_time"]) for r in rows],
+                                   [float(r["max_relative_l2"]) for r in rows])
+    ols = float(ec._fit_exponent([float(r["final_time"]) for r in rows],
+                                 [float(r["max_relative_l2"]) for r in rows]))
+    return (f"late-onset growth on the design family, flat to t=10 then unstable "
+            f"(endpoint "
+            f"{variant['endpoint']:.3f}, OLS {ols:.3f}, robust "
+            f"{variant['robust']:.3f}); the whole-window regression still reads "
+            f"alpha={ols:.3f} <= {ec.MAX_GROWTH_EXPONENT}")
+
+
+def cal_c12(magnitude):
+    def apply(records, certificates):
+        exponent = solve_late_onset(records, magnitude)
+        achieved = robust_statistic_of(late_onset_rows(records))
+        return (f"late-onset exponent {exponent:.6f} -> robust statistic "
+                f"{achieved:.6f}")
+    return apply
+
+
 def control_wall_clock(records, certificates):
     """Control: timing metadata only -- no criterion may react."""
     for record in records:
@@ -301,6 +381,10 @@ MUTATIONS = (
     ("m11", "C11_provenance_integrity", "certificate no longer reproduces", mutation_c11_stale),
     ("m12", "C11_provenance_integrity", "legacy record left unverified",
      mutation_c11_unverified),
+    ("m13", "C12_growth_statistic_robustness",
+     "late-onset growth: flat for one box crossing, then unstable "
+     "(invisible to the whole-window least-squares slope)",
+     mutation_c12),
     ("c01", None, "control: timing metadata", control_wall_clock),
     ("c02", None, "control: iteration counters", control_iteration_counters),
 )
@@ -366,6 +450,8 @@ CALIBRATIONS = (
     ("k04", "C4_entropy_budget", ec.ENTROPY_TOLERANCE, "ENTROPY_TOLERANCE", +1, cal_c4),
     ("k05", "C5_crosscheck_order", 0.8, "0.8 (literal in evaluate_gates)", -1, cal_c5),
     ("k09", "C9_design_order", ec.ORDER_SLACK * 3.0, "ORDER_SLACK*(p+1), p=2", -1, cal_c9),
+    ("k12", "C12_growth_statistic_robustness", ec.MAX_GROWTH_EXPONENT,
+     "MAX_GROWTH_EXPONENT (conservative statistic)", +1, cal_c12),
     ("k11", "C11_provenance_integrity", ec.PROVENANCE_REPLAY_TOLERANCE,
      "PROVENANCE_REPLAY_TOLERANCE", +1, cal_c11),
 )
