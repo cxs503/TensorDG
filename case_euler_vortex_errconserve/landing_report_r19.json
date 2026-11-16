@@ -1,0 +1,89 @@
+[
+  {
+    "certificates_on_disk": 19,
+    "dry_run": false,
+    "kept_existing": [
+      [
+        "dg_d2_n32_t10_cfl0.2",
+        "existing certificate already at least as good (1.128e-12 <= 1.128e-12)"
+      ],
+      [
+        "dg_d2_n32_t10_cfl0.4",
+        "existing certificate already at least as good (0.000e+00 <= 0.000e+00)"
+      ],
+      [
+        "dg_d2_n32_t1_cfl0.2",
+        "existing certificate already at least as good (0.000e+00 <= 0.000e+00)"
+      ],
+      [
+        "dg_d2_n32_t1_cfl0.4",
+        "existing certificate already at least as good (1.512e-13 <= 1.512e-13)"
+      ],
+      [
+        "dg_d2_n32_t2_cfl0.2",
+        "existing certificate already at least as good (0.000e+00 <= 0.000e+00)"
+      ],
+      [
+        "dg_d2_n32_t2_cfl0.4",
+        "existing certificate already at least as good (4.419e-13 <= 4.419e-13)"
+      ],
+      [
+        "dg_d2_n32_t5_cfl0.2",
+        "existing certificate already at least as good (0.000e+00 <= 0.000e+00)"
+      ],
+      [
+        "dg_d2_n32_t5_cfl0.4",
+        "existing certificate already at least as good (1.133e-12 <= 1.133e-12)"
+      ],
+      [
+        "dg_d2_n64_t1_cfl0.2",
+        "existing certificate already at least as good (9.753e-13 <= 9.753e-13)"
+      ],
+      [
+        "dg_d2_n64_t2_cfl0.2",
+        "existing certificate already at least as good (0.000e+00 <= 0.000e+00)"
+      ],
+      [
+        "p0_n128_t10_cfl0.4",
+        "existing certificate already at least as good (3.445e-16 <= 3.445e-16)"
+      ],
+      [
+        "p0_n128_t1_cfl0.4",
+        "existing certificate already at least as good (0.000e+00 <= 0.000e+00)"
+      ],
+      [
+        "p0_n128_t2_cfl0.4",
+        "existing certificate already at least as good (0.000e+00 <= 0.000e+00)"
+      ],
+      [
+        "p0_n128_t5_cfl0.4",
+        "existing certificate already at least as good (0.000e+00 <= 0.000e+00)"
+      ],
+      [
+        "p0_n256_t1_cfl0.4",
+        "existing certificate already at least as good (0.000e+00 <= 0.000e+00)"
+      ],
+      [
+        "p0_n64_t10_cfl0.4",
+        "existing certificate already at least as good (2.910e-16 <= 2.910e-16)"
+      ],
+      [
+        "p0_n64_t1_cfl0.4",
+        "existing certificate already at least as good (0.000e+00 <= 0.000e+00)"
+      ],
+      [
+        "p0_n64_t5_cfl0.4",
+        "existing certificate already at least as good (0.000e+00 <= 0.000e+00)"
+      ]
+    ],
+    "landed": [
+      [
+        "dg_d2_n64_t10_cfl0.2",
+        0.0,
+        0.0012245109983286514
+      ]
+    ],
+    "rejected": [],
+    "source": "/root/tp-agent/cluster/fetch/cj4263_n315.tar.gz"
+  }
+]
