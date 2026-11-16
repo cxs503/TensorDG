@@ -107,8 +107,15 @@ def partition(keys: list, by_key: dict, index: int, total: int) -> list:
     return buckets[index]
 
 
-def replay(record: dict) -> dict:
-    """Re-run one checkpoint against the current reference and compare errors."""
+def replay(record: dict, threads: int | None = None) -> dict:
+    """Re-run one checkpoint against the current reference and compare errors.
+
+    ``threads`` is recorded in the certificate: the thread count of a replay is
+    part of the evidence, because a reduction order that is not declared cannot
+    be audited (round 18 measured 90.2 s at 4 threads vs 86.9 s at 1 thread for
+    ``dg_d2_n32_t2_cfl0.2`` -- i.e. no speed-up -- while 4-thread replays of
+    ``dg_d2_n64_t10_cfl0.2`` died with SIGSEGV inside ``torch.einsum``).
+    """
     config = dict(record["config"])
     config["reference"] = ec.REFERENCE_MODEL
     started = time.time()
@@ -129,6 +136,7 @@ def replay(record: dict) -> dict:
         "steps": fresh["steps"],
         "certified_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "tolerance": ec.PROVENANCE_REPLAY_TOLERANCE,
+        "threads": threads,
     }
 
 
@@ -174,7 +182,48 @@ def isolated_status(keys: list, run=None, echo=print) -> dict:
     return results
 
 
-def main(argv=None) -> int:
+def isolated_batch(keys: list, run, threads: int = 1, fallback_threads=1,
+                   echo=print) -> dict:
+    """Attempt every key in its own subprocess, retrying signal deaths on 1 thread.
+
+    A replay is a full simulation, so it can be killed outside this tool's
+    control.  Round 18 isolated the one crash mode seen so far: with
+    ``threads > 1`` a long DG replay dies with SIGSEGV inside ``torch.einsum``
+    (``tensordg/euler_dg_2d.py::_traces``), while the same checkpoint replays
+    fine single-threaded and multithreading buys nothing measurable for these
+    small contractions.  Such a key is therefore retried *once* with
+    ``fallback_threads``: the checkpoint, the reference model and the tolerance
+    are untouched, only the floating-point reduction order may differ -- and the
+    resulting difference is not asserted, it is *measured* into the certificate
+    (``replay_delta``/``threads``) and must still pass the same 1e-9 gate.  A
+    clean non-zero exit is a real failure and is **not** retried.
+
+    ``run(key, threads) -> returncode`` (negative = killed by a signal) is
+    injected so the policy can be tested without launching simulations.
+    """
+    results = {}
+    for key in keys:
+        attempts = [threads]
+        if threads > 1 and fallback_threads is not None and fallback_threads != threads:
+            attempts.append(fallback_threads)
+        status = "failed (not attempted)"
+        for used in attempts:
+            returncode = run(key, used)
+            if returncode == 0:
+                status = ("ok" if used == threads
+                          else f"ok (retried on threads={used})")
+                break
+            status = (f"crashed (signal {-returncode})" if returncode < 0
+                      else f"failed (rc {returncode})")
+            if returncode > 0:
+                break
+        results[key] = status
+        echo(f"isolated {key}: {status}", flush=True)
+    return results
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """CLI definition (separate so the replay policy defaults can be asserted)."""
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--output-dir", default=str(CASE_DIR))
@@ -188,9 +237,18 @@ def main(argv=None) -> int:
     parser.add_argument("--max-seconds", type=float, default=540.0,
                         help="stop starting new replays after this budget")
     parser.add_argument("--threads", type=int, default=1)
+    parser.add_argument(
+        "--fallback-threads", type=int, default=1, metavar="N",
+        help="thread count for the single-thread retry of a replay killed by a "
+             "signal in an isolated batch; 0 disables the retry (default 1)")
     parser.add_argument("--isolate", action="store_true",
                         help="replay each key in its own subprocess so one crash "
                              "cannot discard the rest of the batch")
+    return parser
+
+
+def main(argv=None) -> int:
+    parser = build_parser()
     args = parser.parse_args(argv)
 
     import torch
@@ -235,10 +293,15 @@ def main(argv=None) -> int:
         raise SystemExit("nothing to certify: pass --keys ... or --all-legacy")
 
     if args.isolate and len(keys) > 1:
-        status = isolated_status(
+        if args.threads > 1:
+            print(f"note: replaying with {args.threads} threads; a signal death "
+                  f"falls back to {args.fallback_threads} thread(s)", flush=True)
+        status = isolated_batch(
             keys,
-            run=lambda key: run_key(key, output_dir, args.threads, args.max_seconds))
-        landed = sorted(k for k, v in status.items() if v == "ok")
+            run=lambda key, used: run_key(key, output_dir, used, args.max_seconds),
+            threads=args.threads,
+            fallback_threads=(args.fallback_threads or None))
+        landed = sorted(k for k, v in status.items() if v.startswith("ok"))
         dead = {k: v for k, v in status.items() if v != "ok"}
         print(f"isolated batch: {len(landed)}/{len(keys)} completed; "
               f"not reproduced: {dead}", flush=True)
@@ -256,7 +319,7 @@ def main(argv=None) -> int:
             print(f"budget exhausted, not attempted: "
                   f"{[k for k in keys if k not in certificates]}", flush=True)
             break
-        certificate = replay(by_key[key])
+        certificate = replay(by_key[key], threads=args.threads)
         certificates[key] = certificate
         bundle["reference_model"] = ec.REFERENCE_MODEL
         bundle["tolerance"] = ec.PROVENANCE_REPLAY_TOLERANCE
