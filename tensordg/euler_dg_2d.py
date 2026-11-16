@@ -137,6 +137,40 @@ def _physical_flux(state: torch.Tensor, axis: int) -> torch.Tensor:
     )
 
 
+INTERFACE_FLUXES = ("hllc", "rusanov")
+
+
+def _rusanov(ul: torch.Tensor, ur: torch.Tensor, axis: int) -> torch.Tensor:
+    """Local Lax-Friedrichs (Rusanov) flux -- the same formula ``_hllc`` falls
+    back to on degenerate data, exposed as a selectable interface flux.
+
+    It is the cheapest two-wave solver and much more diffusive than HLLC on
+    smooth flow, which is exactly why it is useful as a *sensitivity* control:
+    a result that survives HLLC -> Rusanov is a property of the discretisation,
+    not of one particular Riemann solver.
+    """
+    normal = 1 if axis == 0 else 2
+    rho_l = ul[..., 0].clamp_min(1e-12)
+    rho_r = ur[..., 0].clamp_min(1e-12)
+    sound_l = torch.sqrt(GAMMA * _pressure(ul).clamp_min(1e-12) / rho_l)
+    sound_r = torch.sqrt(GAMMA * _pressure(ur).clamp_min(1e-12) / rho_r)
+    speed_l = (ul[..., normal] / rho_l).abs() + sound_l
+    speed_r = (ur[..., normal] / rho_r).abs() + sound_r
+    alpha = torch.maximum(speed_l, speed_r)
+    flux_l = _physical_flux(ul, axis)
+    flux_r = _physical_flux(ur, axis)
+    return 0.5 * (flux_l + flux_r) - 0.5 * alpha[..., None] * (ur - ul)
+
+
+def _interface_flux(kind, ul: torch.Tensor, ur: torch.Tensor, axis: int) -> torch.Tensor:
+    """Numerical flux through one face; ``kind`` selects the Riemann solver."""
+    if kind == "hllc":
+        return _hllc(ul, ur, axis)
+    if kind == "rusanov":
+        return _rusanov(ul, ur, axis)
+    raise ValueError(f"unknown interface flux {kind!r}; expected one of {INTERFACE_FLUXES}")
+
+
 def _hllc(ul: torch.Tensor, ur: torch.Tensor, axis: int) -> torch.Tensor:
     """Three-wave HLLC flux with a Rusanov fallback for degenerate data."""
     normal = 1 if axis == 0 else 2
@@ -302,22 +336,23 @@ def _ghost_state(bc, interior, X, Y, time, axis):
     return state, wall
 
 
-def _boundary_flux(bc, interior, weights, basis, geom, axis, high, time):
+def _boundary_flux(bc, interior, weights, basis, geom, axis, high, time,
+                   flux_kind="hllc"):
     """Integrated numerical flux through one boundary face."""
     if bc is None or bc == "outflow":
         # Zero-gradient outer face: both traces are the interior one, so HLLC
         # collapses to the physical flux.  No quadrature coordinates needed,
         # which keeps the residual callable without a geometry record.
-        flux = _hllc(interior, interior, axis)
+        flux = _interface_flux(flux_kind, interior, interior, axis)
         if axis == 0:
             return torch.einsum("ybv,b,bl->ylv", flux, weights, basis)
         return torch.einsum("xav,a,ak->xkv", flux, weights, basis)
     X, Y = _face_points(geom, axis, high)
     ghost, wall = _ghost_state(bc, interior, X, Y, time, axis)
     if high:
-        flux = _hllc(interior, ghost, axis)
+        flux = _interface_flux(flux_kind, interior, ghost, axis)
     else:
-        flux = _hllc(ghost, interior, axis)
+        flux = _interface_flux(flux_kind, ghost, interior, axis)
     if wall is not None:
         flux = torch.where(wall.unsqueeze(-1), _wall_flux(interior, axis), flux)
     if axis == 0:
@@ -394,7 +429,7 @@ def _zero_solid_face(flux_row, solid_row):
 
 
 def _axis_fluxes(coeff, basis, signs, weights, periodic, axis, geom, stage_time=0.0,
-                 solid=None, wall_rate=None):
+                 solid=None, wall_rate=None, flux="hllc"):
     """Integrated interface fluxes ``(F_right, F_left)`` per cell.
 
     ``F_right[x, y, l, v]`` (x direction) is the numerical flux of the face
@@ -412,7 +447,7 @@ def _axis_fluxes(coeff, basis, signs, weights, periodic, axis, geom, stage_time=
         neighbour = torch.roll(trace_left, shifts=-1, dims=0)
         if not periodic:
             neighbour[-1] = trace_right[-1]
-        interface = _hllc(trace_right, neighbour, axis)
+        interface = _interface_flux(flux, trace_right, neighbour, axis)
         interface = _solid_interface(interface, trace_right, neighbour, solid, axis)
         if wall_rate is not None and solid is not None:
             face_sum = _solid_face_sum(interface, solid, 0, periodic, weights)
@@ -422,10 +457,12 @@ def _axis_fluxes(coeff, basis, signs, weights, periodic, axis, geom, stage_time=
         if not periodic:
             bcs = geom["bcs"] if geom else {}
             flux_left[0] = _boundary_flux(
-                bcs.get("left"), trace_left[0], weights, basis, geom, 0, False, stage_time
+                bcs.get("left"), trace_left[0], weights, basis, geom, 0, False, stage_time,
+                flux_kind=flux,
             )
             flux_right[-1] = _boundary_flux(
-                bcs.get("right"), trace_right[-1], weights, basis, geom, 0, True, stage_time
+                bcs.get("right"), trace_right[-1], weights, basis, geom, 0, True, stage_time,
+                flux_kind=flux,
             )
         if solid is not None:
             # A periodic axis wraps, so both end faces are ordinary interfaces and
@@ -437,7 +474,7 @@ def _axis_fluxes(coeff, basis, signs, weights, periodic, axis, geom, stage_time=
         neighbour = torch.roll(trace_left, shifts=-1, dims=1)
         if not periodic:
             neighbour[:, -1] = trace_right[:, -1]
-        interface = _hllc(trace_right, neighbour, axis)
+        interface = _interface_flux(flux, trace_right, neighbour, axis)
         interface = _solid_interface(interface, trace_right, neighbour, solid, axis)
         if wall_rate is not None and solid is not None:
             face_sum = _solid_face_sum(interface, solid, 1, periodic, weights)
@@ -447,10 +484,12 @@ def _axis_fluxes(coeff, basis, signs, weights, periodic, axis, geom, stage_time=
         if not periodic:
             bcs = geom["bcs"] if geom else {}
             flux_left[:, 0] = _boundary_flux(
-                bcs.get("bottom"), trace_left[:, 0], weights, basis, geom, 1, False, stage_time
+                bcs.get("bottom"), trace_left[:, 0], weights, basis, geom, 1, False, stage_time,
+                flux_kind=flux,
             )
             flux_right[:, -1] = _boundary_flux(
-                bcs.get("top"), trace_right[:, -1], weights, basis, geom, 1, True, stage_time
+                bcs.get("top"), trace_right[:, -1], weights, basis, geom, 1, True, stage_time,
+                flux_kind=flux,
             )
         if solid is not None and not periodic:
             flux_left[:, 0] = _zero_solid_face(flux_left[:, 0], solid[:, 0])
@@ -507,7 +546,7 @@ def _freeze_solid(coeff, solid, reference):
 
 
 def _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic, geom=None,
-         stage_time=0.0, ledger=None, solid=None):
+         stage_time=0.0, ledger=None, solid=None, flux="hllc"):
     """DG residual of the 2-D Euler equations on a Cartesian mesh.
 
     ``ledger`` (optional dict) receives ``ledger["rate"]``: the 4-vector rate at
@@ -538,11 +577,11 @@ def _rhs(coeff, basis, derivative, weights, signs, dx, dy, periodic, geom=None,
         ledger["solid_rate"] = solid_rate
     right_x, left_x = _axis_fluxes(
         coeff, basis, signs, weights, periodic[0], 0, geom, stage_time, solid=solid,
-        wall_rate=solid_rate,
+        wall_rate=solid_rate, flux=flux,
     )
     right_y, left_y = _axis_fluxes(
         coeff, basis, signs, weights, periodic[1], 1, geom, stage_time, solid=solid,
-        wall_rate=solid_rate,
+        wall_rate=solid_rate, flux=flux,
     )
 
     if ledger is not None:
@@ -940,6 +979,7 @@ def solve_euler_dg_2d(
     dtype=torch.float64,
     track_boundary_flux=False,
     solid=None,
+    flux="hllc",
 ):
     """Advance a 2-D Euler initial condition with modal DG / HLLC / SSP-RK3.
 
@@ -1003,6 +1043,8 @@ def solve_euler_dg_2d(
         raise ValueError("degree must be 0, 1, 2 or 3")
     if limiter_stage not in ("every", "final"):
         raise ValueError("limiter_stage must be 'every' or 'final'")
+    if flux not in INTERFACE_FLUXES:
+        raise ValueError(f"flux must be one of {INTERFACE_FLUXES}")
     if nx < 1 or ny < 1 or final_time < 0.0 or not 0.0 < cfl <= 0.5:
         raise ValueError("invalid cells, final_time or CFL")
     prescribed_dt = None if dt is None else float(dt)
@@ -1137,7 +1179,7 @@ def solve_euler_dg_2d(
         ledger = {} if _track else None
         k1 = _rhs(
             coeff, basis, derivative, weights, signs, dx, dy, periodic, geom, time,
-            ledger=ledger, solid=solid_mask,
+            ledger=ledger, solid=solid_mask, flux=flux,
         )
         if _track:
             boundary_balance += (dt / 6.0) * ledger["rate"]
@@ -1153,7 +1195,7 @@ def solve_euler_dg_2d(
         ledger = {} if _track else None
         k2 = _rhs(
             u1, basis, derivative, weights, signs, dx, dy, periodic, geom, time + dt,
-            ledger=ledger, solid=solid_mask,
+            ledger=ledger, solid=solid_mask, flux=flux,
         )
         if _track:
             boundary_balance += (dt / 6.0) * ledger["rate"]
@@ -1169,7 +1211,7 @@ def solve_euler_dg_2d(
         ledger = {} if _track else None
         k3 = _rhs(
             u2, basis, derivative, weights, signs, dx, dy, periodic, geom, time + 0.5 * dt,
-            ledger=ledger, solid=solid_mask,
+            ledger=ledger, solid=solid_mask, flux=flux,
         )
         if _track:
             boundary_balance += (2.0 * dt / 3.0) * ledger["rate"]
@@ -1283,7 +1325,7 @@ def solve_euler_dg_2d(
             face: (value if isinstance(value, str) else getattr(value, "__name__", "callable"))
             for face, value in face_bcs.items()
         },
-        "flux": "hllc",
+        "flux": flux,
         "limiter": limiter if limiter else "local positivity fallback",
         "limiter_stage": limiter_stage,
         "quadrature": order,
@@ -1331,6 +1373,7 @@ def solve_euler_dg_2d_vortex(
     initial_projection="l2",
     device="cpu",
     dtype=torch.float64,
+    flux="hllc",
 ):
     """Periodic smooth isentropic vortex on a high-order 2-D DG mesh.
 
@@ -1357,6 +1400,7 @@ def solve_euler_dg_2d_vortex(
         initial_projection=initial_projection,
         device=device,
         dtype=dtype,
+        flux=flux,
     )
 
 
