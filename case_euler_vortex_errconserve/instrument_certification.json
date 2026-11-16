@@ -1,0 +1,247 @@
+{
+  "R1_exactness": {
+    "criterion": "max |dU/dt + dF/dx + dG/dy| / max(|dU/dt|,|dF/dx|,|dG/dy|)",
+    "limit": 1e-10,
+    "mutants": {
+      "envelope_exponent": 2.3558662727408937,
+      "temperature_factor": 0.3960051937501778,
+      "velocity_one_sign": 2.5462697959666554
+    },
+    "mutants_detected": true,
+    "passed": true,
+    "periodicity_passed": true,
+    "periodicity_relative": 9.839230642910906e-16,
+    "residual": {
+      "t=0": {
+        "energy": {
+          "abs_max": 8.881784197001252e-16,
+          "relative": 7.716782427732996e-16
+        },
+        "mass": {
+          "abs_max": 1.6653345369377348e-16,
+          "relative": 4.1666828226138593e-16
+        },
+        "momentum_x": {
+          "abs_max": 4.440892098500626e-16,
+          "relative": 3.0197151368353908e-15
+        },
+        "momentum_y": {
+          "abs_max": 4.440892098500626e-16,
+          "relative": 2.0123487130201803e-15
+        }
+      },
+      "t=1": {
+        "energy": {
+          "abs_max": 1.3322676295501878e-15,
+          "relative": 6.476140894274498e-16
+        },
+        "mass": {
+          "abs_max": 1.6653345369377348e-16,
+          "relative": 3.9495253553325e-16
+        },
+        "momentum_x": {
+          "abs_max": 4.440892098500626e-16,
+          "relative": 6.842187573791431e-15
+        },
+        "momentum_y": {
+          "abs_max": 4.440892098500626e-16,
+          "relative": 6.199651248831476e-16
+        }
+      },
+      "t=2.5": {
+        "energy": {
+          "abs_max": 1.3322676295501878e-15,
+          "relative": 2.8615336751638294e-15
+        },
+        "mass": {
+          "abs_max": 1.1102230246251565e-16,
+          "relative": 5.63915946077327e-16
+        },
+        "momentum_x": {
+          "abs_max": 3.3306690738754696e-16,
+          "relative": 8.444752889510001e-16
+        },
+        "momentum_y": {
+          "abs_max": 3.3306690738754696e-16,
+          "relative": 1.6788337151358403e-15
+        }
+      }
+    },
+    "worst_relative": 6.842187573791431e-15
+  },
+  "R2_isentropy": {
+    "analytic": 0.0,
+    "criterion": "max |p/rho^gamma - 1| over the reference field",
+    "limit": 1e-14,
+    "mutant": 0.26367222319171657,
+    "mutant_detected": true,
+    "passed": true
+  },
+  "R3_invariants": {
+    "criterion": "|invariant(p) - invariant(1280)| / |invariant(1280)|",
+    "density_min": {
+      "core_ray_4001": 0.49380732389534654,
+      "note": "`density_min` is a minimum *over quadrature nodes*, so the tensor grid samples the core off-centre; the gate uses it only as a same-instrument drift (final vs initial), which is unaffected, but it is not the true core minimum",
+      "relative_gap": 0.0009788352023213961,
+      "tensor_grid_320": 0.49429067988713943
+    },
+    "deviations": {
+      "1280": {
+        "energy": 0.0,
+        "entropy": 0.0,
+        "mass": 0.0,
+        "momentum_x": 0.0,
+        "momentum_y": 0.0
+      },
+      "320": {
+        "energy": 3.297571057538907e-16,
+        "entropy": 2.842170943040402e-16,
+        "mass": 1.446518984722136e-16,
+        "momentum_x": 4.3395569541664087e-16,
+        "momentum_y": 1.446518984722136e-16
+      },
+      "480": {
+        "energy": 1.3190284230155628e-15,
+        "entropy": 2.842170943040402e-16,
+        "mass": 1.7358227816665633e-15,
+        "momentum_x": 1.5911708831943499e-15,
+        "momentum_y": 1.5911708831943497e-15
+      },
+      "640": {
+        "energy": 1.3190284230155628e-15,
+        "entropy": 1.421085471520201e-16,
+        "mass": 1.5911708831943497e-15,
+        "momentum_x": 1.4465189847221362e-15,
+        "momentum_y": 1.5911708831943497e-15
+      },
+      "960": {
+        "energy": 1.3190284230155628e-15,
+        "entropy": 2.842170943040402e-16,
+        "mass": 1.880474680138777e-15,
+        "momentum_x": 1.7358227816665635e-15,
+        "momentum_y": 1.880474680138777e-15
+      }
+    },
+    "gate_points": 320,
+    "gate_worst": 4.3395569541664087e-16,
+    "passed": true,
+    "ratio": 0.07894736842105256,
+    "smallest_drift": 5.496772141944123e-15
+  },
+  "R4_error_norm": {
+    "cases": {
+      "dg_p2_n32_t1": {
+        "cached_state": false,
+        "converged": 9.433627469575582e-05,
+        "gate": 9.43121470612908e-05,
+        "kind": "469 SSP-RK3 steps of the real solver",
+        "readings": {
+          "1": 9.43121470612908e-05,
+          "2": 9.433654590891566e-05,
+          "3": 9.433667993305232e-05,
+          "4": 9.433627469575582e-05
+        },
+        "relative_shift": -0.00025576200186868466,
+        "reproduction_relative": null,
+        "stored": null,
+        "wall_seconds": 50.6643283367157
+      },
+      "p0_n64_t1": {
+        "converged": 0.04926036308818361,
+        "gate": 0.04926036192305211,
+        "kind": "90 SSP-RK3 steps of the P0 solver",
+        "readings": {
+          "1": 0.04964880850915235,
+          "12": 0.04926036308818361,
+          "2": 0.04926022062368236,
+          "3": 0.04926036402777066,
+          "4": 0.04926036192305211,
+          "6": 0.04926036192180023,
+          "8": 0.049260363620794834
+        },
+        "relative_shift": -2.3652515433973282e-08,
+        "reproduction_relative": 0.0,
+        "stored": 0.04926036192305211,
+        "wall_seconds": 1.8978400230407715
+      },
+      "projection_p1_n32": {
+        "converged": 0.001129904556403244,
+        "gate": 0.0011298312632267327,
+        "kind": "L2 projection of the exact initial state (no time stepping)",
+        "readings": {
+          "1": 0.0011298312632267327,
+          "2": 0.0011299045563996563,
+          "3": 0.001129904556403245,
+          "4": 0.001129904556403244
+        },
+        "relative_shift": -6.486669701071583e-05,
+        "under_integrated_shift": -0.9503923529482229
+      },
+      "projection_p2_n32": {
+        "converged": 5.4957032553040534e-05,
+        "gate": 5.4917659323596787e-05,
+        "kind": "L2 projection of the exact initial state (no time stepping)",
+        "readings": {
+          "1": 5.4917659323596787e-05,
+          "2": 5.495703255298202e-05,
+          "3": 5.4957032553040696e-05,
+          "4": 5.4957032553040534e-05
+        },
+        "relative_shift": -0.0007164365980959218,
+        "under_integrated_shift": -0.9358341230544814
+      },
+      "projection_p3_n32": {
+        "converged": 3.5012163051761593e-06,
+        "gate": 3.5003590187830944e-06,
+        "kind": "L2 projection of the exact initial state (no time stepping)",
+        "readings": {
+          "1": 3.5003590187830944e-06,
+          "2": 3.5012163051766413e-06,
+          "3": 3.501216305177699e-06,
+          "4": 3.5012163051761593e-06
+        },
+        "relative_shift": -0.00024485387886418765,
+        "under_integrated_shift": -0.9344024996428615
+      }
+    },
+    "criterion": "(reading at gate quadrature - reading at 4x quadrature) / reading",
+    "passed": true,
+    "ratio": 0.011940609968265365,
+    "tolerance": 0.06,
+    "worst_relative_shift": 0.0007164365980959218
+  },
+  "R5_entropy_instrument": {
+    "budgets": {
+      "1": 2.3423497585994824e-08,
+      "2": 2.3419041594863188e-08,
+      "3": 2.3419042038952398e-08,
+      "4": 2.3419041816907793e-08,
+      "6": 2.3419041816907793e-08
+    },
+    "conservation_check": {
+      "energy": 2.220446049250313e-16,
+      "mass": 0.0,
+      "momentum_x": 0.0,
+      "momentum_y": 0.0
+    },
+    "converged_reading": 2.3419041816907793e-08,
+    "criterion": "|S(gate quadrature) - S(6x quadrature)| / S   vs   the C4 reading",
+    "gate_reading": 2.3423497585994824e-08,
+    "note": "mass/momentum/energy are integrals of the polynomial state and are integrated exactly by any quadrature >= degree+1; entropy p/rho^gamma is not polynomial, so C4 is the only criterion whose denominator can be quadrature-limited",
+    "passed": true,
+    "quadrature_part": 4.455769087030603e-12,
+    "ratio": 0.0001902264625798138,
+    "state": "dg_p2_n32_t1"
+  },
+  "case": "CASE-DG-EULER-VORTEX-ERR",
+  "margin": 10.0,
+  "reference": "analytic isentropic vortex (Yee et al. 2000 configuration)",
+  "scope": "reference + measurement instruments (not the scheme)",
+  "verdict": {
+    "certificates": 5,
+    "controls_passed": true,
+    "failed": [],
+    "status": "CERTIFIED"
+  },
+  "wall_seconds": 55.60433840751648
+}
