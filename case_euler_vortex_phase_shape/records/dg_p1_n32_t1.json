@@ -1,0 +1,25 @@
+{
+  "key": "dg_p1_n32_t1",
+  "config": {
+    "task": "dg",
+    "degree": 1,
+    "cells": 32,
+    "cfl": 0.2,
+    "final_time": 1.0
+  },
+  "per_cell": 8,
+  "grid": 256,
+  "dx": 0.3125,
+  "steps": 282,
+  "reference_model": "min_image periodic map",
+  "sampling": "uniform nodes, degree+1 polynomial value evaluation",
+  "harness_metric_fields": {
+    "density": 0.0009272514930407116,
+    "velocity_x": 0.0020100992123961918,
+    "velocity_y": 0.002002666319943967,
+    "pressure": 0.0013723166611430734
+  },
+  "harness_metric_percent": 0.20100992123961917,
+  "harness_metric": "volume-Gauss relative L2 on the assembled modal state",
+  "wall_seconds": 23.632614850997925
+}

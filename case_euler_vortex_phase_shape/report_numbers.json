@@ -1,0 +1,380 @@
+{
+  "claims": {
+    "A_instrument": {
+      "text": "the estimator is calibrated (K1-K4)",
+      "value": true,
+      "decided": true,
+      "passed": true
+    },
+    "B_design_t1_is_shape": {
+      "text": "at the design point (t = 1) the transport part is a negligible share of the error",
+      "value": 0.8672488503746362,
+      "decided": true,
+      "passed": true
+    },
+    "C_p0_transport_share": {
+      "text": "for P0 after a full box crossing the transport part is < 5 % of the error (i.e. the growth is not a phase artefact)",
+      "value": 7.575826982759926,
+      "decided": true,
+      "passed": false
+    },
+    "D_p0_shape_growth": {
+      "text": "for P0 the shift-aligned (shape) error is conserved from t = 1 to t = 10 (growth <= 1.5)",
+      "value": 2.8921126213649244,
+      "decided": true,
+      "passed": false
+    },
+    "E_design_ladder": {
+      "text": "design-family shape exponent alpha <= 0.5 over the full ladder (2 checkpoints in the fit; >= 3 required to decide)",
+      "value": 0.045318560539948705,
+      "n_checkpoints": 2,
+      "decided": false,
+      "passed": false
+    }
+  },
+  "gate": {
+    "design_family": "dg_p2_n32",
+    "alpha_shape": 0.045318560539948705,
+    "alpha_shape_max": 0.5,
+    "shape_growth": 1.0319110097359923,
+    "shape_growth_max": 1.5,
+    "instrument_passed": true,
+    "reading_agreement_max_percent": 10.0,
+    "reading_delta_worst": -5.6434430966299765,
+    "reads_published_numbers": true,
+    "passed": true
+  },
+  "calibration": {
+    "k1_recovery": {
+      "cases": [
+        {
+          "injected_cells": [
+            0.13,
+            0.0
+          ],
+          "recovered_cells": [
+            0.12999999999921646,
+            4.298162479632919e-18
+          ],
+          "abs_error_cells": 7.835398996409932e-13,
+          "shape_residual_max": 4.8653287933550334e-14
+        },
+        {
+          "injected_cells": [
+            0.05,
+            -0.4
+          ],
+          "recovered_cells": [
+            0.04999999999814802,
+            -0.39999999999700336
+          ],
+          "abs_error_cells": 3.522755481996128e-12,
+          "shape_residual_max": 1.975923374355395e-13
+        },
+        {
+          "injected_cells": [
+            -0.21,
+            0.31
+          ],
+          "recovered_cells": [
+            -0.210000000002851,
+            0.3099999999996051
+          ],
+          "abs_error_cells": 2.8782175274801476e-12,
+          "shape_residual_max": 1.7761111520246235e-13
+        }
+      ],
+      "worst_abs_error_cells": 3.522755481996128e-12,
+      "worst_shape_residual": 1.975923374355395e-13,
+      "passed": true
+    },
+    "k2_amplitude": {
+      "injected_amplitude": 0.02,
+      "read_shape_max": 0.0032451426981807297,
+      "predicted_shape_max": 0.0032451426981807223,
+      "read_lag_cells": 3.787416009326039e-17,
+      "read_total_max": 0.003245142698180734,
+      "passed": true
+    },
+    "k3_shift_on_computed": {
+      "injected_cells": [
+        0.2,
+        -0.15
+      ],
+      "lag_shift_difference_cells": 0.25000000000352746,
+      "shape_before": 8.898811752685738e-05,
+      "shape_after": 8.898515538071851e-05,
+      "shape_relative_change": 3.328698506270548e-05,
+      "passed": true
+    },
+    "k4_window": {
+      "injected_cells": 0.7,
+      "read_lag_cells": 0.5,
+      "ambiguous": true,
+      "passed": true
+    },
+    "passed": true
+  },
+  "pending_job": "cj4658",
+  "families": {
+    "dg_p2_n32": {
+      "alpha_total": 0.04531178108025274,
+      "alpha_shape": 0.045318560539948705,
+      "alpha_shift_only": -0.07792337061227386,
+      "shape_growth_first_to_last": 1.0319110097359923,
+      "floor_shape_percent": 0.004914750539071217,
+      "checkpoints": [
+        {
+          "key": "dg_p2_n32_t0",
+          "t": 0.0,
+          "total_percent": 0.004914750539070953,
+          "shape_percent": 0.004914750539071217,
+          "shift_only_percent": 2.1798248717114437e-14,
+          "lag_cells": 6.564627274139922e-17,
+          "lag_fraction": 0.0,
+          "ambiguous": false,
+          "lag_direction": [
+            -6.358785141580293e-17,
+            -1.6310066742964117e-17
+          ],
+          "additivity_residual": -4.701299169900134e-22,
+          "cross_term": 2.1039520460084636e-22,
+          "carrier_field": "velocity_y",
+          "harness_percent": null,
+          "reading_delta_percent": null
+        },
+        {
+          "key": "dg_p2_n32_t1",
+          "t": 1.0,
+          "total_percent": 0.008898969470867686,
+          "shape_percent": 0.008898811752685738,
+          "shift_only_percent": 7.717621043128986e-05,
+          "lag_cells": 1.4394957218415342e-05,
+          "lag_fraction": 3.976082759387394e-07,
+          "ambiguous": false,
+          "lag_direction": [
+            1.1316226653939369e-05,
+            8.897067361590569e-06
+          ],
+          "additivity_residual": -1.1708250836096187e-22,
+          "cross_term": -3.149133758059182e-13,
+          "carrier_field": "velocity_y",
+          "harness_percent": 0.009431214706129079,
+          "reading_delta_percent": -5.6434430966299765
+        },
+        {
+          "key": "dg_p2_n32_t2",
+          "t": 2.0,
+          "total_percent": 0.009182901420237439,
+          "shape_percent": 0.009182781821164453,
+          "shift_only_percent": 7.31183155335319e-05,
+          "lag_cells": 1.4397592575842138e-05,
+          "lag_fraction": 1.988405340456849e-07,
+          "ambiguous": false,
+          "lag_direction": [
+            1.0148537373102324e-05,
+            1.0212632430803041e-05
+          ],
+          "additivity_residual": 2.7897751630956442e-22,
+          "cross_term": -3.149769378859736e-13,
+          "carrier_field": "velocity_x",
+          "harness_percent": 0.009689709783187584,
+          "reading_delta_percent": -5.230377114384764
+        }
+      ]
+    },
+    "dg_p1_n32": {
+      "alpha_total": NaN,
+      "alpha_shape": NaN,
+      "alpha_shift_only": NaN,
+      "shape_growth_first_to_last": 1.0,
+      "floor_shape_percent": 0.10857628757805862,
+      "checkpoints": [
+        {
+          "key": "dg_p1_n32_t0",
+          "t": 0.0,
+          "total_percent": 0.1085762875780586,
+          "shape_percent": 0.10857628757805862,
+          "shift_only_percent": 2.2264742698582312e-14,
+          "lag_cells": 1.4036909611957572e-16,
+          "lag_fraction": 0.0,
+          "ambiguous": false,
+          "lag_direction": [
+            1.2262432966223076e-16,
+            -6.831366569227008e-17
+          ],
+          "additivity_residual": 2.0050871067785518e-22,
+          "cross_term": 2.128831894224962e-21,
+          "carrier_field": "velocity_x",
+          "harness_percent": null,
+          "reading_delta_percent": null
+        },
+        {
+          "key": "dg_p1_n32_t1",
+          "t": 1.0,
+          "total_percent": 0.19822481421064359,
+          "shape_percent": 0.19787317362661572,
+          "shift_only_percent": 0.008536315861196674,
+          "lag_cells": 0.001516983200366275,
+          "lag_fraction": 4.1901137028322816e-05,
+          "ambiguous": false,
+          "lag_direction": [
+            0.0007858999202697915,
+            -0.0012975358744610652
+          ],
+          "additivity_residual": 1.045556294267027e-21,
+          "cross_term": 6.641543929322885e-09,
+          "carrier_field": "velocity_x",
+          "harness_percent": 0.20100992123961917,
+          "reading_delta_percent": -1.3855569972864776
+        }
+      ]
+    },
+    "dg_p3_n32": {
+      "alpha_total": NaN,
+      "alpha_shape": NaN,
+      "alpha_shift_only": NaN,
+      "shape_growth_first_to_last": null,
+      "floor_shape_percent": 0.00028204174255001835,
+      "checkpoints": [
+        {
+          "key": "dg_p3_n32_t0",
+          "t": 0.0,
+          "total_percent": 0.00028204174254984374,
+          "shape_percent": 0.00028204174255001835,
+          "shift_only_percent": 2.2123391120781445e-14,
+          "lag_cells": 3.698575569388743e-17,
+          "lag_fraction": 0.0,
+          "ambiguous": false,
+          "lag_direction": [
+            -3.050721985006748e-17,
+            -2.0910659034750082e-17
+          ],
+          "additivity_residual": 8.48585232253508e-24,
+          "cross_term": -1.833447153968901e-23,
+          "carrier_field": "velocity_y",
+          "harness_percent": null,
+          "reading_delta_percent": null
+        }
+      ]
+    },
+    "dg_p2_n64": {
+      "alpha_total": NaN,
+      "alpha_shape": NaN,
+      "alpha_shift_only": NaN,
+      "shape_growth_first_to_last": null,
+      "floor_shape_percent": 0.0006171368864960026,
+      "checkpoints": [
+        {
+          "key": "dg_p2_n64_t0",
+          "t": 0.0,
+          "total_percent": 0.0006171368864961543,
+          "shape_percent": 0.0006171368864960026,
+          "shift_only_percent": 2.7830202249309784e-14,
+          "lag_cells": 6.739069328558696e-17,
+          "lag_fraction": 0.0,
+          "ambiguous": false,
+          "lag_direction": [
+            -6.661956808884233e-17,
+            -1.0165563888351519e-17
+          ],
+          "additivity_residual": 2.8741958723362916e-23,
+          "cross_term": -1.0020535077167414e-23,
+          "carrier_field": "velocity_y",
+          "harness_percent": null,
+          "reading_delta_percent": null
+        }
+      ]
+    },
+    "p0_n64": {
+      "alpha_total": 0.4766186252032944,
+      "alpha_shape": 0.47724536523528566,
+      "alpha_shift_only": 0.479264775691297,
+      "shape_growth_first_to_last": 2.8921126213649244,
+      "floor_shape_percent": 0.03859880858887789,
+      "checkpoints": [
+        {
+          "key": "p0_n64_t0",
+          "t": 0.0,
+          "total_percent": 0.038598808588876175,
+          "shape_percent": 0.03859880858887789,
+          "shift_only_percent": 3.216084396559175e-14,
+          "lag_cells": 9.09365817358294e-17,
+          "lag_fraction": 0.0,
+          "ambiguous": false,
+          "lag_direction": [
+            8.76600161698177e-17,
+            -2.419056557636633e-17
+          ],
+          "additivity_residual": -1.2164557488243772e-21,
+          "cross_term": -1.2044903831729194e-20,
+          "carrier_field": "velocity_x",
+          "harness_percent": null,
+          "reading_delta_percent": null
+        },
+        {
+          "key": "p0_n64_t1",
+          "t": 1.0,
+          "total_percent": 4.964880850915249,
+          "shape_percent": 4.957690221768488,
+          "shift_only_percent": 0.37608378796084746,
+          "lag_cells": 0.12537720068218847,
+          "lag_fraction": 0.013852354501337828,
+          "ambiguous": false,
+          "lag_direction": [
+            0.11894124665934254,
+            -0.0396537803244936
+          ],
+          "additivity_residual": -2.749363067669052e-18,
+          "cross_term": 3.732568457616472e-07,
+          "carrier_field": "velocity_y",
+          "harness_percent": 4.926036192305211,
+          "reading_delta_percent": 0.78855812449605
+        },
+        {
+          "key": "p0_n64_t5",
+          "t": 5.0,
+          "total_percent": 12.060055180420266,
+          "shape_percent": 12.057820101791837,
+          "shift_only_percent": 0.9355103497631183,
+          "lag_cells": 0.3044250537176415,
+          "lag_fraction": 0.006726906870213228,
+          "ambiguous": false,
+          "lag_direction": [
+            0.2998109839428325,
+            0.052801394282911994
+          ],
+          "additivity_residual": 1.5646392601681436e-17,
+          "cross_term": -2.6175716733690355e-05,
+          "carrier_field": "velocity_x",
+          "harness_percent": 12.0235164048954,
+          "reading_delta_percent": 0.3038942543463325
+        },
+        {
+          "key": "p0_n64_t10",
+          "t": 10.0,
+          "total_percent": 14.339407428841962,
+          "shape_percent": 14.338198463194116,
+          "shift_only_percent": 1.0863286971620907,
+          "lag_cells": 0.3646622352596225,
+          "lag_fraction": 0.00402898655304255,
+          "ambiguous": false,
+          "lag_direction": [
+            0.3423941248604106,
+            0.12547832117787439
+          ],
+          "additivity_residual": -3.5248767880219356e-16,
+          "cross_term": -0.00011036914212082105,
+          "carrier_field": "velocity_y",
+          "harness_percent": 14.304740633914417,
+          "reading_delta_percent": 0.24234479893578656
+        }
+      ]
+    }
+  },
+  "figures": [
+    "figures/fig_vortex_split_curves.png",
+    "figures/fig_vortex_split_lag.png",
+    "figures/fig_vortex_split_budget.png"
+  ]
+}
