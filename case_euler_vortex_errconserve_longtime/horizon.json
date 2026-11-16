@@ -1,0 +1,101 @@
+{
+  "case": "CASE-DG-EULER-VORTEX-ERR",
+  "predict_time": 40.0,
+  "archive_digest_sha256": "3e02a7a95a7c37a7f511d28aeebff81c1133f86d73b9dafc5d13d4cca0700dd5",
+  "reference_defect_percent": {
+    "1": 0.00014861700391441312,
+    "10": 0.00019102185861623696,
+    "20": 0.0001910218586162366,
+    "40": 0.0001910218586162366
+  },
+  "families": {
+    "dg_d2_n32_cfl0.2": {
+      "status": "missing",
+      "role": "design family (C2 gate family, p=2, 32^2)"
+    },
+    "dg_d1_n32_cfl0.2": {
+      "status": "missing",
+      "role": "degree axis p=1 (32^2)"
+    },
+    "dg_d3_n32_cfl0.2": {
+      "status": "missing",
+      "role": "degree axis p=3 (32^2)"
+    },
+    "p0_n64": {
+      "status": "measured",
+      "role": "first-order cross-check control (64^2)",
+      "times": [
+        1.0,
+        5.0,
+        10.0,
+        40.0
+      ],
+      "errors_percent": [
+        4.926036192305211,
+        12.0235164048954,
+        14.30474063391442,
+        16.044479167316837
+      ],
+      "measured_percent": 16.044479167316837,
+      "reference": "lattice",
+      "steps": 2903,
+      "wall_seconds": 49.158024311065674,
+      "scores": {
+        "ols_window": {
+          "alpha": 0.4790904891383299,
+          "predicted_percent": 27.792089747423404,
+          "relative_error_percent": -73.21902105764117,
+          "within_10_percent": false
+        },
+        "robust_window": {
+          "alpha": 0.5530794633407751,
+          "predicted_percent": 30.79406376401833,
+          "relative_error_percent": -91.92934493471692,
+          "within_10_percent": false
+        },
+        "tail_local": {
+          "alpha": 0.2506344504789044,
+          "predicted_percent": 20.247758996520954,
+          "relative_error_percent": -26.197670771179315,
+          "within_10_percent": false
+        },
+        "linear_bound": {
+          "alpha": 1.0,
+          "predicted_percent": 57.21896253565768,
+          "relative_error_percent": -256.627111039009,
+          "within_10_percent": false
+        }
+      },
+      "best_model": "tail_local",
+      "prediction_confirmed": false,
+      "extended": {
+        "window": [
+          1.0,
+          40.0
+        ],
+        "ols": 0.323322677151068,
+        "robust": 0.4790904891383299,
+        "robust_at": "leave_one_out_worst",
+        "tail_local": 0.08279180909791119,
+        "gate_bound": 1.0,
+        "gate_holds": true
+      },
+      "growth_ratio_window": 3.2570769967909206,
+      "tolerance_percent": 6.0,
+      "within_tolerance": false,
+      "horizon_to_tolerance": {
+        "alpha=extended_ols": 40.0,
+        "alpha=extended_robust": 40.0,
+        "alpha=tail_local": 40.0,
+        "alpha=linear 1": 40.0
+      }
+    }
+  },
+  "verdict": {
+    "status": "INCOMPLETE",
+    "checks": {
+      "design_measured": false
+    },
+    "reason": "design family t = 40 checkpoint has not landed"
+  }
+}
