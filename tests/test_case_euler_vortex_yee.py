@@ -115,3 +115,29 @@ def test_report_is_data_driven_not_hardcoded(tmp_path):
     assert "~16%" not in report, "Report must not contain hardcoded ~16%"
     # Must contain the actual data-driven numbers
     assert "0.0094" in report or "0.0152" in report, "Report must contain actual computed error values"
+
+
+def test_committed_report_has_single_header():
+    """The committed report must not contain two concatenated reports (m21061/m21330 overlap)."""
+    from pathlib import Path
+    repo = Path(__file__).resolve().parent.parent
+    report = (repo / "docs" / "CASE-DG-EULER-VORTEX-ERR.md").read_text()
+    headers = [ln for ln in report.splitlines() if ln.startswith("# CASE-DG-EULER-VORTEX-ERR")]
+    assert len(headers) == 1, (
+        f"report must contain exactly one top-level header, found {len(headers)}: {headers}"
+    )
+
+
+def test_committed_figures_exist():
+    """Every figure referenced by figures.json must exist on disk (gate filtered PNGs in PR#744)."""
+    from pathlib import Path
+    import json as _json
+    repo = Path(__file__).resolve().parent.parent
+    case_dir = repo / "case_euler_vortex_yee"
+    fig_index = case_dir / "figures" / "figures.json"
+    assert fig_index.exists(), "case_euler_vortex_yee/figures/figures.json missing"
+    entries = _json.loads(fig_index.read_text())
+    assert entries, "figures.json must list at least one figure"
+    for entry in entries:
+        png = case_dir / "figures" / entry["name"]
+        assert png.exists() and png.stat().st_size > 0, f"missing figure: {png}"
