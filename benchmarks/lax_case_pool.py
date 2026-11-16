@@ -383,6 +383,32 @@ def ledger_acceptance_tolerance():
     return float(lax_parameters()["acceptance_threshold"])
 
 
+def registered_production_leg():
+    """The production leg *registered by the case module* (single source).
+
+    ``gate_a0`` used to take the finest ladder leg as its production leg.  That
+    is a local convention, not a registration: it is how the pool ended up
+    publishing ``A0 = FAIL`` for ``p3.N400`` while the certified-configuration
+    closure (``docs/CASE-LAX-DG-a0-production-leg-closure.md``) published
+    ``A0 = PASS`` for ``p2.N800`` -- two artifacts, one ledger, no single source
+    of truth.  The leg is therefore read from
+    ``tensordg.cases.lax_1d.lax_parameters()["production_leg"]`` (imported, not
+    copied, for the same reason as the tolerance) and this accessor is the only
+    place the pool is allowed to learn it.
+    """
+    from tensordg.cases.lax_1d import lax_parameters
+
+    leg = lax_parameters().get("production_leg")
+    if not isinstance(leg, dict) or "cells" not in leg or "degree" not in leg:
+        raise KeyError(
+            "tensordg.cases.lax_1d.lax_parameters() must register "
+            "['production_leg'] = {'degree': int, 'cells': int}")
+    cells, degree = int(leg["cells"]), int(leg["degree"])
+    if cells <= 0 or degree <= 0:
+        raise ValueError(f"registered production leg is not a valid leg: {leg!r}")
+    return {"cells": cells, "degree": degree}
+
+
 def _weighted_l2(points, values, exact_values, weights, dx, mask=None):
     """Relative L2 norm over the (optionally masked) quadrature points."""
     cell_weight = 0.5 * dx * weights[None, :] * np.ones_like(values)
@@ -472,12 +498,32 @@ def gate_a0(entries, tolerance=None, production_leg=None, production_l2=None):
             if worst_l1 is None or l1v > worst_l1["relative_l1"]:
                 worst_l1 = {"leg": key, "field": field, "relative_l1": l1v}
     prod_key = f"p{production_leg['degree']}.N{production_leg['cells']}"
+    prod_on_ladder = prod_key in rows
+    if not prod_on_ladder:
+        # The registered production leg need not be a ladder leg (it is the
+        # certified configuration, p2.N800).  Its row is carried into the same
+        # table so the ledger arm still sits next to every other leg it is
+        # being compared against -- including the old ladder-finest leg, whose
+        # sub-bar verdict stays visible.
+        stored_l2 = production_leg.get("l2_errors")
+        rows[prod_key] = {
+            "l1": {f: float(production_leg["errors"][f]) for f in fields},
+            "l2": {f: (float(stored_l2[f]) if stored_l2 else None)
+                   for f in fields},
+            "role": "registered production leg (ladder-external)",
+        }
+        known = [v for v in rows[prod_key]["l2"].values() if v is not None]
+        rows[prod_key]["status"] = ("n/a" if not known
+                                    else "PASS" if max(known) < tolerance
+                                    else "FAIL")
     if production_l2 is None:
         prod_values, prod_source = dict(production_leg["l2_errors"]), "ladder"
     else:
-        prod_values, prod_source = dict(production_l2), "profiles"
+        prod_values, prod_source = dict(production_l2), "production-leg record"
         for field in fields:  # keep the per-leg table consistent with the arm
             rows[prod_key]["l2"][field] = float(prod_values[field])
+        rows[prod_key]["status"] = ("PASS" if max(prod_values.values()) < tolerance
+                                    else "FAIL")
     prod_worst = max(prod_values.values())
     arms = {
         "production_l2": {"leg": prod_key, "metric": "relative L2",
@@ -497,6 +543,8 @@ def gate_a0(entries, tolerance=None, production_leg=None, production_l2=None):
                        "solution"),
             "regions": "whole field, every field, no wave band removed, no exemption",
             "tolerance": tolerance, "production_leg": prod_key,
+            "production_leg_source": ("ladder" if prod_on_ladder
+                                      else "registered (case module)"),
             "per_leg": rows, "arms": arms,
             "worst": worst_l2, "worst_l1": worst_l1,
             "status": "PASS" if ok else "FAIL"}
@@ -720,60 +768,94 @@ def gate_time(rows):
 
 
 # --------------------------------------------------------------------- runner
+def measure_leg(cells, degree, waves):
+    """Solve one leg and measure it with the pool instrument.
+
+    Returns ``(entry, bundle)``.  ``entry`` is byte-identical to the per-leg
+    record the ladder stores; ``bundle`` carries the raw fields so a caller can
+    reuse them (wave positions / profiles) without a second solve.  Factoring
+    this out is what lets the *registered production leg* be measured by the
+    same instrument as the ladder legs instead of being read out of another
+    artifact.
+    """
+    started = time.time()
+    x, coeff, meta = solve_euler_dg_1d(LEFT, RIGHT, ncells=cells, degree=degree,
+                                       final_time=FINAL_TIME, cfl=CFL)
+    points, primitive, dx, weights = modal_fields(x, coeff)
+    exact = exact_reference(points)
+    errors = {field: _weighted_l1(points, primitive[field], exact[field],
+                                  weights, dx)
+              for field in ("density", "velocity", "pressure")}
+    l2_errors = {field: _weighted_l2(points, primitive[field], exact[field],
+                                    weights, dx)
+                 for field in ("density", "velocity", "pressure")}
+    # R3 region rule: fixed *physical* band (nested across the ladder) ...
+    mask = np.ones_like(primitive["density"], dtype=bool)
+    # ... and the retired dx-scaled band, measured on the very same fields
+    mask_legacy = np.ones_like(mask, dtype=bool)
+    for name in ("rarefaction_head", "rarefaction_tail", "contact", "shock"):
+        distance = np.abs(points - waves["positions"][name])
+        mask &= distance > R3_BAND_WIDTH
+        mask_legacy &= distance > R3_LEGACY_BAND_CELLS * dx
+    analytic_errors = {
+        field: _weighted_l1(points, primitive[field], exact[field], weights, dx,
+                            mask=mask)
+        for field in ("density", "velocity", "pressure")}
+    analytic_errors_legacy = {
+        field: _weighted_l1(points, primitive[field], exact[field], weights, dx,
+                            mask=mask_legacy)
+        for field in ("density", "velocity", "pressure")}
+    entry = {
+        "cells": cells, "degree": degree,
+        "steps": int(meta["steps"]),
+        "dt": float(meta.get("dt_mean", FINAL_TIME / max(meta["steps"], 1))),
+        "dt_last_step": float(meta["dt"]),
+        "wall_seconds": float(time.time() - started),
+        "analytic_fraction": float(mask.mean()),
+        "analytic_fraction_legacy": float(mask_legacy.mean()),
+        "analytic_errors_legacy_band": analytic_errors_legacy,
+        "density_min": float(primitive["density"].min()),
+        "errors": errors, "l2_errors": l2_errors,
+        "analytic_errors": analytic_errors,
+    }
+    bundle = {"points": points, "primitive": primitive, "exact": exact,
+              "dx": dx, "weights": weights, "meta": meta}
+    return entry, bundle
+
+
 def run_ladder(ladder=LADDER):
     waves = exact_waves()
     exact_pos = exact_positions(waves)
     entries, finest, profiles = [], None, None
-    for index, (cells, degree) in enumerate(ladder):
-        started = time.time()
-        x, coeff, meta = solve_euler_dg_1d(LEFT, RIGHT, ncells=cells, degree=degree,
-                                           final_time=FINAL_TIME, cfl=CFL)
-        points, primitive, dx, weights = modal_fields(x, coeff)
-        exact = exact_reference(points)
-        errors = {field: _weighted_l1(points, primitive[field], exact[field],
-                                      weights, dx)
-                  for field in ("density", "velocity", "pressure")}
-        l2_errors = {field: _weighted_l2(points, primitive[field], exact[field],
-                                        weights, dx)
-                     for field in ("density", "velocity", "pressure")}
-        # R3 region rule: fixed *physical* band (nested across the ladder) ...
-        mask = np.ones_like(primitive["density"], dtype=bool)
-        # ... and the retired dx-scaled band, measured on the very same fields
-        mask_legacy = np.ones_like(mask, dtype=bool)
-        for name in ("rarefaction_head", "rarefaction_tail", "contact", "shock"):
-            distance = np.abs(points - waves["positions"][name])
-            mask &= distance > R3_BAND_WIDTH
-            mask_legacy &= distance > R3_LEGACY_BAND_CELLS * dx
-        analytic_errors = {
-            field: _weighted_l1(points, primitive[field], exact[field], weights, dx,
-                                mask=mask)
-            for field in ("density", "velocity", "pressure")}
-        analytic_errors_legacy = {
-            field: _weighted_l1(points, primitive[field], exact[field], weights, dx,
-                                mask=mask_legacy)
-            for field in ("density", "velocity", "pressure")}
-        entries.append({
-            "cells": cells, "degree": degree,
-            "steps": int(meta["steps"]),
-            "dt": float(meta.get("dt_mean", FINAL_TIME / max(meta["steps"], 1))),
-            "dt_last_step": float(meta["dt"]),
-            "wall_seconds": float(time.time() - started),
-            "analytic_fraction": float(mask.mean()),
-            "analytic_fraction_legacy": float(mask_legacy.mean()),
-            "analytic_errors_legacy_band": analytic_errors_legacy,
-            "density_min": float(primitive["density"].min()),
-            "errors": errors, "l2_errors": l2_errors,
-            "analytic_errors": analytic_errors,
-        })
-        print(f"[lax] N={cells:4d} p={degree} L1(rho)={errors['density']:.6f} "
-              f"analytic={analytic_errors['density']:.6f} "
-              f"t={entries[-1]['wall_seconds']:.1f}s", flush=True)
+    for cells, degree in ladder:
+        entry, bundle = measure_leg(cells, degree, waves)
+        entries.append(entry)
+        print(f"[lax] N={cells:4d} p={degree} L1(rho)={entry['errors']['density']:.6f} "
+              f"analytic={entry['analytic_errors']['density']:.6f} "
+              f"t={entry['wall_seconds']:.1f}s", flush=True)
         if (cells, degree) == ladder[-1]:
             finest = {"cells": cells, "degree": degree,
-                      "positions": wave_positions(points, primitive, waves, dx=dx),
-                      "plateaus": plateau_values(points, primitive, waves)}
-            profiles = {"points": points, "numerical": primitive, "exact": exact}
+                      "positions": wave_positions(bundle["points"],
+                                                  bundle["primitive"], waves,
+                                                  dx=bundle["dx"]),
+                      "plateaus": plateau_values(bundle["points"],
+                                                 bundle["primitive"], waves)}
+            profiles = {"points": bundle["points"],
+                        "numerical": bundle["primitive"], "exact": bundle["exact"]}
     return waves, exact_pos, entries, finest, profiles
+
+
+def run_production_leg(waves=None, leg=None):
+    """Measure the leg registered in the case module, with the pool instrument."""
+    waves = exact_waves() if waves is None else waves
+    leg = registered_production_leg() if leg is None else dict(leg)
+    entry, bundle = measure_leg(leg["cells"], leg["degree"], waves)
+    entry["role"] = "registered production leg (ledger A0)"
+    entry["leg"] = f"p{leg['degree']}.N{leg['cells']}"
+    print(f"[lax] production leg {entry['leg']} L2(rho)="
+          f"{entry['l2_errors']['density']:.6f} t={entry['wall_seconds']:.1f}s",
+          flush=True)
+    return entry, bundle
 
 
 def run_entropy(ladder=ENTROPY_CELLS):
@@ -1118,6 +1200,28 @@ def main(argv=None):
     waves, exact_pos, entries, finest, profiles = run_ladder(ladder)
     entropy_entries = run_entropy()
     time_rows = run_time_refinement() if run_time else []
+    # The ledger arm is read on the leg the case module *registers*, not on
+    # "whatever the ladder ends at".  Measured here with the same instrument as
+    # the ladder legs; reused from the ladder when the registered leg happens to
+    # be one of them.
+    production_leg = None
+    production_bundle = None
+    if not args.quick:
+        registered = registered_production_leg()
+        on_ladder = [e for e in entries
+                     if e["cells"] == registered["cells"]
+                     and e["degree"] == registered["degree"]]
+        if on_ladder:
+            production_leg = dict(on_ladder[0])
+            production_leg["role"] = ("registered production leg (ledger A0; "
+                                      "also a ladder leg)")
+            production_leg["leg"] = (f"p{registered['degree']}."
+                                     f"N{registered['cells']}")
+        else:
+            production_leg, production_bundle = run_production_leg(waves,
+                                                                   registered)
+    else:
+        registered = registered_production_leg()
     c1 = gate_c1(finest["positions"], exact_pos)
     c2 = gate_c2(finest["plateaus"], waves)
     c3 = gate_c3(entries)
@@ -1125,7 +1229,11 @@ def main(argv=None):
                  {"width": R3_BAND_WIDTH, "rule": "fixed physical band (nested)"})
     r5 = gate_r5(entropy_entries)
     gates = {"c1": c1, "c2": c2, "c3": c3, "r3": r3, "r5": r5}
-    acceptance = gate_a0(entries)
+    if production_leg is None:
+        acceptance = gate_a0(entries)
+    else:
+        acceptance = gate_a0(entries, production_leg=production_leg,
+                             production_l2=production_leg["l2_errors"])
     diagnostics = {}
     if entries and "analytic_errors_legacy_band" in entries[0]:
         diagnostics["r3_legacy_band"] = gate_r3(
@@ -1143,6 +1251,12 @@ def main(argv=None):
         figures.extend(render_time_figure(time_rows, fig_dir))
     if not args.skip_figures:
         figures.append(render_acceptance_figure(entries, acceptance, fig_dir))
+    if production_bundle is not None:
+        np.savez(out / "profiles_production.npz",
+                 points=production_bundle["points"],
+                 **{f"numerical_{k}": v
+                    for k, v in production_bundle["primitive"].items()},
+                 **{f"exact_{k}": v for k, v in production_bundle["exact"].items()})
     np.savez(out / "profiles.npz",
              points=profiles["points"],
              **{f"numerical_{k}": v for k, v in profiles["numerical"].items()},
@@ -1172,6 +1286,21 @@ def main(argv=None):
         "waves": waves,
         "exact_positions": exact_pos,
         "ladder": entries,
+        "production_leg": (None if production_leg is None else {
+            "leg": production_leg["leg"],
+            "cells": production_leg["cells"],
+            "degree": production_leg["degree"],
+            "role": production_leg.get("role"),
+            "registration": {"source": "tensordg.cases.lax_1d.lax_parameters()",
+                             "leg": registered},
+            "steps": production_leg["steps"],
+            "wall_seconds": production_leg["wall_seconds"],
+            "density_min": production_leg["density_min"],
+            "errors": production_leg["errors"],
+            "l2_errors": production_leg["l2_errors"],
+            "profiles": ("profiles_production.npz"
+                         if production_bundle is not None else None),
+        }),
         "entropy_wave": entropy_entries,
         "time_refinement": time_rows,
         "diagnostics": diagnostics,

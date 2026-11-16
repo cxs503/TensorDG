@@ -63,6 +63,8 @@ _BOUNDARY = r"(?=^## |^Verification verdict |\Z)"
 INVENTORY = (
     ("metrics.json", "实测值 + 判据 verdict + 全部容差配置"),
     ("profiles.npz", "最细腿原始量 vs 精确解逐点场"),
+    ("production_leg.json", "登记生产腿 p2.N800 的测量记录（台账 A0 读数来源）"),
+    ("profiles_production.npz", "登记生产腿 p2.N800 的逐点场（台账读数可离线复算）"),
     ("summary.md", "由 metrics.json 渲染的表（禁手改）"),
     ("figures_binding.json", "图-工件-渲染器溯源绑定（sha256 校验链）"),
     ("figures/lax_profiles.png", "场量对比图（最细腿 vs 精确解）"),

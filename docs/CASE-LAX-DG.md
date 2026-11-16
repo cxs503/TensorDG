@@ -93,15 +93,17 @@ Lax (1954) 激波管 / Toro (1999) test 2：`[0,1]` 域内隔膜 `x0 = 0.5` 两�
 
 | 文件 | 用途 | bytes | sha256[:16] |
 |---|---|---|---|
-| `docs/benchmarks/results/lax_case_pool/metrics.json` | 实测值 + 判据 verdict + 全部容差配置 | 34647 | cab44001048395cc |
+| `docs/benchmarks/results/lax_case_pool/metrics.json` | 实测值 + 判据 verdict + 全部容差配置 | 36399 | 531fa33e91af69b1 |
 | `docs/benchmarks/results/lax_case_pool/profiles.npz` | 最细腿原始量 vs 精确解逐点场 | 225846 | 7bdcc57cb9a0c212 |
-| `docs/benchmarks/results/lax_case_pool/summary.md` | 由 metrics.json 渲染的表（禁手改） | 5672 | 6513f513e500ad04 |
+| `docs/benchmarks/results/lax_case_pool/production_leg.json` | 登记生产腿 p2.N800 的测量记录（台账 A0 读数来源） | 1084 | 4d12d3f1caf588aa |
+| `docs/benchmarks/results/lax_case_pool/profiles_production.npz` | 登记生产腿 p2.N800 的逐点场（台账读数可离线复算） | 449846 | 6ae65fa838af73e7 |
+| `docs/benchmarks/results/lax_case_pool/summary.md` | 由 metrics.json 渲染的表（禁手改） | 5758 | 2f533256968891ab |
 | `docs/benchmarks/results/lax_case_pool/figures_binding.json` | 图-工件-渲染器溯源绑定（sha256 校验链） | 1253 | e60fe6c39c5f95e5 |
 | `docs/benchmarks/results/lax_case_pool/figures/lax_profiles.png` | 场量对比图（最细腿 vs 精确解） | 88993 | f78845d66a09ee9a |
 | `docs/benchmarks/results/lax_case_pool/figures/lax_convergence.png` | 收敛图（全场与解析区 rel L1 vs N） | 91941 | e0d2435c305669ea |
 | `docs/benchmarks/results/lax_case_pool/figures/time_refinement.png` | dt 细化：固定网格上 L1 误差 vs dt | 50076 | 972a3bc56946c56f |
 | `docs/benchmarks/results/lax_case_pool/figures/entropy_wave_order.png` | 熵波实测阶 vs 设计阶 p+1 | 59423 | 91bd74b53d9a4da5 |
-| `docs/benchmarks/results/lax_case_pool/figures/lax_acceptance_a0.png` | 验收 A0：逐腿 relative L2/L1 vs 容差 | 108114 | b18efb3bbc640302 |
+| `docs/benchmarks/results/lax_case_pool/figures/lax_acceptance_a0.png` | 验收 A0：逐腿 relative L2/L1 vs 容差 | 108765 | d4a3f551f28f230a |
 
 **复现与门禁状态**（2026-11-12，m16585）：`PYTHONPATH=. python -m benchmarks.lax_case_pool`
 全量（非 `--quick`）墙钟 **373.2 s**，9 条阶梯腿的 rel L1 rho/u/p 与解析区 rho 与本文表格
@@ -153,8 +155,8 @@ ledger 原文：ref: exact solution | tolerance < 3 %（`feature_ledger CASE-LAX
 
 | arm | metric | leg / legs | worst | verdict |
 |---|---|---|---|---|
-| production_l2 | relative L2 | p3.N400 | 3.11556e-02 | FAIL |
-| ladder_l1 | relative L1 | 9 legs | 2.32905e-02 | PASS |
+| production_l2 | relative L2 | p2.N800 | 2.57033e-02 | PASS |
+| ladder_l1 | relative L1 | 10 legs | 2.32905e-02 | PASS |
 
 | leg | rel L2 rho | rel L2 u | rel L2 p | rel L1 rho | rel L1 u | rel L1 p |
 |---|---|---|---|---|---|---|
@@ -167,10 +169,11 @@ ledger 原文：ref: exact solution | tolerance < 3 %（`feature_ledger CASE-LAX
 | p3.N100 | 5.30621e-02 | 3.69773e-02 | 2.05245e-02 | 1.58470e-02 | 2.05087e-02 | 1.15437e-02 |
 | p3.N200 | 4.19998e-02 | 3.39022e-02 | 1.65541e-02 | 1.21474e-02 | 1.69898e-02 | 9.56416e-03 |
 | p3.N400 | 3.11556e-02 | 2.24805e-02 | 1.30501e-02 | 8.68554e-03 | 1.23064e-02 | 7.31196e-03 |
+| p2.N800 | 2.57033e-02 | 9.10287e-03 | 5.49864e-03 | 2.54812e-03 | 7.97066e-04 | 5.44790e-04 |
 
-A0 verdict: **FAIL** -- ledger arm (relative L2, p3.N400) worst 3.11556e-02 vs tolerance 3.00e-02 (margin x0.963); 更严的 L1 臂跨 9 腿最差 2.32905e-02。
+A0 verdict: **PASS** -- ledger arm (relative L2, p2.N800) worst 2.57033e-02 vs tolerance 3.00e-02 (margin x1.167); 更严的 L1 臂跨 10 腿最差 2.32905e-02。
 
 Verification verdict (supplementary order gates C1/C2/C3/R3/R5/TIME): **FAIL**  
-Acceptance verdict (ledger A0, relative L2 vs exact < 3 %): **FAIL**
+Acceptance verdict (ledger A0, relative L2 vs exact < 3 %): **PASS**
 
 两层判据回答不同问题，分开记录：A0 问「解与精确参考的距离是否在登记容差内」，阶数闸问「间断存在时族是否达设计阶」。验证层 FAIL 原样保留（honest FAIL），不被 A0 的 PASS 改写。
