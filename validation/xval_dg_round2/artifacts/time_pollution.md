@@ -19,3 +19,27 @@ CFL series [0.3, 0.15, 0.075] (ratio 2, fixed grids), reference grid N = 3200, b
 
 The eleven shipped DG legs and the CFL = 0.3 ladder are committed, so the audit can say *what* it would compute -- it cannot say *what the answer is* until the profiles above exist. Total cost of the table: ~1.2 CPU-hours (see `validation/xval_dg_round2/gen_cfl_ladder.py`, shardable).
 
+The DG-side axis below needs none of the missing FV levels (the CFL = 0.3 ladder and the three shipped P2/N=400 legs are committed), so it is reported even while the FV-side claim is withheld.
+
+## DG legs: is the shipped leg error time-converged?
+
+Legs compared: **CFL=0.4, CFL=0.2, CFL=0.1** (DG P2 N=400), judged against the certified reference (verdict CERTIFIED, U = 0.041622 %, stored on N=3200).
+
+| CFL | err vs certified ref % | decision (3 %) |
+|---|---|---|
+| 0.4 | 1.513771 | PASS |
+| 0.2 | 1.515633 | PASS |
+| 0.1 | 1.517166 | PASS |
+
+| temporal pair | rel L1 % |
+|---|---|
+| 0.4 -> 0.2 | 5.065128e-03 |
+| 0.2 -> 0.1 | 2.501554e-03 |
+
+* **D0** resolvable: `False` -- time error below the band: bounded by 0.041622 %, not measurable
+* **D1** R_leg = delta_t / err = 0.001649 (state CLEAN, bound-only True)
+* **D2** decisions {'0.4': 'PASS', '0.2': 'PASS', '0.1': 'PASS'}, max move 0.003395 pp
+* **D3** temporal order 1.0178 (usable False: differences monotone True, errors monotone False)
+
+**DG_AXIS_CLEAN** -- accepted = `True`
+
