@@ -1,0 +1,370 @@
+{
+  "schema_version": "1.0",
+  "domain": "ship structural materials (hull, superstructure, cryogenic tanks)",
+  "substances": [
+    {
+      "name": "AH36",
+      "class": "structural",
+      "state": "solid",
+      "aliases": ["mild_steel", "ship_steel", "steel_ah36", "S355"],
+      "notes": "Normal-strength hull structural steel grade AH36 (IACS unified requirement W11); the default material of a steel hull.",
+      "properties": {
+        "density": {
+          "dimension": "density", "unit": "kg/m^3", "mode": "constant", "value": 7850.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "DNV-RP-C201 Buckling strength of plated structures, Sec. 2 (steel density 7850 kg/m^3)", "type": "constant", "note": "standard value for carbon steel"},
+          "accuracy": "+/- 1%",
+          "applicability": "carbon and low-alloy ship steels"
+        },
+        "youngs_modulus": {
+          "dimension": "stress", "unit": "GPa", "mode": "constant", "value": 206.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "DNV-RP-C201 Sec. 2 / EN 1993-1-1 Table 3.1 (E = 210 GPa nominal, 206 GPa used in ship rules)", "type": "constant", "note": "206 GPa is the value used by DNV-CG-0128 and most class buckling checks"},
+          "accuracy": "+/- 2% (EN 1993-1-1 uses 210 GPa)",
+          "applicability": "-40 to 100 degC"
+        },
+        "poisson_ratio": {
+          "dimension": "dimensionless", "unit": "1", "mode": "constant", "value": 0.3,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1993-1-1 Sec. 3.2.6 (nu = 0.3 for structural steel)", "type": "constant", "note": "elastic Poisson ratio"},
+          "accuracy": "+/- 0.01",
+          "applicability": "elastic range"
+        },
+        "yield_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 355.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "IACS Unified Requirement W11 (normal-strength hull structural steel): AH36 minimum yield 355 MPa", "type": "constant", "note": "minimum specified value, thickness <= 50 mm"},
+          "accuracy": "specified minimum (material scatter 355-420 MPa)",
+          "applicability": "-40 to 100 degC (design temperature band)"
+        },
+        "ultimate_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 490.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "IACS UR W11: AH36 tensile strength 490-620 MPa", "type": "constant", "note": "lower bound of the specified tensile range"},
+          "accuracy": "specified minimum",
+          "applicability": "hull structural steel"
+        },
+        "thermal_expansion": {
+          "dimension": "expansion", "unit": "1/K", "mode": "constant", "value": 1.2e-05,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1993-1-1 Sec. 3.2.6 (alpha = 12e-6 1/K for structural steel)", "type": "constant", "note": "mean coefficient 20-100 degC"},
+          "accuracy": "+/- 5%",
+          "applicability": "-40 to 100 degC"
+        }
+      }
+    },
+    {
+      "name": "EH40",
+      "class": "structural",
+      "state": "solid",
+      "aliases": ["high_strength_steel", "steel_eh40", "S420"],
+      "notes": "Higher-strength hull structural steel grade EH40 (IACS W11), used for upper decks and high-stress regions.",
+      "properties": {
+        "density": {
+          "dimension": "density", "unit": "kg/m^3", "mode": "constant", "value": 7850.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "DNV-RP-C201 Sec. 2 (steel density)", "type": "constant", "note": "standard carbon-steel density"},
+          "accuracy": "+/- 1%", "applicability": "carbon and low-alloy steels"
+        },
+        "youngs_modulus": {
+          "dimension": "stress", "unit": "GPa", "mode": "constant", "value": 206.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "DNV-RP-C201 Sec. 2 (E = 206 GPa for all ship structural steels)", "type": "constant", "note": "strength grade does not change E"},
+          "accuracy": "+/- 2%", "applicability": "-40 to 100 degC"
+        },
+        "poisson_ratio": {
+          "dimension": "dimensionless", "unit": "1", "mode": "constant", "value": 0.3,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1993-1-1 Sec. 3.2.6", "type": "constant", "note": "nu = 0.3"},
+          "accuracy": "+/- 0.01", "applicability": "elastic range"
+        },
+        "yield_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 390.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "IACS UR W11: EH40 minimum yield 390 MPa", "type": "constant", "note": "thickness <= 50 mm"},
+          "accuracy": "specified minimum", "applicability": "hull structural steel"
+        },
+        "ultimate_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 510.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "IACS UR W11: EH40 tensile strength 510-650 MPa", "type": "constant", "note": "lower bound"},
+          "accuracy": "specified minimum", "applicability": "hull structural steel"
+        },
+        "thermal_expansion": {
+          "dimension": "expansion", "unit": "1/K", "mode": "constant", "value": 1.2e-05,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1993-1-1 Sec. 3.2.6", "type": "constant", "note": "alpha = 12e-6 1/K"},
+          "accuracy": "+/- 5%", "applicability": "-40 to 100 degC"
+        }
+      }
+    },
+    {
+      "name": "stainless_316L",
+      "class": "structural",
+      "state": "solid",
+      "aliases": ["316L", "stainless_steel", "SS316L"],
+      "notes": "Austenitic stainless steel 316L for cargo tanks, cryogenic piping and sea-water-exposed components.",
+      "properties": {
+        "density": {
+          "dimension": "density", "unit": "kg/m^3", "mode": "constant", "value": 8000.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-196.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASTM A240/A240M (316L plate): density 8.0 g/cm^3", "type": "constant", "note": "room-temperature value"},
+          "accuracy": "+/- 1%", "applicability": "-196 to 100 degC"
+        },
+        "youngs_modulus": {
+          "dimension": "stress", "unit": "GPa", "mode": "constant", "value": 193.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-196.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 10088-1 Table 6 (austenitic stainless steels: E = 200 GPa at 20 degC; ASME II-D gives 195 GPa for 316L)", "type": "constant", "note": "193 GPa is the ASME II-D Part D value used in pressure-vessel design"},
+          "accuracy": "+/- 3%", "applicability": "elastic range, 20 degC"
+        },
+        "poisson_ratio": {
+          "dimension": "dimensionless", "unit": "1", "mode": "constant", "value": 0.3,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-196.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASME BPVC Section II Part D, Table PRD (nu = 0.3 for austenitic stainless)", "type": "constant", "note": "elastic constant"},
+          "accuracy": "+/- 0.01", "applicability": "elastic range"
+        },
+        "yield_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 170.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-196.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASTM A240/A240M 316L: minimum yield strength 170 MPa (25 ksi)", "type": "constant", "note": "annealed condition"},
+          "accuracy": "specified minimum", "applicability": "annealed plate"
+        },
+        "ultimate_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 485.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-196.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASTM A240/A240M 316L: minimum tensile strength 485 MPa (70 ksi)", "type": "constant", "note": "annealed condition"},
+          "accuracy": "specified minimum", "applicability": "annealed plate"
+        },
+        "thermal_expansion": {
+          "dimension": "expansion", "unit": "1/K", "mode": "constant", "value": 1.6e-05,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-196.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 10088-1 Table 6 (mean coefficient 20-100 degC for 316L: 16.0e-6 1/K)", "type": "constant", "note": "mean expansion coefficient"},
+          "accuracy": "+/- 5%", "applicability": "20-100 degC mean"
+        }
+      }
+    },
+    {
+      "name": "alu_5083_H116",
+      "class": "structural",
+      "state": "solid",
+      "aliases": ["5083", "aluminium", "aluminum_5083", "Al5083"],
+      "notes": "Aluminium-magnesium alloy 5083-H116, the standard material for high-speed craft hulls and LNG tank domes.",
+      "properties": {
+        "density": {
+          "dimension": "density", "unit": "kg/m^3", "mode": "constant", "value": 2660.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASTM B928/B928M 5083 plate: density 2.66 g/cm^3", "type": "constant", "note": "nominal alloy density"},
+          "accuracy": "+/- 1%", "applicability": "-40 to 100 degC"
+        },
+        "youngs_modulus": {
+          "dimension": "stress", "unit": "GPa", "mode": "constant", "value": 70.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1999-1-1 Table 3.1 (E = 70 GPa for 5xxx/6xxx aluminium alloys)", "type": "constant", "note": "alloy-independent for Al-Mg"},
+          "accuracy": "+/- 2%", "applicability": "elastic range"
+        },
+        "poisson_ratio": {
+          "dimension": "dimensionless", "unit": "1", "mode": "constant", "value": 0.33,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1999-1-1 Sec. 3.2 (nu = 0.33 for aluminium alloys)", "type": "constant", "note": "elastic Poisson ratio"},
+          "accuracy": "+/- 0.01", "applicability": "elastic range"
+        },
+        "yield_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 215.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASTM B928/B928M 5083-H116: minimum yield strength 215 MPa (31 ksi)", "type": "constant", "note": "thickness 40-80 mm lower bound"},
+          "accuracy": "specified minimum", "applicability": "H116 temper plate"
+        },
+        "ultimate_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 305.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASTM B928/B928M 5083-H116: minimum tensile strength 305 MPa (44 ksi)", "type": "constant", "note": "H116 temper"},
+          "accuracy": "specified minimum", "applicability": "H116 temper plate"
+        },
+        "thermal_expansion": {
+          "dimension": "expansion", "unit": "1/K", "mode": "constant", "value": 2.4e-05,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 100.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1999-1-1 Sec. 3.2 (alpha = 23e-6 1/K for 5xxx alloys; 24e-6 used for 5083)", "type": "constant", "note": "mean 20-100 degC"},
+          "accuracy": "+/- 5%", "applicability": "-40 to 100 degC"
+        }
+      }
+    },
+    {
+      "name": "frp_glass_polyester",
+      "class": "structural",
+      "state": "solid",
+      "aliases": ["FRP", "GRP", "composite", "glass_polyester"],
+      "notes": "E-glass/polyester laminate (single-skin, hand lay-up, 35% glass by weight). Values are quasi-isotropic warp-direction nominals; laminates are strongly direction-dependent so the values apply to the fibre direction only.",
+      "properties": {
+        "density": {
+          "dimension": "density", "unit": "kg/m^3", "mode": "constant", "value": 1800.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-20.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "DNV-ST-0342 (FRP vessels) / ISO 12215-5: E-glass/polyester laminate density 1750-1850 kg/m^3", "type": "constant", "note": "nominal 1800 kg/m^3"},
+          "accuracy": "+/- 5%", "applicability": "hand lay-up E-glass/polyester"
+        },
+        "youngs_modulus": {
+          "dimension": "stress", "unit": "GPa", "mode": "constant", "value": 20.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-20.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ISO 12215-5 Annex / DNV-ST-0342: E-glass CSM laminate E = 7-10 GPa; woven roving warp E = 18-25 GPa", "type": "constant", "note": "20 GPa = warp-direction woven roving; use 8 GPa for CSM-dominated lay-ups"},
+          "accuracy": "factor 2 between lay-up types",
+          "applicability": "warp/fibre direction only"
+        },
+        "poisson_ratio": {
+          "dimension": "dimensionless", "unit": "1", "mode": "constant", "value": 0.3,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-20.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "DNV-ST-0342 Sec. 3 (typical laminate nu = 0.3)", "type": "constant", "note": "effective in-plane value"},
+          "accuracy": "+/- 0.05", "applicability": "in-plane, fibre direction"
+        },
+        "tensile_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 300.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-20.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ISO 12215-5 / DNV-ST-0342: E-glass woven roving laminate ultimate tensile strength 250-350 MPa", "type": "constant", "note": "warp direction, dry condition"},
+          "accuracy": "+/- 20%", "applicability": "fibre direction, short-term loading"
+        },
+        "compressive_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 250.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-20.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "DNV-ST-0342: E-glass/polyester compressive strength 200-300 MPa (warp)", "type": "constant", "note": "nominal 250 MPa"},
+          "accuracy": "+/- 20%", "applicability": "fibre direction"
+        },
+        "thermal_expansion": {
+          "dimension": "expansion", "unit": "1/K", "mode": "constant", "value": 1.5e-05,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-20.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "DNV-ST-0342 Annex (in-plane laminate expansion 10-20e-6 1/K)", "type": "constant", "note": "nominal in-plane value"},
+          "accuracy": "+/- 30%", "applicability": "in-plane"
+        }
+      }
+    },
+    {
+      "name": "concrete_C40",
+      "class": "structural",
+      "state": "solid",
+      "aliases": ["C40", "concrete", "C40/50"],
+      "notes": "Normal-weight concrete class C40/50 (EN 206), used for gravity-base and ballast structures.",
+      "properties": {
+        "density": {
+          "dimension": "density", "unit": "kg/m^3", "mode": "constant", "value": 2400.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1992-1-1 Sec. 3.1.2 (normal-weight concrete 2000-2600 kg/m^3; 2400 for normal-weight)", "type": "constant", "note": "reinforced normal-weight concrete"},
+          "accuracy": "+/- 100 kg/m^3", "applicability": "normal-weight concrete"
+        },
+        "youngs_modulus": {
+          "dimension": "stress", "unit": "GPa", "mode": "constant", "value": 35.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1992-1-1 Table 3.1: Ecm = 22 (fcm/10)^0.3 GPa, fcm = 48 MPa for C40/50 gives 35.2 GPa", "type": "constant", "note": "secant modulus at 28 days"},
+          "accuracy": "+/- 10%", "applicability": "28-day secant modulus"
+        },
+        "poisson_ratio": {
+          "dimension": "dimensionless", "unit": "1", "mode": "constant", "value": 0.2,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1992-1-1 Sec. 3.1.3 (nu = 0.2 for uncracked concrete)", "type": "constant", "note": "uncracked elastic range"},
+          "accuracy": "+/- 0.02", "applicability": "uncracked concrete"
+        },
+        "compressive_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 40.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 206-1 / EN 1992-1-1: class C40/50 characteristic cylinder strength fck = 40 MPa", "type": "constant", "note": "characteristic value (5% fractile)"},
+          "accuracy": "characteristic value", "applicability": "28-day strength"
+        },
+        "tensile_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 3.5,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1992-1-1 Table 3.1: fctm = 0.30 fck^(2/3) = 3.51 MPa for C40/50", "type": "constant", "note": "mean axial tensile strength"},
+          "accuracy": "+/- 30%", "applicability": "mean value, uncracked"
+        },
+        "thermal_expansion": {
+          "dimension": "expansion", "unit": "1/K", "mode": "constant", "value": 1.0e-05,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 80.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "EN 1992-1-1 Sec. 3.1.3 (alpha_t = 10e-6 1/K)", "type": "constant", "note": "normal-weight concrete"},
+          "accuracy": "+/- 20%", "applicability": "normal-weight concrete"
+        }
+      }
+    },
+    {
+      "name": "titanium_grade5",
+      "class": "structural",
+      "state": "solid",
+      "aliases": ["Ti6Al4V", "titanium", "grade5"],
+      "notes": "Ti-6Al-4V (grade 5) alloy for high-performance marine hardware, propeller shafts and heat exchangers.",
+      "properties": {
+        "density": {
+          "dimension": "density", "unit": "kg/m^3", "mode": "constant", "value": 4430.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 200.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASTM B265 (titanium strip/sheet): Ti-6Al-4V density 4.43 g/cm^3", "type": "constant", "note": "nominal alloy density"},
+          "accuracy": "+/- 1%", "applicability": "-40 to 200 degC"
+        },
+        "youngs_modulus": {
+          "dimension": "stress", "unit": "GPa", "mode": "constant", "value": 114.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 200.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASTM B265 / ASM Handbook Vol. 2: Ti-6Al-4V E = 110-119 GPa", "type": "constant", "note": "annealed condition"},
+          "accuracy": "+/- 5%", "applicability": "annealed, elastic range"
+        },
+        "poisson_ratio": {
+          "dimension": "dimensionless", "unit": "1", "mode": "constant", "value": 0.34,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 200.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASM Handbook Vol. 2 (Ti-6Al-4V nu = 0.342)", "type": "constant", "note": "elastic constant"},
+          "accuracy": "+/- 0.01", "applicability": "elastic range"
+        },
+        "yield_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 828.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 200.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASTM B265 Grade 5: minimum yield strength 828 MPa (120 ksi)", "type": "constant", "note": "annealed bar"},
+          "accuracy": "specified minimum", "applicability": "annealed Grade 5"
+        },
+        "ultimate_strength": {
+          "dimension": "stress", "unit": "MPa", "mode": "constant", "value": 895.0,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 200.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASTM B265 Grade 5: minimum tensile strength 895 MPa (130 ksi)", "type": "constant", "note": "annealed bar"},
+          "accuracy": "specified minimum", "applicability": "annealed Grade 5"
+        },
+        "thermal_expansion": {
+          "dimension": "expansion", "unit": "1/K", "mode": "constant", "value": 8.6e-06,
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [-40.0, 200.0], "P": [1000.0, 1000000000.0]},
+          "source": {"ref": "ASM Handbook Vol. 2 (Ti-6Al-4V alpha = 8.6e-6 1/K, 20-100 degC)", "type": "constant", "note": "mean coefficient"},
+          "accuracy": "+/- 5%", "applicability": "20-100 degC mean"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0",
+  "domain": "naval architecture / hydrodynamics working fluids",
+  "substances": [
+    {
+      "name": "fresh_water",
+      "class": "water",
+      "state": "liquid",
+      "aliases": ["water", "pure_water", "fresh water", "H2O"],
+      "notes": "Distilled/fresh water at atmospheric pressure. Density and kinematic viscosity are the ITTC recommended values (1 atm); dynamic viscosity is derived as rho*nu per the ITTC definition.",
+      "properties": {
+        "density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "table",
+          "interp": "linear",
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 30.0], "P": [101325.0, 101325.0]},
+          "points": [[0.0, 999.84], [5.0, 999.96], [10.0, 999.70], [15.0, 999.10], [20.0, 998.21], [25.0, 997.05], [30.0, 995.65]],
+          "source": {
+            "ref": "ITTC Recommended Procedures and Guidelines 7.5-02-01-03 (2011), Fresh water and seawater properties, Table 2",
+            "type": "table",
+            "note": "values transcribed from the ITTC 1-atm fresh-water table at 5 degC intervals"
+          },
+          "accuracy": "table values; linear interpolation error < 0.01 kg/m^3 over 5 degC intervals",
+          "applicability": "0-30 degC, 1 atm; fresh water (S ~ 0)"
+        },
+        "viscosity_kinematic": {
+          "dimension": "viscosity_kinematic",
+          "unit": "m^2/s",
+          "mode": "table",
+          "interp": "linear",
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 30.0], "P": [101325.0, 101325.0]},
+          "points": [[0.0, 1.7922e-06], [5.0, 1.5187e-06], [10.0, 1.3059e-06], [15.0, 1.1386e-06], [20.0, 1.0034e-06], [25.0, 8.926e-07], [30.0, 8.007e-07]],
+          "source": {
+            "ref": "ITTC Recommended Procedures and Guidelines 7.5-02-01-03 (2011), Table 2 (fresh water kinematic viscosity)",
+            "type": "table",
+            "note": "the 15 degC anchor 1.1883e-06 m^2/s quoted in the ITTC-1957 model-ship correlation line refers to seawater, see sea_water"
+          },
+          "accuracy": "table values, 0.0001e-06 resolution",
+          "applicability": "0-30 degC, 1 atm; used for Reynolds number in model-scale resistance work"
+        },
+        "viscosity_dynamic": {
+          "dimension": "viscosity_dynamic",
+          "unit": "Pa*s",
+          "mode": "derived",
+          "expr": "density * viscosity_kinematic",
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 30.0], "P": [101325.0, 101325.0]},
+          "source": {
+            "ref": "derived identity mu = rho * nu (ITTC 7.5-02-01-03 definition)",
+            "type": "derived",
+            "note": "inherits the provenance of the density and kinematic-viscosity tables"
+          },
+          "accuracy": "0.04% agreement with the Kestin-type Vogel correlation at 20 degC (1.0016e-03 vs 1.002e-03 Pa*s)",
+          "applicability": "0-30 degC, 1 atm"
+        }
+      }
+    },
+    {
+      "name": "sea_water",
+      "class": "water",
+      "state": "liquid",
+      "aliases": ["seawater", "sea water", "salt_water"],
+      "notes": "Standard seawater at salinity S = 35 g/kg (35 ppt), 1 atm. This is the fluid assumed by the ITTC-1957 model-ship correlation line.",
+      "properties": {
+        "density": {
+          "dimension": "density",
+          "unit": "kg/m^3",
+          "mode": "table",
+          "interp": "linear",
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 30.0], "P": [101325.0, 101325.0]},
+          "points": [[0.0, 1028.1], [5.0, 1027.7], [10.0, 1026.9], [15.0, 1025.9], [20.0, 1024.8], [25.0, 1023.3], [30.0, 1021.7]],
+          "source": {
+            "ref": "ITTC Recommended Procedures and Guidelines 7.5-02-01-03 (2011), Table 3 (seawater, S = 35 g/kg)",
+            "type": "table",
+            "note": "salinity S = 35 g/kg, 1 atm"
+          },
+          "accuracy": "table values; +/-0.05 kg/m^3 for S within 30-38 g/kg (ITTC graph)",
+          "applicability": "0-30 degC, 1 atm, S = 35 g/kg"
+        },
+        "viscosity_kinematic": {
+          "dimension": "viscosity_kinematic",
+          "unit": "m^2/s",
+          "mode": "table",
+          "interp": "linear",
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 30.0], "P": [101325.0, 101325.0]},
+          "points": [[0.0, 1.8285e-06], [5.0, 1.561e-06], [10.0, 1.3506e-06], [15.0, 1.1883e-06], [20.0, 1.0569e-06], [25.0, 9.49e-07], [30.0, 8.586e-07]],
+          "source": {
+            "ref": "ITTC Recommended Procedures and Guidelines 7.5-02-01-03 (2011), Table 3 (seawater kinematic viscosity)",
+            "type": "table",
+            "note": "15 degC value 1.1883e-06 m^2/s is the standard viscosity quoted for the ITTC-1957 correlation line"
+          },
+          "accuracy": "table values; correlation-line anchor reproduced exactly at 15 degC",
+          "applicability": "0-30 degC, 1 atm, S = 35 g/kg; model-ship extrapolation"
+        },
+        "viscosity_dynamic": {
+          "dimension": "viscosity_dynamic",
+          "unit": "Pa*s",
+          "mode": "derived",
+          "expr": "density * viscosity_kinematic",
+          "x": {"name": "T", "unit": "degC"},
+          "domain": {"T": [0.0, 30.0], "P": [101325.0, 101325.0]},
+          "source": {
+            "ref": "derived identity mu = rho * nu",
+            "type": "derived",
+            "note": "inherits provenance of the seawater density and viscosity tables"
+          },
+          "accuracy": "0.06% agreement with Sharqawy et al. (2010) seawater viscosity correlation at 20 degC, S = 35",
+          "applicability": "0-30 degC, 1 atm, S = 35 g/kg"
+        }
+      }
+    }
+  ]
+}
