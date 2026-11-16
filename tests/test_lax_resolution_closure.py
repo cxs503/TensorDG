@@ -1,8 +1,8 @@
 """Consistency of the CASE-LAX-DG resolution-closure artifact.
 
 The artifact ``docs/benchmarks/results/lax_resolution_closure/metrics.json`` is
-produced by ``benchmarks/lax_resolution_closure.py`` from a ~55 minute cluster
-run, so it cannot be regenerated inside a unit test.  What *can* be checked --
+produced by ``benchmarks/lax_resolution_closure.py`` from a long cluster run
+(the committed run took 1385 s wall), so it cannot be regenerated in a unit test.  What *can* be checked --
 and is what this file checks -- is that the committed numbers still say what
 the committed verdict says, i.e. that the verdict is **re-derived** from the
 ladder and not asserted next to it:
@@ -41,9 +41,18 @@ LEDGER_TOLERANCE = 0.03  # 3 % relative L2
 
 @pytest.fixture(scope="module")
 def metrics():
-    if not METRICS.exists():
-        pytest.skip(f"{METRICS} not generated yet (run benchmarks.lax_resolution_closure)")
-    return json.loads(METRICS.read_text(encoding="utf-8"))
+    # The artifact lives under ``docs/`` and is tracked by git, so a missing
+    # file means the evidence was dropped -- not that the study is optional.
+    # Skipping here would turn the whole closure gate green and empty (the
+    # m16815 gate-vacuity failure mode), so absence is a hard failure.
+    assert METRICS.exists(), (
+        f"committed closure artifact {METRICS} is missing; it is tracked under "
+        "docs/, so this is a dropped-evidence defect, not a skip"
+    )
+    data = json.loads(METRICS.read_text(encoding="utf-8"))
+    for key in ("config", "ladder", "arms", "gate"):
+        assert key in data, f"artifact lacks required key {key!r}"
+    return data
 
 
 def test_ladder_is_the_registered_production_arm(metrics):
@@ -242,8 +251,10 @@ def test_summary_md_verdict_matches_the_gate(metrics):
     render_summary`` as ``Verdict: **<status>**  (closure mesh = <N>)``;
     asserting the exact line (not a substring) is what catches a stale file.
     """
-    if not SUMMARY.exists():
-        pytest.skip(f"{SUMMARY} not generated yet")
+    assert SUMMARY.exists(), (
+        f"committed summary {SUMMARY} is missing; the artifact and its one-line "
+        "summary are tracked together, so absence is a defect"
+    )
     text = SUMMARY.read_text(encoding="utf-8")
     gate = metrics["gate"]
     mesh = "None" if gate["closure_mesh"] is None else str(gate["closure_mesh"])
@@ -256,8 +267,10 @@ def test_summary_md_verdict_matches_the_gate(metrics):
 
 def test_summary_md_tables_match_metrics(metrics):
     """Every ladder/arm row of summary.md must equal the artifact numbers."""
-    if not SUMMARY.exists():
-        pytest.skip(f"{SUMMARY} not generated yet")
+    assert SUMMARY.exists(), (
+        f"committed summary {SUMMARY} is missing; the artifact and its one-line "
+        "summary are tracked together, so absence is a defect"
+    )
     text = SUMMARY.read_text(encoding="utf-8")
     for e in metrics["ladder"]:
         row = (f"| {e['cells']} | {e['l2']['density']:.4%} | "
@@ -301,3 +314,156 @@ def test_ingest_refreshes_a_stale_summary(tmp_path, monkeypatch, metrics):
     # the ingested metrics.json must be self-contained for render_summary
     reingested = json.loads((out / "metrics.json").read_text(encoding="utf-8"))
     assert reingested["out_dir"] == str(out)
+
+
+# ------------------------------- m23026 (reopened #676): code / doc / report drift
+#
+# The tests above pin the *artifact* to the published conclusions.  What they
+# cannot see is the other half of the contract: the driver that produced the
+# artifact, the human-readable views rendered from it, and the dev report that
+# describes this suite.  Each of those can drift away from ``metrics.json``
+# while every assertion above stays green:
+#
+# * editing ``CLOSURE_LADDER`` / ``DEGREE`` / ``ARM_CELLS`` / ``LIMITER_ARMS``
+#   in ``benchmarks/lax_resolution_closure.py`` without re-running leaves a
+#   committed artifact measured under the *old* configuration;
+# * editing ``metrics.json`` by hand (or re-ingesting a run) leaves the case
+#   doc and ``summary.md`` quoting the previous verdict;
+# * editing this file leaves the dev report quoting tests that no longer exist.
+#
+# The guards below close those holes without re-running the solver: the views
+# are re-rendered from the committed artifact and compared byte-for-byte, the
+# driver constants are compared to the artifact's own ``config``, and the dev
+# report's table is parsed and compared to the artifact numbers.
+
+CASE_DOC = Path("docs/CASE-LAX-DG-resolution-closure.md")
+DEV_REPORT = Path("dev_report_tensordg-lax-resolution-closure-tests.md")
+LADDER_TABLE_START = "<!-- LADDER-TABLE-START -->"
+LADDER_TABLE_END = "<!-- LADDER-TABLE-END -->"
+
+
+def test_committed_views_and_figures_are_on_disk(metrics):
+    """Every file the closure study publishes must be committed and present."""
+    assert CASE_DOC.exists(), f"committed case doc {CASE_DOC} is missing"
+    assert DEV_REPORT.exists(), f"committed dev report {DEV_REPORT} is missing"
+    assert SUMMARY.exists(), f"committed summary {SUMMARY} is missing"
+    assert metrics["figures"], "artifact declares no figures; expected the ladder/arms pair"
+    for figure in metrics["figures"]:
+        path = METRICS.parent / "figures" / figure["name"]
+        assert path.exists() and path.stat().st_size > 0, f"figure {path} missing/empty"
+
+
+def test_driver_constants_and_artifact_config_agree(metrics):
+    """The driver's registered configuration must be the one the artifact measured.
+
+    ``metrics.json`` is only evidence for the configuration recorded in its own
+    ``config`` block; if the driver constants were edited afterwards the
+    artifact no longer describes the code, and the ladder in this file would be
+    pinning a stale study.
+    """
+    import benchmarks.lax_resolution_closure as driver
+    from benchmarks.lax_case_pool import CFL
+
+    cfg = metrics["config"]
+    assert tuple(driver.CLOSURE_LADDER) == tuple(cfg["ladder"]), (
+        f"driver CLOSURE_LADDER {driver.CLOSURE_LADDER} != artifact ladder {cfg['ladder']}"
+    )
+    assert driver.DEGREE == cfg["degree"]
+    assert driver.ARM_CELLS == cfg["arm_cells"]
+    assert tuple("none" if a is None else a for a in driver.LIMITER_ARMS) == tuple(
+        cfg["limiter_arms"]
+    )
+    assert CFL == cfg["cfl"], f"driver CFL {CFL} != artifact CFL {cfg['cfl']}"
+    assert tuple(driver.FIELDS) == FIELDS
+    # the local pins must not be a third, quietly different configuration
+    assert tuple(LADDER) == tuple(cfg["ladder"])
+    assert ARMS == tuple(cfg["limiter_arms"])
+
+
+def test_case_doc_is_a_rendered_view_of_the_artifact(metrics):
+    """``docs/CASE-LAX-DG-resolution-closure.md`` must equal its own renderer.
+
+    The doc claims to be a view of ``metrics.json`` ("nothing is transcribed",
+    per the driver docstring).  Re-rendering from the committed artifact and
+    comparing byte-for-byte is what makes that claim testable: a re-run that
+    refreshes the JSON but not the prose fails here instead of shipping two
+    disagreeing numbers.
+    """
+    import scripts.render_lax_closure_doc as renderer
+
+    rendered = renderer.render(metrics)
+    committed = CASE_DOC.read_text(encoding="utf-8")
+    assert rendered == committed, (
+        "docs/CASE-LAX-DG-resolution-closure.md is stale relative to metrics.json; "
+        "re-render with scripts.render_lax_closure_doc"
+    )
+
+
+def test_summary_md_is_exactly_the_rendered_view(metrics, tmp_path):
+    """``summary.md`` must equal ``render_summary`` output, not merely contain it.
+
+    ``test_summary_md_tables_match_metrics`` checks row substrings; this test
+    also catches a stale verdict header, a leftover section from an earlier
+    ``--quick`` run, or a row for a mesh that is no longer in the ladder.
+    """
+    import benchmarks.lax_resolution_closure as driver
+
+    copy = dict(metrics)
+    copy["out_dir"] = str(tmp_path)
+    rendered = driver.render_summary(copy)
+    committed = SUMMARY.read_text(encoding="utf-8")
+    assert rendered.rstrip("\n") == committed.rstrip("\n"), (
+        "summary.md differs from render_summary(metrics.json); it is stale"
+    )
+
+
+def test_dev_report_test_inventory_matches_the_module():
+    """Every test the dev report names must exist, and the count must be right.
+
+    The reopened #676 report drifted from this suite once already (it described
+    10 tests whose names no longer existed).  Binding the report to the module
+    keeps the delivery document honest without hand-checking it.
+    """
+    import re
+
+    report = DEV_REPORT.read_text(encoding="utf-8")
+    defined = set(re.findall(r"^def (test_[a-z0-9_]+)\(", Path(__file__).read_text(encoding="utf-8"),
+                             flags=re.MULTILINE))
+    quoted = set(re.findall(r"`(test_[a-z0-9_]+)`", report))
+    assert quoted, "dev report names no tests at all"
+    unknown = sorted(quoted - defined)
+    assert not unknown, f"dev report names tests that do not exist: {unknown}"
+    match = re.search(r"\*\*(\d+) 条测试\*\*", report)
+    assert match, "dev report must state its test count as '**N 条测试**'"
+    assert int(match.group(1)) == len(defined), (
+        f"dev report claims {match.group(1)} tests, module defines {len(defined)}"
+    )
+
+
+def test_dev_report_ladder_table_matches_the_artifact(metrics):
+    """The dev report's ladder table is parsed and compared to the artifact.
+
+    The table between the two HTML markers is the only place in the report that
+    quotes the numbers; rounding to three decimals is allowed, so the tolerance
+    is half a unit in the last printed place.
+    """
+    report = DEV_REPORT.read_text(encoding="utf-8")
+    assert LADDER_TABLE_START in report and LADDER_TABLE_END in report, (
+        "dev report must delimit its number table with the marker comments"
+    )
+    body = report.split(LADDER_TABLE_START, 1)[1].split(LADDER_TABLE_END, 1)[0]
+    rows = [line for line in body.splitlines() if line.startswith("|")]
+    assert len(rows) == len(LADDER) + 2, f"unexpected ladder table shape: {rows}"
+    seen = []
+    for line in rows[2:]:  # skip header + separator
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        assert len(cells) == 4, f"malformed row {line!r}"
+        n = int(cells[0])
+        seen.append(n)
+        leg = _find_leg(metrics, n)
+        for field, printed in zip(FIELDS, cells[1:]):
+            value = 100.0 * leg["l2"][field]
+            assert abs(float(printed.rstrip("%").strip()) - value) <= 5e-4, (
+                f"report row N={n} {field}: printed {printed} %, artifact {value:.6f} %"
+            )
+    assert seen == list(LADDER)
