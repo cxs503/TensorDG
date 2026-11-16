@@ -42,7 +42,12 @@ if str(REPO) not in sys.path:
     sys.path.insert(0, str(REPO))
 
 from benchmarks._modal_1d import legendre_values  # noqa: E402
-from benchmarks.sod_exact import cell_averages, sample  # noqa: E402
+from benchmarks.sod_exact import sample  # noqa: E402
+# exact (breakpoint-split) reference instrument: the gated quantity here is the
+# observed *order*, and a reference that does not converge contaminates the order
+from validation.repro_cks1998.station_reference import (  # noqa: E402
+    exact_cell_averages,
+)
 from tensordg.euler_1d import GAMMA  # noqa: E402
 from tensordg.euler_dg_1d import solve_euler_dg_1d  # noqa: E402
 
@@ -119,7 +124,7 @@ def run_rung(degree: int, ncells: int, limiter):
     )
     x, num, weights = _primitive_at_quadrature(coeff, degree, QUADRATURE)
     ref = _exact_at(x, ncells)
-    centres, ref_avg = cell_averages(ncells, SOD_T)
+    centres, ref_avg = exact_cell_averages(ncells, SOD_T)
     avg = coeff[:, 0].detach().cpu().numpy()
     got_avg = {
         "density": avg[:, 0],
