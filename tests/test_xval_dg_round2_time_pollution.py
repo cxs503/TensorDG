@@ -279,3 +279,56 @@ def test_audit_artifacts_and_figures_render(tmp_path):
         assert p.exists() and p.stat().st_size > 1000, f
     md = Path(out["md"]).read_text()
     assert res["verdict"] in md and "T0" in md and "DG P1 N=200 CFL=0.4" in md
+
+
+# ------------------------------------------------- partial CFL series (2-level)
+def _write_partial_tree(root: Path, ncells: int, cfls) -> Path:
+    """Materialise a fixed-grid series with only the given CFL members."""
+    x = (np.arange(ncells) + 0.5) * (10.0 / ncells) - 5.0
+    for c in cfls:
+        f = 1.0 + 0.2 * x + 0.05 * float(c) ** 2.0
+        np.savez(tp.level_path(root, ncells, c), x=x, rho=f, rho_u=f, rho_e=f, meta="{}")
+    return root
+
+
+def test_two_level_series_yields_the_ratio_but_no_order(tmp_path):
+    """The extra ratio grid ships two CFL members: R is computable, p_t is not.
+
+    This is the documented shape of the finest ladder grid (``EXTRA_RATIO_LEVELS``
+    carries CFL 0.3/0.15 only -- a third level costs ~70 CPU-minutes).  Before
+    this contract was pinned, ``temporal_series`` demanded the third level and
+    the whole audit died with ``FileNotFoundError`` on a dataset its own
+    ``_REQUIRED`` list called complete.
+    """
+    root = _write_partial_tree(tmp_path, 6400, (0.3, 0.15))
+    series = tp.temporal_series(root, 6400, require=2)
+    assert [s["cfl"] for s in series] == [0.3, 0.15]
+    rep = tp.temporal_report(series)
+    assert rep["levels_present"] == 2
+    assert rep["delta_t"] > 0.0          # the leading-order temporal error
+    assert rep["temporal_order"] is None  # one difference carries no order
+    assert rep["monotone"] is True        # nothing to contradict monotonicity
+    with pytest.raises(ValueError):
+        tp.time_corrected_field(series, rep["temporal_order"])
+
+
+def test_base_grid_still_requires_the_full_series(tmp_path):
+    """A corrected (BASE) grid must not fall back to a two-member series."""
+    root = _write_partial_tree(tmp_path, 3200, (0.3, 0.15))
+    with pytest.raises(FileNotFoundError, match="0p075"):
+        tp.temporal_series(root, 3200, require=len(tp.CFL_LEVELS))
+
+
+def test_single_level_is_refused_loudly(tmp_path):
+    root = _write_partial_tree(tmp_path, 800, (0.3,))
+    with pytest.raises(FileNotFoundError):
+        tp.temporal_series(root, 800)
+
+
+def test_present_levels_are_used_in_coarse_to_fine_order(tmp_path):
+    """An incomplete ladder mid-grid is still ordered, never silently reindexed."""
+    root = _write_partial_tree(tmp_path, 1600, (0.3, 0.075))
+    series = tp.temporal_series(root, 1600)
+    assert [s["cfl"] for s in series] == [0.3, 0.075]
+    rep = tp.temporal_report(series)
+    assert rep["differences"][0]["ratio"] == pytest.approx(4.0)
