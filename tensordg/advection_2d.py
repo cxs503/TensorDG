@@ -102,6 +102,15 @@ def _rhs(
     return out
 
 
+from .registry import capability
+@capability(
+    name="advection-2d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-SOLID-BODY-ROTATION-2D"},
+    description="2D advection DG (solid-body rotation / deformational flow)",
+    tags=['advection', '2d', 'dg']
+)
 def solve_advection_2d(
     ncells: int | tuple[int, int] = 24,
     degree: int = 1,

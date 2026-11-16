@@ -198,6 +198,15 @@ def superposition_solution() -> Dict[str, Callable]:
 # Assembly + solve
 # ---------------------------------------------------------------------------
 
+from .registry import capability
+@capability(
+    name="poisson-2d-ldg",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-LDG-POISSON"},
+    description="2D Poisson LDG; convergence order",
+    tags=['poisson', 'ldg', 'elliptic']
+)
 def solve_poisson_2d_ldg(
     ncells: int | Sequence[int] = 16,
     degree: int = 1,

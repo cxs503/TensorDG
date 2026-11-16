@@ -103,6 +103,15 @@ def _limit(coeff: torch.Tensor, dx: float, limiter: str | None,
     return limited.squeeze(-1)
 
 
+from .registry import capability
+@capability(
+    name="advection-1d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-DG-ADVECT-ORDER"},
+    description="1D linear advection DG (periodic/Dirichlet); p-order convergence re-measured",
+    tags=['advection', '1d', 'dg']
+)
 def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
                     speed: float = 1.0, cfl: float = 0.08,
                     device: str = "cpu", dtype: torch.dtype = torch.float64,

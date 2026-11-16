@@ -128,6 +128,15 @@ def _rhs(coeff, dx, weights, phi, dphi, phi_left, phi_right, periodic=False):
     return out
 
 
+from .registry import capability
+@capability(
+    name="euler-dg-1d",
+    category="solver",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-SOD-DG"},
+    description="1D Euler DG (Sod shock tube, shock-entropy check)",
+    tags=['euler', '1d', 'shock']
+)
 def solve_euler_dg_1d(
     left_state,
     right_state,

@@ -199,7 +199,7 @@ def _extract_capability_from_ast(func_node: ast.FunctionDef, py_file: Path) -> O
                             list_val.append(elt.value)
                     kwargs[kw.arg] = list_val
                     
-            return {
+            result = {
                 "name": kwargs.get("name", f"{py_file.stem}-{func_node.name}"),
                 "category": kwargs.get("category", "solver"),
                 "maturity": kwargs.get("maturity", "planned"),
@@ -208,6 +208,14 @@ def _extract_capability_from_ast(func_node: ast.FunctionDef, py_file: Path) -> O
                 "function": f"{py_file.stem}.{func_node.name}",
                 "source_file": str(py_file.relative_to(get_git_root())),
             }
+            # Carry the discipline-relevant fields through so static-mode
+            # validation sees the same evidence/endpoint/verified that
+            # import-mode sees (m24065: previously dropped, which made
+            # static-mode validation blind to planned/mature requirements).
+            for key in ("evidence", "endpoint", "verified"):
+                if isinstance(kwargs.get(key), dict):
+                    result[key] = kwargs[key]
+            return result
     return None
 
 
@@ -224,21 +232,25 @@ def scan_package_import(package_path: Path) -> list[dict]:
         
         package_name = package_path.name
         pkg = importlib.import_module(package_name)
-        
-        # Scan all submodules
-        for attr_name in dir(pkg):
-            if attr_name.startswith("_"):
-                continue
-                
+
+        # Import *every* submodule so every @capability decorator runs,
+        # regardless of whether ``__init__`` re-exports it (some analysis
+        # tools are not re-exported at the package root).
+        import pkgutil
+        for mod_info in pkgutil.iter_modules(pkg.__path__, prefix=package_name + "."):
             try:
-                attr = getattr(pkg, attr_name)
-                if hasattr(attr, "__module__"):
-                    # Check if it's a registered capability
-                    for cap_name, cap_info in _CAPABILITY_REGISTRY.items():
-                        if cap_info.get("function", "").startswith(attr_name):
-                            capabilities.append(cap_info)
-            except (ImportError, AttributeError):
+                importlib.import_module(mod_info.name)
+            except Exception:
                 continue
+
+        # The decorators register into the canonical ``tensordg.registry``
+        # module's registry (submodules do ``from .registry import capability``),
+        # which may be a *different* module object than this one when the CLI
+        # is run as a plain script (``python tensordg/registry.py`` -> __main__).
+        # Read from the canonical module so both invocation styles agree.
+        reg_mod = importlib.import_module(f"{package_name}.registry")
+        for cap_name, cap_info in reg_mod._CAPABILITY_REGISTRY.items():
+            capabilities.append(cap_info)
                 
     except ImportError as e:
         print(f"Warning: Could not import package: {e}", file=sys.stderr)
@@ -291,12 +303,16 @@ def validate_capability(cap: dict) -> list[str]:
     # Rule 5: Pointer resolution - check module/entry/test_path exist
     func = cap.get("function", "")
     if func:
-        module_name = func.split(".")[0] if "." in func else func
-        # Check if module exists
-        package_path = get_git_root() / "tensordg"
-        module_path = package_path / f"{module_name}.py"
-        if not module_path.exists():
-            problems.append(f"module {module_name} does not exist at {module_path}")
+        parts = func.split(".")
+        # static mode: "mod.func" ; import mode: "pkg.mod.func" -> module is
+        # always the segment immediately before the function name.
+        module_name = parts[-2] if len(parts) >= 2 else (parts[0] if parts else "")
+        if module_name:
+            # Check if module exists
+            package_path = get_git_root() / "tensordg"
+            module_path = package_path / f"{module_name}.py"
+            if not module_path.exists():
+                problems.append(f"module {module_name} does not exist at {module_path}")
             
     return problems
 
@@ -361,6 +377,14 @@ def generate_registry_json(
     return result
 
 
+@capability(
+    name="capability-registry",
+    category="infrastructure",
+    maturity="planned",
+    evidence={"feature_ledger": "CAP-REG-DG"},
+    description="Capability registry (self-registration + dual-mode CLI)",
+    tags=['registry', 'infrastructure']
+)
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(

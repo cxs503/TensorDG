@@ -426,6 +426,15 @@ _LIMITERS = {
 }
 
 
+from .registry import capability
+@capability(
+    name="tvb-weno-limiters",
+    category="limiter",
+    maturity="planned",
+    evidence={"feature_ledger": "CASE-SHU-OSHER-DG"},
+    description="TVB/WENO limiters (minmod/superbee/WENO) dispatch",
+    tags=['limiter', 'tvb', 'weno']
+)
 def apply_limiter(
     coeff: torch.Tensor,
     dx: float,
