@@ -1,0 +1,73 @@
+{
+  "task": "dg",
+  "degree": 3,
+  "cells": 32,
+  "final_time": 2.0,
+  "cfl": 0.2,
+  "steps": 1312,
+  "dt": 0.0007623562248291194,
+  "dt_note": "final (clamped) step; steps*dt is not the elapsed time",
+  "dofs": 65536,
+  "errors": {
+    "density": 2.5240585206372424e-06,
+    "velocity_x": 5.9180948450737376e-06,
+    "velocity_y": 5.895619805223344e-06,
+    "pressure": 3.574200031286287e-06
+  },
+  "metric": "volume-quadrature relative L2 (L2-projected modal state)",
+  "reference_model": "lattice",
+  "reference_images": 2,
+  "final": {
+    "invariants": {
+      "mass": 98.24174356018621,
+      "momentum_x": 98.24174356018621,
+      "momentum_y": 98.2417435601862,
+      "energy": 344.7593266010112,
+      "entropy": 99.99999973247216
+    },
+    "entropy_mean": 1023.9999972605146,
+    "density_min": 0.4946097633275958,
+    "pressure_min": 0.3732160861701827
+  },
+  "initial": {
+    "invariants": {
+      "mass": 98.241743560191,
+      "momentum_x": 98.24174356019101,
+      "momentum_y": 98.241743560191,
+      "energy": 344.75932660102995,
+      "entropy": 99.99999999671248
+    },
+    "entropy_mean": 1023.9999999663355,
+    "density_min": 0.4939877770343363,
+    "pressure_min": 0.372566156473506
+  },
+  "wall_seconds": 120.5012059211731,
+  "task_key": "dg_d3_n32_t2_cfl0.2",
+  "config": {
+    "task": "dg",
+    "cells": 32,
+    "final_time": 2.0,
+    "cfl": 0.2,
+    "strength": 5.0,
+    "reference": "lattice",
+    "background_velocity": [
+      1.0,
+      1.0
+    ],
+    "degree": 3
+  },
+  "family": "dg_d3_n32_cfl0.2",
+  "max_relative_l2": 5.9180948450737376e-06,
+  "max_percent": 0.0005918094845073738,
+  "invariant_drift": {
+    "mass": 4.8747689785136024e-14,
+    "momentum_x": 4.8892341683608226e-14,
+    "momentum_y": 4.889234168360824e-14,
+    "energy": 5.440992244939199e-14,
+    "entropy": 2.6424031319452426e-09
+  },
+  "entropy_production": -2.642403185149078e-09,
+  "entropy_drift": 2.642403185149078e-09,
+  "density_min_relative_error": 0.0012591127193341736,
+  "gate_pass": true
+}
