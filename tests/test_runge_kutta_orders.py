@@ -165,6 +165,43 @@ def test_butcher_barrier_bound():
     assert max_order_for_stages(5) < 5
 
 
+def test_barrier_table_is_the_published_minimal_stage_inversion():
+    """Every value is backed by a published minimal-stage count, not a guess.
+
+    ``s_min(p) = 1, 2, 3, 4, 6, 7, 9, 11`` for ``p = 1..8`` (Butcher 1964/65)
+    and ``13, 15, 17`` for ``p = 9..11`` (Butcher 1985; Hairer & Wanner II.5)
+    invert to the table below.  A parity rule -- what the module used before --
+    understates order 8 by one at 11 stages (it returned 7, where an 11-stage
+    8th-order scheme exists), which would turn a correct high-degree rung into a
+    false FAIL.
+    """
+    published = {1: 1, 2: 2, 3: 3, 4: 4, 5: 6, 6: 7, 7: 9, 8: 11, 9: 13,
+                 10: 15, 11: 17}
+    expected = {s: max(p for p, need in published.items() if need <= s)
+                for s in range(1, 18)}
+    assert {s: max_order_for_stages(s) for s in expected} == expected
+    # the old parity fallback disagreed exactly here
+    assert max_order_for_stages(11) == 8
+    assert max_order_for_stages(17) == 11
+    # monotone, never above the trivial bound ``order <= stages``
+    values = [max_order_for_stages(s) for s in range(1, 18)]
+    assert values == sorted(values)
+    assert all(v <= s for s, v in zip(range(1, 18), values))
+
+
+def test_barrier_refuses_to_extrapolate_past_published_data():
+    """Beyond 17 stages no minimal-stage count is published -> refuse."""
+    with pytest.raises(ValueError):
+        max_order_for_stages(18)
+    with pytest.raises(ValueError):
+        max_order_for_stages(0)
+
+
+def test_registered_tableaus_respect_the_barrier():
+    for tab in TABLEAUS.values():
+        assert tab.order <= max_order_for_stages(tab.stages), tab.name
+
+
 def test_ssp_rk54_structure_and_order_conditions():
     """SSP-RK(5,4): 5 stages, consistent row sums, and the order-4 conditions.
 

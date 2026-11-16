@@ -1,0 +1,211 @@
+{
+  "degree": 1,
+  "rung": {
+    "degree": 1,
+    "integrator": "rk2",
+    "rk_stages": 2,
+    "rk_order": 2,
+    "requested_stages": 2,
+    "barrier_at_requested_stages": 2,
+    "expected_spatial_order": 2,
+    "cells": [
+      12,
+      24,
+      48
+    ],
+    "cfl": 0.2,
+    "l2": [
+      0.014315036887230915,
+      0.0031358781993522816,
+      0.000751143800702445
+    ],
+    "meta": [
+      {
+        "ncells": 12,
+        "steps": 180,
+        "dt": 0.005555555555555556
+      },
+      {
+        "ncells": 24,
+        "steps": 360,
+        "dt": 0.002777777777777778
+      },
+      {
+        "ncells": 48,
+        "steps": 720,
+        "dt": 0.001388888888888889
+      }
+    ],
+    "pairwise_orders": [
+      2.190589957968511,
+      2.0617084926614098
+    ],
+    "fitted_order": 2.1261492253149603,
+    "fit_points": 3,
+    "fit_dropped_cells": []
+  },
+  "budget": {
+    "degree": 1,
+    "ncells": 16,
+    "grid": [
+      0.05,
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6,
+      0.8,
+      1.0,
+      1.5,
+      2.0
+    ],
+    "rows": [
+      {
+        "degree": 1,
+        "ncells": 16,
+        "cfl": 0.05,
+        "integrator": "rk2",
+        "steps": 960,
+        "dt": 0.0010416666666666667,
+        "E_total": 0.007465605427988161,
+        "E_space": 0.007464013368338296,
+        "E_time": 3.156547754876559e-05,
+        "time_share": 0.004228120258060824,
+        "diverged": false
+      },
+      {
+        "degree": 1,
+        "ncells": 16,
+        "cfl": 0.1,
+        "integrator": "rk2",
+        "steps": 480,
+        "dt": 0.0020833333333333333,
+        "E_total": 0.007470885668004786,
+        "E_space": 0.007464013368338296,
+        "E_time": 0.00012626219458544157,
+        "time_share": 0.016900565769086627,
+        "diverged": false
+      },
+      {
+        "degree": 1,
+        "ncells": 16,
+        "cfl": 0.2,
+        "integrator": "rk2",
+        "steps": 240,
+        "dt": 0.004166666666666667,
+        "E_total": 0.0075019099961288,
+        "E_space": 0.007464013368338296,
+        "E_time": 0.0005050507669758802,
+        "time_share": 0.06732295738505271,
+        "diverged": false
+      },
+      {
+        "degree": 1,
+        "ncells": 16,
+        "cfl": 0.3,
+        "integrator": "rk2",
+        "steps": 160,
+        "dt": 0.00625,
+        "E_total": 0.007591333090360855,
+        "E_space": 0.007464013368338296,
+        "E_time": 0.001136372733032201,
+        "time_share": 0.14969343585715106,
+        "diverged": false
+      },
+      {
+        "degree": 1,
+        "ncells": 16,
+        "cfl": 0.4,
+        "integrator": "rk2",
+        "steps": 120,
+        "dt": 0.008333333333333333,
+        "E_total": 0.007795578620741866,
+        "E_space": 0.007464013368338296,
+        "E_time": 0.002020250789894999,
+        "time_share": 0.2591534109501088,
+        "diverged": false
+      },
+      {
+        "degree": 1,
+        "ncells": 16,
+        "cfl": 0.5,
+        "integrator": "rk2",
+        "steps": 96,
+        "dt": 0.010416666666666666,
+        "E_total": 0.008185322460342237,
+        "E_space": 0.007464013368338296,
+        "E_time": 0.003156735960782331,
+        "time_share": 0.3856581064553863,
+        "diverged": false
+      },
+      {
+        "degree": 1,
+        "ncells": 16,
+        "cfl": 0.6,
+        "integrator": "rk2",
+        "steps": 80,
+        "dt": 0.0125,
+        "E_total": 0.008831302724129431,
+        "E_space": 0.007464013368338296,
+        "E_time": 0.004545919962523875,
+        "time_share": 0.5147507796446872,
+        "diverged": false
+      },
+      {
+        "degree": 1,
+        "ncells": 16,
+        "cfl": 0.8,
+        "integrator": "rk2",
+        "steps": 60,
+        "dt": 0.016666666666666666,
+        "E_total": 0.011086729027531758,
+        "E_space": 0.007464013368338296,
+        "E_time": 0.00808302712669523,
+        "time_share": 0.7290723085792561,
+        "diverged": false
+      },
+      {
+        "degree": 1,
+        "ncells": 16,
+        "cfl": 1.0,
+        "integrator": "rk2",
+        "steps": 48,
+        "dt": 0.020833333333333332,
+        "E_total": 0.014582174644482424,
+        "E_space": 0.007464013368338296,
+        "E_time": 0.012639801597406923,
+        "time_share": 0.8667981220612763,
+        "diverged": false
+      },
+      {
+        "degree": 1,
+        "ncells": 16,
+        "cfl": 1.5,
+        "integrator": "rk2",
+        "steps": 32,
+        "dt": 0.03125,
+        "E_total": 14641905744.591791,
+        "E_space": 0.007464013368338296,
+        "E_time": 14641905744.587631,
+        "time_share": null,
+        "diverged": true
+      },
+      {
+        "degree": 1,
+        "ncells": 16,
+        "cfl": 2.0,
+        "integrator": "rk2",
+        "steps": 24,
+        "dt": 0.041666666666666664,
+        "E_total": 226371696535241.28,
+        "E_space": 0.007464013368338296,
+        "E_time": 226371696535241.3,
+        "time_share": null,
+        "diverged": true
+      }
+    ],
+    "cfl_time_share_10": 0.2,
+    "cfl_divergence": 1.5
+  }
+}
