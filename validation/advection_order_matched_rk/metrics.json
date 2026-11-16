@@ -23,10 +23,15 @@
     "cells": [
       20,
       40,
-      80
+      80,
+      160,
+      320
     ],
     "degrees": [
-      3
+      1,
+      2,
+      3,
+      4
     ],
     "reference_meshes": [
       20,
@@ -49,6 +54,98 @@
   },
   "comparison": [
     {
+      "degree": 1,
+      "integrator": "rk2",
+      "rk_order": 2,
+      "rk_stages": 2,
+      "order_ok": true,
+      "max_order_for_stages": 2,
+      "ref_column": "RK2DG1",
+      "ref_rk_stages": 2,
+      "meshes": [
+        20,
+        40,
+        80,
+        160,
+        320
+      ],
+      "ref_fitted_order": 1.989632975978156,
+      "got_fitted_order": 2.0263262351626583,
+      "order_gap_vs_ref": 0.03669325918450239,
+      "rate_ok": true,
+      "stages_matched": true,
+      "got_l2": [
+        0.004619964452519557,
+        0.0010888332736716864,
+        0.0002677517487933767,
+        6.665242449716329e-05,
+        1.6645102016237283e-05
+      ],
+      "ref_l2": [
+        0.0069,
+        0.00173,
+        0.000437,
+        0.00011,
+        2.77e-05
+      ],
+      "ratio_got_over_ref": [
+        0.6695600655825446,
+        0.6293833951859459,
+        0.6127042306484592,
+        0.6059311317923936,
+        0.6009062099724651
+      ],
+      "ratio_mean": 0.6236970066363616,
+      "ratio_in_band": false,
+      "baseline_ratio_mean": 0.6216098974330728
+    },
+    {
+      "degree": 2,
+      "integrator": "rk3",
+      "rk_order": 3,
+      "rk_stages": 3,
+      "order_ok": true,
+      "max_order_for_stages": 3,
+      "ref_column": "RK3DG2",
+      "ref_rk_stages": 3,
+      "meshes": [
+        20,
+        40,
+        80,
+        160,
+        320
+      ],
+      "ref_fitted_order": 2.9991341933265256,
+      "got_fitted_order": 2.999982194335289,
+      "order_gap_vs_ref": 0.000848001008763255,
+      "rate_ok": true,
+      "stages_matched": true,
+      "got_l2": [
+        0.00010697739435057525,
+        1.3372370058487673e-05,
+        1.671584921125066e-06,
+        2.089495831848092e-07,
+        2.611874584954638e-08
+      ],
+      "ref_l2": [
+        0.000567,
+        7.12e-05,
+        8.91e-06,
+        1.11e-06,
+        1.39e-07
+      ],
+      "ratio_got_over_ref": [
+        0.18867265317561774,
+        0.18781418621471452,
+        0.1876077352553385,
+        0.18824286773406235,
+        0.18790464639961427
+      ],
+      "ratio_mean": 0.18804841775586947,
+      "ratio_in_band": false,
+      "baseline_ratio_mean": 0.18804430489704774
+    },
+    {
       "degree": 3,
       "integrator": "rk4",
       "rk_order": 4,
@@ -60,31 +157,85 @@
       "meshes": [
         20,
         40,
-        80
+        80,
+        160,
+        320
       ],
-      "ref_fitted_order": 4.000834410180307,
-      "got_fitted_order": 3.9996154080572306,
-      "order_gap_vs_ref": -0.0012190021230762405,
+      "ref_fitted_order": 3.9997111243905628,
+      "got_fitted_order": 3.999821252294095,
+      "order_gap_vs_ref": 0.00011012790353204238,
       "rate_ok": true,
       "stages_matched": true,
       "got_l2": [
         2.0649768809379866e-06,
         1.2911373125964268e-07,
-        8.070617705804999e-09
+        8.070617705804999e-09,
+        5.044285216762509e-10,
+        3.1526134293516805e-11
       ],
       "ref_l2": [
         3.46e-05,
         2.17e-06,
-        1.35e-07
+        1.35e-07,
+        8.46e-09,
+        5.29e-10
       ],
       "ratio_got_over_ref": [
         0.059681412743872446,
         0.059499415327024276,
-        0.05978235337633332
+        0.05978235337633332,
+        0.059625120765514295,
+        0.05959571700097694
       ],
-      "ratio_mean": 0.059654393815743355,
+      "ratio_mean": 0.05963680384274426,
       "ratio_in_band": false,
       "baseline_ratio_mean": 0.05963726413511282
+    },
+    {
+      "degree": 4,
+      "integrator": "ssp_rk54",
+      "rk_order": 4,
+      "rk_stages": 5,
+      "order_ok": true,
+      "max_order_for_stages": 4,
+      "ref_column": "RK5DG4",
+      "ref_rk_stages": 5,
+      "meshes": [
+        20,
+        40,
+        80,
+        160,
+        320
+      ],
+      "ref_fitted_order": 5.021842794466689,
+      "got_fitted_order": 4.994854045333335,
+      "order_gap_vs_ref": -0.026988749133353807,
+      "rate_ok": true,
+      "stages_matched": true,
+      "got_l2": [
+        3.194065262109772e-08,
+        1.0035817228838184e-09,
+        3.1415357214566995e-11,
+        9.816756032966665e-13,
+        3.8438842228631175e-14
+      ],
+      "ref_l2": [
+        1.71e-06,
+        5.67e-08,
+        1.62e-09,
+        5.07e-11,
+        1.58e-12
+      ],
+      "ratio_got_over_ref": [
+        0.018678744222864162,
+        0.017699854019114964,
+        0.019392195811461108,
+        0.019362437934845496,
+        0.024328381157361505
+      ],
+      "ratio_mean": 0.019892322629129447,
+      "ratio_in_band": false,
+      "baseline_ratio_mean": 0.01898182776538507
     }
   ],
   "error_split": [
@@ -180,9 +331,9 @@
       "steps": 720,
       "dt": 0.001388888888888889,
       "E_total": 9.731720785624922e-08,
-      "E_space": 9.731718638166718e-08,
-      "E_time": 9.934775709619219e-11,
-      "time_share": 0.0010208652640645256
+      "E_space": 9.73171863808034e-08,
+      "E_time": 9.934785089482382e-11,
+      "time_share": 0.00102086622790878
     }
   ],
   "time_share_vs_stages": [
@@ -212,9 +363,9 @@
     },
     {
       "degree": 4,
-      "rk4_time_share": 0.0022064817948247396,
+      "rk4_time_share": 0.0022064827613209543,
       "matched_integrator": "ssp_rk54",
-      "matched_time_share": 0.0010208652640645256,
+      "matched_time_share": 0.00102086622790878,
       "rk4_E_total": 9.73173658129836e-08,
       "matched_E_total": 9.731720785624922e-08
     }
@@ -358,9 +509,9 @@
     }
   ],
   "checks": {
-    "M1_rate": false,
-    "M2_stages": false,
-    "M3_stage_gap_rejected": false,
+    "M1_rate": true,
+    "M2_stages": true,
+    "M3_stage_gap_rejected": true,
     "M4_time_share": true,
     "M5_dt_order": true
   },
@@ -393,14 +544,10 @@
       }
     }
   },
-  "verdict": "FAIL",
-  "failed": [
-    "M1_rate",
-    "M2_stages",
-    "M3_stage_gap_rejected"
-  ],
+  "verdict": "PASS",
+  "failed": [],
   "not_run": [],
   "falsified_hypotheses": [
-    "H_stage_gap: NOT rejected -- matching the stage count moves the L2 ratio into the comparison band"
+    "H_stage_gap: the reference's larger L2 constant is explained by its lower-order (p+1-stage) time integration"
   ]
 }

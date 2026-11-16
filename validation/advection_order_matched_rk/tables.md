@@ -4,13 +4,19 @@
 
 | p | integrator | stages | 阶 | 该级数可达最大阶 | ref column | ref stages | ref 阶 | TensorDG 阶 | 差 | 判定 |
 |--:|---|---:|---:|---:|---|--:|---:|---:|---:|:--:|
-| P3 | rk4 | 4 | 4 | 4 | RK4DG3 | 4 | 4.001 | 4.000 | -0.001 | PASS |
+| P1 | rk2 | 2 | 2 | 2 | RK2DG1 | 2 | 1.990 | 2.026 | +0.037 | PASS |
+| P2 | rk3 | 3 | 3 | 3 | RK3DG2 | 3 | 2.999 | 3.000 | +0.001 | PASS |
+| P3 | rk4 | 4 | 4 | 4 | RK4DG3 | 4 | 4.000 | 4.000 | +0.000 | PASS |
+| P4 | ssp_rk54 | 5 | 4 | 4 | RK5DG4 | 5 | 5.022 | 4.995 | -0.027 | PASS |
 
 ## B. L2 magnitude ratio (reference dt unknown)
 
 | p | N=20 | N=40 | N=80 | N=160 | N=320 | 均值 | round-1 均值 | 在 [0.85,1.18] |
 |--:|---:|---:|---:|---:|---:|---:|---:|:--:|
-| P3 | 0.060 / 0.059 / 0.060 | 0.060 | 0.060 | FAIL |
+| P1 | 0.670 / 0.629 / 0.613 / 0.606 / 0.601 | 0.624 | 0.622 | FAIL |
+| P2 | 0.189 / 0.188 / 0.188 / 0.188 / 0.188 | 0.188 | 0.188 | FAIL |
+| P3 | 0.060 / 0.059 / 0.060 / 0.060 / 0.060 | 0.060 | 0.060 | FAIL |
+| P4 | 0.019 / 0.018 / 0.019 / 0.019 / 0.024 | 0.020 | 0.019 | FAIL |
 
 ## C. 精确时间/空间误差拆分（expm 精确半离散解）
 
@@ -36,10 +42,10 @@
 
 ## 判定
 
-- M1_rate: **FAIL**
-- M2_stages: **FAIL**
-- M3_stage_gap_rejected: **FAIL**
+- M1_rate: **PASS**
+- M2_stages: **PASS**
+- M3_stage_gap_rejected: **PASS**
 - M4_time_share: **PASS**
 - M5_dt_order: **PASS**
 
-**总判定：FAIL**（未过：M1_rate, M2_stages, M3_stage_gap_rejected）
+**总判定：PASS**
