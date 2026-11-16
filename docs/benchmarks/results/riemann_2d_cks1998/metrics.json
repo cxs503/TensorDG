@@ -2,40 +2,212 @@
   "benchmark": "riemann_2d_cks1998",
   "profile": "quick",
   "config": "Lax_Liu_1998_config_3",
-  "reference": "Lax & Liu (1998), SIAM J. Sci. Comput. 19(2), 319-340; Cockburn & Shu (1998/2001), JCP 141 / SIAM Review 43(1)",
   "gates": {
-    "C1_positivity": "rho > 0 and p > 0 at all quadrature points — NOT GUARANTEED by TVB limiter",
-    "C2_self_convergence_l1": "L1(density) between 64x64 and 32x32 < 0.05",
-    "C3_finite": "no NaN/Inf in final state",
-    "C4_mass_conservation": "total mass change < 1%"
+    "C1_positivity": "rho > 0, p > 0 at all volume quadrature points and cell averages",
+    "C2_self_convergence_l1": 0.05,
+    "C3_finite": "no NaN/Inf",
+    "C4_flux_balance_rel": 1e-10,
+    "C5_periodic_drift_rel": 1e-12,
+    "C6_mass_flux_safety": 5.0,
+    "C6_extremum_factor": 1.5
   },
-  "runs": {
-    "16x16_P1_t0.1": {
+  "runs": [
+    {
       "ncells": 16,
       "degree": 1,
       "final_time": 0.1,
       "cfl": 0.1,
-      "steps": 305,
-      "rho_mean_min": 0.1334,
-      "rho_mean_max": 8.9353,
-      "rho_quad_min": -21.44,
-      "p_quad_min": -2.69e16,
+      "periodic": [
+        false,
+        false
+      ],
+      "steps": 300,
+      "dt": 8.038646902913671e-05,
+      "wall_seconds": 23.59,
+      "rho_min": 0.137999812473641,
+      "rho_max": 1.5510443663985818,
+      "p_min": 0.2999757081157923,
+      "p_max": 1.5887786150568317,
+      "positivity": {
+        "rho_min": 0.13798765466728577,
+        "rho_max": 1.569326122229234,
+        "p_min": 0.2999465730114033,
+        "p_max": 1.6190279439205846,
+        "rho_min_mean": 0.137999812473641,
+        "p_min_mean": 0.2999757081157923,
+        "rho_positive": true,
+        "p_positive": true,
+        "rho_positive_mean": true,
+        "p_positive_mean": true,
+        "quadrature_nodes": 3
+      },
+      "total_mass": 0.7584953369041143,
+      "initial_mass": 0.67565,
+      "c6_bounds": {
+        "final_time": 0.1,
+        "mass0": 0.67565,
+        "rho_max0": 1.5,
+        "p_max0": 1.5,
+        "speed_max0": 3.4500983081992462,
+        "perimeter": 4.0,
+        "mass_flux_bound": 10.35029492459774,
+        "rho_cap": 2.25,
+        "p_cap": 2.25
+      },
+      "conservation": {
+        "mass": {
+          "change": 0.08284533690411444,
+          "boundary_flux": 0.08284533690412262,
+          "residual": -8.174017018802715e-15,
+          "relative_residual": 1.2098004912014678e-14
+        },
+        "x_momentum": {
+          "change": -0.00020998541105876622,
+          "boundary_flux": -0.00020998541105696675,
+          "residual": -1.799477450728504e-15,
+          "relative_residual": 8.90409680538827e-15
+        },
+        "y_momentum": {
+          "change": -0.00020998541105876622,
+          "boundary_flux": -0.00020998541105695834,
+          "residual": -1.8078800175652665e-15,
+          "relative_residual": 8.945674024651555e-15
+        },
+        "energy": {
+          "change": 0.34941814686325934,
+          "boundary_flux": 0.3494181468632809,
+          "residual": -2.1538326677728037e-14,
+          "relative_residual": 1.2351890683386769e-14
+        }
+      },
+      "max_flux_balance_residual": 1.2351890683386769e-14,
+      "max_abs_conservation_change": 0.34941814686325934,
       "finite": true,
-      "mass_init": 0.675650,
-      "mass_final": 0.845618,
-      "mass_change_pct": 25.16
+      "dofs": 4096
+    },
+    {
+      "ncells": 16,
+      "degree": 1,
+      "final_time": 0.1,
+      "cfl": 0.1,
+      "periodic": [
+        true,
+        true
+      ],
+      "steps": 293,
+      "dt": 0.00015297937525683702,
+      "wall_seconds": 14.13,
+      "rho_min": 0.0851082548797486,
+      "rho_max": 1.5520074993719528,
+      "p_min": 0.10543928528351151,
+      "p_max": 1.5899209616048542,
+      "positivity": {
+        "rho_min": 0.08460363048845626,
+        "rho_max": 1.5710429086662265,
+        "p_min": 0.0955629525706199,
+        "p_max": 1.6221097300275034,
+        "rho_min_mean": 0.0851082548797486,
+        "p_min_mean": 0.10543928528351151,
+        "rho_positive": true,
+        "p_positive": true,
+        "rho_positive_mean": true,
+        "p_positive_mean": true,
+        "quadrature_nodes": 3
+      },
+      "total_mass": 0.675649999999993,
+      "initial_mass": 0.67565,
+      "c6_bounds": {
+        "final_time": 0.1,
+        "mass0": 0.67565,
+        "rho_max0": 1.5,
+        "p_max0": 1.5,
+        "speed_max0": 3.4500983081992462,
+        "perimeter": 4.0,
+        "mass_flux_bound": 10.35029492459774,
+        "rho_cap": 2.25,
+        "p_cap": 2.25
+      },
+      "conservation": {
+        "mass": {
+          "change": -6.8833827526759706e-15,
+          "boundary_flux": 0.0,
+          "residual": -6.8833827526759706e-15,
+          "relative_residual": 1.0187793610117622e-14
+        },
+        "x_momentum": {
+          "change": -1.887379141862766e-15,
+          "boundary_flux": 0.0,
+          "residual": -1.887379141862766e-15,
+          "relative_residual": 9.339048166907107e-15
+        },
+        "y_momentum": {
+          "change": -1.915134717478395e-15,
+          "boundary_flux": 0.0,
+          "residual": -1.915134717478395e-15,
+          "relative_residual": 9.476387110538093e-15
+        },
+        "energy": {
+          "change": -1.84297022087776e-14,
+          "boundary_flux": 0.0,
+          "residual": -1.84297022087776e-14,
+          "relative_residual": 1.0569143574444348e-14
+        }
+      },
+      "max_flux_balance_residual": 1.0569143574444348e-14,
+      "max_abs_conservation_change": 1.84297022087776e-14,
+      "finite": true,
+      "dofs": 4096
+    }
+  ],
+  "verdicts": {
+    "C1_positivity": {
+      "passed": true,
+      "worst_rho_min": 0.08460363048845626,
+      "worst_p_min": 0.0955629525706199,
+      "detail": "rho > 0 and p > 0 at volume nodes and cell averages"
+    },
+    "C3_finite": {
+      "passed": true,
+      "detail": "no NaN/Inf"
+    },
+    "C4_flux_balance": {
+      "passed": true,
+      "worst_relative_residual": 1.2351890683386769e-14,
+      "tolerance": 1e-10,
+      "detail": "Q(t) - Q(0) equals the time-integrated boundary flux; the transmissive mass change itself is physical and is reported under 'mass change' rather than being scored as conservation"
+    },
+    "C5_periodic_drift": {
+      "passed": true,
+      "worst_relative_change": 2.7276995794831333e-14,
+      "tolerance": 1e-12,
+      "detail": "periodic control: no boundary flux is possible"
+    },
+    "C2_self_convergence": {
+      "passed": false,
+      "worst_relative_l1": null,
+      "tolerance": 0.05,
+      "detail": "NOT_RUN: quick profile has a single mesh",
+      "check_state": "not_run"
+    },
+    "C6_physical_magnitude": {
+      "passed": true,
+      "worst_mass_bound_ratio": 0.008004152297847126,
+      "worst_extremum_factor": 1.0814064866850022,
+      "mass_tolerance": 1.0,
+      "extremum_tolerance": 1.5,
+      "per_row": {
+        "p1_16_open": {
+          "mass_bound_ratio": 0.008004152297847126,
+          "extremum_factor": 1.0793519626137231
+        },
+        "p1_16_periodic": {
+          "mass_bound_ratio": 6.650421850605857e-16,
+          "extremum_factor": 1.0814064866850022
+        }
+      },
+      "detail": "|mass(t)-mass(0)| must stay inside an a-priori flux bound (MASS_FLUX_SAFETY * rho_max0 * speed_max0 * perimeter * t) and max(rho,p) must stay within EXTREMUM_SAFETY x the initial extrema; bounds come from the initial data, not from a run"
     }
   },
-  "verdicts": {
-    "C1_positivity": "FAIL at quadrature points (TVB does not guarantee positivity); cell-average bounded",
-    "C3_finite": "PASS (no NaN/Inf)",
-    "C2_self_convergence": "not_run (system load >= 100)",
-    "C4_mass_conservation": "FAIL at 16x16 (25% change); likely improves at finer resolution"
-  },
-  "findings": {
-    "positivity": "TVB limiter controls oscillations but does NOT guarantee pointwise positivity. Quadrature-point rho and p can be negative near discontinuities. A Zhang-Shu positivity limiter would be needed for strict positivity.",
-    "mass_conservation": "25% mass change at 16x16 suggests the TVB limiter's modal scaling is not conservative at coarse resolution. This should be investigated at finer meshes.",
-    "finite": "Solution remains finite throughout, confirming numerical stability of the DG+HLLC+SSP-RK3+TVB pipeline."
-  },
-  "notes": "Full convergence study deferred due to system load >= 100. Smoke run reveals two honest limitations: (1) TVB does not guarantee pointwise positivity, (2) mass conservation at coarse resolution needs investigation. These are documented as findings, not hidden."
+  "reference": "Lax & Liu (1998), SIAM J. Sci. Comput. 19(2), 319-340",
+  "notes": "The transmissive mass change is a physical boundary flux, not a conservation error; C4 scores the flux-balance identity instead."
 }
