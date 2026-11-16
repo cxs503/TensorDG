@@ -1,0 +1,42 @@
+{
+ "config": {
+  "degree": 2,
+  "ncells": 200,
+  "cfl": 0.12,
+  "limiter": "tvb",
+  "tvb_constant": 1.0,
+  "limiter_stage": "final",
+  "positivity": "scale"
+ },
+ "steps": 3628,
+ "seconds": 52.61,
+ "fields": {
+  "density": {
+   "legacy_rel_l2": 0.01691560369254934,
+   "exact_rel_l2": 0.016454875252318323,
+   "delta_pp": 0.046072844023101536,
+   "pass_legacy": true,
+   "pass_exact": true
+  },
+  "velocity": {
+   "legacy_rel_l2": 0.06125561439209764,
+   "exact_rel_l2": 0.05792890917182904,
+   "delta_pp": 0.3326705220268601,
+   "pass_legacy": false,
+   "pass_exact": false
+  },
+  "pressure": {
+   "legacy_rel_l2": 0.014564200552334976,
+   "exact_rel_l2": 0.01407694201502827,
+   "delta_pp": 0.04872585373067052,
+   "pass_legacy": true,
+   "pass_exact": true
+  }
+ },
+ "worst_field_legacy": "velocity",
+ "worst_field_exact": "velocity",
+ "worst_legacy": 0.06125561439209764,
+ "worst_exact": 0.05792890917182904,
+ "gap_to_published_pp": 3.757561439209764,
+ "reproduces_published": false
+}
