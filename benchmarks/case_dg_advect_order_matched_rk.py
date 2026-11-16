@@ -97,8 +97,11 @@ FIT_FLOOR = 1e-12
 #: accumulation noise (~1e-16 * sqrt(steps)), not truncation.
 E_TIME_FLOOR = 1e-11
 #: Probe mesh / CFL: 2 cells keeps the dense ``expm`` cheap and the round-off
-#: floor far below the truncation error, 0.4 stays inside the linear DG
-#: stability limit for every degree in the study.
+#: floor far below the truncation error.  0.4 is inside the *certified* linear
+#: stability region of every matched rung -- measured, not assumed: see
+#: ``benchmarks/case_dg_advect_order_stability.py`` /
+#: ``validation/advection_order_stability/metrics.json`` (smallest rung
+#: ``cfl_max = 1.00`` at ``p = 1``, i.e. a 2.5x margin at 0.4).
 PROBE_CELLS = 2
 PROBE_CFL_MAX = 0.4
 PROBE_LEVELS = 6

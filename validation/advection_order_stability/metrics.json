@@ -1,0 +1,1030 @@
+{
+  "case": "CASE-DG-ADVECT-ORDER",
+  "round": 3,
+  "anchor": "CASE-DG-ADVECT-ORDER (round 2 matched-stage ladder)",
+  "objective": "certify that the matched-stage (p+1-stage) RK ladder of the DG advection accuracy study runs inside its linear stability region",
+  "git_sha": "0c52709",
+  "setup": {
+    "degrees_spectrum": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "degrees_matched": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "certified_tableaus": [
+      "rk2",
+      "rk3",
+      "rk4",
+      "rk5",
+      "ssp_rk54",
+      "ssp_rk3"
+    ],
+    "cfl_accuracy_ladder": 0.2,
+    "cfl_probe_max": 0.4,
+    "n_theta": 400,
+    "symbol_ncells": 16,
+    "empirical_ncells": 8,
+    "empirical_final_time": 1.0,
+    "stability_tol": 1e-10
+  },
+  "thresholds": {
+    "MARGIN_MIN": 2.0,
+    "EMP_TOL": 0.05,
+    "ANCHOR_TOL": 1e-06,
+    "TWO_FORM_TOL": 1e-12,
+    "ORDER_TOL": 1e-08,
+    "ORDER_Z": 0.001
+  },
+  "anchors": {
+    "reference": {
+      "rk4_real_axis_interval": 2.785293563405282,
+      "rk4_imaginary_axis_interval": 2.8284271247461903,
+      "kutta3_imaginary_axis_interval": 1.7320508075688772,
+      "ssp_rk3_real_axis_interval_replayed": 2.5127453266791484,
+      "ssp_rk3_source": "validation/cfl_stability/results.json (hand-coded stage replay)"
+    },
+    "measured": {
+      "euler": {
+        "real_axis_interval": 2.0000000001,
+        "imaginary_axis_interval": 1.4142147984481763e-05
+      },
+      "rk2": {
+        "real_axis_interval": 2.0000000001,
+        "imaginary_axis_interval": 0.005318298539563766
+      },
+      "rk3": {
+        "real_axis_interval": 2.5127453266791484,
+        "imaginary_axis_interval": 1.7320508077998182
+      },
+      "rk4": {
+        "real_axis_interval": 2.7852935634716083,
+        "imaginary_axis_interval": 2.828427124785965
+      },
+      "ssp_rk54": {
+        "real_axis_interval": 5.331472640453349,
+        "imaginary_axis_interval": 3.278355597678906
+      },
+      "rk5": {
+        "real_axis_interval": 3.3864931267085217,
+        "imaginary_axis_interval": 0.852312716384052
+      },
+      "ssp_rk3": {
+        "real_axis_interval": 2.5127453266791484,
+        "imaginary_axis_interval": 1.7320508077998178
+      }
+    },
+    "two_form_max_abs_diff": 1.9860273225978185e-15,
+    "order_identity": {
+      "euler": {
+        "order": 1,
+        "stages": 1,
+        "abs_R_minus_T_order": 0.0,
+        "abs_R_minus_T_order_plus_1": 5.00000000069889e-07,
+        "truncation_scale_z_pow_p1": 1e-06,
+        "order_ok": true
+      },
+      "rk2": {
+        "order": 2,
+        "stages": 2,
+        "abs_R_minus_T_order": 0.0,
+        "abs_R_minus_T_order_plus_1": 1.666666804567285e-10,
+        "truncation_scale_z_pow_p1": 1e-09,
+        "order_ok": true
+      },
+      "rk3": {
+        "order": 3,
+        "stages": 3,
+        "abs_R_minus_T_order": 0.0,
+        "abs_R_minus_T_order_plus_1": 4.1744385725905886e-14,
+        "truncation_scale_z_pow_p1": 1.0000000000000002e-12,
+        "order_ok": true
+      },
+      "rk4": {
+        "order": 4,
+        "stages": 4,
+        "abs_R_minus_T_order": 0.0,
+        "abs_R_minus_T_order_plus_1": 0.0,
+        "truncation_scale_z_pow_p1": 1e-15,
+        "order_ok": true
+      },
+      "ssp_rk54": {
+        "order": 4,
+        "stages": 5,
+        "abs_R_minus_T_order": 0.0,
+        "abs_R_minus_T_order_plus_1": 0.0,
+        "truncation_scale_z_pow_p1": 1e-15,
+        "order_ok": true
+      },
+      "rk5": {
+        "order": 5,
+        "stages": 6,
+        "abs_R_minus_T_order": 0.0,
+        "abs_R_minus_T_order_plus_1": 0.0,
+        "truncation_scale_z_pow_p1": 1e-18,
+        "order_ok": true
+      },
+      "ssp_rk3": {
+        "order": 3,
+        "stages": 3,
+        "abs_R_minus_T_order": 0.0,
+        "abs_R_minus_T_order_plus_1": 4.1744385725905886e-14,
+        "truncation_scale_z_pow_p1": 1.0000000000000002e-12,
+        "order_ok": true
+      }
+    },
+    "checks": {
+      "rk4_real_axis": true,
+      "rk4_imaginary_axis": true,
+      "kutta3_imaginary_axis": true,
+      "ssp_rk3_real_axis_vs_replayed": true,
+      "two_forms_agree": true
+    }
+  },
+  "matched": [
+    {
+      "tableau": "rk2",
+      "order": 2,
+      "stages": 2,
+      "degree": 1,
+      "dt_max_h_over_a": 0.33333333335000004,
+      "cfl_max": 1.00000000005,
+      "binding_lambda": [
+        -6.0,
+        0.0
+      ],
+      "max_abs_lambda": 6.0,
+      "n_modes": 800,
+      "audit_corrected": false,
+      "stages_matched": true,
+      "cfl_used": 0.2,
+      "margin_at_used": 5.00000000025,
+      "used_inside": true,
+      "probe_cfl": 0.4,
+      "probe_inside": true,
+      "probe_margin": 2.500000000125
+    },
+    {
+      "tableau": "rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 2,
+      "dt_max_h_over_a": 0.2097536989520889,
+      "cfl_max": 1.0487684947604445,
+      "binding_lambda": [
+        -10.67327925958168,
+        -4.136204816433925
+      ],
+      "max_abs_lambda": 11.842355613304818,
+      "n_modes": 1200,
+      "audit_corrected": true,
+      "stages_matched": true,
+      "cfl_used": 0.2,
+      "margin_at_used": 5.243842473802222,
+      "used_inside": true,
+      "probe_cfl": 0.4,
+      "probe_inside": true,
+      "probe_margin": 2.621921236901111
+    },
+    {
+      "tableau": "rk4",
+      "order": 4,
+      "stages": 4,
+      "degree": 3,
+      "dt_max_h_over_a": 0.14539389434999211,
+      "cfl_max": 1.0177572604499447,
+      "binding_lambda": [
+        -19.156881215155092,
+        -8.881784197001252e-16
+      ],
+      "max_abs_lambda": 19.156881215155092,
+      "n_modes": 1600,
+      "audit_corrected": false,
+      "stages_matched": true,
+      "cfl_used": 0.2,
+      "margin_at_used": 5.088786302249724,
+      "used_inside": true,
+      "probe_cfl": 0.4,
+      "probe_inside": true,
+      "probe_margin": 2.544393151124862
+    },
+    {
+      "tableau": "ssp_rk54",
+      "order": 4,
+      "stages": 5,
+      "degree": 4,
+      "dt_max_h_over_a": 0.14915771596013105,
+      "cfl_max": 1.3424194436411794,
+      "binding_lambda": [
+        -20.745496329922247,
+        -14.013441360695172
+      ],
+      "max_abs_lambda": 27.841930404064318,
+      "n_modes": 2000,
+      "audit_corrected": false,
+      "stages_matched": true,
+      "cfl_used": 0.2,
+      "margin_at_used": 6.712097218205897,
+      "used_inside": true,
+      "probe_cfl": 0.4,
+      "probe_inside": true,
+      "probe_margin": 3.3560486091029484
+    }
+  ],
+  "cross_pairing": [
+    {
+      "tableau": "rk2",
+      "order": 2,
+      "stages": 2,
+      "degree": 0,
+      "dt_max_h_over_a": 1.00000000005,
+      "cfl_max": 1.00000000005,
+      "binding_lambda": [
+        -2.0,
+        -1.2246467991473532e-16
+      ],
+      "max_abs_lambda": 2.0,
+      "n_modes": 400,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 0,
+      "dt_max_h_over_a": 1.2563726633395742,
+      "cfl_max": 1.2563726633395742,
+      "binding_lambda": [
+        -2.0,
+        -1.2246467991473532e-16
+      ],
+      "max_abs_lambda": 2.0,
+      "n_modes": 400,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk4",
+      "order": 4,
+      "stages": 4,
+      "degree": 0,
+      "dt_max_h_over_a": 1.3926467817358041,
+      "cfl_max": 1.3926467817358041,
+      "binding_lambda": [
+        -2.0,
+        -1.2246467991473532e-16
+      ],
+      "max_abs_lambda": 2.0,
+      "n_modes": 400,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk5",
+      "order": 5,
+      "stages": 6,
+      "degree": 0,
+      "dt_max_h_over_a": 1.6932465633542608,
+      "cfl_max": 1.6932465633542608,
+      "binding_lambda": [
+        -2.0,
+        -1.2246467991473532e-16
+      ],
+      "max_abs_lambda": 2.0,
+      "n_modes": 400,
+      "audit_corrected": true,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk54",
+      "order": 4,
+      "stages": 5,
+      "degree": 0,
+      "dt_max_h_over_a": 2.1906405761209964,
+      "cfl_max": 2.1906405761209964,
+      "binding_lambda": [
+        -1.6656123881854858,
+        -0.7462976274208662
+      ],
+      "max_abs_lambda": 2.0,
+      "n_modes": 400,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 0,
+      "dt_max_h_over_a": 1.2563726633395742,
+      "cfl_max": 1.2563726633395742,
+      "binding_lambda": [
+        -2.0,
+        -1.2246467991473532e-16
+      ],
+      "max_abs_lambda": 2.0,
+      "n_modes": 400,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk2",
+      "order": 2,
+      "stages": 2,
+      "degree": 1,
+      "dt_max_h_over_a": 0.33333333335000004,
+      "cfl_max": 1.00000000005,
+      "binding_lambda": [
+        -6.0,
+        0.0
+      ],
+      "max_abs_lambda": 6.0,
+      "n_modes": 800,
+      "audit_corrected": false,
+      "matched": true,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 1,
+      "dt_max_h_over_a": 0.4095904800597071,
+      "cfl_max": 1.2287714401791212,
+      "binding_lambda": [
+        -5.288319962897512,
+        2.3912443752434465
+      ],
+      "max_abs_lambda": 6.0,
+      "n_modes": 800,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk4",
+      "order": 4,
+      "stages": 4,
+      "degree": 1,
+      "dt_max_h_over_a": 0.4642155939119348,
+      "cfl_max": 1.3926467817358044,
+      "binding_lambda": [
+        -6.0,
+        0.0
+      ],
+      "max_abs_lambda": 6.0,
+      "n_modes": 800,
+      "audit_corrected": true,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk5",
+      "order": 5,
+      "stages": 6,
+      "degree": 1,
+      "dt_max_h_over_a": 0.5644155211180868,
+      "cfl_max": 1.6932465633542604,
+      "binding_lambda": [
+        -6.0,
+        0.0
+      ],
+      "max_abs_lambda": 6.0,
+      "n_modes": 800,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk54",
+      "order": 4,
+      "stages": 5,
+      "degree": 1,
+      "dt_max_h_over_a": 0.6628401501557337,
+      "cfl_max": 1.9885204504672012,
+      "binding_lambda": [
+        -3.9030965451211497,
+        3.6046742391900217
+      ],
+      "max_abs_lambda": 6.0,
+      "n_modes": 800,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 1,
+      "dt_max_h_over_a": 0.409590480059707,
+      "cfl_max": 1.228771440179121,
+      "binding_lambda": [
+        -5.288319962897512,
+        2.3912443752434465
+      ],
+      "max_abs_lambda": 6.0,
+      "n_modes": 800,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk2",
+      "order": 2,
+      "stages": 2,
+      "degree": 2,
+      "dt_max_h_over_a": 0.03821987366317087,
+      "cfl_max": 0.19109936831585433,
+      "binding_lambda": [
+        -4.889241567163083e-09,
+        -0.18109431351670177
+      ],
+      "max_abs_lambda": 11.842355613304818,
+      "n_modes": 1200,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": false
+    },
+    {
+      "tableau": "rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 2,
+      "dt_max_h_over_a": 0.2097536989520889,
+      "cfl_max": 1.0487684947604445,
+      "binding_lambda": [
+        -10.67327925958168,
+        -4.136204816433925
+      ],
+      "max_abs_lambda": 11.842355613304818,
+      "n_modes": 1200,
+      "audit_corrected": true,
+      "matched": true,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk4",
+      "order": 4,
+      "stages": 4,
+      "degree": 2,
+      "dt_max_h_over_a": 0.23519759534516488,
+      "cfl_max": 1.1759879767258243,
+      "binding_lambda": [
+        -11.842355613304818,
+        4.440892098500626e-16
+      ],
+      "max_abs_lambda": 11.842355613304818,
+      "n_modes": 1200,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk5",
+      "order": 5,
+      "stages": 6,
+      "degree": 2,
+      "dt_max_h_over_a": 0.28596448521642226,
+      "cfl_max": 1.4298224260821113,
+      "binding_lambda": [
+        -11.842355613304818,
+        4.440892098500626e-16
+      ],
+      "max_abs_lambda": 11.842355613304818,
+      "n_modes": 1200,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk54",
+      "order": 4,
+      "stages": 5,
+      "degree": 2,
+      "dt_max_h_over_a": 0.3439684052064147,
+      "cfl_max": 1.7198420260320735,
+      "binding_lambda": [
+        -7.928817444596879,
+        -6.740882812479968
+      ],
+      "max_abs_lambda": 11.842355613304818,
+      "n_modes": 1200,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 2,
+      "dt_max_h_over_a": 0.2097536989520889,
+      "cfl_max": 1.0487684947604445,
+      "binding_lambda": [
+        -10.67327925958168,
+        -4.136204816433925
+      ],
+      "max_abs_lambda": 11.842355613304818,
+      "n_modes": 1200,
+      "audit_corrected": true,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk2",
+      "order": 2,
+      "stages": 2,
+      "degree": 3,
+      "dt_max_h_over_a": 0.010866547864958234,
+      "cfl_max": 0.07606583505470764,
+      "binding_lambda": [
+        -9.282259572057535e-09,
+        -0.5826512697757309
+      ],
+      "max_abs_lambda": 19.156881215155092,
+      "n_modes": 1600,
+      "audit_corrected": true,
+      "matched": false,
+      "stable_at_cfl_used": false
+    },
+    {
+      "tableau": "rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 3,
+      "dt_max_h_over_a": 0.13009383584436846,
+      "cfl_max": 0.9106568509105792,
+      "binding_lambda": [
+        -17.500069366594232,
+        6.184373764914062
+      ],
+      "max_abs_lambda": 19.156881215155092,
+      "n_modes": 1600,
+      "audit_corrected": true,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk4",
+      "order": 4,
+      "stages": 4,
+      "degree": 3,
+      "dt_max_h_over_a": 0.14539389434999211,
+      "cfl_max": 1.0177572604499447,
+      "binding_lambda": [
+        -19.156881215155092,
+        -8.881784197001252e-16
+      ],
+      "max_abs_lambda": 19.156881215155092,
+      "n_modes": 1600,
+      "audit_corrected": false,
+      "matched": true,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk5",
+      "order": 5,
+      "stages": 6,
+      "degree": 3,
+      "dt_max_h_over_a": 0.17677685050473935,
+      "cfl_max": 1.2374379535331754,
+      "binding_lambda": [
+        -19.156881215155092,
+        -8.881784197001252e-16
+      ],
+      "max_abs_lambda": 19.156881215155092,
+      "n_modes": 1600,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk54",
+      "order": 4,
+      "stages": 5,
+      "degree": 3,
+      "dt_max_h_over_a": 0.2152504606821577,
+      "cfl_max": 1.5067532247751039,
+      "binding_lambda": [
+        -13.805166305813575,
+        10.099452899008863
+      ],
+      "max_abs_lambda": 19.156881215155092,
+      "n_modes": 1600,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 3,
+      "dt_max_h_over_a": 0.13009383584436846,
+      "cfl_max": 0.9106568509105792,
+      "binding_lambda": [
+        -17.500069366594232,
+        6.184373764914062
+      ],
+      "max_abs_lambda": 19.156881215155092,
+      "n_modes": 1600,
+      "audit_corrected": true,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk2",
+      "order": 2,
+      "stages": 2,
+      "degree": 4,
+      "dt_max_h_over_a": 0.005023190227658743,
+      "cfl_max": 0.045208712048928686,
+      "binding_lambda": [
+        -1.3459491613546042e-08,
+        -1.2046708688170682
+      ],
+      "max_abs_lambda": 27.841930404064318,
+      "n_modes": 2000,
+      "audit_corrected": true,
+      "matched": false,
+      "stable_at_cfl_used": false
+    },
+    {
+      "tableau": "rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 4,
+      "dt_max_h_over_a": 0.08968656505162437,
+      "cfl_max": 0.8071790854646193,
+      "binding_lambda": [
+        -25.69870158674861,
+        -8.41485451430518
+      ],
+      "max_abs_lambda": 27.841930404064318,
+      "n_modes": 2000,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk4",
+      "order": 4,
+      "stages": 4,
+      "degree": 4,
+      "dt_max_h_over_a": 0.10003952754170437,
+      "cfl_max": 0.9003557478753392,
+      "binding_lambda": [
+        -27.841930404064318,
+        -8.881784197001252e-15
+      ],
+      "max_abs_lambda": 27.841930404064318,
+      "n_modes": 2000,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk5",
+      "order": 5,
+      "stages": 6,
+      "degree": 4,
+      "dt_max_h_over_a": 0.1216328421758488,
+      "cfl_max": 1.0946955795826392,
+      "binding_lambda": [
+        -27.841930404064318,
+        -8.881784197001252e-15
+      ],
+      "max_abs_lambda": 27.841930404064318,
+      "n_modes": 2000,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk54",
+      "order": 4,
+      "stages": 5,
+      "degree": 4,
+      "dt_max_h_over_a": 0.14915771596013105,
+      "cfl_max": 1.3424194436411794,
+      "binding_lambda": [
+        -20.745496329922247,
+        -14.013441360695172
+      ],
+      "max_abs_lambda": 27.841930404064318,
+      "n_modes": 2000,
+      "audit_corrected": false,
+      "matched": true,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 4,
+      "dt_max_h_over_a": 0.08968656505162437,
+      "cfl_max": 0.8071790854646193,
+      "binding_lambda": [
+        -25.69870158674861,
+        -8.41485451430518
+      ],
+      "max_abs_lambda": 27.841930404064318,
+      "n_modes": 2000,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk2",
+      "order": 2,
+      "stages": 2,
+      "degree": 5,
+      "dt_max_h_over_a": 0.002938919387891998,
+      "cfl_max": 0.03232811326681198,
+      "binding_lambda": [
+        -1.753694058831759e-08,
+        -2.0077847816100136
+      ],
+      "max_abs_lambda": 37.82471451893467,
+      "n_modes": 2400,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": false
+    },
+    {
+      "tableau": "rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 5,
+      "dt_max_h_over_a": 0.06610008634364445,
+      "cfl_max": 0.7271009497800889,
+      "binding_lambda": [
+        -35.17984016502812,
+        10.836802161276065
+      ],
+      "max_abs_lambda": 37.82471451893467,
+      "n_modes": 2400,
+      "audit_corrected": true,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk4",
+      "order": 4,
+      "stages": 4,
+      "degree": 5,
+      "dt_max_h_over_a": 0.0736368694092144,
+      "cfl_max": 0.8100055635013584,
+      "binding_lambda": [
+        -37.82471451893467,
+        -7.105427357601002e-15
+      ],
+      "max_abs_lambda": 37.82471451893467,
+      "n_modes": 2400,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk5",
+      "order": 5,
+      "stages": 6,
+      "degree": 5,
+      "dt_max_h_over_a": 0.08953122765839455,
+      "cfl_max": 0.98484350424234,
+      "binding_lambda": [
+        -37.82471451893467,
+        -7.105427357601002e-15
+      ],
+      "max_abs_lambda": 37.82471451893467,
+      "n_modes": 2400,
+      "audit_corrected": true,
+      "matched": true,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk54",
+      "order": 4,
+      "stages": 5,
+      "degree": 5,
+      "dt_max_h_over_a": 0.11031256565182543,
+      "cfl_max": 1.2134382221700797,
+      "binding_lambda": [
+        -28.71280471200304,
+        18.465285342357436
+      ],
+      "max_abs_lambda": 37.82471451893467,
+      "n_modes": 2400,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 5,
+      "dt_max_h_over_a": 0.06610008634364445,
+      "cfl_max": 0.7271009497800889,
+      "binding_lambda": [
+        -35.17984016502812,
+        10.836802161276065
+      ],
+      "max_abs_lambda": 37.82471451893467,
+      "n_modes": 2400,
+      "audit_corrected": true,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk2",
+      "order": 2,
+      "stages": 2,
+      "degree": 6,
+      "dt_max_h_over_a": 0.001965972703842798,
+      "cfl_max": 0.025557645149956378,
+      "binding_lambda": [
+        -2.13239572510294e-08,
+        -2.952624679056428
+      ],
+      "max_abs_lambda": 49.051811187286226,
+      "n_modes": 2800,
+      "audit_corrected": true,
+      "matched": false,
+      "stable_at_cfl_used": false
+    },
+    {
+      "tableau": "rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 6,
+      "dt_max_h_over_a": 0.05101590893371459,
+      "cfl_max": 0.6632068161382897,
+      "binding_lambda": [
+        -45.89370450791119,
+        -13.43112515749232
+      ],
+      "max_abs_lambda": 49.051811187286226,
+      "n_modes": 2800,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk4",
+      "order": 4,
+      "stages": 4,
+      "degree": 6,
+      "dt_max_h_over_a": 0.05678268541067716,
+      "cfl_max": 0.7381749103388031,
+      "binding_lambda": [
+        -49.051811187286226,
+        3.552713678800501e-15
+      ],
+      "max_abs_lambda": 49.051811187286226,
+      "n_modes": 2800,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "rk5",
+      "order": 5,
+      "stages": 6,
+      "degree": 6,
+      "dt_max_h_over_a": 0.06903910466788776,
+      "cfl_max": 0.8975083606825409,
+      "binding_lambda": [
+        -49.051811187286226,
+        3.552713678800501e-15
+      ],
+      "max_abs_lambda": 49.051811187286226,
+      "n_modes": 2800,
+      "audit_corrected": true,
+      "matched": true,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk54",
+      "order": 4,
+      "stages": 5,
+      "degree": 6,
+      "dt_max_h_over_a": 0.08535579681039113,
+      "cfl_max": 1.1096253585350846,
+      "binding_lambda": [
+        -37.74026989857854,
+        -23.384340679394917
+      ],
+      "max_abs_lambda": 49.051811187286226,
+      "n_modes": 2800,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    },
+    {
+      "tableau": "ssp_rk3",
+      "order": 3,
+      "stages": 3,
+      "degree": 6,
+      "dt_max_h_over_a": 0.05101590893371459,
+      "cfl_max": 0.6632068161382897,
+      "binding_lambda": [
+        -45.89370450791119,
+        -13.43112515749232
+      ],
+      "max_abs_lambda": 49.051811187286226,
+      "n_modes": 2800,
+      "audit_corrected": false,
+      "matched": false,
+      "stable_at_cfl_used": true
+    }
+  ],
+  "empirical": [
+    {
+      "degree": 1,
+      "tableau": "rk2",
+      "ncells": 8,
+      "final_time": 1.0,
+      "predicted_cfl_max_mesh": 1.00000000005,
+      "predicted_cfl_max_symbol": 1.00000000005,
+      "empirical_cfl_max": 1.2000434437699299,
+      "empirical_growth_stable": -0.5577867165692423,
+      "empirical_growth_unstable": 1.8848091701212193,
+      "empirical_over_predicted": 0.20004344370992766,
+      "growth_exponent_at_cfl_used": -2.2399721700508213,
+      "steps_at_cfl_used": 120
+    },
+    {
+      "degree": 2,
+      "tableau": "rk3",
+      "ncells": 8,
+      "final_time": 1.0,
+      "predicted_cfl_max_mesh": 1.049103518020713,
+      "predicted_cfl_max_symbol": 1.0487684947604445,
+      "empirical_cfl_max": 1.081014545280193,
+      "empirical_growth_stable": -0.9006226669731042,
+      "empirical_growth_unstable": 1.8838109838682557,
+      "empirical_over_predicted": 0.03041742469769293,
+      "growth_exponent_at_cfl_used": -0.7413873773688925,
+      "steps_at_cfl_used": 200
+    },
+    {
+      "degree": 3,
+      "tableau": "rk4",
+      "ncells": 8,
+      "final_time": 1.0,
+      "predicted_cfl_max_mesh": 1.0177572604499447,
+      "predicted_cfl_max_symbol": 1.0177572604499447,
+      "empirical_cfl_max": 1.0567088172749903,
+      "empirical_growth_stable": -0.021613251560733075,
+      "empirical_growth_unstable": 3.3804433958120406,
+      "empirical_over_predicted": 0.038271951808848126,
+      "growth_exponent_at_cfl_used": -0.14505289278754438,
+      "steps_at_cfl_used": 280
+    },
+    {
+      "degree": 4,
+      "tableau": "ssp_rk54",
+      "ncells": 8,
+      "final_time": 1.0,
+      "predicted_cfl_max_mesh": 1.3426539629409044,
+      "predicted_cfl_max_symbol": 1.3424194436411794,
+      "empirical_cfl_max": 1.3844458682526875,
+      "empirical_growth_stable": -0.014037338096734934,
+      "empirical_growth_unstable": 3.887966115736624,
+      "empirical_over_predicted": 0.031126341161086257,
+      "growth_exponent_at_cfl_used": -0.14462907347519918,
+      "steps_at_cfl_used": 360
+    }
+  ],
+  "checks": {
+    "S1_anchors": true,
+    "S2_order": true,
+    "S3_cfl_used": true,
+    "S4_probe_cfl": true,
+    "S5_empirical": true,
+    "S6_pairing": true
+  },
+  "verdict": "PASS",
+  "failed": [],
+  "not_run": [],
+  "falsified_hypotheses": [
+    "H_unstable_ladder: the round-2 ladder ran at or beyond its linear stability limit (rejected: every matched rung has cfl_max >= 0.807, the used cfl is 0.2)"
+  ]
+}
