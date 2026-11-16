@@ -1,0 +1,454 @@
+{
+  "R1_exactness": {
+    "criterion": "max |dU/dt + dF/dx + dG/dy| / max(|dU/dt|,|dF/dx|,|dG/dy|)",
+    "limit": 1e-10,
+    "mutants": {
+      "envelope_exponent": 2.3558662727408937,
+      "temperature_factor": 0.3960051937501778,
+      "velocity_one_sign": 2.5462697959666554
+    },
+    "mutants_detected": true,
+    "passed": true,
+    "periodicity_passed": true,
+    "periodicity_relative": 9.839230642910906e-16,
+    "residual": {
+      "t=0": {
+        "energy": {
+          "abs_max": 8.881784197001252e-16,
+          "relative": 7.716782427732996e-16
+        },
+        "mass": {
+          "abs_max": 1.6653345369377348e-16,
+          "relative": 4.1666828226138593e-16
+        },
+        "momentum_x": {
+          "abs_max": 4.440892098500626e-16,
+          "relative": 3.0197151368353908e-15
+        },
+        "momentum_y": {
+          "abs_max": 4.440892098500626e-16,
+          "relative": 2.0123487130201803e-15
+        }
+      },
+      "t=1": {
+        "energy": {
+          "abs_max": 1.3322676295501878e-15,
+          "relative": 6.476140894274498e-16
+        },
+        "mass": {
+          "abs_max": 1.6653345369377348e-16,
+          "relative": 3.9495253553325e-16
+        },
+        "momentum_x": {
+          "abs_max": 4.440892098500626e-16,
+          "relative": 6.842187573791431e-15
+        },
+        "momentum_y": {
+          "abs_max": 4.440892098500626e-16,
+          "relative": 6.199651248831476e-16
+        }
+      },
+      "t=2.5": {
+        "energy": {
+          "abs_max": 1.3322676295501878e-15,
+          "relative": 2.8615336751638294e-15
+        },
+        "mass": {
+          "abs_max": 1.1102230246251565e-16,
+          "relative": 5.63915946077327e-16
+        },
+        "momentum_x": {
+          "abs_max": 3.3306690738754696e-16,
+          "relative": 8.444752889510001e-16
+        },
+        "momentum_y": {
+          "abs_max": 3.3306690738754696e-16,
+          "relative": 1.6788337151358403e-15
+        }
+      }
+    },
+    "worst_relative": 6.842187573791431e-15
+  },
+  "R2_isentropy": {
+    "analytic": 0.0,
+    "criterion": "max |p/rho^gamma - 1| over the reference field",
+    "limit": 1e-14,
+    "mutant": 0.26367222319171657,
+    "mutant_detected": true,
+    "passed": true
+  },
+  "R3_invariants": {
+    "criterion": "|invariant(p) - invariant(1280)| / |invariant(1280)|",
+    "density_min": {
+      "core_ray_4001": 0.49380732389534654,
+      "note": "`density_min` is a minimum *over quadrature nodes*, so the tensor grid samples the core off-centre; the gate uses it only as a same-instrument drift (final vs initial), which is unaffected, but it is not the true core minimum",
+      "relative_gap": 0.0009788352023213961,
+      "tensor_grid_320": 0.49429067988713943
+    },
+    "deviations": {
+      "1280": {
+        "energy": 0.0,
+        "entropy": 0.0,
+        "mass": 0.0,
+        "momentum_x": 0.0,
+        "momentum_y": 0.0
+      },
+      "320": {
+        "energy": 3.297571057538907e-16,
+        "entropy": 2.842170943040402e-16,
+        "mass": 4.3395569541664087e-16,
+        "momentum_x": 2.893037969444272e-16,
+        "momentum_y": 2.893037969444272e-16
+      },
+      "480": {
+        "energy": 1.3190284230155628e-15,
+        "entropy": 2.842170943040402e-16,
+        "mass": 1.4465189847221362e-15,
+        "momentum_x": 1.880474680138777e-15,
+        "momentum_y": 1.5911708831943497e-15
+      },
+      "640": {
+        "energy": 1.1541498701386173e-15,
+        "entropy": 1.421085471520201e-16,
+        "mass": 1.4465189847221362e-15,
+        "momentum_x": 1.5911708831943497e-15,
+        "momentum_y": 1.5911708831943497e-15
+      },
+      "960": {
+        "energy": 1.6487855287694534e-15,
+        "entropy": 1.421085471520201e-16,
+        "mass": 1.880474680138777e-15,
+        "momentum_x": 1.880474680138777e-15,
+        "momentum_y": 2.0251265786109907e-15
+      }
+    },
+    "gate_points": 320,
+    "gate_worst": 4.3395569541664087e-16,
+    "passed": true,
+    "ratio": 0.07894736842105256,
+    "smallest_drift": 5.496772141944123e-15
+  },
+  "R4_error_norm": {
+    "cases": {
+      "projection_p1_n32": {
+        "converged": 0.001129904556403244,
+        "gate": 0.0011298312632267327,
+        "kind": "L2 projection of the exact initial state (no time stepping)",
+        "readings": {
+          "1": 0.0011298312632267327,
+          "2": 0.0011299045563996565,
+          "3": 0.0011299045564032448,
+          "4": 0.001129904556403244
+        },
+        "relative_shift": -6.486669701071583e-05,
+        "under_integrated_shift": -0.9503923529482229
+      },
+      "projection_p2_n32": {
+        "converged": 5.4957032553040534e-05,
+        "gate": 5.4917659323596787e-05,
+        "kind": "L2 projection of the exact initial state (no time stepping)",
+        "readings": {
+          "1": 5.4917659323596787e-05,
+          "2": 5.495703255298203e-05,
+          "3": 5.49570325530407e-05,
+          "4": 5.4957032553040534e-05
+        },
+        "relative_shift": -0.0007164365980959218,
+        "under_integrated_shift": -0.9358341230544814
+      },
+      "projection_p3_n32": {
+        "converged": 3.5012163051761598e-06,
+        "gate": 3.500359018783095e-06,
+        "kind": "L2 projection of the exact initial state (no time stepping)",
+        "readings": {
+          "1": 3.500359018783095e-06,
+          "2": 3.5012163051766413e-06,
+          "3": 3.501216305177699e-06,
+          "4": 3.5012163051761598e-06
+        },
+        "relative_shift": -0.00024485387886418765,
+        "under_integrated_shift": -0.9344024996428615
+      }
+    },
+    "criterion": "(reading at gate quadrature - reading at 4x quadrature) / reading",
+    "passed": true,
+    "ratio": 0.011940609968265365,
+    "tolerance": 0.06,
+    "worst_relative_shift": 0.0007164365980959218
+  },
+  "R6_reproduction": {
+    "coverage": {
+      "declared_ladder_entries": 40,
+      "missing": [],
+      "reproduced": 2
+    },
+    "criterion": "re-solve the declared checkpoint in a fresh process and compare every published scalar with results/*.json; |fresh - stored| / |stored| > 1e-09 means the bundle is stale",
+    "envelope": 6.26742683741277e-13,
+    "envelope_at": "dg_d2_n32_t1_cfl0.2/density_min_relative_error",
+    "harness_control": {
+      "deviations": {
+        "density_min_relative_error": 6.26742683741277e-13,
+        "entropy_drift": 0.0,
+        "entropy_production": 0.0,
+        "errors.density": 2.1743074714570358e-13,
+        "errors.pressure": 1.9142419840283516e-13,
+        "errors.velocity_x": 1.4386064937397775e-15,
+        "errors.velocity_y": 1.8034179170801817e-13,
+        "final.energy": 0.0,
+        "final.entropy": 2.842170881994379e-16,
+        "final.mass": 0.0,
+        "final.momentum_x": 1.4465189847221629e-16,
+        "final.momentum_y": 1.446518984722163e-16,
+        "max_relative_l2": 1.8034179170801817e-13
+      },
+      "note": "pinned vs inherited OMP/MKL environment: a harness that changes the answer is not measuring the bundle",
+      "worst": 6.26742683741277e-13
+    },
+    "intrinsic": 0.0,
+    "intrinsic_at": null,
+    "limit": 1e-09,
+    "margin_kept": true,
+    "passed": true,
+    "probes": {
+      "clean_run": "threads=1",
+      "flip_point": "magnitude_1e-09",
+      "note": "a one-sided gate: it can only reject staleness above the limit, so the probe that matters is the smallest flagged perturbation relative to the measured reproduction envelope",
+      "probes": {
+        "magnitude_1.001e-09": {
+          "deviation": 1.0009999749015276e-09,
+          "flagged": true,
+          "kind": "stored reading scaled by (1 + factor)"
+        },
+        "magnitude_1e-08": {
+          "deviation": 9.999999814459058e-09,
+          "flagged": true,
+          "kind": "stored reading scaled by (1 + factor)"
+        },
+        "magnitude_1e-09": {
+          "deviation": 1.0000001197746801e-09,
+          "flagged": true,
+          "kind": "stored reading scaled by (1 + factor)"
+        },
+        "magnitude_1e-10": {
+          "deviation": 1.0000002643733191e-10,
+          "flagged": false,
+          "kind": "stored reading scaled by (1 + factor)"
+        },
+        "magnitude_1e-11": {
+          "deviation": 9.99998827476931e-12,
+          "flagged": false,
+          "kind": "stored reading scaled by (1 + factor)"
+        },
+        "wrong_checkpoint": {
+          "deviation": 0.02667727752897448,
+          "flagged": true,
+          "kind": "stored slot holds dg_d2_n32_t2_cfl0.2 instead of dg_d2_n32_t1_cfl0.2"
+        },
+        "wrong_family": {
+          "deviation": 0.9966519303592725,
+          "flagged": true,
+          "kind": "stored slot holds p0_n128_t1_cfl0.4 instead of dg_d2_n32_t1_cfl0.2"
+        }
+      },
+      "reading": "max_relative_l2",
+      "target": "dg_d2_n32_t1_cfl0.2"
+    },
+    "ratio": 0.0006267426837412769,
+    "repeated_targets": [
+      "dg_d2_n32_t1_cfl0.2",
+      "p0_n128_t1_cfl0.4"
+    ],
+    "steps_identical": true,
+    "targets": {
+      "dg_d2_n32_t1_cfl0.2": {
+        "role": "C1/C2 \u95e8\u7981\u5224\u5b9a\u70b9\uff08\u8bbe\u8ba1\u65cf\u5feb\u7167\uff09",
+        "runs": {
+          "threads=1": {
+            "deviations": {
+              "density_min_relative_error": 6.26742683741277e-13,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 2.1743074714570358e-13,
+              "errors.pressure": 1.9142419840283516e-13,
+              "errors.velocity_x": 1.4386064937397775e-15,
+              "errors.velocity_y": 1.8034179170801817e-13,
+              "final.energy": 0.0,
+              "final.entropy": 2.842170881994379e-16,
+              "final.mass": 0.0,
+              "final.momentum_x": 1.4465189847221629e-16,
+              "final.momentum_y": 1.446518984722163e-16,
+              "max_relative_l2": 1.8034179170801817e-13
+            },
+            "steps_match": true,
+            "steps_reproduced": 469,
+            "steps_stored": 469,
+            "wall_seconds": 42.16945028305054,
+            "worst": 6.26742683741277e-13,
+            "worst_metric": "density_min_relative_error"
+          },
+          "threads=1_repeat": {
+            "against": "another fresh process at identical settings",
+            "deviations": {
+              "density_min_relative_error": 0.0,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 0.0,
+              "errors.pressure": 0.0,
+              "errors.velocity_x": 0.0,
+              "errors.velocity_y": 0.0,
+              "final.energy": 0.0,
+              "final.entropy": 0.0,
+              "final.mass": 0.0,
+              "final.momentum_x": 0.0,
+              "final.momentum_y": 0.0,
+              "max_relative_l2": 0.0
+            },
+            "steps_match": true,
+            "wall_seconds": 51.618006467819214,
+            "worst": 0.0,
+            "worst_metric": "max_relative_l2"
+          },
+          "threads=4": {
+            "deviations": {
+              "density_min_relative_error": 6.26742683741277e-13,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 2.1743074714570358e-13,
+              "errors.pressure": 1.9142419840283516e-13,
+              "errors.velocity_x": 1.4386064937397775e-15,
+              "errors.velocity_y": 1.8034179170801817e-13,
+              "final.energy": 0.0,
+              "final.entropy": 2.842170881994379e-16,
+              "final.mass": 0.0,
+              "final.momentum_x": 1.4465189847221629e-16,
+              "final.momentum_y": 1.446518984722163e-16,
+              "max_relative_l2": 1.8034179170801817e-13
+            },
+            "steps_match": true,
+            "steps_reproduced": 469,
+            "steps_stored": 469,
+            "wall_seconds": 42.16945028305054,
+            "worst": 6.26742683741277e-13,
+            "worst_metric": "density_min_relative_error"
+          }
+        },
+        "steps": 469,
+        "stored_wall_seconds": 46.749340295791626
+      },
+      "p0_n128_t1_cfl0.4": {
+        "role": "C5 \u7b2c\u4e8c\u6761\u4ee3\u7801\u8def\u5f84\uff08P0 \u6709\u9650\u4f53\u79ef\uff09",
+        "runs": {
+          "threads=1": {
+            "deviations": {
+              "density_min_relative_error": 0.0,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 0.0,
+              "errors.pressure": 0.0,
+              "errors.velocity_x": 0.0,
+              "errors.velocity_y": 0.0,
+              "final.energy": 0.0,
+              "final.entropy": 0.0,
+              "final.mass": 0.0,
+              "final.momentum_x": 0.0,
+              "final.momentum_y": 0.0,
+              "max_relative_l2": 0.0
+            },
+            "steps_match": true,
+            "steps_reproduced": 183,
+            "steps_stored": 183,
+            "wall_seconds": 7.472647190093994,
+            "worst": 0.0,
+            "worst_metric": "max_relative_l2"
+          },
+          "threads=1_repeat": {
+            "against": "another fresh process at identical settings",
+            "deviations": {
+              "density_min_relative_error": 0.0,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 0.0,
+              "errors.pressure": 0.0,
+              "errors.velocity_x": 0.0,
+              "errors.velocity_y": 0.0,
+              "final.energy": 0.0,
+              "final.entropy": 0.0,
+              "final.mass": 0.0,
+              "final.momentum_x": 0.0,
+              "final.momentum_y": 0.0,
+              "max_relative_l2": 0.0
+            },
+            "steps_match": true,
+            "wall_seconds": 8.940999746322632,
+            "worst": 0.0,
+            "worst_metric": "max_relative_l2"
+          },
+          "threads=4": {
+            "deviations": {
+              "density_min_relative_error": 0.0,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 0.0,
+              "errors.pressure": 0.0,
+              "errors.velocity_x": 0.0,
+              "errors.velocity_y": 0.0,
+              "final.energy": 0.0,
+              "final.entropy": 0.0,
+              "final.mass": 0.0,
+              "final.momentum_x": 0.0,
+              "final.momentum_y": 0.0,
+              "max_relative_l2": 0.0
+            },
+            "steps_match": true,
+            "steps_reproduced": 183,
+            "steps_stored": 183,
+            "wall_seconds": 7.472647190093994,
+            "worst": 0.0,
+            "worst_metric": "max_relative_l2"
+          },
+          "threads=4_repeat": {
+            "against": "another fresh process at identical settings",
+            "deviations": {
+              "density_min_relative_error": 0.0,
+              "entropy_drift": 0.0,
+              "entropy_production": 0.0,
+              "errors.density": 0.0,
+              "errors.pressure": 0.0,
+              "errors.velocity_x": 0.0,
+              "errors.velocity_y": 0.0,
+              "final.energy": 0.0,
+              "final.entropy": 0.0,
+              "final.mass": 0.0,
+              "final.momentum_x": 0.0,
+              "final.momentum_y": 0.0,
+              "max_relative_l2": 0.0
+            },
+            "steps_match": true,
+            "wall_seconds": 8.80520749092102,
+            "worst": 0.0,
+            "worst_metric": "max_relative_l2"
+          }
+        },
+        "steps": 183,
+        "stored_wall_seconds": 8.713639259338379
+      }
+    },
+    "threads": [
+      1,
+      4
+    ],
+    "worst": 6.26742683741277e-13,
+    "worst_at": "dg_d2_n32_t1_cfl0.2/threads=1/density_min_relative_error"
+  },
+  "case": "CASE-DG-EULER-VORTEX-ERR",
+  "margin": 10.0,
+  "reference": "analytic isentropic vortex (Yee et al. 2000 configuration)",
+  "scope": "reference + measurement instruments (not the scheme)",
+  "verdict": {
+    "certificates": 5,
+    "controls_passed": true,
+    "failed": [],
+    "status": "CERTIFIED"
+  },
+  "wall_seconds": 14.28214955329895
+}
