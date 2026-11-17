@@ -12324,7 +12324,7 @@
   }
  ],
  "provenance": {
-  "git_sha": "375183574098ecdf0ee71198b3c55b419c706cfe",
+  "git_sha": "4a05feac602158eca8351c98818752cff54e13c9",
   "arch": "loongarch64",
   "torch": "2.7.1"
  }
