@@ -74,25 +74,27 @@ def test_m_zero_flags_every_cell_and_preserves_cell_averages():
     coeff, nodes, basis, dx, dy = _project_vortex(2, 16, 16)
     averages = coeff[..., 0, 0, :].clone()
     limited = dg2.apply_weno_limiter_2d(coeff, dx, dy, 0.0, (True, True))
-    troubled_x, minmod_x = dg2._troubled_1d(averages, 0, dx, 0.0, True)
+    troubled_x, _ = dg2._troubled_1d(averages, 0, dx, 0.0, True)
     troubled_y, _ = dg2._troubled_1d(averages, 1, dy, 0.0, True)
-    # M=0 does NOT flag every cell, and cannot: the indicator is
-    # |d_left - minmod(d_left, d_right)| > M dx^2, and minmod returns d_left
-    # itself wherever |d_left| <= |d_right| with the same sign, so that
-    # deviation is exactly zero on ~30 % of the cells of a smooth field.  This
-    # asymmetry is a property of the shipping indicator, not a limiter defect;
-    # the substantive claim only needs the flagged majority.
-    deviation = (averages - dg2._shift(averages, 0, -1, True)) - minmod_x
-    zero_deviation = deviation.abs() == 0.0
-    # The indicator's strict asymmetry leaves a sizeable unflagged minority:
-    # assert that it exists and that the zero-deviation cells are a matching
-    # population (bit-for-bit equality is not asserted because the indicator
-    # applies its own scaling/edge handling inside ``_troubled_1d``).
-    assert int(zero_deviation.sum()) > 0
-    assert int((~troubled_x).sum()) > 0
+    # Since m21413 the shipping indicator is *two-sided*:
+    #   max(|d_left - mm|, |d_right - mm|) > M dx^2,
+    # which vanishes iff d_left == d_right (locally affine cell averages).
+    # The historic one-sided form |d_left - mm| was identically zero wherever
+    # |d_left| <= |d_right|, which let right-facing fronts through; the
+    # two-sided repair removed that blind spot, and with it the unflagged
+    # minority this test used to assert.  At M = 0 the test therefore flags
+    # exactly the non-affine cells -- on a smooth vortex projection, every
+    # cell -- which is what the module docstring (claim 2) already records.
+    d_left = averages - dg2._shift(averages, 0, -1, True)
+    d_right = dg2._shift(averages, 0, 1, True) - averages
+    # A cell escapes M=0 flagging only when *every* field component is locally
+    # affine (the indicator is any-field); a smooth vortex has none.
+    affine_x = (d_left == d_right).all(dim=-1)
+    assert torch.equal(troubled_x, ~affine_x), (
+        "M=0 must flag exactly the cells whose increments are not locally affine"
+    )
     fraction = float((troubled_x | troubled_y).double().mean())
     assert fraction >= 0.9, f"only {fraction:.3f} of the cells flagged at M=0"
-    assert fraction < 1.0, "the indicator's strict minmod equality should leave some cells"
     assert torch.equal(limited[..., 0, 0, :], averages), (
         "the limiter must never modify a cell average"
     )
