@@ -1,8 +1,8 @@
 """Gate power of ``CASE-DG-EULER-VORTEX-ERR``: can each criterion actually fail?
 
-The eleven acceptance criteria were certified green round by round; ten of them
-came with a hand-written counter-example test, C4 (entropy budget) did not.  This
-module grades the gate itself, on the **committed** evidence bundle, through
+The twelve acceptance criteria were certified green round by round; eleven of
+them came with a hand-written counter-example test, C4 (entropy budget) did not.
+This module grades the gate itself, on the **committed** evidence bundle, through
 ``tools/audit_vortex_gate_power.py``:
 
 * every criterion must be killed by at least one plausible defect;
@@ -48,7 +48,7 @@ def test_baseline_reproduces_the_published_verdict(result):
 
 def test_every_acceptance_criterion_is_killed_by_a_plausible_defect(result):
     assert result["survivors"] == []
-    assert result["power"] == "11/11"
+    assert result["power"] == "12/12"
     for name, killers in result["killed_by"].items():
         assert killers, f"{name} survived every mutation aimed at it"
 
