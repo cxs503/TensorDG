@@ -1,0 +1,33 @@
+{
+  "pipeline": "ke.kbm_extract",
+  "version": "1.0.0",
+  "timestamp": "2026-11-18T22:29:31Z",
+  "source": {
+    "path": "tensordg/knowledge/kbm/demo-sample/report.md",
+    "sha256": "9bff11bf12d0bbbf13f849a7663f14fcc2503bf4be7b8bce739725930e3bad1f"
+  },
+  "metrics": {
+    "cards_extracted": 6,
+    "cards_verified": 5,
+    "cards_discarded": 1,
+    "verification_rate": 0.8333333333333334,
+    "evidence_records": 5,
+    "numbers_verified": 5,
+    "numbers_failed": 0,
+    "source_coverage_bytes": 295,
+    "source_total_bytes": 1285
+  },
+  "discarded": [
+    {
+      "errors": [
+        "quote verification failed: 1/1"
+      ]
+    }
+  ],
+  "artifacts": {
+    "claims_dir": "tensordg/knowledge/kbm/demo-sample/extract/claims",
+    "evidence_dir": "tensordg/knowledge/kbm/demo-sample/extract/evidence",
+    "provenance_dir": "tensordg/knowledge/kbm/demo-sample/extract/provenance",
+    "index": "tensordg/knowledge/kbm/demo-sample/extract/INDEX.md"
+  }
+}

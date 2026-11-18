@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cxs503/TensorDG/blob/main/schemas/failure-card.schema.json",
+  "title": "Failure Card",
+  "description": "A failure card captures negative knowledge: failure mode + root cause + workaround. Aligned with negative_knowledge_ledger. It is a specialization of the claim record (claim_type=hypothesis or methodological) for documented failures.",
+  "type": "object",
+  "required": [
+    "id",
+    "card_type",
+    "failure_mode",
+    "root_cause",
+    "created_at",
+    "version"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^tkc:[a-z][a-z0-9-]*:[a-z0-9][a-z0-9-]*$"
+    },
+    "card_type": {
+      "const": "failure"
+    },
+    "failure_mode": {
+      "type": "object",
+      "required": ["description", "symptom"],
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "symptom": { "type": "string", "minLength": 1 },
+        "severity": { "enum": ["critical", "major", "minor", "cosmetic"] },
+        "trigger_conditions": { "type": "array", "items": { "type": "string" } },
+        "affected_domain": { "type": "string" },
+        "affected_method": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "root_cause": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "category": { "enum": ["numerical", "algorithmic", "implementation", "model", "data", "configuration", "other"] },
+        "mechanism": { "type": "string" },
+        "evidence": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "workaround": {
+      "type": "object",
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "effectiveness": { "enum": ["full", "partial", "temporary", "none"] },
+        "side_effects": { "type": "array", "items": { "type": "string" } },
+        "parameter_adjustment": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "resolution": {
+      "type": "object",
+      "properties": {
+        "status": { "enum": ["unresolved", "workaround-available", "fixed", "accepted-limitation"] },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "negative_knowledge_ledger_ref": { "type": "string" },
+    "claim_type": { "type": "string" },
+    "statement": { "type": "string" },
+    "epistemic_status": { "type": "string" },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "scope": { "type": "string" },
+    "modality": { "type": "string" },
+    "created_by": { "type": "string" },
+    "supersedes": { "type": "string" },
+    "notes": { "type": "string" },
+    "verification": {
+      "type": "object",
+      "properties": {
+        "source_quote": { "type": "string" },
+        "offset": { "type": "integer" },
+        "content_hash": { "type": "string" }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "version": { "type": "string" }
+  },
+  "additionalProperties": false
+}

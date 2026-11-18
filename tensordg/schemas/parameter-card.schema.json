@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cxs503/TensorDG/blob/main/schemas/parameter-card.schema.json",
+  "title": "Parameter Card",
+  "description": "A parameter card captures dimensionless parameters with their values, ranges, and source references. It is a specialization of the claim record (claim_type=definition) for non-dimensional groups.",
+  "type": "object",
+  "required": [
+    "id",
+    "card_type",
+    "parameter",
+    "created_at",
+    "version"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^tkc:[a-z][a-z0-9-]*:[a-z0-9][a-z0-9-]*$"
+    },
+    "card_type": {
+      "const": "parameter"
+    },
+    "parameter": {
+      "type": "object",
+      "required": ["symbol", "name", "definition"],
+      "properties": {
+        "symbol": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "formula": { "type": "string" },
+        "typical_value": { "type": "number" },
+        "value_range": {
+          "type": "object",
+          "properties": {
+            "min": { "type": "number" },
+            "max": { "type": "number" },
+            "unit": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "dimension": { "type": "string" },
+        "physical_significance": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "required": ["citation"],
+      "properties": {
+        "citation": { "type": "string", "minLength": 1 },
+        "source_type": { "enum": ["paper", "book", "standard", "experiment", "simulation", "other"] },
+        "doi": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "page_or_section": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "claim_type": { "const": "definition" },
+    "statement": { "type": "string" },
+    "epistemic_status": { "type": "string" },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "scope": { "type": "string" },
+    "modality": { "type": "string" },
+    "created_by": { "type": "string" },
+    "supersedes": { "type": "string" },
+    "notes": { "type": "string" },
+    "verification": {
+      "type": "object",
+      "properties": {
+        "source_quote": { "type": "string" },
+        "offset": { "type": "integer" },
+        "content_hash": { "type": "string" }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "version": { "type": "string" }
+  },
+  "additionalProperties": false
+}

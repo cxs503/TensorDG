@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cxs503/TensorDG/blob/main/schemas/method-card.schema.json",
+  "title": "Method Card",
+  "description": "A method card captures: problem → method → equation/format source → applicable domain. It is a specialization of the claim record (claim_type=methodological) with structured content for numerical methods.",
+  "type": "object",
+  "required": [
+    "id",
+    "card_type",
+    "problem",
+    "method",
+    "equations",
+    "applicable_domain",
+    "created_at",
+    "version"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^tkc:[a-z][a-z0-9-]*:[a-z0-9][a-z0-9-]*$"
+    },
+    "card_type": {
+      "const": "method"
+    },
+    "problem": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "governing_equation": { "type": "string" },
+        "boundary_conditions": { "type": "array", "items": { "type": "string" } },
+        "regime": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "method": {
+      "type": "object",
+      "required": ["name", "description"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "family": { "type": "string", "enum": ["LBM", "FVM", "FEM", "BEM", "DEM", "SPH", "DG", "spectral", "finite-difference", "other"] },
+        "order_of_accuracy": { "type": "string" },
+        "stability_condition": { "type": "string" },
+        "computational_complexity": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "equations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["formula", "source"],
+        "properties": {
+          "formula": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "minLength": 1 },
+          "source_type": { "enum": ["paper", "book", "standard", "derivation", "other"] },
+          "doi": { "type": "string" },
+          "equation_number": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "applicable_domain": {
+      "type": "object",
+      "required": ["domain"],
+      "properties": {
+        "domain": { "type": "string", "minLength": 1 },
+        "limitations": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "claim_type": { "const": "methodological" },
+    "statement": { "type": "string" },
+    "epistemic_status": { "type": "string" },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "scope": { "type": "string" },
+    "modality": { "type": "string" },
+    "created_by": { "type": "string" },
+    "supersedes": { "type": "string" },
+    "notes": { "type": "string" },
+    "verification": {
+      "type": "object",
+      "properties": {
+        "source_quote": { "type": "string" },
+        "offset": { "type": "integer" },
+        "content_hash": { "type": "string" }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "version": { "type": "string" }
+  },
+  "additionalProperties": false
+}

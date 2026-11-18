@@ -1,0 +1,40 @@
+{
+  "id": "tkc:kbm:benchmark-benchmark-case-wigley-fr025",
+  "card_type": "benchmark",
+  "statement": "Benchmark case: wigley-fr025",
+  "fields": {
+    "benchmark_case": {
+      "case_id": "wigley-fr025",
+      "description": "Wigley hull at Froude number 0.25",
+      "physics_domain": "ship-resistance",
+      "geometry": "Wigley hull, L=2.0m, B=0.3m, T=0.125m, Cb=0.467"
+    },
+    "reference": {
+      "value": 0.00325,
+      "source": "Holtrop & Mennen (1982)",
+      "tolerance_pct": 5.0,
+      "quantity": "total resistance coefficient Ct"
+    },
+    "results_history": [
+      {
+        "got": 0.00328,
+        "run_id": "demo-run-001",
+        "rel_error_pct": 0.92,
+        "within_tolerance": true
+      }
+    ]
+  },
+  "evidence_refs": [
+    "tke:kbm:benchmark-ev-4d6a016a"
+  ],
+  "epistemic_status": "extracted",
+  "scope": "tensordg/knowledge/kbm/demo-sample/report.md",
+  "created_by": "agent",
+  "created_at": "2026-11-18T22:29:31Z",
+  "version": "1.0.0",
+  "verification": {
+    "source_quote": "Computed Ct = 3.28e-3",
+    "offset": 534,
+    "content_hash": "6dbe17ea9aab6db03e3219c5b9c4c056ff404333ec9bf8592eef72880b524751"
+  }
+}

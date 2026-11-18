@@ -1,0 +1,12 @@
+{
+  "id": "tkp:kbm:prov-11641a85",
+  "type": "extraction",
+  "source": {
+    "path": "tensordg/knowledge/kbm/demo-sample/report.md",
+    "sha256": "9bff11bf12d0bbbf13f849a7663f14fcc2503bf4be7b8bce739725930e3bad1f"
+  },
+  "pipeline": "ke.kbm_extract",
+  "version": "1.0.0",
+  "created_by": "agent",
+  "recorded_at": "2026-11-18T22:29:31Z"
+}
