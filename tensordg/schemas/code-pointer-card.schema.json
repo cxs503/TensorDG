@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cxs503/TensorDG/blob/main/schemas/code-pointer-card.schema.json",
+  "title": "Code Pointer Card",
+  "description": "A code pointer card captures which repo/module implements what + artifact paths. Links implementation to claims.",
+  "type": "object",
+  "required": [
+    "id",
+    "card_type",
+    "code_location",
+    "implements",
+    "created_at",
+    "version"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^tkc:[a-z][a-z0-9-]*:[a-z0-9][a-z0-9-]*$"
+    },
+    "card_type": {
+      "const": "code-pointer"
+    },
+    "code_location": {
+      "type": "object",
+      "required": ["repo", "path"],
+      "properties": {
+        "repo": { "type": "string", "minLength": 1 },
+        "path": { "type": "string", "minLength": 1 },
+        "commit": { "type": "string" },
+        "symbol": { "type": "string" },
+        "line_range": {
+          "type": "object",
+          "properties": {
+            "start": { "type": "integer" },
+            "end": { "type": "integer" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "implements": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": { "type": "string", "minLength": 1 },
+        "algorithm": { "type": "string" },
+        "references_card": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "artifact_paths": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "type"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 },
+          "type": { "type": "string", "enum": ["output", "figure", "data", "config"] },
+          "checksum": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "verification": {
+      "type": "object",
+      "properties": {
+        "test_coverage": { "type": "string" },
+        "test_ids": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "claim_type": { "const": "methodological" },
+    "statement": { "type": "string" },
+    "epistemic_status": { "type": "string" },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "scope": { "type": "string" },
+    "modality": { "type": "string" },
+    "created_by": { "type": "string" },
+    "supersedes": { "type": "string" },
+    "notes": { "type": "string" },
+    "verification": {
+      "type": "object",
+      "properties": {
+        "source_quote": { "type": "string" },
+        "offset": { "type": "integer" },
+        "content_hash": { "type": "string" }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "version": { "type": "string" }
+  },
+  "additionalProperties": false
+}

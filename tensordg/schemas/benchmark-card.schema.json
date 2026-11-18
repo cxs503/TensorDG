@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/cxs503/TensorDG/blob/main/schemas/benchmark-card.schema.json",
+  "title": "Benchmark Card",
+  "description": "A benchmark card captures case + reference value + tolerance + got history. Linked to tensor_benchmark_cases / REPRO / XVAL via shared keys.",
+  "type": "object",
+  "required": [
+    "id",
+    "card_type",
+    "benchmark_case",
+    "reference",
+    "created_at",
+    "version"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^tkc:[a-z][a-z0-9-]*:[a-z0-9][a-z0-9-]*$"
+    },
+    "card_type": {
+      "const": "benchmark"
+    },
+    "benchmark_case": {
+      "type": "object",
+      "required": ["case_id", "description"],
+      "properties": {
+        "case_id": { "type": "string", "minLength": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "physics_domain": { "type": "string" },
+        "geometry": { "type": "string" },
+        "boundary_conditions": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "reference": {
+      "type": "object",
+      "required": ["value", "source"],
+      "properties": {
+        "value": { "type": "number" },
+        "source": { "type": "string", "minLength": 1 },
+        "tolerance_pct": { "type": "number" },
+        "doi": { "type": "string" },
+        "year": { "type": "integer" },
+        "quantity": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "results_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["got", "run_id"],
+        "properties": {
+          "got": { "type": "number" },
+          "run_id": { "type": "string" },
+          "rel_error_pct": { "type": "number" },
+          "within_tolerance": { "type": "boolean" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "linked_keys": {
+      "type": "object",
+      "properties": {
+        "tensor_benchmark_cases": { "type": "string" },
+        "repro_key": { "type": "string" },
+        "xval_key": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "claim_type": { "const": "predictive" },
+    "statement": { "type": "string" },
+    "epistemic_status": { "type": "string" },
+    "evidence_refs": { "type": "array", "items": { "type": "string" } },
+    "scope": { "type": "string" },
+    "modality": { "type": "string" },
+    "created_by": { "type": "string" },
+    "supersedes": { "type": "string" },
+    "notes": { "type": "string" },
+    "verification": {
+      "type": "object",
+      "properties": {
+        "source_quote": { "type": "string" },
+        "offset": { "type": "integer" },
+        "content_hash": { "type": "string" }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "version": { "type": "string" }
+  },
+  "additionalProperties": false
+}

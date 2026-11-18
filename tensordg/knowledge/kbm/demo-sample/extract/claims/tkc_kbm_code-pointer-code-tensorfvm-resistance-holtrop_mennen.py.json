@@ -1,0 +1,29 @@
+{
+  "id": "tkc:kbm:code-pointer-code-tensorfvm-resistance-holtrop_mennen.py",
+  "card_type": "code-pointer",
+  "statement": "Code: TensorFVM/resistance/holtrop_mennen.py",
+  "fields": {
+    "code_location": {
+      "repo": "TensorFVM",
+      "path": "resistance/holtrop_mennen.py",
+      "symbol": "compute_ct"
+    },
+    "implements": {
+      "description": "Holtrop-Mennen total resistance coefficient computation",
+      "algorithm": "Holtrop-Mennen 1982 empirical method"
+    }
+  },
+  "evidence_refs": [
+    "tke:kbm:code-pointer-ev-73bb4d3c"
+  ],
+  "epistemic_status": "extracted",
+  "scope": "tensordg/knowledge/kbm/demo-sample/report.md",
+  "created_by": "agent",
+  "created_at": "2026-11-18T22:29:31Z",
+  "version": "1.0.0",
+  "verification": {
+    "source_quote": "The implementation is in TensorFVM, module resistance/holtrop_mennen.py",
+    "offset": 980,
+    "content_hash": "080cc639e82cea8ea0a84231d51cb4cc568be9d5ffda9093169a5195ef733790"
+  }
+}

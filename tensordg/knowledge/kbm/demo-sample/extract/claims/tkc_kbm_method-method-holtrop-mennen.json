@@ -1,0 +1,44 @@
+{
+  "id": "tkc:kbm:method-method-holtrop-mennen",
+  "card_type": "method",
+  "statement": "Method 'Holtrop-Mennen' for problem: Ship resistance prediction for displacement hulls",
+  "fields": {
+    "problem": {
+      "description": "Ship resistance prediction for displacement hulls",
+      "governing_equation": "ITTC-1957 friction line + residual resistance coefficient"
+    },
+    "method": {
+      "name": "Holtrop-Mennen",
+      "description": "Empirical resistance prediction method for displacement hulls",
+      "family": "other",
+      "order_of_accuracy": "empirical"
+    },
+    "equations": [
+      {
+        "formula": "Ct = Cf + Cr + Caa",
+        "source": "Holtrop & Mennen (1982)",
+        "source_type": "paper"
+      }
+    ],
+    "applicable_domain": {
+      "domain": "ship-resistance",
+      "limitations": [
+        "valid for Fr < 0.45",
+        "displacement hulls only"
+      ]
+    }
+  },
+  "evidence_refs": [
+    "tke:kbm:method-ev-928e6b4f"
+  ],
+  "epistemic_status": "extracted",
+  "scope": "tensordg/knowledge/kbm/demo-sample/report.md",
+  "created_by": "agent",
+  "created_at": "2026-11-18T22:29:31Z",
+  "version": "1.0.0",
+  "verification": {
+    "source_quote": "Resistance is computed using the Holtrop-Mennen empirical method",
+    "offset": 275,
+    "content_hash": "6317b5c4236dd29157fb7f1e7a575eefc1aec2feb4581ff175aad82dc09c927e"
+  }
+}

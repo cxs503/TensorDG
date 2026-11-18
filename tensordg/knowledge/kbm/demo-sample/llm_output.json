@@ -1,0 +1,148 @@
+{
+  "cards": [
+    {
+      "card_type": "method",
+      "fields": {
+        "problem": {
+          "description": "Ship resistance prediction for displacement hulls",
+          "governing_equation": "ITTC-1957 friction line + residual resistance coefficient"
+        },
+        "method": {
+          "name": "Holtrop-Mennen",
+          "description": "Empirical resistance prediction method for displacement hulls",
+          "family": "other",
+          "order_of_accuracy": "empirical"
+        },
+        "equations": [
+          {
+            "formula": "Ct = Cf + Cr + Caa",
+            "source": "Holtrop & Mennen (1982)",
+            "source_type": "paper"
+          }
+        ],
+        "applicable_domain": {
+          "domain": "ship-resistance",
+          "limitations": ["valid for Fr < 0.45", "displacement hulls only"]
+        }
+      },
+      "source_quotes": [
+        {"quote": "Resistance is computed using the Holtrop-Mennen empirical method", "path": "report.md"}
+      ],
+      "numbers": [
+        {"value": 0.00325, "unit": "-", "source_path": "report.md", "needle": "Ct = 3.25e-3"}
+      ]
+    },
+    {
+      "card_type": "parameter",
+      "fields": {
+        "parameter": {
+          "symbol": "Cb",
+          "name": "Block coefficient",
+          "definition": "Ratio of displaced volume to L*B*T",
+          "formula": "Cb = V / (L * B * T)",
+          "typical_value": 0.467
+        }
+      },
+      "source_quotes": [
+        {"quote": "Block coefficient Cb = 0.467", "path": "report.md"}
+      ],
+      "numbers": [
+        {"value": 0.467, "unit": "-", "source_path": "report.md", "needle": "Cb = 0.467"}
+      ]
+    },
+    {
+      "card_type": "parameter",
+      "fields": {
+        "parameter": {
+          "symbol": "Fr",
+          "name": "Froude number",
+          "definition": "Ratio of inertial to gravitational forces",
+          "formula": "Fr = V / sqrt(g * L)",
+          "value_range": {"min": 0.1, "max": 0.5, "unit": "-"}
+        }
+      },
+      "source_quotes": [
+        {"quote": "Froude number Fr = V / sqrt(g * L), typical range 0.1 to 0.5", "path": "report.md"}
+      ],
+      "numbers": [
+        {"value": 0.25, "unit": "-", "source_path": "report.md", "needle": "Fr = 0.25"}
+      ]
+    },
+    {
+      "card_type": "failure",
+      "fields": {
+        "failure_mode": {
+          "description": "Overprediction of resistance at high Froude numbers",
+          "symptom": "Computed resistance exceeds reference by 5-10%",
+          "severity": "major",
+          "trigger_conditions": ["Fr > 0.45", "high-speed displacement hulls"]
+        },
+        "root_cause": {
+          "description": "Empirical formulation limitations for high-speed regimes",
+          "category": "model",
+          "mechanism": "Residual resistance coefficient extrapolation beyond calibration range"
+        },
+        "workaround": {
+          "description": "Use ITTC-1978 method for Fr > 0.45",
+          "effectiveness": "partial"
+        },
+        "resolution": {
+          "status": "accepted-limitation"
+        }
+      },
+      "source_quotes": [
+        {"quote": "When the Froude number exceeds 0.45, the Holtrop-Mennen method tends to overpredict resistance by 5-10%", "path": "report.md"}
+      ],
+      "numbers": [
+        {"value": 0.45, "unit": "-", "source_path": "report.md", "needle": "Froude number exceeds 0.45"},
+        {"value": 0.05, "unit": "%", "source_path": "report.md", "needle": "5-10%"}
+      ]
+    },
+    {
+      "card_type": "benchmark",
+      "fields": {
+        "benchmark_case": {
+          "case_id": "wigley-fr025",
+          "description": "Wigley hull at Froude number 0.25",
+          "physics_domain": "ship-resistance",
+          "geometry": "Wigley hull, L=2.0m, B=0.3m, T=0.125m, Cb=0.467"
+        },
+        "reference": {
+          "value": 0.00325,
+          "source": "Holtrop & Mennen (1982)",
+          "tolerance_pct": 5.0,
+          "quantity": "total resistance coefficient Ct"
+        },
+        "results_history": [
+          {"got": 0.00328, "run_id": "demo-run-001", "rel_error_pct": 0.92, "within_tolerance": true}
+        ]
+      },
+      "source_quotes": [
+        {"quote": "Computed Ct = 3.28e-3", "path": "report.md"},
+        {"quote": "Reference Ct_ref = 3.25e-3 (Holtrop & Mennen, 1982)", "path": "report.md"}
+      ],
+      "numbers": [
+        {"value": 0.00328, "unit": "-", "source_path": "report.md", "needle": "Ct = 3.28e-3"},
+        {"value": 0.00325, "unit": "-", "source_path": "report.md", "needle": "Ct_ref = 3.25e-3"}
+      ]
+    },
+    {
+      "card_type": "code-pointer",
+      "fields": {
+        "code_location": {
+          "repo": "TensorFVM",
+          "path": "resistance/holtrop_mennen.py",
+          "symbol": "compute_ct"
+        },
+        "implements": {
+          "description": "Holtrop-Mennen total resistance coefficient computation",
+          "algorithm": "Holtrop-Mennen 1982 empirical method"
+        }
+      },
+      "source_quotes": [
+        {"quote": "The implementation is in TensorFVM, module resistance/holtrop_mennen.py", "path": "report.md"}
+      ],
+      "numbers": []
+    }
+  ]
+}

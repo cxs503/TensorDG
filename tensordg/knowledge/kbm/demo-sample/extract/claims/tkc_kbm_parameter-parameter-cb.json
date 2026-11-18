@@ -1,0 +1,27 @@
+{
+  "id": "tkc:kbm:parameter-parameter-cb",
+  "card_type": "parameter",
+  "statement": "Parameter Cb (Block coefficient)",
+  "fields": {
+    "parameter": {
+      "symbol": "Cb",
+      "name": "Block coefficient",
+      "definition": "Ratio of displaced volume to L*B*T",
+      "formula": "Cb = V / (L * B * T)",
+      "typical_value": 0.467
+    }
+  },
+  "evidence_refs": [
+    "tke:kbm:parameter-ev-5e7922f6"
+  ],
+  "epistemic_status": "extracted",
+  "scope": "tensordg/knowledge/kbm/demo-sample/report.md",
+  "created_by": "agent",
+  "created_at": "2026-11-18T22:29:31Z",
+  "version": "1.0.0",
+  "verification": {
+    "source_quote": "Block coefficient Cb = 0.467",
+    "offset": 198,
+    "content_hash": "a92ae05781501b3e2d16c26d9e4a7bf7579c517fae9efa54a4df3f961f4d066b"
+  }
+}
