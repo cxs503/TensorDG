@@ -1,6 +1,6 @@
 # CASE-LAX-DG · 钉扎腿 p3.N400：把 3 % 门槛只靠配置能不能拿下
 
-> 锚点 `CASE-LAX-DG`（原文「ref: 精确解｜容差 < 3 %」，status open）。本文全部数字由 `benchmarks/lax_scheme_variants.py` 从 `docs/benchmarks/results/lax_scheme_variants/metrics.json`（生成于 2026-11-15T22:15:57Z）程序化注入，零手抄；`--check` 在漂移时失败。台账容差 = 3.0 %（整场、每场量、不挖波段）。
+> 锚点 `CASE-LAX-DG`（原文「ref: 精确解｜容差 < 3 %」，status open）。本文全部数字由 `benchmarks/lax_scheme_variants.py` 从 `docs/benchmarks/results/lax_scheme_variants/metrics.json`（生成于 2026-11-18T07:35:34Z）程序化注入，零手抄；`--check` 在漂移时失败。台账容差 = 3.0 %（整场、每场量、不挖波段）。
 
 ## ① 案例介绍
 

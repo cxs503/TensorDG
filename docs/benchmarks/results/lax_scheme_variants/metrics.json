@@ -52,9 +52,9 @@
  },
  "control_check": {
   "committed_l2": {
-   "density": 0.03115561881158076,
-   "pressure": 0.01305011534420177,
-   "velocity": 0.022480528737058383
+   "density": 0.031155618811580767,
+   "pressure": 0.013050115344201776,
+   "velocity": 0.022480528737058404
   },
   "measured_l2": {
    "density": 0.03115561985348536,
@@ -63,15 +63,15 @@
   },
   "note": "residual control difference is BLAS/thread-count reduction order, not a model change; all sweep arms are run with OMP_NUM_THREADS=1 on the compute cluster",
   "relative_difference": {
-   "density": 3.3441948532348236e-08,
-   "pressure": 1.305070357343104e-06,
-   "velocity": 3.472336896705767e-07
+   "density": 3.3441948309630974e-08,
+   "pressure": 1.30507035694432e-06,
+   "velocity": 3.472336887445892e-07
   },
   "reproduced": true,
   "source": "docs/benchmarks/results/lax_case_pool/metrics.json",
-  "worst_relative_difference": 1.305070357343104e-06
+  "worst_relative_difference": 1.30507035694432e-06
  },
- "generated_at_utc": "2026-11-15T22:15:57Z",
+ "generated_at_utc": "2026-11-18T07:35:34Z",
  "question": "Does any admissible configuration of the existing scheme bring the pinned ledger leg p3.N400 under the registered 3 % whole-field relative-L2 bar without changing the degrees of freedom?",
  "rows": [
   {
