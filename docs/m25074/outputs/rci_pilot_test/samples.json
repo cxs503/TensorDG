@@ -1,0 +1,802 @@
+[
+  {
+    "id": "RCI-S2-0001",
+    "stratum_key": "ship_A/full/A",
+    "template": "full",
+    "quality_score": {
+      "completeness": 61.0,
+      "consistency": 71.0,
+      "accuracy": 68.93,
+      "timeliness": 89.46,
+      "validity": 87.07,
+      "usability": 95.69
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-0002",
+    "stratum_key": "ship_A/full/A",
+    "template": "full",
+    "quality_score": {
+      "completeness": 83.62,
+      "consistency": 61.27,
+      "accuracy": 63.75,
+      "timeliness": 69.31,
+      "validity": 84.08,
+      "usability": 82.45
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-1001",
+    "stratum_key": "ship_A/full/B",
+    "template": "random",
+    "quality_score": {
+      "completeness": 76.78,
+      "consistency": 77.97,
+      "accuracy": 71.13,
+      "timeliness": 94.77,
+      "validity": 90.35,
+      "usability": 66.39
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-1002",
+    "stratum_key": "ship_A/full/B",
+    "template": "extreme",
+    "quality_score": {
+      "completeness": 73.61,
+      "consistency": 66.22,
+      "accuracy": 98.29,
+      "timeliness": 73.46,
+      "validity": 63.71,
+      "usability": 63.87
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-2001",
+    "stratum_key": "ship_A/full/C",
+    "template": "focused",
+    "quality_score": {
+      "completeness": 84.15,
+      "consistency": 92.29,
+      "accuracy": 89.19,
+      "timeliness": 81.45,
+      "validity": 98.92,
+      "usability": 75.14
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-2002",
+    "stratum_key": "ship_A/full/C",
+    "template": "random",
+    "quality_score": {
+      "completeness": 71.73,
+      "consistency": 85.15,
+      "accuracy": 95.42,
+      "timeliness": 74.47,
+      "validity": 67.69,
+      "usability": 62.78
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-3001",
+    "stratum_key": "ship_A/full/D",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 90.92,
+      "consistency": 99.41,
+      "accuracy": 94.21,
+      "timeliness": 94.66,
+      "validity": 75.21,
+      "usability": 78.14
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-3002",
+    "stratum_key": "ship_A/full/D",
+    "template": "focused",
+    "quality_score": {
+      "completeness": 66.51,
+      "consistency": 74.21,
+      "accuracy": 86.81,
+      "timeliness": 88.07,
+      "validity": 87.34,
+      "usability": 62.86
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-4001",
+    "stratum_key": "ship_A/balanced/A",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 81.37,
+      "consistency": 69.79,
+      "accuracy": 78.49,
+      "timeliness": 70.8,
+      "validity": 97.02,
+      "usability": 87.53
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-4002",
+    "stratum_key": "ship_A/balanced/A",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 87.38,
+      "consistency": 93.71,
+      "accuracy": 91.04,
+      "timeliness": 69.16,
+      "validity": 61.28,
+      "usability": 72.62
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-5001",
+    "stratum_key": "ship_A/balanced/B",
+    "template": "focused",
+    "quality_score": {
+      "completeness": 62.65,
+      "consistency": 96.53,
+      "accuracy": 82.69,
+      "timeliness": 88.72,
+      "validity": 68.51,
+      "usability": 79.97
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-5002",
+    "stratum_key": "ship_A/balanced/B",
+    "template": "extreme",
+    "quality_score": {
+      "completeness": 65.71,
+      "consistency": 65.59,
+      "accuracy": 89.8,
+      "timeliness": 81.56,
+      "validity": 89.88,
+      "usability": 77.14
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-6001",
+    "stratum_key": "ship_A/balanced/C",
+    "template": "random",
+    "quality_score": {
+      "completeness": 75.98,
+      "consistency": 68.77,
+      "accuracy": 99.9,
+      "timeliness": 80.38,
+      "validity": 63.64,
+      "usability": 61.88
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-6002",
+    "stratum_key": "ship_A/balanced/C",
+    "template": "full",
+    "quality_score": {
+      "completeness": 66.11,
+      "consistency": 66.4,
+      "accuracy": 87.22,
+      "timeliness": 83.86,
+      "validity": 75.39,
+      "usability": 83.84
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-7001",
+    "stratum_key": "ship_A/balanced/D",
+    "template": "extreme",
+    "quality_score": {
+      "completeness": 81.16,
+      "consistency": 98.84,
+      "accuracy": 94.43,
+      "timeliness": 60.46,
+      "validity": 88.83,
+      "usability": 87.27
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-7002",
+    "stratum_key": "ship_A/balanced/D",
+    "template": "random",
+    "quality_score": {
+      "completeness": 90.04,
+      "consistency": 90.74,
+      "accuracy": 73.61,
+      "timeliness": 71.74,
+      "validity": 66.33,
+      "usability": 60.13
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-8001",
+    "stratum_key": "ship_A/focused/A",
+    "template": "focused",
+    "quality_score": {
+      "completeness": 98.88,
+      "consistency": 90.48,
+      "accuracy": 80.31,
+      "timeliness": 64.26,
+      "validity": 85.01,
+      "usability": 93.67
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-8002",
+    "stratum_key": "ship_A/focused/A",
+    "template": "random",
+    "quality_score": {
+      "completeness": 84.36,
+      "consistency": 66.11,
+      "accuracy": 90.5,
+      "timeliness": 81.58,
+      "validity": 91.15,
+      "usability": 81.21
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-9001",
+    "stratum_key": "ship_A/focused/B",
+    "template": "full",
+    "quality_score": {
+      "completeness": 83.96,
+      "consistency": 79.54,
+      "accuracy": 64.47,
+      "timeliness": 74.52,
+      "validity": 99.41,
+      "usability": 92.27
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-9002",
+    "stratum_key": "ship_A/focused/B",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 62.32,
+      "consistency": 95.12,
+      "accuracy": 97.88,
+      "timeliness": 63.43,
+      "validity": 79.44,
+      "usability": 62.77
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-10001",
+    "stratum_key": "ship_A/focused/C",
+    "template": "random",
+    "quality_score": {
+      "completeness": 90.63,
+      "consistency": 65.14,
+      "accuracy": 79.01,
+      "timeliness": 81.99,
+      "validity": 70.6,
+      "usability": 94.9
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-10002",
+    "stratum_key": "ship_A/focused/C",
+    "template": "extreme",
+    "quality_score": {
+      "completeness": 98.57,
+      "consistency": 97.16,
+      "accuracy": 90.21,
+      "timeliness": 87.59,
+      "validity": 88.52,
+      "usability": 75.96
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-11001",
+    "stratum_key": "ship_A/focused/D",
+    "template": "focused",
+    "quality_score": {
+      "completeness": 77.52,
+      "consistency": 80.7,
+      "accuracy": 64.84,
+      "timeliness": 68.99,
+      "validity": 73.52,
+      "usability": 83.53
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-11002",
+    "stratum_key": "ship_A/focused/D",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 83.54,
+      "consistency": 60.29,
+      "accuracy": 88.31,
+      "timeliness": 62.35,
+      "validity": 62.7,
+      "usability": 61.26
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-12001",
+    "stratum_key": "ship_A/extreme/A",
+    "template": "focused",
+    "quality_score": {
+      "completeness": 62.83,
+      "consistency": 69.52,
+      "accuracy": 86.76,
+      "timeliness": 68.57,
+      "validity": 65.29,
+      "usability": 97.42
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-12002",
+    "stratum_key": "ship_A/extreme/A",
+    "template": "random",
+    "quality_score": {
+      "completeness": 83.05,
+      "consistency": 69.72,
+      "accuracy": 78.92,
+      "timeliness": 76.28,
+      "validity": 63.77,
+      "usability": 86.36
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-13001",
+    "stratum_key": "ship_A/extreme/B",
+    "template": "focused",
+    "quality_score": {
+      "completeness": 76.94,
+      "consistency": 78.68,
+      "accuracy": 89.16,
+      "timeliness": 86.93,
+      "validity": 99.37,
+      "usability": 63.94
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-13002",
+    "stratum_key": "ship_A/extreme/B",
+    "template": "extreme",
+    "quality_score": {
+      "completeness": 89.13,
+      "consistency": 92.02,
+      "accuracy": 64.37,
+      "timeliness": 67.66,
+      "validity": 81.45,
+      "usability": 65.61
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-14001",
+    "stratum_key": "ship_A/extreme/C",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 71.14,
+      "consistency": 69.99,
+      "accuracy": 96.93,
+      "timeliness": 77.73,
+      "validity": 94.45,
+      "usability": 82.01
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-14002",
+    "stratum_key": "ship_A/extreme/C",
+    "template": "full",
+    "quality_score": {
+      "completeness": 86.09,
+      "consistency": 81.62,
+      "accuracy": 60.59,
+      "timeliness": 63.73,
+      "validity": 90.14,
+      "usability": 69.46
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-15001",
+    "stratum_key": "ship_A/extreme/D",
+    "template": "extreme",
+    "quality_score": {
+      "completeness": 79.43,
+      "consistency": 68.55,
+      "accuracy": 76.04,
+      "timeliness": 62.35,
+      "validity": 75.16,
+      "usability": 99.41
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-15002",
+    "stratum_key": "ship_A/extreme/D",
+    "template": "focused",
+    "quality_score": {
+      "completeness": 97.06,
+      "consistency": 91.41,
+      "accuracy": 71.41,
+      "timeliness": 87.86,
+      "validity": 89.22,
+      "usability": 91.33
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-16001",
+    "stratum_key": "ship_B/full/A",
+    "template": "extreme",
+    "quality_score": {
+      "completeness": 66.19,
+      "consistency": 71.87,
+      "accuracy": 98.75,
+      "timeliness": 83.17,
+      "validity": 81.69,
+      "usability": 89.92
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-16002",
+    "stratum_key": "ship_B/full/A",
+    "template": "full",
+    "quality_score": {
+      "completeness": 62.01,
+      "consistency": 79.07,
+      "accuracy": 96.78,
+      "timeliness": 81.25,
+      "validity": 62.28,
+      "usability": 80.31
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-17001",
+    "stratum_key": "ship_B/full/B",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 62.74,
+      "consistency": 62.72,
+      "accuracy": 94.47,
+      "timeliness": 76.15,
+      "validity": 97.66,
+      "usability": 82.79
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-17002",
+    "stratum_key": "ship_B/full/B",
+    "template": "random",
+    "quality_score": {
+      "completeness": 83.78,
+      "consistency": 84.78,
+      "accuracy": 76.77,
+      "timeliness": 83.35,
+      "validity": 80.91,
+      "usability": 97.39
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-18001",
+    "stratum_key": "ship_B/full/C",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 86.79,
+      "consistency": 72.57,
+      "accuracy": 70.62,
+      "timeliness": 65.24,
+      "validity": 85.82,
+      "usability": 78.29
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-19001",
+    "stratum_key": "ship_B/full/D",
+    "template": "full",
+    "quality_score": {
+      "completeness": 60.37,
+      "consistency": 84.85,
+      "accuracy": 82.52,
+      "timeliness": 64.0,
+      "validity": 81.51,
+      "usability": 80.24
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-20001",
+    "stratum_key": "ship_B/balanced/A",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 97.33,
+      "consistency": 95.23,
+      "accuracy": 95.17,
+      "timeliness": 74.78,
+      "validity": 66.31,
+      "usability": 93.35
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-21001",
+    "stratum_key": "ship_B/balanced/B",
+    "template": "focused",
+    "quality_score": {
+      "completeness": 84.47,
+      "consistency": 99.49,
+      "accuracy": 86.16,
+      "timeliness": 60.31,
+      "validity": 92.68,
+      "usability": 71.98
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-22001",
+    "stratum_key": "ship_B/balanced/C",
+    "template": "full",
+    "quality_score": {
+      "completeness": 97.56,
+      "consistency": 65.37,
+      "accuracy": 64.62,
+      "timeliness": 64.28,
+      "validity": 82.13,
+      "usability": 70.89
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-23001",
+    "stratum_key": "ship_B/balanced/D",
+    "template": "random",
+    "quality_score": {
+      "completeness": 68.43,
+      "consistency": 73.72,
+      "accuracy": 87.5,
+      "timeliness": 94.12,
+      "validity": 80.22,
+      "usability": 70.04
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-24001",
+    "stratum_key": "ship_B/focused/A",
+    "template": "full",
+    "quality_score": {
+      "completeness": 63.69,
+      "consistency": 76.94,
+      "accuracy": 71.07,
+      "timeliness": 60.14,
+      "validity": 90.84,
+      "usability": 85.48
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-25001",
+    "stratum_key": "ship_B/focused/B",
+    "template": "focused",
+    "quality_score": {
+      "completeness": 66.46,
+      "consistency": 77.67,
+      "accuracy": 88.23,
+      "timeliness": 82.44,
+      "validity": 64.47,
+      "usability": 97.8
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-26001",
+    "stratum_key": "ship_B/focused/C",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 81.82,
+      "consistency": 93.38,
+      "accuracy": 83.3,
+      "timeliness": 65.92,
+      "validity": 65.1,
+      "usability": 72.33
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-27001",
+    "stratum_key": "ship_B/focused/D",
+    "template": "full",
+    "quality_score": {
+      "completeness": 95.96,
+      "consistency": 68.4,
+      "accuracy": 69.98,
+      "timeliness": 64.11,
+      "validity": 91.2,
+      "usability": 95.37
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-28001",
+    "stratum_key": "ship_B/extreme/A",
+    "template": "extreme",
+    "quality_score": {
+      "completeness": 98.95,
+      "consistency": 89.98,
+      "accuracy": 97.03,
+      "timeliness": 69.47,
+      "validity": 66.5,
+      "usability": 92.0
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-29001",
+    "stratum_key": "ship_B/extreme/B",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 95.26,
+      "consistency": 60.99,
+      "accuracy": 89.46,
+      "timeliness": 73.29,
+      "validity": 97.23,
+      "usability": 92.09
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-30001",
+    "stratum_key": "ship_B/extreme/C",
+    "template": "balanced",
+    "quality_score": {
+      "completeness": 70.67,
+      "consistency": 91.49,
+      "accuracy": 64.32,
+      "timeliness": 94.89,
+      "validity": 94.34,
+      "usability": 68.9
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  },
+  {
+    "id": "RCI-S2-31001",
+    "stratum_key": "ship_B/extreme/D",
+    "template": "extreme",
+    "quality_score": {
+      "completeness": 73.99,
+      "consistency": 92.82,
+      "accuracy": 94.85,
+      "timeliness": 68.92,
+      "validity": 86.4,
+      "usability": 75.94
+    },
+    "verified": false,
+    "verification_fields": {},
+    "extraction_accuracy": null
+  }
+]
