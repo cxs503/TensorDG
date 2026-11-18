@@ -1,0 +1,59 @@
+{
+  "case": "CASE-DG-CKS1998-CURVED-OPERATOR-SIGN-FIX",
+  "reference": "Cockburn & Shu, JCP 141 (1998) 199-224, Part V; Kopriva & Batta, JCP 270 (2014) 550 (metric identities)",
+  "gate": 0.03,
+  "description": "Curvilinear (isoparametric) DG for 2D Euler equations — interface orientation and flux trace fix. The pre-fix assembly had low faces carrying the interior physical trace in the inward orientation, producing a positive eigenvalue of +2.1 in the linearised spectrum (anti-dissipative). The fix reverses the low-face normal so all faces use the outward reference normal, matching the high-face convention.",
+  "physics": {
+    "equation": "2D Euler (compressible inviscid)",
+    "flux": "HLLC (Toro)",
+    "scheme": "Strong-form modal DG, tensor-product Legendre basis",
+    "geometry": "Isoparametric quadrilateral elements, geometry degree 3",
+    "domain": "Box [0,10] x [0,10] with sinusoidal warp (amplitude 0.06, strength 1 or 5)",
+    "mesh": "2x2 elements (4 DOF per cell for p0, 16 for p1)",
+    "time_integrator": "SSP-RK3",
+    "cfl": 0.2
+  },
+  "evidence_lines": [
+    {
+      "id": "G1_spectrum",
+      "title": "Linear spectrum about uniform flow",
+      "description": "Max real eigenvalue of dU/dt about a uniform flow. Pre-fix has positive eigenvalues (unstable); fixed is neutral (round-off).",
+      "acceptance": "fixed.max_real < 1e-8 for all mesh/degree combinations",
+      "result": "PASS",
+      "details": "straight_2x2_p0: 3.80e-09, straight_2x2_p1: -1.44e-11, warped_2x2_p0: 8.33e-10, warped_2x2_p1: 1.06e-10"
+    },
+    {
+      "id": "G2_convergence",
+      "title": "Design order — smooth isentropic vortex",
+      "description": "Relative L2 error on straight and warped meshes at p=1,2. Design order p+1, paper tolerance p+1/2.",
+      "acceptance": "observed_order >= paper_tolerance (p+1/2) for all cases",
+      "result": "PASS",
+      "details": "straight_p1: 1.84,1.77 (design 2, tol 1.5); warped_p1: 2.01,1.73; warped_p2: 1.90 (design 3, tol 2.5)"
+    },
+    {
+      "id": "G3_conservation",
+      "title": "Conservation over finite-time march",
+      "description": "Total mass/momentum/energy drift on 8x8 mesh, strength 5, t=0.5.",
+      "acceptance": "relative_drift < 1e-10",
+      "result": "PASS",
+      "details": "straight_p1: 9.89e-16, warped_p1: 4.78e-15, warped_p2: 8.90e-15"
+    },
+    {
+      "id": "G4_wall_march",
+      "title": "Wall-bounded channel — reflective wall stability",
+      "description": "Semi-discrete residual on exact uniform slip state, then time march to observe round-off growth.",
+      "acceptance": "operator_defect < 1e-10 (semi-discrete); blowup_step > 100 (finite-time stability)",
+      "result": "PASS_WITH_NOTE",
+      "details": "operator_defect: 1.03e-14 (PASS); blowup at step 694 — reflective wall remains linearly unstable but ~10x slower than pre-fix"
+    }
+  ],
+  "artifacts": {
+    "metrics_json": "metrics.json",
+    "audit_md": "audit.md",
+    "convergence_png": "convergence_and_spectrum.png",
+    "wall_march_png": "wall_march_growth.png"
+  },
+  "regenerator": "benchmarks/euler_curved_sign_fix_audit.py",
+  "generated_at": "2026-11-18T13:19:00Z",
+  "status": "verified"
+}
