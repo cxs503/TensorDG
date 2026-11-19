@@ -403,6 +403,42 @@ def ladder_completeness(records: list) -> dict:
     }
 
 
+def pending_runs_audit(records: list) -> dict:
+    """Audit the ``PENDING_RUNS`` registry itself, not just the ladder.
+
+    :func:`ladder_completeness` asks "is there a file?" for every *declared*
+    checkpoint.  This audit asks the question the other way round: is the
+    ``PENDING_RUNS`` registry consistent with the ladder and the records?
+
+    * ``orphans`` -- keys in ``PENDING_RUNS`` that are not in ``LADDER``.  Such
+      an entry can never become live (nothing is declared to produce it) and
+      silently inflates the "a job is behind this hole" claim, so it is a
+      bookkeeping defect, not a pending run.
+    * ``inert``   -- keys whose record is already on disk.  The entry is
+      ignored automatically by :func:`ladder_completeness`; naming it here
+      keeps the dead-job history visible without reading it as a hole.
+    * ``live``    -- keys still missing: the genuine, self-resolving holes that
+      keep the verdict INCOMPLETE until they land.
+
+    ``consistent`` is True iff there are no orphans: the registry only ever
+    names checkpoints the ladder actually declares.
+    """
+    declared = set(declared_task_keys())
+    present = {record["task_key"] for record in records}
+    orphans = sorted(key for key in PENDING_RUNS if key not in declared)
+    inert = sorted(key for key in PENDING_RUNS
+                   if key in declared and key in present)
+    live = sorted(key for key in PENDING_RUNS
+                  if key in declared and key not in present)
+    return {
+        "registered": len(PENDING_RUNS),
+        "orphans": orphans,
+        "inert": inert,
+        "live": live,
+        "consistent": not orphans,
+    }
+
+
 def canonical_config(config: dict) -> dict:
     """Configuration in a comparison-normal form.
 
