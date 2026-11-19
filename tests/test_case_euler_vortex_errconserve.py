@@ -300,6 +300,46 @@ def test_committed_evidence_covers_every_declared_checkpoint():
     assert completeness["declared"] == len(ec.LADDER)
 
 
+def test_pending_runs_registry_has_no_orphan_entries():
+    """Guards the shipped registry: every PENDING_RUNS key must be declared.
+
+    A registry entry for a checkpoint the ladder never declares can never
+    become live and silently inflates the "a job is behind this hole" claim, so
+    the registry must only name declared checkpoints.
+    """
+    audit = ec.pending_runs_audit([])
+    assert audit["orphans"] == []
+    assert audit["consistent"] is True
+    assert audit["registered"] == len(ec.PENDING_RUNS)
+
+
+def test_pending_runs_audit_classifies_inert_and_live():
+    """A landed record makes its entry inert; a missing one stays live."""
+    # Full bundle: every registered checkpoint is on disk -> all inert, none live.
+    full = ec.pending_runs_audit(_full_ladder_records())
+    assert full["inert"] == sorted(ec.PENDING_RUNS)
+    assert full["live"] == []
+    assert full["consistent"] is True
+    # Drop two registered checkpoints: they turn live, the rest stay inert.
+    drop = ("dg_d1_n32_t5_cfl0.2", "dg_d2_n32_t20_cfl0.2")
+    partial = ec.pending_runs_audit(_full_ladder_records(drop=drop))
+    assert partial["live"] == sorted(drop)
+    assert partial["inert"] == sorted(set(ec.PENDING_RUNS) - set(drop))
+    assert partial["consistent"] is True
+
+
+def test_pending_runs_audit_flags_an_orphan_entry(monkeypatch):
+    """Anti-vacuity: the audit must discriminate a registry/ladder mismatch."""
+    orphan = "dg_d9_n32_t1_cfl0.2"
+    assert orphan not in set(ec.declared_task_keys())
+    monkeypatch.setitem(ec.PENDING_RUNS, orphan, "cj9999")
+    audit = ec.pending_runs_audit(_full_ladder_records())
+    assert audit["orphans"] == [orphan]
+    assert audit["consistent"] is False
+    # the orphan is neither inert nor live: it is not a declared checkpoint
+    assert orphan not in audit["inert"] and orphan not in audit["live"]
+
+
 # ---------------------------------------------------------------------------
 # C7: design-space invariance
 # ---------------------------------------------------------------------------
