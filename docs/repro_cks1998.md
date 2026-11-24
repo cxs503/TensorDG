@@ -194,3 +194,15 @@ initial values (0.5625 and 1.375). The momentum integral reaches 0.18 from the
 pressure difference across the two ends. The last column checks all three
 against these analytic balances at t=0.2. The three relative errors decrease
 at both refinements. Only the finest mesh meets 3% for every field.
+
+#### Off-grid diaphragm initialization
+
+The P0 and P1–P3 Riemann entry points integrate the two conserved states in
+each cell according to the fraction on each side of the diaphragm. All
+initial higher modes are zero. For the quarter-cell case on [-1,1] in
+`tests/test_euler_dg_diaphragm.py`, the analytic mass, momentum, and energy
+integrals are (2.825, 2.125, 10.95). Across P0–P3 the largest absolute
+residual was 4.45e-16 or less (CPU float64). On a 21-cell mesh a P2 stationary
+contact with the diaphragm at the middle of the central cell also preserved
+the analytic cell averages and zero higher modes through t=0.02 within
+3e-13. Reproduce with `OMP_NUM_THREADS=1 python -m pytest -q tests/test_euler_dg_diaphragm.py`.

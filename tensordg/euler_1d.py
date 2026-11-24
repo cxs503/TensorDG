@@ -272,6 +272,16 @@ def hllc_rhs(u, dx, wave_speed: str = "davis"):
     return -(right_flux - left_flux) / dx
 
 
+def _riemann_cell_averages(left_state, right_state, ncells, lower, dx, diaphragm, device, dtype):
+    """Cell centers and exact conservative averages of a step on a uniform grid."""
+    indices = torch.arange(ncells, device=device, dtype=dtype)
+    centers = lower + (indices + 0.5) * dx
+    states = torch.as_tensor((left_state, right_state), dtype=dtype, device=device)
+    left, right = primitive_to_conservative(*states.unbind(dim=1))
+    left_fraction = ((diaphragm - lower) / dx - indices).clamp(0., 1.)
+    return centers, torch.lerp(right, left, left_fraction[:, None])
+
+
 def solve_riemann(
     left_state: tuple[float, float, float],
     right_state: tuple[float, float, float],
@@ -301,12 +311,7 @@ def solve_riemann(
         raise ValueError("domain must be increasing and contain the diaphragm")
     dev = torch.device(device)
     dx = (upper - lower) / ncells
-    x = lower + (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * dx
-    left_mask = x < diaphragm
-    rho = torch.where(left_mask, torch.full_like(x, left_state[0]), torch.full_like(x, right_state[0]))
-    velocity = torch.where(left_mask, torch.full_like(x, left_state[1]), torch.full_like(x, right_state[1]))
-    pressure = torch.where(left_mask, torch.full_like(x, left_state[2]), torch.full_like(x, right_state[2]))
-    u = primitive_to_conservative(rho, velocity, pressure)
+    x, u = _riemann_cell_averages(left_state, right_state, ncells, lower, dx, diaphragm, dev, dtype)
 
     time, steps, dt = 0.0, 0, 0.0
     while time < final_time:

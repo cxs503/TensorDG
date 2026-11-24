@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from .euler_1d import GAMMA, hllc_flux, physical_flux, primitive_to_conservative, sound_speed
+from .euler_1d import _riemann_cell_averages, GAMMA, hllc_flux, physical_flux, primitive_to_conservative, sound_speed
 from .limiters import apply_limiter
 
 
@@ -202,15 +202,9 @@ def solve_euler_dg_1d(
         raise ValueError("domain must be increasing and contain the diaphragm")
     dev = torch.device(device)
     dx = (upper - lower) / ncells
-    x = lower + (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * dx
-    # Initialize a piecewise-constant state with exact conserved cell averages.
-    # Mixing primitive variables in the cut cell would lose momentum or energy.
-    states = torch.as_tensor((left_state, right_state), dtype=dtype, device=dev)
-    left, right = primitive_to_conservative(*states.unbind(dim=1))
-    diaphragm_cell = (diaphragm - lower) / dx
-    left_fraction = (diaphragm_cell - torch.arange(ncells, device=dev, dtype=dtype)).clamp(0., 1.)
+    x, averages = _riemann_cell_averages(left_state, right_state, ncells, lower, dx, diaphragm, dev, dtype)
     coeff = torch.zeros((ncells, degree + 1, 3), device=dev, dtype=dtype)
-    coeff[:, 0] = torch.lerp(right, left, left_fraction[:, None])
+    coeff[:, 0] = averages
     nodes, weights, phi, dphi, phi_left, phi_right = _operators(degree, dev, dtype)
     check_points = torch.cat((phi, phi_left[None, :], phi_right[None, :]), dim=0)
 
