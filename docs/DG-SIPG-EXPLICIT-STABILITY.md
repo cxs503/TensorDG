@@ -170,3 +170,16 @@ At t=0.02 the maximum errors against the integrated sine-mode Fourier flux
 were 4.224e-6, 2.120e-7 and 8.906e-9 on 8, 16 and 32 degree-two cells
 using three time steps per cell. At 16 cells dense, sparse and matrix-free
 runs all balanced every cell to within 7e-14.
+
+The dense, sparse, matrix-free and matrix-exponential 1-D heat drivers accept
+`initial_temperature(x)`, evaluated on the cell quadrature grid and projected
+onto the Legendre basis. Use `heat_error(..., reference=exact)` with an
+independent function of position and time for other initial profiles.
+
+For `sin(πx) + 0.8 sin(2πx)`, the exact temperature damps each term by
+`exp(-k²t)` for its wavenumber k. Integrating Fourier's law gives each
+term's signed face transfer as `amplitude * expm1(-k²t) * cos(kx) / k`.
+At t=0.03 the sparse degree-two calculation on 8, 16 and 32 cells (12
+steps per cell) produced maximum transfer errors 9.342e-6, 6.921e-7 and
+6.824e-8, with relative temperature L2 errors 9.101e-4, 1.140e-4 and
+1.427e-5. The right boundary supplied heat while the left removed it.

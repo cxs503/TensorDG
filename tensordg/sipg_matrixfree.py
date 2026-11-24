@@ -520,10 +520,10 @@ def solve_heat_1d_matrixfree(
     dtype: torch.dtype = torch.float64,
     rtol: float = 1e-12,
     maxiter: int = 5_000,
-    *, integrate_face_fluxes: bool = False,
+    *, integrate_face_fluxes: bool = False, initial_temperature=None,
 ) -> tuple:
     """Matrix-free CN heat solve: each time step uses PCG."""
-    from tensordg.heat_1d import sipg_heat_face_fluxes, _operators
+    from tensordg.heat_1d import sipg_heat_face_fluxes, _operators, _project_initial
 
     dev = torch.device(device)
     h = 1.0 / ncells
@@ -535,13 +535,7 @@ def solve_heat_1d_matrixfree(
     ndofs = ncells * modes
 
     # Initial condition
-    xq = centers[:, None] + 0.5 * h * nodes[None, :]
-    initial = torch.sin(math.pi * xq)
-    coeff = torch.empty((ncells, modes), device=dev, dtype=dtype)
-    for k in range(modes):
-        coeff[:, k] = (2 * k + 1) * 0.5 * torch.sum(
-            weights[None, :] * initial * phi[:, k][None, :], dim=1,
-        )
+    coeff = _project_initial(centers, h, nodes, weights, phi, initial_temperature)
 
     steps = (
         max(1, math.ceil(final_time / (0.02 * h)))

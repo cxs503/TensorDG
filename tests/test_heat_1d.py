@@ -60,3 +60,24 @@ def test_accumulated_flux_balances_all_cell_stores_and_matches_sine_decay():
         torch.testing.assert_close(flux, exact, atol=1e-6, rtol=0.)
         _, _, zero = solve_heat_1d(n, 2, 0., backend=backend, integrate_face_fluxes=True)
         assert zero["integrated_face_fluxes"] == [0.]*(n+1)
+
+
+def test_asymmetric_modal_heat_transfer_with_custom_profile():
+    from tensordg.heat_1d import solve_heat_1d_exact_time
+
+    n, end = 16, .03
+
+    def profile(x):
+        return torch.sin(math.pi*x) + .8*torch.sin(2*math.pi*x)
+
+    modes = torch.tensor([math.pi, 2*math.pi], dtype=torch.float64)
+    amplitudes = modes.new_tensor([1., .8])
+    faces = torch.linspace(0., 1., n+1, dtype=modes.dtype)
+    exact = (amplitudes * torch.expm1(-modes**2*end) / modes) @ torch.cos(modes[:, None]*faces)
+    _, reference, _ = solve_heat_1d_exact_time(n, 2, end, initial_temperature=profile)
+    for backend in ("dense", "sparse", "matrix-free"):
+        _, coeff, info = solve_heat_1d(n, 2, end, 192, backend=backend,
+                                      integrate_face_fluxes=True, initial_temperature=profile)
+        flux = modes.new_tensor(info["integrated_face_fluxes"])
+        torch.testing.assert_close(flux, exact, atol=3e-6, rtol=0.)
+        torch.testing.assert_close(coeff[:, 0], reference[:, 0], atol=6e-6, rtol=0.)

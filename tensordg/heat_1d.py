@@ -56,6 +56,17 @@ def _operators(degree: int, device: torch.device, dtype: torch.dtype):
     )
 
 
+def _project_initial(centers, h, nodes, weights, phi, initial_temperature):
+    """Quadrature L2 projection onto the cellwise Legendre basis."""
+    x = centers[:, None] + .5*h*nodes
+    values = torch.sin(math.pi*x) if initial_temperature is None else initial_temperature(x)
+    values = torch.as_tensor(values, device=x.device, dtype=x.dtype).expand_as(x)
+    if not torch.isfinite(values).all():
+        raise ValueError("initial temperature must be finite at quadrature nodes")
+    modes = torch.arange(phi.shape[1], dtype=x.dtype, device=x.device)
+    return ((values*weights) @ phi) * (modes + .5)
+
+
 def _add_block(matrix, indices, block):
     matrix[indices[:, None], indices[None, :]] += block
 
@@ -66,6 +77,7 @@ def assemble_sipg_1d(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
+    *, initial_temperature=None,
 ):
     """Assemble the SIPG mass/diffusion matrices for ``u_t = u_xx`` on (0,1).
 
@@ -77,7 +89,7 @@ def assemble_sipg_1d(
     Returns a dict with ``centers``, ``h``, ``dofs``, ``mass_matrix`` (SPD),
     ``diffusion`` (the SPD SIPG stiffness ``K`` of ``M du/dt = -K u``, with face
     penalty ``penalty * (p+1)**2 / h`` on every interface and boundary face), and
-    ``initial_coefficients`` (L2 projection of ``sin(pi*x)``).
+    ``initial_coefficients`` (L2 projection of the supplied profile, default ``sin(pi*x)``).
     """
     if ncells < 2 or degree < 1 or penalty <= 0.0:
         raise ValueError("ncells >= 2, degree >= 1, and positive penalty are required")
@@ -123,13 +135,7 @@ def assemble_sipg_1d(
         )
         _add_block(diffusion, dofs(cell), block)
 
-    xq = centers[:, None] + 0.5 * h * nodes[None, :]
-    initial = torch.sin(math.pi * xq)
-    coeff = torch.empty((ncells, modes), device=dev, dtype=dtype)
-    for k in range(modes):
-        coeff[:, k] = (2 * k + 1) * 0.5 * torch.sum(
-            weights[None, :] * initial * phi[:, k][None, :], dim=1,
-        )
+    coeff = _project_initial(centers, h, nodes, weights, phi, initial_temperature)
     return {
         "ncells": ncells,
         "degree": degree,
@@ -161,15 +167,18 @@ def solve_heat_1d(
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     backend: str = "dense",
-    *, integrate_face_fluxes: bool = False,
+    *, integrate_face_fluxes: bool = False, initial_temperature=None,
 ):
-    """Solve u_t=u_xx with zero Dirichlet data and sin(pi*x) initial data.
+    """Solve u_t=u_xx with zero Dirichlet data and a projected initial profile.
 
     Crank--Nicolson is used for the global method-of-lines system. If
     ``time_steps`` is omitted, dt is approximately ``0.02*cell_width``.
 
     Parameters
     ----------
+    initial_temperature : optional callable
+        Evaluated on cell quadrature points and projected onto the modal basis.
+        The default profile is sin(pi*x).
     integrate_face_fluxes : bool
         Include the time-integrated flux toward +x at all faces in metadata
         under "integrated_face_fluxes", using Crank–Nicolson stage values.
@@ -185,13 +194,13 @@ def solve_heat_1d(
         from tensordg.sipg_sparse import solve_heat_1d_sparse
         return solve_heat_1d_sparse(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_face_fluxes=integrate_face_fluxes,
+            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature,
         )
     elif backend == "matrix-free":
         from tensordg.sipg_matrixfree import solve_heat_1d_matrixfree
         return solve_heat_1d_matrixfree(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_face_fluxes=integrate_face_fluxes,
+            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature,
         )
 
     # backend == "dense": original implementation
@@ -201,7 +210,7 @@ def solve_heat_1d(
         raise ValueError("final_time must be >= 0 and time_steps must be positive")
     dev = torch.device(device)
     assembly = assemble_sipg_1d(
-        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype,
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature,
     )
     h = assembly["h"]
     modes = degree + 1
@@ -245,6 +254,7 @@ def solve_heat_1d_exact_time(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
+    *, initial_temperature=None,
 ):
     """SIPG heat solution with the semi-discrete system integrated *exactly* in time.
 
@@ -262,7 +272,7 @@ def solve_heat_1d_exact_time(
     from scipy.linalg import expm
 
     system = assemble_sipg_1d(
-        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype,
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature,
     )
     mass = system["mass_matrix"].detach().cpu().numpy()
     diffusion = system["diffusion"].detach().cpu().numpy()
@@ -296,8 +306,9 @@ def solve_heat_1d_exact_time(
 
 
 def heat_error(
-    centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
+    centers: torch.Tensor, coeff: torch.Tensor, final_time: float, *, reference=exact_temperature,
 ) -> dict[str, float]:
+    """Quadrature error against reference(x, time), defaulting to the first sine mode."""
     degree = coeff.shape[1] - 1
     h = 1.0 / centers.numel()
     nodes_np, weights_np = np.polynomial.legendre.leggauss(max(2 * degree + 5, 8))
@@ -314,7 +325,7 @@ def heat_error(
     phi = torch.stack(basis, dim=1)
     numerical = coeff @ phi.T
     x = centers[:, None] + 0.5 * h * nodes[None, :]
-    exact = exact_temperature(x, final_time)
+    exact = reference(x, final_time)
     error2 = 0.5 * h * torch.sum(weights[None, :] * (numerical - exact) ** 2)
     norm2 = 0.5 * h * torch.sum(weights[None, :] * exact ** 2)
     absolute = float(torch.sqrt(error2).item())
