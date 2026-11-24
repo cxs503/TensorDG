@@ -177,3 +177,20 @@ primitive variables, following the original benchmark.
 
 Run the MC numerical regression and modal reconstruction checks with
 `OMP_NUM_THREADS=1 python -m pytest -q tests/test_sod_mc.py tests/test_limiter_units.py tests/test_limiter_kernel_budget.py`.
+
+#### MC refinement and conserved-integral balance
+
+Run `OMP_NUM_THREADS=1 python -m benchmarks.sod_mc_refinement` from the
+repository root. For the split-wave reference and the solver settings above:
+
+| Cells | Density relative L2 | Velocity relative L2 | Pressure relative L2 | Largest absolute integral residual |
+|---:|---:|---:|---:|---:|
+| 100 | 1.604% | 6.741% | 1.748% | 8.55e-14 |
+| 200 | 1.233% | 4.344% | 1.010% | 1.69e-13 |
+| 400 | 0.851% | 2.858% | 0.583% | 3.42e-13 |
+
+Before waves reach the boundary, the mass and energy integrals retain their
+initial values (0.5625 and 1.375). The momentum integral reaches 0.18 from the
+pressure difference across the two ends. The last column checks all three
+against these analytic balances at t=0.2. The three relative errors decrease
+at both refinements. Only the finest mesh meets 3% for every field.
