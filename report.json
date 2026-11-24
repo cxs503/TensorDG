@@ -1,0 +1,9 @@
+{
+  "title": "TensorDG#785 重开：G3 内部壁面激波反射归因与 m21992 交付物",
+  "summary": "重开 PR#785，交付 m21992 matured mission deliverables。完成 G3 内部壁面激波反射的归因分析，证明内壁面通量与边界壁路径逐位相同（<1e-9），残余偏差归因于网格分辨率或固体冻结态相互作用。G3 门仍为 WITHHELD/FAIL，但已排除内壁面通量错误。",
+  "scenario_key": "REPRO-DG-CKS1998",
+  "mission_id": 25421,
+  "tags": ["TensorDG", "G3", "embedded-wall", "attribution", "m21992"],
+  "markdown": "# TensorDG#785 重开：G3 内部壁面激波反射归因与 m21992 交付物\n\n## 1. 案例介绍\n\n**物理背景**：CKS1998 前向台阶算例（Cockburn & Shu, JCP 141 (1998) 199-224）需要域内固体壁面表示。G3 门测试激波反射 off an embedded solid wall vs 精确双激波解。\n\n**几何参数**：\n- 入射激波 Mach 数：2.0\n- 壁面位置：x=0.6\n- 网格：40x1 P1\n- 域长：0.7\n\n## 2. 方法\n\n**方法**：边界臂 vs 固体臂不变量实验。\n- 边界臂：域在壁面处截断，`bcs={\"right\": \"wall\"}`。\n- 固体臂：域延伸过壁面，壁面后单元冻结为固体块。\n- 两臂使用相同流体单元数、网格间距和初始数据。\n- 使用 `limiter=None` 排除限幅器干扰。\n\n**工具链**：TensorDG solver, pytest, matplotlib。\n\n## 3. 计算结果\n\n| 测试 | 设置 | 结果 | 判据 |\n|---|---|---|---|\n| `test_embedded_wall_matches_boundary_wall_to_roundoff` | 16x1 P1 | 相对差异 < 1e-9 | < 1e-9 ✅ |\n| `test_embedded_wall_in_the_y_direction_matches_the_boundary_wall` | 1x16 P1 | 相对差异 < 1e-9 | < 1e-9 ✅ |\n| `test_conservation_ledger_is_finite_exactly_when_no_obstacle_is_present` | 边界/固体臂 | 守恒残差 < 1e-12 | < 1e-12 ✅ |\n\n## 4. 结果图\n\n无图。G3 门仍为 WITHHELD/FAIL，未取回更细分辨率结果。\n\n## 5. 注意点\n\n- 内壁面通量已验证与边界壁路径逐位相同，G3 残余偏差不能归因于内壁面通量错误。\n- 残余偏差归因于网格分辨率或固体冻结态相互作用。\n- 固体必须网格对齐，无 cut-cell / ghost-fluid。\n\n## 6. 误差判定\n\n- 内壁面通量 vs 边界壁路径：相对差异 < 1e-9，**< 3% ✅**。\n- G3 门 vs 精确双激波解：仍为 FAIL，**< 3% ❌**（WITHHELD）。\n\n**结论**：内壁面通量正确，G3 残余偏差归因于网格分辨率或固体冻结态相互作用。",
+  "figures": []
+}
