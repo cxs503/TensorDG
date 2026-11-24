@@ -307,3 +307,24 @@ def heat_error(
     absolute = float(torch.sqrt(error2).item())
     norm = float(torch.sqrt(norm2).item())
     return {"absolute_l2": absolute, "exact_l2": norm, "relative_l2": absolute / norm}
+
+
+def sipg_heat_face_fluxes(coefficients: torch.Tensor, penalty: float = 20.) -> torch.Tensor:
+    """Return conductive flux toward +x at all faces of the uniform unit slab.
+
+    Uses the modal coefficients returned by solve_heat_1d, unit diffusivity,
+    homogeneous Dirichlet wall data and the solver's SIPG penalty parameter.
+    For cell i the inward net power is flux[i] - flux[i+1].
+    """
+    if coefficients.ndim != 2 or min(coefficients.shape) < 2:
+        raise ValueError("expected at least two cells and two Legendre modes")
+    if not math.isfinite(penalty) or penalty <= 0:
+        raise ValueError("penalty must be finite and positive")
+    cells, modes = coefficients.shape
+    *_, left, right, dleft, dright = _operators(modes-1, coefficients.device, coefficients.dtype)
+    trace_l, trace_r = coefficients @ left, coefficients @ right
+    grad_l, grad_r = (2*cells)*(coefficients @ dleft), (2*cells)*(coefficients @ dright)
+    strength = penalty*modes**2*cells
+    interior = -.5*(grad_r[:-1]+grad_l[1:]) + strength*(trace_r[:-1]-trace_l[1:])
+    return torch.cat((-grad_l[:1]-strength*trace_l[:1], interior,
+                      -grad_r[-1:]+strength*trace_r[-1:]))

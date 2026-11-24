@@ -147,3 +147,17 @@ python -m benchmarks.sipg_explicit_stability --output-dir validation/sipg_explic
 python tools/sipg_explicit_stability_report.py
 python -m pytest tests/test_sipg_explicit_stability.py -q
 ```
+
+### Cellwise conductive flux diagnostic
+
+For the uniform unit slab with zero Dirichlet walls and unit diffusivity,
+`tensordg.heat_1d.sipg_heat_face_fluxes(coefficients, penalty)` returns one
+flux per face, positive toward increasing x. Use the penalty from the solve.
+Subtract successive fluxes (left minus right) to obtain the integrated cell
+heating rate. A discontinuous degree-three field verifies this identity
+against the constant-mode row of the assembled stiffness operator.
+
+For the degree-two sine decay at time 0.02, the maximum face errors against
+`-π cos(πx) exp(-π²t)` were 1.4611e-4, 9.2400e-6 and 5.8049e-7 on 8,
+16 and 32 cells. This check uses the matrix exponential to isolate spatial
+error. Reproduce both checks with `python -m pytest -q tests/test_heat_1d.py`.

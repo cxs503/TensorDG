@@ -20,3 +20,26 @@ def test_documented_heat_case_is_below_three_percent():
     assert torch.isfinite(coeff).all()
     metrics = heat_error(x, coeff, 0.1)
     assert metrics["relative_l2"] < 0.03, metrics
+
+
+def test_face_flux_divergence_matches_each_sipg_cell_balance():
+    from tensordg.heat_1d import assemble_sipg_1d, sipg_heat_face_fluxes
+
+    assembly = assemble_sipg_1d(7, 3, penalty=13.)
+    coefficients = torch.arange(28, dtype=torch.float64).cos().reshape(7, 4)
+    flux = sipg_heat_face_fluxes(coefficients, penalty=13.)
+    # Testing with the constant Legendre mode gives the integrated cell dT/dt.
+    integrated_rate = -(assembly["diffusion"] @ coefficients.flatten()).reshape(7, 4)[:, 0]
+    torch.testing.assert_close(flux[:-1]-flux[1:], integrated_rate, atol=2e-11, rtol=0.)
+
+
+def test_heat_face_fluxes_converge_to_fourier_flux():
+    from tensordg.heat_1d import solve_heat_1d_exact_time, sipg_heat_face_fluxes
+
+    errors = []
+    for n in (8, 16, 32):
+        _, coeff, _ = solve_heat_1d_exact_time(ncells=n, degree=2, final_time=.02)
+        x = torch.linspace(0., 1., n+1, dtype=coeff.dtype)
+        exact = -torch.pi * torch.cos(torch.pi*x) * math.exp(-torch.pi**2*.02)
+        errors.append(float((sipg_heat_face_fluxes(coeff)-exact).abs().max()))
+    assert all(fine < coarse/3.5 for coarse, fine in zip(errors, errors[1:]))
