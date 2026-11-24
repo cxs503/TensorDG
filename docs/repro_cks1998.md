@@ -150,3 +150,30 @@ OMP_NUM_THREADS=1 python -m pytest tests/test_repro_cks1998.py -x -q
 **未完成 / 诚实边界**：论文表格单元格的逐格对照仍为 **WITHHELD**（仓内无 PDF，
 不冒充 REAL）；2-D 系统算例（JCP 141 主算例）未做；Sod 3% 门在 N=200 粗网格
 FAIL（4.17%）如实记录，门按预登记落在最细网格。
+
+### Sod velocity regression and optional MC reconstruction
+
+At N=400, P2, t=0.2, CFL=0.12 and M=1 with final-stage limiting, changing
+only the troubled-cell sensor in base revision `5db9ebe` reproduced the
+historical 2.37% velocity result. The historical sensor came from
+`fdc046a^`. The current sensor checks both sides of the cell. With the
+original Sod quadrature, the cell centered at x=0.85125 accounts for 72.1%
+of the current default reconstruction's squared velocity error.
+
+| Sensor and slope | Reference cell quadrature | Density relative L2 | Velocity relative L2 | Pressure relative L2 |
+|---|---|---:|---:|---:|
+| Historical one-sided, minmod | Original | 1.113% | 2.368% | 0.594% |
+| Two-sided, minmod | Original | 1.180% | 3.838% | 0.854% |
+| Two-sided, minmod | Split at exact wave positions | 1.166% | 3.770% | 0.843% |
+| Two-sided, MC | Original | 0.871% | 2.934% | 0.595% |
+| Two-sided, MC | Split at exact wave positions | 0.851% | 2.858% | 0.583% |
+
+Select MC by passing `limiter="tvb", limiter_kwargs={"reconstruction": "mc"}`
+to the 1-D Euler DG solver. This limits the centered slope to twice either
+one-sided increment and preserves the cell average. The default minmod case
+still exceeds the 3% velocity gate. The comparison uses primitive variables
+computed from numerical conserved cell averages and analytic averages of the
+primitive variables, following the original benchmark.
+
+Run the MC numerical regression and modal reconstruction checks with
+`OMP_NUM_THREADS=1 python -m pytest -q tests/test_sod_mc.py tests/test_limiter_units.py tests/test_limiter_kernel_budget.py`.

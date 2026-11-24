@@ -90,6 +90,7 @@ def _detect(
     limit_boundaries: bool = False,
     periodic: bool = False,
     limit_all: bool = False,
+    reconstruction: str = "minmod",
 ):
     """Troubled-cell mask and minmod slope in one pass.
 
@@ -111,6 +112,9 @@ def _detect(
     d_left = avg - avg_pad[:-2]   # u_i - u_{i-1}
     d_right = avg_pad[2:] - avg   # u_{i+1} - u_i
     troubled, slope = troubled_from_differences(d_left, d_right, dx, tvb_constant)
+    if reconstruction == "mc":
+        # MC = minmod(centered difference, 2*d_left, 2*d_right).
+        slope = _minmod(0.5 * (d_left + d_right), 2.0 * slope)
     if limit_all:
         # Strict TVD policy: minmod every cell, including the monotone ones the
         # TVB indicator releases.  Those released cells keep their full DG
@@ -186,6 +190,7 @@ def apply_tvb_limiter(
     limit_boundaries: bool = False,
     periodic: bool = False,
     limit_all: bool = False,
+    reconstruction: str = "minmod",
 ) -> torch.Tensor:
     """Apply the TVB limiter to a modal DG coefficient tensor.
 
@@ -194,18 +199,21 @@ def apply_tvb_limiter(
     coeff : (ncells, nmodes, nvar)
     dx : cell width
     tvb_constant : M in the TVB criterion; M=0 is strict TVD.
+    reconstruction : "minmod" or "mc" (monotonized central slope).
 
     Returns
     -------
     limited : same shape as *coeff*, with higher modes reduced in troubled
     cells.
     """
+    if reconstruction not in ("minmod", "mc"):
+        raise ValueError("reconstruction must be minmod or mc")
     if coeff.shape[1] <= 1:
         return coeff  # P0 -- nothing to limit
 
     troubled, slope = _detect(
         coeff, dx, tvb_constant, limit_boundaries=limit_boundaries,
-        periodic=periodic, limit_all=limit_all,
+        periodic=periodic, limit_all=limit_all, reconstruction=reconstruction,
     )
     if not troubled.any():
         return coeff

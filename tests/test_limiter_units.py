@@ -140,3 +140,14 @@ def test_tvb_limiter_reconstruction_interpolates_minmod_edge_values():
     # TVD bookkeeping: the reconstruction slope must not exceed half the
     # smaller neighbour jump, otherwise the limiter is not the minmod one.
     assert abs(limited[cell, 1, 0].item()) <= 0.5 * abs(m) + 1e-15
+
+def test_mc_modal_slopes_and_cell_averages():
+    # Increments include a centered branch, a capped slope and a sign change.
+    averages = torch.tensor([0., 1., 3., 9., 8., 6.], dtype=torch.float64)
+    coeff = torch.ones((6, 3, 1), dtype=torch.float64)
+    coeff[:, 0, 0] = averages
+    limited = apply_tvb_limiter(coeff, 1., limit_all=True, reconstruction="mc")
+    torch.testing.assert_close(limited[:, 0, 0], averages)
+    torch.testing.assert_close(limited[:, 1, 0], averages.new_tensor(
+        [0., .75, 2., 0., -.75, 0.]))
+    assert torch.count_nonzero(limited[:, 2]) == 0
