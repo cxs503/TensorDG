@@ -203,13 +203,14 @@ def solve_euler_dg_1d(
     dev = torch.device(device)
     dx = (upper - lower) / ncells
     x = lower + (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * dx
-    mask = x < diaphragm
-    rho = torch.where(mask, torch.full_like(x, left_state[0]), torch.full_like(x, right_state[0]))
-    velocity = torch.where(mask, torch.full_like(x, left_state[1]), torch.full_like(x, right_state[1]))
-    pressure = torch.where(mask, torch.full_like(x, left_state[2]), torch.full_like(x, right_state[2]))
-    average = primitive_to_conservative(rho, velocity, pressure)
+    # Initialize a piecewise-constant state with exact conserved cell averages.
+    # Mixing primitive variables in the cut cell would lose momentum or energy.
+    states = torch.as_tensor((left_state, right_state), dtype=dtype, device=dev)
+    left, right = primitive_to_conservative(*states.unbind(dim=1))
+    diaphragm_cell = (diaphragm - lower) / dx
+    left_fraction = (diaphragm_cell - torch.arange(ncells, device=dev, dtype=dtype)).clamp(0., 1.)
     coeff = torch.zeros((ncells, degree + 1, 3), device=dev, dtype=dtype)
-    coeff[:, 0] = average
+    coeff[:, 0] = torch.lerp(right, left, left_fraction[:, None])
     nodes, weights, phi, dphi, phi_left, phi_right = _operators(degree, dev, dtype)
     check_points = torch.cat((phi, phi_left[None, :], phi_right[None, :]), dim=0)
 
