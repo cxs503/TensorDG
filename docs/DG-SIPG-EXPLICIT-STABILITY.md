@@ -161,3 +161,12 @@ For the degree-two sine decay at time 0.02, the maximum face errors against
 `-π cos(πx) exp(-π²t)` were 1.4611e-4, 9.2400e-6 and 5.8049e-7 on 8,
 16 and 32 cells. This check uses the matrix exponential to isolate spatial
 error. Reproduce both checks with `python -m pytest -q tests/test_heat_1d.py`.
+
+Pass `integrate_face_fluxes=True` to `solve_heat_1d` to record the signed
+time integral at each face in `metadata["integrated_face_fluxes"]`. The
+Crank–Nicolson trapezoid is applied to modal coefficients; the linear flux
+operator then gives the integrated transfer without retaining time history.
+At t=0.02 the maximum errors against the integrated sine-mode Fourier flux
+were 4.224e-6, 2.120e-7 and 8.906e-9 on 8, 16 and 32 degree-two cells
+using three time steps per cell. At 16 cells dense, sparse and matrix-free
+runs all balanced every cell to within 7e-14.

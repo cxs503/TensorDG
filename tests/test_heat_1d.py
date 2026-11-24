@@ -43,3 +43,20 @@ def test_heat_face_fluxes_converge_to_fourier_flux():
         exact = -torch.pi * torch.cos(torch.pi*x) * math.exp(-torch.pi**2*.02)
         errors.append(float((sipg_heat_face_fluxes(coeff)-exact).abs().max()))
     assert all(fine < coarse/3.5 for coarse, fine in zip(errors, errors[1:]))
+
+
+def test_accumulated_flux_balances_all_cell_stores_and_matches_sine_decay():
+    from tensordg.heat_1d import assemble_sipg_1d
+
+    n, end = 16, .02
+    initial = assemble_sipg_1d(n, 2)["initial_coefficients"]
+    faces = torch.linspace(0., 1., n+1, dtype=initial.dtype)
+    exact = math.expm1(-math.pi**2*end) * torch.cos(math.pi*faces) / math.pi
+    for backend in ("dense", "sparse", "matrix-free"):
+        _, final, info = solve_heat_1d(n, 2, end, 48, backend=backend, integrate_face_fluxes=True)
+        flux = initial.new_tensor(info["integrated_face_fluxes"])
+        torch.testing.assert_close((final[:, 0]-initial[:, 0])/n, flux[:-1]-flux[1:],
+                                   atol=1e-11, rtol=0.)
+        torch.testing.assert_close(flux, exact, atol=1e-6, rtol=0.)
+        _, _, zero = solve_heat_1d(n, 2, 0., backend=backend, integrate_face_fluxes=True)
+        assert zero["integrated_face_fluxes"] == [0.]*(n+1)

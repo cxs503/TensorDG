@@ -520,9 +520,10 @@ def solve_heat_1d_matrixfree(
     dtype: torch.dtype = torch.float64,
     rtol: float = 1e-12,
     maxiter: int = 5_000,
+    *, integrate_face_fluxes: bool = False,
 ) -> tuple:
     """Matrix-free CN heat solve: each time step uses PCG."""
-    from tensordg.heat_1d import _operators
+    from tensordg.heat_1d import sipg_heat_face_fluxes, _operators
 
     dev = torch.device(device)
     h = 1.0 / ncells
@@ -549,6 +550,7 @@ def solve_heat_1d_matrixfree(
     dt = final_time / steps if steps else 0.0
 
     state = coeff.reshape(-1)
+    integrated = torch.zeros_like(state) if integrate_face_fluxes else None
 
     # Build diagonal preconditioner for system = M + 0.5*dt*D
     volume_mass = 0.5 * h * mass
@@ -601,12 +603,15 @@ def solve_heat_1d_matrixfree(
             )
 
         for _ in range(steps):
+            previous = state
             b = explicit_mv(state)
             state, cg_info = _pcg(
                 system_mv, b, precond=precond, rtol=rtol, maxiter=maxiter,
             )
             total_cg_iters += cg_info["iterations"]
             converged_steps += int(cg_info["converged"])
+            if integrated is not None:
+                integrated += (.5 * dt) * (previous + state)
 
     coeff = state.reshape(ncells, modes)
     metadata = {
@@ -618,4 +623,7 @@ def solve_heat_1d_matrixfree(
         "cg_all_converged": converged_steps == steps,
         "cg_rtol": rtol,
     }
+    if integrated is not None:
+        integrated_coeff = torch.as_tensor(integrated, dtype=dtype, device=dev).reshape(ncells, modes)
+        metadata["integrated_face_fluxes"] = sipg_heat_face_fluxes(integrated_coeff, penalty).tolist()
     return centers, coeff, metadata

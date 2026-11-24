@@ -161,6 +161,7 @@ def solve_heat_1d(
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     backend: str = "dense",
+    *, integrate_face_fluxes: bool = False,
 ):
     """Solve u_t=u_xx with zero Dirichlet data and sin(pi*x) initial data.
 
@@ -169,6 +170,9 @@ def solve_heat_1d(
 
     Parameters
     ----------
+    integrate_face_fluxes : bool
+        Include the time-integrated flux toward +x at all faces in metadata
+        under "integrated_face_fluxes", using Crank–Nicolson stage values.
     backend : str
         - ``"dense"``: assemble dense torch matrices (default, backward compatible)
         - ``"sparse"``: assemble scipy CSR matrices, solve with splu
@@ -181,11 +185,13 @@ def solve_heat_1d(
         from tensordg.sipg_sparse import solve_heat_1d_sparse
         return solve_heat_1d_sparse(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
+            integrate_face_fluxes=integrate_face_fluxes,
         )
     elif backend == "matrix-free":
         from tensordg.sipg_matrixfree import solve_heat_1d_matrixfree
         return solve_heat_1d_matrixfree(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
+            integrate_face_fluxes=integrate_face_fluxes,
         )
 
     # backend == "dense": original implementation
@@ -210,11 +216,15 @@ def solve_heat_1d(
     ) if final_time > 0.0 else 0
     dt = final_time / steps if steps else 0.0
     state = coeff.reshape(-1)
+    integrated = torch.zeros_like(state) if integrate_face_fluxes else None
     if steps:
         system = mass_matrix + 0.5 * dt * diffusion
         explicit = mass_matrix - 0.5 * dt * diffusion
         for _ in range(steps):
+            previous = state
             state = torch.linalg.solve(system, explicit @ state)
+            if integrated is not None:
+                integrated += (.5 * dt) * (previous + state)
     coeff = state.reshape(ncells, modes)
     metadata = {
         "ncells": ncells, "degree": degree, "final_time": final_time,
@@ -222,6 +232,9 @@ def solve_heat_1d(
         "diffusion_symmetry_error": float(torch.max(torch.abs(diffusion - diffusion.T)).item()),
         "device": str(dev),
     }
+    if integrated is not None:
+        integrated_coeff = torch.as_tensor(integrated, dtype=dtype, device=dev).reshape(ncells, modes)
+        metadata["integrated_face_fluxes"] = sipg_heat_face_fluxes(integrated_coeff, penalty).tolist()
     return centers, coeff, metadata
 
 
