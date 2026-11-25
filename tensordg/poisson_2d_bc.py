@@ -92,7 +92,7 @@ def assemble_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None, robin_films=None,
+    *, dirichlet_values=None, robin_films=None, sparse=False,
 ):
     """Assemble ``-Delta u = f`` with per-side Dirichlet/Neumann data.
 
@@ -101,7 +101,8 @@ def assemble_poisson_2d_bc(
     robin_films maps each Robin side to (h, ambient), implementing outward
     Fourier flux h*(u-ambient); both entries accept scalars or callables.
     Returns ``(matrix, rhs, grid, metadata)`` where ``grid`` holds the element
-    centres and sizes needed by :func:`l2_error_2d`.
+    centres and sizes needed by :func:`l2_error_2d`. With sparse=True the
+    CPU operator is a SciPy CSR matrix. The default returns a torch tensor.
     """
     nx, ny = (ncells, ncells) if isinstance(ncells, int) else tuple(ncells)
     if nx < 2 or ny < 2 or degree not in (1, 2, 3):
@@ -136,7 +137,26 @@ def assemble_poisson_2d_bc(
     modes = degree + 1
     local_dofs = modes * modes
     ndofs = nx * ny * local_dofs
-    matrix = torch.zeros((ndofs, ndofs), device=dev, dtype=dtype)
+    if sparse:
+        from scipy.sparse import coo_matrix
+
+        if dev.type != "cpu" or dtype not in (torch.float32, torch.float64):
+            raise ValueError("sparse assembly requires CPU float32 or float64")
+        rows, columns, values = [], [], []
+
+        def add(indices, block):
+            idx = indices.numpy()
+            data = block.numpy()
+            i, j = np.nonzero(data)
+            rows.append(idx[i])
+            columns.append(idx[j])
+            values.append(data[i, j])
+    else:
+        matrix = torch.zeros((ndofs, ndofs), device=dev, dtype=dtype)
+
+        def add(indices, block):
+            _add_block(matrix, indices, block)
+
     local = torch.arange(local_dofs, device=dev)
 
     def dofs(ix: int, iy: int):
@@ -152,7 +172,7 @@ def assemble_poisson_2d_bc(
     volume = volume_x + volume_y
     for ix in range(nx):
         for iy in range(ny):
-            _add_block(matrix, dofs(ix, iy), volume)
+            add(dofs(ix, iy), volume)
 
     # ---- interior faces (identical to the Dirichlet-only benchmark) ------
     measure_x, measure_y = 0.5 * hy, 0.5 * hx
@@ -162,14 +182,14 @@ def assemble_poisson_2d_bc(
     )
     for ix in range(nx - 1):
         for iy in range(ny):
-            _add_block(matrix, torch.cat((dofs(ix, iy), dofs(ix + 1, iy))), face_x)
+            add(torch.cat((dofs(ix, iy), dofs(ix + 1, iy))), face_x)
     face_y = interior_face_operator(
         phi, weights, phi_left, phi_right, dphi_left, dphi_right,
         "y", hy, measure_y, penalty, modes,
     )
     for ix in range(nx):
         for iy in range(ny - 1):
-            _add_block(matrix, torch.cat((dofs(ix, iy), dofs(ix, iy + 1))), face_y)
+            add(torch.cat((dofs(ix, iy), dofs(ix, iy + 1))), face_y)
 
     # ---- boundary faces --------------------------------------------------
     load = torch.zeros(ndofs, device=dev, dtype=dtype).view(nx, ny, local_dofs)
@@ -188,7 +208,7 @@ def assemble_poisson_2d_bc(
             )
             for line in range(ny if axis == "x" else nx):
                 ix, iy = (index, line) if axis == "x" else (line, index)
-                _add_block(matrix, dofs(ix, iy), block)
+                add(dofs(ix, iy), block)
             data = traces.get(side)
             if data is None:
                 continue
@@ -201,7 +221,7 @@ def assemble_poisson_2d_bc(
             blocks = measure*torch.einsum("iq,q,qk,ql->ikl", h, weights, test, test)
             for line, block in enumerate(blocks):
                 ix, iy = (index, line) if axis == "x" else (line, index)
-                _add_block(matrix, dofs(ix, iy), block)
+                add(dofs(ix, iy), block)
             data = h*ambient
         else:
             data = fluxes.get(side)
@@ -223,12 +243,19 @@ def assemble_poisson_2d_bc(
         "xyqr,q,r,qk,rl->xykl", f, weights, weights, phi, phi,
     )).reshape(nx, ny, local_dofs)
 
+    if sparse:
+        matrix = coo_matrix((np.concatenate(values), (np.concatenate(rows), np.concatenate(columns))),
+                            shape=(ndofs, ndofs)).tocsr()
+        matrix.eliminate_zeros()
+        symmetry_error = float(np.max(np.abs((matrix - matrix.T).data), initial=0))
+    else:
+        symmetry_error = float((matrix - matrix.T).abs().max())
     grid = {"x": x, "y": y, "hx": hx, "hy": hy, "degree": degree}
     metadata = {
         "ncells": (nx, ny), "degree": degree, "dofs": ndofs, "penalty": penalty,
         "bc": dict(types), "temperature_anchored": anchored,
-        "matrix_symmetry_error": float(torch.max(torch.abs(matrix - matrix.T)).item()),
-        "device": str(dev),
+        "matrix_symmetry_error": symmetry_error,
+        "device": str(dev), "backend": "scipy-csr" if sparse else "torch-dense",
     }
     return matrix, load.reshape(-1), grid, metadata
 
@@ -242,9 +269,9 @@ def solve_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None, robin_films=None,
+    *, dirichlet_values=None, robin_films=None, sparse=False,
 ):
-    """Solve the per-side Dirichlet/Neumann Poisson problem (dense backend).
+    """Solve the Poisson problem with dense torch or CPU SciPy sparse direct algebra.
 
     Returns ``(x_centers, y_centers, modal_coefficients, metadata)`` with the
     modal coefficients shaped ``(nx, ny, degree + 1, degree + 1)``.
@@ -252,17 +279,21 @@ def solve_poisson_2d_bc(
     matrix, rhs, grid, metadata = assemble_poisson_2d_bc(
         ncells=ncells, degree=degree, penalty=penalty, bc=bc,
         forcing=forcing, neumann_flux=neumann_flux, device=device, dtype=dtype,
-        dirichlet_values=dirichlet_values, robin_films=robin_films,
+        dirichlet_values=dirichlet_values, robin_films=robin_films, sparse=sparse,
     )
     nx, ny = metadata["ncells"]
     local_dofs = (degree + 1) ** 2
     if not metadata["temperature_anchored"]:
-        ones = torch.zeros(matrix.shape[0], device=matrix.device, dtype=matrix.dtype)
+        ones = torch.zeros_like(rhs)
         ones.view(nx, ny, local_dofs)[:, :, 0] = 1.0
-        scale = float(torch.max(torch.abs(matrix)).item())
-        nullspace = float(torch.max(torch.abs(matrix @ ones)).item())
+        if sparse:
+            scale = float(np.max(np.abs(matrix.data)))
+            nullspace = float(np.max(np.abs(matrix @ ones.numpy())))
+        else:
+            scale = float(matrix.abs().max())
+            nullspace = float((matrix @ ones).abs().max())
         metadata["nullspace_residual"] = nullspace / max(scale, 1e-300)
-        if metadata["nullspace_residual"] > 1e-10:
+        if metadata["nullspace_residual"] > max(1e-10, 8*torch.finfo(rhs.dtype).eps):
             raise RuntimeError(
                 "pure-Neumann operator does not annihilate constants "
                 f"(relative residual {metadata['nullspace_residual']:.3e}); "
@@ -277,14 +308,30 @@ def solve_poisson_2d_bc(
         if abs(imbalance) > tolerance:
             raise ValueError("incompatible pure Neumann data: integrated source plus "
                              f"outward normal derivative is {imbalance:.6g} (tolerance {tolerance:.3g})")
-        matrix = matrix + (1.0 / matrix.shape[0]) * torch.outer(ones, ones)
-        metadata["gauge"] = "rank-one 1 1^T / ndofs"
+        if sparse:
+            metadata["gauge"] = "pin first mean mode and shift to zero spatial mean"
+        else:
+            matrix = matrix + (1.0 / matrix.shape[0]) * torch.outer(ones, ones)
+            metadata["gauge"] = "rank-one 1 1^T / ndofs"
     else:
         metadata["nullspace_residual"] = 0.0
         metadata["gauge"] = "none"
 
-    solution = torch.linalg.solve(matrix, rhs)
-    residual = float(torch.max(torch.abs(matrix @ solution - rhs)).item())
+    if sparse:
+        from scipy.sparse.linalg import spsolve
+
+        b = rhs.numpy()
+        if metadata["temperature_anchored"]:
+            u = spsolve(matrix, b)
+        else:
+            u = np.zeros_like(b)
+            u[1:] = spsolve(matrix[1:, 1:], b[1:])
+            u[::local_dofs] -= u[::local_dofs].mean()
+        solution = torch.from_numpy(u)
+        residual = float(np.max(np.abs(matrix @ u - b)))
+    else:
+        solution = torch.linalg.solve(matrix, rhs)
+        residual = float((matrix @ solution - rhs).abs().max())
     metadata["linear_residual"] = residual / max(float(torch.max(torch.abs(rhs)).item()), 1e-300)
     coeff = solution.reshape(nx, ny, degree + 1, degree + 1)
     return grid["x"], grid["y"], coeff, metadata

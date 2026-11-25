@@ -219,3 +219,40 @@ def test_variable_robin_film_on_all_sides_and_zero_film_gauge():
     assert meta["gauge"].startswith("rank-one")
     with pytest.raises(ValueError, match="incompatible"):
         solve_poisson_2d_bc(3, bc=bc, robin_films=zero_films, forcing=lambda x,y: 1+0*x+0*y)
+
+
+@pytest.mark.parametrize("degree", [1, 2, 3])
+@pytest.mark.parametrize("anchored", [False, True])
+def test_sparse_boundary_operator_and_solution(degree, anchored):
+    kwargs = dict(ncells=(3, 4), degree=degree, forcing=_forcing_cosine, bc=NEUMANN_ALL)
+    if anchored:
+        kwargs.update(bc=dict(left="robin", right="dirichlet", top="neumann"),
+                      robin_films={"left": (lambda x, y: 1+y, lambda x, y: y*y)},
+                      dirichlet_values={"right": lambda x, y: 1+y},
+                      neumann_flux={"top": lambda x, y: x})
+    dense, load, _, _ = assemble_poisson_2d_bc(**kwargs)
+    csr, sparse_load, _, _ = assemble_poisson_2d_bc(**kwargs, sparse=True)
+    assert csr.format == "csr"
+    assert csr.nnz <= 5 * 12 * (degree+1)**4
+    torch.testing.assert_close(torch.from_numpy(csr.toarray()), dense)
+    torch.testing.assert_close(sparse_load, load)
+    _, _, reference, _ = solve_poisson_2d_bc(**kwargs)
+    _, _, solution, info = solve_poisson_2d_bc(**kwargs, sparse=True)
+    torch.testing.assert_close(solution, reference, atol=2e-11, rtol=2e-11)
+    assert info["linear_residual"] < 1e-11
+    if not anchored:
+        assert abs(solution[:, :, 0, 0].mean()) < 1e-14
+
+
+def test_sparse_neumann_compatibility():
+    with pytest.raises(ValueError, match="incompatible pure Neumann"):
+        solve_poisson_2d_bc(3, bc=NEUMANN_ALL, forcing=lambda x, y: 1+0*x+0*y, sparse=True)
+
+
+def test_sparse_float32_neumann_affine_solution():
+    _, y, coeff, info = solve_poisson_2d_bc(
+        (3, 4), 1, bc=NEUMANN_ALL, neumann_flux={"top": 1., "bottom": -1.},
+        forcing=lambda x, y: 0*x+0*y, dtype=torch.float32, sparse=True,
+    )
+    torch.testing.assert_close(coeff[:, :, 0, 0], (y-.5).expand(3, 4), atol=5e-5, rtol=0)
+    assert info["linear_residual"] < 1e-4
