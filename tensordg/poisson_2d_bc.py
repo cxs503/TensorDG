@@ -46,7 +46,7 @@ from .poisson_2d import (
 )
 
 BC_SIDES = ("left", "right", "bottom", "top")
-_ALLOWED = ("dirichlet", "neumann")
+_ALLOWED = ("dirichlet", "neumann", "robin")
 
 
 def _resolve_bc(bc) -> dict[str, str]:
@@ -72,6 +72,17 @@ def _boundary_samples(data, side, centers, nodes):
     return torch.broadcast_to(torch.as_tensor(values, device=along.device, dtype=along.dtype), along.shape)
 
 
+def _film_samples(films, side, centers, nodes):
+    if films is None or side not in films:
+        raise ValueError(f"Robin side {side} requires (coefficient, ambient temperature)")
+    coefficient, ambient = films[side]
+    h = _boundary_samples(coefficient, side, centers, nodes)
+    temperature = _boundary_samples(ambient, side, centers, nodes)
+    if not torch.isfinite(h).all() or torch.any(h < 0) or not torch.isfinite(temperature).all():
+        raise ValueError("Robin coefficients must be finite and nonnegative and ambient data finite")
+    return h, temperature
+
+
 def assemble_poisson_2d_bc(
     ncells: int | tuple[int, int] = 16,
     degree: int = 1,
@@ -81,12 +92,14 @@ def assemble_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None,
+    *, dirichlet_values=None, robin_films=None,
 ):
     """Assemble ``-Delta u = f`` with per-side Dirichlet/Neumann data.
 
     dirichlet_values maps prescribed sides to scalar values or callables of
     (x, y). Unspecified Dirichlet traces are zero. neumann_flux supplies du/dn.
+    robin_films maps each Robin side to (h, ambient), implementing outward
+    Fourier flux h*(u-ambient); both entries accept scalars or callables.
     Returns ``(matrix, rhs, grid, metadata)`` where ``grid`` holds the element
     centres and sizes needed by :func:`l2_error_2d`.
     """
@@ -108,6 +121,10 @@ def assemble_poisson_2d_bc(
         if types[side] != "dirichlet":
             raise ValueError(f"Dirichlet trace supplied on {types[side]} side {side}")
 
+    for side in robin_films or {}:
+        if types.get(side) != "robin":
+            raise ValueError(f"film data require a Robin side: {side}")
+    anchored = "dirichlet" in types.values()
     dev = torch.device(device)
     hx, hy = 1.0 / nx, 1.0 / ny
     x = (torch.arange(nx, device=dev, dtype=dtype) + 0.5) * hx
@@ -163,6 +180,7 @@ def assemble_poisson_2d_bc(
         ("top", "y", 1.0, ny - 1, phi_right, dphi_right, 1.0, hy, measure_y),
     )
     for side, axis, position, index, endpoint, d_endpoint, outward, h_normal, measure in sides:
+        centers = y if axis == "x" else x
         if types[side] == "dirichlet":
             block, trace = dirichlet_face_operator(
                 phi, weights, endpoint, d_endpoint, axis, outward,
@@ -176,12 +194,21 @@ def assemble_poisson_2d_bc(
                 continue
             _, derivative = _face_basis(phi, endpoint, d_endpoint, axis, 2/h_normal, outward)
             test = penalty*modes**2/h_normal*trace - derivative
+        elif types[side] == "robin":
+            h, ambient = _film_samples(robin_films, side, centers, nodes)
+            anchored = anchored or bool((h > 0).any())
+            test, _ = _face_basis(phi, endpoint, d_endpoint, axis, 2/h_normal, outward)
+            blocks = measure*torch.einsum("iq,q,qk,ql->ikl", h, weights, test, test)
+            for line, block in enumerate(blocks):
+                ix, iy = (index, line) if axis == "x" else (line, index)
+                _add_block(matrix, dofs(ix, iy), block)
+            data = h*ambient
         else:
             data = fluxes.get(side)
             if data is None:
                 continue
             test, _ = _face_basis(phi, endpoint, d_endpoint, axis, 2/h_normal, outward)
-        samples = _boundary_samples(data, side, y if axis == "x" else x, nodes)
+        samples = _boundary_samples(data, side, centers, nodes)
         contribution = measure*((samples*weights) @ test)
         if axis == "x":
             load[index] += contribution
@@ -199,7 +226,7 @@ def assemble_poisson_2d_bc(
     grid = {"x": x, "y": y, "hx": hx, "hy": hy, "degree": degree}
     metadata = {
         "ncells": (nx, ny), "degree": degree, "dofs": ndofs, "penalty": penalty,
-        "bc": dict(types),
+        "bc": dict(types), "temperature_anchored": anchored,
         "matrix_symmetry_error": float(torch.max(torch.abs(matrix - matrix.T)).item()),
         "device": str(dev),
     }
@@ -215,7 +242,7 @@ def solve_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None,
+    *, dirichlet_values=None, robin_films=None,
 ):
     """Solve the per-side Dirichlet/Neumann Poisson problem (dense backend).
 
@@ -225,12 +252,11 @@ def solve_poisson_2d_bc(
     matrix, rhs, grid, metadata = assemble_poisson_2d_bc(
         ncells=ncells, degree=degree, penalty=penalty, bc=bc,
         forcing=forcing, neumann_flux=neumann_flux, device=device, dtype=dtype,
-        dirichlet_values=dirichlet_values,
+        dirichlet_values=dirichlet_values, robin_films=robin_films,
     )
     nx, ny = metadata["ncells"]
     local_dofs = (degree + 1) ** 2
-    pure_neumann = all(kind == "neumann" for kind in metadata["bc"].values())
-    if pure_neumann:
+    if not metadata["temperature_anchored"]:
         ones = torch.zeros(matrix.shape[0], device=matrix.device, dtype=matrix.dtype)
         ones.view(nx, ny, local_dofs)[:, :, 0] = 1.0
         scale = float(torch.max(torch.abs(matrix)).item())
@@ -264,7 +290,7 @@ def solve_poisson_2d_bc(
     return grid["x"], grid["y"], coeff, metadata
 
 
-def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None, neumann_flux=None):
+def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None, neumann_flux=None, robin_films=None):
     """Integrate SIPG numerical heat flux over each face for unit conductivity and depth.
 
     Returns arrays (nx+1, ny) and (nx, ny+1) oriented in increasing x and y.
@@ -289,6 +315,11 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
         result[1:-1] = (interior @ weights)/(2*tangential)
         centers = (torch.arange(tangential, device=coeff.device, dtype=coeff.dtype)+.5)/tangential
         for side, index, sign, trace, gradient in ((low, 0, -1, tl, gl), (high, -1, 1, tr, gr)):
+            if types[side] == "robin":
+                h, ambient = _film_samples(robin_films, side, centers, nodes)
+                flux = sign*h*(u[index] @ trace.T-ambient)
+                result[index] = (flux @ weights)/(2*tangential)
+                continue
             neumann = types[side] == "neumann"
             data = ((neumann_flux if neumann else dirichlet_values) or {}).get(side)
             prescribed = torch.zeros_like(result[index, :, None]) if data is None else _boundary_samples(

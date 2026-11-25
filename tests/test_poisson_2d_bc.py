@@ -198,3 +198,24 @@ def test_pure_neumann_heat_balance_and_reference_offset():
         assert err["absolute_l2"] < 2e-13
     with pytest.raises(ValueError, match="incompatible pure Neumann"):
         solve_poisson_2d_bc((3,5), 2, forcing=lambda x,y: 1+0*x+0*y, bc=NEUMANN_ALL)
+
+
+def test_variable_robin_film_on_all_sides_and_zero_film_gauge():
+    from tensordg import poisson_face_powers_2d
+
+    exact = lambda x,y: 1.+x*x+x*y+.5*y*y
+    h = lambda x,y: 1.+x+2*y
+    deriv = dict(left=lambda x,y: -(2*x+y), right=lambda x,y: 2*x+y,
+                 bottom=lambda x,y: -(x+y), top=lambda x,y: x+y)
+    films = {s:(h, lambda x,y, dn=dn: exact(x,y)+dn(x,y)/h(x,y)) for s,dn in deriv.items()}
+    bc = dict.fromkeys(deriv, "robin")
+    x,y,u,meta = solve_poisson_2d_bc((3,5), 2, forcing=lambda x,y: 0*x+0*y-3, bc=bc, robin_films=films)
+    assert meta["temperature_anchored"]
+    assert l2_error_2d(x,y,u,exact)["absolute_l2"] < 5e-12
+    qx,qy = poisson_face_powers_2d(u, bc=bc, robin_films=films)
+    torch.testing.assert_close(qx.diff(dim=0)+qy.diff(dim=1), torch.full_like(u[:,:,0,0], -.2), atol=1e-12, rtol=0)
+    zero_films = dict.fromkeys(bc, (0., 2.))
+    *_, meta = solve_poisson_2d_bc(3, bc=bc, robin_films=zero_films, forcing=lambda x,y: 0*x+0*y)
+    assert meta["gauge"].startswith("rank-one")
+    with pytest.raises(ValueError, match="incompatible"):
+        solve_poisson_2d_bc(3, bc=bc, robin_films=zero_films, forcing=lambda x,y: 1+0*x+0*y)
