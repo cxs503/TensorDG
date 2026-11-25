@@ -565,6 +565,7 @@ from .poisson_2d import (
 
 # ---- poisson_2d_bc
 from .poisson_2d_bc import (
+    poisson_face_powers_2d,
     assemble_poisson_2d_bc,
     solve_poisson_2d_bc,
     l2_error_2d,
@@ -773,6 +774,7 @@ __all__ = [
     "assemble_heat_1d_sparse",
     "assemble_ldg_dirichlet_1d",
     "assemble_operator",
+    "poisson_face_powers_2d",
     "assemble_poisson_2d_bc",
     "assemble_poisson_2d_sparse",
     "assemble_sipg_1d",

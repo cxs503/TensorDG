@@ -154,3 +154,28 @@ def test_boundary_kind_and_side_validation():
         solve_poisson_2d_bc(ncells=4, degree=1, penalty=0.0, forcing=_forcing_sine)
     with pytest.raises(TypeError):
         solve_poisson_2d_bc(ncells=4, degree=1)
+
+@pytest.mark.parametrize("side,sign", [("top", 1.), ("bottom", -1.)])
+def test_nonzero_dirichlet_and_tangentially_varying_neumann_on_rectangle(side, sign):
+    exact = lambda x,y: .7+2*x-.3*y+x*y
+    x, y, u, _ = solve_poisson_2d_bc((3, 5), 1, bc={side:"neumann"},
+            forcing=lambda x,y: 0*x+0*y, neumann_flux={side:lambda x,y: sign*(x-.3)},
+            dirichlet_values={s:exact for s in NEUMANN_ALL if s != side})
+    assert l2_error_2d(x, y, u, exact)["absolute_l2"] < 2e-13
+
+
+def test_numerical_face_power_local_source_and_boundary_signs():
+    from tensordg import poisson_face_powers_2d
+
+    # Quadratic exact solution lies in the P2 space.
+    exact = lambda x,y: .4+x*x+.5*y*y+x*y
+    bc = {"bottom":"neumann"}
+    data = dict(bc=bc, neumann_flux={"bottom":lambda x,y: -x},
+                dirichlet_values={s:exact for s in ("top","left","right")})
+    x, y, u, _ = solve_poisson_2d_bc((3,5), 2, forcing=lambda x,y: -3+0*x+0*y, **data)
+    qx, qy = poisson_face_powers_2d(u, **data)
+    xf, yf = torch.arange(4,dtype=x.dtype)/3, torch.arange(6,dtype=x.dtype)/5
+    torch.testing.assert_close(qx, -(2*xf[:,None]+y)/5, atol=3e-13, rtol=0)
+    torch.testing.assert_close(qy, -(x[:,None]+yf)/3, atol=3e-13, rtol=0)
+    torch.testing.assert_close(qx.diff(dim=0)+qy.diff(dim=1), torch.full_like(u[:,:,0,0], -.2),
+                               atol=1e-12, rtol=0)

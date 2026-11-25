@@ -65,21 +65,13 @@ def _resolve_bc(bc) -> dict[str, str]:
     return resolved
 
 
-def _as_flux(g, side):
-    """Return a callable (x, y) -> du/dn, or ``None`` for a zero flux."""
-    if g is None:
-        return None
-    if callable(g):
-        return g
-    if isinstance(g, (int, float)):
-        value = float(g)
-
-        def constant(x, y):
-            return torch.full(torch.broadcast_shapes(x.shape, y.shape), value,
-                              device=x.device, dtype=x.dtype)
-
-        return constant
-    raise TypeError("neumann_flux entries must be None, a number, or a callable")
+def _boundary_samples(data, side, centers, nodes):
+    """One row per face, one column per tangential quadrature point."""
+    along = centers[:, None] + nodes[None, :]/(2*len(centers))
+    fixed = torch.full_like(along, float(side in ("right", "top")))
+    x, y = (fixed, along) if side in ("left", "right") else (along, fixed)
+    values = data(x, y) if callable(data) else data
+    return torch.broadcast_to(torch.as_tensor(values, device=along.device, dtype=along.dtype), along.shape)
 
 
 def assemble_poisson_2d_bc(
@@ -91,9 +83,12 @@ def assemble_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
+    *, dirichlet_values=None,
 ):
     """Assemble ``-Delta u = f`` with per-side Dirichlet/Neumann data.
 
+    dirichlet_values maps prescribed sides to scalar values or callables of
+    (x, y). Unspecified Dirichlet traces are zero. neumann_flux supplies du/dn.
     Returns ``(matrix, rhs, grid, metadata)`` where ``grid`` holds the element
     centres and sizes needed by :func:`l2_error_2d`.
     """
@@ -106,11 +101,14 @@ def assemble_poisson_2d_bc(
         raise TypeError("forcing must be a callable f(x, y) -> tensor")
 
     types = _resolve_bc(bc)
-    fluxes = {side: None for side in BC_SIDES}
-    for side, g in (neumann_flux or {}).items():
+    fluxes = neumann_flux or {}
+    traces = dirichlet_values or {}
+    for side in (*fluxes, *traces):
         if side not in BC_SIDES:
             raise ValueError(f"unknown boundary side {side!r}; use one of {BC_SIDES}")
-        fluxes[side] = _as_flux(g, side)
+    for side in traces:
+        if types[side] != "dirichlet":
+            raise ValueError(f"Dirichlet trace supplied on {types[side]} side {side}")
 
     dev = torch.device(device)
     hx, hy = 1.0 / nx, 1.0 / ny
@@ -168,31 +166,29 @@ def assemble_poisson_2d_bc(
     )
     for side, axis, position, index, endpoint, d_endpoint, outward, h_normal, measure in sides:
         if types[side] == "dirichlet":
-            block, _ = dirichlet_face_operator(
+            block, trace = dirichlet_face_operator(
                 phi, weights, endpoint, d_endpoint, axis, outward,
                 h_normal, measure, penalty, modes,
             )
             for line in range(ny if axis == "x" else nx):
                 ix, iy = (index, line) if axis == "x" else (line, index)
                 _add_block(matrix, dofs(ix, iy), block)
-            continue
-        g = fluxes[side]
-        if g is None:
-            continue  # homogeneous Neumann: no matrix block, no load
-        if axis == "x":
-            yq = y[None, :, None] + 0.5 * hy * nodes[None, None, :]
-            xq = torch.full_like(yq, position)
-            scaled = 0.5 * hy * weights[None, None, :] * g(xq, yq)
-            load[index] += torch.einsum(
-                "yr,rl,k->ykl", scaled[0], phi, endpoint,
-            ).reshape(ny, local_dofs)
+            data = traces.get(side)
+            if data is None:
+                continue
+            _, derivative = _face_basis(phi, endpoint, d_endpoint, axis, 2/h_normal, outward)
+            test = penalty*modes**2/h_normal*trace - derivative
         else:
-            xq = x[:, None, None] + 0.5 * hx * nodes[None, :, None]
-            yq = torch.full_like(xq, position)
-            scaled = 0.5 * hx * weights[None, None, :] * g(xq, yq)
-            load[:, index] += torch.einsum(
-                "xq,qk,l->xkl", scaled[:, 0], phi, endpoint,
-            ).reshape(nx, local_dofs)
+            data = fluxes.get(side)
+            if data is None:
+                continue
+            test, _ = _face_basis(phi, endpoint, d_endpoint, axis, 2/h_normal, outward)
+        samples = _boundary_samples(data, side, y if axis == "x" else x, nodes)
+        contribution = measure*((samples*weights) @ test)
+        if axis == "x":
+            load[index] += contribution
+        else:
+            load[:,index] += contribution
 
     # ---- forcing ---------------------------------------------------------
     xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
@@ -221,6 +217,7 @@ def solve_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
+    *, dirichlet_values=None,
 ):
     """Solve the per-side Dirichlet/Neumann Poisson problem (dense backend).
 
@@ -230,6 +227,7 @@ def solve_poisson_2d_bc(
     matrix, rhs, grid, metadata = assemble_poisson_2d_bc(
         ncells=ncells, degree=degree, penalty=penalty, bc=bc,
         forcing=forcing, neumann_flux=neumann_flux, device=device, dtype=dtype,
+        dirichlet_values=dirichlet_values,
     )
     nx, ny = metadata["ncells"]
     local_dofs = (degree + 1) ** 2
@@ -257,6 +255,44 @@ def solve_poisson_2d_bc(
     metadata["linear_residual"] = residual / max(float(torch.max(torch.abs(rhs)).item()), 1e-300)
     coeff = solution.reshape(nx, ny, degree + 1, degree + 1)
     return grid["x"], grid["y"], coeff, metadata
+
+
+def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None, neumann_flux=None):
+    """Integrate SIPG numerical heat flux over each face for unit conductivity and depth.
+
+    Returns arrays (nx+1, ny) and (nx, ny+1) oriented in increasing x and y.
+    Supply the same penalty and boundary data as the solve. For each cell,
+    right minus left plus top minus bottom equals its integrated source.
+    """
+    nx, ny, modes, last = coeff.shape
+    if modes != last or modes not in (2, 3, 4) or min(nx, ny) < 2 or penalty <= 0:
+        raise ValueError("expected square P1 to P3 modal blocks and positive penalty")
+    nodes, weights, phi, _, _, pl, pr, dl, dr = _operators(modes-1, coeff.device, coeff.dtype)
+    types = _resolve_bc(bc)
+    fields = coeff.flatten(2)
+    outputs = []
+    for axis, count, tangential, low, high in (("x", nx, ny, "left", "right"),
+                                               ("y", ny, nx, "bottom", "top")):
+        u = fields if axis == "x" else fields.transpose(0, 1)
+        tl, gl = _face_basis(phi, pl, dl, axis, 2*count)
+        tr, gr = _face_basis(phi, pr, dr, axis, 2*count)
+        scale = penalty*modes*modes*count
+        interior = -.5*(u[:-1] @ gr.T + u[1:] @ gl.T) + scale*(u[:-1] @ tr.T-u[1:] @ tl.T)
+        result = coeff.new_empty((count+1, tangential))
+        result[1:-1] = (interior @ weights)/(2*tangential)
+        centers = (torch.arange(tangential, device=coeff.device, dtype=coeff.dtype)+.5)/tangential
+        for side, index, sign, trace, gradient in ((low, 0, -1, tl, gl), (high, -1, 1, tr, gr)):
+            neumann = types[side] == "neumann"
+            data = ((neumann_flux if neumann else dirichlet_values) or {}).get(side)
+            prescribed = torch.zeros_like(result[index, :, None]) if data is None else _boundary_samples(
+                data, side, centers, nodes)
+            if neumann:
+                flux = -sign*prescribed.expand(tangential, len(nodes))
+            else:
+                flux = -(u[index] @ gradient.T) + sign*scale*(u[index] @ trace.T-prescribed)
+            result[index] = (flux @ weights)/(2*tangential)
+        outputs.append(result if axis == "x" else result.T)
+    return tuple(outputs)
 
 
 def l2_error_2d(x, y, coeff, exact, remove_constant: bool = False) -> dict[str, float]:
