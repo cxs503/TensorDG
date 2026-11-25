@@ -15,6 +15,7 @@ what is still open.
 | Ritter dry-bed dam break (h_L=1, h_R=0) | Exact self-similar solution | rel L1(h) < 3 % | see table below | verified (this work) |
 | Lake at rest, flat and sloped bed | Exact steady state | machine precision / 5e-4 eta drift | passed | verified |
 | Thacker (1981) parabolic basin, t >= 0.3 s | Exact planar solution | 3 % | ~12 %, not mesh convergent | **open gap** |
+| Boussinesq solitary wave (a/h0=0.02, 2-5 w) | Exact Boussinesq profile | peak/speed < 3 % | peak 0.005 %, speed 1.95 % | verified (this work) |
 
 Before this work the dry-bed case was pinned in the test suite as a *known
 limitation* ("rel L1 ~ 28 %, the dry front is smeared over many cells"). That
@@ -155,3 +156,25 @@ python -m benchmarks.ritter_dam_break --ncells 200 --degree 1 --time 0.5
 python -m benchmarks.ritter_dam_break --convergence --output-dir validation/swe_1d_dry_bed
 pytest -q tests/test_swe_dam_break.py tests/test_swe_wellbalanced.py
 ```
+
+
+## 8. Solitary wave (Boussinesq) absorption
+
+Absorption benchmark TensorDG#1001 (`docs/CASE-DG-SWE-SOLITARY-WAVE.md`,
+`docs/benchmarks/swe_solitary_wave.py`): the DG(P1/P2) SWE solver propagates a
+small-amplitude Boussinesq solitary wave (a/h0 = 0.02, h0 = 1 m, g = 9.81) over
+2-5 characteristic widths with
+
+| Quantity | Gate | Measured (N=400, P1) | Status |
+|---|---|---|---|
+| peak height vs h0+a | < 3 % | 0.0053 % | verified |
+| wave speed vs c = sqrt(g(h0+a)) | < 3 % | 1.9544 % | verified |
+| profile rel L2 | < 3 % | 0.0092 % | verified |
+| mass drift | machine | 3.4e-9 | verified |
+
+The ~1.95 % wave-speed offset is the *physical* O(a/h0) difference between the
+non-dispersive SWE and the dispersive Boussinesq family (amplitude sweep:
+speed error 0.50 % at a/h0=0.005, 4.75 % at a/h0=0.05), not a numerical
+defect; the benchmark is scoped to small amplitude (a/h0 <= 0.03).  Peak
+position is measured with sub-cell parabolic interpolation (grid-quantisation
+removed).  All gates pass: `python docs/benchmarks/verify_swe_solitary_wave.py`.
