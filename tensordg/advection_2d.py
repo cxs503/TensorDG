@@ -6,15 +6,26 @@ The exact solution is a periodically translated smooth trigonometric profile.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 import math
 
 import numpy as np
 import torch
 
+from .advection_1d import _departure_coordinate
+
 # The tensor-product operators are built from Legendre values/derivatives at
 # Gauss nodes, so they are degree-generic; the bound only keeps the Python-side
 # basis assembly sane (see ``tensordg.advection_1d.MAX_DEGREE``).
 MAX_DEGREE = 8
+
+
+def _sample_profile(profile, x, y):
+    if profile is None:
+        return 1.0 + torch.sin(2.0 * math.pi * x) * torch.sin(2.0 * math.pi * y)
+    x, y = torch.broadcast_tensors(x, y)
+    values = torch.as_tensor(profile(x, y), device=x.device, dtype=x.dtype)
+    return torch.broadcast_to(values, x.shape)
 
 
 def _operators(degree: int, device: torch.device, dtype: torch.dtype):
@@ -119,11 +130,13 @@ def solve_advection_2d(
     cfl: float = 0.08,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
+    *,
+    initial: Callable | None = None,
 ):
     """Solve ``u_t + ax*u_x + ay*u_y = 0`` on the periodic unit square.
 
     The initial/exact profile is ``1 + sin(2*pi*x) * sin(2*pi*y)`` translated
-    by ``velocity * final_time``. ``ncells`` can be one integer or ``(nx,ny)``.
+    by ``velocity * final_time``. Supply ``initial(x, y)`` to project another periodic profile. ``ncells`` can be one integer or ``(nx,ny)``.
 
     Returns ``(x_centers, y_centers, modal_coefficients, metadata)``. The
     coefficient array has shape ``(nx,ny,degree+1,degree+1)``; its ``[0,0]``
@@ -149,9 +162,9 @@ def solve_advection_2d(
 
     xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
-    initial = 1.0 + torch.sin(2.0 * math.pi * xq) * torch.sin(2.0 * math.pi * yq)
+    samples = _sample_profile(initial, xq, yq)
     coeff = torch.einsum(
-        "xyqr,q,r,qk,rl->xykl", initial, weights, weights, phi, phi,
+        "xyqr,q,r,qk,rl->xykl", samples, weights, weights, phi, phi,
     )
     norm = torch.tensor(
         [(2 * k + 1) * (2 * l + 1) / 4.0
@@ -200,8 +213,13 @@ def error_2d(
     coeff: torch.Tensor,
     final_time: float,
     velocity: tuple[float, float] = (1.0, 0.5),
+    *,
+    initial: Callable | None = None,
 ) -> dict[str, float]:
-    """Return quadrature-based absolute/relative L2 errors and exact norm."""
+    """Compare against initial(x, y) translated along both periodic characteristics.
+
+    For a zero reference norm, relative L2 is zero for exact agreement and infinity otherwise.
+    """
     degree = coeff.shape[-1] - 1
     nx, ny = coeff.shape[:2]
     hx, hy = 1.0 / nx, 1.0 / ny
@@ -223,9 +241,8 @@ def error_2d(
     xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
     ax, ay = velocity
-    exact = 1.0 + torch.sin(
-        2.0 * math.pi * (xq - ax * final_time),
-    ) * torch.sin(2.0 * math.pi * (yq - ay * final_time))
+    exact = _sample_profile(initial, _departure_coordinate(xq, final_time, ax),
+                            _departure_coordinate(yq, final_time, ay))
     error2 = 0.25 * hx * hy * torch.sum(
         weights[None, None, :, None] * weights[None, None, None, :]
         * (numerical - exact) ** 2,
@@ -239,5 +256,5 @@ def error_2d(
     return {
         "absolute_l2": absolute,
         "exact_l2": norm,
-        "relative_l2": absolute / norm,
+        "relative_l2": absolute / norm if norm else (0.0 if absolute == 0.0 else math.inf),
     }

@@ -229,14 +229,17 @@ def _basis(degree: int, nodes, device, dtype):
     return torch.stack(basis, dim=1)
 
 
-def _translated_profile(x, final_time, speed, exact):
-    """Evaluate a periodic initial profile at the characteristic's foot."""
+def _departure_coordinate(x, final_time, speed):
+    """Periodic characteristic foot in the unit interval."""
     # Remove full revolutions before subtracting from the quadrature nodes
     # so long translations retain the local sub-cell coordinates.
     foot = torch.remainder(x - math.fmod(speed * final_time, 1.0), 1.0)
     # A negative foot very close to zero can round to 1 after remainder.
-    foot = torch.where(foot == 1, 0., foot)
-    return (_sine if exact is None else exact)(foot)
+    return torch.where(foot == 1, 0., foot)
+
+
+def _translated_profile(x, final_time, speed, exact):
+    return (_sine if exact is None else exact)(_departure_coordinate(x, final_time, speed))
 
 
 def l2_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
