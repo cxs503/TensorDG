@@ -99,6 +99,27 @@ def _operators(degree: int, device: torch.device, dtype: torch.dtype):
     )
 
 
+def _mesh(ncells, cell_edges, device, dtype):
+    if cell_edges is None:
+        n = 32 if ncells is None else ncells
+        if n < 2:
+            raise ValueError("at least two cells are required")
+        widths = torch.full((n,), 1./n, device=device, dtype=dtype)
+        centers = (torch.arange(n, device=device, dtype=dtype)+.5)/n
+        return centers, widths
+    edges = torch.as_tensor(cell_edges, dtype=dtype, device=device)
+    if edges.ndim != 1 or len(edges)<3 or (ncells is not None and len(edges)!=ncells+1):
+        raise ValueError("cell_edges must contain one endpoint per face of at least two cells")
+    widths = edges.diff()
+    if not torch.isfinite(edges).all() or edges[0]!=0 or edges[-1]!=1 or torch.any(widths<=0):
+        raise ValueError("cell_edges must increase strictly from 0 to 1")
+    return edges[:-1]+.5*widths, widths
+
+
+def _face_widths(widths):
+    return torch.cat((widths[:1],torch.minimum(widths[:-1],widths[1:]),widths[-1:]))
+
+
 from .registry import capability
 @capability(
     name="advection-diffusion-1d",
@@ -109,7 +130,7 @@ from .registry import capability
     tags=['advection-diffusion', '1d']
 )
 def solve_advection_diffusion_1d(
-    ncells: int = 32,
+    ncells: int | None = None,
     degree: int = 2,
     peclet: float = 10.0,
     speed: float = 1.0,
@@ -119,7 +140,7 @@ def solve_advection_diffusion_1d(
     advection_scheme: str = "upwind",
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, source=0., reaction=0., total_flux=(None,None), mean_value=None,
+    *, source=0., reaction=0., total_flux=(None,None), mean_value=None, cell_edges=None,
 ):
     """Solve (1) on [0, 1] and return (cell_centres, modal_coefficients, metadata).
 
@@ -128,6 +149,10 @@ def solve_advection_diffusion_1d(
     peclet : float
         Peclet magnitude ``|a| L / D`` with ``L = 1``; the diffusivity is
         ``D = abs(speed) / peclet``.
+    cell_edges : optional vector
+        Strictly increasing mesh edges spanning [0,1]. Omit ncells to infer
+        it from the edges. The default mesh has 32 equal cells. Pass the same
+        edges to sampling, error and flux diagnostics on a nonuniform grid.
     source, reaction
         Solve (a u - D u')' + reaction*u = source. Each coefficient accepts a
         scalar, one value per cell, or a callable of quadrature coordinates
@@ -142,7 +167,7 @@ def solve_advection_diffusion_1d(
         ``"downwind"`` exists only as an implementation negative control: it is
         *not* a consistent scheme and must fail the verification gates.
     """
-    if ncells < 2 or degree not in (1, 2, 3):
+    if degree not in (1, 2, 3):
         raise ValueError("ncells >= 2 and degree in [1, 2, 3] are required")
     if peclet <= 0.0 or speed == 0.0:
         raise ValueError("peclet > 0 and speed != 0 are required")
@@ -152,10 +177,10 @@ def solve_advection_diffusion_1d(
         raise ValueError("advection_scheme must be 'upwind' or 'downwind'")
 
     dev = torch.device(device)
-    h = 1.0 / ncells
+    centers,h = _mesh(ncells,cell_edges,dev,dtype)
+    ncells = len(h)
     modes = degree + 1
     ndofs = ncells * modes
-    centers = (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * h
     (
         nodes, weights, phi, stiffness, volume, phi_left, phi_right,
         dphi_left, dphi_right,
@@ -174,9 +199,9 @@ def solve_advection_diffusion_1d(
     # B_diff is the SIPG form of -D u'' (same matrix as tensordg.heat_1d) and
     # A_adv(u, v_i) = a * int_K u v_i' - a * f_hat_R v_i(1) + a * f_hat_L v_i(-1).
     # The two blocks therefore carry *opposite* signs.
-    diffusion_volume = diffusivity * (2.0 / h) * stiffness
+    diffusion_volume = diffusivity * (2.0 / h[:,None,None]) * stiffness
     advection_volume = -a * volume
-    xq = centers[:, None] + (.5*h)*nodes
+    xq = centers[:, None] + (.5*h[:,None])*nodes
     def profile(value, name):
         sampled = value(xq) if callable(value) else value
         data = torch.as_tensor(sampled, device=dev)
@@ -202,8 +227,8 @@ def solve_advection_diffusion_1d(
         raise ValueError("two total flux boundaries require a finite mean_value or nonzero reaction")
     if not needs_mean and mean_value is not None:
         raise ValueError("mean_value requires two prescribed fluxes and zero reaction")
-    reaction_volume = (.5*h)*torch.einsum("cq,q,qi,qj->cij",sink,weights,phi,phi)
-    integrated_source = (.5*h)*profile(source,"source")*weights
+    reaction_volume = (.5*h[:,None,None])*torch.einsum("cq,q,qi,qj->cij",sink,weights,phi,phi)
+    integrated_source = (.5*h[:,None])*profile(source,"source")*weights
     if needs_mean:
         residual = integrated_source.sum() + west_flux - east_flux
         scale = integrated_source.abs().sum() + abs(west_flux) + abs(east_flux)
@@ -212,15 +237,16 @@ def solve_advection_diffusion_1d(
     rhs = (integrated_source @ phi).reshape(-1)
     for cell in range(ncells):
         idx = dofs(cell)
-        add(idx, idx, diffusion_volume + advection_volume + reaction_volume[cell])
+        add(idx, idx, diffusion_volume[cell] + advection_volume + reaction_volume[cell])
 
     # ---- interior diffusive faces: SIPG face block (as in tensordg.heat_1d) --
     jump = torch.cat((phi_right, -phi_left))
-    average_derivative = 0.5 * diffusivity * (2.0 / h) * torch.cat((dphi_right, dphi_left))
-    consistency = -torch.outer(jump, average_derivative)
-    penalty_face = penalty * modes * modes / h
-    diffusion_face = consistency + consistency.T + penalty_face * torch.outer(jump, jump)
+    penalties = penalty*modes*modes/_face_widths(h)
+    jump_matrix = torch.outer(jump,jump)
     for cell in range(ncells - 1):
+        average_derivative = diffusivity*torch.cat((dphi_right/h[cell],dphi_left/h[cell+1]))
+        consistency = -torch.outer(jump, average_derivative)
+        diffusion_face = consistency + consistency.T + penalties[cell+1]*jump_matrix
         idx = torch.cat((dofs(cell), dofs(cell + 1)))
         add(idx, idx, diffusion_face)
 
@@ -258,7 +284,8 @@ def solve_advection_diffusion_1d(
         if prescribed_flux is not None:
             rhs[idx] -= outward*prescribed_flux*endpoint
             continue
-        derivative = outward * diffusivity * (2.0 / h) * derivative_endpoint
+        derivative = outward * diffusivity * (2.0 / h[cell]) * derivative_endpoint
+        penalty_face = penalties[0 if cell==0 else -1]
         consistency = -torch.outer(endpoint, derivative)
         block = consistency + consistency.T + penalty_face * torch.outer(endpoint, endpoint)
         add(idx, idx, block)
@@ -281,28 +308,30 @@ def solve_advection_diffusion_1d(
     metadata = {
         "ncells": ncells, "degree": degree, "peclet": peclet, "speed": a,
         "diffusivity": diffusivity, "penalty": penalty, "dofs": ndofs,
-        "advection_scheme": advection_scheme, "h": h,
+        "advection_scheme": advection_scheme, "h": 1./ncells if cell_edges is None else None,
         "device": str(dev),
     }
+    if cell_edges is not None:
+        metadata["cell_edges"] = torch.as_tensor(cell_edges,dtype=dtype).tolist()
     return centers, coeff, metadata
 
 
 def advection_diffusion_error(
     centers: torch.Tensor, coeff: torch.Tensor, peclet: float,
-    speed: float = 1.0, left_value: float = 0.0, right_value: float = 1.0,
+    speed: float = 1.0, left_value: float = 0.0, right_value: float = 1.0, *, cell_edges=None,
 ) -> dict[str, float]:
     """Quadrature L2 error of the discrete solution against the exact layer."""
     degree = coeff.shape[1] - 1
-    h = 1.0 / centers.numel()
+    _, h = _mesh(centers.numel(),cell_edges,coeff.device,coeff.dtype)
     nodes_np, weights_np = np.polynomial.legendre.leggauss(max(2 * degree + 5, 8))
     nodes = torch.as_tensor(nodes_np, device=coeff.device, dtype=coeff.dtype)
     weights = torch.as_tensor(weights_np, device=coeff.device, dtype=coeff.dtype)
     phi = _legendre_values(nodes_np, degree, coeff.device, coeff.dtype)
     numerical = coeff @ phi.T
-    x = centers[:, None] + 0.5 * h * nodes[None, :]
+    x = centers[:, None] + 0.5 * h[:,None] * nodes[None, :]
     exact = exact_solution(x, peclet, speed, left_value, right_value)
-    error2 = 0.5 * h * torch.sum(weights[None, :] * (numerical - exact) ** 2)
-    norm2 = 0.5 * h * torch.sum(weights[None, :] * exact ** 2)
+    error2 = 0.5 * torch.sum(h[:,None] * weights[None, :] * (numerical - exact) ** 2)
+    norm2 = 0.5 * torch.sum(h[:,None] * weights[None, :] * exact ** 2)
     absolute = float(torch.sqrt(error2).item())
     norm = float(torch.sqrt(norm2).item())
     return {"absolute_l2": absolute, "exact_l2": norm, "relative_l2": absolute / norm if norm else (0.0 if absolute == 0 else math.inf)}
@@ -320,14 +349,14 @@ def _legendre_values(nodes_np, degree: int, device, dtype) -> torch.Tensor:
 
 
 def sample_solution(
-    centers: torch.Tensor, coeff: torch.Tensor, samples_per_cell: int = 8,
+    centers: torch.Tensor, coeff: torch.Tensor, samples_per_cell: int = 8, *, cell_edges=None,
 ):
     """Return ``(x, u_h)`` sampled at Gauss points inside every cell (1-D arrays)."""
     degree = coeff.shape[1] - 1
     nodes_np, _ = np.polynomial.legendre.leggauss(max(samples_per_cell, degree + 2))
-    h = 1.0 / centers.numel()
+    _, h = _mesh(centers.numel(),cell_edges,coeff.device,coeff.dtype)
     phi = _legendre_values(nodes_np, degree, coeff.device, coeff.dtype)
-    x = (centers[:, None] + 0.5 * h * torch.as_tensor(
+    x = (centers[:, None] + 0.5 * h[:,None] * torch.as_tensor(
         nodes_np, device=coeff.device, dtype=coeff.dtype,
     )[None, :]).reshape(-1)
     values = (coeff @ phi.T).reshape(-1)
@@ -335,7 +364,7 @@ def sample_solution(
 
 
 def face_fluxes(
-    coeff: torch.Tensor, peclet: float, speed: float = 1.0,
+    coeff: torch.Tensor, peclet: float, speed: float = 1.0, *, cell_edges=None,
 ) -> torch.Tensor:
     """Total flux ``a u - D u'`` evaluated at every cell's right face.
 
@@ -344,7 +373,7 @@ def face_fluxes(
     consistency, independent of the L2 error norm.
     """
     degree = coeff.shape[1] - 1
-    h = 1.0 / coeff.shape[0]
+    _, h = _mesh(coeff.shape[0],cell_edges,coeff.device,coeff.dtype)
     right_values, right_derivatives = [], []
     for k in range(degree + 1):
         polynomial = np.zeros(k + 1)
@@ -363,7 +392,7 @@ def face_fluxes(
 
 
 def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., right_value=1.,
-                          advection_scheme="upwind", total_flux=(None,None)):
+                          advection_scheme="upwind", total_flux=(None,None), *, cell_edges=None):
     """Single-valued rightward DG total flux at all n+1 faces, including Nitsche terms."""
     if advection_scheme not in ("upwind","downwind"):
         raise ValueError("unknown advection scheme")
@@ -373,11 +402,12 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
     west_flux,east_flux = total_flux
     low = torch.cat((west.new_tensor([left_value if west_flux is None else 0.]),east))
     high = torch.cat((west,east.new_tensor([right_value if east_flux is None else 0.])))
-    diff_scale = -2*ncells*abs(speed)/peclet
+    _,widths = _mesh(ncells,cell_edges,coeff.device,coeff.dtype)
+    diff_scale = -2*abs(speed)/(peclet*widths)
     west_diff,east_diff = diff_scale*(coeff @ dl),diff_scale*(coeff @ dr)
     diffusion = torch.cat((west_diff[:1],.5*(east_diff[:-1]+west_diff[1:]),east_diff[-1:]))
     advected = low if (speed>0)==(advection_scheme=="upwind") else high
-    flux = speed*advected + diffusion + penalty*modes**2*ncells*(low-high)
+    flux = speed*advected + diffusion + penalty*modes**2*(low-high)/_face_widths(widths)
     if west_flux is not None:
         flux[0] = west_flux
     if east_flux is not None:

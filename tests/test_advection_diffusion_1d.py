@@ -272,3 +272,28 @@ def test_flux_pair_with_mean_selects_exponential_stationary_mode(speed):
     torch.testing.assert_close(flux,torch.full_like(flux,.4),atol=2e-10,rtol=0.)
     with pytest.raises(ValueError,match="incompatible"):
         solve_advection_diffusion_1d(n,2,pe,speed,total_flux=(.4,.41),mean_value=1.7)
+
+
+def test_nonuniform_flux_driven_solution_and_width_weighted_mean():
+    from tensordg.advection_diffusion_1d import numerical_face_fluxes
+    edges = torch.tensor([0.,.07,.2,.53,.8,1.],dtype=torch.float64)
+    speed,pe = -1.3,4.
+    d = abs(speed)/pe
+    def field(x):
+        return .8-.4*x+.6*x*x
+    def flux(x):
+        return speed*field(x)-d*(-.4+1.2*x)
+    imposed = (flux(0.),flux(1.))
+    centers,coeff,meta = solve_advection_diffusion_1d(degree=2,peclet=pe,speed=speed,
+             cell_edges=edges,total_flux=imposed,mean_value=.8,source=lambda x:speed*(-.4+1.2*x)-1.2*d)
+    x,uh = sample_solution(centers,coeff,cell_edges=meta["cell_edges"])
+    torch.testing.assert_close(uh,field(x),atol=1e-11,rtol=0.)
+    torch.testing.assert_close(face_fluxes(coeff,pe,speed,cell_edges=edges),flux(edges[1:]),atol=1e-11,rtol=0.)
+    recovered = numerical_face_fluxes(coeff,pe,speed,total_flux=imposed,cell_edges=edges)
+    torch.testing.assert_close(recovered,flux(edges),atol=1e-11,rtol=0.)
+
+
+@pytest.mark.parametrize("edges",[[0.,.2,.2,1.],[0.,.2,.9],[0.,float("nan"),1.]])
+def test_reject_invalid_transport_edges(edges):
+    with pytest.raises(ValueError,match="cell_edges"):
+        solve_advection_diffusion_1d(cell_edges=edges)
