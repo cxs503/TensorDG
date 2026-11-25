@@ -179,3 +179,22 @@ def test_numerical_face_power_local_source_and_boundary_signs():
     torch.testing.assert_close(qy, -(x[:,None]+yf)/3, atol=3e-13, rtol=0)
     torch.testing.assert_close(qx.diff(dim=0)+qy.diff(dim=1), torch.full_like(u[:,:,0,0], -.2),
                                atol=1e-12, rtol=0)
+
+
+def test_pure_neumann_heat_balance_and_reference_offset():
+    from tensordg import poisson_face_powers_2d
+
+    # u=x²+xy, with independently prescribed outward derivatives on all walls.
+    data = dict(bc=NEUMANN_ALL, neumann_flux={"right": lambda x,y: 2+y, "top": lambda x,y: x,
+                "bottom": lambda x,y: -x, "left": lambda x,y: -y})
+    x, y, u, meta = solve_poisson_2d_bc((3,5), 2, forcing=lambda x,y: -2+0*x+0*y, **data)
+    assert abs(meta["net_neumann_load"]) < 2e-14
+    qx, qy = poisson_face_powers_2d(u, **data)
+    torch.testing.assert_close(qx.diff(dim=0)+qy.diff(dim=1), torch.full_like(u[:,:,0,0], -2/15),
+                               rtol=0, atol=1e-12)
+    for shift in (0., 8.):
+        err = l2_error_2d(x,y,u, lambda x,y: x*x+x*y+shift, remove_constant=True)
+        assert err["constant_offset"] == pytest.approx(-1/3-1/4-shift, abs=2e-12)
+        assert err["absolute_l2"] < 2e-13
+    with pytest.raises(ValueError, match="incompatible pure Neumann"):
+        solve_poisson_2d_bc((3,5), 2, forcing=lambda x,y: 1+0*x+0*y, bc=NEUMANN_ALL)

@@ -25,12 +25,10 @@ nullspace.  That case is detected, checked (row sums must vanish, i.e.
 
     A + (1/ndofs) 1 1^T
 
-which pins the remaining additive constant (``1^T u = 1^T b``; the field it
-returns has, to quadrature accuracy, the same pointwise mean as the reference).
-Problems whose nullspace is larger than the constants (e.g. a solution that is
-constant across the periodic-like direction of a fully Neumann box) are out of
-scope and rejected rather than silently mis-gauge'd -- see
-``docs/reports/tensordg-poisson-neumann-verification.md``.
+which fixes the spatial mean to zero for a compatible right-hand side. The
+constant vector in the modal basis has only its cell-mean entries set to one.
+The assembled source and outward normal derivative must sum to zero when
+tested against this vector.
 """
 from __future__ import annotations
 
@@ -244,6 +242,15 @@ def solve_poisson_2d_bc(
                 f"(relative residual {metadata['nullspace_residual']:.3e}); "
                 "the assembly is inconsistent"
             )
+        means = rhs.view(nx, ny, local_dofs)[:, :, 0]
+        imbalance = float(means.sum().item())
+        metadata["net_neumann_load"] = imbalance
+        # Scale by the full assembled load to include moments of nonconstant
+        # data when the cell-mean components nearly cancel.
+        tolerance = 128*torch.finfo(rhs.dtype).eps*float(rhs.abs().sum().item())
+        if abs(imbalance) > tolerance:
+            raise ValueError("incompatible pure Neumann data: integrated source plus "
+                             f"outward normal derivative is {imbalance:.6g} (tolerance {tolerance:.3g})")
         matrix = matrix + (1.0 / matrix.shape[0]) * torch.outer(ones, ones)
         metadata["gauge"] = "rank-one 1 1^T / ndofs"
     else:
@@ -327,11 +334,13 @@ def l2_error_2d(x, y, coeff, exact, remove_constant: bool = False) -> dict[str, 
     offset = 0.0
     reference = reference.expand_as(difference)
     if remove_constant:
-        total = float(torch.sum(weight * quadrature).item())
+        total = nx * ny * float(torch.sum(weight * quadrature).item())
         offset = float(torch.sum(weight * quadrature * difference).item()) / total
         difference = difference - offset
     error2 = weight * torch.sum(quadrature * difference ** 2)
-    norm2 = weight * torch.sum(quadrature * (reference - (offset if remove_constant else 0.0)) ** 2)
+    if remove_constant:
+        reference = reference - (weight * torch.sum(quadrature * reference))/total
+    norm2 = weight * torch.sum(quadrature * reference**2)
     absolute = float(torch.sqrt(error2).item())
     norm = float(torch.sqrt(norm2).item())
     return {
