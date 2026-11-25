@@ -138,13 +138,18 @@ def _face_widths(widths):
     return torch.cat((widths[:1],torch.minimum(widths[:-1],widths[1:]),widths[-1:]))
 
 
-def _material_ratios(value, widths):
+def _positive_cell_values(value, widths, name):
     raw = torch.as_tensor(value,device=widths.device)
     if raw.is_complex() or raw.ndim>0 and raw.shape!=widths.shape:
-        raise ValueError("diffusivity_ratio must be real and scalar or one value per cell")
+        raise ValueError(f"{name} must be real and scalar or one value per cell")
     ratio = torch.as_tensor(value,device=widths.device,dtype=widths.dtype).expand_as(widths)
     if not torch.isfinite(ratio).all() or torch.any(ratio<=0):
-        raise ValueError("diffusivity_ratio must be finite and positive")
+        raise ValueError(f"{name} must be finite and positive")
+    return ratio
+
+
+def _material_ratios(value, widths):
+    ratio = _positive_cell_values(value,widths,"diffusivity_ratio")
     # Opposite-material weighting of the two physical diffusive traces gives
     # the harmonic coefficient multiplying their mean unscaled gradient.
     harmonic = 2/(ratio[:-1].reciprocal()+ratio[1:].reciprocal())
@@ -472,9 +477,10 @@ def _assemble_transport(
 def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_history=None,
                                           source_jump_times=(), interface_source_history=None, rannacher=False,
                                           return_face_transport=False, total_flux_history=None,
-                                          boundary_value_history=None, **spatial_options):
-    """Advance u_t + (a*u-D*u_x)_x + reaction*u = source with fixed coefficients.
+                                          boundary_value_history=None, storage=1., **spatial_options):
+    """Advance storage*u_t + (a*u-D*u_x)_x + reaction*u = source with fixed coefficients.
 
+    Storage is a positive scalar or one positive coefficient per cell.
     Spatial keywords match solve_advection_diffusion_1d. Initial data are a
     scalar, a spatial callable projected onto the modal basis, or previously
     computed coefficients shaped (cells, degree+1). The theta method accepts
@@ -505,7 +511,8 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
         raise ValueError("times must be finite and strictly increasing")
     n,degree = len(widths),metadata["degree"]
     indices = torch.arange(degree+1,device=centers.device)
-    mass = (widths[:,None]/(2*indices+1)).reshape(-1)
+    stored_width = widths*_positive_cell_values(storage,widths,"storage")
+    mass = (stored_width[:,None]/(2*indices+1)).reshape(-1)
     if callable(initial) or source_history is not None:
         nodes,weights,phi,*_ = _operators(degree,centers.device,centers.dtype)
         x = centers[:,None]+.5*widths[:,None]*nodes

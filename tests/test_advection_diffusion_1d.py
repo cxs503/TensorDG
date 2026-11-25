@@ -628,3 +628,25 @@ def test_simultaneous_mixed_boundary_histories_reproduce_affine_transient():
     integral = .5*times.square().diff()
     torch.testing.assert_close(west[:,0],.75*integral,atol=1e-12,rtol=0.)
     torch.testing.assert_close(east[:,-1],1.75*integral,atol=1e-12,rtol=0.)
+
+
+def test_cell_storage_conserves_mass_with_volume_and_end_fluxes():
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d
+
+    edges = np.array([0., .16, .5, .72, 1.])
+    capacity = np.array([.7, 1.1, 2.3, 4.])
+    times = np.array([0., .015, .07])
+    _, states, _, (west, east) = solve_transient_advection_diffusion_1d(
+        times, .3, cell_edges=edges, storage=capacity, source=2., total_flux=(.1,-.2),
+        return_face_transport=True)
+    mass_change = np.diff(states[:,:,0].numpy(),axis=0)
+    np.testing.assert_allclose(mass_change*(capacity*np.diff(edges)),
+                               (west-east).numpy()+2*np.outer(np.diff(times),np.diff(edges)),atol=1e-12)
+
+
+@pytest.mark.parametrize("storage", [0., -1., float("inf"), float("nan"), 1j, [1.,2.]])
+def test_invalid_cell_storage(storage):
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d
+
+    with pytest.raises(ValueError, match="storage"):
+        solve_transient_advection_diffusion_1d([0.,.1], 0., ncells=4, storage=storage)
