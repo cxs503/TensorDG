@@ -92,11 +92,11 @@ def test_stationary_quartic_source_profile_preserves_equilibrium_and_wall_flux()
                 initial_temperature=initial)
     for backend in ("dense", "sparse", "matrix-free", "exact-time"):
         if backend == "exact-time":
-            centers, coeff, _ = solve_heat_1d_exact_time(**opts)
+            centers, coeff, meta = solve_heat_1d_exact_time(**opts, integrate_face_fluxes=True)
         else:
             centers, coeff, meta = solve_heat_1d(**opts, backend=backend, time_steps=5,
                                                  integrate_face_fluxes=True)
-            faces = torch.linspace(0.,1.,6,dtype=coeff.dtype)
-            heat = torch.tensor(meta["integrated_face_fluxes"],dtype=coeff.dtype)
-            torch.testing.assert_close(heat,.013*(4*faces**3-1),atol=5e-10,rtol=0.)
+        faces = torch.linspace(0.,1.,6,dtype=coeff.dtype)
+        heat = torch.tensor(meta["integrated_face_fluxes"],dtype=coeff.dtype)
+        torch.testing.assert_close(heat,.013*(4*faces**3-1),atol=5e-10,rtol=0.)
         assert heat_error(centers,coeff,.013,reference=lambda x,t: initial(x))["absolute_l2"] < 2e-11

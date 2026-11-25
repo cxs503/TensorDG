@@ -269,7 +269,7 @@ def solve_heat_1d_exact_time(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, initial_temperature=None, source=None,
+    *, initial_temperature=None, source=None, integrate_face_fluxes: bool = False,
 ):
     """SIPG heat solution with the semi-discrete system integrated *exactly* in time.
 
@@ -280,6 +280,9 @@ def solve_heat_1d_exact_time(
     Crank--Nicolson, which for high polynomial degrees is otherwise *larger*
     than the spatial error and masks the ``h**(p+1)`` rate.  This makes the
     driver a pure measurement of the **spatial** order for any ``p``.
+
+    When requested, integrated_face_fluxes gives cumulative rightward heat
+    at each face from the time integral of the semi-discrete balance.
 
     Returns ``(centers, coefficients, metadata)`` like :func:`solve_heat_1d`.
     """
@@ -327,6 +330,14 @@ def solve_heat_1d_exact_time(
         "stiffness_eigenvalue_max": float(eigenvalues.real.max()),
         "time_step_limit": float(2.0 / eigenvalues.real.max()),
     }
+    if integrate_face_fluxes:
+        # Integrate M du/dt = f-Ku before recovering the numerical face flux.
+        rhs = mass @ (initial-state)
+        if system["source_load"] is not None:
+            rhs += final_time*system["source_load"].detach().cpu().numpy().reshape(-1)
+        integrated = np.linalg.solve(diffusion, rhs).reshape(ncells, degree+1)
+        modes = torch.as_tensor(integrated, device=coeff.device, dtype=coeff.dtype)
+        metadata["integrated_face_fluxes"] = sipg_heat_face_fluxes(modes, penalty).tolist()
     return system["centers"], coeff, metadata
 
 
