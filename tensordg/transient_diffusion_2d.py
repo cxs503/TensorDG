@@ -2,11 +2,11 @@
 
 import numpy as np
 import torch
-from scipy.sparse import bsr_matrix, diags
+from scipy.sparse import bsr_matrix, coo_matrix, diags
 from scipy.sparse.linalg import splu
 
-from .poisson_2d import _operators
-from .poisson_2d_bc import assemble_poisson_2d_bc, _wall_storage
+from .poisson_2d import _operators, _face_basis
+from .poisson_2d_bc import assemble_poisson_2d_bc, _wall_storage, _trace_face_data
 
 
 def _capacity_quadrature(grid):
@@ -220,8 +220,31 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     return result
 
 
+def _trace_capacity_matrix(grid,capacities):
+    x,y,degree = grid["x"],grid["y"],grid["degree"]
+    nx,ny = len(x),len(y)
+    _,weights,phi,_,_,pl,pr,dl,dr = _operators(degree,x.device,x.dtype)
+    dofs = np.arange(nx*ny*(degree+1)**2).reshape(nx,ny,-1)
+    rows,cols,values = [],[],[]
+    for axis,pair in _trace_face_data(capacities,nx,ny,x.device,x.dtype):
+        measure = .5/(ny if axis=="x" else nx)
+        for upper,capacity in enumerate(pair):
+            if (capacity<0).any():
+                raise ValueError("trace capacity must be nonnegative")
+            ix,iy = torch.where(capacity>0)
+            trace,_ = _face_basis(phi,pl if upper else pr,dl if upper else dr,axis,1.)
+            gram = measure*(trace.T*weights) @ trace
+            blocks = capacity[ix,iy,None,None]*gram
+            ids = dofs[ix.numpy()+upper*(axis=="x"),iy.numpy()+upper*(axis=="y")]
+            rows.append(np.broadcast_to(ids[:,:,None],blocks.shape).ravel())
+            cols.append(np.broadcast_to(ids[:,None,:],blocks.shape).ravel())
+            values.append(blocks.numpy().ravel())
+    return coo_matrix((np.concatenate(values),(np.concatenate(rows),np.concatenate(cols))),
+                      shape=(dofs.size,dofs.size)).tocsc()
+
+
 def _frequency_system(ncells,degree,penalty,bc,forcing,neumann_flux,reaction,conductivity,
-                      dirichlet_values,robin_films,capacity,complex_load,wall_areal_heat_capacity,contact_resistance,trace_power):
+                      dirichlet_values,robin_films,capacity,complex_load,wall_areal_heat_capacity,contact_resistance,trace_power,trace_heat_capacity):
     if forcing is None:
         forcing = lambda x,y: torch.zeros_like(x+y)
     stiffness,load,grid,metadata = assemble_poisson_2d_bc(
@@ -232,12 +255,15 @@ def _frequency_system(ncells,degree,penalty,bc,forcing,neumann_flux,reaction,con
     if wall_areal_heat_capacity:
         surface,_ = _wall_storage(grid,metadata["bc"],wall_areal_heat_capacity)
         mass += surface
+    if trace_heat_capacity:
+        mass += _trace_capacity_matrix(grid,trace_heat_capacity)
     return stiffness,mass,load,grid,metadata
 
 
 def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conductivity=1.,
                                      reaction=0., forcing=None, bc=None, dirichlet_values=None,
-                                     neumann_flux=None, robin_films=None, penalty=20., wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None):
+                                     neumann_flux=None, robin_films=None, penalty=20., wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None,
+                                     trace_heat_capacity=None):
     """Return x, y, U0 and U1 for the SIPG temperature U0 + iω U1 + O(ω²).
 
     Real, frequency-independent data follow solve_transient_diffusion_2d.
@@ -245,9 +271,10 @@ def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conduc
     problem requires zero integrated load and selects zero capacity-weighted
     mean at both orders, including surface storage. wall_areal_heat_capacity maps
     Robin sides to nonnegative scalars or functions of (x,y) in J/(m² K).
+    trace_heat_capacity uses the axis and trace ordering of trace_power.
     """
     stiffness,mass,load,grid,metadata = _frequency_system(ncells,degree,penalty,bc,forcing,
-        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,False,wall_areal_heat_capacity,contact_resistance,trace_power)
+        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,False,wall_areal_heat_capacity,contact_resistance,trace_power,trace_heat_capacity)
     anchored = metadata["temperature_anchored"]
     stride = (degree+1)**2
     rhs = load.numpy()
@@ -275,7 +302,8 @@ def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conduc
 
 def solve_harmonic_diffusion_2d(angular_frequency, *, ncells=16, degree=1, capacity=1.,
                                 conductivity=1., reaction=0., forcing=None, bc=None,
-                                dirichlet_values=None, neumann_flux=None, robin_films=None, penalty=20., wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None):
+                                dirichlet_values=None, neumann_flux=None, robin_films=None, penalty=20., wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None,
+                                     trace_heat_capacity=None):
     """Solve (K + iω M)U = F for exp(+iωt) and positive angular frequency.
 
     Volume forcing, prescribed temperatures, inward flux and film ambient
@@ -283,11 +311,13 @@ def solve_harmonic_diffusion_2d(angular_frequency, *, ncells=16, degree=1, capac
     Return x, y and CPU complex128 Legendre coefficients. Face powers can be
     evaluated with poisson_face_powers_2d and the same boundary data. For storing
     Robin faces supply wall_areal_heat_capacity by side and use rate iωU.
+    trace_heat_capacity stores heat independently on the two interior traces
+    (J/(m² K)), using the same face arrays and ordering as trace_power.
     """
     if not np.isfinite(angular_frequency) or angular_frequency<=0:
         raise ValueError("angular frequency must be positive and finite")
     stiffness,mass,load,grid,metadata = _frequency_system(ncells,degree,penalty,bc,forcing,
-        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,True,wall_areal_heat_capacity,contact_resistance,trace_power)
+        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,True,wall_areal_heat_capacity,contact_resistance,trace_power,trace_heat_capacity)
     field = splu((stiffness+1j*angular_frequency*mass).tocsc()).solve(load.numpy())
     shape = (*metadata["ncells"],degree+1,degree+1)
     return grid["x"],grid["y"],torch.from_numpy(field.reshape(shape))

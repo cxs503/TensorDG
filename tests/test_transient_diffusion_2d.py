@@ -238,3 +238,32 @@ def test_transient_surface_projection_conserves_initial_heat_and_restart():
         assert abs(bulk+wall-2.95)<1e-12
     _,_,restart = solve_transient_diffusion_2d(states[1],[.04,.09],**opts)
     torch.testing.assert_close(restart[-1],states[-1],rtol=0.,atol=1e-12)
+
+
+@pytest.mark.parametrize("axis",["x","y"])
+def test_storing_contact_low_frequency_limit_from_rod_admittance(axis):
+    from tensordg import solve_low_frequency_diffusion_2d, solve_harmonic_diffusion_2d
+
+    n = 6
+    face = np.zeros((n-1,n))
+    face[n//2-1] = 1.
+    if axis=="y":
+        face = face.T
+    r = .35
+    surface = np.array([.5,.2])
+    drive = np.array([1.,-.3])
+    options = dict(ncells=n,degree=3,bc=dict.fromkeys(("top","bottom") if axis=="x" else ("left","right"),"neumann"),
+                   contact_resistance={axis:r*face},trace_power={axis:(drive[0]*face,drive[1]*face)},
+                   trace_heat_capacity={axis:(surface[0]*face,surface[1]*face)})
+    _,_,steady,lag = solve_low_frequency_diffusion_2d(**options)
+    # k*A*w*coth(w*L) = k*A/L + iω*C*A*L/3 + O(ω²).
+    matrix = 2*np.eye(2)+np.array([[1.,-1.],[-1.,1.]])/r
+    expected = np.linalg.solve(matrix,drive)
+    derivative = np.linalg.solve(matrix,-(surface+1/6)*expected)
+    for field,reference in ((steady,expected),(lag,derivative)):
+        oriented = field if axis=="x" else field.permute(1,0,3,2)
+        modes = oriented[:,:,:,0].mean(1).numpy()
+        traces = [modes[n//2-1].sum(),modes[n//2]@np.array([1.,-1.,1.,-1.])]
+        np.testing.assert_allclose(traces,reference,atol=1e-11,rtol=0)
+    with pytest.raises(ValueError,match="nonnegative"):
+        solve_harmonic_diffusion_2d(1.,**dict(options,trace_heat_capacity={axis:(-face,face)}))
