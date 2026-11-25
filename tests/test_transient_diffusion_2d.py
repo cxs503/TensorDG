@@ -222,3 +222,19 @@ def test_storage_flux_preserves_imaginary_rate_for_real_trace():
     qx,_ = poisson_face_powers_2d(coeff,bc={"right":"robin"},robin_films={"right":(1.,1.)},
                                   wall_areal_heat_capacity={"right":2.},temperature_rate=3j*coeff)
     assert abs(qx[-1]-2j).max()<1e-14
+
+
+def test_transient_surface_projection_conserves_initial_heat_and_restart():
+    # The continuum projection uses both the volume and true wall values.
+    # For T=x³, C=1+x and wall capacity 2+y at x=1 the total is 2.95.
+    opts = dict(ncells=(4,3),degree=1,capacity=lambda x,y:1+x,
+                bc=dict(INSULATED,right="robin"),robin_films={"right":(0.,0.)},
+                wall_areal_heat_capacity={"right":lambda x,y:2+y})
+    x,y,states = solve_transient_diffusion_2d(lambda x,y:x**3,[0.,.04,.09],**opts)
+    for u in states:
+        bulk = ((1+x[:,None])*u[:,:,0,0]+u[:,:,1,0]/(6*len(x))).mean()
+        trace = u[-1].sum(1)
+        wall = ((2+y)*trace[:,0]+trace[:,1]/(6*len(y))).mean()
+        assert abs(bulk+wall-2.95)<1e-12
+    _,_,restart = solve_transient_diffusion_2d(states[1],[.04,.09],**opts)
+    torch.testing.assert_close(restart[-1],states[-1],rtol=0.,atol=1e-12)

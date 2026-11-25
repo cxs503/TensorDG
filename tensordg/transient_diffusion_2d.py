@@ -6,7 +6,7 @@ from scipy.sparse import bsr_matrix, diags
 from scipy.sparse.linalg import splu
 
 from .poisson_2d import _operators
-from .poisson_2d_bc import assemble_poisson_2d_bc, _wall_mass_matrix
+from .poisson_2d_bc import assemble_poisson_2d_bc, _wall_storage
 
 
 def _capacity_quadrature(grid):
@@ -56,7 +56,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
                                  dirichlet_values=None, neumann_flux=None, robin_films=None,
                                  penalty=20., load_amplitude=None, conductivity=1.,
                                  rannacher=False, return_interval_means=False, load_jump_times=(),
-                                 return_load_means=False, source_history=None):
+                                 return_load_means=False, source_history=None, wall_areal_heat_capacity=None):
     """Solve C*u_t - div(k grad u) + reaction*u = f with optional time-dependent loads.
 
     times specifies strictly increasing output times, each interval taking one
@@ -66,7 +66,10 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     the conventions of assemble_poisson_2d_bc, including its cellwise conductivity. Optional load_amplitude(t)
     scales the assembled source, prescribed temperature and flux data, and
     Robin ambient temperature together. Film coefficients and reaction are
-    stationary. By default the amplitude is one. source_history(t,x,y) adds
+    stationary. wall_areal_heat_capacity maps Robin sides to nonnegative
+    J/(m² K) values or functions of (x,y). The wall shares the material trace
+    temperature. Its storage also contributes to the initial projection.
+    By default the amplitude is one. source_history(t,x,y) adds
     an independently varying volume source in physical units, sampled at
     element quadrature points. Its jumps also belong in load_jump_times. The initial field can be a
     scalar, a function (x,y) projected in capacity-weighted L², or previously computed Legendre
@@ -103,7 +106,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     weights = np.where(np.isin(internal[:-1],np.r_[starts,midpoints]),1.,theta)
     if forcing is None:
         forcing = lambda x,y: torch.zeros_like(x+y)
-    operator,load,grid,_ = assemble_poisson_2d_bc(ncells,degree,penalty,bc,forcing,neumann_flux,
+    operator,load,grid,metadata = assemble_poisson_2d_bc(ncells,degree,penalty,bc,forcing,neumann_flux,
                     sparse=True,reaction=reaction,conductivity=conductivity,dirichlet_values=dirichlet_values,robin_films=robin_films)
     x,y = grid["x"],grid["y"]
     hx,hy = grid["hx"],grid["hy"]
@@ -135,6 +138,17 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
             initial = constant
     if initial.shape!=shape or not torch.isfinite(initial).all():
         raise ValueError("provide a finite initial temperature or matching modal coefficients")
+    if wall_areal_heat_capacity:
+        surface,wall_load = _wall_storage(grid,metadata["bc"],wall_areal_heat_capacity,
+                         initial_temperature if callable(initial_temperature) else None)
+        if wall_load is not None:
+            # Bulk projection already represents all volume moments of C*T0.
+            initial_load = mass_matrix@initial.reshape(-1).numpy()+wall_load
+        mass_matrix = (mass_matrix+surface).tocsc()
+        if wall_load is not None:
+            initial = torch.from_numpy(splu(mass_matrix).solve(initial_load).reshape(shape))
+            if not torch.isfinite(initial).all():
+                raise ValueError("initial wall temperature must be finite")
     history = np.empty((len(times),operator.shape[0]))
     state = history[0]
     state[:] = initial.reshape(-1).numpy()
@@ -215,7 +229,8 @@ def _frequency_system(ncells,degree,penalty,bc,forcing,neumann_flux,reaction,con
     quadrature = _capacity_quadrature(grid) if callable(capacity) else None
     mass = _capacity_operator(grid,capacity,quadrature)[0]
     if wall_areal_heat_capacity:
-        mass += _wall_mass_matrix(grid,metadata["bc"],wall_areal_heat_capacity)
+        surface,_ = _wall_storage(grid,metadata["bc"],wall_areal_heat_capacity)
+        mass += surface
     return stiffness,mass,load,grid,metadata
 
 

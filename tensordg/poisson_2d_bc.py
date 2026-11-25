@@ -89,7 +89,7 @@ def _check_storage_sides(capacities,types):
         raise ValueError("wall capacity requires a Robin side")
 
 
-def _wall_mass_matrix(grid,types,capacities):
+def _wall_storage(grid,types,capacities,initial_temperature=None):
     from scipy.sparse import coo_matrix
 
     _check_storage_sides(capacities,types)
@@ -98,6 +98,7 @@ def _wall_mass_matrix(grid,types,capacities):
     local = (degree+1)**2
     dofs = np.arange(len(x)*len(y)*local).reshape(len(x),len(y),local)
     rows,cols,values = [],[],[]
+    load = np.zeros(dofs.size) if initial_temperature is not None else None
     for side,data in capacities.items():
         horizontal = side in ("left","right")
         low = side in ("left","bottom")
@@ -107,11 +108,14 @@ def _wall_mass_matrix(grid,types,capacities):
         blocks = torch.einsum("iq,q,qk,ql->ikl",samples,w,trace,trace)/(2*len(centers))
         index = 0 if low else -1
         ids = dofs[index,:] if horizontal else dofs[:,index]
+        if load is not None:
+            values_on_wall = _boundary_samples(initial_temperature,side,centers,nodes)
+            load[ids] += (((values_on_wall*samples*w) @ trace)/(2*len(centers))).numpy()
         rows.append(np.broadcast_to(ids[:,:,None],blocks.shape).ravel())
         cols.append(np.broadcast_to(ids[:,None,:],blocks.shape).ravel())
         values.append(blocks.numpy().ravel())
     return coo_matrix((np.concatenate(values),(np.concatenate(rows),np.concatenate(cols))),
-                      shape=(dofs.size,dofs.size)).tocsc()
+                      shape=(dofs.size,dofs.size)).tocsc(),load
 
 
 def _film_samples(films, side, centers, nodes, load_dtype=None):
