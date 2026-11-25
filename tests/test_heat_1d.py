@@ -143,13 +143,14 @@ def test_ramped_walls_recover_cubic_field_and_integrated_flux():
         assert heat_error(centers,coeff,t,reference=lambda x,t: initial(x)+t*(2-3*x))["absolute_l2"] < 5e-10
 
 
-def test_piecewise_wall_history_restarts_modes_and_conserves_interval_heat():
+@pytest.mark.parametrize("wall_penalty", [None, 40.])
+def test_piecewise_wall_history_restarts_modes_and_conserves_interval_heat(wall_penalty):
     from tensordg import solve_heat_1d_wall_history
 
     times = [.2,.23,.24,.28]
     walls = [[.1,.4],[.3,.2],[.3,.2],[.15,.25]]
     for backend in ("dense","sparse","matrix-free","exact-time"):
-        x, states, meta = solve_heat_1d_wall_history(times,walls,5,2,backend=backend,
+        x, states, meta = solve_heat_1d_wall_history(times,walls,5,2,backend=backend,wall_penalty=wall_penalty,
             steps_per_interval=None if backend=="exact-time" else 4,source=lambda x: 1+x,
             initial_temperature=lambda x: .1+.3*x,integrate_face_fluxes=True)
         heat = states.new_tensor(meta["interval_face_heat"])
@@ -158,7 +159,7 @@ def test_piecewise_wall_history_restarts_modes_and_conserves_interval_heat():
         assert residual.abs().max() < 5e-10
         torch.testing.assert_close(heat.sum(dim=0),states.new_tensor(meta["integrated_face_fluxes"]))
         torch.testing.assert_close(states[0,:,0],.1+.3*x)
-        _,tail,_ = solve_heat_1d_wall_history(times[1:],walls[1:],5,2,backend=backend,
+        _,tail,_ = solve_heat_1d_wall_history(times[1:],walls[1:],5,2,backend=backend,wall_penalty=wall_penalty,
             steps_per_interval=None if backend=="exact-time" else 4,source=lambda x: 1+x,initial_temperature=states[1])
         torch.testing.assert_close(tail,states[1:],atol=5e-11,rtol=0.)
 
@@ -785,3 +786,20 @@ def test_ramped_wall_interval_temperature_modes(backend):
     expected[:, :, 0] = midpoint[:, None]*(1+2*centers)
     expected[:, :, 1] = midpoint[:, None]/6
     torch.testing.assert_close(means, expected, atol=1e-10, rtol=0.)
+
+
+def test_independent_wall_penalty_changes_only_two_trace_blocks():
+    from tensordg.heat_1d import assemble_sipg_1d
+
+    n = 5
+    base = assemble_sipg_1d(n)
+    tuned = assemble_sipg_1d(n, wall_penalty=40.)
+    delta = torch.zeros_like(base["diffusion"])
+    left = delta.new_tensor([1, -1, 1])
+    right = delta.new_tensor([1, 1, 1])
+    delta[:3, :3] = 20*9*n*torch.outer(left, left)
+    delta[-3:, -3:] = 20*9*n*torch.outer(right, right)
+    torch.testing.assert_close(tuned["diffusion"] - base["diffusion"], delta)
+    for value in (0., -1., math.nan, math.inf):
+        with pytest.raises(ValueError, match="wall_penalty"):
+            assemble_sipg_1d(n, wall_penalty=value)

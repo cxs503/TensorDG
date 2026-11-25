@@ -92,6 +92,14 @@ def _wall_pair(wall_temperatures, like):
     return pair
 
 
+def _wall_penalty(penalty, wall_penalty):
+    """Dirichlet coefficient, independent of the interior face penalty."""
+    value = penalty if wall_penalty is None else wall_penalty
+    if not math.isfinite(value) or value <= 0:
+        raise ValueError("wall_penalty must be finite and positive")
+    return value
+
+
 def _stationary_load(centers, h, operators, source, penalty, wall_temperatures):
     nodes, weights, phi, _, _, left, right, dleft, dright = operators
     load = None if source is None else _source_load(centers,h,nodes,weights,phi,source)
@@ -106,9 +114,9 @@ def _stationary_load(centers, h, operators, source, penalty, wall_temperatures):
     return load
 
 
-def _integrated_face_heat(coefficients, penalty, walls, duration):
+def _integrated_face_heat(coefficients, penalty, walls, duration, wall_penalty=None):
     integrated_walls = duration*_wall_pair(walls, coefficients)
-    return sipg_heat_face_fluxes(coefficients, penalty, wall_temperatures=integrated_walls).tolist()
+    return sipg_heat_face_fluxes(coefficients, penalty, wall_temperatures=integrated_walls, wall_penalty=wall_penalty).tolist()
 
 
 def _add_block(matrix, indices, block):
@@ -121,7 +129,7 @@ def assemble_sipg_1d(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, initial_temperature=None, source=None, wall_temperatures=None,
+    *, wall_penalty=None, initial_temperature=None, source=None, wall_temperatures=None,
 ):
     """Assemble the SIPG mass/diffusion matrices for ``u_t = u_xx`` on (0,1).
 
@@ -133,9 +141,11 @@ def assemble_sipg_1d(
 
     Returns a dict with ``centers``, ``h``, ``dofs``, ``mass_matrix`` (SPD),
     ``diffusion`` (the SPD SIPG stiffness ``K`` of ``M du/dt = -K u``, with face
-    penalty ``penalty * (p+1)**2 / h`` on every interface and boundary face), and
+    penalty ``penalty * (p+1)**2 / h`` on interior faces and the optional
+    coefficient `wall_penalty` on Dirichlet faces (defaults to `penalty`)), and
     ``initial_coefficients`` (L2 projection of the supplied profile, default ``sin(pi*x)``).
     """
+    wall_penalty = _wall_penalty(penalty, wall_penalty)
     if ncells < 2 or degree < 1 or penalty <= 0.0:
         raise ValueError("ncells >= 2, degree >= 1, and positive penalty are required")
     dev = torch.device(device)
@@ -173,7 +183,7 @@ def assemble_sipg_1d(
     ):
         derivative = outward * (2.0 / h) * derivative_endpoint
         consistency = -torch.outer(endpoint, derivative)
-        block = consistency + consistency.T + penalty * modes * modes / h * torch.outer(
+        block = consistency + consistency.T + wall_penalty * modes * modes / h * torch.outer(
             endpoint, endpoint,
         )
         _add_block(diffusion, dofs(cell), block)
@@ -188,8 +198,8 @@ def assemble_sipg_1d(
         "mass_matrix": mass_matrix,
         "diffusion": diffusion,
         "initial_coefficients": coeff,
-        "source_load": _stationary_load(centers,h,operators,source,penalty,wall_temperatures),
-        "penalty": penalty,
+        "source_load": _stationary_load(centers,h,operators,source,wall_penalty,wall_temperatures),
+        "penalty": penalty, "wall_penalty": wall_penalty,
     }
 
 
@@ -211,7 +221,7 @@ def solve_heat_1d(
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     backend: str = "dense",
-    *, integrate_temperature: bool = False, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
+    *, wall_penalty=None, integrate_temperature: bool = False, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
 ):
     """Solve the forced heat equation with fixed Dirichlet data and a projected initial profile.
 
@@ -220,6 +230,8 @@ def solve_heat_1d(
 
     Parameters
     ----------
+    wall_penalty : optional positive float
+        Dirichlet boundary coefficient. Defaults to the interior penalty.
     wall_temperatures : optional pair
         Constant left and right temperatures, default (0, 0).
     source : optional scalar or callable of x
@@ -244,13 +256,13 @@ def solve_heat_1d(
         from tensordg.sipg_sparse import solve_heat_1d_sparse
         return solve_heat_1d_sparse(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_temperature=integrate_temperature, integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
+            integrate_temperature=integrate_temperature, integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
         )
     elif backend == "matrix-free":
         from tensordg.sipg_matrixfree import solve_heat_1d_matrixfree
         return solve_heat_1d_matrixfree(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_temperature=integrate_temperature, integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
+            integrate_temperature=integrate_temperature, integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
         )
 
     # backend == "dense": original implementation
@@ -260,7 +272,7 @@ def solve_heat_1d(
         raise ValueError("final_time must be >= 0 and time_steps must be positive")
     dev = torch.device(device)
     assembly = assemble_sipg_1d(
-        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
     )
     h = assembly["h"]
     modes = degree + 1
@@ -289,7 +301,7 @@ def solve_heat_1d(
     coeff = state.reshape(ncells, modes)
     metadata = {
         "ncells": ncells, "degree": degree, "final_time": final_time,
-        "steps": steps, "dt": dt, "penalty": penalty, "dofs": ndofs,
+        "steps": steps, "dt": dt, "penalty": penalty, "wall_penalty": _wall_penalty(penalty, wall_penalty), "dofs": ndofs,
         "diffusion_symmetry_error": float(torch.max(torch.abs(diffusion - diffusion.T)).item()),
         "device": str(dev),
     }
@@ -298,7 +310,7 @@ def solve_heat_1d(
         if integrate_temperature:
             metadata["integrated_temperature_modes"] = integrated_coeff.tolist()
         if integrate_face_fluxes:
-            metadata["integrated_face_fluxes"] = _integrated_face_heat(integrated_coeff, penalty, wall_temperatures, final_time)
+            metadata["integrated_face_fluxes"] = _integrated_face_heat(integrated_coeff, penalty, wall_temperatures, final_time, wall_penalty)
     return centers, coeff, metadata
 
 
@@ -309,7 +321,7 @@ def solve_heat_1d_exact_time(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, initial_temperature=None, source=None, wall_temperatures=None, integrate_face_fluxes: bool = False, integrate_temperature: bool = False,
+    *, wall_penalty=None, initial_temperature=None, source=None, wall_temperatures=None, integrate_face_fluxes: bool = False, integrate_temperature: bool = False,
 ):
     """SIPG heat solution with the semi-discrete system integrated *exactly* in time.
 
@@ -331,7 +343,7 @@ def solve_heat_1d_exact_time(
     from scipy.linalg import expm
 
     system = assemble_sipg_1d(
-        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
     )
     mass = system["mass_matrix"].detach().cpu().numpy()
     diffusion = system["diffusion"].detach().cpu().numpy()
@@ -361,7 +373,7 @@ def solve_heat_1d_exact_time(
         "ncells": ncells,
         "degree": degree,
         "final_time": final_time,
-        "penalty": penalty,
+        "penalty": penalty, "wall_penalty": _wall_penalty(penalty, wall_penalty),
         "dofs": system["dofs"],
         "time_integration": "matrix-exponential",
         "mass_symmetry_error": float(np.max(np.abs(mass - mass.T))),
@@ -380,7 +392,7 @@ def solve_heat_1d_exact_time(
         if integrate_temperature:
             metadata["integrated_temperature_modes"] = modes.tolist()
         if integrate_face_fluxes:
-            metadata["integrated_face_fluxes"] = _integrated_face_heat(modes, penalty, wall_temperatures, final_time)
+            metadata["integrated_face_fluxes"] = _integrated_face_heat(modes, penalty, wall_temperatures, final_time, wall_penalty)
     return system["centers"], coeff, metadata
 
 
@@ -412,7 +424,7 @@ def heat_error(
     return {"absolute_l2": absolute, "exact_l2": norm, "relative_l2": absolute / norm}
 
 
-def sipg_heat_face_fluxes(coefficients: torch.Tensor, penalty: float = 20., *, wall_temperatures=None) -> torch.Tensor:
+def sipg_heat_face_fluxes(coefficients: torch.Tensor, penalty: float = 20., *, wall_temperatures=None, wall_penalty=None) -> torch.Tensor:
     """Return conductive flux toward +x at all faces of the uniform unit slab.
 
     Uses the modal coefficients returned by solve_heat_1d, unit diffusivity,
@@ -430,13 +442,14 @@ def sipg_heat_face_fluxes(coefficients: torch.Tensor, penalty: float = 20., *, w
     strength = penalty*modes**2*cells
     interior = -.5*(grad_r[:-1]+grad_l[1:]) + strength*(trace_r[:-1]-trace_l[1:])
     walls = _wall_pair(wall_temperatures, coefficients)
-    return torch.cat((-grad_l[:1]-strength*(trace_l[:1]-walls[0]), interior,
-                      -grad_r[-1:]+strength*(trace_r[-1:]-walls[1])))
+    boundary_strength = _wall_penalty(penalty, wall_penalty)*modes**2*cells
+    return torch.cat((-grad_l[:1]-boundary_strength*(trace_l[:1]-walls[0]), interior,
+                      -grad_r[-1:]+boundary_strength*(trace_r[-1:]-walls[1])))
 
 
 def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_temperatures,
                                wall_rates, initial_temperature=None, source=None, backend="dense",
-                               time_steps=None, penalty=20., device="cpu", dtype=torch.float64,
+                               time_steps=None, penalty=20., wall_penalty=None, device="cpu", dtype=torch.float64,
                                integrate_face_fluxes=False, integrate_temperature=False):
     """Solve with wall values g(0)+t*wall_rates, homogeneous material, and stationary source.
 
@@ -454,7 +467,7 @@ def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_tempe
         return generation-(rates[0]+slope*x)
 
     options = dict(ncells=ncells,degree=degree,final_time=final_time,wall_temperatures=walls,
-                   initial_temperature=initial_temperature,source=lifted_source,penalty=penalty,
+                   initial_temperature=initial_temperature,source=lifted_source,penalty=penalty,wall_penalty=wall_penalty,
                    device=device,dtype=dtype,integrate_face_fluxes=integrate_face_fluxes, integrate_temperature=integrate_temperature)
     if backend == "exact-time":
         if time_steps is not None:
@@ -478,7 +491,7 @@ def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_tempe
 
 def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
                                initial_temperature=None, source=None, interval_sources=None, backend="dense",
-                               steps_per_interval=None, penalty=20., device="cpu",
+                               steps_per_interval=None, penalty=20., wall_penalty=None, device="cpu",
                                dtype=torch.float64, integrate_face_fluxes=False, return_interval_temperatures=False):
     """Evolve piecewise-linear left/right wall temperatures on a uniform unit slab.
 
@@ -530,7 +543,7 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
         _, state, meta = solve_heat_1d_ramped_walls(
             ncells, degree, duration, wall_temperatures=start[i], wall_rates=rates,
             initial_temperature=state, source=generation, backend=backend, time_steps=steps_per_interval,
-            penalty=penalty, device=device, dtype=dtype, integrate_face_fluxes=integrate_face_fluxes,
+            penalty=penalty, wall_penalty=wall_penalty, device=device, dtype=dtype, integrate_face_fluxes=integrate_face_fluxes,
             integrate_temperature=return_interval_temperatures)
         history.append(state)
         if integrate_face_fluxes:
