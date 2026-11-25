@@ -358,3 +358,32 @@ def test_sampled_speed_uses_solver_precision_and_absolute_time():
     assert result["meta"]["max_speed"][0] == 0.5
     with pytest.raises(ValueError, match="finite"):
         solver.solve(coeff, lambda x, y, t: (torch.full_like(x, math.nan), y*0), 0.1)
+
+
+
+@pytest.mark.parametrize("axis", ["x", "y", "constant"])
+def test_axis_dependent_projection_and_norms_cover_the_domain(axis, record_property):
+    solver = DGAdvection2D(2, ncells=(5, 9))
+    def profile(x, y, t):
+        if axis == "constant":
+            return t
+        return t + (x if axis == "x" else y)
+
+    coeff = solver.project(profile, t=1)
+    assert coeff.shape == (5, 9, 3, 3)
+    expected_l1 = 1.0 if axis == "constant" else 1.5
+    expected_l2 = 1.0 if axis == "constant" else math.sqrt(7 / 3)
+    assert solver.mass(coeff) == pytest.approx(expected_l1, abs=2e-15)
+    l1 = solver.l1_error(coeff, profile, t=1)
+    l2 = solver.l2_error(coeff, profile, t=1)
+    record_property("mass", solver.mass(coeff))
+    record_property("reference_l2", l2["reference_l2"])
+    record_property("projection_error_l2", l2["absolute_l2"])
+    assert l1["reference_l1"] == pytest.approx(expected_l1, abs=2e-15)
+    assert l2["reference_l2"] == pytest.approx(expected_l2, abs=2e-15)
+    assert l2["absolute_l2"] < 5e-15
+    # A centered disk integrates the linear part about its center to zero,
+    # so its share of reference L1 mass equals its share of the domain area.
+    disk = solver.l1_error(coeff, profile, t=1, radius=0.3)
+    assert disk["masked"] and l1["coverage"] == pytest.approx(1.0)
+    assert disk["coverage"] == pytest.approx(math.pi * 0.3**2, abs=0.004)

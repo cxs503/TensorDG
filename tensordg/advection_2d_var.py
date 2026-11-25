@@ -38,6 +38,12 @@ import torch
 Velocity = Callable[[torch.Tensor, torch.Tensor, float], tuple[torch.Tensor, torch.Tensor]]
 
 
+def _sample_profile(profile, x, y, t):
+    """Expand scalar or axis-dependent data across the whole quadrature grid."""
+    values = torch.as_tensor(profile(x, y, t), device=x.device, dtype=x.dtype)
+    return torch.broadcast_to(values, torch.broadcast_shapes(x.shape, y.shape))
+
+
 @dataclass(frozen=True)
 class Basis1D:
     """Modal Legendre basis sampled at Gauss-Legendre nodes."""
@@ -246,10 +252,10 @@ class DGAdvection2D:
         self.XFaceNodes, self.YFace = xq[:, None, :], yf[None, :, None]
 
     # -- projection / post-processing -------------------------------------
-    def project(self, profile: Callable[..., torch.Tensor]) -> torch.Tensor:
+    def project(self, profile: Callable[..., torch.Tensor], t: float = 0.0) -> torch.Tensor:
         """L2 projection of a nodal profile onto the modal space."""
         b = self.basis
-        vals = profile(self.Xn, self.Yn, 0.0)
+        vals = _sample_profile(profile, self.Xn, self.Yn, t)
         coeff = torch.einsum("xyqr,q,r,qk,rl->xykl", vals, b.weights, b.weights,
                             b.phi, b.phi)
         norm = torch.outer(self._mode, self._mode) / 4.0
@@ -395,7 +401,7 @@ class DGAdvection2D:
             dtype=self.dtype)[:, None] + 0.5 * self.hy * b.nodes[None, :]
         X = xq[:, None, :, None]
         Y = yq[None, :, None, :]
-        ref = exact(X, Y, t)
+        ref = _sample_profile(exact, X, Y, t)
         wq = b.weights[None, None, :, None] * b.weights[None, None, None, :]
         if radius is not None:
             x0, y0 = float(center[0]), float(center[1])
@@ -430,7 +436,7 @@ class DGAdvection2D:
             dtype=self.dtype)[:, None] + 0.5 * self.hy * b.nodes[None, :]
         X = xq[:, None, :, None]
         Y = yq[None, :, None, :]
-        ref = exact(X, Y, t)
+        ref = _sample_profile(exact, X, Y, t)
         wq = b.weights[None, None, :, None] * b.weights[None, None, None, :]
         jac = 0.25 * self.hx * self.hy
         ref_l1_global = jac * torch.sum(wq * ref.abs())
@@ -456,39 +462,6 @@ class DGAdvection2D:
         wq = b.weights[None, None, :, None] * b.weights[None, None, None, :]
         jac = 0.25 * self.hx * self.hy
         return {"absolute_l2": float(torch.sqrt(jac * torch.sum(wq * num ** 2)).item())}
-
-
-    def l1_error(self, coeff: torch.Tensor, exact: Callable[..., torch.Tensor],
-                 t: float = 0.0, radius: float | None = None,
-                 center: Sequence[float] = (0.5, 0.5)) -> dict:
-        """L1 error against an analytic field (Gauss quadrature).
-
-        Returns ``absolute_l1``, ``reference_l1``, and ``relative_l1``.
-        The ``radius`` parameter works identically to :meth:`l2_error`.
-        """
-        b = basis_1d(self.degree, max(2 * self.degree + 6, 10), self.device, self.dtype)
-        num = torch.einsum("xykl,qk,rl->xyqr", coeff, b.phi, b.phi)
-        xq = torch.as_tensor(
-            [(i + 0.5) * self.hx for i in range(self.nx)], device=self.device,
-            dtype=self.dtype)[:, None] + 0.5 * self.hx * b.nodes[None, :]
-        yq = torch.as_tensor(
-            [(j + 0.5) * self.hy for j in range(self.ny)], device=self.device,
-            dtype=self.dtype)[:, None] + 0.5 * self.hy * b.nodes[None, :]
-        X = xq[:, None, :, None]
-        Y = yq[None, :, None, :]
-        ref = exact(X, Y, t)
-        wq = b.weights[None, None, :, None] * b.weights[None, None, None, :]
-        if radius is not None:
-            x0, y0 = float(center[0]), float(center[1])
-            mask = ((X - x0) ** 2 + (Y - y0) ** 2 <= radius ** 2).to(wq.dtype)
-            wq = wq * mask
-        jac = 0.25 * self.hx * self.hy
-        abs_l1 = jac * torch.sum(wq * torch.abs(num - ref))
-        ref_l1 = jac * torch.sum(wq * torch.abs(ref))
-        abs_l1 = float(abs_l1.item())
-        ref_l1 = float(ref_l1.item())
-        return {"absolute_l1": abs_l1, "reference_l1": ref_l1,
-                "relative_l1": abs_l1 / ref_l1 if ref_l1 else abs_l1}
 
 
 def estimate_max_speed(velocity: Velocity, times: Sequence[float] = (0.0,),
