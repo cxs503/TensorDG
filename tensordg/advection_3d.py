@@ -42,6 +42,7 @@ import numpy as np
 import torch
 
 from .advection_1d import MAX_DEGREE, _departure_coordinate
+from .runge_kutta import get_tableau, rk_step
 
 Velocity3 = tuple[float, float, float]
 
@@ -228,6 +229,7 @@ def solve_advection_3d(
     dtype: torch.dtype = torch.float64,
     *,
     initial: Callable | None = None,
+    time_integrator: str = "rk4",
     lengths: tuple[float, float, float] = (1.0, 1.0, 1.0),
 ):
     """Solve ``u_t + a . grad u = 0`` on a periodic box with the given physical side lengths.
@@ -239,7 +241,9 @@ def solve_advection_3d(
     the cell average. A custom initial(x, y, z) receives physical coordinates
     in [0, Lx) × [0, Ly) × [0, Lz). The default profile spans one period
     in each direction. For total mass use mass_3d(coeff, lengths=lengths).
+    The time integrator can be any registered explicit Runge–Kutta tableau.
     """
+    tableau = get_tableau(time_integrator)
     nx, ny, nz = (
         (ncells, ncells, ncells) if isinstance(ncells, int) else tuple(ncells)
     )
@@ -275,26 +279,25 @@ def solve_advection_3d(
 
     spacing = (hx, hy, hz)
     velocity3 = (ax, ay, az)
+    def rhs(state):
+        return _rhs(state, spacing, velocity3, volume, phi_left, phi_right)
+
     for _ in range(steps):
-        k1 = _rhs(coeff, spacing, velocity3, volume, phi_left, phi_right)
-        k2 = _rhs(
-            coeff + 0.5 * dt * k1, spacing, velocity3,
-            volume, phi_left, phi_right,
-        )
-        k3 = _rhs(
-            coeff + 0.5 * dt * k2, spacing, velocity3,
-            volume, phi_left, phi_right,
-        )
-        k4 = _rhs(
-            coeff + dt * k3, spacing, velocity3,
-            volume, phi_left, phi_right,
-        )
-        coeff = coeff + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        if time_integrator == "rk4":
+            # Preserve the summation order of the established default.
+            k1 = rhs(coeff)
+            k2 = rhs(coeff + 0.5 * dt * k1)
+            k3 = rhs(coeff + 0.5 * dt * k2)
+            k4 = rhs(coeff + dt * k3)
+            coeff = coeff + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        else:
+            coeff = rk_step(rhs, coeff, dt, tableau)
 
     metadata = {
         "ncells": (nx, ny, nz), "lengths": lengths, "degree": degree, "final_time": final_time,
         "velocity": velocity3, "dt": dt, "steps": steps,
         "device": str(dev), "cfl": cfl, "dtype": str(dtype),
+        "time_integrator": tableau.name, "rk_order": tableau.order, "rk_stages": tableau.stages,
     }
     return x, y, z, coeff, metadata
 

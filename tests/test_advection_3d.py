@@ -236,3 +236,38 @@ def test_high_order_modes_transport_a_translated_wave(degree, record_property):
         record_property(f"mass_error_{n}", drift)
         assert drift < 2e-14
     assert min(math.log2(a/b) for a, b in zip(errors, errors[1:])) > degree + 0.5
+
+
+
+@pytest.mark.parametrize(("method", "order", "stages"), [
+    ("euler", 1, 1), ("rk2", 2, 2), ("rk3", 3, 3), ("ssp_rk3", 3, 3),
+    ("rk4", 4, 4), ("ssp_rk54", 4, 5), ("rk5", 5, 6),
+])
+def test_temporal_order_against_exact_semidiscrete_mode(method, order, stages, record_property):
+    import cmath
+
+    # At P0 the Cartesian upwind operator acts diagonally on a Fourier mode.
+    # Use its exponential to isolate time error at fixed spatial resolution.
+    velocity = (0.25, -0.125, 0.125)
+    phases = (math.pi/2, -math.pi/2, math.pi/2)
+    eigenvalue = sum(4 * abs(a) * (cmath.exp(-1j * math.copysign(1, a) * phase) - 1)
+                     for a, phase in zip(velocity, phases))
+    def wave(x, y, z):
+        return 1 + torch.cos(2 * math.pi * (x - y + z))
+
+    _, _, _, initial, _ = solve_advection_3d(4, 0, 0., velocity, initial=wave)
+    cosine = initial - 1
+    sine = cosine.roll(1, dims=0)
+    factor = cmath.exp(eigenvalue)
+    exact = 1 + factor.real * cosine - factor.imag * sine
+    errors = []
+    for steps in (8, 16, 32, 64):
+        _, _, _, coeff, meta = solve_advection_3d(
+            4, 0, 1., velocity, cfl=2/steps, initial=wave, time_integrator=method)
+        assert (meta["steps"], meta["rk_order"], meta["rk_stages"]) == (steps, order, stages)
+        errors.append(float((coeff - exact).square().mean().sqrt()))
+        record_property(f"rms_error_{steps}", errors[-1])
+        assert abs(mass_3d(coeff) - 1) < 2e-14
+    measured = math.log2(errors[-2] / errors[-1])
+    record_property("final_observed_order", measured)
+    assert abs(measured - order) < 0.2
