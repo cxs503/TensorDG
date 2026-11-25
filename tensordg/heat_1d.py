@@ -529,6 +529,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     Returns cell centers, complex128 Legendre coefficients and the rightward
     numerical flux at every face. Uses a CPU sparse direct solve.
     """
+    from scipy import sparse
     from scipy.sparse.linalg import splu
     from .sipg_sparse import assemble_heat_1d_sparse
 
@@ -548,12 +549,26 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     for i,(cell,v,dv,normal) in enumerate(((0,left,dleft,-1),(-1,right,dright,1))):
         boundary = conductivity*(strength*v-normal*2*dv/h) if wall_types[i]=="dirichlet" else v
         load[cell] += values[i]*boundary
-    system = conductivity*stiffness + (1j*angular_frequency*capacity)*mass
-    state = splu(system.tocsc()).solve(load.detach().numpy().ravel())
+    storage = 1j*angular_frequency*capacity
+    system = conductivity*stiffness + storage*mass
+    rhs = load.detach().numpy().ravel()
+    mean = 0j
+    if all(kind=="neumann" for kind in wall_types):
+        # Constant mode has no conductive restoring force. Separate its exact
+        # storage response and constrain the remaining fluctuation to zero mean.
+        mean = rhs[::degree+1].sum()/storage
+        integral = np.zeros_like(rhs)
+        integral[::degree+1] = h
+        column = sparse.csc_matrix(integral[:,None])
+        bordered = sparse.bmat([[system,column],[column.T,None]],format="csc")
+        state = splu(bordered).solve(np.r_[rhs-storage*mean*integral,0j])[:-1]
+    else:
+        state = splu(system.tocsc()).solve(rhs)
     coefficients = torch.from_numpy(state.reshape(ncells,degree+1))
     flux = conductivity*sipg_heat_face_fluxes(coefficients,penalty,wall_temperatures=values)
     if wall_types[0]=="neumann":
         flux[0] = values[0]
     if wall_types[1]=="neumann":
         flux[-1] = -values[1]
+    coefficients[:,0] += mean
     return centers,coefficients,flux

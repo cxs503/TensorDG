@@ -197,3 +197,23 @@ def test_harmonic_cubic_field_for_independent_wall_types():
         expected_mean = temperature(x)+(.2+.6j)*x/(4*6**2)
         torch.testing.assert_close(u[:,0],expected_mean,atol=1e-11,rtol=0.)
         torch.testing.assert_close(q,flux(faces),atol=1e-10,rtol=0.)
+
+
+def test_slow_two_flux_walls_separate_bulk_storage_from_local_flux():
+    from tensordg import solve_harmonic_heat_1d
+
+    omega, c, k = 1e-12, 1.5, 2.
+    # The spatial mean grows like 1/omega; the zero-mean quadratic keeps
+    # heat travelling to the right with a finite slope-independent limit.
+    bulk = (.6+.3j)/(1j*omega*c)
+    def local(x):
+        return (.3-.5j)*(x**2-1/3)+(.2+.4j)*(x-.5)
+    def power(x):
+        return -k*(2*(.3-.5j)*x+.2+.4j)
+    def source(x):
+        return (.6+.3j)+1j*omega*c*local(x)-2*k*(.3-.5j)
+    x,u,q = solve_harmonic_heat_1d(omega,ncells=16,degree=2,capacity=c,conductivity=k,
+        source=source,wall_types=("neumann","neumann"),wall_values=(power(0),-power(1)))
+    torch.testing.assert_close(u[:,0].mean()/bulk,u.new_tensor(1.),atol=5e-15,rtol=0.)
+    faces = torch.linspace(0.,1.,17,dtype=x.dtype)
+    torch.testing.assert_close(q,power(faces),atol=1e-11,rtol=0.)
