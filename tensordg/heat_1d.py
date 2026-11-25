@@ -708,7 +708,7 @@ def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
 
 def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall_temperatures=None,
                                      interface_heat_sources=None, interface_left_heat_sources=None, interface_areal_heat_capacity=None,
-                                     angular_frequency=None, interface_film_coefficients=0.,
+                                     interface_left_areal_heat_capacity=None, angular_frequency=None, interface_film_coefficients=0.,
                                      interface_ambient_temperatures=0., layer_flux_offsets=None,
                                      return_flux_offset=False):
     """Return the complex wall admittance of a stack, ordered left to right.
@@ -726,14 +726,15 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     complex phasor per contact) immediately to the right of each resistance.
     interface_left_heat_sources independently loads the left trace in W/m².
     With left input S, the flux crossing the resistance is S plus the
-    rightward flux exiting the left material.
+    rightward flux exiting the left material minus the left trace storage rate.
     Optional interface_areal_heat_capacity (J/(m² K), scalar or one per
-    contact) places storage at the same right-hand trace. Supply the common
+    contact) places storage at the right-hand trace. interface_left_areal_heat_capacity
+    places independent storage at the left-hand trace in the same units. Supply the common
     angular_frequency (rad/s) of the layer matrices for storing interfaces.
     At each right-hand trace a film coefficient h (W/(m² K)) and ambient
     temperature phasor Ta (K) add the input h*(Ta-T_right). Supply either
     scalars or one value per interface. The rightward material flux increases by
-    S_left + S_right + h*(Ta-T_right) - i*omega*C_surface*T_right.
+    S_left + S_right + h*(Ta-T_right) - i*omega*(C_left*T_left + C_right*T_right).
     Y maps temperature perturbations at fixed sources; fluxes include the
     full driven response. To include volumetric forcing, supply each layer
     with its pair of zero-wall-temperature inward fluxes in layer_flux_offsets
@@ -785,15 +786,19 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
 
     sources = source_profile(interface_heat_sources)
     left_sources = source_profile(interface_left_heat_sources)
-    storage = matrices[0].new_zeros(len(layers)-1)
     if angular_frequency is not None and (not math.isfinite(angular_frequency) or angular_frequency <= 0):
         raise ValueError("angular_frequency must be finite and positive")
-    if interface_areal_heat_capacity is not None:
-        capacity = real_parameter(interface_areal_heat_capacity, "areal heat capacity")
+
+    def storage_admittance(value):
+        capacity = real_parameter(0. if value is None else value, "areal heat capacity")
         if capacity.any():
             if len(layers) == 1 or angular_frequency is None:
                 raise ValueError("interface storage requires two or more layers and an angular frequency")
-            storage = 1j*angular_frequency*capacity.expand(len(layers)-1)
+            return 1j*angular_frequency*capacity.expand(count)
+        return matrices[0].new_zeros(count)
+
+    left_storage = storage_admittance(interface_left_areal_heat_capacity)
+    storage = storage_admittance(interface_areal_heat_capacity)
     sources = sources + film*ambient
     interface_admittance = storage + film
     offsets = matrices[0].new_zeros((len(layers), 2))
@@ -809,11 +814,12 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     left_flux_offset, right_flux_offset = offsets[0]
     interfaces = []
     combined = matrices[0]
-    for layer, r, source, left_source, shunt, layer_offset in zip(
-            matrices[1:], resistance.expand(count), sources, left_sources, interface_admittance, offsets[1:]):
+    for layer, r, source, left_source, left_shunt, shunt, layer_offset in zip(
+            matrices[1:], resistance.expand(count), sources, left_sources, left_storage, interface_admittance, offsets[1:]):
         (a, b), (c, d) = combined
         (e, f), (g, h) = layer
-        # The right trace feeds the layer, the film, and surface storage.
+        # Each trace supplies its own local storage in addition to material power.
+        d = d + left_shunt
         e = e + shunt
         # Eliminate the two contact temperatures using the heat balance and
         # the contact jump directly, so perfect contact needs no 1/R limit.

@@ -736,3 +736,20 @@ def test_two_trace_sources_balance_each_side_of_resistive_and_perfect_contacts()
     torch.testing.assert_close(y @ drive+offset, torch.stack((flux[0, 0], flux[-1, 1])))
     torch.testing.assert_close(flux[:-1, 1]+flux[1:, 0], left+right)
     torch.testing.assert_close(t[:-1, 1]-t[1:, 0], resistance*(left-flux[:-1, 1]))
+
+
+@pytest.mark.parametrize("resistance", [0., .35])
+def test_independent_contact_storage_rates(resistance):
+    from tensordg import compose_heat_wall_admittances_1d
+
+    layer = torch.tensor([[2.+.6j, -.9], [-.9, 1.3+.2j]], dtype=torch.complex128)
+    omega, cl, cr = 2.3, .28, .51
+    opts = dict(interface_left_areal_heat_capacity=cl, interface_areal_heat_capacity=cr,
+                interface_left_heat_sources=.4+.1j, interface_heat_sources=-.2j)
+    with pytest.raises(ValueError, match="angular frequency"):
+        compose_heat_wall_admittances_1d([layer]*2, resistance, return_flux_offset=True, **opts)
+    _, t, flux = compose_heat_wall_admittances_1d([layer]*2, resistance, wall_temperatures=(1., .3j),
+                                                  angular_frequency=omega, **opts)
+    through = .4+.1j-flux[0, 1]-1j*omega*cl*t[0, 1]
+    torch.testing.assert_close(t[0, 1]-t[1, 0], resistance*through)
+    torch.testing.assert_close(flux[1, 0], through-.2j-1j*omega*cr*t[1, 0])
