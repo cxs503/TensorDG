@@ -84,3 +84,33 @@ def test_rannacher_matches_split_solve_and_stage_means():
     torch.testing.assert_close(fields[1:],cn)
     torch.testing.assert_close(means[0],be[1:].mean(dim=0))
     torch.testing.assert_close(means[1],cn.mean(dim=0))
+
+
+@pytest.mark.parametrize("damped",[False,True])
+def test_multiple_off_grid_load_jumps_match_independent_restarts(damped):
+    jump_times = [.015,.025,.09]
+    levels = [.3,1.4,-.5,.2]
+    opts = dict(ncells=(3,2),degree=1,dirichlet_values={"left":1.},
+                rannacher=damped,return_interval_means=True,return_load_means=True)
+    amplitude = lambda t:levels[np.searchsorted(jump_times,t,side="right")]
+    time = np.array([0.,.06,.09,.17])
+    *_,fields,means,loads = solve_transient_diffusion_2d(
+        .3,time,load_amplitude=amplitude,load_jump_times=jump_times,**opts)
+    init = fields[0]
+    stores,stages,weights = [],[],[]
+    for interval,value in zip(([0.,.015],[.015,.025],[.025,.06,.09],[.09,.17]),levels):
+        _,_,sol,stage,load = solve_transient_diffusion_2d(init,interval,load_amplitude=lambda t:value,**opts)
+        init = sol[-1]
+        stores.extend(sol[1:])
+        stages.extend(stage)
+        weights.extend(load)
+    torch.testing.assert_close(fields[1:],torch.stack(stores)[[2,3,4]])
+    torch.testing.assert_close(means[0],(.015*stages[0]+.010*stages[1]+.035*stages[2])/.06)
+    torch.testing.assert_close(means[1:],torch.stack(stages)[3:])
+    np.testing.assert_allclose(loads,[(.015*.3+.01*1.4-.035*.5)/.06,-.5,.2],atol=1e-14)
+
+
+@pytest.mark.parametrize("jumps",[[0.],[.5,.5],[1.],[float("nan")]])
+def test_bad_jump_schedule(jumps):
+    with pytest.raises(ValueError,match="jump"):
+        solve_transient_diffusion_2d(0.,[0.,1.],load_jump_times=jumps)

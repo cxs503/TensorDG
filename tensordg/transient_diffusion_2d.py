@@ -13,7 +13,8 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
                                  capacity=1., theta=.5, reaction=0., forcing=None, bc=None,
                                  dirichlet_values=None, neumann_flux=None, robin_films=None,
                                  penalty=20., load_amplitude=None, conductivity=1.,
-                                 rannacher=False, return_interval_means=False):
+                                 rannacher=False, return_interval_means=False, load_jump_times=(),
+                                 return_load_means=False):
     """Solve C*u_t - div(k grad u) + reaction*u = f with separable loads.
 
     times specifies strictly increasing output times, each interval taking one
@@ -28,9 +29,14 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     coefficients (nx,ny,degree+1,degree+1). Returns x, y and a CPU float64
     tensor of modal fields with leading time dimension, including the initial state.
     rannacher=True starts Crank–Nicolson with two backward Euler half steps
-    in the first interval. return_interval_means=True appends the time-integrator
+    in the first interval and after each declared load jump. load_jump_times
+    lists distinct interior times at which load_amplitude changes discontinuously;
+    off-grid jumps introduce internal steps. At a jump the callable must give
+    the new value; the preceding step samples its immediate left limit.
+    return_interval_means=True appends the time-integrator
     weighted modal field on each requested interval for flux/heat integration.
-    Weight the prescribed boundary data with the same time rule.
+    return_load_means=True appends the corresponding scalar load amplitude
+    per requested interval (after the optional modal means).
     """
     times = np.asarray(times,dtype=float)
     if times.ndim != 1 or len(times)<2 or not np.isfinite(times).all() or np.any(np.diff(times)<=0):
@@ -39,11 +45,18 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
         raise ValueError("require theta in [0.5,1]")
     if rannacher and theta!=.5:
         raise ValueError("Rannacher startup requires theta=.5")
-    if rannacher:
-        midpoint = times[0]+.5*(times[1]-times[0])
-        if not times[0]<midpoint<times[1]:
-            raise ValueError("first interval has no representable midpoint")
-        times = np.insert(times,1,midpoint)
+    jumps = np.asarray(load_jump_times,dtype=float)
+    if (jumps.ndim!=1 or not np.isfinite(jumps).all() or len(np.unique(jumps))!=len(jumps)
+            or np.any(jumps<=times[0]) or np.any(jumps>=times[-1])):
+        raise ValueError("load_jump_times must contain distinct finite interior times")
+    segments = np.union1d(times,jumps)
+    damp = rannacher & ((segments[:-1]==times[0]) | np.isin(segments[:-1],jumps))
+    starts,stops = segments[:-1][damp],segments[1:][damp]
+    midpoints = starts+.5*(stops-starts)
+    if np.any((midpoints<=starts) | (midpoints>=stops)):
+        raise ValueError("damped interval has no representable midpoint")
+    internal = np.union1d(segments,midpoints)
+    weights = np.where(np.isin(internal[:-1],np.r_[starts,midpoints]),1.,theta)
     if forcing is None:
         forcing = lambda x,y: torch.zeros_like(x+y)
     operator,load,grid,_ = assemble_poisson_2d_bc(ncells,degree,penalty,bc,forcing,neumann_flux,
@@ -95,31 +108,46 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     if initial.shape!=shape or not torch.isfinite(initial).all():
         raise ValueError("provide a finite initial temperature or matching modal coefficients")
     history = np.empty((len(times),operator.shape[0]))
-    history[0] = initial.reshape(-1).numpy()
-    amplitudes = np.ones(len(times))
+    state = history[0]
+    state[:] = initial.reshape(-1).numpy()
+    if return_interval_means:
+        modal_means = np.zeros_like(history[:-1])
+    if return_load_means:
+        load_means = np.zeros(len(times)-1)
+    start_values = np.ones(len(internal))
     if load_amplitude is not None:
-        amplitudes = np.asarray([load_amplitude(float(t)) for t in times],dtype=float)
-        if amplitudes.shape!=times.shape or not np.isfinite(amplitudes).all():
-            raise ValueError("load_amplitude must return a finite scalar at each time")
+        def sample(t):
+            value = np.asarray(load_amplitude(float(t)),dtype=float)
+            if value.ndim or not np.isfinite(value):
+                raise ValueError("load_amplitude must return a finite scalar at each time")
+            return float(value)
+        start_values = np.asarray([sample(t) for t in internal])
+    end_values = start_values[1:].copy()
+    if load_amplitude is not None:
+        for j in np.searchsorted(internal,jumps):
+            end_values[j-1] = sample(np.nextafter(internal[j],internal[j-1]))
     last_shift = None
-    for i,dt in enumerate(np.diff(times)):
-        weight = 1. if rannacher and i<2 else theta
+    out = 0
+    for i,dt in enumerate(np.diff(internal)):
+        weight = weights[i]
         shift = weight*dt
         if shift!=last_shift:
             factor = splu((mass_matrix+shift*operator).tocsc())
             last_shift = shift
-        state = history[i]
-        # Solve for the increment to retain stationary states to roundoff.
-        amplitude = (1-weight)*amplitudes[i]+weight*amplitudes[i+1]
-        history[i+1] = state+factor.solve(dt*(amplitude*load.numpy()-operator@state))
-    fields = torch.from_numpy(history.reshape((len(times),*shape)))
+        amplitude = (1-weight)*start_values[i]+weight*end_values[i]
+        increment = factor.solve(dt*(amplitude*load.numpy()-operator@state))
+        fraction = dt/(times[out+1]-times[out])
+        if return_interval_means:
+            modal_means[out] += fraction*(state+weight*increment)
+        if return_load_means:
+            load_means[out] += fraction*amplitude
+        state = state+increment
+        if internal[i+1]==times[out+1]:
+            out += 1
+            history[out] = state
+    result = (x,y,torch.from_numpy(history.reshape((len(times),*shape))))
     if return_interval_means:
-        means = (1-theta)*fields[:-1]+theta*fields[1:]
-        if rannacher:
-            fraction = (times[1]-times[0])/(times[2]-times[0])
-            means[1] = fraction*fields[1]+(1-fraction)*fields[2]
-            means = means[1:]
-    if rannacher:
-        fields = torch.cat((fields[:1],fields[2:]))
-    result = (x,y,fields)
-    return result+(means,) if return_interval_means else result
+        result += (torch.from_numpy(modal_means.reshape((len(times)-1,*shape))),)
+    if return_load_means:
+        result += (torch.from_numpy(load_means),)
+    return result
