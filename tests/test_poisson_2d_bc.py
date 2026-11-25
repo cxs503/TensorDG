@@ -413,3 +413,20 @@ def test_complex_cubic_interface_samples(axis):
                 gy = 2*ny*legendre.legval2d(*point, legendre.legder(block, axis=1))
                 truth = (t, gx, -2*gx+.4*gy) if axis == "x" else (t, gy, .4*gx-3*gy)
                 np.testing.assert_allclose([v[side,j,i].item() for v in fields], truth, atol=2e-12)
+
+
+@pytest.mark.parametrize("axis", ["x", "y"])
+def test_interface_traces_preserve_leading_dimensions(axis):
+    from tensordg import poisson_interface_traces_2d
+
+    generator = torch.Generator().manual_seed(916)
+    coeff = torch.randn((2, 3, 4, 5, 2, 2), dtype=torch.complex128, generator=generator)
+    material = torch.rand((4, 5, 3), dtype=torch.float64, generator=generator)
+    material[..., :2] += 1.
+    options = dict(conductivity=material, points=[-.9, .2])
+    actual = poisson_interface_traces_2d(coeff, axis, 2, **options)
+    for batch in range(2):
+        for time in range(3):
+            expected = poisson_interface_traces_2d(coeff[batch,time], axis, 2, **options)
+            for sampled, single in zip(actual, expected):
+                torch.testing.assert_close(sampled[batch,time], single)

@@ -539,20 +539,21 @@ def poisson_interface_traces_2d(coeff, axis, face, *, conductivity=1., points=(0
     """Sample the two material traces on a grid-aligned interior cut of the unit square.
 
     Return temperature (K), coordinate-normal derivative (K/m) and conductive
-    flux density (W/m²), all shaped (2, tangential cells, sample points).
+    flux density (W/m²), all shaped (..., 2, tangential cells, sample points).
+    Leading dimensions of the modal fields are preserved, including time.
     Side 0 belongs to the lower-coordinate material and side 1 to the higher.
     Both fluxes are positive along increasing axis. The material gradients
     give one-sided physical fluxes; poisson_face_powers_2d integrates the SIPG
     numerical flux. Face indices start at 1 for the first interior cut. Sample
     points are local tangential Legendre coordinates in [-1, 1] per face.
     """
-    if coeff.ndim != 4 or coeff.shape[2] != coeff.shape[3] or coeff.shape[2] not in (2, 3, 4):
+    if coeff.ndim < 4 or coeff.shape[-2] != coeff.shape[-1] or coeff.shape[-2] not in (2, 3, 4):
         raise ValueError("expected square P1 to P3 modal blocks")
     if axis not in ("x", "y") or not (coeff.is_floating_point() or coeff.is_complex()):
         raise ValueError("expected axis x or y and floating or complex coefficients")
-    nx, ny, modes, _ = coeff.shape
-    cells = coeff if axis == "x" else coeff.transpose(0, 1)
-    count, tangent_count = cells.shape[:2]
+    nx, ny, modes, _ = coeff.shape[-4:]
+    cells = coeff if axis == "x" else coeff.transpose(-4, -3)
+    count, tangent_count = cells.shape[-4:-2]
     if not isinstance(face, (int, np.integer)) or not 0 < face < count:
         raise ValueError("face must index an interior cut")
     raw = torch.as_tensor(points, device=coeff.device)
@@ -573,7 +574,7 @@ def poisson_interface_traces_2d(coeff, axis, face, *, conductivity=1., points=(0
         cross = cross.T
     temperatures, gradients, fluxes = [], [], []
     for index, endpoint, derivative in ((face-1, pr, dr), (face, pl, dl)):
-        block = cells[index].flatten(1)
+        block = cells.select(-4, index).flatten(-2)
         trace, normal = _face_basis(phi, endpoint, derivative, axis, 2*count)
         gradient = block @ normal.T.to(coeff.dtype)
         flux = -kn[index, :, None]*gradient
@@ -583,7 +584,7 @@ def poisson_interface_traces_2d(coeff, axis, face, *, conductivity=1., points=(0
         temperatures.append(block @ trace.T.to(coeff.dtype))
         gradients.append(gradient)
         fluxes.append(flux)
-    return torch.stack(temperatures), torch.stack(gradients), torch.stack(fluxes)
+    return torch.stack(temperatures, -3), torch.stack(gradients, -3), torch.stack(fluxes, -3)
 
 
 def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None, neumann_flux=None, robin_films=None, conductivity=1.,
