@@ -388,9 +388,12 @@ def test_switched_films_and_wall_storage_match_time_linear_quadratic_solution():
         heats.append(dt*(-k*(1-.4*ends+2*(amplitude+.5*dt*speed)*ends)*film.new_tensor([1.,-1.])+cw*speed*mode(ends)))
         amplitude += dt*speed
         targets.append(initial(ends)+amplitude*mode(ends))
-    _,u,q,bulk,wall = solve_heat_1d_bulk_history(times,reservoirs,ncells=7,degree=2,initial_temperature=initial,
+    _,u,q,bulk,wall,means = solve_heat_1d_bulk_history(times,reservoirs,ncells=7,degree=2,initial_temperature=initial,
         capacity=c,conductivity=k,heat_loss_coefficient=h,steps_per_interval=4,film_coefficients=film,
-        wall_areal_heat_capacity=cw,wall_ambient_intervals=air,inward_flux_intervals=powers,return_wall_history=True)
+        wall_areal_heat_capacity=cw,wall_ambient_intervals=air,inward_flux_intervals=powers,return_wall_history=True,
+        return_interval_modes=True)
+    # Each exact quadratic modal profile varies linearly inside a loading interval.
+    torch.testing.assert_close(means,.5*(u[:-1]+u[1:]),atol=2e-12,rtol=0.)
     torch.testing.assert_close(wall["temperature"][1:],torch.stack(targets),atol=2e-12,rtol=0.)
     exact_knots = torch.stack([initial(ends), *targets])
     torch.testing.assert_close(wall["mean_temperature"],.5*(exact_knots[:-1]+exact_knots[1:]),atol=2e-12,rtol=0.)

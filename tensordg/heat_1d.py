@@ -662,7 +662,7 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
                                heat_loss_coefficient=1., steps_per_interval=8, penalty=20.,
                                inward_flux_intervals=None, film_coefficients=(0.,0.),
                                wall_areal_heat_capacity=(0.,0.), wall_ambient_intervals=None,
-                               return_wall_history=False):
+                               return_wall_history=False, return_interval_modes=False):
     """Advance c*T_t=k*T_xx+H(x)*(Ta-T) on the unit slab.
 
     Each interval supplies an independent (start, end) pair of reservoir
@@ -679,6 +679,8 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
     return_wall_history appends a dict with knot temperatures (temperature,
     K), interval-mean traces (mean_temperature, K) and interval inward
     external heat (external_heat, J/m²), each ordered left then right.
+    return_interval_modes appends the SDIRK2 interval-mean DG coefficients
+    (interval, cell, mode), after any requested wall history.
     """
     from scipy import sparse
     from scipy.sparse.linalg import splu
@@ -725,6 +727,7 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
     shape = (ncells,degree+1)
     history = [torch.from_numpy(state.reshape(shape))]
     face_heat,bulk_heat = [],[]
+    interval_modes = []
     surface = trace @ state
     wall_history,mean_wall_history,external_history = [surface],[],[]
     gamma = 1-1/math.sqrt(2.)
@@ -750,6 +753,8 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
             state = predictor+gamma*dt*factor.solve(load2-operator@predictor)
             integral += dt*((1-gamma)*first+gamma*state)
         modes = torch.from_numpy(integral.reshape(shape))
+        if return_interval_modes:
+            interval_modes.append(modes/duration)
         flux = conductivity*sipg_heat_face_fluxes(modes,penalty)
         next_surface = trace @ state
         integrated_surface = trace @ integral
@@ -767,7 +772,9 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
         history.append(torch.from_numpy(state.reshape(shape)))
     result = (x,torch.stack(history),torch.stack(face_heat),torch.stack(bulk_heat))
     if return_wall_history:
-        return (*result,dict(temperature=torch.from_numpy(np.stack(wall_history)),
+        result += (dict(temperature=torch.from_numpy(np.stack(wall_history)),
                              mean_temperature=torch.from_numpy(np.stack(mean_wall_history)),
-                             external_heat=torch.from_numpy(np.stack(external_history))))
+                             external_heat=torch.from_numpy(np.stack(external_history))),)
+    if return_interval_modes:
+        result += (torch.stack(interval_modes),)
     return result
