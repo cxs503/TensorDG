@@ -83,6 +83,19 @@ def _film_samples(films, side, centers, nodes):
     return h, temperature
 
 
+def _cell_conductivity(value, nx, ny, device, dtype):
+    k = torch.as_tensor(value,device=device,dtype=dtype)
+    if k.shape not in ((),(nx,ny)) or not torch.isfinite(k).all() or (k<=0).any():
+        raise ValueError("conductivity must be a positive finite scalar or (nx,ny) field")
+    return k.expand(nx,ny)
+
+
+def _interface_conductivity(left,right):
+    # Harmonic weighting of k*grad(u) gives equal coefficients for the two gradients.
+    low,high = torch.minimum(left,right),torch.maximum(left,right)
+    return low/(.5+.5*(low/high))
+
+
 def assemble_poisson_2d_bc(
     ncells: int | tuple[int, int] = 16,
     degree: int = 1,
@@ -92,12 +105,13 @@ def assemble_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0.,
+    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1.,
 ):
-    """Assemble ``-Delta u + reaction*u = f`` with per-side Dirichlet/Neumann data.
+    """Assemble ``-div(k grad u) + reaction*u = f`` with per-side Dirichlet/Neumann data.
 
     dirichlet_values maps prescribed sides to scalar values or callables of
-    (x, y). Unspecified Dirichlet traces are zero. neumann_flux supplies du/dn.
+    (x, y). Unspecified Dirichlet traces are zero. neumann_flux supplies inward heat flux k*du/dn.
+    conductivity is a positive scalar or (nx,ny) field of element constants.
     robin_films maps each Robin side to (h, ambient), implementing outward
     Fourier flux h*(u-ambient); both entries accept scalars or callables.
     reaction is a finite nonnegative scalar or callable of (x,y). Positive
@@ -171,6 +185,7 @@ def assemble_poisson_2d_bc(
     volume_y = (hx / hy) * torch.einsum("ki,lj->klij", mass, stiffness).reshape(
         local_dofs, local_dofs,
     )
+    k = _cell_conductivity(conductivity,nx,ny,dev,dtype)
     volume = volume_x + volume_y
     xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
@@ -181,7 +196,7 @@ def assemble_poisson_2d_bc(
     if coefficient.ndim == 0:
         if coefficient > 0:
             anchored = True
-            volume = volume + (hx*hy/4)*coefficient*torch.kron(mass,mass)
+        reaction_block = (hx*hy/4)*coefficient*torch.kron(mass,mass)
     else:
         coefficient = torch.broadcast_to(coefficient,(nx,ny,len(nodes),len(nodes)))
         anchored = anchored or bool((coefficient > 0).any())
@@ -190,9 +205,9 @@ def assemble_poisson_2d_bc(
     for ix in range(nx):
         if coefficient.ndim:
             weighted = (coefficient[ix]*product_weights).flatten(1)
-            blocks = volume + (hx*hy/4)*(basis.T @ (weighted[...,None]*basis))
+            blocks = (hx*hy/4)*(basis.T @ (weighted[...,None]*basis))
         for iy in range(ny):
-            block = blocks[iy] if coefficient.ndim else volume
+            block = k[ix,iy]*volume + (blocks[iy] if coefficient.ndim else reaction_block)
             add(dofs(ix, iy), block)
 
     # ---- interior faces (identical to the Dirichlet-only benchmark) ------
@@ -201,16 +216,18 @@ def assemble_poisson_2d_bc(
         phi, weights, phi_left, phi_right, dphi_left, dphi_right,
         "x", hx, measure_x, penalty, modes,
     )
+    kx = _interface_conductivity(k[:-1],k[1:])
     for ix in range(nx - 1):
         for iy in range(ny):
-            add(torch.cat((dofs(ix, iy), dofs(ix + 1, iy))), face_x)
+            add(torch.cat((dofs(ix, iy), dofs(ix + 1, iy))), kx[ix,iy]*face_x)
     face_y = interior_face_operator(
         phi, weights, phi_left, phi_right, dphi_left, dphi_right,
         "y", hy, measure_y, penalty, modes,
     )
+    ky = _interface_conductivity(k[:,:-1],k[:,1:])
     for ix in range(nx):
         for iy in range(ny - 1):
-            add(torch.cat((dofs(ix, iy), dofs(ix, iy + 1))), face_y)
+            add(torch.cat((dofs(ix, iy), dofs(ix, iy + 1))), ky[ix,iy]*face_y)
 
     # ---- boundary faces --------------------------------------------------
     load = torch.zeros(ndofs, device=dev, dtype=dtype).view(nx, ny, local_dofs)
@@ -229,7 +246,7 @@ def assemble_poisson_2d_bc(
             )
             for line in range(ny if axis == "x" else nx):
                 ix, iy = (index, line) if axis == "x" else (line, index)
-                add(dofs(ix, iy), block)
+                add(dofs(ix, iy), k[ix,iy]*block)
             data = traces.get(side)
             if data is None:
                 continue
@@ -251,6 +268,8 @@ def assemble_poisson_2d_bc(
             test, _ = _face_basis(phi, endpoint, d_endpoint, axis, 2/h_normal, outward)
         samples = _boundary_samples(data, side, centers, nodes)
         contribution = measure*((samples*weights) @ test)
+        if types[side] == "dirichlet":
+            contribution *= (k[index,:] if axis=="x" else k[:,index])[:,None]
         if axis == "x":
             load[index] += contribution
         else:
@@ -288,7 +307,7 @@ def solve_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0.,
+    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1.,
 ):
     """Solve the Poisson problem with dense torch or CPU SciPy sparse direct algebra.
 
@@ -298,7 +317,7 @@ def solve_poisson_2d_bc(
     matrix, rhs, grid, metadata = assemble_poisson_2d_bc(
         ncells=ncells, degree=degree, penalty=penalty, bc=bc,
         forcing=forcing, neumann_flux=neumann_flux, device=device, dtype=dtype,
-        dirichlet_values=dirichlet_values, robin_films=robin_films, sparse=sparse, reaction=reaction,
+        dirichlet_values=dirichlet_values, robin_films=robin_films, sparse=sparse, reaction=reaction, conductivity=conductivity,
     )
     nx, ny = metadata["ncells"]
     local_dofs = (degree + 1) ** 2
@@ -356,18 +375,19 @@ def solve_poisson_2d_bc(
     return grid["x"], grid["y"], coeff, metadata
 
 
-def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None, neumann_flux=None, robin_films=None):
-    """Integrate SIPG numerical heat flux over each face for unit conductivity and depth.
+def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None, neumann_flux=None, robin_films=None, conductivity=1.):
+    """Integrate SIPG numerical heat flux over each face for unit depth.
 
     Returns arrays (nx+1, ny) and (nx, ny+1) oriented in increasing x and y.
-    Supply the same penalty and boundary data as the solve. For each cell,
-    right minus left plus top minus bottom equals its integrated source.
+    Supply the same conductivity, penalty and boundary data as the solve. For each cell,
+    right minus left plus top minus bottom equals its integrated source minus reaction loss in steady state.
     """
     nx, ny, modes, last = coeff.shape
     if modes != last or modes not in (2, 3, 4) or min(nx, ny) < 2 or penalty <= 0:
         raise ValueError("expected square P1 to P3 modal blocks and positive penalty")
     nodes, weights, phi, _, _, pl, pr, dl, dr = _operators(modes-1, coeff.device, coeff.dtype)
     types = _resolve_bc(bc)
+    k = _cell_conductivity(conductivity,nx,ny,coeff.device,coeff.dtype)
     fields = coeff.flatten(2)
     outputs = []
     for axis, count, tangential, low, high in (("x", nx, ny, "left", "right"),
@@ -377,6 +397,8 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
         tr, gr = _face_basis(phi, pr, dr, axis, 2*count)
         scale = penalty*modes*modes*count
         interior = -.5*(u[:-1] @ gr.T + u[1:] @ gl.T) + scale*(u[:-1] @ tr.T-u[1:] @ tl.T)
+        material = k if axis=="x" else k.T
+        interior *= _interface_conductivity(material[:-1],material[1:])[...,None]
         result = coeff.new_empty((count+1, tangential))
         result[1:-1] = (interior @ weights)/(2*tangential)
         centers = (torch.arange(tangential, device=coeff.device, dtype=coeff.dtype)+.5)/tangential
@@ -393,7 +415,7 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
             if neumann:
                 flux = -sign*prescribed.expand(tangential, len(nodes))
             else:
-                flux = -(u[index] @ gradient.T) + sign*scale*(u[index] @ trace.T-prescribed)
+                flux = material[index,:,None]*(-(u[index] @ gradient.T) + sign*scale*(u[index] @ trace.T-prescribed))
             result[index] = (flux @ weights)/(2*tangential)
         outputs.append(result if axis == "x" else result.T)
     return tuple(outputs)

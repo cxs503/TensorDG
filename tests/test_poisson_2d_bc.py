@@ -277,3 +277,28 @@ def test_zero_reaction_preserves_neumann_compatibility():
         solve_poisson_2d_bc(2,bc=NEUMANN_ALL,forcing=lambda x,y:1+x+y,reaction=lambda x,y:0*x)
     with pytest.raises(ValueError,match="reaction"):
         solve_poisson_2d_bc(2,forcing=lambda x,y:x+y,reaction=-1.)
+
+
+@pytest.mark.parametrize("sparse",[False,True])
+@pytest.mark.parametrize("driven",["dirichlet","robin","neumann"])
+def test_two_layer_conductivity_preserves_temperature_and_power(sparse,driven):
+    from tensordg import poisson_face_powers_2d
+    k = torch.tensor([[.5],[.5],[6.],[6.]],dtype=torch.float64).expand(4,3)
+    resistance = .5/.5+.5/6
+    power = 2/(resistance+(1/3 if driven=="robin" else 0))
+    bc = dict(left=driven,right="dirichlet",bottom="neumann",top="neumann")
+    data = dict(bc=bc,conductivity=k,dirichlet_values={"right":1.})
+    if driven=="dirichlet":
+        data["dirichlet_values"]["left"] = 3.
+    elif driven=="robin":
+        data["robin_films"] = {"left":(3.,3.)}
+    else:
+        data["neumann_flux"] = {"left":power}
+    x,y,u,meta = solve_poisson_2d_bc((4,3),2,forcing=lambda x,y:0*x+0*y,sparse=sparse,**data)
+    def exact(x,y):
+        return 1.+power*(torch.clamp(.5-x,min=0)/.5+torch.clamp(1-x,max=.5)/6)
+    assert l2_error_2d(x,y,u,exact)["absolute_l2"] < 3e-11
+    assert meta["matrix_symmetry_error"]<1e-11
+    qx,qy = poisson_face_powers_2d(u,**data)
+    torch.testing.assert_close(qx,torch.full_like(qx,power/3),atol=2e-11,rtol=0.)
+    torch.testing.assert_close(qy,torch.zeros_like(qy),atol=2e-11,rtol=0.)

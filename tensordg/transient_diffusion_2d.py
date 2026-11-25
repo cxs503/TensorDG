@@ -12,14 +12,14 @@ from .poisson_2d_bc import assemble_poisson_2d_bc
 def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degree=1,
                                  capacity=1., theta=.5, reaction=0., forcing=None, bc=None,
                                  dirichlet_values=None, neumann_flux=None, robin_films=None,
-                                 penalty=20., load_amplitude=None):
-    """Solve C*u_t - Δu + reaction*u = f with separable loads and unit conductivity.
+                                 penalty=20., load_amplitude=None, conductivity=1.):
+    """Solve C*u_t - div(k grad u) + reaction*u = f with separable loads.
 
     times specifies strictly increasing output times, each interval taking one
     theta step (.5 for Crank–Nicolson, 1 for backward Euler). capacity is a
     positive volumetric heat capacity given as a scalar, an (nx,ny) array of
     cell constants, or a function C(x,y) sampled at element quadrature points. Boundary data and reaction use
-    the conventions of assemble_poisson_2d_bc. Optional load_amplitude(t)
+    the conventions of assemble_poisson_2d_bc, including its cellwise conductivity. Optional load_amplitude(t)
     scales the assembled source, prescribed temperature and flux data, and
     Robin ambient temperature together. Film coefficients and reaction are
     stationary. By default the amplitude is one. The initial field can be a
@@ -35,7 +35,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     if forcing is None:
         forcing = lambda x,y: torch.zeros_like(x+y)
     operator,load,grid,_ = assemble_poisson_2d_bc(ncells,degree,penalty,bc,forcing,neumann_flux,
-                    sparse=True,reaction=reaction,dirichlet_values=dirichlet_values,robin_films=robin_films)
+                    sparse=True,reaction=reaction,conductivity=conductivity,dirichlet_values=dirichlet_values,robin_films=robin_films)
     x,y = grid["x"],grid["y"]
     hx,hy = grid["hx"],grid["hy"]
     modes = degree+1
