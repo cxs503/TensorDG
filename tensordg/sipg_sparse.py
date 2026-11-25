@@ -26,6 +26,7 @@ def assemble_heat_1d_sparse(
     penalty: float,
     device: torch.device,
     dtype: torch.dtype,
+    *, wall_penalty=None, wall_types=("dirichlet", "dirichlet"),
 ) -> tuple:
     """Assemble the SIPG diffusion + mass matrices for 1-D heat as scipy CSR.
 
@@ -33,7 +34,9 @@ def assemble_heat_1d_sparse(
     tuple ``(nodes, weights, phi, mass_dense, stiffness_dense, ...)`` needed
     by downstream code (RHS projection, error evaluation).
     """
-    from tensordg.heat_1d import _operators
+    from tensordg.heat_1d import _operators, _wall_penalty
+
+    wall_penalty = _wall_penalty(penalty, wall_penalty)
 
     h = 1.0 / ncells
     (
@@ -79,15 +82,19 @@ def assemble_heat_1d_sparse(
         vals_mass.append(np.zeros(idx.numel() ** 2))
 
     # Boundary faces
+    if len(wall_types) != 2 or any(kind not in ("dirichlet","neumann") for kind in wall_types):
+        raise ValueError("wall_types must specify dirichlet or neumann for each end")
     for cell, endpoint, deriv_endpoint, outward in (
         (0, phi_left, dphi_left, -1.0),
         (ncells - 1, phi_right, dphi_right, 1.0),
     ):
+        if wall_types[0 if cell == 0 else 1] == "neumann":
+            continue
         derivative = outward * (2.0 / h) * deriv_endpoint
         consistency_b = -torch.outer(endpoint, derivative)
         block = (
             consistency_b + consistency_b.T
-            + penalty * modes * modes / h * torch.outer(endpoint, endpoint)
+            + wall_penalty * modes * modes / h * torch.outer(endpoint, endpoint)
         )
         idx = _dofs(cell)
         ii, jj = torch.meshgrid(idx, idx, indexing="ij")
@@ -297,28 +304,24 @@ def solve_heat_1d_sparse(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
+    *, wall_penalty=None, integrate_temperature: bool = False, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
 ) -> tuple:
     """Sparse SIPG heat solve.  Signature mirrors ``solve_heat_1d``."""
-    from tensordg.heat_1d import _operators, exact_temperature
+    from tensordg.heat_1d import _wall_penalty, _integrated_face_heat, _operators, _project_initial, _stationary_load
 
+    wall_penalty = _wall_penalty(penalty, wall_penalty)
     dev = torch.device(device)
     h = 1.0 / ncells
     centers = (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * h
 
     diffusion_csr, mass_csr, operators = assemble_heat_1d_sparse(
-        ncells, degree, penalty, dev, dtype,
+        ncells, degree, penalty, dev, dtype, wall_penalty=wall_penalty,
     )
     nodes, weights, phi, mass, stiffness, *_ = operators
     modes = degree + 1
 
     # Initial condition
-    xq = centers[:, None] + 0.5 * h * nodes[None, :]
-    initial = torch.sin(math.pi * xq)
-    coeff = torch.empty((ncells, modes), device=dev, dtype=dtype)
-    for k in range(modes):
-        coeff[:, k] = (2 * k + 1) * 0.5 * torch.sum(
-            weights[None, :] * initial * phi[:, k][None, :], dim=1,
-        )
+    coeff = _project_initial(centers, h, nodes, weights, phi, initial_temperature)
 
     steps = (
         max(1, math.ceil(final_time / (0.02 * h)))
@@ -326,7 +329,13 @@ def solve_heat_1d_sparse(
     ) if final_time > 0.0 else 0
     dt = final_time / steps if steps else 0.0
 
+    increment = 0.
+    load = _stationary_load(centers,h,operators,source,wall_penalty,wall_temperatures)
+    if load is not None:
+        increment = dt*load.reshape(-1)
+        increment = increment.cpu().numpy()
     state = coeff.reshape(-1).cpu().numpy().astype(np.float64)
+    integrated = np.zeros_like(state) if integrate_face_fluxes or integrate_temperature else None
 
     if steps:
         system = mass_csr + 0.5 * dt * diffusion_csr
@@ -334,7 +343,10 @@ def solve_heat_1d_sparse(
         # Factorise once
         lu = spla.splu(system.tocsc())
         for _ in range(steps):
-            state = lu.solve(explicit @ state)
+            previous = state
+            state = lu.solve(explicit @ state + increment)
+            if integrated is not None:
+                integrated += (.5 * dt) * (previous + state)
 
     solution = torch.as_tensor(state, device=dev, dtype=dtype)
     coeff = solution.reshape(ncells, modes)
@@ -342,9 +354,15 @@ def solve_heat_1d_sparse(
     symmetry_error = float(np.max(np.abs(diffusion_csr - diffusion_csr.T)))
     metadata = {
         "ncells": ncells, "degree": degree, "final_time": final_time,
-        "steps": steps, "dt": dt, "penalty": penalty,
+        "steps": steps, "dt": dt, "penalty": penalty, "wall_penalty": wall_penalty,
         "dofs": diffusion_csr.shape[0], "nnz": diffusion_csr.nnz,
         "diffusion_symmetry_error": symmetry_error,
         "device": str(dev), "backend": "sparse",
     }
+    if integrated is not None:
+        integrated_coeff = torch.as_tensor(integrated, dtype=dtype, device=dev).reshape(ncells, modes)
+        if integrate_temperature:
+            metadata["integrated_temperature_modes"] = integrated_coeff.tolist()
+        if integrate_face_fluxes:
+            metadata["integrated_face_fluxes"] = _integrated_face_heat(integrated_coeff, penalty, wall_temperatures, final_time, wall_penalty)
     return centers, coeff, metadata

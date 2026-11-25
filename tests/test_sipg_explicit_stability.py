@@ -125,7 +125,7 @@ def test_artifact_provenance_hashes_the_committed_artifacts():
     provenance = json.loads((ART / "provenance.json").read_text())
     digest = hashlib.sha256((ART / "results.json").read_bytes()).hexdigest()
     assert provenance["results_sha256"] == digest
-    assert (ART / provenance["figure"]).is_file()
+    assert hashlib.sha256((ART / provenance["figure"]).read_bytes()).hexdigest() == provenance["figure_sha256"]
 
 
 # --------------------------------------------------------------------------- #

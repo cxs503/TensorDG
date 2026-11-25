@@ -16,6 +16,7 @@ now be supplied as a callable, which is what makes discontinuous-data
 from __future__ import annotations
 
 import math
+from fractions import Fraction
 from typing import Callable, Sequence
 
 import numpy as np
@@ -229,12 +230,31 @@ def _basis(degree: int, nodes, device, dtype):
     return torch.stack(basis, dim=1)
 
 
+def _departure_coordinate(x, final_time, speed, period=1.0):
+    """Periodic characteristic foot in [0, period)."""
+    # Reduce the product of the *represented* scalar inputs before rounding:
+    # even two exactly representable floats can have a product that loses a
+    # fractional turn or overflows. Tensor arithmetic only needs the small shift.
+    box = Fraction.from_float(float(period))
+    shift = (Fraction.from_float(float(speed)) * Fraction.from_float(float(final_time))) % box
+    if 2 * shift > box:
+        shift -= box
+    foot = torch.remainder(x - float(shift), period)
+    return torch.where(foot == period, 0., foot)
+
+
+
+def _translated_profile(x, final_time, speed, exact):
+    return (_sine if exact is None else exact)(_departure_coordinate(x, final_time, speed))
+
+
 def l2_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
              speed: float = 1.0,
              exact: Callable[[torch.Tensor], torch.Tensor] | None = None) -> float:
     """Quadrature-based L2 error against the exact translated wave.
 
-    ``exact`` defaults to the translated sine wave ``sin(2*pi*(x - speed*t))``.
+    ``exact`` is the initial profile on [0, 1), sampled at (x - speed*t) mod 1.
+    Its default is sin(2*pi*x).
     """
     degree = coeff.shape[1] - 1
     x_np, w_np = np.polynomial.legendre.leggauss(max(2 * degree + 4, 6))
@@ -244,8 +264,7 @@ def l2_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
     phi = _basis(degree, x_np, coeff.device, coeff.dtype)
     uh = coeff @ phi.T
     x = centers[:, None] + 0.5 * h * xq[None, :]
-    truth = (_sine(x - speed * final_time) if exact is None
-             else exact(x - speed * final_time))
+    truth = _translated_profile(x, final_time, speed, exact)
     err2 = 0.5 * h * torch.sum(wq[None, :] * (uh - truth) ** 2)
     return float(torch.sqrt(err2).item())
 
@@ -272,6 +291,7 @@ def l1_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
              jumps: Sequence[float] = (), nsub: int = 4) -> float:
     """Quadrature-based L1 error, robust to discontinuities.
 
+    The optional exact profile receives periodic departure coordinates in [0, 1).
     The quadrature is composite Gauss on each cell, split at every interior
     point of ``jumps`` (the exact jump abscissas of the reference solution,
     modulo the domain) and further subdivided into ``nsub`` panels.  A kinked
@@ -306,8 +326,7 @@ def l1_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
     cf = coeff.detach().cpu().numpy()
     uh = np.einsum("pqm,pm->pq", vals, cf[cell])
     xa = torch.as_tensor(nodes, dtype=coeff.dtype, device=coeff.device)
-    truth = (_sine(xa - speed * final_time) if exact is None
-             else exact(xa - speed * final_time))
+    truth = _translated_profile(xa, final_time, speed, exact)
     diff = np.abs(uh - truth.detach().cpu().numpy())
     return float(np.sum(0.5 * width[:, None] * diff * w_np[None, :]))
 
@@ -318,6 +337,7 @@ def linf_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
                nsub: int = 8, nq: int = 16) -> float:
     """Discrete L-infinity error (max over a dense sub-cell quadrature net).
 
+    The optional exact profile receives periodic departure coordinates in [0, 1).
     Used for Gibbs-overshoot studies, where the extremum sits inside the cell
     that contains the discontinuity.
     """
@@ -336,6 +356,5 @@ def linf_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
     cf = coeff.detach().cpu().numpy()
     uh = np.einsum("pqm,pm->pq", vals, cf[cell])
     xa = torch.as_tensor(nodes, dtype=coeff.dtype, device=coeff.device)
-    truth = (_sine(xa - speed * final_time) if exact is None
-             else exact(xa - speed * final_time))
+    truth = _translated_profile(xa, final_time, speed, exact)
     return float(np.max(np.abs(uh - truth.detach().cpu().numpy())))

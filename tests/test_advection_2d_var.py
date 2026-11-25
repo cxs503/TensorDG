@@ -277,3 +277,113 @@ def test_invalid_ncells_raises():
     """ncells must be >= 2."""
     with pytest.raises(ValueError):
         DGAdvection2D(degree=1, ncells=1)
+
+
+@pytest.mark.parametrize("cycles", [2, 8])
+def test_pulsed_periodic_shear_against_characteristics(cycles, record_property):
+    """The two-cycle pulse vanishes at the old three CFL sample times."""
+    duration = 0.4
+    def velocity(x, y, t):
+        pulse = math.sin(math.pi * cycles * t / duration)**2
+        return pulse * torch.sin(2 * math.pi * y), torch.zeros_like(x)
+
+    def exact(x, y, t):
+        frequency = 2 * math.pi * cycles / duration
+        shift = 0.5 * (t - math.sin(frequency*t) / frequency) * torch.sin(2 * math.pi * y)
+        return trig_profile(x - shift, y)
+
+    options = {} if cycles == 2 else {"max_speed": (1., 0.), "max_dt": duration / (12 * cycles)}
+    errors = []
+    for n in (6, 12, 24):
+        solver = DGAdvection2D(2, ncells=(n, 2*n))
+        result = solver.solve(solver.project(trig_profile), velocity, duration, **options)
+        error = solver.l2_error(result["coeff"], exact, duration)["absolute_l2"]
+        errors.append(error)
+        record_property(f"error_{n}", error)
+        record_property(f"steps_{n}", result["meta"]["steps"])
+        record_property(f"mass_drift_{n}", result["meta"]["mass_drift_abs"])
+        assert result["meta"]["mass_drift_abs"] < 2e-14
+        if cycles == 8:
+            assert result["meta"]["dt"] <= options["max_dt"]
+    assert min(math.log2(a / b) for a, b in zip(errors, errors[1:])) > 2.5
+
+
+@pytest.mark.parametrize("max_dt", [0., -1., float("inf"), float("nan")])
+def test_time_resolution_cap_requires_a_positive_finite_value(max_dt):
+    solver = DGAdvection2D(1, 4)
+    with pytest.raises(ValueError, match="max_dt"):
+        solver.solve(solver.project(trig_profile), reentrant_vortex(), 0.1, max_dt=max_dt)
+
+
+
+def test_clocked_restart_matches_uninterrupted_translation(record_property):
+    solver = DGAdvection2D(2, ncells=(16, 12))
+    start, middle, end = 0.25, 0.375, 0.5
+    options = {"max_speed": (1., 0.5), "max_dt": 1/512, "record_mass": True}
+
+    def velocity(x, y, t):
+        return torch.full_like(x, t), torch.full_like(y, -0.5 * t)
+
+    coeff = solver.project(trig_profile)
+    whole = solver.solve(coeff, velocity, end, start_time=start, **options)
+    first = solver.solve(coeff, velocity, middle, start_time=start, **options)
+    last = solver.solve(first["coeff"], velocity, end, start_time=middle, **options)
+    torch.testing.assert_close(last["coeff"], whole["coeff"], rtol=0, atol=0)
+    assert first["mass_history"] + last["mass_history"][1:] == whole["mass_history"]
+    assert last["meta"]["start_time"] == middle
+    displacement = (end**2 - start**2) / 2
+    error = solver.l2_error(last["coeff"], lambda x, y, t: trig_profile(
+        x-displacement, y+displacement/2))["absolute_l2"]
+    record_property("restarted_field_absolute_l2", error)
+    assert error < 5e-4
+    empty = solver.solve(last["coeff"], velocity, end, start_time=end, **options)
+    assert empty["meta"]["steps"] == 0
+    torch.testing.assert_close(empty["coeff"], last["coeff"], rtol=0, atol=0)
+    with pytest.raises(ValueError, match="interval"):
+        solver.solve(coeff, velocity, start, start_time=end)
+
+def test_sampled_speed_uses_solver_precision_and_absolute_time():
+    solver = DGAdvection2D(1, ncells=4, dtype=torch.float32)
+    observed = []
+
+    def velocity(x, y, t):
+        assert x.dtype == y.dtype == torch.float32
+        observed.append(t)
+        return torch.full_like(x, t), torch.zeros_like(y)
+
+    coeff = solver.project(trig_profile)
+    result = solver.solve(coeff, velocity, final_time=0.5, start_time=0.375)
+    assert min(observed) == 0.375
+    assert max(observed) == 0.5
+    assert result["meta"]["max_speed"][0] == 0.5
+    with pytest.raises(ValueError, match="finite"):
+        solver.solve(coeff, lambda x, y, t: (torch.full_like(x, math.nan), y*0), 0.1)
+
+
+
+@pytest.mark.parametrize("axis", ["x", "y", "constant"])
+def test_axis_dependent_projection_and_norms_cover_the_domain(axis, record_property):
+    solver = DGAdvection2D(2, ncells=(5, 9))
+    def profile(x, y, t):
+        if axis == "constant":
+            return t
+        return t + (x if axis == "x" else y)
+
+    coeff = solver.project(profile, t=1)
+    assert coeff.shape == (5, 9, 3, 3)
+    expected_l1 = 1.0 if axis == "constant" else 1.5
+    expected_l2 = 1.0 if axis == "constant" else math.sqrt(7 / 3)
+    assert solver.mass(coeff) == pytest.approx(expected_l1, abs=2e-15)
+    l1 = solver.l1_error(coeff, profile, t=1)
+    l2 = solver.l2_error(coeff, profile, t=1)
+    record_property("mass", solver.mass(coeff))
+    record_property("reference_l2", l2["reference_l2"])
+    record_property("projection_error_l2", l2["absolute_l2"])
+    assert l1["reference_l1"] == pytest.approx(expected_l1, abs=2e-15)
+    assert l2["reference_l2"] == pytest.approx(expected_l2, abs=2e-15)
+    assert l2["absolute_l2"] < 5e-15
+    # A centered disk integrates the linear part about its center to zero,
+    # so its share of reference L1 mass equals its share of the domain area.
+    disk = solver.l1_error(coeff, profile, t=1, radius=0.3)
+    assert disk["masked"] and l1["coverage"] == pytest.approx(1.0)
+    assert disk["coverage"] == pytest.approx(math.pi * 0.3**2, abs=0.004)

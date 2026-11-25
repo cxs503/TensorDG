@@ -1,6 +1,7 @@
 import math
 
 import torch
+import pytest
 
 from tensordg.heat_1d import heat_error, solve_heat_1d
 
@@ -20,3 +21,785 @@ def test_documented_heat_case_is_below_three_percent():
     assert torch.isfinite(coeff).all()
     metrics = heat_error(x, coeff, 0.1)
     assert metrics["relative_l2"] < 0.03, metrics
+
+
+def test_face_flux_divergence_matches_each_sipg_cell_balance():
+    from tensordg.heat_1d import assemble_sipg_1d, sipg_heat_face_fluxes
+
+    assembly = assemble_sipg_1d(7, 3, penalty=13.)
+    coefficients = torch.arange(28, dtype=torch.float64).cos().reshape(7, 4)
+    flux = sipg_heat_face_fluxes(coefficients, penalty=13.)
+    # Testing with the constant Legendre mode gives the integrated cell dT/dt.
+    integrated_rate = -(assembly["diffusion"] @ coefficients.flatten()).reshape(7, 4)[:, 0]
+    torch.testing.assert_close(flux[:-1]-flux[1:], integrated_rate, atol=2e-11, rtol=0.)
+
+
+def test_heat_face_fluxes_converge_to_fourier_flux():
+    from tensordg.heat_1d import solve_heat_1d_exact_time, sipg_heat_face_fluxes
+
+    errors = []
+    for n in (8, 16, 32):
+        _, coeff, _ = solve_heat_1d_exact_time(ncells=n, degree=2, final_time=.02)
+        x = torch.linspace(0., 1., n+1, dtype=coeff.dtype)
+        exact = -torch.pi * torch.cos(torch.pi*x) * math.exp(-torch.pi**2*.02)
+        errors.append(float((sipg_heat_face_fluxes(coeff)-exact).abs().max()))
+    assert all(fine < coarse/3.5 for coarse, fine in zip(errors, errors[1:]))
+
+
+def test_accumulated_flux_balances_all_cell_stores_and_matches_sine_decay():
+    from tensordg.heat_1d import assemble_sipg_1d
+
+    n, end = 16, .02
+    initial = assemble_sipg_1d(n, 2)["initial_coefficients"]
+    faces = torch.linspace(0., 1., n+1, dtype=initial.dtype)
+    exact = math.expm1(-math.pi**2*end) * torch.cos(math.pi*faces) / math.pi
+    for backend in ("dense", "sparse", "matrix-free"):
+        _, final, info = solve_heat_1d(n, 2, end, 48, backend=backend, integrate_face_fluxes=True)
+        flux = initial.new_tensor(info["integrated_face_fluxes"])
+        torch.testing.assert_close((final[:, 0]-initial[:, 0])/n, flux[:-1]-flux[1:],
+                                   atol=1e-11, rtol=0.)
+        torch.testing.assert_close(flux, exact, atol=1e-6, rtol=0.)
+        _, _, zero = solve_heat_1d(n, 2, 0., backend=backend, integrate_face_fluxes=True)
+        assert zero["integrated_face_fluxes"] == [0.]*(n+1)
+
+
+def test_asymmetric_modal_heat_transfer_with_custom_profile():
+    from tensordg.heat_1d import solve_heat_1d_exact_time
+
+    n, end = 16, .03
+
+    def profile(x):
+        return torch.sin(math.pi*x) + .8*torch.sin(2*math.pi*x)
+
+    modes = torch.tensor([math.pi, 2*math.pi], dtype=torch.float64)
+    amplitudes = modes.new_tensor([1., .8])
+    faces = torch.linspace(0., 1., n+1, dtype=modes.dtype)
+    exact = (amplitudes * torch.expm1(-modes**2*end) / modes) @ torch.cos(modes[:, None]*faces)
+    _, reference, _ = solve_heat_1d_exact_time(n, 2, end, initial_temperature=profile)
+    for backend in ("dense", "sparse", "matrix-free"):
+        _, coeff, info = solve_heat_1d(n, 2, end, 192, backend=backend,
+                                      integrate_face_fluxes=True, initial_temperature=profile)
+        flux = modes.new_tensor(info["integrated_face_fluxes"])
+        torch.testing.assert_close(flux, exact, atol=3e-6, rtol=0.)
+        torch.testing.assert_close(coeff[:, 0], reference[:, 0], atol=6e-6, rtol=0.)
+
+
+def test_stationary_quartic_source_profile_preserves_equilibrium_and_wall_flux():
+    from tensordg.heat_1d import solve_heat_1d_exact_time
+
+    # u=x-x⁴ has -u''=12x², homogeneous endpoints, and nonzero wall fluxes.
+    initial = lambda x: x-x**4
+    opts = dict(ncells=5, degree=4, final_time=.013, source=lambda x: 12*x*x,
+                initial_temperature=initial)
+    for backend in ("dense", "sparse", "matrix-free", "exact-time"):
+        if backend == "exact-time":
+            centers, coeff, meta = solve_heat_1d_exact_time(**opts, integrate_face_fluxes=True)
+        else:
+            centers, coeff, meta = solve_heat_1d(**opts, backend=backend, time_steps=5,
+                                                 integrate_face_fluxes=True)
+        faces = torch.linspace(0.,1.,6,dtype=coeff.dtype)
+        heat = torch.tensor(meta["integrated_face_fluxes"],dtype=coeff.dtype)
+        torch.testing.assert_close(heat,.013*(4*faces**3-1),atol=5e-10,rtol=0.)
+        assert heat_error(centers,coeff,.013,reference=lambda x,t: initial(x))["absolute_l2"] < 2e-11
+
+
+def test_unequal_walls_and_volume_heating_all_backends():
+    from tensordg.heat_1d import solve_heat_1d_exact_time, sipg_heat_face_fluxes
+
+    # T=2-3x+x(1-x), -T''=2, rightward flux=2+2x.
+    def profile(x):
+        return 2-3*x+x*(1-x)
+    walls = (2.,-1.)
+    duration = .025
+    options = dict(ncells=6,degree=2,final_time=duration,wall_temperatures=walls,
+                   initial_temperature=profile,source=2.,integrate_face_fluxes=True)
+    for backend in ("dense","sparse","matrix-free","exact-time"):
+        if backend == "exact-time":
+            centers, coeff, meta = solve_heat_1d_exact_time(**options)
+        else:
+            centers, coeff, meta = solve_heat_1d(**options,backend=backend,time_steps=8)
+        target = 2+2*torch.linspace(0.,1.,7,dtype=coeff.dtype)
+        instantaneous = sipg_heat_face_fluxes(coeff,wall_temperatures=walls)
+        cumulative = coeff.new_tensor(meta["integrated_face_fluxes"])
+        torch.testing.assert_close(instantaneous,target,atol=5e-8,rtol=0.)
+        torch.testing.assert_close(cumulative,duration*target,atol=5e-9,rtol=0.)
+        assert heat_error(centers,coeff,duration,reference=lambda x,t: profile(x))["absolute_l2"] < 2e-10
+
+
+def test_ramped_walls_recover_cubic_field_and_integrated_flux():
+    from tensordg import solve_heat_1d_ramped_walls
+
+    # u=1-2x+t*(2-3x)+x²-x³/2-x/2 satisfies u_t=u_xx.
+    def initial(x):
+        return 1-2*x+x*x-.5*x**3-.5*x
+    t = .07
+    for backend in ("dense","sparse","matrix-free","exact-time"):
+        centers,coeff,meta = solve_heat_1d_ramped_walls(5,3,t,wall_temperatures=(1.,-1.),
+            wall_rates=(2.,-1.),initial_temperature=initial,backend=backend,
+            time_steps=None if backend=="exact-time" else 8,integrate_face_fluxes=True)
+        x = torch.linspace(0.,1.,6,dtype=coeff.dtype)
+        exact_heat = t*(2.5-2*x+1.5*x**2)+1.5*t*t
+        torch.testing.assert_close(coeff.new_tensor(meta["integrated_face_fluxes"]),exact_heat,atol=5e-9,rtol=0.)
+        assert heat_error(centers,coeff,t,reference=lambda x,t: initial(x)+t*(2-3*x))["absolute_l2"] < 5e-10
+
+
+@pytest.mark.parametrize("wall_penalty", [None, 40.])
+def test_piecewise_wall_history_restarts_modes_and_conserves_interval_heat(wall_penalty):
+    from tensordg import solve_heat_1d_wall_history
+
+    times = [.2,.23,.24,.28]
+    walls = [[.1,.4],[.3,.2],[.3,.2],[.15,.25]]
+    for backend in ("dense","sparse","matrix-free","exact-time"):
+        x, states, meta = solve_heat_1d_wall_history(times,walls,5,2,backend=backend,wall_penalty=wall_penalty,
+            steps_per_interval=None if backend=="exact-time" else 4,source=lambda x: 1+x,
+            initial_temperature=lambda x: .1+.3*x,integrate_face_fluxes=True)
+        heat = states.new_tensor(meta["interval_face_heat"])
+        dt = states.new_tensor(times).diff()
+        residual = states[:,:,0].diff(dim=0)/5+heat.diff(dim=1)-dt[:,None]*(1+x)/5
+        assert residual.abs().max() < 5e-10
+        torch.testing.assert_close(heat.sum(dim=0),states.new_tensor(meta["integrated_face_fluxes"]))
+        torch.testing.assert_close(states[0,:,0],.1+.3*x)
+        _,tail,_ = solve_heat_1d_wall_history(times[1:],walls[1:],5,2,backend=backend,wall_penalty=wall_penalty,
+            steps_per_interval=None if backend=="exact-time" else 4,source=lambda x: 1+x,initial_temperature=states[1])
+        torch.testing.assert_close(tail,states[1:],atol=5e-11,rtol=0.)
+
+
+def test_wall_history_jump_between_independent_ramps():
+    from tensordg import solve_heat_1d_wall_history
+
+    times = [0., .017, .043]
+    walls = [[[0., 1.], [.3, .7]], [[-.4, .8], [.2, .1]]]
+    opts = dict(ncells=5, degree=2, backend="exact-time", integrate_face_fluxes=True)
+    _, history, meta = solve_heat_1d_wall_history(times, walls, initial_temperature=lambda x: x, **opts)
+    for i, endpoints in enumerate(walls):
+        _, segment, single = solve_heat_1d_wall_history(
+            times[i:i+2], endpoints, initial_temperature=history[i], **opts)
+        torch.testing.assert_close(segment[-1], history[i+1])
+        torch.testing.assert_close(torch.tensor(single["interval_face_heat"][0], dtype=history.dtype),
+                                   torch.tensor(meta["interval_face_heat"][i], dtype=history.dtype))
+
+
+def test_switched_volume_heating_cell_energy_for_every_backend():
+    from tensordg import solve_heat_1d_wall_history
+
+    times = [0., .01, .037, .05]
+    walls = [[0.,0.], [.01,-.01], [.01,-.01], [.02,.015]]
+    for backend in ("dense","sparse","matrix-free","exact-time"):
+        x,states,meta = solve_heat_1d_wall_history(times,walls,4,2,backend=backend,
+            initial_temperature=torch.zeros_like, interval_sources=[2.,None,lambda x: -3*x],
+            steps_per_interval=None if backend=="exact-time" else 6,integrate_face_fluxes=True)
+        heat = states.new_tensor(meta["interval_face_heat"])
+        deposited = torch.stack([2*torch.ones_like(x),torch.zeros_like(x),-3*x])
+        deposited = deposited*states.new_tensor(times).diff()[:,None]/4
+        residual = states[:,:,0].diff(dim=0)/4+heat.diff(dim=1)-deposited
+        assert residual.abs().max() < 5e-10
+
+
+def test_harmonic_cubic_field_for_independent_wall_types():
+    from itertools import product
+    from tensordg import solve_harmonic_heat_1d
+
+    k, c, omega = 2.1, .7, 4.
+    def temperature(x):
+        return 1+.2j + (.7-.4j)*x + (.2+.6j)*x**3
+    def flux(x):
+        return -k*((.7-.4j)+3*(.2+.6j)*x*x)
+    def source(x):
+        return 1j*omega*c*temperature(x)-6*k*(.2+.6j)*x
+    for types in product(("dirichlet","neumann"),repeat=2):
+        values = [temperature(i) if kind=="dirichlet" else (1-2*i)*flux(i) for i,kind in enumerate(types)]
+        x,u,q = solve_harmonic_heat_1d(omega,ncells=6,degree=3,conductivity=k,capacity=c,
+                                       source=source,wall_types=types,wall_values=values)
+        faces = torch.linspace(0.,1.,7,dtype=x.dtype)
+        expected_mean = temperature(x)+(.2+.6j)*x/(4*6**2)
+        torch.testing.assert_close(u[:,0],expected_mean,atol=1e-11,rtol=0.)
+        torch.testing.assert_close(q,flux(faces),atol=1e-10,rtol=0.)
+
+
+def test_slow_two_flux_walls_separate_bulk_storage_from_local_flux():
+    from tensordg import solve_harmonic_heat_1d
+
+    omega, c, k = 1e-12, 1.5, 2.
+    # The spatial mean grows like 1/omega; the zero-mean quadratic keeps
+    # heat travelling to the right with a finite slope-independent limit.
+    bulk = (.6+.3j)/(1j*omega*c)
+    def local(x):
+        return (.3-.5j)*(x**2-1/3)+(.2+.4j)*(x-.5)
+    def power(x):
+        return -k*(2*(.3-.5j)*x+.2+.4j)
+    def source(x):
+        return (.6+.3j)+1j*omega*c*local(x)-2*k*(.3-.5j)
+    x,u,q = solve_harmonic_heat_1d(omega,ncells=16,degree=2,capacity=c,conductivity=k,
+        source=source,wall_types=("neumann","neumann"),wall_values=(power(0),-power(1)))
+    torch.testing.assert_close(u[:,0].mean()/bulk,u.new_tensor(1.),atol=5e-15,rtol=0.)
+    faces = torch.linspace(0.,1.,17,dtype=x.dtype)
+    torch.testing.assert_close(q,power(faces),atol=1e-11,rtol=0.)
+
+
+def test_harmonic_storing_wall_material_flux_and_trace():
+    from itertools import product
+    from tensordg import solve_harmonic_heat_1d
+
+    omega,c,k = 3.,1.4,2.1
+    def temp(x):
+        return (.5+.7j)+(1.-.2j)*x**2
+    def flux(x):
+        return -2*k*(1.-.2j)*x
+    def source(x):
+        return 1j*omega*c*temp(x)-2*k*(1.-.2j)
+    for kinds in product(("dirichlet","neumann","robin"), repeat=2):
+        data,films,cw = [],[],[]
+        for i,kind in enumerate(kinds):
+            cap = 0. if kind=="dirichlet" else (.3,.8)[i]
+            film = (2.,5.)[i] if kind=="robin" else 0.
+            external = (1-2*i)*flux(i)+1j*omega*cap*temp(i)
+            data.append(temp(i)+external/film if film else external if kind=="neumann" else temp(i))
+            films.append(film)
+            cw.append(cap)
+        x,u,q,surface = solve_harmonic_heat_1d(omega,ncells=7,degree=2,capacity=c,conductivity=k,
+            wall_types=kinds,wall_values=data,film_coefficients=films,wall_areal_heat_capacity=cw,
+            source=source,return_wall_temperatures=True)
+        faces = torch.linspace(0.,1.,8,dtype=x.dtype)
+        torch.testing.assert_close(surface,temp(faces[[0,-1]]),rtol=0.,atol=1e-11)
+        torch.testing.assert_close(q,flux(faces),rtol=0.,atol=1e-10)
+
+
+def test_slow_flux_driven_walls_include_surface_storage_in_mean_constraint():
+    from tensordg import solve_harmonic_heat_1d
+
+    omega,c,k = 1e-12,1.5,2.
+    cw = torch.tensor([.3,.9],dtype=torch.float64)
+    ends = torch.tensor([0.,1.],dtype=torch.float64)
+    rate = .8-.6j
+    def local(x):
+        return (.5+.3j)*x*x
+    def flux(x):
+        return -2*k*(.5+.3j)*x
+    input_flux = flux(ends)*torch.tensor([1.,-1.])+cw*(rate+1j*omega*local(ends))
+    def source(x):
+        return c*(rate+1j*omega*local(x))-2*k*(.5+.3j)
+    x,u,q,surface = solve_harmonic_heat_1d(omega,ncells=12,degree=2,capacity=c,conductivity=k,
+        source=source,wall_types=("neumann","neumann"),wall_values=input_flux,
+        wall_areal_heat_capacity=cw,return_wall_temperatures=True)
+    torch.testing.assert_close(q,flux(torch.linspace(0.,1.,13,dtype=x.dtype)),atol=2e-11,rtol=0.)
+    torch.testing.assert_close(1j*omega*surface,rate+1j*omega*local(ends),atol=1e-14,rtol=0.)
+
+
+def test_uniform_harmonic_field_with_two_storing_films_has_zero_material_flux():
+    from tensordg import solve_harmonic_heat_1d
+
+    temperature = .8+.4j
+    capacity = 1.7
+    films = (2.,5.)
+    surface_capacity = (.35,1.1)
+    ambient = [temperature*(1+1j*c/h) for c,h in zip(surface_capacity,films)]
+    _,u,q,wall = solve_harmonic_heat_1d(1.,ncells=128,degree=2,conductivity=2.3,capacity=capacity,
+        source=1j*capacity*temperature,wall_types=("robin","robin"),wall_values=ambient,
+        film_coefficients=films,wall_areal_heat_capacity=surface_capacity,return_wall_temperatures=True)
+    assert (wall-temperature).abs().max()<5e-13
+    assert (u[:,0]-temperature).abs().max()<5e-13
+    assert q[[0,-1]].abs().max()<1e-12
+
+
+def test_graded_bulk_exchange_complex_ambient_and_flux_walls():
+    from tensordg import solve_harmonic_heat_1d
+
+    n,k,c,omega = 12,1.4,2.,.8
+    def temp(x):
+        return .3+.6j+(.7-.4j)*x**2
+    def ambient(x):
+        return 1+.1j-(.5+.2j)*x
+    def loss(x):
+        return 1+x*x
+    def source(x):
+        return 1j*omega*c*temp(x)-2*k*(.7-.4j)+loss(x)*(temp(x)-ambient(x))
+    x,u,q = solve_harmonic_heat_1d(omega,ncells=n,degree=2,conductivity=k,capacity=c,
+        wall_types=("neumann","neumann"),wall_values=(0.,2*k*(.7-.4j)),
+        heat_loss_coefficient=loss,bulk_ambient_temperature=ambient,source=source)
+    faces = torch.linspace(0.,1.,n+1,dtype=x.dtype)
+    torch.testing.assert_close(u[:,0],temp(x)+(.7-.4j)/(12*n*n),rtol=0.,atol=2e-12)
+    torch.testing.assert_close(q,-2*k*(.7-.4j)*faces,rtol=0.,atol=2e-11)
+
+
+def test_layerwise_bulk_reservoir_pins_uniform_insulated_slab():
+    from tensordg import solve_harmonic_heat_1d
+
+    n,omega = 8,1e-12
+    h = torch.linspace(.4,2.,n,dtype=torch.float64)
+    target = .4-.8j
+    ambient = target*(1+1j*omega/h)
+    x,u,q = solve_harmonic_heat_1d(omega,ncells=n,degree=2,wall_types=("neumann","neumann"),
+        heat_loss_coefficient=h,bulk_ambient_temperature=ambient)
+    torch.testing.assert_close(u[:,0],torch.full_like(u[:,0],target),rtol=0.,atol=2e-12)
+    assert q.abs().max()<2e-11
+
+
+def test_bulk_history_preserves_linear_warming_and_cell_heat_with_graded_exchange():
+    from tensordg import solve_heat_1d_bulk_history
+
+    times = [0.,.07,.18]
+    speeds = [1.3,-.6]
+    loss = lambda x: 1+x*x
+    start = .4
+    pairs,expected = [],[start]
+    for dt,speed in zip((.07,.11),speeds):
+        finish = start+dt*speed
+        pairs.append(tuple(lambda x,v=v,b=speed: v+2*b/loss(x) for v in (start,finish)))
+        start = finish
+        expected.append(finish)
+    x,u,q,b = solve_heat_1d_bulk_history(times,pairs,initial_temperature=lambda x: .4,
+        ncells=8,degree=2,conductivity=.7,capacity=2.,heat_loss_coefficient=loss,steps_per_interval=3)
+    torch.testing.assert_close(u[:,:,0],x.new_tensor(expected)[:,None].expand(-1,8),rtol=0.,atol=1e-12)
+    assert q.abs().max()<1e-12
+    torch.testing.assert_close(b,2*u[:,:,0].diff(dim=0)/8,rtol=0.,atol=1e-12)
+
+
+def test_bulk_history_with_time_varying_end_powers_has_exact_quadratic_field():
+    from tensordg import solve_heat_1d_bulk_history
+
+    c,k,h = 1.3,2.,3.5
+    times = [.1,.15,.28]
+    def field(x,t):
+        return (1+t)*x*x+(.4-t)*x
+    def reservoir(x,t):
+        return field(x,t)+(c*(x*x-x)-2*k*(1+t))/h
+    def flux(x,t):
+        return -k*(2*(1+t)*x+.4-t)
+    pairs = [[lambda x,t=t: reservoir(x,t) for t in ends] for ends in zip(times,times[1:])]
+    powers = [[[flux(0,t),-flux(1,t)] for t in ends] for ends in zip(times,times[1:])]
+    x,u,q,b = solve_heat_1d_bulk_history(times,pairs,initial_temperature=lambda x: field(x,times[0]),
+        ncells=7,degree=2,capacity=c,conductivity=k,heat_loss_coefficient=h,inward_flux_intervals=powers)
+    faces = torch.linspace(0.,1.,8,dtype=x.dtype)
+    for i,(a,z) in enumerate(zip(times,times[1:])):
+        torch.testing.assert_close(q[i],(z-a)*flux(faces,(a+z)/2),atol=2e-12,rtol=0.)
+        torch.testing.assert_close(u[i+1,:,0],field(x,z)+(1+z)/(12*7**2),atol=1e-12,rtol=0.)
+    assert ((c/7)*u[:,:,0].diff(dim=0)+q.diff(dim=1)-b).abs().max()<2e-12
+
+
+def test_switched_films_and_wall_storage_match_time_linear_quadratic_solution():
+    from tensordg import solve_heat_1d_bulk_history
+
+    c,k,h = 1.4,.8,2.
+    film = torch.tensor([1.7,3.4],dtype=torch.float64)
+    cw = torch.tensor([.35,.8],dtype=film.dtype)
+    ends = film.new_tensor([0.,1.])
+    times = [0.,.08,.19]
+    initial = lambda x: .3+x-.2*x*x
+    mode = lambda x: .4+x*x
+    amplitude = 0.
+    reservoirs,air,powers,targets,heats = [],[],[],[],[]
+    for a,b,speed in zip(times,times[1:],[1.2,-.6]):
+        dt = b-a
+        pair,wall_pair,power_pair = [],[],[]
+        for elapsed in (0.,dt):
+            amp = amplitude+elapsed*speed
+            pair.append(lambda x,v=amp,s=speed: initial(x)+v*mode(x)+(c*s*mode(x)-k*(-.4+2*v))/h)
+            surface = initial(ends)+amp*mode(ends)
+            material = -k*(1-.4*ends+2*amp*ends)*film.new_tensor([1.,-1.])
+            applied = (.1+elapsed)*film.new_tensor([1.,-2.])
+            wall_pair.append((surface+(material+cw*speed*mode(ends)-applied)/film).tolist())
+            power_pair.append(applied.tolist())
+        reservoirs.append(pair)
+        air.append(wall_pair)
+        powers.append(power_pair)
+        heats.append(dt*(-k*(1-.4*ends+2*(amplitude+.5*dt*speed)*ends)*film.new_tensor([1.,-1.])+cw*speed*mode(ends)))
+        amplitude += dt*speed
+        targets.append(initial(ends)+amplitude*mode(ends))
+    _,u,q,bulk,wall,means = solve_heat_1d_bulk_history(times,reservoirs,ncells=7,degree=2,initial_temperature=initial,
+        capacity=c,conductivity=k,heat_loss_coefficient=h,steps_per_interval=4,film_coefficients=film,
+        wall_areal_heat_capacity=cw,wall_ambient_intervals=air,inward_flux_intervals=powers,return_wall_history=True,
+        return_interval_modes=True)
+    # Each exact quadratic modal profile varies linearly inside a loading interval.
+    torch.testing.assert_close(means,.5*(u[:-1]+u[1:]),atol=2e-12,rtol=0.)
+    torch.testing.assert_close(wall["temperature"][1:],torch.stack(targets),atol=2e-12,rtol=0.)
+    exact_knots = torch.stack([initial(ends), *targets])
+    torch.testing.assert_close(wall["mean_temperature"],.5*(exact_knots[:-1]+exact_knots[1:]),atol=2e-12,rtol=0.)
+    torch.testing.assert_close(wall["external_heat"],torch.stack(heats),atol=2e-12,rtol=0.)
+    assert (c*u[:,:,0].diff(dim=0)/7+q.diff(dim=1)-bulk).abs().max()<2e-12
+
+
+def test_wall_admittance_and_cell_means_against_hyperbolic_slab(record_property):
+    from tensordg import harmonic_heat_wall_admittance_1d, solve_harmonic_heat_1d
+
+    k, c, loss, omega = 1.7, 2.1, 0.8, 4.
+    wave = torch.tensor(((loss+1j*omega*c)/k)**0.5, dtype=torch.complex128)
+    # U is the sum of the two normalized sinh profiles. Fourier's law at
+    # either wall gives Y_ii=k*b*coth(b) and Y_ij=-k*b/sinh(b).
+    exact_y = (k*wave/wave.sinh()) * torch.stack((
+        torch.stack((wave.cosh(), -torch.ones_like(wave))),
+        torch.stack((-torch.ones_like(wave), wave.cosh()))))
+    drive = torch.tensor([1.+.3j, -.2+.7j], dtype=wave.dtype)
+    errors = []
+    for n in (8, 16, 32):
+        opts = dict(ncells=n, degree=2, conductivity=k, capacity=c, heat_loss_coefficient=loss)
+        admittance = harmonic_heat_wall_admittance_1d(omega, **opts)
+        _, coeff, flux = solve_harmonic_heat_1d(omega, wall_values=drive, **opts)
+        inward = torch.stack((flux[0], -flux[-1]))
+        torch.testing.assert_close(admittance @ drive, inward, atol=2e-11, rtol=0)
+        x = torch.linspace(0, 1, n+1, dtype=torch.float64)
+        primitive = (-drive[0]*(wave*(1-x)).cosh()+drive[1]*(wave*x).cosh())/(wave*wave.sinh())
+        exact_means = n*primitive.diff()
+        row = [(admittance-exact_y).abs().max().item(), (coeff[:, 0]-exact_means).abs().max().item()]
+        record_property(f"max_admittance_error_{n}_W_per_m2_K", row[0])
+        record_property(f"max_cell_mean_error_{n}_K", row[1])
+        errors.append(row)
+    for coarse, fine in zip(errors, errors[1:]):
+        assert all(a/b > 3.5 for a, b in zip(coarse, fine))
+
+
+def test_physical_thickness_admittance_against_two_layer_transfer_matrix(record_property):
+    import cmath
+    import numpy as np
+    import pytest
+    from tensordg import harmonic_heat_wall_admittance_1d
+
+    k, c, omega = 1.6, 2.2, 1.7
+    for length in (0.25, 2.5):
+        # Transfer state [T, -k*dT/dx] from left to right through both layers.
+        transfer = np.eye(2)
+        for loss in (0.3, 3.4):
+            b = cmath.sqrt((loss+1j*omega*c)/k)
+            cosh, sinh = cmath.cosh(b*length/2), cmath.sinh(b*length/2)
+            transfer = np.array([[cosh, -sinh/(k*b)], [-k*b*sinh, cosh]]) @ transfer
+        a, off = transfer[0]
+        exact = torch.from_numpy(np.array([[-a, 1.], [1., -transfer[1, 1]]])/off)
+        errors = []
+        for n in (8, 16, 32):
+            opts = dict(thickness=length, ncells=n, degree=2, conductivity=k, capacity=c)
+            def physical_loss(x):
+                return 0.3 + 3.1*(x >= length/2).to(x.dtype)
+            y = harmonic_heat_wall_admittance_1d(omega, heat_loss_coefficient=physical_loss, **opts)
+            per_cell = [0.3]*(n//2) + [3.4]*(n//2)
+            sampled = harmonic_heat_wall_admittance_1d(omega, heat_loss_coefficient=per_cell, **opts)
+            torch.testing.assert_close(y, sampled, atol=2e-12, rtol=1e-12)
+            error = (y-exact).abs().max().item()
+            errors.append(error)
+            record_property(f"max_admittance_error_L{length}_{n}_W_per_m2_K", error)
+        assert all(a/b > 8 for a, b in zip(errors, errors[1:]))
+    for invalid in (0., -1., float("inf"), float("nan")):
+        with pytest.raises(ValueError, match="thickness"):
+            harmonic_heat_wall_admittance_1d(omega, thickness=invalid)
+
+
+def test_composite_harmonic_admittance_against_contact_transfer(record_property):
+    import cmath
+    import numpy as np
+    from tensordg import compose_heat_wall_admittances_1d, harmonic_heat_wall_admittance_1d
+
+    omega = 3.2
+    layers = [(0.35, 1.3, 2.1), (0.2, 3.7, 1.4), (0.6, 0.9, 1.2)]
+    contacts = [0., 0.27]
+    transfer = np.eye(2)
+    for i, (length, k, c) in enumerate(layers):
+        if i:
+            transfer = np.array([[1., -contacts[i-1]], [0., 1.]]) @ transfer
+        wave = cmath.sqrt(1j*omega*c/k)
+        a, b = cmath.cosh(wave*length), cmath.sinh(wave*length)
+        transfer = np.array([[a, -b/(k*wave)], [-k*wave*b, a]]) @ transfer
+    exact = torch.from_numpy(np.array([[-transfer[0, 0], 1.], [1., -transfer[1, 1]]])/transfer[0, 1])
+    errors = []
+    for n in (4, 8, 16):
+        matrices = [harmonic_heat_wall_admittance_1d(
+            omega, ncells=n, thickness=length, conductivity=k, capacity=c) for length, k, c in layers]
+        combined = compose_heat_wall_admittances_1d(matrices, contacts)
+        reverse = compose_heat_wall_admittances_1d([a.flip((0, 1)) for a in reversed(matrices)], contacts[::-1])
+        torch.testing.assert_close(reverse.flip((0, 1)), combined, atol=1e-13, rtol=0)
+        torch.testing.assert_close(compose_heat_wall_admittances_1d(matrices[:1]), matrices[0])
+        errors.append((combined-exact).abs().max().item())
+        record_property(f"max_stack_admittance_error_{n}_W_per_m2_K", errors[-1])
+    assert all(a/b > 8 for a, b in zip(errors, errors[1:]))
+
+
+@pytest.mark.parametrize("film_exchange", [False, True])
+@pytest.mark.parametrize("heated", [False, True])
+@pytest.mark.parametrize("storing", [False, True])
+def test_harmonic_stack_internal_states_against_propagated_traces(heated, storing, film_exchange, record_property):
+    import cmath
+    import numpy as np
+    from tensordg import harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
+
+    omega = 2.7
+    layers = [(0.5, 1.4, 2.1), (0.2, 2.6, 1.2), (0.3, 1.8, 1.4)]
+    resistances = [0.23, 0.]
+    sources = [0.43+0.18j, -0.27j] if heated else [0., 0.]
+    surface_capacity = [0.7, 0.19] if storing else [0., 0.]
+    films = [0.6, 1.1] if film_exchange else [0., 0.]
+    ambient = [0.31-0.45j, -0.23+0.9j]
+    temperature, q = 1.2+0.4j, 0.8-0.15j
+    reference_t, reference_q = [], []
+    for i, (length, k, capacity) in enumerate(layers):
+        wave = cmath.sqrt(1j*omega*capacity/k)
+        co, si = cmath.cosh(wave*length), cmath.sinh(wave*length)
+        right_t, right_q = co*temperature-si*q/(k*wave), -k*wave*si*temperature+co*q
+        reference_t.append((temperature, right_t))
+        reference_q.append((q, -right_q))
+        if i < len(resistances):
+            temperature = right_t-resistances[i]*right_q
+            exchange = films[i]*(ambient[i]-temperature)
+            q = right_q+sources[i]+exchange-1j*omega*surface_capacity[i]*temperature
+    drive = [reference_t[0][0], reference_t[-1][1]]
+    errors = []
+    for n in (4, 8, 16):
+        matrices = [harmonic_heat_wall_admittance_1d(
+            omega, ncells=n, thickness=length, conductivity=k, capacity=c) for length, k, c in layers]
+        opts = dict(interface_heat_sources=sources) if heated else {}
+        if film_exchange:
+            opts.update(interface_film_coefficients=films, interface_ambient_temperatures=ambient)
+        if storing:
+            opts.update(interface_areal_heat_capacity=surface_capacity, angular_frequency=omega)
+        y, t, flux = compose_heat_wall_admittances_1d(matrices, resistances, wall_temperatures=drive, **opts)
+        _, _, base_flux = compose_heat_wall_admittances_1d(matrices, resistances, wall_temperatures=(0., 0.), **opts)
+        if storing and not heated:
+            reduced = compose_heat_wall_admittances_1d(matrices, resistances, **opts)
+            torch.testing.assert_close(reduced, y)
+        response = flux - base_flux
+        torch.testing.assert_close(y @ t.new_tensor(drive), torch.stack((response[0, 0], response[-1, 1])))
+        stored_power = 1j*omega*t.new_tensor(surface_capacity)*t[1:, 0]
+        film_power = t.new_tensor(films)*(t.new_tensor(ambient)-t[1:, 0])
+        torch.testing.assert_close(flux[:-1, 1]+flux[1:, 0]+stored_power, t.new_tensor(sources)+film_power,
+                                   atol=1e-12, rtol=0)
+        torch.testing.assert_close(t[:-1, 1]-t[1:, 0], -t.new_tensor(resistances)*flux[:-1, 1],
+                                   atol=1e-12, rtol=0)
+        row = [np.max(np.abs(t.numpy()-reference_t)), np.max(np.abs(flux.numpy()-reference_q))]
+        record_property(f"max_trace_error_{n}_K", float(row[0]))
+        record_property(f"max_flux_error_{n}_W_per_m2", float(row[1]))
+        errors.append(row)
+    for coarse, fine in zip(errors, errors[1:]):
+        assert all(a/b > 8 for a, b in zip(coarse, fine))
+
+def test_stack_rejects_undefined_interface_storage():
+    from tensordg import compose_heat_wall_admittances_1d
+
+    layers = [torch.eye(2)]*2
+    for capacity, omega in ((1., None), (-1., 2.), (float("nan"), 2.), ([1., 2.], 2.), (1j, 2.)):
+        with pytest.raises(ValueError):
+            compose_heat_wall_admittances_1d(layers, interface_areal_heat_capacity=capacity,
+                                             angular_frequency=omega)
+
+
+def test_stack_with_affine_volume_generation_and_contact_heater(record_property):
+    import cmath
+    from tensordg import harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
+
+    omega = 2.3
+    # L, k, C, constant and slope of heat generation in each layer's local x.
+    layers = [(0.35, 1.3, 1.7, 1.2-0.3j, 2j), (0.6, 2.1, 0.8, -0.5j, -1.3+0.2j)]
+    resistance, heater = 0.21, 0.7-0.4j
+    t, q = 0.8+0.3j, 0.4-0.2j
+    exact_t, exact_q = [], []
+    for length, k, c, base, slope in layers:
+        wave = cmath.sqrt(1j*omega*c/k)
+        co, si = cmath.cosh(wave*length), cmath.sinh(wave*length)
+        # Subtract the exact affine particular solution before propagation.
+        particular, derivative = base/(1j*omega*c), slope/(1j*omega*c)
+        u, f = t-particular, q+k*derivative
+        end_t = particular+length*derivative + co*u-si*f/(k*wave)
+        end_q = -k*derivative-k*wave*si*u+co*f
+        exact_t.append((t, end_t))
+        exact_q.append((q, -end_q))
+        t, q = end_t-resistance*end_q, end_q+heater
+    temperatures = [exact_t[0][0], exact_t[-1][1]]
+    errors = []
+    for n in (4, 8, 16):
+        matrices, offsets = zip(*(harmonic_heat_wall_admittance_1d(
+            omega, ncells=n, thickness=length, conductivity=k, capacity=c,
+            source=lambda x: base+slope*x) for length, k, c, base, slope in layers))
+        _, surface, flux = compose_heat_wall_admittances_1d(
+            matrices, resistance, layer_flux_offsets=offsets, wall_temperatures=temperatures,
+            interface_heat_sources=heater)
+        row = [(surface-surface.new_tensor(exact_t)).abs().max().item(),
+               (flux-flux.new_tensor(exact_q)).abs().max().item()]
+        record_property(f"max_temperature_error_{n}_K", row[0])
+        record_property(f"max_flux_error_{n}_W_per_m2", row[1])
+        torch.testing.assert_close(flux[0, 1]+flux[1, 0], flux.new_tensor(heater), rtol=0, atol=1e-12)
+        errors.append(row)
+    for coarse, fine in zip(errors, errors[1:]):
+        assert all(a/b > 8 for a, b in zip(coarse, fine))
+
+
+def test_loaded_wall_flux_offset_against_augmented_transfer(record_property):
+    import numpy as np
+    from scipy.linalg import expm
+    from tensordg import harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
+
+    omega = 2.1
+    layers = [(.31, 1.5, 2., .8j), (.4, .9, 1.1, -.3+.1j), (.2, 2., 1.3, .7)]
+    resistances, heaters = [.12, .25], [.4-.3j, .1j]
+    # Exact propagation of [T, rightward flux, 1] with constant generation.
+    transfer = np.eye(3)
+    for index, (length, k, c, source) in enumerate(layers):
+        generator = np.array([[0, -1/k, 0], [-1j*omega*c, 0, source], [0, 0, 0]])
+        transfer = expm(length*generator) @ transfer
+        if index < len(heaters):
+            transfer = np.array([[1, -resistances[index], 0], [0, 1, heaters[index]], [0, 0, 1]]) @ transfer
+
+    def exact_flux(drive):
+        q = (drive[1]-transfer[0, 0]*drive[0]-transfer[0, 2])/transfer[0, 1]
+        return np.array([q, -(transfer[1] @ [drive[0], q, 1])])
+
+    errors = []
+    for n in (4, 8, 16):
+        matrices, offsets = zip(*(harmonic_heat_wall_admittance_1d(
+            omega, thickness=length, conductivity=k, capacity=c, source=source, ncells=n)
+            for length, k, c, source in layers))
+        opts = dict(layer_flux_offsets=offsets, interface_heat_sources=heaters, return_flux_offset=True)
+        y, offset = compose_heat_wall_admittances_1d(matrices, resistances, **opts)
+        error = np.max(abs(offset.numpy()-exact_flux((0., 0.))))
+        record_property(f"zero_drive_flux_error_{n}_W_per_m2", float(error))
+        for drive in ([.4+.3j, -.1j], [-.3, .7+.1j]):
+            _, _, flux, baseline = compose_heat_wall_admittances_1d(
+                matrices, resistances, wall_temperatures=drive, **opts)
+            prediction = y @ y.new_tensor(drive) + offset
+            torch.testing.assert_close(prediction, torch.stack((flux[0, 0], flux[-1, 1])), rtol=0, atol=1e-12)
+            torch.testing.assert_close(baseline, offset)
+            error = max(error, np.max(abs(prediction.numpy()-exact_flux(drive))))
+        record_property(f"max_wall_flux_error_{n}_W_per_m2", float(error))
+        errors.append(error)
+    assert all(a/b > 8 for a, b in zip(errors, errors[1:]))
+
+@pytest.mark.parametrize("storing", [False, True])
+def test_loaded_stack_mixed_wall_conditions_against_transfer_solution(storing, record_property):
+    from itertools import product
+    from scipy.linalg import expm
+    import numpy as np
+    from tensordg import (harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d,
+                          solve_heat_wall_admittance_1d)
+
+    omega, resistance = 2.7, .18
+    layers = [(.6, 1.5, 1.2, .5-.2j), (.35, .9, 1.9, -.3j)]
+    initial_t, initial_q = 1.+.2j, .4-.3j
+    state = np.array([initial_t, initial_q, 1.])
+    for i, (length, k, c, source) in enumerate(layers):
+        if i:
+            state[0] -= resistance*state[1]
+        state = expm(length*np.array([[0, -1/k, 0], [-1j*omega*c, 0, source], [0, 0, 0]])) @ state
+    exact_t = np.array([initial_t, state[0]])
+    exact_q = np.array([initial_q, -state[1]])
+    capacities = np.array([.37, .81]) if storing else np.zeros(2)
+    exact_external = exact_q + 1j*omega*capacities*exact_t
+    errors = []
+    for n in (4, 8, 16):
+        matrices, offsets = zip(*(harmonic_heat_wall_admittance_1d(
+            omega, thickness=L, conductivity=k, capacity=c, source=s, ncells=n) for L, k, c, s in layers))
+        y, offset = compose_heat_wall_admittances_1d(matrices, resistance, layer_flux_offsets=offsets,
+                                                    return_flux_offset=True)
+        worst_t = worst_q = worst_external = 0.
+        for kinds in product(("dirichlet", "neumann", "robin"), repeat=2):
+            films, values = [], []
+            for i, kind in enumerate(kinds):
+                h = (1.8, 3.5)[i] if kind == "robin" else 0.
+                films.append(h)
+                if kind == "robin":
+                    values.append(exact_t[i]+exact_external[i]/h)
+                elif kind == "neumann":
+                    values.append(exact_external[i])
+                else:
+                    values.append(exact_t[i])
+            t, q, external = solve_heat_wall_admittance_1d(
+                y, kinds, values, flux_offset=offset, film_coefficients=films,
+                wall_areal_heat_capacity=capacities, angular_frequency=omega,
+                return_external_flux=True)
+            worst_external = max(worst_external, np.max(abs(external.numpy()-exact_external)))
+            worst_t = max(worst_t, np.max(abs(t.numpy()-exact_t)))
+            worst_q = max(worst_q, np.max(abs(q.numpy()-exact_q)))
+        errors.append((worst_t, worst_q, worst_external))
+        record_property(f"max_external_supply_error_{n}_W_per_m2", float(worst_external))
+        record_property(f"max_wall_temperature_error_{n}_K", float(worst_t))
+        record_property(f"max_wall_flux_error_{n}_W_per_m2", float(worst_q))
+    for coarse, fine in zip(errors, errors[1:]):
+        assert all(a/b > 8 for a,b in zip(coarse, fine))
+
+
+def test_wall_admittance_storage_requires_valid_capacities_and_frequency():
+    from tensordg import solve_heat_wall_admittance_1d
+
+    args = (torch.eye(2), ("neumann", "dirichlet"), (1., 2.))
+    temperature, flux = solve_heat_wall_admittance_1d(*args)
+    torch.testing.assert_close(temperature, flux.new_tensor([1., 2.]))
+    torch.testing.assert_close(temperature, flux)
+    for cap, omega in (([1., 0.], None), ([1., 0.], -1.), ([1., -1.], 2.),
+                       ([1.j, 0.], 2.), ([float("inf"), 0.], 2.), ([1.], 2.)):
+        with pytest.raises(ValueError):
+            solve_heat_wall_admittance_1d(*args, wall_areal_heat_capacity=cap, angular_frequency=omega)
+
+
+def test_two_trace_sources_balance_each_side_of_resistive_and_perfect_contacts():
+    from tensordg import compose_heat_wall_admittances_1d
+
+    layer = torch.tensor([[2.+.6j, -.9], [-.9, 1.3+.2j]], dtype=torch.complex128)
+    left = layer.new_tensor([.34-.5j, -.12+.3j])
+    right = layer.new_tensor([.15+.1j, .32-.25j])
+    resistance = left.real.new_tensor([.6, 0.])
+    drive = layer.new_tensor([1.-.3j, .55j])
+    opts = dict(interface_heat_sources=right, interface_left_heat_sources=left)
+    y, offset = compose_heat_wall_admittances_1d([layer]*3, resistance, return_flux_offset=True, **opts)
+    _, t, flux = compose_heat_wall_admittances_1d([layer]*3, resistance, wall_temperatures=drive, **opts)
+    torch.testing.assert_close(y @ drive+offset, torch.stack((flux[0, 0], flux[-1, 1])))
+    torch.testing.assert_close(flux[:-1, 1]+flux[1:, 0], left+right)
+    torch.testing.assert_close(t[:-1, 1]-t[1:, 0], resistance*(left-flux[:-1, 1]))
+
+
+@pytest.mark.parametrize("resistance", [0., .35])
+def test_independent_contact_storage_rates(resistance):
+    from tensordg import compose_heat_wall_admittances_1d
+
+    layer = torch.tensor([[2.+.6j, -.9], [-.9, 1.3+.2j]], dtype=torch.complex128)
+    omega, cl, cr = 2.3, .28, .51
+    opts = dict(interface_left_areal_heat_capacity=cl, interface_areal_heat_capacity=cr,
+                interface_left_heat_sources=.4+.1j, interface_heat_sources=-.2j)
+    with pytest.raises(ValueError, match="angular frequency"):
+        compose_heat_wall_admittances_1d([layer]*2, resistance, return_flux_offset=True, **opts)
+    _, t, flux = compose_heat_wall_admittances_1d([layer]*2, resistance, wall_temperatures=(1., .3j),
+                                                  angular_frequency=omega, **opts)
+    through = .4+.1j-flux[0, 1]-1j*omega*cl*t[0, 1]
+    torch.testing.assert_close(t[0, 1]-t[1, 0], resistance*through)
+    torch.testing.assert_close(flux[1, 0], through-.2j-1j*omega*cr*t[1, 0])
+
+
+@pytest.mark.parametrize("r", [0., .35])
+def test_left_film_equals_reflected_right_film(r):
+    from tensordg import compose_heat_wall_admittances_1d
+
+    layer = torch.tensor([[2.+.6j, -.9], [-.9, 1.3+.2j]], dtype=torch.complex128)
+    layers = [layer, .7*layer]
+    reverse = [m.flip((0, 1)) for m in reversed(layers)]
+    left = dict(interface_left_film_coefficients=2.1, interface_left_ambient_temperatures=.32-.46j)
+    right = dict(interface_film_coefficients=2.1, interface_ambient_temperatures=.32-.46j)
+    y, offset = compose_heat_wall_admittances_1d(layers, r, return_flux_offset=True, **left)
+    yr, br = compose_heat_wall_admittances_1d(reverse, r, return_flux_offset=True, **right)
+    torch.testing.assert_close(y, yr.flip((0, 1)))
+    torch.testing.assert_close(offset, br.flip((0,)))
+
+
+@pytest.mark.parametrize("backend", ["dense", "sparse", "matrix-free", "exact-time"])
+def test_ramped_wall_interval_temperature_modes(backend):
+    from tensordg.heat_1d import solve_heat_1d_wall_history
+
+    times = torch.tensor([0., .03, .1], dtype=torch.float64)
+    walls = torch.stack((times, 3*times), dim=1)
+    centers, _, meta = solve_heat_1d_wall_history(
+        times, walls, 6, 2, backend=backend, source=lambda x: 1+2*x,
+        initial_temperature=torch.zeros_like, return_interval_temperatures=True)
+    means = centers.new_tensor(meta["interval_temperature_modes"])
+    midpoint = (times[1:]+times[:-1])/2
+    expected = torch.zeros_like(means)
+    expected[:, :, 0] = midpoint[:, None]*(1+2*centers)
+    expected[:, :, 1] = midpoint[:, None]/6
+    torch.testing.assert_close(means, expected, atol=1e-10, rtol=0.)
+
+
+def test_independent_wall_penalty_changes_only_two_trace_blocks():
+    from tensordg.heat_1d import assemble_sipg_1d
+
+    n = 5
+    base = assemble_sipg_1d(n)
+    tuned = assemble_sipg_1d(n, wall_penalty=40.)
+    delta = torch.zeros_like(base["diffusion"])
+    left = delta.new_tensor([1, -1, 1])
+    right = delta.new_tensor([1, 1, 1])
+    delta[:3, :3] = 20*9*n*torch.outer(left, left)
+    delta[-3:, -3:] = 20*9*n*torch.outer(right, right)
+    torch.testing.assert_close(tuned["diffusion"] - base["diffusion"], delta)
+    for value in (0., -1., math.nan, math.inf):
+        with pytest.raises(ValueError, match="wall_penalty"):
+            assemble_sipg_1d(n, wall_penalty=value)

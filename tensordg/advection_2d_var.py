@@ -38,6 +38,12 @@ import torch
 Velocity = Callable[[torch.Tensor, torch.Tensor, float], tuple[torch.Tensor, torch.Tensor]]
 
 
+def _sample_profile(profile, x, y, t):
+    """Expand scalar or axis-dependent data across the whole quadrature grid."""
+    values = torch.as_tensor(profile(x, y, t), device=x.device, dtype=x.dtype)
+    return torch.broadcast_to(values, torch.broadcast_shapes(x.shape, y.shape))
+
+
 @dataclass(frozen=True)
 class Basis1D:
     """Modal Legendre basis sampled at Gauss-Legendre nodes."""
@@ -246,10 +252,10 @@ class DGAdvection2D:
         self.XFaceNodes, self.YFace = xq[:, None, :], yf[None, :, None]
 
     # -- projection / post-processing -------------------------------------
-    def project(self, profile: Callable[..., torch.Tensor]) -> torch.Tensor:
+    def project(self, profile: Callable[..., torch.Tensor], t: float = 0.0) -> torch.Tensor:
         """L2 projection of a nodal profile onto the modal space."""
         b = self.basis
-        vals = profile(self.Xn, self.Yn, 0.0)
+        vals = _sample_profile(profile, self.Xn, self.Yn, t)
         coeff = torch.einsum("xyqr,q,r,qk,rl->xykl", vals, b.weights, b.weights,
                             b.phi, b.phi)
         norm = torch.outer(self._mode, self._mode) / 4.0
@@ -311,26 +317,45 @@ class DGAdvection2D:
 
     # -- time integration --------------------------------------------------
     def solve(self, coeff: torch.Tensor, velocity: Velocity, final_time: float,
-              cfl: float = 0.3, max_speed: float | None = None,
-              record_mass: bool = False) -> dict:
-        """Advance to ``final_time`` with RK4; returns ``(coeff, metadata)``."""
-        if final_time < 0.0 or cfl <= 0.0:
-            raise ValueError("final_time must be >= 0 and cfl must be > 0")
+              cfl: float = 0.3, max_speed: float | tuple[float, float] | None = None,
+              record_mass: bool = False, *, max_dt: float | None = None,
+              start_time: float = 0.0) -> dict:
+        """Advance with RK4 using a spatial CFL bound and optional time-resolution cap.
+
+        By default, sample component speeds at the endpoints, midpoint and
+        quarter points. For rapidly varying velocities supply known maximum
+        speeds and set ``max_dt`` to resolve the temporal modulation. The input
+        coefficients are at ``start_time``; velocity callbacks receive absolute
+        stage times up to ``final_time`` so a previous result can be continued.
+        """
+        duration = final_time - start_time
+        if not math.isfinite(duration) or duration < 0.0:
+            raise ValueError("start_time and final_time must define a finite forward interval")
+        if not math.isfinite(cfl) or cfl <= 0.0:
+            raise ValueError("cfl must be finite and positive")
+        if max_dt is not None and (not math.isfinite(max_dt) or max_dt <= 0.0):
+            raise ValueError("max_dt must be finite and positive")
         if max_speed is None:
             max_speed = estimate_max_components(
-                velocity, times=(0.0, 0.5 * final_time, final_time))
+                velocity, times=[start_time + i * (duration / 4) for i in range(5)],
+                device=self.device, dtype=self.dtype)
         if isinstance(max_speed, (tuple, list)):
-            ax_max, ay_max = float(max_speed[0]), float(max_speed[1])
+            if len(max_speed) != 2:
+                raise ValueError("max_speed needs an x and a y component")
+            ax_max, ay_max = map(float, max_speed)
         else:
             ax_max = ay_max = float(max_speed)
+        if not all(math.isfinite(v) and v >= 0.0 for v in (ax_max, ay_max)):
+            raise ValueError("max_speed must contain finite nonnegative bounds")
         rate = (2 * self.degree + 1) * (ax_max / self.hx + ay_max / self.hy)
-        steps = 0 if (final_time == 0.0 or rate == 0.0) else int(
-            math.ceil(final_time * rate / cfl))
-        dt = final_time / steps if steps else 0.0
+        steps = math.ceil(duration * rate / cfl)
+        if max_dt is not None:
+            steps = max(steps, math.ceil(duration / max_dt))
+        dt = duration / steps if steps else 0.0
         mass0 = self.mass(coeff)
         history = [mass0]
         for n in range(steps):
-            t = n * dt
+            t = start_time + n * dt
             k1 = self.rhs(coeff, velocity, t)
             k2 = self.rhs(coeff + 0.5 * dt * k1, velocity, t + 0.5 * dt)
             k3 = self.rhs(coeff + 0.5 * dt * k2, velocity, t + 0.5 * dt)
@@ -341,7 +366,7 @@ class DGAdvection2D:
         mass1 = self.mass(coeff)
         meta = {
             "ncells": list(self.ncells), "degree": self.degree,
-            "final_time": float(final_time), "dt": float(dt), "steps": steps,
+            "start_time": float(start_time), "final_time": float(final_time), "dt": float(dt), "steps": steps,
             "cfl": float(cfl), "max_speed": [ax_max, ay_max],
             "dofs": int(self.nx * self.ny * (self.degree + 1) ** 2),
             "mass_initial": mass0, "mass_final": mass1,
@@ -376,7 +401,7 @@ class DGAdvection2D:
             dtype=self.dtype)[:, None] + 0.5 * self.hy * b.nodes[None, :]
         X = xq[:, None, :, None]
         Y = yq[None, :, None, :]
-        ref = exact(X, Y, t)
+        ref = _sample_profile(exact, X, Y, t)
         wq = b.weights[None, None, :, None] * b.weights[None, None, None, :]
         if radius is not None:
             x0, y0 = float(center[0]), float(center[1])
@@ -411,7 +436,7 @@ class DGAdvection2D:
             dtype=self.dtype)[:, None] + 0.5 * self.hy * b.nodes[None, :]
         X = xq[:, None, :, None]
         Y = yq[None, :, None, :]
-        ref = exact(X, Y, t)
+        ref = _sample_profile(exact, X, Y, t)
         wq = b.weights[None, None, :, None] * b.weights[None, None, None, :]
         jac = 0.25 * self.hx * self.hy
         ref_l1_global = jac * torch.sum(wq * ref.abs())
@@ -437,39 +462,6 @@ class DGAdvection2D:
         wq = b.weights[None, None, :, None] * b.weights[None, None, None, :]
         jac = 0.25 * self.hx * self.hy
         return {"absolute_l2": float(torch.sqrt(jac * torch.sum(wq * num ** 2)).item())}
-
-
-    def l1_error(self, coeff: torch.Tensor, exact: Callable[..., torch.Tensor],
-                 t: float = 0.0, radius: float | None = None,
-                 center: Sequence[float] = (0.5, 0.5)) -> dict:
-        """L1 error against an analytic field (Gauss quadrature).
-
-        Returns ``absolute_l1``, ``reference_l1``, and ``relative_l1``.
-        The ``radius`` parameter works identically to :meth:`l2_error`.
-        """
-        b = basis_1d(self.degree, max(2 * self.degree + 6, 10), self.device, self.dtype)
-        num = torch.einsum("xykl,qk,rl->xyqr", coeff, b.phi, b.phi)
-        xq = torch.as_tensor(
-            [(i + 0.5) * self.hx for i in range(self.nx)], device=self.device,
-            dtype=self.dtype)[:, None] + 0.5 * self.hx * b.nodes[None, :]
-        yq = torch.as_tensor(
-            [(j + 0.5) * self.hy for j in range(self.ny)], device=self.device,
-            dtype=self.dtype)[:, None] + 0.5 * self.hy * b.nodes[None, :]
-        X = xq[:, None, :, None]
-        Y = yq[None, :, None, :]
-        ref = exact(X, Y, t)
-        wq = b.weights[None, None, :, None] * b.weights[None, None, None, :]
-        if radius is not None:
-            x0, y0 = float(center[0]), float(center[1])
-            mask = ((X - x0) ** 2 + (Y - y0) ** 2 <= radius ** 2).to(wq.dtype)
-            wq = wq * mask
-        jac = 0.25 * self.hx * self.hy
-        abs_l1 = jac * torch.sum(wq * torch.abs(num - ref))
-        ref_l1 = jac * torch.sum(wq * torch.abs(ref))
-        abs_l1 = float(abs_l1.item())
-        ref_l1 = float(ref_l1.item())
-        return {"absolute_l1": abs_l1, "reference_l1": ref_l1,
-                "relative_l1": abs_l1 / ref_l1 if ref_l1 else abs_l1}
 
 
 def estimate_max_speed(velocity: Velocity, times: Sequence[float] = (0.0,),
@@ -499,6 +491,10 @@ def estimate_max_components(velocity: Velocity, times: Sequence[float] = (0.0,),
     bx = by = 0.0
     for t in times:
         ax, ay = velocity(X, Y, float(t))
-        bx = max(bx, float(ax.abs().max().item()))
-        by = max(by, float(ay.abs().max().item()))
+        x_peak = float(ax.abs().max().item())
+        y_peak = float(ay.abs().max().item())
+        if not math.isfinite(x_peak) or not math.isfinite(y_peak):
+            raise ValueError("velocity samples must be finite")
+        bx = max(bx, x_peak)
+        by = max(by, y_peak)
     return max(bx, 1e-14), max(by, 1e-14)

@@ -4,7 +4,7 @@ from __future__ import annotations
 import numpy as np
 import torch
 
-from .euler_1d import GAMMA, hllc_flux, physical_flux, primitive_to_conservative, sound_speed
+from .euler_1d import _riemann_cell_averages, GAMMA, hllc_flux, physical_flux, primitive_to_conservative, sound_speed
 from .limiters import apply_limiter
 
 
@@ -202,14 +202,9 @@ def solve_euler_dg_1d(
         raise ValueError("domain must be increasing and contain the diaphragm")
     dev = torch.device(device)
     dx = (upper - lower) / ncells
-    x = lower + (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * dx
-    mask = x < diaphragm
-    rho = torch.where(mask, torch.full_like(x, left_state[0]), torch.full_like(x, right_state[0]))
-    velocity = torch.where(mask, torch.full_like(x, left_state[1]), torch.full_like(x, right_state[1]))
-    pressure = torch.where(mask, torch.full_like(x, left_state[2]), torch.full_like(x, right_state[2]))
-    average = primitive_to_conservative(rho, velocity, pressure)
+    x, averages = _riemann_cell_averages(left_state, right_state, ncells, lower, dx, diaphragm, dev, dtype)
     coeff = torch.zeros((ncells, degree + 1, 3), device=dev, dtype=dtype)
-    coeff[:, 0] = average
+    coeff[:, 0] = averages
     nodes, weights, phi, dphi, phi_left, phi_right = _operators(degree, dev, dtype)
     check_points = torch.cat((phi, phi_left[None, :], phi_right[None, :]), dim=0)
 

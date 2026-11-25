@@ -150,3 +150,59 @@ OMP_NUM_THREADS=1 python -m pytest tests/test_repro_cks1998.py -x -q
 **未完成 / 诚实边界**：论文表格单元格的逐格对照仍为 **WITHHELD**（仓内无 PDF，
 不冒充 REAL）；2-D 系统算例（JCP 141 主算例）未做；Sod 3% 门在 N=200 粗网格
 FAIL（4.17%）如实记录，门按预登记落在最细网格。
+
+### Sod velocity regression and optional MC reconstruction
+
+At N=400, P2, t=0.2, CFL=0.12 and M=1 with final-stage limiting, changing
+only the troubled-cell sensor in base revision `5db9ebe` reproduced the
+historical 2.37% velocity result. The historical sensor came from
+`fdc046a^`. The current sensor checks both sides of the cell. With the
+original Sod quadrature, the cell centered at x=0.85125 accounts for 72.1%
+of the current default reconstruction's squared velocity error.
+
+| Sensor and slope | Reference cell quadrature | Density relative L2 | Velocity relative L2 | Pressure relative L2 |
+|---|---|---:|---:|---:|
+| Historical one-sided, minmod | Original | 1.113% | 2.368% | 0.594% |
+| Two-sided, minmod | Original | 1.180% | 3.838% | 0.854% |
+| Two-sided, minmod | Split at exact wave positions | 1.166% | 3.770% | 0.843% |
+| Two-sided, MC | Original | 0.871% | 2.934% | 0.595% |
+| Two-sided, MC | Split at exact wave positions | 0.851% | 2.858% | 0.583% |
+
+Select MC by passing `limiter="tvb", limiter_kwargs={"reconstruction": "mc"}`
+to the 1-D Euler DG solver. This limits the centered slope to twice either
+one-sided increment and preserves the cell average. The default minmod case
+still exceeds the 3% velocity gate. The comparison uses primitive variables
+computed from numerical conserved cell averages and analytic averages of the
+primitive variables, following the original benchmark.
+
+Run the MC numerical regression and modal reconstruction checks with
+`OMP_NUM_THREADS=1 python -m pytest -q tests/test_sod_mc.py tests/test_limiter_units.py tests/test_limiter_kernel_budget.py`.
+
+#### MC refinement and conserved-integral balance
+
+Run `OMP_NUM_THREADS=1 python -m benchmarks.sod_mc_refinement` from the
+repository root. For the split-wave reference and the solver settings above:
+
+| Cells | Density relative L2 | Velocity relative L2 | Pressure relative L2 | Largest absolute integral residual |
+|---:|---:|---:|---:|---:|
+| 100 | 1.604% | 6.741% | 1.748% | 8.55e-14 |
+| 200 | 1.233% | 4.344% | 1.010% | 1.69e-13 |
+| 400 | 0.851% | 2.858% | 0.583% | 3.42e-13 |
+
+Before waves reach the boundary, the mass and energy integrals retain their
+initial values (0.5625 and 1.375). The momentum integral reaches 0.18 from the
+pressure difference across the two ends. The last column checks all three
+against these analytic balances at t=0.2. The three relative errors decrease
+at both refinements. Only the finest mesh meets 3% for every field.
+
+#### Off-grid diaphragm initialization
+
+The P0 and P1–P3 Riemann entry points integrate the two conserved states in
+each cell according to the fraction on each side of the diaphragm. All
+initial higher modes are zero. For the quarter-cell case on [-1,1] in
+`tests/test_euler_dg_diaphragm.py`, the analytic mass, momentum, and energy
+integrals are (2.825, 2.125, 10.95). Across P0–P3 the largest absolute
+residual was 4.45e-16 or less (CPU float64). On a 21-cell mesh a P2 stationary
+contact with the diaphragm at the middle of the central cell also preserved
+the analytic cell averages and zero higher modes through t=0.02 within
+3e-13. Reproduce with `OMP_NUM_THREADS=1 python -m pytest -q tests/test_euler_dg_diaphragm.py`.

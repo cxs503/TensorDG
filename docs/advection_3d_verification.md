@@ -64,11 +64,14 @@ identities, and argument validation.
 * Uniform Cartesian hexahedral meshes only — no curved or unstructured 3-D
   geometry (curved 2-D geometry is covered by `tensordg/curved_geometry.py`).
 * Linear advection only; 3-D Euler/Navier–Stokes remain future work.
-* `p ≤ 3` (the modal operators are built for that range), CPU/float64 gates.
+* The solver accepts P0 through P8. CPU/float64 tests for P4 through P8 compare the transported field to its analytic translation at fixed time on successively finer meshes.
 * The P0 first-order check is deliberately loose (`0.6 < EOC < 1.4`) because a
   first-order upwind scheme on the coarse stretched ladder is still
   pre-asymptotic; the gate exists to catch a *second*-order regression, not to
   certify the asymptotic constant.
-* Time integration is classical RK4 with a `cfl = 0.08` default; the ladder
-  records `dt` and `steps` per level, so a temporal-order regression is visible
-  in the artifact even though it is not a separate gate.
+* Classical RK4 and `cfl=0.08` remain the defaults. Set `time_integrator` to select a registered explicit Runge–Kutta method. The fixed-grid P0 Fourier test in `tests/test_advection_3d.py` compares seven integrators to the exact exponential of the semidiscrete upwind operator at 8, 16, 32 and 64 steps.
+## Continuing a transport segment
+
+Pass the coefficient tensor returned by the previous call as `initial`, using the same mesh, degree and physical box. Set `start_time` to the saved time and `final_time` to the absolute end time. A spatially uniform velocity can be a three-component tuple or a function of the absolute RK stage time. For a rapidly varying velocity, supply component bounds through `max_speed` and a temporal resolution cap through `max_dt`. The three-dimensional tests compare a forward/reverse run to the initial wave and accelerating flow to the integrated characteristic displacement.
+
+Five zero velocity samples cannot distinguish stationary flow from a pulse between samples. For a positive-duration callback in this case, provide a component bound or a time-step cap. Without an explicit speed bound the solver checks the requested CFL at every evaluated RK stage. For pulses shorter than the stage spacing, choose `max_dt` to resolve the pulse. The P0 pulse regression compares against the exact semidiscrete Fourier mode after a parabolic velocity pulse with integrated displacement 1/6.

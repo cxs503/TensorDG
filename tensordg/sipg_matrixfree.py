@@ -442,8 +442,12 @@ def matvec_heat_diffusion_1d(
     degree: int,
     penalty: float,
     operators: tuple,
+    *, wall_penalty=None,
 ) -> torch.Tensor:
     """Compute the SIPG diffusion operator A @ coeff for 1-D heat."""
+    from tensordg.heat_1d import _wall_penalty
+
+    wall_penalty = _wall_penalty(penalty, wall_penalty)
     h = 1.0 / ncells
     (
         nodes, weights, phi, mass, stiffness, phi_left, phi_right,
@@ -485,7 +489,7 @@ def matvec_heat_diffusion_1d(
         consistency_b = -torch.outer(endpoint, derivative)
         block = (
             consistency_b + consistency_b.T
-            + penalty * modes * modes / h * torch.outer(endpoint, endpoint)
+            + wall_penalty * modes * modes / h * torch.outer(endpoint, endpoint)
         )
         out[cell] += block @ coeff[cell]
 
@@ -520,10 +524,12 @@ def solve_heat_1d_matrixfree(
     dtype: torch.dtype = torch.float64,
     rtol: float = 1e-12,
     maxiter: int = 5_000,
+    *, wall_penalty=None, integrate_temperature: bool = False, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
 ) -> tuple:
     """Matrix-free CN heat solve: each time step uses PCG."""
-    from tensordg.heat_1d import _operators
+    from tensordg.heat_1d import _wall_penalty, _integrated_face_heat, _operators, _project_initial, _stationary_load
 
+    wall_penalty = _wall_penalty(penalty, wall_penalty)
     dev = torch.device(device)
     h = 1.0 / ncells
     centers = (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * h
@@ -534,13 +540,7 @@ def solve_heat_1d_matrixfree(
     ndofs = ncells * modes
 
     # Initial condition
-    xq = centers[:, None] + 0.5 * h * nodes[None, :]
-    initial = torch.sin(math.pi * xq)
-    coeff = torch.empty((ncells, modes), device=dev, dtype=dtype)
-    for k in range(modes):
-        coeff[:, k] = (2 * k + 1) * 0.5 * torch.sum(
-            weights[None, :] * initial * phi[:, k][None, :], dim=1,
-        )
+    coeff = _project_initial(centers, h, nodes, weights, phi, initial_temperature)
 
     steps = (
         max(1, math.ceil(final_time / (0.02 * h)))
@@ -548,7 +548,12 @@ def solve_heat_1d_matrixfree(
     ) if final_time > 0.0 else 0
     dt = final_time / steps if steps else 0.0
 
+    increment = 0.
+    load = _stationary_load(centers,h,operators,source,wall_penalty,wall_temperatures)
+    if load is not None:
+        increment = dt*load.reshape(-1)
     state = coeff.reshape(-1)
+    integrated = torch.zeros_like(state) if integrate_face_fluxes or integrate_temperature else None
 
     # Build diagonal preconditioner for system = M + 0.5*dt*D
     volume_mass = 0.5 * h * mass
@@ -569,7 +574,7 @@ def solve_heat_1d_matrixfree(
         consistency_b = -torch.outer(endpoint, derivative)
         face_block = (
             consistency_b + consistency_b.T
-            + penalty * modes * modes / h * torch.outer(endpoint, endpoint)
+            + wall_penalty * modes * modes / h * torch.outer(endpoint, endpoint)
         )
         face_diag = torch.diag(face_block)
         diag[cell * modes:(cell + 1) * modes] += 0.5 * dt * face_diag
@@ -588,7 +593,7 @@ def solve_heat_1d_matrixfree(
             return (
                 matvec_heat_mass_1d(v, ncells, degree, operators)
                 + 0.5 * dt * matvec_heat_diffusion_1d(
-                    v, ncells, degree, penalty, operators,
+                    v, ncells, degree, penalty, operators, wall_penalty=wall_penalty,
                 )
             )
 
@@ -596,26 +601,35 @@ def solve_heat_1d_matrixfree(
             return (
                 matvec_heat_mass_1d(v, ncells, degree, operators)
                 - 0.5 * dt * matvec_heat_diffusion_1d(
-                    v, ncells, degree, penalty, operators,
+                    v, ncells, degree, penalty, operators, wall_penalty=wall_penalty,
                 )
             )
 
         for _ in range(steps):
-            b = explicit_mv(state)
+            previous = state
+            b = explicit_mv(state) + increment
             state, cg_info = _pcg(
                 system_mv, b, precond=precond, rtol=rtol, maxiter=maxiter,
             )
             total_cg_iters += cg_info["iterations"]
             converged_steps += int(cg_info["converged"])
+            if integrated is not None:
+                integrated += (.5 * dt) * (previous + state)
 
     coeff = state.reshape(ncells, modes)
     metadata = {
         "ncells": ncells, "degree": degree, "final_time": final_time,
-        "steps": steps, "dt": dt, "penalty": penalty, "dofs": ndofs,
+        "steps": steps, "dt": dt, "penalty": penalty, "wall_penalty": wall_penalty, "dofs": ndofs,
         "device": str(dev), "backend": "matrix-free",
         "total_cg_iterations": total_cg_iters,
         "cg_converged_steps": converged_steps,
         "cg_all_converged": converged_steps == steps,
         "cg_rtol": rtol,
     }
+    if integrated is not None:
+        integrated_coeff = torch.as_tensor(integrated, dtype=dtype, device=dev).reshape(ncells, modes)
+        if integrate_temperature:
+            metadata["integrated_temperature_modes"] = integrated_coeff.tolist()
+        if integrate_face_fluxes:
+            metadata["integrated_face_fluxes"] = _integrated_face_heat(integrated_coeff, penalty, wall_temperatures, final_time, wall_penalty)
     return centers, coeff, metadata

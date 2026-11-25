@@ -30,24 +30,30 @@ def test_weno_limiter_preserves_cell_average():
     assert torch.allclose(limited[:, 0], coeff[:, 0])
 
 
-def test_tvb_limiter_does_not_modify_smooth_solution():
-    """TVB limiter should not modify a smooth monotone solution."""
+def test_tvb_limiter_resolves_smooth_quadratic_curvature():
+    """For x² the two-sided sensor deviation is exactly 2 dx²."""
     ncells = 30
     dx = 1.0 / ncells
-    # Create a smooth linear function: u(x) = x
     x = (torch.arange(ncells, dtype=torch.float64) + 0.5) * dx
-    # For a linear function, only mode-0 and mode-1 are non-zero
     coeff = torch.zeros(ncells, 3, 3, dtype=torch.float64)
-    coeff[:, 0, 0] = x  # density = x
-    coeff[:, 1, 0] = dx / 2.0  # slope in mode-1
-    coeff[:, 0, 1] = 2.0 * x  # velocity = 2x
-    coeff[:, 1, 1] = dx  # slope
-    coeff[:, 0, 2] = x ** 2  # energy = x^2
-    coeff[:, 1, 2] = 2.0 * x * dx  # slope
-    
+    coeff[:, 0, 0] = x
+    coeff[:, 1, 0] = dx / 2
+    coeff[:, 0, 1] = 2 * x
+    coeff[:, 1, 1] = dx
+    # Exact Legendre coefficients for x² about each cell center.
+    coeff[:, 0, 2] = x ** 2 + dx ** 2 / 12
+    coeff[:, 1, 2] = x * dx
+    coeff[:, 2, 2] = dx ** 2 / 6
+
+    released = apply_tvb_limiter(coeff, dx, tvb_constant=2.0)
+    torch.testing.assert_close(released, coeff, rtol=0, atol=0)
+
     limited = apply_tvb_limiter(coeff, dx, tvb_constant=1.0)
-    # Smooth monotone solution should not be modified
-    assert torch.allclose(limited, coeff, atol=1e-12)
+    expected = coeff.clone()
+    # Interior cells have positive, increasing increments: minmod picks left.
+    expected[1:-1, 1, 2] = x[1:-1] * dx - dx ** 2 / 2
+    expected[1:-1, 2, 2] = 0
+    torch.testing.assert_close(limited, expected, rtol=0, atol=1e-14)
 
 
 def test_tvb_limiter_reduces_extremum():

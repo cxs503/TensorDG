@@ -35,10 +35,14 @@ factors collapse to the familiar ``(2k+1) a_x / h_x`` per axis.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 import math
 
 import numpy as np
 import torch
+
+from .advection_1d import MAX_DEGREE, _departure_coordinate
+from .runge_kutta import get_tableau, rk_step
 
 Velocity3 = tuple[float, float, float]
 
@@ -145,52 +149,52 @@ def _rhs(
     return out
 
 
-def _project_initial(
-    nx: int, ny: int, nz: int,
-    degree: int,
-    spacing: Velocity3,
-    device: torch.device,
-    dtype: torch.dtype,
-) -> torch.Tensor:
-    """Modal coefficients of ``1 + sin(2 pi x) sin(2 pi y) sin(2 pi z)``.
+def _velocity_components(values):
+    components = tuple(float(a) for a in values)
+    if len(components) != 3 or not all(map(math.isfinite, components)):
+        raise ValueError("velocity must contain three finite components")
+    return components
 
-    The initial field is separable, so the 3-D tensor product of the three 1-D
-    projections is exact (up to the Gauss quadrature of the sine modes) and
-    costs ``O(N (p+1))`` instead of ``O((N (p+1))**3)``.
-    """
-    hx, hy, hz = spacing
-    nq = max(2 * degree + 3, 4)
-    nodes_np, weights_np = np.polynomial.legendre.leggauss(nq)
-    nodes = torch.as_tensor(nodes_np, device=device, dtype=dtype)
-    weights = torch.as_tensor(weights_np, device=device, dtype=dtype)
-    basis = []
-    for k in range(degree + 1):
-        polynomial = np.zeros(k + 1)
-        polynomial[-1] = 1.0
-        basis.append(torch.as_tensor(
-            np.polynomial.legendre.legval(nodes_np, polynomial),
-            device=device, dtype=dtype,
-        ))
-    phi = torch.stack(basis, dim=1)
 
-    def _axis_modes(ncells: int, h: float) -> torch.Tensor:
-        centres = (torch.arange(ncells, device=device, dtype=dtype) + 0.5) * h
-        xq = centres[:, None] + 0.5 * h * nodes[None, :]
-        samples = torch.sin(2.0 * math.pi * xq)
-        # (2k+1)/2 * sum_q w_q f_q P_k(q)  -- per cell.
-        modes = torch.einsum("q,cq,qk->ck", weights, samples, phi) * 0.5
-        scales = torch.tensor(
-            [2 * k + 1 for k in range(degree + 1)],
-            device=device, dtype=dtype,
-        )
-        return modes * scales[None, :]
+def _domain_lengths(lengths):
+    sides = tuple(float(v) for v in lengths)
+    if len(sides) != 3 or any(not math.isfinite(v) or v <= 0 for v in sides):
+        raise ValueError("lengths must contain three finite positive box lengths")
+    return sides
 
-    mx = _axis_modes(nx, hx)
-    my = _axis_modes(ny, hy)
-    mz = _axis_modes(nz, hz)
-    coeff = torch.einsum("xk,yl,zm->xyzklm", mx, my, mz)
-    # The constant part of the field only projects onto the cell-average mode.
-    coeff[:, :, :, 0, 0, 0] += 1.0
+
+def _sample_profile(initial, x, y, z, lengths):
+    if initial is None:
+        sx, sy, sz = (torch.sin(2 * math.pi * q / side) for q, side in zip((x, y, z), lengths))
+        return 1.0 + sx * sy * sz
+    x, y, z = torch.broadcast_tensors(x, y, z)
+    values = torch.as_tensor(initial(x, y, z), device=x.device, dtype=x.dtype)
+    return torch.broadcast_to(values, x.shape)
+
+
+def _sample_slab(initial, xq, yq, zq, lengths):
+    return _sample_profile(initial, xq[:, None, None, :, None, None],
+                           yq[None, :, None, None, :, None], zq[None, None, :, None, None, :], lengths)
+
+
+def _project_initial(initial, xq, yq, zq, weights, phi, lengths):
+    modes = torch.arange(phi.shape[1], device=phi.device, dtype=phi.dtype)
+    projector = weights[:, None] * phi * (modes + .5)
+    if initial is None:
+        # The default product of sines only requires three 1-D projections.
+        axes = [torch.sin(2*math.pi*q/L) @ projector for q, L in zip((xq, yq, zq), lengths)]
+        coeff = torch.einsum("xk,yl,zm->xyzklm", *axes)
+        coeff[..., 0, 0, 0] += 1.
+        return coeff
+
+    shape = (len(xq), len(yq), len(zq)) + (len(modes),)*3
+    coeff = phi.new_empty(shape)
+    for start in range(0, len(xq), 4):
+        slab = slice(start, start+4)
+        samples = _sample_slab(initial, xq[slab], yq, zq, lengths)
+        projected_z = torch.einsum("xyzqrs,sm->xyzqrm", samples, projector)
+        projected_y = torch.einsum("xyzqrm,rl->xyzqlm", projected_z, projector)
+        coeff[slab] = torch.einsum("xyzqlm,qk->xyzklm", projected_y, projector)
     return coeff
 
 
@@ -200,14 +204,17 @@ def exact_solution_3d(
     z: torch.Tensor,
     final_time: float,
     velocity: Velocity3 = (1.0, 0.5, 0.25),
+    *,
+    initial: Callable | None = None,
+    lengths: tuple[float, float, float] = (1.0, 1.0, 1.0),
 ) -> torch.Tensor:
-    """Closed-form solution of the periodic 3-D advection test."""
-    ax, ay, az = velocity
-    return 1.0 + (
-        torch.sin(2.0 * math.pi * (x - ax * final_time))
-        * torch.sin(2.0 * math.pi * (y - ay * final_time))
-        * torch.sin(2.0 * math.pi * (z - az * final_time))
-    )
+    """Evaluate the initial profile at the periodic characteristic foot."""
+    lengths = _domain_lengths(lengths)
+    feet = [_departure_coordinate(q, final_time, a, L)
+            for q, a, L in zip((x, y, z), velocity, lengths, strict=True)]
+    return _sample_profile(initial, feet[0], feet[1], feet[2], lengths)
+
+
 
 
 from .registry import capability
@@ -223,78 +230,205 @@ def solve_advection_3d(
     ncells: int | tuple[int, int, int] = 8,
     degree: int = 1,
     final_time: float = 1.0,
-    velocity: Velocity3 = (1.0, 0.5, 0.25),
+    velocity: Velocity3 | Callable[[float], Velocity3] = (1.0, 0.5, 0.25),
     cfl: float = 0.08,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
+    *,
+    initial: Callable | torch.Tensor | None = None,
+    time_integrator: str = "rk4",
+    start_time: float = 0.0,
+    max_speed: Velocity3 | None = None,
+    max_dt: float | None = None,
+    velocity_jump_times: tuple[float, ...] = (),
+    lengths: tuple[float, float, float] = (1.0, 1.0, 1.0),
 ):
-    """Solve ``u_t + a . grad u = 0`` on the periodic unit cube.
+    """Solve ``u_t + a . grad u = 0`` on a periodic box with the given physical side lengths.
 
     ``ncells`` is one integer or ``(nx, ny, nz)``. Returns
     ``(x, y, z, modal_coefficients, metadata)`` where ``x``, ``y``, ``z`` are
     the cell centres and the coefficient array has shape
     ``(nx, ny, nz, degree+1, degree+1, degree+1)`` whose ``[0, 0, 0]`` entry is
-    the cell average.
+    the cell average. A custom initial(x, y, z) receives physical coordinates
+    in [0, Lx) × [0, Ly) × [0, Lz). The default profile spans one period
+    in each direction. For total mass use mass_3d(coeff, lengths=lengths).
+    A tensor passed as ``initial`` supplies modal coefficients on the same
+    physical box and mesh at start_time. Advance to the absolute final_time.
+    A velocity(t) callback supplies spatially uniform components at RK stage
+    times. Five samples estimate component maxima unless max_speed supplies
+    explicit bounds. Use max_dt to resolve rapidly varying velocity histories.
+    Supply velocity_jump_times for known interior discontinuities of a
+    right-continuous callback. Steps end at every jump, with endpoint stages
+    using the velocity on their own side. Each smooth interval contributes
+    five speed samples. Metadata dt is the largest step taken.
+    The time integrator can be any registered explicit RK tableau.
     """
+    tableau = get_tableau(time_integrator)
     nx, ny, nz = (
         (ncells, ncells, ncells) if isinstance(ncells, int) else tuple(ncells)
     )
-    if min(nx, ny, nz) < 2 or degree not in (0, 1, 2, 3):
-        raise ValueError("ncells must be >= 2 and degree must be in [0, 3]")
-    if final_time < 0.0 or cfl <= 0.0:
-        raise ValueError("final_time must be >= 0 and cfl must be > 0")
-    if len(velocity) != 3:
-        raise ValueError("velocity must contain exactly three components")
+    if min(nx, ny, nz) < 2:
+        raise ValueError("ncells must be >= 2 along every axis")
+    if isinstance(degree, bool) or not isinstance(degree, (int, np.integer)) or not 0 <= degree <= MAX_DEGREE:
+        raise ValueError(f"degree must be an integer in [0, {MAX_DEGREE}]")
+    duration = final_time - start_time
+    if not math.isfinite(duration) or duration < 0.0:
+        raise ValueError("start_time and final_time must define a finite forward interval")
+    if not math.isfinite(cfl) or cfl <= 0.0:
+        raise ValueError("cfl must be positive and finite")
+    if max_dt is not None and (not math.isfinite(max_dt) or max_dt <= 0.0):
+        raise ValueError("max_dt must be positive and finite")
 
     dev = torch.device(device)
-    hx, hy, hz = 1.0 / nx, 1.0 / ny, 1.0 / nz
+    lengths = _domain_lengths(lengths)
+    hx, hy, hz = (L / n for L, n in zip(lengths, (nx, ny, nz)))
     x = (torch.arange(nx, device=dev, dtype=dtype) + 0.5) * hx
     y = (torch.arange(ny, device=dev, dtype=dtype) + 0.5) * hy
     z = (torch.arange(nz, device=dev, dtype=dtype) + 0.5) * hz
-    _, _, _, volume, phi_left, phi_right = _operators(degree, dev, dtype)
+    nodes, weights, phi, volume, phi_left, phi_right = _operators(degree, dev, dtype)
 
-    coeff = _project_initial(nx, ny, nz, degree, (hx, hy, hz), dev, dtype)
-
-    ax, ay, az = (float(component) for component in velocity)
-    wave_rate = abs(ax) / hx + abs(ay) / hy + abs(az) / hz
-    if final_time == 0.0 or wave_rate == 0.0:
-        steps = 0
-        dt_nominal = float("inf")
+    if isinstance(initial, torch.Tensor):
+        shape = (nx, ny, nz) + (degree + 1,) * 3
+        if tuple(initial.shape) != shape:
+            raise ValueError(f"initial modal coefficients must have shape {shape}")
+        if not initial.is_floating_point():
+            raise ValueError("initial modal coefficients must be real floating-point values")
+        coeff = initial.to(device=dev, dtype=dtype, copy=True)
+        if not torch.isfinite(coeff).all():
+            raise ValueError("initial modal coefficients must be finite")
     else:
-        dt_nominal = cfl / ((2 * degree + 1) * wave_rate)
-        steps = math.ceil(final_time / dt_nominal)
-    dt = final_time / steps if steps else 0.0
+        xq, yq, zq = (centers[:, None] + .5*h*nodes
+                      for centers, h in ((x, hx), (y, hy), (z, hz)))
+        coeff = _project_initial(initial, xq, yq, zq, weights, phi, lengths)
 
     spacing = (hx, hy, hz)
-    velocity3 = (ax, ay, az)
-    for _ in range(steps):
-        k1 = _rhs(coeff, spacing, velocity3, volume, phi_left, phi_right)
-        k2 = _rhs(
-            coeff + 0.5 * dt * k1, spacing, velocity3,
-            volume, phi_left, phi_right,
-        )
-        k3 = _rhs(
-            coeff + 0.5 * dt * k2, spacing, velocity3,
-            volume, phi_left, phi_right,
-        )
-        k4 = _rhs(
-            coeff + dt * k3, spacing, velocity3,
-            volume, phi_left, phi_right,
-        )
-        coeff = coeff + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+    variable = callable(velocity)
+    fixed = None if variable else _velocity_components(velocity)
+    jumps = sorted(float(t) for t in velocity_jump_times)
+    if jumps and (not variable or len(set(jumps)) != len(jumps)
+                  or not all(start_time < t < final_time for t in jumps)):
+        raise ValueError("velocity_jump_times requires distinct interior times and a velocity callback")
+    boundaries = [start_time, *jumps, final_time]
+    # A right-continuous event belongs to the following interval. Clamp all
+    # evaluations on the preceding interval to the last float on its side.
+    intervals = [(a, b, math.nextafter(b, a) if b != final_time else b)
+                 for a, b in zip(boundaries, boundaries[1:])]
+
+    if max_speed is not None:
+        bounds = _velocity_components(max_speed)
+        if min(bounds) < 0:
+            raise ValueError("max_speed must contain nonnegative bounds")
+        if not variable and any(abs(a) > b for a, b in zip(fixed, bounds)):
+            raise ValueError("constant velocity exceeds max_speed")
+    elif variable:
+        samples = []
+        for begin, end, last in intervals:
+            for i in range(5):
+                t = last if i == 4 else min(begin + i * ((end - begin) / 4), last)
+                samples.append(_velocity_components(velocity(t)))
+        bounds = tuple(max(map(abs, axis)) for axis in zip(*samples))
+    else:
+        bounds = tuple(map(abs, fixed))
+
+    wave_rate = sum(a / h for a, h in zip(bounds, spacing))
+    if variable and duration and not wave_rate and max_speed is None and max_dt is None:
+        raise ValueError("all sampled velocities vanish; supply max_speed or max_dt to resolve the interval")
+    steps = 0
+    largest_dt = 0.0
+
+    def rhs(state, t=None):
+        components = _velocity_components(velocity(min(max(t, begin), last))) if variable else fixed
+        if variable and max_speed is not None and any(abs(a) > b for a, b in zip(components, bounds)):
+            raise ValueError("stage velocity exceeds max_speed")
+        if variable and max_speed is None:
+            stage_rate = sum(abs(a) / h for a, h in zip(components, spacing))
+            stage_cfl = dt * (2 * degree + 1) * stage_rate
+            if stage_cfl > cfl and not math.isclose(stage_cfl, cfl, rel_tol=1e-12):
+                raise ValueError("stage velocity exceeds the requested CFL; supply max_speed or reduce max_dt")
+        return _rhs(state, spacing, components, volume, phi_left, phi_right)
+
+    for begin, end, last in intervals:
+        span = end - begin
+        segment_steps = math.ceil(span / (cfl / ((2 * degree + 1) * wave_rate))) if wave_rate else 0
+        if max_dt is not None:
+            segment_steps = max(segment_steps, math.ceil(span / max_dt))
+        dt = span / segment_steps if segment_steps else 0.
+        steps += segment_steps
+        largest_dt = max(largest_dt, dt)
+        for step in range(segment_steps):
+            if variable:
+                coeff = rk_step(rhs, coeff, dt, tableau, time=begin + step * dt)
+            elif time_integrator == "rk4":
+                # Preserve the summation order of the established default.
+                k1 = rhs(coeff)
+                k2 = rhs(coeff + 0.5 * dt * k1)
+                k3 = rhs(coeff + 0.5 * dt * k2)
+                k4 = rhs(coeff + dt * k3)
+                coeff = coeff + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+            else:
+                coeff = rk_step(rhs, coeff, dt, tableau)
 
     metadata = {
-        "ncells": (nx, ny, nz), "degree": degree, "final_time": final_time,
-        "velocity": velocity3, "dt": dt, "steps": steps,
+        "ncells": (nx, ny, nz), "lengths": lengths, "degree": degree, "final_time": final_time,
+        "velocity": "time-dependent" if variable else fixed, "max_speed": bounds,
+        "start_time": start_time, "dt": largest_dt, "steps": steps,
         "device": str(dev), "cfl": cfl, "dtype": str(dtype),
+        "time_integrator": tableau.name, "rk_order": tableau.order, "rk_stages": tableau.stages,
     }
     return x, y, z, coeff, metadata
 
 
-def mass_3d(coeff: torch.Tensor) -> float:
-    """Total integral of the modal field (``sum`` of cell averages / N)."""
-    nx, ny, nz = coeff.shape[:3]
-    return float(coeff[:, :, :, 0, 0, 0].sum().item()) / (nx * ny * nz)
+def mass_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
+    """Integrate the cell averages over a box of the specified side lengths."""
+    return float(coeff[:, :, :, 0, 0, 0].mean().item()) * math.prod(_domain_lengths(lengths))
+
+
+def _modal_mean_weights(coeff):
+    if coeff.ndim != 6 or min(coeff.shape) < 1 or not coeff.is_floating_point():
+        raise ValueError("provide a nonempty six-dimensional real modal field")
+    return [(2*torch.arange(n, dtype=torch.float64, device=coeff.device)+1).reciprocal()
+            for n in coeff.shape[3:]]
+
+
+def energy_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
+    """Integrate half the squared real DG field on a uniform periodic box.
+
+    The last three axes store unnormalized Legendre coefficients as returned
+    by solve_advection_3d. Each squared mode has cell-average weight
+    1 / ((2k+1)(2l+1)(2m+1)) by Legendre orthogonality.
+    """
+    weights = _modal_mean_weights(coeff)
+    volume = math.prod(_domain_lengths(lengths))
+    mean_square = coeff.double().square().mean(dim=(0, 1, 2))
+    return 0.5 * volume * torch.einsum("klm,k,l,m->", mean_square, *weights).item()
+
+
+def upwind_dissipation_3d(coeff: torch.Tensor, velocity: Velocity3, *,
+                          lengths=(1.0, 1.0, 1.0)) -> tuple[float, float, float]:
+    """Directional rates of scalar energy loss for periodic upwind advection.
+
+    Each entry integrates half the absolute normal speed times the squared
+    trace jump over that axis's faces, each counted once. Their sum equals
+    minus the semidiscrete time derivative of energy_3d.
+    """
+    weights = _modal_mean_weights(coeff)
+    lengths = _domain_lengths(lengths)
+    speeds = _velocity_components(velocity)
+    modes = coeff.double()
+    rates = []
+    for axis, speed in enumerate(speeds):
+        # P_k(1)=1; P_k(-1)=(-1)^k on the neighbor's lower face.
+        normal_modes = modes.movedim(3+axis, -1)
+        signs = torch.ones_like(weights[axis])
+        signs[1::2] = -1.
+        lower = normal_modes @ signs
+        jump = normal_modes.sum(dim=-1) - lower.roll(-1, dims=axis)
+        mean_square = jump.square().mean(dim=(0, 1, 2))
+        tangential = weights[:axis] + weights[axis+1:]
+        face_mean = torch.einsum("ij,i,j->", mean_square, *tangential)
+        area = math.prod(lengths) * coeff.shape[axis] / lengths[axis]
+        rates.append(.5 * abs(speed) * area * face_mean.item())
+    return tuple(rates)
 
 
 def error_3d(
@@ -305,16 +439,24 @@ def error_3d(
     final_time: float,
     velocity: Velocity3 = (1.0, 0.5, 0.25),
     x_chunk: int = 4,
+    *,
+    initial: Callable | None = None,
+    lengths: tuple[float, float, float] | None = None,
 ) -> dict[str, float]:
     """Quadrature-based absolute/relative L2 errors against the closed form.
 
     The quadrature field ``u_h - u_exact`` would be an ``(nx*nq)**3`` tensor, so
     the norm is accumulated in ``x``-slabs to keep the memory footprint bounded
-    for the finest meshes.
+    for the finest meshes. If omitted, lengths are inferred from the returned
+    cell centres of the zero-origin box.
     """
     degree = coeff.shape[-1] - 1
     nx, ny, nz = coeff.shape[:3]
-    hx, hy, hz = 1.0 / nx, 1.0 / ny, 1.0 / nz
+    if lengths is None:
+        # Cell centres begin at h/2 in each direction.
+        lengths = tuple(2 * float(q[0]) * n for q, n in zip((x, y, z), (nx, ny, nz)))
+    lengths = _domain_lengths(lengths)
+    hx, hy, hz = (L / n for L, n in zip(lengths, (nx, ny, nz)))
     nq = max(2 * degree + 4, 6)
     nodes_np, weights_np = np.polynomial.legendre.leggauss(nq)
     nodes = torch.as_tensor(nodes_np, device=coeff.device, dtype=coeff.dtype)
@@ -333,9 +475,11 @@ def error_3d(
     yq = y[:, None] + 0.5 * hy * nodes[None, :]
     zq = z[:, None] + 0.5 * hz * nodes[None, :]
     ax, ay, az = velocity
-    sin_x = torch.sin(2.0 * math.pi * (xq - ax * final_time))
-    sin_y = torch.sin(2.0 * math.pi * (yq - ay * final_time))
-    sin_z = torch.sin(2.0 * math.pi * (zq - az * final_time))
+    if x_chunk < 1:
+        raise ValueError("x_chunk must be positive")
+    xq = _departure_coordinate(xq, final_time, ax, lengths[0])
+    yq = _departure_coordinate(yq, final_time, ay, lengths[1])
+    zq = _departure_coordinate(zq, final_time, az, lengths[2])
 
     # (1, 1, 1, nq, nq, nq) tensor-product quadrature weights, matching the
     # (cell_x, cell_y, cell_z, qx, qy, qz) layout of ``numerical`` below.
@@ -353,11 +497,7 @@ def error_3d(
         numerical = torch.einsum("xyzklm,qk->xyzqlm", slab, phi)
         numerical = torch.einsum("xyzqlm,rl->xyzqrm", numerical, phi)
         numerical = torch.einsum("xyzqrm,sm->xyzqrs", numerical, phi)
-        exact = 1.0 + (
-            sin_x[start:stop, None, None, :, None, None]
-            * sin_y[None, :, None, None, :, None]
-            * sin_z[None, None, :, None, None, :]
-        )
+        exact = _sample_slab(initial, xq[start:stop], yq, zq, lengths)
         error2 = error2 + cell_volume * torch.sum(quad_w * (numerical - exact) ** 2)
         norm2 = norm2 + cell_volume * torch.sum(quad_w * exact ** 2)
     absolute = float(torch.sqrt(error2).item())
@@ -365,5 +505,5 @@ def error_3d(
     return {
         "absolute_l2": absolute,
         "exact_l2": norm,
-        "relative_l2": absolute / norm,
+        "relative_l2": absolute / norm if norm else (0.0 if absolute == 0.0 else math.inf),
     }

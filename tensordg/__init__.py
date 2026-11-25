@@ -81,6 +81,8 @@ from .advection_3d import (
     exact_solution_3d,
     solve_advection_3d,
     mass_3d,
+    energy_3d,
+    upwind_dissipation_3d,
     error_3d,
 )
 
@@ -476,6 +478,14 @@ from .heat_1d import (
     assemble_sipg_1d,
     solve_heat_1d,
     solve_heat_1d_exact_time,
+    solve_heat_1d_ramped_walls,
+    solve_harmonic_heat_1d,
+    harmonic_heat_wall_admittance_1d,
+    compose_heat_wall_admittances_1d,
+    solve_heat_wall_admittance_1d,
+    solve_heat_1d_bulk_history,
+    solve_heat_1d_wall_history,
+    sipg_heat_face_fluxes,
     heat_error,
 )
 
@@ -563,8 +573,12 @@ from .poisson_2d import (
     poisson_error_2d,
 )
 
+from .transient_diffusion_2d import solve_transient_diffusion_2d, solve_low_frequency_diffusion_2d, solve_harmonic_diffusion_2d
+
 # ---- poisson_2d_bc
 from .poisson_2d_bc import (
+    poisson_face_powers_2d,
+    poisson_interface_traces_2d,
     assemble_poisson_2d_bc,
     solve_poisson_2d_bc,
     l2_error_2d,
@@ -773,6 +787,8 @@ __all__ = [
     "assemble_heat_1d_sparse",
     "assemble_ldg_dirichlet_1d",
     "assemble_operator",
+    "poisson_face_powers_2d",
+    "poisson_interface_traces_2d",
     "assemble_poisson_2d_bc",
     "assemble_poisson_2d_sparse",
     "assemble_sipg_1d",
@@ -947,6 +963,8 @@ __all__ = [
     "manning_friction_slope",
     "manning_normal_depth",
     "mass_3d",
+    "energy_3d",
+    "upwind_dissipation_3d",
     "mass_balance_trace",
     "math_sqrt2",
     "matvec_heat_diffusion_1d",
@@ -1072,6 +1090,14 @@ __all__ = [
     "solve_euler_dg_2d_vortex",
     "solve_heat_1d",
     "solve_heat_1d_exact_time",
+    "solve_heat_1d_ramped_walls",
+    "solve_harmonic_heat_1d",
+    "harmonic_heat_wall_admittance_1d",
+    "compose_heat_wall_admittances_1d",
+    "solve_heat_wall_admittance_1d",
+    "solve_heat_1d_bulk_history",
+    "solve_heat_1d_wall_history",
+    "sipg_heat_face_fluxes",
     "solve_heat_1d_matrixfree",
     "solve_heat_1d_sparse",
     "solve_heat_conduction_dg_2d",
@@ -1084,6 +1110,9 @@ __all__ = [
     "solve_periodic_euler_dg_1d",
     "solve_poisson_2d",
     "solve_poisson_2d_bc",
+    "solve_transient_diffusion_2d",
+    "solve_low_frequency_diffusion_2d",
+    "solve_harmonic_diffusion_2d",
     "solve_poisson_2d_ldg",
     "solve_poisson_2d_matrixfree",
     "solve_poisson_2d_sparse",
