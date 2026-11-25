@@ -261,6 +261,42 @@ def solve_advection_diffusion_1d(
         ``"downwind"`` exists only as an implementation negative control: it is
         *not* a consistent scheme and must fail the verification gates.
     """
+    centers,h,system,rhs,needs_mean,metadata = _assemble_transport(
+        ncells,degree,peclet,speed,penalty,left_value,right_value,advection_scheme,device,dtype,
+        source=source,reaction=reaction,total_flux=total_flux,boundary_exchange=boundary_exchange,
+        velocity=velocity,mean_value=mean_value,cell_edges=cell_edges,diffusivity_ratio=diffusivity_ratio,
+        diffusivity_profile=diffusivity_profile,interface_source=interface_source,
+        interface_reaction=interface_reaction,periodic=periodic,steady=True)
+    if needs_mean:
+        # A bordered system retains each local balance and fixes the mean.
+        # Its multiplier is a spatially uniform source, zero for compatible data.
+        ndofs = len(rhs)
+        mean_row = rhs.new_zeros(ndofs)
+        mean_row[::degree+1] = h
+        constrained = system.new_zeros((ndofs+1,ndofs+1))
+        constrained[:-1,:-1] = system
+        constrained[-1,:-1] = mean_row
+        constrained[:-1,-1] = mean_row
+        state = torch.linalg.solve(constrained,torch.cat((rhs,rhs.new_tensor([mean_value]))))[:-1]
+    else:
+        state = torch.linalg.solve(system, rhs)
+    coeff = state.reshape(len(h),degree+1)
+    return centers, coeff, metadata
+
+
+def _assemble_transport(
+    ncells: int | None = None,
+    degree: int = 2,
+    peclet: float = 10.0,
+    speed: float = 1.0,
+    penalty: float = 20.0,
+    left_value: float = 0.0,
+    right_value: float = 1.0,
+    advection_scheme: str = "upwind",
+    device: str = "cpu",
+    dtype: torch.dtype = torch.float64,
+    *, source=0., reaction=0., total_flux=(None,None), boundary_exchange=(None,None), velocity=None, mean_value=None, cell_edges=None, diffusivity_ratio=1., diffusivity_profile=1., interface_source=0., interface_reaction=0., periodic=False, steady=False,
+):
     if degree not in (1, 2, 3):
         raise ValueError("ncells >= 2 and degree in [1, 2, 3] are required")
     if peclet <= 0.0 or speed == 0.0:
@@ -327,14 +363,14 @@ def solve_advection_diffusion_1d(
     needs_mean = (periodic or (west_flux is not None and east_flux is not None and kw==0 and ke==0)) and not torch.any(sink>0) and not torch.any(uptake>0)
     if periodic:
         seam_ratio,seam_weight,seam_width = _periodic_seam(face_speeds,face_ratio,h,((west_flux,kw),(east_flux,ke)))
-    if needs_mean and (mean_value is None or not math.isfinite(mean_value)):
+    if steady and needs_mean and (mean_value is None or not math.isfinite(mean_value)):
         raise ValueError("closed or periodic boundaries require a finite mean_value or nonzero reaction")
-    if not needs_mean and mean_value is not None:
+    if (not steady or not needs_mean) and mean_value is not None:
         raise ValueError("mean_value requires periodic or two prescribed flux boundaries and zero reaction")
     reaction_volume = (.5*h[:,None,None])*torch.einsum("cq,q,qi,qj->cij",sink,weights,phi,phi)
     integrated_source = (.5*h[:,None])*profile(source,"source")*weights
     sheet = _interface_profile(interface_source,h,"interface_source",periodic)
-    if needs_mean:
+    if steady and needs_mean:
         residual = sheet.sum() + integrated_source.sum() + (west_flux or 0.) - (east_flux or 0.)
         scale = sheet.abs().sum() + integrated_source.abs().sum() + abs(west_flux or 0.) + abs(east_flux or 0.)
         if residual.abs() > 64*torch.finfo(dtype).eps*scale:
@@ -415,19 +451,6 @@ def solve_advection_diffusion_1d(
         # data terms of the Nitsche form: -int (D v' n) g + penalty * int g v
         rhs[idx] += (-derivative + penalty_face * endpoint) * value
 
-    if needs_mean:
-        # A bordered system retains each local balance and fixes the mean.
-        # Its multiplier is a spatially uniform source, zero for compatible data.
-        mean_row = rhs.new_zeros(ndofs)
-        mean_row[::modes] = h
-        constrained = system.new_zeros((ndofs+1,ndofs+1))
-        constrained[:-1,:-1] = system
-        constrained[-1,:-1] = mean_row
-        constrained[:-1,-1] = mean_row
-        state = torch.linalg.solve(constrained,torch.cat((rhs,rhs.new_tensor([mean_value]))))[:-1]
-    else:
-        state = torch.linalg.solve(system, rhs)
-    coeff = state.reshape(ncells, modes)
     metadata = {
         "ncells": ncells, "degree": degree, "peclet": peclet, "speed": a,
         "diffusivity": diffusivity, "penalty": penalty, "dofs": ndofs,
@@ -438,7 +461,53 @@ def solve_advection_diffusion_1d(
         metadata["diffusivity_ratio"] = ratio.tolist()
     if cell_edges is not None:
         metadata["cell_edges"] = torch.as_tensor(cell_edges,dtype=dtype).tolist()
-    return centers, coeff, metadata
+    return centers,h,system,rhs,needs_mean,metadata
+
+
+def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, **spatial_options):
+    """Advance u_t + (a*u-D*u_x)_x + reaction*u = source with fixed coefficients and loads.
+
+    Spatial keywords match solve_advection_diffusion_1d. Initial data are a
+    scalar, a spatial callable projected onto the modal basis, or previously
+    computed coefficients shaped (cells, degree+1). The theta method accepts
+    0.5 through 1. Return centers, modal states at all times, and mesh metadata.
+    """
+    if not math.isfinite(theta) or not .5<=theta<=1:
+        raise ValueError("theta must be in [0.5,1]")
+    centers,widths,operator,load,_,metadata = _assemble_transport(**spatial_options)
+    grid = torch.as_tensor(times,dtype=centers.dtype,device=centers.device)
+    if grid.ndim!=1 or len(grid)<2 or not torch.isfinite(grid).all() or torch.any(grid.diff()<=0):
+        raise ValueError("times must be finite and strictly increasing")
+    n,degree = len(widths),metadata["degree"]
+    indices = torch.arange(degree+1,device=centers.device)
+    mass = (widths[:,None]/(2*indices+1)).reshape(-1)
+    if callable(initial):
+        nodes,weights,phi,*_ = _operators(degree,centers.device,centers.dtype)
+        x = centers[:,None]+.5*widths[:,None]*nodes
+        values = _coefficient_at(initial,x,"initial")
+        coeff = ((values*weights) @ phi)*((2*indices+1)*.5).to(centers.dtype)
+    else:
+        raw = torch.as_tensor(initial,device=centers.device)
+        if raw.is_complex() or raw.ndim and raw.shape!=(n,degree+1):
+            raise ValueError("initial must be a real scalar, spatial callable or modal field")
+        data = torch.as_tensor(initial,device=centers.device,dtype=centers.dtype)
+        if not torch.isfinite(data).all():
+            raise ValueError("initial must be finite")
+        coeff = data
+        if data.ndim==0:
+            coeff = centers.new_zeros((n,degree+1))
+            coeff[:,0] = data
+    states = [coeff]
+    state = coeff.reshape(-1)
+    previous_dt = None
+    for dt in grid.diff():
+        if previous_dt is None or dt!=previous_dt:
+            factors = torch.linalg.lu_factor(torch.diag(mass)+(theta*dt)*operator)
+            previous_dt = dt
+        rhs = mass*state+dt*(load-(1-theta)*(operator @ state))
+        state = torch.linalg.lu_solve(*factors,rhs[:,None])[:,0]
+        states.append(state.reshape(n,degree+1))
+    return centers,torch.stack(states),metadata
 
 
 def advection_diffusion_error(

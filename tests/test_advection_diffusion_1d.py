@@ -486,3 +486,22 @@ def test_periodic_transport_rejects_incompatible_data():
         solve_advection_diffusion_1d(4,periodic=True,total_flux=(0.,None))
     with pytest.raises(ValueError,match="velocity must agree"):
         solve_advection_diffusion_1d(4,periodic=True,mean_value=1.,velocity=lambda x:x)
+
+
+@pytest.mark.parametrize("theta",[.5,1.])
+def test_transient_periodic_ring_with_unbalanced_load_and_modal_restart(theta):
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d,numerical_face_fluxes
+    times = torch.tensor([0.,.03125,.085,.125],dtype=torch.float64)
+    edges = times.new_tensor([0.,.15,.45,.8,1.])
+    opts = dict(cell_edges=edges,degree=2,periodic=True,peclet=5.,interface_source=[0.,0.,0.,.7])
+    initial = lambda x: 1.+.2*torch.cos(2*torch.pi*x)
+    centers,history,_ = solve_transient_advection_diffusion_1d(times,initial,theta=theta,**opts)
+    for i,dt in enumerate(times.diff()):
+        stage = (1-theta)*history[i]+theta*history[i+1]
+        west,east = numerical_face_fluxes(stage,5.,periodic=True,cell_edges=edges,
+                                          interface_source=opts["interface_source"],return_cell_fluxes=True)
+        delta = (history[i+1,:,0]-history[i,:,0])*edges.diff()
+        torch.testing.assert_close(delta,dt*(west-east),atol=5e-13,rtol=0.)
+        torch.testing.assert_close(delta.sum(),.7*dt,atol=5e-13,rtol=0.)
+    _,restarted,_ = solve_transient_advection_diffusion_1d(times[1:],history[1],theta=theta,**opts)
+    torch.testing.assert_close(restarted,history[1:])
