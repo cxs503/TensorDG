@@ -114,3 +114,21 @@ def test_multiple_off_grid_load_jumps_match_independent_restarts(damped):
 def test_bad_jump_schedule(jumps):
     with pytest.raises(ValueError,match="jump"):
         solve_transient_diffusion_2d(0.,[0.,1.],load_jump_times=jumps)
+
+
+@pytest.mark.parametrize("damped", [False, True])
+def test_independent_uniform_source_jump_conserves_heat(damped):
+    jump = .033
+    times = np.array([0., .05, .1])
+    _,_,states = solve_transient_diffusion_2d(
+        .4,times,ncells=(3,2),capacity=2.,bc=INSULATED,forcing=lambda x,y:1+x*0+y*0,
+        load_amplitude=lambda t:.5,source_history=lambda t,x,y:3. if t<jump else -1.,
+        load_jump_times=[jump],rannacher=damped)
+    heat = .8+.5*times+3*np.minimum(times,jump)-np.maximum(times-jump,0.)
+    np.testing.assert_allclose(2*states[:,:,:,0,0].mean(dim=(1,2)).numpy(),heat,atol=1e-13,rtol=0.)
+
+
+@pytest.mark.parametrize("value",[1j, float("nan"), torch.ones(17)])
+def test_invalid_source_history(value):
+    with pytest.raises(ValueError,match="source_history"):
+        solve_transient_diffusion_2d(0.,[0.,.1],ncells=2,source_history=lambda t,x,y:value)

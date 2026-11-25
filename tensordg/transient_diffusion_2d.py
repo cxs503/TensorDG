@@ -14,8 +14,8 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
                                  dirichlet_values=None, neumann_flux=None, robin_films=None,
                                  penalty=20., load_amplitude=None, conductivity=1.,
                                  rannacher=False, return_interval_means=False, load_jump_times=(),
-                                 return_load_means=False):
-    """Solve C*u_t - div(k grad u) + reaction*u = f with separable loads.
+                                 return_load_means=False, source_history=None):
+    """Solve C*u_t - div(k grad u) + reaction*u = f with optional time-dependent loads.
 
     times specifies strictly increasing output times, each interval taking one
     theta step (.5 for Crank–Nicolson, 1 for backward Euler). capacity is a
@@ -24,7 +24,9 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     the conventions of assemble_poisson_2d_bc, including its cellwise conductivity. Optional load_amplitude(t)
     scales the assembled source, prescribed temperature and flux data, and
     Robin ambient temperature together. Film coefficients and reaction are
-    stationary. By default the amplitude is one. The initial field can be a
+    stationary. By default the amplitude is one. source_history(t,x,y) adds
+    an independently varying volume source in physical units, sampled at
+    element quadrature points. Its jumps also belong in load_jump_times. The initial field can be a
     scalar, a function (x,y) projected in capacity-weighted L², or previously computed Legendre
     coefficients (nx,ny,degree+1,degree+1). Returns x, y and a CPU float64
     tensor of modal fields with leading time dimension, including the initial state.
@@ -68,11 +70,15 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     indices = torch.arange(modes,dtype=x.dtype)
     modal_norm = 1/(2*indices+1)
     local_mass = hx*hy*modal_norm[:,None]*modal_norm
-    if callable(capacity) or callable(initial_temperature):
+    if callable(capacity) or callable(initial_temperature) or source_history is not None:
         z,w,phi,*_ = _operators(degree,x.device,x.dtype)
         xq = x[:,None,None,None]+hx*z[None,None,:,None]/2
         yq = y[None,:,None,None]+hy*z/2
         quadrature_shape = (*shape[:2],len(z),len(z))
+
+        def modal_moments(values):
+            return (hx*hy/4)*torch.einsum("xyqr,q,r,qi,rj->xyij",values,w,w,phi,phi)
+
     heat_capacity = torch.as_tensor(capacity(xq,yq) if callable(capacity) else capacity,dtype=x.dtype)
     if not torch.isfinite(heat_capacity).all() or (heat_capacity<=0).any():
         raise ValueError("capacity must be finite and positive")
@@ -96,7 +102,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
         values = torch.broadcast_to(values,quadrature_shape)
         if blocks is not None:
             values = samples*values
-        projected = (hx*hy/4)*torch.einsum("xyqr,q,r,qi,rj->xyij",values,w,w,phi,phi)
+        projected = modal_moments(values)
         initial = (projected/local_mass if blocks is None else
                    torch.linalg.solve(blocks,projected.flatten(2)[...,None]).reshape(shape))
     else:
@@ -126,6 +132,23 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     if load_amplitude is not None:
         for j in np.searchsorted(internal,jumps):
             end_values[j-1] = sample(np.nextafter(internal[j],internal[j-1]))
+
+    def volume_load(t):
+        value = source_history(float(t),xq,yq)
+        if torch.as_tensor(value).is_complex():
+            raise ValueError("source_history must return real values")
+        sampled = torch.as_tensor(value,dtype=x.dtype)
+        if not torch.isfinite(sampled).all():
+            raise ValueError("source_history must return finite values")
+        try:
+            values = torch.broadcast_to(sampled,quadrature_shape)
+        except RuntimeError as exc:
+            raise ValueError("source_history must broadcast to the quadrature grid") from exc
+        return modal_moments(values).reshape(-1).numpy()
+
+    if source_history is not None:
+        source_start = volume_load(internal[0])
+        jump_set = set(jumps)
     last_shift = None
     out = 0
     for i,dt in enumerate(np.diff(internal)):
@@ -135,7 +158,14 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
             factor = splu((mass_matrix+shift*operator).tocsc())
             last_shift = shift
         amplitude = (1-weight)*start_values[i]+weight*end_values[i]
-        increment = factor.solve(dt*(amplitude*load.numpy()-operator@state))
+        rhs = amplitude*load.numpy()-operator@state
+        if source_history is not None:
+            stop = internal[i+1]
+            at_jump = stop in jump_set
+            source_end = volume_load(np.nextafter(stop,internal[i]) if at_jump else stop)
+            rhs += (1-weight)*source_start+weight*source_end
+            source_start = volume_load(stop) if at_jump else source_end
+        increment = factor.solve(dt*rhs)
         fraction = dt/(times[out+1]-times[out])
         if return_interval_means:
             modal_means[out] += fraction*(state+weight*increment)
