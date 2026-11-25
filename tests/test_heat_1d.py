@@ -160,3 +160,19 @@ def test_piecewise_wall_history_restarts_modes_and_conserves_interval_heat():
         _,tail,_ = solve_heat_1d_wall_history(times[1:],walls[1:],5,2,backend=backend,
             steps_per_interval=None if backend=="exact-time" else 4,source=lambda x: 1+x,initial_temperature=states[1])
         torch.testing.assert_close(tail,states[1:],atol=5e-11,rtol=0.)
+
+
+def test_switched_volume_heating_cell_energy_for_every_backend():
+    from tensordg import solve_heat_1d_wall_history
+
+    times = [0., .01, .037, .05]
+    walls = [[0.,0.], [.01,-.01], [.01,-.01], [.02,.015]]
+    for backend in ("dense","sparse","matrix-free","exact-time"):
+        x,states,meta = solve_heat_1d_wall_history(times,walls,4,2,backend=backend,
+            initial_temperature=torch.zeros_like, interval_sources=[2.,None,lambda x: -3*x],
+            steps_per_interval=None if backend=="exact-time" else 6,integrate_face_fluxes=True)
+        heat = states.new_tensor(meta["interval_face_heat"])
+        deposited = torch.stack([2*torch.ones_like(x),torch.zeros_like(x),-3*x])
+        deposited = deposited*states.new_tensor(times).diff()[:,None]/4
+        residual = states[:,:,0].diff(dim=0)/4+heat.diff(dim=1)-deposited
+        assert residual.abs().max() < 5e-10

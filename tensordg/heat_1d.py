@@ -466,7 +466,7 @@ def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_tempe
 
 
 def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
-                               initial_temperature=None, source=None, backend="dense",
+                               initial_temperature=None, source=None, interval_sources=None, backend="dense",
                                steps_per_interval=None, penalty=20., device="cpu",
                                dtype=torch.float64, integrate_face_fluxes=False):
     """Evolve piecewise-linear left/right wall temperatures on a uniform unit slab.
@@ -477,7 +477,8 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
     transfer at each face over each individual interval, when requested.
     steps_per_interval is the number of CN steps per segment, or None to use
     the solver default. Use backend="exact-time" for semi-discrete exponential
-    evolution. The volumetric source is stationary across the entire history.
+    evolution. Supply a stationary source, or interval_sources with one
+    scalar or callable of x per interval. None denotes zero generation.
     """
     times = torch.as_tensor(times, dtype=torch.float64)
     walls = torch.as_tensor(wall_temperatures, dtype=dtype, device=device)
@@ -489,6 +490,11 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
         raise ValueError("ncells >= 2, degree >= 1 and finite positive penalty are required")
     if steps_per_interval is not None and (not isinstance(steps_per_interval, int) or steps_per_interval < 1):
         raise ValueError("steps_per_interval must be a positive integer")
+    if interval_sources is not None:
+        if source is not None:
+            raise ValueError("provide source or interval_sources, not both")
+        if len(interval_sources) != times.numel()-1:
+            raise ValueError("interval_sources must contain one profile per interval")
     centers = (torch.arange(ncells, dtype=dtype, device=device)+.5)/ncells
     nodes, weights, phi, *_ = _operators(degree, centers.device, dtype)
     state = _project_initial(centers, 1/ncells, nodes, weights, phi, initial_temperature)
@@ -497,9 +503,10 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
     intervals = []
     for i, duration in enumerate(times.diff().tolist()):
         rates = (walls[i+1]-walls[i])/duration
+        generation = source if interval_sources is None else interval_sources[i]
         _, state, meta = solve_heat_1d_ramped_walls(
             ncells, degree, duration, wall_temperatures=walls[i], wall_rates=rates,
-            initial_temperature=state, source=source, backend=backend, time_steps=steps_per_interval,
+            initial_temperature=state, source=generation, backend=backend, time_steps=steps_per_interval,
             penalty=penalty, device=device, dtype=dtype, integrate_face_fluxes=integrate_face_fluxes)
         history.append(state)
         if integrate_face_fluxes:
