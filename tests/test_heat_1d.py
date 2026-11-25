@@ -335,3 +335,25 @@ def test_bulk_history_preserves_linear_warming_and_cell_heat_with_graded_exchang
     torch.testing.assert_close(u[:,:,0],x.new_tensor(expected)[:,None].expand(-1,8),rtol=0.,atol=1e-12)
     assert q.abs().max()<1e-12
     torch.testing.assert_close(b,2*u[:,:,0].diff(dim=0)/8,rtol=0.,atol=1e-12)
+
+
+def test_bulk_history_with_time_varying_end_powers_has_exact_quadratic_field():
+    from tensordg import solve_heat_1d_bulk_history
+
+    c,k,h = 1.3,2.,3.5
+    times = [.1,.15,.28]
+    def field(x,t):
+        return (1+t)*x*x+(.4-t)*x
+    def reservoir(x,t):
+        return field(x,t)+(c*(x*x-x)-2*k*(1+t))/h
+    def flux(x,t):
+        return -k*(2*(1+t)*x+.4-t)
+    pairs = [[lambda x,t=t: reservoir(x,t) for t in ends] for ends in zip(times,times[1:])]
+    powers = [[[flux(0,t),-flux(1,t)] for t in ends] for ends in zip(times,times[1:])]
+    x,u,q,b = solve_heat_1d_bulk_history(times,pairs,initial_temperature=lambda x: field(x,times[0]),
+        ncells=7,degree=2,capacity=c,conductivity=k,heat_loss_coefficient=h,inward_flux_intervals=powers)
+    faces = torch.linspace(0.,1.,8,dtype=x.dtype)
+    for i,(a,z) in enumerate(zip(times,times[1:])):
+        torch.testing.assert_close(q[i],(z-a)*flux(faces,(a+z)/2),atol=2e-12,rtol=0.)
+        torch.testing.assert_close(u[i+1,:,0],field(x,z)+(1+z)/(12*7**2),atol=1e-12,rtol=0.)
+    assert ((c/7)*u[:,:,0].diff(dim=0)+q.diff(dim=1)-b).abs().max()<2e-12

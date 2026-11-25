@@ -652,11 +652,14 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
 
 def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
                                ncells=16, degree=2, conductivity=1., capacity=1.,
-                               heat_loss_coefficient=1., steps_per_interval=8, penalty=20.):
-    """Advance c*T_t=k*T_xx+H(x)*(Ta-T) on an insulated unit slab.
+                               heat_loss_coefficient=1., steps_per_interval=8, penalty=20.,
+                               inward_flux_intervals=None):
+    """Advance c*T_t=k*T_xx+H(x)*(Ta-T) on the unit slab.
 
     Each interval supplies an independent (start, end) pair of reservoir
-    profiles, interpolated linearly in time. A profile may be scalar, cellwise
+    profiles, interpolated linearly in time. inward_flux_intervals optionally
+    specifies the two end fluxes in W/m² with shape (interval, start/end,
+    left/right). Positive values enter the slab. Both ends default to insulation. A profile may be scalar, cellwise
     or callable at real spatial quadrature points. H is stationary. CPU
     sparse SDIRK2 returns centers, knot modal fields, interval rightward face
     heat and interval reservoir heat into each cell (both in J/m²).
@@ -672,6 +675,12 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
         raise ValueError("require ncells >= 2, degree >= 1 and positive integer steps_per_interval")
     if not all(math.isfinite(v) and v>0 for v in (conductivity,capacity,penalty)):
         raise ValueError("conductivity, capacity and penalty must be finite and positive")
+    if inward_flux_intervals is None:
+        inward = np.zeros((len(knots)-1,2,2))
+    else:
+        inward = np.asarray(inward_flux_intervals)
+        if inward.shape!=(len(knots)-1,2,2) or np.iscomplexobj(inward) or not np.isfinite(inward).all():
+            raise ValueError("supply finite real inward flux pairs at each interval start and end")
     h = 1./ncells
     x = (torch.arange(ncells,dtype=torch.float64)+.5)*h
     stiff,mass,ops = assemble_heat_1d_sparse(ncells,degree,penalty,x.device,x.dtype,
@@ -688,10 +697,16 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
     history = [torch.from_numpy(state.reshape(shape))]
     face_heat,bulk_heat = [],[]
     gamma = 1-1/math.sqrt(2.)
-    for duration,pair in zip(np.diff(knots),ambient_intervals):
+    for duration,pair,ends in zip(np.diff(knots),ambient_intervals,inward):
         if len(pair)!=2:
             raise ValueError("each ambient interval requires a start and an end profile")
         begin,end = [((weighted*_bulk_profile(p,points,x.dtype)) @ phi).detach().numpy().ravel() for p in pair]
+        # Keep reservoir work separate from the prescribed boundary work.
+        net = .5*duration*(begin+end)
+        for load,flux_pair in zip((begin,end),ends):
+            local = load.reshape(shape)
+            local[0] += flux_pair[0]*ops[5].numpy()
+            local[-1] += flux_pair[1]*ops[6].numpy()
         dt = duration/steps_per_interval
         factor = splu((mass+gamma*dt*operator).tocsc())
         integral = np.zeros_like(state)
@@ -705,8 +720,7 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
             integral += dt*((1-gamma)*first+gamma*state)
         modes = torch.from_numpy(integral.reshape(shape))
         flux = conductivity*sipg_heat_face_fluxes(modes,penalty)
-        flux[[0,-1]] = 0.
-        net = .5*duration*(begin+end)
+        flux[[0,-1]] = torch.from_numpy(duration*ends.mean(axis=0)*[1.,-1.])
         if exchange is not None:
             net -= exchange@integral
         face_heat.append(flux)
