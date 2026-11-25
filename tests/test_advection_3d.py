@@ -311,3 +311,52 @@ def test_modal_restart_validates_coefficients_and_preserves_zero_duration():
         solve_advection_3d(2, 1, 0., initial=coeff)
     with pytest.raises(ValueError, match="finite"):
         solve_advection_3d(2, 0, 0., initial=coeff * float("nan"))
+
+
+@pytest.mark.parametrize(("method", "order"), [("rk2", 2), ("rk4", 4), ("rk5", 5)])
+def test_time_varying_velocity_uses_absolute_tableau_nodes(method, order, record_property):
+    import cmath
+
+    start, end = 0.25, 0.75
+    def velocity(t):
+        return (t, -t*t, 0.5)
+    def wave(x, y, z):
+        return 1 + torch.cos(2 * math.pi * (x - y + z))
+
+    # The three upwind shift operators commute. On this wave each signed
+    # velocity gives the same phase shift, so integrate the three rates exactly.
+    travel = (end**2 - start**2)/2 + (end**3 - start**3)/3 + 0.5*(end-start)
+    factor = cmath.exp(4 * travel * (-1-1j))
+    _, _, _, initial, _ = solve_advection_3d(4, 0, 0., initial=wave)
+    cosine = initial - 1
+    exact = 1 + factor.real * cosine - factor.imag * cosine.roll(1, dims=0)
+    errors = []
+    for steps in (8, 16, 32, 64):
+        dt = (end-start)/steps
+        _, _, _, coeff, meta = solve_advection_3d(
+            4, 0, end, velocity, start_time=start, cfl=1.0,
+            max_dt=dt, initial=initial, time_integrator=method)
+        assert meta["steps"] == steps
+        assert meta["max_speed"] == (end, end**2, 0.5)
+        assert abs(mass_3d(coeff) - 1.0) < 2e-14
+        errors.append(float((coeff-exact).square().mean().sqrt()))
+        record_property(f"rms_error_{steps}", errors[-1])
+    observed = math.log2(errors[-2]/errors[-1])
+    record_property("observed_order", observed)
+    assert abs(observed - order) < 0.3
+
+
+def test_smooth_velocity_reversal_against_continuous_characteristics(record_property):
+    end = 0.5
+    def velocity(t):
+        return t - 0.25, -0.3, 0.5*t
+    # The x displacement vanishes, the other components integrate to
+    # -0.3*T and T^2/4. A reversal still dissipates some upwind modes.
+    mean_velocity = (0., -0.3, end/4)
+    errors = []
+    for n in (4, 8):
+        x,y,z,coeff,_ = solve_advection_3d(n, 3, end, velocity, cfl=0.25,
+                                            max_speed=(0.25, 0.3, 0.25))
+        errors.append(error_3d(x,y,z,coeff,end,mean_velocity)["absolute_l2"])
+        record_property(f"absolute_l2_{n}", errors[-1])
+    assert errors[-1] < errors[0] / 10

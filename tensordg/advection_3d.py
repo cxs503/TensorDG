@@ -149,6 +149,13 @@ def _rhs(
     return out
 
 
+def _velocity_components(values):
+    components = tuple(float(a) for a in values)
+    if len(components) != 3 or not all(map(math.isfinite, components)):
+        raise ValueError("velocity must contain three finite components")
+    return components
+
+
 def _domain_lengths(lengths):
     sides = tuple(float(v) for v in lengths)
     if len(sides) != 3 or any(not math.isfinite(v) or v <= 0 for v in sides):
@@ -223,13 +230,16 @@ def solve_advection_3d(
     ncells: int | tuple[int, int, int] = 8,
     degree: int = 1,
     final_time: float = 1.0,
-    velocity: Velocity3 = (1.0, 0.5, 0.25),
+    velocity: Velocity3 | Callable[[float], Velocity3] = (1.0, 0.5, 0.25),
     cfl: float = 0.08,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     *,
     initial: Callable | torch.Tensor | None = None,
     time_integrator: str = "rk4",
+    start_time: float = 0.0,
+    max_speed: Velocity3 | None = None,
+    max_dt: float | None = None,
     lengths: tuple[float, float, float] = (1.0, 1.0, 1.0),
 ):
     """Solve ``u_t + a . grad u = 0`` on a periodic box with the given physical side lengths.
@@ -242,8 +252,11 @@ def solve_advection_3d(
     in [0, Lx) × [0, Ly) × [0, Lz). The default profile spans one period
     in each direction. For total mass use mass_3d(coeff, lengths=lengths).
     A tensor passed as ``initial`` supplies modal coefficients on the same
-    physical box and mesh. In that case ``final_time`` is the duration of
-    this segment. The time integrator can be any registered explicit RK tableau.
+    physical box and mesh at start_time. Advance to the absolute final_time.
+    A velocity(t) callback supplies spatially uniform components at RK stage
+    times. Five samples estimate component maxima unless max_speed supplies
+    explicit bounds. Use max_dt to resolve rapidly varying velocity histories.
+    The time integrator can be any registered explicit RK tableau.
     """
     tableau = get_tableau(time_integrator)
     nx, ny, nz = (
@@ -253,10 +266,13 @@ def solve_advection_3d(
         raise ValueError("ncells must be >= 2 along every axis")
     if isinstance(degree, bool) or not isinstance(degree, (int, np.integer)) or not 0 <= degree <= MAX_DEGREE:
         raise ValueError(f"degree must be an integer in [0, {MAX_DEGREE}]")
-    if final_time < 0.0 or cfl <= 0.0:
-        raise ValueError("final_time must be >= 0 and cfl must be > 0")
-    if len(velocity) != 3:
-        raise ValueError("velocity must contain exactly three components")
+    duration = final_time - start_time
+    if not math.isfinite(duration) or duration < 0.0:
+        raise ValueError("start_time and final_time must define a finite forward interval")
+    if not math.isfinite(cfl) or cfl <= 0.0:
+        raise ValueError("cfl must be positive and finite")
+    if max_dt is not None and (not math.isfinite(max_dt) or max_dt <= 0.0):
+        raise ValueError("max_dt must be positive and finite")
 
     dev = torch.device(device)
     lengths = _domain_lengths(lengths)
@@ -280,23 +296,37 @@ def solve_advection_3d(
                       for centers, h in ((x, hx), (y, hy), (z, hz)))
         coeff = _project_initial(initial, xq, yq, zq, weights, phi, lengths)
 
-    ax, ay, az = (float(component) for component in velocity)
-    wave_rate = abs(ax) / hx + abs(ay) / hy + abs(az) / hz
-    if final_time == 0.0 or wave_rate == 0.0:
-        steps = 0
-        dt_nominal = float("inf")
-    else:
-        dt_nominal = cfl / ((2 * degree + 1) * wave_rate)
-        steps = math.ceil(final_time / dt_nominal)
-    dt = final_time / steps if steps else 0.0
-
     spacing = (hx, hy, hz)
-    velocity3 = (ax, ay, az)
-    def rhs(state):
-        return _rhs(state, spacing, velocity3, volume, phi_left, phi_right)
+    variable = callable(velocity)
+    fixed = None if variable else _velocity_components(velocity)
+    if max_speed is not None:
+        bounds = _velocity_components(max_speed)
+        if min(bounds) < 0:
+            raise ValueError("max_speed must contain nonnegative bounds")
+        if not variable and any(abs(a) > b for a, b in zip(fixed, bounds)):
+            raise ValueError("constant velocity exceeds max_speed")
+    elif variable:
+        samples = [_velocity_components(velocity(start_time + i * (duration / 4))) for i in range(5)]
+        bounds = tuple(max(map(abs, axis)) for axis in zip(*samples))
+    else:
+        bounds = tuple(map(abs, fixed))
 
-    for _ in range(steps):
-        if time_integrator == "rk4":
+    wave_rate = sum(a / h for a, h in zip(bounds, spacing))
+    steps = math.ceil(duration / (cfl / ((2 * degree + 1) * wave_rate))) if wave_rate else 0
+    if max_dt is not None:
+        steps = max(steps, math.ceil(duration / max_dt))
+    dt = duration / steps if steps else 0.0
+
+    def rhs(state, t=None):
+        components = _velocity_components(velocity(t)) if variable else fixed
+        if variable and max_speed is not None and any(abs(a) > b for a, b in zip(components, bounds)):
+            raise ValueError("stage velocity exceeds max_speed")
+        return _rhs(state, spacing, components, volume, phi_left, phi_right)
+
+    for step in range(steps):
+        if variable:
+            coeff = rk_step(rhs, coeff, dt, tableau, time=start_time + step * dt)
+        elif time_integrator == "rk4":
             # Preserve the summation order of the established default.
             k1 = rhs(coeff)
             k2 = rhs(coeff + 0.5 * dt * k1)
@@ -308,7 +338,8 @@ def solve_advection_3d(
 
     metadata = {
         "ncells": (nx, ny, nz), "lengths": lengths, "degree": degree, "final_time": final_time,
-        "velocity": velocity3, "dt": dt, "steps": steps,
+        "velocity": "time-dependent" if variable else fixed, "max_speed": bounds,
+        "start_time": start_time, "dt": dt, "steps": steps,
         "device": str(dev), "cfl": cfl, "dtype": str(dtype),
         "time_integrator": tableau.name, "rk_order": tableau.order, "rk_stages": tableau.stages,
     }

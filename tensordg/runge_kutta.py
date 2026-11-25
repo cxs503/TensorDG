@@ -207,16 +207,16 @@ from .registry import capability
     description="Explicit RK tableaus + step",
     tags=['rk', 'time-integration']
 )
-def rk_step(rhs: Callable[[torch.Tensor], torch.Tensor], u: torch.Tensor,
+def rk_step(rhs: Callable[..., torch.Tensor], u: torch.Tensor,
             dt: float, tableau: RKTableau,
             project: Callable[[torch.Tensor], torch.Tensor] | None = None,
-            ) -> torch.Tensor:
+            *, time: float | None = None) -> torch.Tensor:
     """Advance ``u`` by one step of ``tableau`` on ``du/dt = rhs(u)``.
 
     ``project`` is applied to every stage input (as RKDG limiters require) and
-    to the final update; pass ``None`` for the unlimited scheme.
+    to the final update; pass ``None`` for the unlimited scheme. With
+    ``time`` supplied, evaluate ``rhs(state, stage_time)`` at each tableau node.
     """
-    stage_in: list[torch.Tensor] = []
     k: list[torch.Tensor] = []
     for i in range(tableau.stages):
         y = u
@@ -226,8 +226,7 @@ def rk_step(rhs: Callable[[torch.Tensor], torch.Tensor], u: torch.Tensor,
                 y = y + (dt * aij) * k[j]
         if project is not None:
             y = project(y)
-        stage_in.append(y)
-        k.append(rhs(y))
+        k.append(rhs(y) if time is None else rhs(y, time + dt * tableau.c[i]))
     out = u
     for i, bi in enumerate(tableau.b):
         if bi != 0.0:

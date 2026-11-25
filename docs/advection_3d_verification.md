@@ -70,3 +70,6 @@ identities, and argument validation.
   pre-asymptotic; the gate exists to catch a *second*-order regression, not to
   certify the asymptotic constant.
 * Classical RK4 and `cfl=0.08` remain the defaults. Set `time_integrator` to select a registered explicit Runge–Kutta method. The fixed-grid P0 Fourier test in `tests/test_advection_3d.py` compares seven integrators to the exact exponential of the semidiscrete upwind operator at 8, 16, 32 and 64 steps.
+## Continuing a transport segment
+
+Pass the coefficient tensor returned by the previous call as `initial`, using the same mesh, degree and physical box. Set `start_time` to the saved time and `final_time` to the absolute end time. A spatially uniform velocity can be a three-component tuple or a function of the absolute RK stage time. For a rapidly varying velocity, supply component bounds through `max_speed` and a temporal resolution cap through `max_dt`. The three-dimensional tests compare a forward/reverse run to the initial wave and accelerating flow to the integrated characteristic displacement.
