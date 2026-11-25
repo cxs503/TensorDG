@@ -26,6 +26,7 @@ def assemble_heat_1d_sparse(
     penalty: float,
     device: torch.device,
     dtype: torch.dtype,
+    *, wall_types=("dirichlet", "dirichlet"),
 ) -> tuple:
     """Assemble the SIPG diffusion + mass matrices for 1-D heat as scipy CSR.
 
@@ -79,10 +80,14 @@ def assemble_heat_1d_sparse(
         vals_mass.append(np.zeros(idx.numel() ** 2))
 
     # Boundary faces
+    if len(wall_types) != 2 or any(kind not in ("dirichlet","neumann") for kind in wall_types):
+        raise ValueError("wall_types must specify dirichlet or neumann for each end")
     for cell, endpoint, deriv_endpoint, outward in (
         (0, phi_left, dphi_left, -1.0),
         (ncells - 1, phi_right, dphi_right, 1.0),
     ):
+        if wall_types[0 if cell == 0 else 1] == "neumann":
+            continue
         derivative = outward * (2.0 / h) * deriv_endpoint
         consistency_b = -torch.outer(endpoint, derivative)
         block = (

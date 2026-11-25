@@ -70,17 +70,17 @@ def _project_initial(centers, h, nodes, weights, phi, initial_temperature):
     if not torch.isfinite(values).all():
         raise ValueError("initial temperature must be finite at quadrature nodes")
     modes = torch.arange(phi.shape[1], dtype=x.dtype, device=x.device)
-    return ((values*weights) @ phi) * (modes + .5)
+    return ((values*weights) @ phi.to(values.dtype)) * (modes + .5)
 
 
-def _source_load(centers, h, nodes, weights, phi, source):
+def _source_load(centers, h, nodes, weights, phi, source, *, dtype=None):
     """Integrate a stationary physical source against the modal test functions."""
     x = centers[:, None] + .5*h*nodes
     values = source(x) if callable(source) else source
-    values = torch.as_tensor(values, dtype=x.dtype, device=x.device).expand_as(x)
+    values = torch.as_tensor(values, dtype=dtype or x.dtype, device=x.device).expand_as(x)
     if not torch.isfinite(values).all():
         raise ValueError("source must be finite at quadrature nodes")
-    return (.5*h)*((values*weights) @ phi)
+    return (.5*h)*((values*weights) @ phi.to(values.dtype))
 
 
 def _wall_pair(wall_temperatures, like):
@@ -383,22 +383,22 @@ def heat_error(
     degree = coeff.shape[1] - 1
     h = 1.0 / centers.numel()
     nodes_np, weights_np = np.polynomial.legendre.leggauss(max(2 * degree + 5, 8))
-    nodes = torch.as_tensor(nodes_np, device=coeff.device, dtype=coeff.dtype)
-    weights = torch.as_tensor(weights_np, device=coeff.device, dtype=coeff.dtype)
+    nodes = torch.as_tensor(nodes_np, device=coeff.device, dtype=coeff.real.dtype)
+    weights = torch.as_tensor(weights_np, device=coeff.device, dtype=coeff.real.dtype)
     basis = []
     for k in range(degree + 1):
         polynomial = np.zeros(k + 1)
         polynomial[-1] = 1.0
         basis.append(torch.as_tensor(
             np.polynomial.legendre.legval(nodes_np, polynomial),
-            device=coeff.device, dtype=coeff.dtype,
+            device=coeff.device, dtype=coeff.real.dtype,
         ))
     phi = torch.stack(basis, dim=1)
-    numerical = coeff @ phi.T
+    numerical = coeff @ phi.T.to(coeff.dtype)
     x = centers[:, None] + 0.5 * h * nodes[None, :]
     exact = reference(x, final_time)
-    error2 = 0.5 * h * torch.sum(weights[None, :] * (numerical - exact) ** 2)
-    norm2 = 0.5 * h * torch.sum(weights[None, :] * exact ** 2)
+    error2 = 0.5 * h * torch.sum(weights[None, :] * (numerical - exact).abs().square())
+    norm2 = 0.5 * h * torch.sum(weights[None, :] * exact.abs().square())
     absolute = float(torch.sqrt(error2).item())
     norm = float(torch.sqrt(norm2).item())
     return {"absolute_l2": absolute, "exact_l2": norm, "relative_l2": absolute / norm}
@@ -518,3 +518,42 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
         metadata["interval_face_heat"] = transfers
         metadata["integrated_face_fluxes"] = heat.sum(dim=0).tolist()
     return centers, torch.stack(history), metadata
+
+
+def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivity=1., capacity=1.,
+                           source=None, wall_types=("dirichlet","dirichlet"), wall_values=(0.,0.), penalty=20.):
+    """Solve iωcU - kU'' = source on the unit slab with exp(+iωt) convention.
+
+    Each end prescribes a temperature (dirichlet) or inward heat flux (neumann).
+    Source phasors may be constant or callable on real cell quadrature points.
+    Returns cell centers, complex128 Legendre coefficients and the rightward
+    numerical flux at every face. Uses a CPU sparse direct solve.
+    """
+    from scipy.sparse.linalg import splu
+    from .sipg_sparse import assemble_heat_1d_sparse
+
+    if ncells < 2 or degree < 1:
+        raise ValueError("ncells >= 2 and degree >= 1 are required")
+    if not all(math.isfinite(v) and v > 0 for v in (angular_frequency,conductivity,capacity,penalty)):
+        raise ValueError("frequency, conductivity, capacity and penalty must be positive and finite")
+    h = 1./ncells
+    centers = (torch.arange(ncells,dtype=torch.float64)+.5)*h
+    stiffness,mass,ops = assemble_heat_1d_sparse(ncells,degree,penalty,centers.device,centers.dtype,
+                                                 wall_types=wall_types)
+    nodes,weights,phi,_,_,left,right,dleft,dright = ops
+    load = torch.zeros((ncells,degree+1),dtype=torch.complex128) if source is None else _source_load(
+        centers,h,nodes,weights,phi,source,dtype=torch.complex128)
+    values = _wall_pair(wall_values,load)
+    strength = penalty*(degree+1)**2/h
+    for i,(cell,v,dv,normal) in enumerate(((0,left,dleft,-1),(-1,right,dright,1))):
+        boundary = conductivity*(strength*v-normal*2*dv/h) if wall_types[i]=="dirichlet" else v
+        load[cell] += values[i]*boundary
+    system = conductivity*stiffness + (1j*angular_frequency*capacity)*mass
+    state = splu(system.tocsc()).solve(load.detach().numpy().ravel())
+    coefficients = torch.from_numpy(state.reshape(ncells,degree+1))
+    flux = conductivity*sipg_heat_face_fluxes(coefficients,penalty,wall_temperatures=values)
+    if wall_types[0]=="neumann":
+        flux[0] = values[0]
+    if wall_types[1]=="neumann":
+        flux[-1] = -values[1]
+    return centers,coefficients,flux

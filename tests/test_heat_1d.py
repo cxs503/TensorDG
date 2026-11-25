@@ -176,3 +176,24 @@ def test_switched_volume_heating_cell_energy_for_every_backend():
         deposited = deposited*states.new_tensor(times).diff()[:,None]/4
         residual = states[:,:,0].diff(dim=0)/4+heat.diff(dim=1)-deposited
         assert residual.abs().max() < 5e-10
+
+
+def test_harmonic_cubic_field_for_independent_wall_types():
+    from itertools import product
+    from tensordg import solve_harmonic_heat_1d
+
+    k, c, omega = 2.1, .7, 4.
+    def temperature(x):
+        return 1+.2j + (.7-.4j)*x + (.2+.6j)*x**3
+    def flux(x):
+        return -k*((.7-.4j)+3*(.2+.6j)*x*x)
+    def source(x):
+        return 1j*omega*c*temperature(x)-6*k*(.2+.6j)*x
+    for types in product(("dirichlet","neumann"),repeat=2):
+        values = [temperature(i) if kind=="dirichlet" else (1-2*i)*flux(i) for i,kind in enumerate(types)]
+        x,u,q = solve_harmonic_heat_1d(omega,ncells=6,degree=3,conductivity=k,capacity=c,
+                                       source=source,wall_types=types,wall_values=values)
+        faces = torch.linspace(0.,1.,7,dtype=x.dtype)
+        expected_mean = temperature(x)+(.2+.6j)*x/(4*6**2)
+        torch.testing.assert_close(u[:,0],expected_mean,atol=1e-11,rtol=0.)
+        torch.testing.assert_close(q,flux(faces),atol=1e-10,rtol=0.)
