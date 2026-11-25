@@ -545,6 +545,15 @@ def _bulk_exchange_matrix(loss, weights, phi, h):
     return sparse.bsr_matrix((blocks.detach().numpy(),np.arange(n),np.arange(n+1))).tocsr(),weighted
 
 
+def _slab_trace_matrix(ncells, degree, left, right):
+    from scipy import sparse
+
+    modes = degree+1
+    columns = np.r_[np.arange(modes),np.arange((ncells-1)*modes,ncells*modes)]
+    return sparse.csr_matrix((np.r_[left.numpy(),right.numpy()],columns,[0,modes,2*modes]),
+                             shape=(2,ncells*modes))
+
+
 def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivity=1., capacity=1.,
                            source=None, wall_types=("dirichlet","dirichlet"), wall_values=(0.,0.), penalty=20.,
                            film_coefficients=(0.,0.), wall_areal_heat_capacity=(0.,0.),
@@ -606,9 +615,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     system = conductivity*stiffness + storage*mass
     if exchange is not None:
         system += exchange
-    columns = np.r_[np.arange(degree+1),np.arange(ncells*(degree+1)-degree-1,ncells*(degree+1))]
-    trace = sparse.csr_matrix((np.r_[left.numpy(),right.numpy()],columns,[0,degree+1,2*(degree+1)]),
-                              shape=(2,ncells*(degree+1)))
+    trace = _slab_trace_matrix(ncells,degree,left,right)
     if np.any(film) or np.any(wall_capacity):
         system += trace.T @ sparse.diags(film+1j*angular_frequency*wall_capacity) @ trace
     rhs = load.detach().numpy().ravel()
@@ -653,7 +660,9 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
 def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
                                ncells=16, degree=2, conductivity=1., capacity=1.,
                                heat_loss_coefficient=1., steps_per_interval=8, penalty=20.,
-                               inward_flux_intervals=None):
+                               inward_flux_intervals=None, film_coefficients=(0.,0.),
+                               wall_areal_heat_capacity=(0.,0.), wall_ambient_intervals=None,
+                               return_wall_history=False):
     """Advance c*T_t=k*T_xx+H(x)*(Ta-T) on the unit slab.
 
     Each interval supplies an independent (start, end) pair of reservoir
@@ -663,7 +672,14 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
     or callable at real spatial quadrature points. H is stationary. CPU
     sparse SDIRK2 returns centers, knot modal fields, interval rightward face
     heat and interval reservoir heat into each cell (both in J/m²).
+    At either end, external input is the prescribed inward flux plus
+    h*(Tfluid-Twall). Supply wall_ambient_intervals with the same shape as
+    inward_flux_intervals. A surface capacity in J/(m² K) stores heat at
+    the DG endpoint trace, initially the trace of the projected field.
+    return_wall_history appends knot temperatures and interval inward
+    external heat for the two walls, in a dict.
     """
+    from scipy import sparse
     from scipy.sparse.linalg import splu
     from .sipg_sparse import assemble_heat_1d_sparse
 
@@ -675,12 +691,19 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
         raise ValueError("require ncells >= 2, degree >= 1 and positive integer steps_per_interval")
     if not all(math.isfinite(v) and v>0 for v in (conductivity,capacity,penalty)):
         raise ValueError("conductivity, capacity and penalty must be finite and positive")
-    if inward_flux_intervals is None:
-        inward = np.zeros((len(knots)-1,2,2))
-    else:
-        inward = np.asarray(inward_flux_intervals)
-        if inward.shape!=(len(knots)-1,2,2) or np.iscomplexobj(inward) or not np.isfinite(inward).all():
-            raise ValueError("supply finite real inward flux pairs at each interval start and end")
+    def boundary_history(values):
+        if values is None:
+            return np.zeros((len(knots)-1,2,2))
+        data = np.asarray(values)
+        if data.shape!=(len(knots)-1,2,2) or np.iscomplexobj(data) or not np.isfinite(data).all():
+            raise ValueError("supply finite real boundary pairs at each interval start and end")
+        return data
+    inward = boundary_history(inward_flux_intervals)
+    ambient_wall = boundary_history(wall_ambient_intervals)
+    film,cw = map(np.asarray,(film_coefficients,wall_areal_heat_capacity))
+    for pair in (film,cw):
+        if pair.shape!=(2,) or np.iscomplexobj(pair) or not np.isfinite(pair).all() or (pair<0).any():
+            raise ValueError("film and wall capacity require finite nonnegative real pairs")
     h = 1./ncells
     x = (torch.arange(ncells,dtype=torch.float64)+.5)*h
     stiff,mass,ops = assemble_heat_1d_sparse(ncells,degree,penalty,x.device,x.dtype,
@@ -693,17 +716,24 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
         operator += exchange
     mass = capacity*mass
     state = _project_initial(x,h,nodes,weights,phi,initial_temperature).detach().numpy().flatten()
+    trace = _slab_trace_matrix(ncells,degree,ops[5],ops[6])
+    if np.any(film):
+        operator += trace.T @ sparse.diags(film) @ trace
+    if np.any(cw):
+        mass += trace.T @ sparse.diags(cw) @ trace
     shape = (ncells,degree+1)
     history = [torch.from_numpy(state.reshape(shape))]
     face_heat,bulk_heat = [],[]
+    surface = trace @ state
+    wall_history,external_history = [surface],[]
     gamma = 1-1/math.sqrt(2.)
-    for duration,pair,ends in zip(np.diff(knots),ambient_intervals,inward):
+    for duration,pair,ends,air in zip(np.diff(knots),ambient_intervals,inward,ambient_wall):
         if len(pair)!=2:
             raise ValueError("each ambient interval requires a start and an end profile")
         begin,end = [((weighted*_bulk_profile(p,points,x.dtype)) @ phi).detach().numpy().ravel() for p in pair]
         # Keep reservoir work separate from the prescribed boundary work.
         net = .5*duration*(begin+end)
-        for load,flux_pair in zip((begin,end),ends):
+        for load,flux_pair in zip((begin,end),ends+film*air):
             local = load.reshape(shape)
             local[0] += flux_pair[0]*ops[5].numpy()
             local[-1] += flux_pair[1]*ops[6].numpy()
@@ -720,10 +750,20 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
             integral += dt*((1-gamma)*first+gamma*state)
         modes = torch.from_numpy(integral.reshape(shape))
         flux = conductivity*sipg_heat_face_fluxes(modes,penalty)
-        flux[[0,-1]] = torch.from_numpy(duration*ends.mean(axis=0)*[1.,-1.])
+        next_surface = trace @ state
+        external = duration*(ends+film*air).mean(axis=0) - film*(trace @ integral)
+        flux[[0,-1]] = torch.from_numpy((external-cw*(next_surface-surface))*[1.,-1.])
+        surface = next_surface
+        if return_wall_history:
+            wall_history.append(surface)
+            external_history.append(external)
         if exchange is not None:
             net -= exchange@integral
         face_heat.append(flux)
         bulk_heat.append(torch.from_numpy(net.reshape(shape)[:,0]))
         history.append(torch.from_numpy(state.reshape(shape)))
-    return x,torch.stack(history),torch.stack(face_heat),torch.stack(bulk_heat)
+    result = (x,torch.stack(history),torch.stack(face_heat),torch.stack(bulk_heat))
+    if return_wall_history:
+        return (*result,dict(temperature=torch.from_numpy(np.stack(wall_history)),
+                             external_heat=torch.from_numpy(np.stack(external_history))))
+    return result

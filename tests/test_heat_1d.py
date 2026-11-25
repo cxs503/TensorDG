@@ -357,3 +357,40 @@ def test_bulk_history_with_time_varying_end_powers_has_exact_quadratic_field():
         torch.testing.assert_close(q[i],(z-a)*flux(faces,(a+z)/2),atol=2e-12,rtol=0.)
         torch.testing.assert_close(u[i+1,:,0],field(x,z)+(1+z)/(12*7**2),atol=1e-12,rtol=0.)
     assert ((c/7)*u[:,:,0].diff(dim=0)+q.diff(dim=1)-b).abs().max()<2e-12
+
+
+def test_switched_films_and_wall_storage_match_time_linear_quadratic_solution():
+    from tensordg import solve_heat_1d_bulk_history
+
+    c,k,h = 1.4,.8,2.
+    film = torch.tensor([1.7,3.4],dtype=torch.float64)
+    cw = torch.tensor([.35,.8],dtype=film.dtype)
+    ends = film.new_tensor([0.,1.])
+    times = [0.,.08,.19]
+    initial = lambda x: .3+x-.2*x*x
+    mode = lambda x: .4+x*x
+    amplitude = 0.
+    reservoirs,air,powers,targets,heats = [],[],[],[],[]
+    for a,b,speed in zip(times,times[1:],[1.2,-.6]):
+        dt = b-a
+        pair,wall_pair,power_pair = [],[],[]
+        for elapsed in (0.,dt):
+            amp = amplitude+elapsed*speed
+            pair.append(lambda x,v=amp,s=speed: initial(x)+v*mode(x)+(c*s*mode(x)-k*(-.4+2*v))/h)
+            surface = initial(ends)+amp*mode(ends)
+            material = -k*(1-.4*ends+2*amp*ends)*film.new_tensor([1.,-1.])
+            applied = (.1+elapsed)*film.new_tensor([1.,-2.])
+            wall_pair.append((surface+(material+cw*speed*mode(ends)-applied)/film).tolist())
+            power_pair.append(applied.tolist())
+        reservoirs.append(pair)
+        air.append(wall_pair)
+        powers.append(power_pair)
+        heats.append(dt*(-k*(1-.4*ends+2*(amplitude+.5*dt*speed)*ends)*film.new_tensor([1.,-1.])+cw*speed*mode(ends)))
+        amplitude += dt*speed
+        targets.append(initial(ends)+amplitude*mode(ends))
+    _,u,q,bulk,wall = solve_heat_1d_bulk_history(times,reservoirs,ncells=7,degree=2,initial_temperature=initial,
+        capacity=c,conductivity=k,heat_loss_coefficient=h,steps_per_interval=4,film_coefficients=film,
+        wall_areal_heat_capacity=cw,wall_ambient_intervals=air,inward_flux_intervals=powers,return_wall_history=True)
+    torch.testing.assert_close(wall["temperature"][1:],torch.stack(targets),atol=2e-12,rtol=0.)
+    torch.testing.assert_close(wall["external_heat"],torch.stack(heats),atol=2e-12,rtol=0.)
+    assert (c*u[:,:,0].diff(dim=0)/7+q.diff(dim=1)-bulk).abs().max()<2e-12
