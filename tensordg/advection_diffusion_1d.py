@@ -468,7 +468,8 @@ def _assemble_transport(
 
 
 def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_history=None,
-                                          source_jump_times=(), interface_source_history=None, rannacher=False, **spatial_options):
+                                          source_jump_times=(), interface_source_history=None, rannacher=False,
+                                          return_face_transport=False, **spatial_options):
     """Advance u_t + (a*u-D*u_x)_x + reaction*u = source with fixed coefficients.
 
     Spatial keywords match solve_advection_diffusion_1d. Initial data are a
@@ -483,6 +484,9 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
     With rannacher=True, replace the first Crank-Nicolson step and the first
     step after each jump by two backward Euler half steps.
     Return centers, modal states at all times, and mesh metadata.
+    With return_face_transport=True append (west,east), each shaped
+    (len(times)-1,ncells). These are integrated rightward numerical fluxes,
+    including both sides of any point sources and all internal substeps.
     """
     if not math.isfinite(theta) or not .5<=theta<=1:
         raise ValueError("theta must be in [0.5,1]")
@@ -520,20 +524,30 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
     if not all(output[0]<t<output[-1] for t in jumps):
         raise ValueError("source_jump_times must be interior times")
     boundaries = sorted(set(output)|jumps)
+    if return_face_transport:
+        west_transport = centers.new_zeros((len(output)-1,n))
+        east_transport = torch.zeros_like(west_transport)
+        state_integral = torch.zeros_like(state)
+        sheet_integral = torch.zeros_like(_interface_profile(0.,widths,"source",metadata["periodic"]))
+        flux_options = {k:spatial_options[k] for k in ("speed","penalty","left_value","right_value",
+                        "advection_scheme","total_flux","cell_edges","diffusivity_ratio","interface_reaction",
+                        "boundary_exchange","velocity","diffusivity_profile","periodic") if k in spatial_options}
+        static_sheet = _interface_profile(spatial_options.get("interface_source",0.),widths,"interface_source",metadata["periodic"])
     def forcing(time):
         if source_history is None:
             projected = centers.new_zeros((n,degree+1))
         else:
             values = _coefficient_at(source_history(time,x),x,"source_history")
             projected = (.5*widths[:,None])*((values*weights) @ phi)
+        sheet = 0.
         if interface_source_history is not None:
             sheet = _interface_profile(interface_source_history(time),widths,"interface_source_history",metadata["periodic"])
             add_face_sources(projected,sheet)
-        return projected.reshape(-1)
+        return projected.reshape(-1),sheet
     index = 1
     changing_load = source_history is not None or interface_source_history is not None
     if changing_load:
-        start_load = forcing(output[0])
+        start_load,start_sheet = forcing(output[0])
     for start,stop in zip(boundaries,boundaries[1:]):
         damp = rannacher and (start==output[0] or start in jumps)
         endpoints = (start+(stop-start)/2,stop) if damp else (stop,)
@@ -548,16 +562,32 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
                 previous_scale = scale
             stage_load = load
             if changing_load:
-                end_load = forcing(math.nextafter(end,start) if end in jumps else end)
+                end_load,end_sheet = forcing(math.nextafter(end,start) if end in jumps else end)
                 stage_load = load+(1-weight)*start_load+weight*end_load
-                start_load = forcing(end) if end in jumps else end_load
+                if return_face_transport and interface_source_history is not None:
+                    sheet_integral = sheet_integral+dt*((1-weight)*start_sheet+weight*end_sheet)
+                start_load,start_sheet = forcing(end) if end in jumps else (end_load,end_sheet)
             rhs = mass*state+dt*(stage_load-(1-weight)*(operator @ state))
-            state = torch.linalg.lu_solve(*factors,rhs[:,None])[:,0]
+            updated = torch.linalg.lu_solve(*factors,rhs[:,None])[:,0]
+            if return_face_transport:
+                state_integral = state_integral+dt*((1-weight)*state+weight*updated)
+            state = updated
             start = end
         if stop==output[index]:
+            if return_face_transport:
+                duration = stop-output[index-1]
+                # With stationary coefficients the face law is affine. Evaluate
+                # at interval means so prescribed offsets contribute exactly once.
+                west,east = numerical_face_fluxes(state_integral.reshape(n,degree+1)/duration,
+                    metadata["peclet"],**flux_options,interface_source=static_sheet+sheet_integral/duration,
+                    return_cell_fluxes=True)
+                west_transport[index-1],east_transport[index-1] = duration*west,duration*east
+                state_integral = torch.zeros_like(state)
+                sheet_integral = torch.zeros_like(sheet_integral)
             states.append(state.reshape(n,degree+1))
             index += 1
-    return centers,torch.stack(states),metadata
+    result = centers,torch.stack(states),metadata
+    return result+((west_transport,east_transport),) if return_face_transport else result
 
 
 def advection_diffusion_error(

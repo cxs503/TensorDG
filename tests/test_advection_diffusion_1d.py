@@ -551,3 +551,23 @@ def test_transport_damping_restarts_after_internal_jump():
     _,mid,_ = solve([.03125,.0625,jump],early[-1],interface_source=distribution,**opts)
     _,late,_ = solve([jump,.109375,.125],mid[-1],theta=1.,interface_source=-distribution,**opts)
     torch.testing.assert_close(auto,torch.stack((early[0],early[-1],mid[1],late[-1])),atol=2e-14,rtol=0.)
+
+
+@pytest.mark.parametrize("rannacher",[False,True])
+@pytest.mark.parametrize("periodic",[False,True])
+def test_interval_face_transport_balances_pulses_and_distributed_load(rannacher,periodic):
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d as solve
+    edges = torch.tensor([0.,.15,.45,.8,1.],dtype=torch.float64)
+    times = [0.,.041,.11]
+    pulse = edges.new_tensor([-.3,1.2,.5,-.8] if periodic else [-.3,1.2,.5])
+    opts = {} if periodic else dict(boundary_exchange=((1.,.8),(.7,-.2)),total_flux=(.3,-.1))
+    _,u,_,(west,east) = solve(times,.35,degree=2,cell_edges=edges,periodic=periodic,**opts,
+                  diffusivity_ratio=[1.,3.,.6,2.],rannacher=rannacher,interface_source=.1,
+                  source_history=lambda t,x:.7*float(.018<=t<.067),
+                  interface_source_history=lambda t:pulse*float(.018<=t<.067),
+                  source_jump_times=(.018,.067),return_face_transport=True)
+    on = edges.new_tensor([.023,.026])
+    delta = u[:,:,0].diff(dim=0)*edges.diff()
+    torch.testing.assert_close(delta,west-east+.7*on[:,None]*edges.diff(),atol=2e-12,rtol=0.)
+    jump = west.roll(-1,dims=1)-east if periodic else west[:,1:]-east[:,:-1]
+    torch.testing.assert_close(jump,on[:,None]*pulse+.1*edges.new_tensor(times).diff()[:,None],atol=2e-12,rtol=0.)
