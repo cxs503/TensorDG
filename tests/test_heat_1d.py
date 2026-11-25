@@ -559,3 +559,43 @@ def test_stack_rejects_undefined_interface_storage():
         with pytest.raises(ValueError):
             compose_heat_wall_admittances_1d(layers, interface_areal_heat_capacity=capacity,
                                              angular_frequency=omega)
+
+
+def test_stack_with_affine_volume_generation_and_contact_heater(record_property):
+    import cmath
+    from tensordg import harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
+
+    omega = 2.3
+    # L, k, C, constant and slope of heat generation in each layer's local x.
+    layers = [(0.35, 1.3, 1.7, 1.2-0.3j, 2j), (0.6, 2.1, 0.8, -0.5j, -1.3+0.2j)]
+    resistance, heater = 0.21, 0.7-0.4j
+    t, q = 0.8+0.3j, 0.4-0.2j
+    exact_t, exact_q = [], []
+    for length, k, c, base, slope in layers:
+        wave = cmath.sqrt(1j*omega*c/k)
+        co, si = cmath.cosh(wave*length), cmath.sinh(wave*length)
+        # Subtract the exact affine particular solution before propagation.
+        particular, derivative = base/(1j*omega*c), slope/(1j*omega*c)
+        u, f = t-particular, q+k*derivative
+        end_t = particular+length*derivative + co*u-si*f/(k*wave)
+        end_q = -k*derivative-k*wave*si*u+co*f
+        exact_t.append((t, end_t))
+        exact_q.append((q, -end_q))
+        t, q = end_t-resistance*end_q, end_q+heater
+    temperatures = [exact_t[0][0], exact_t[-1][1]]
+    errors = []
+    for n in (4, 8, 16):
+        matrices, offsets = zip(*(harmonic_heat_wall_admittance_1d(
+            omega, ncells=n, thickness=length, conductivity=k, capacity=c,
+            source=lambda x: base+slope*x) for length, k, c, base, slope in layers))
+        _, surface, flux = compose_heat_wall_admittances_1d(
+            matrices, resistance, layer_flux_offsets=offsets, wall_temperatures=temperatures,
+            interface_heat_sources=heater)
+        row = [(surface-surface.new_tensor(exact_t)).abs().max().item(),
+               (flux-flux.new_tensor(exact_q)).abs().max().item()]
+        record_property(f"max_temperature_error_{n}_K", row[0])
+        record_property(f"max_flux_error_{n}_W_per_m2", row[1])
+        torch.testing.assert_close(flux[0, 1]+flux[1, 0], flux.new_tensor(heater), rtol=0, atol=1e-12)
+        errors.append(row)
+    for coarse, fine in zip(errors, errors[1:]):
+        assert all(a/b > 8 for a, b in zip(coarse, fine))

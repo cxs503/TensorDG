@@ -659,13 +659,15 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
 
 def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
                                      conductivity=1., capacity=1., penalty=20.,
-                                     heat_loss_coefficient=None, thickness=1.):
+                                     heat_loss_coefficient=None, thickness=1., source=None):
     """Map two prescribed wall-temperature phasors to inward heat fluxes.
 
     For a SIPG slab of the specified thickness in meters, return a complex128 matrix Y with rows
     and columns ordered left, right. Y @ temperatures gives the pair of
-    inward fluxes in W/m². Sources and the bulk reservoir temperature are
-    zero, so the response is linear. The frequency and material arguments
+    inward fluxes in W/m² for an unforced layer. If source is supplied
+    (W/m³, scalar, per-cell values or a function of physical position),
+    return (Y, offset): inward flux = Y @ temperatures + offset. The bulk
+    reservoir temperature is zero. The frequency and material arguments
     follow solve_harmonic_heat_1d, including spatially varying bulk loss. Loss callbacks receive
     physical coordinates measured from the left wall.
     """
@@ -678,23 +680,30 @@ def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
 
     loss = None if heat_loss_coefficient is None else scaled_loss
 
-    columns = []
-    for drive in ((1., 0.), (0., 1.)):
+    def inward_flux(drive, generation=None):
         _, _, flux = solve_harmonic_heat_1d(
             angular_frequency, ncells=ncells, degree=degree, conductivity=conductivity/thickness,
             capacity=capacity*thickness, penalty=penalty, heat_loss_coefficient=loss,
-            wall_values=drive)
-        columns.append(torch.stack((flux[0], -flux[-1])))
-    return torch.stack(columns, dim=1)
+            wall_values=drive, source=generation)
+        return torch.stack((flux[0], -flux[-1]))
+
+    matrix = torch.stack((inward_flux((1., 0.)), inward_flux((0., 1.))), dim=1)
+    if source is None:
+        return matrix
+
+    def scaled_source(xi):
+        return thickness*_bulk_profile(source, thickness*xi, torch.complex128)
+
+    return matrix, inward_flux((0., 0.), scaled_source)
 
 
 def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall_temperatures=None,
                                      interface_heat_sources=None, interface_areal_heat_capacity=None,
                                      angular_frequency=None, interface_film_coefficients=0.,
-                                     interface_ambient_temperatures=0.):
+                                     interface_ambient_temperatures=0., layer_flux_offsets=None):
     """Return the complex wall admittance of a stack, ordered left to right.
 
-    Supply one 2-by-2 inward-flux matrix per source-free layer at a common
+    Supply one 2-by-2 inward-flux matrix per layer at a common
     frequency and cross section. Each interface without exchange, generation or storage conserves heat flux and
     supports the temperature drop R*q (q positive to the right). R is an
     areal resistance in m² K/W, scalar or one value per interface.
@@ -713,7 +722,9 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     scalars or one value per interface. The rightward flux increases by
     source + h*(Ta-T_right) - i*omega*C_surface*T_right.
     Y maps temperature perturbations at fixed sources; fluxes include the
-    full driven response.
+    full driven response. To include volumetric forcing, supply each layer
+    with its pair of zero-wall-temperature inward fluxes in layer_flux_offsets
+    (shape layers by 2, W/m²) alongside the prescribed wall temperatures.
     """
     layers = tuple(admittances)
     if not layers:
@@ -764,10 +775,21 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
             storage = 1j*angular_frequency*capacity.expand(len(layers)-1)
     sources = sources + film*ambient
     interface_admittance = storage + film
-    right_flux_offset = matrices[0].new_zeros(())
+    offsets = matrices[0].new_zeros((len(layers), 2))
+    if layer_flux_offsets is not None:
+        if wall_temperatures is None:
+            raise ValueError("layer flux offsets require prescribed wall temperatures")
+        pairs = [torch.as_tensor(pair, dtype=offsets.dtype, device=device) for pair in layer_flux_offsets]
+        if len(pairs) != len(layers) or any(pair.shape != (2,) for pair in pairs):
+            raise ValueError("supply one pair of inward flux offsets per layer")
+        offsets = torch.stack(pairs)
+        if not torch.isfinite(offsets).all():
+            raise ValueError("layer flux offsets must be finite")
+    right_flux_offset = offsets[0, 1]
     interfaces = []
     combined = matrices[0]
-    for layer, r, source, shunt in zip(matrices[1:], resistance.expand(len(layers)-1), sources, interface_admittance):
+    for layer, r, source, shunt, layer_offset in zip(
+            matrices[1:], resistance.expand(count), sources, interface_admittance, offsets[1:]):
         (a, b), (c, d) = combined
         (e, f), (g, h) = layer
         # The right trace feeds the layer, the film, and surface storage.
@@ -782,10 +804,11 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
             # the two material-side temperatures at its newest interface.
             mapping = -torch.stack((torch.stack((c*(1+r*e), f)),
                                     torch.stack((c, f*(1+r*d))))) / denominator
+            source = source-layer_offset[0]
             offset = torch.stack((source-(1+r*e)*right_flux_offset,
                                   (1+r*d)*source-right_flux_offset)) / denominator
             interfaces.append((mapping, offset))
-            right_flux_offset = g*offset[1]
+            right_flux_offset = g*offset[1]+layer_offset[1]
         left = torch.stack((a - b*c*(1+r*e)/denominator, -b*f/denominator))
         right = torch.stack((-g*c/denominator, h - g*f*(1+r*d)/denominator))
         combined = torch.stack((left, right))
@@ -800,7 +823,7 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     temperatures.append(ends)
     temperatures = torch.stack(temperatures[::-1])
     fluxes = (torch.stack(matrices) @ temperatures.unsqueeze(-1)).squeeze(-1)
-    return combined, temperatures, fluxes
+    return combined, temperatures, fluxes + offsets
 
 
 def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
