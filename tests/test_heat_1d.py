@@ -315,3 +315,23 @@ def test_layerwise_bulk_reservoir_pins_uniform_insulated_slab():
         heat_loss_coefficient=h,bulk_ambient_temperature=ambient)
     torch.testing.assert_close(u[:,0],torch.full_like(u[:,0],target),rtol=0.,atol=2e-12)
     assert q.abs().max()<2e-11
+
+
+def test_bulk_history_preserves_linear_warming_and_cell_heat_with_graded_exchange():
+    from tensordg import solve_heat_1d_bulk_history
+
+    times = [0.,.07,.18]
+    speeds = [1.3,-.6]
+    loss = lambda x: 1+x*x
+    start = .4
+    pairs,expected = [],[start]
+    for dt,speed in zip((.07,.11),speeds):
+        finish = start+dt*speed
+        pairs.append(tuple(lambda x,v=v,b=speed: v+2*b/loss(x) for v in (start,finish)))
+        start = finish
+        expected.append(finish)
+    x,u,q,b = solve_heat_1d_bulk_history(times,pairs,initial_temperature=lambda x: .4,
+        ncells=8,degree=2,conductivity=.7,capacity=2.,heat_loss_coefficient=loss,steps_per_interval=3)
+    torch.testing.assert_close(u[:,:,0],x.new_tensor(expected)[:,None].expand(-1,8),rtol=0.,atol=1e-12)
+    assert q.abs().max()<1e-12
+    torch.testing.assert_close(b,2*u[:,:,0].diff(dim=0)/8,rtol=0.,atol=1e-12)

@@ -520,6 +520,31 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
     return centers, torch.stack(history), metadata
 
 
+def _bulk_profile(profile, points, dtype):
+    raw = profile(points) if callable(profile) else profile
+    if dtype == torch.float64 and torch.is_complex(torch.as_tensor(raw)):
+        raise ValueError("real bulk profiles are required")
+    values = torch.as_tensor(raw,dtype=dtype)
+    if not callable(profile) and values.shape == (len(points),):
+        values = values[:,None]
+    if not torch.isfinite(values).all():
+        raise ValueError("bulk exchange profiles must be finite")
+    return values.expand_as(points)
+
+
+def _bulk_exchange_matrix(loss, weights, phi, h):
+    from scipy import sparse
+
+    if torch.any(loss<0):
+        raise ValueError("heat_loss_coefficient must be nonnegative")
+    weighted = (.5*h)*loss*weights
+    if not torch.any(loss):
+        return None,weighted
+    blocks = torch.einsum("eq,qi,qj->eij",weighted,phi,phi)
+    n = len(loss)
+    return sparse.bsr_matrix((blocks.detach().numpy(),np.arange(n),np.arange(n+1))).tocsr(),weighted
+
+
 def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivity=1., capacity=1.,
                            source=None, wall_types=("dirichlet","dirichlet"), wall_values=(0.,0.), penalty=20.,
                            film_coefficients=(0.,0.), wall_areal_heat_capacity=(0.,0.),
@@ -567,25 +592,10 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     exchange = None
     if heat_loss_coefficient is not None:
         points = centers[:,None] + .5*h*nodes
-        def sample(profile, dtype):
-            raw = profile(points) if callable(profile) else profile
-            if dtype == torch.float64 and torch.is_complex(torch.as_tensor(raw)):
-                raise ValueError("heat_loss_coefficient must be real")
-            values = torch.as_tensor(raw,dtype=dtype)
-            if not callable(profile) and values.shape == (ncells,):
-                values = values[:,None]
-            if not torch.isfinite(values).all():
-                raise ValueError("bulk exchange profiles must be finite")
-            return values.expand_as(points)
-        loss = sample(heat_loss_coefficient,torch.float64)
-        if torch.any(loss<0):
-            raise ValueError("heat_loss_coefficient must be nonnegative")
-        ambient = sample(bulk_ambient_temperature,torch.complex128)
-        if torch.any(loss):
-            weighted = (.5*h)*loss*weights
-            blocks = torch.einsum("eq,qi,qj->eij",weighted,phi,phi)
-            exchange = sparse.bsr_matrix((blocks.detach().numpy(),np.arange(ncells),np.arange(ncells+1))).tocsr()
-            load += (weighted*ambient) @ phi.to(load.dtype)
+        loss = _bulk_profile(heat_loss_coefficient,points,torch.float64)
+        exchange,weighted = _bulk_exchange_matrix(loss,weights,phi,h)
+        ambient = _bulk_profile(bulk_ambient_temperature,points,torch.complex128)
+        load += (weighted*ambient) @ phi.to(load.dtype)
     values = _wall_pair(wall_values,load)
     strength = penalty*(degree+1)**2/h
     for i,(cell,v,dv,normal) in enumerate(((0,left,dleft,-1),(-1,right,dright,1))):
@@ -638,3 +648,68 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     coefficients[:,0] += mean
     result = (centers,coefficients,flux)
     return (*result,surface) if return_wall_temperatures else result
+
+
+def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
+                               ncells=16, degree=2, conductivity=1., capacity=1.,
+                               heat_loss_coefficient=1., steps_per_interval=8, penalty=20.):
+    """Advance c*T_t=k*T_xx+H(x)*(Ta-T) on an insulated unit slab.
+
+    Each interval supplies an independent (start, end) pair of reservoir
+    profiles, interpolated linearly in time. A profile may be scalar, cellwise
+    or callable at real spatial quadrature points. H is stationary. CPU
+    sparse SDIRK2 returns centers, knot modal fields, interval rightward face
+    heat and interval reservoir heat into each cell (both in J/m²).
+    """
+    from scipy.sparse.linalg import splu
+    from .sipg_sparse import assemble_heat_1d_sparse
+
+    knots = np.asarray(times,dtype=float)
+    if (knots.ndim!=1 or len(knots)<2 or not np.isfinite(knots).all() or np.any(np.diff(knots)<=0)
+            or len(ambient_intervals)!=len(knots)-1):
+        raise ValueError("supply increasing finite knot times and one ambient pair per interval")
+    if ncells<2 or degree<1 or not isinstance(steps_per_interval,int) or steps_per_interval<1:
+        raise ValueError("require ncells >= 2, degree >= 1 and positive integer steps_per_interval")
+    if not all(math.isfinite(v) and v>0 for v in (conductivity,capacity,penalty)):
+        raise ValueError("conductivity, capacity and penalty must be finite and positive")
+    h = 1./ncells
+    x = (torch.arange(ncells,dtype=torch.float64)+.5)*h
+    stiff,mass,ops = assemble_heat_1d_sparse(ncells,degree,penalty,x.device,x.dtype,
+                                             wall_types=("neumann","neumann"))
+    nodes,weights,phi = ops[:3]
+    points = x[:,None]+.5*h*nodes
+    exchange,weighted = _bulk_exchange_matrix(_bulk_profile(heat_loss_coefficient,points,x.dtype),weights,phi,h)
+    operator = conductivity*stiff
+    if exchange is not None:
+        operator += exchange
+    mass = capacity*mass
+    state = _project_initial(x,h,nodes,weights,phi,initial_temperature).detach().numpy().flatten()
+    shape = (ncells,degree+1)
+    history = [torch.from_numpy(state.reshape(shape))]
+    face_heat,bulk_heat = [],[]
+    gamma = 1-1/math.sqrt(2.)
+    for duration,pair in zip(np.diff(knots),ambient_intervals):
+        if len(pair)!=2:
+            raise ValueError("each ambient interval requires a start and an end profile")
+        begin,end = [((weighted*_bulk_profile(p,points,x.dtype)) @ phi).detach().numpy().ravel() for p in pair]
+        dt = duration/steps_per_interval
+        factor = splu((mass+gamma*dt*operator).tocsc())
+        integral = np.zeros_like(state)
+        for step in range(steps_per_interval):
+            load1 = begin+((step+gamma)/steps_per_interval)*(end-begin)
+            load2 = begin+((step+1)/steps_per_interval)*(end-begin)
+            k1 = factor.solve(load1-operator@state)
+            first = state+gamma*dt*k1
+            predictor = state+(1-gamma)*dt*k1
+            state = predictor+gamma*dt*factor.solve(load2-operator@predictor)
+            integral += dt*((1-gamma)*first+gamma*state)
+        modes = torch.from_numpy(integral.reshape(shape))
+        flux = conductivity*sipg_heat_face_fluxes(modes,penalty)
+        flux[[0,-1]] = 0.
+        net = .5*duration*(begin+end)
+        if exchange is not None:
+            net -= exchange@integral
+        face_heat.append(flux)
+        bulk_heat.append(torch.from_numpy(net.reshape(shape)[:,0]))
+        history.append(torch.from_numpy(state.reshape(shape)))
+    return x,torch.stack(history),torch.stack(face_heat),torch.stack(bulk_heat)
