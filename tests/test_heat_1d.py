@@ -494,9 +494,10 @@ def test_composite_harmonic_admittance_against_contact_transfer(record_property)
     assert all(a/b > 8 for a, b in zip(errors, errors[1:]))
 
 
+@pytest.mark.parametrize("film_exchange", [False, True])
 @pytest.mark.parametrize("heated", [False, True])
 @pytest.mark.parametrize("storing", [False, True])
-def test_harmonic_stack_internal_states_against_propagated_traces(heated, storing, record_property):
+def test_harmonic_stack_internal_states_against_propagated_traces(heated, storing, film_exchange, record_property):
     import cmath
     import numpy as np
     from tensordg import harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
@@ -506,6 +507,8 @@ def test_harmonic_stack_internal_states_against_propagated_traces(heated, storin
     resistances = [0.23, 0.]
     sources = [0.43+0.18j, -0.27j] if heated else [0., 0.]
     surface_capacity = [0.7, 0.19] if storing else [0., 0.]
+    films = [0.6, 1.1] if film_exchange else [0., 0.]
+    ambient = [0.31-0.45j, -0.23+0.9j]
     temperature, q = 1.2+0.4j, 0.8-0.15j
     reference_t, reference_q = [], []
     for i, (length, k, capacity) in enumerate(layers):
@@ -516,13 +519,16 @@ def test_harmonic_stack_internal_states_against_propagated_traces(heated, storin
         reference_q.append((q, -right_q))
         if i < len(resistances):
             temperature = right_t-resistances[i]*right_q
-            q = right_q+sources[i]-1j*omega*surface_capacity[i]*temperature
+            exchange = films[i]*(ambient[i]-temperature)
+            q = right_q+sources[i]+exchange-1j*omega*surface_capacity[i]*temperature
     drive = [reference_t[0][0], reference_t[-1][1]]
     errors = []
     for n in (4, 8, 16):
         matrices = [harmonic_heat_wall_admittance_1d(
             omega, ncells=n, thickness=length, conductivity=k, capacity=c) for length, k, c in layers]
         opts = dict(interface_heat_sources=sources) if heated else {}
+        if film_exchange:
+            opts.update(interface_film_coefficients=films, interface_ambient_temperatures=ambient)
         if storing:
             opts.update(interface_areal_heat_capacity=surface_capacity, angular_frequency=omega)
         y, t, flux = compose_heat_wall_admittances_1d(matrices, resistances, wall_temperatures=drive, **opts)
@@ -533,7 +539,9 @@ def test_harmonic_stack_internal_states_against_propagated_traces(heated, storin
         response = flux - base_flux
         torch.testing.assert_close(y @ t.new_tensor(drive), torch.stack((response[0, 0], response[-1, 1])))
         stored_power = 1j*omega*t.new_tensor(surface_capacity)*t[1:, 0]
-        torch.testing.assert_close(flux[:-1, 1]+flux[1:, 0]+stored_power, t.new_tensor(sources), atol=1e-12, rtol=0)
+        film_power = t.new_tensor(films)*(t.new_tensor(ambient)-t[1:, 0])
+        torch.testing.assert_close(flux[:-1, 1]+flux[1:, 0]+stored_power, t.new_tensor(sources)+film_power,
+                                   atol=1e-12, rtol=0)
         torch.testing.assert_close(t[:-1, 1]-t[1:, 0], -t.new_tensor(resistances)*flux[:-1, 1],
                                    atol=1e-12, rtol=0)
         row = [np.max(np.abs(t.numpy()-reference_t)), np.max(np.abs(flux.numpy()-reference_q))]

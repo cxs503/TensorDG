@@ -690,11 +690,12 @@ def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
 
 def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall_temperatures=None,
                                      interface_heat_sources=None, interface_areal_heat_capacity=None,
-                                     angular_frequency=None):
+                                     angular_frequency=None, interface_film_coefficients=0.,
+                                     interface_ambient_temperatures=0.):
     """Return the complex wall admittance of a stack, ordered left to right.
 
     Supply one 2-by-2 inward-flux matrix per source-free layer at a common
-    frequency and cross section. Each unheated, massless interface conserves heat flux and
+    frequency and cross section. Each interface without exchange, generation or storage conserves heat flux and
     supports the temperature drop R*q (q positive to the right). R is an
     areal resistance in m² K/W, scalar or one value per interface.
 
@@ -707,7 +708,10 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     Optional interface_areal_heat_capacity (J/(m² K), scalar or one per
     contact) places storage at the same right-hand trace. Supply the common
     angular_frequency (rad/s) of the layer matrices for storing interfaces.
-    The rightward flux increases by source minus i*omega*C_surface*T_right.
+    At each right-hand trace a film coefficient h (W/(m² K)) and ambient
+    temperature phasor Ta (K) add the input h*(Ta-T_right). Supply either
+    scalars or one value per interface. The rightward flux increases by
+    source + h*(Ta-T_right) - i*omega*C_surface*T_right.
     Y maps temperature perturbations at fixed sources; fluxes include the
     full driven response.
     """
@@ -717,13 +721,24 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     matrices = [torch.as_tensor(layer, dtype=torch.complex128) for layer in layers]
     if any(layer.shape != (2, 2) or not torch.isfinite(layer).all() for layer in matrices):
         raise ValueError("layer admittances must be finite 2-by-2 matrices")
-    resistance = torch.as_tensor(contact_resistance, device=matrices[0].device)
-    if resistance.is_complex():
-        raise ValueError("contact resistance must be real")
-    resistance = torch.as_tensor(contact_resistance, device=matrices[0].device, dtype=torch.float64)
-    if (resistance.shape not in ((), (len(layers)-1,)) or not torch.isfinite(resistance).all()
-            or (resistance < 0).any()):
-        raise ValueError("supply a nonnegative finite resistance or one per interface")
+    count = len(matrices)-1
+    device = matrices[0].device
+
+    def real_parameter(value, name):
+        if torch.as_tensor(value).is_complex():
+            raise ValueError(f"{name} must be real")
+        values = torch.as_tensor(value, dtype=torch.float64, device=device)
+        if values.shape not in ((), (count,)) or not torch.isfinite(values).all() or (values < 0).any():
+            raise ValueError(f"supply a nonnegative finite {name} or one per interface")
+        return values
+
+    resistance = real_parameter(contact_resistance, "contact resistance")
+    film = real_parameter(interface_film_coefficients, "film coefficient")
+    ambient = torch.as_tensor(interface_ambient_temperatures, dtype=matrices[0].dtype, device=device)
+    if ambient.shape not in ((), (count,)) or not torch.isfinite(ambient).all():
+        raise ValueError("supply a finite ambient temperature or one per interface")
+    if count == 0 and film.any():
+        raise ValueError("interface films require at least two layers")
     if wall_temperatures is not None:
         drive = torch.as_tensor(wall_temperatures, device=matrices[0].device, dtype=torch.complex128)
         if drive.shape != (2,) or not torch.isfinite(drive).all():
@@ -742,24 +757,20 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     if angular_frequency is not None and (not math.isfinite(angular_frequency) or angular_frequency <= 0):
         raise ValueError("angular_frequency must be finite and positive")
     if interface_areal_heat_capacity is not None:
-        raw = torch.as_tensor(interface_areal_heat_capacity, device=storage.device)
-        if raw.is_complex():
-            raise ValueError("interface areal heat capacity must be real")
-        capacity = torch.as_tensor(interface_areal_heat_capacity, device=storage.device, dtype=torch.float64)
-        if (capacity.shape not in ((), (len(layers)-1,)) or not torch.isfinite(capacity).all()
-                or (capacity < 0).any()):
-            raise ValueError("supply a nonnegative finite areal heat capacity or one per interface")
+        capacity = real_parameter(interface_areal_heat_capacity, "areal heat capacity")
         if capacity.any():
             if len(layers) == 1 or angular_frequency is None:
                 raise ValueError("interface storage requires two or more layers and an angular frequency")
             storage = 1j*angular_frequency*capacity.expand(len(layers)-1)
+    sources = sources + film*ambient
+    interface_admittance = storage + film
     right_flux_offset = matrices[0].new_zeros(())
     interfaces = []
     combined = matrices[0]
-    for layer, r, source, shunt in zip(matrices[1:], resistance.expand(len(layers)-1), sources, storage):
+    for layer, r, source, shunt in zip(matrices[1:], resistance.expand(len(layers)-1), sources, interface_admittance):
         (a, b), (c, d) = combined
         (e, f), (g, h) = layer
-        # The right trace feeds both the layer and the surface storage.
+        # The right trace feeds the layer, the film, and surface storage.
         e = e + shunt
         # Eliminate the two contact temperatures using the heat balance and
         # the contact jump directly, so perfect contact needs no 1/R limit.
