@@ -231,3 +231,28 @@ def test_quadratic_source_and_linear_reaction_close_every_face(speed,scheme):
     faces = torch.linspace(0.,1.,n+1,dtype=coeff.dtype)
     flux = numerical_face_fluxes(coeff,pe,speed,left_value=u(0.),right_value=u(1.),advection_scheme=scheme)
     torch.testing.assert_close(flux,speed*u(faces)-d*(.5-2*faces),atol=2e-12,rtol=0.)
+
+
+@pytest.mark.parametrize("speed",[-1.3,1.3])
+@pytest.mark.parametrize("ends",[(True,False),(False,True),(True,True)])
+def test_rightward_boundary_flux_with_variable_reaction(speed,ends):
+    from tensordg.advection_diffusion_1d import numerical_face_fluxes
+    d = abs(speed)/4
+    def u(x):
+        return 1.2-.4*x+.7*x*x
+    def flux(x):
+        return speed*u(x)-d*(-.4+1.4*x)
+    imposed = tuple(flux(i) if use else None for i,use in enumerate(ends))
+    options = dict(total_flux=imposed,left_value=None if ends[0] else u(0.),
+                   right_value=None if ends[1] else u(1.))
+    x,coeff,_ = solve_advection_diffusion_1d(8,2,4.,speed,**options,reaction=lambda x:2+x,
+                source=lambda x:speed*(-.4+1.4*x)-1.4*d+(2+x)*u(x))
+    points,values = sample_solution(x,coeff)
+    torch.testing.assert_close(values,u(points),atol=5e-12,rtol=0.)
+    estimate = numerical_face_fluxes(coeff,4.,speed,**options)
+    torch.testing.assert_close(estimate,flux(torch.linspace(0.,1.,9,dtype=x.dtype)),atol=2e-12,rtol=0.)
+
+
+def test_two_flux_walls_need_reaction_anchor():
+    with pytest.raises(ValueError,match="nonzero reaction"):
+        solve_advection_diffusion_1d(total_flux=(.1,.1))

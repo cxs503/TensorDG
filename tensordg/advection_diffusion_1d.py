@@ -119,7 +119,7 @@ def solve_advection_diffusion_1d(
     advection_scheme: str = "upwind",
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, source=0., reaction=0.,
+    *, source=0., reaction=0., total_flux=(None,None),
 ):
     """Solve (1) on [0, 1] and return (cell_centres, modal_coefficients, metadata).
 
@@ -132,6 +132,10 @@ def solve_advection_diffusion_1d(
         Solve (a u - D u')' + reaction*u = source. Each coefficient accepts a
         scalar, one value per cell, or a callable of quadrature coordinates
         of shape (ncells, nq). The reaction coefficient must be nonnegative.
+    total_flux : (left, right)
+        A finite scalar prescribes the rightward advective plus diffusive
+        flux in place of that end's Dirichlet value. None uses Dirichlet data.
+        Two prescribed fluxes require nonzero reaction in the domain.
     advection_scheme : {"upwind", "downwind"}
         ``"downwind"`` exists only as an implementation negative control: it is
         *not* a consistent scheme and must fail the verification gates.
@@ -184,9 +188,15 @@ def solve_advection_diffusion_1d(
         if not torch.isfinite(data).all():
             raise ValueError(f"{name} must be finite")
         return data.expand_as(xq)
+    west_flux,east_flux = total_flux
+    for value in (west_flux,east_flux):
+        if value is not None and not math.isfinite(value):
+            raise ValueError("boundary total flux must be finite")
     sink = profile(reaction,"reaction")
     if torch.any(sink < 0):
         raise ValueError("reaction must be nonnegative")
+    if west_flux is not None and east_flux is not None and not torch.any(sink>0):
+        raise ValueError("two total flux boundaries require a nonzero reaction")
     reaction_volume = (.5*h)*torch.einsum("cq,q,qi,qj->cij",sink,weights,phi,phi)
     rhs = ((.5*h)*(profile(source,"source")*weights) @ phi).reshape(-1)
     for cell in range(ncells):
@@ -209,6 +219,8 @@ def solve_advection_diffusion_1d(
     # interior trace while the inflow boundary uses the prescribed data.
     upwind = advection_scheme == "upwind"
     for face in range(ncells + 1):
+        if (face==0 and west_flux is not None) or (face==ncells and east_flux is not None):
+            continue
         left_cell = face - 1 if face > 0 else None
         right_cell = face if face < ncells else None
         src_is_left = (a > 0.0) == upwind
@@ -227,11 +239,14 @@ def solve_advection_diffusion_1d(
             add(dofs(right_cell), dofs(source), -a * torch.outer(phi_left, trace))
 
     # ---- Dirichlet boundary terms for the diffusive operator (Nitsche) ------
-    for cell, endpoint, derivative_endpoint, outward, value in (
-        (0, phi_left, dphi_left, -1.0, left_value),
-        (ncells - 1, phi_right, dphi_right, 1.0, right_value),
+    for cell, endpoint, derivative_endpoint, outward, value, prescribed_flux in (
+        (0, phi_left, dphi_left, -1.0, left_value, west_flux),
+        (ncells - 1, phi_right, dphi_right, 1.0, right_value, east_flux),
     ):
         idx = dofs(cell)
+        if prescribed_flux is not None:
+            rhs[idx] -= outward*prescribed_flux*endpoint
+            continue
         derivative = outward * diffusivity * (2.0 / h) * derivative_endpoint
         consistency = -torch.outer(endpoint, derivative)
         block = consistency + consistency.T + penalty_face * torch.outer(endpoint, endpoint)
@@ -326,17 +341,23 @@ def face_fluxes(
 
 
 def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., right_value=1.,
-                          advection_scheme="upwind"):
+                          advection_scheme="upwind", total_flux=(None,None)):
     """Single-valued rightward DG total flux at all n+1 faces, including Nitsche terms."""
     if advection_scheme not in ("upwind","downwind"):
         raise ValueError("unknown advection scheme")
     ncells,modes = coeff.shape
     _,_,_,_,_,pl,pr,dl,dr = _operators(modes-1,coeff.device,coeff.dtype)
     west,east = coeff @ pl,coeff @ pr
-    low = torch.cat((west.new_tensor([left_value]),east))
-    high = torch.cat((west,east.new_tensor([right_value])))
+    west_flux,east_flux = total_flux
+    low = torch.cat((west.new_tensor([left_value if west_flux is None else 0.]),east))
+    high = torch.cat((west,east.new_tensor([right_value if east_flux is None else 0.])))
     diff_scale = -2*ncells*abs(speed)/peclet
     west_diff,east_diff = diff_scale*(coeff @ dl),diff_scale*(coeff @ dr)
     diffusion = torch.cat((west_diff[:1],.5*(east_diff[:-1]+west_diff[1:]),east_diff[-1:]))
     advected = low if (speed>0)==(advection_scheme=="upwind") else high
-    return speed*advected + diffusion + penalty*modes**2*ncells*(low-high)
+    flux = speed*advected + diffusion + penalty*modes**2*ncells*(low-high)
+    if west_flux is not None:
+        flux[0] = west_flux
+    if east_flux is not None:
+        flux[-1] = east_flux
+    return flux
