@@ -35,10 +35,13 @@ factors collapse to the familiar ``(2k+1) a_x / h_x`` per axis.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 import math
 
 import numpy as np
 import torch
+
+from .advection_1d import _departure_coordinate
 
 Velocity3 = tuple[float, float, float]
 
@@ -145,52 +148,37 @@ def _rhs(
     return out
 
 
-def _project_initial(
-    nx: int, ny: int, nz: int,
-    degree: int,
-    spacing: Velocity3,
-    device: torch.device,
-    dtype: torch.dtype,
-) -> torch.Tensor:
-    """Modal coefficients of ``1 + sin(2 pi x) sin(2 pi y) sin(2 pi z)``.
+def _sample_profile(initial, x, y, z):
+    if initial is None:
+        return 1.0 + (torch.sin(2*math.pi*x) * torch.sin(2*math.pi*y) * torch.sin(2*math.pi*z))
+    x, y, z = torch.broadcast_tensors(x, y, z)
+    values = torch.as_tensor(initial(x, y, z), device=x.device, dtype=x.dtype)
+    return torch.broadcast_to(values, x.shape)
 
-    The initial field is separable, so the 3-D tensor product of the three 1-D
-    projections is exact (up to the Gauss quadrature of the sine modes) and
-    costs ``O(N (p+1))`` instead of ``O((N (p+1))**3)``.
-    """
-    hx, hy, hz = spacing
-    nq = max(2 * degree + 3, 4)
-    nodes_np, weights_np = np.polynomial.legendre.leggauss(nq)
-    nodes = torch.as_tensor(nodes_np, device=device, dtype=dtype)
-    weights = torch.as_tensor(weights_np, device=device, dtype=dtype)
-    basis = []
-    for k in range(degree + 1):
-        polynomial = np.zeros(k + 1)
-        polynomial[-1] = 1.0
-        basis.append(torch.as_tensor(
-            np.polynomial.legendre.legval(nodes_np, polynomial),
-            device=device, dtype=dtype,
-        ))
-    phi = torch.stack(basis, dim=1)
 
-    def _axis_modes(ncells: int, h: float) -> torch.Tensor:
-        centres = (torch.arange(ncells, device=device, dtype=dtype) + 0.5) * h
-        xq = centres[:, None] + 0.5 * h * nodes[None, :]
-        samples = torch.sin(2.0 * math.pi * xq)
-        # (2k+1)/2 * sum_q w_q f_q P_k(q)  -- per cell.
-        modes = torch.einsum("q,cq,qk->ck", weights, samples, phi) * 0.5
-        scales = torch.tensor(
-            [2 * k + 1 for k in range(degree + 1)],
-            device=device, dtype=dtype,
-        )
-        return modes * scales[None, :]
+def _sample_slab(initial, xq, yq, zq):
+    return _sample_profile(initial, xq[:, None, None, :, None, None],
+                           yq[None, :, None, None, :, None], zq[None, None, :, None, None, :])
 
-    mx = _axis_modes(nx, hx)
-    my = _axis_modes(ny, hy)
-    mz = _axis_modes(nz, hz)
-    coeff = torch.einsum("xk,yl,zm->xyzklm", mx, my, mz)
-    # The constant part of the field only projects onto the cell-average mode.
-    coeff[:, :, :, 0, 0, 0] += 1.0
+
+def _project_initial(initial, xq, yq, zq, weights, phi):
+    modes = torch.arange(phi.shape[1], device=phi.device, dtype=phi.dtype)
+    projector = weights[:, None] * phi * (modes + .5)
+    if initial is None:
+        # The default product of sines only requires three 1-D projections.
+        axes = [torch.sin(2*math.pi*q) @ projector for q in (xq, yq, zq)]
+        coeff = torch.einsum("xk,yl,zm->xyzklm", *axes)
+        coeff[..., 0, 0, 0] += 1.
+        return coeff
+
+    shape = (len(xq), len(yq), len(zq)) + (len(modes),)*3
+    coeff = phi.new_empty(shape)
+    for start in range(0, len(xq), 4):
+        slab = slice(start, start+4)
+        samples = _sample_slab(initial, xq[slab], yq, zq)
+        projected_z = torch.einsum("xyzqrs,sm->xyzqrm", samples, projector)
+        projected_y = torch.einsum("xyzqrm,rl->xyzqlm", projected_z, projector)
+        coeff[slab] = torch.einsum("xyzqlm,qk->xyzklm", projected_y, projector)
     return coeff
 
 
@@ -200,14 +188,15 @@ def exact_solution_3d(
     z: torch.Tensor,
     final_time: float,
     velocity: Velocity3 = (1.0, 0.5, 0.25),
+    *,
+    initial: Callable | None = None,
 ) -> torch.Tensor:
-    """Closed-form solution of the periodic 3-D advection test."""
+    """Evaluate the initial profile at the periodic characteristic foot."""
     ax, ay, az = velocity
-    return 1.0 + (
-        torch.sin(2.0 * math.pi * (x - ax * final_time))
-        * torch.sin(2.0 * math.pi * (y - ay * final_time))
-        * torch.sin(2.0 * math.pi * (z - az * final_time))
-    )
+    return _sample_profile(initial, _departure_coordinate(x, final_time, ax),
+                           _departure_coordinate(y, final_time, ay),
+                           _departure_coordinate(z, final_time, az))
+
 
 
 from .registry import capability
@@ -227,6 +216,8 @@ def solve_advection_3d(
     cfl: float = 0.08,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
+    *,
+    initial: Callable | None = None,
 ):
     """Solve ``u_t + a . grad u = 0`` on the periodic unit cube.
 
@@ -234,7 +225,7 @@ def solve_advection_3d(
     ``(x, y, z, modal_coefficients, metadata)`` where ``x``, ``y``, ``z`` are
     the cell centres and the coefficient array has shape
     ``(nx, ny, nz, degree+1, degree+1, degree+1)`` whose ``[0, 0, 0]`` entry is
-    the cell average.
+    the cell average. Supply initial(x, y, z) to project a custom periodic field.
     """
     nx, ny, nz = (
         (ncells, ncells, ncells) if isinstance(ncells, int) else tuple(ncells)
@@ -251,9 +242,10 @@ def solve_advection_3d(
     x = (torch.arange(nx, device=dev, dtype=dtype) + 0.5) * hx
     y = (torch.arange(ny, device=dev, dtype=dtype) + 0.5) * hy
     z = (torch.arange(nz, device=dev, dtype=dtype) + 0.5) * hz
-    _, _, _, volume, phi_left, phi_right = _operators(degree, dev, dtype)
+    nodes, weights, phi, volume, phi_left, phi_right = _operators(degree, dev, dtype)
 
-    coeff = _project_initial(nx, ny, nz, degree, (hx, hy, hz), dev, dtype)
+    xq, yq, zq = (centers[:, None] + .5*h*nodes for centers, h in ((x, hx), (y, hy), (z, hz)))
+    coeff = _project_initial(initial, xq, yq, zq, weights, phi)
 
     ax, ay, az = (float(component) for component in velocity)
     wave_rate = abs(ax) / hx + abs(ay) / hy + abs(az) / hz
@@ -305,6 +297,8 @@ def error_3d(
     final_time: float,
     velocity: Velocity3 = (1.0, 0.5, 0.25),
     x_chunk: int = 4,
+    *,
+    initial: Callable | None = None,
 ) -> dict[str, float]:
     """Quadrature-based absolute/relative L2 errors against the closed form.
 
@@ -333,9 +327,11 @@ def error_3d(
     yq = y[:, None] + 0.5 * hy * nodes[None, :]
     zq = z[:, None] + 0.5 * hz * nodes[None, :]
     ax, ay, az = velocity
-    sin_x = torch.sin(2.0 * math.pi * (xq - ax * final_time))
-    sin_y = torch.sin(2.0 * math.pi * (yq - ay * final_time))
-    sin_z = torch.sin(2.0 * math.pi * (zq - az * final_time))
+    if x_chunk < 1:
+        raise ValueError("x_chunk must be positive")
+    xq = _departure_coordinate(xq, final_time, ax)
+    yq = _departure_coordinate(yq, final_time, ay)
+    zq = _departure_coordinate(zq, final_time, az)
 
     # (1, 1, 1, nq, nq, nq) tensor-product quadrature weights, matching the
     # (cell_x, cell_y, cell_z, qx, qy, qz) layout of ``numerical`` below.
@@ -353,11 +349,7 @@ def error_3d(
         numerical = torch.einsum("xyzklm,qk->xyzqlm", slab, phi)
         numerical = torch.einsum("xyzqlm,rl->xyzqrm", numerical, phi)
         numerical = torch.einsum("xyzqrm,sm->xyzqrs", numerical, phi)
-        exact = 1.0 + (
-            sin_x[start:stop, None, None, :, None, None]
-            * sin_y[None, :, None, None, :, None]
-            * sin_z[None, None, :, None, None, :]
-        )
+        exact = _sample_slab(initial, xq[start:stop], yq, zq)
         error2 = error2 + cell_volume * torch.sum(quad_w * (numerical - exact) ** 2)
         norm2 = norm2 + cell_volume * torch.sum(quad_w * exact ** 2)
     absolute = float(torch.sqrt(error2).item())
@@ -365,5 +357,5 @@ def error_3d(
     return {
         "absolute_l2": absolute,
         "exact_l2": norm,
-        "relative_l2": absolute / norm,
+        "relative_l2": absolute / norm if norm else (0.0 if absolute == 0.0 else math.inf),
     }

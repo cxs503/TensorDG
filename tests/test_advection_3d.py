@@ -125,3 +125,32 @@ def test_anisotropic_mesh_and_degree_zero_are_supported():
 def test_invalid_arguments_are_rejected(kwargs):
     with pytest.raises(ValueError):
         solve_advection_3d(**kwargs)
+
+def test_oblique_custom_wave_on_cuboid(record_property):
+    def wave(x, y, z):
+        return .4 + torch.cos(2*math.pi*(x-y+z))
+
+    errors = []
+    velocity = (-.4, .25, .6)
+    for grid in ((4, 5, 6), (8, 10, 12), (16, 20, 24)):
+        x, y, z, coeff, _ = solve_advection_3d(grid, 2, .04, velocity, initial=wave)
+        error = error_3d(x, y, z, coeff, .04, velocity, initial=wave)["absolute_l2"]
+        errors.append(error)
+        record_property(f"grid_{grid}_L2", error)
+        assert abs(mass_3d(coeff) - .4) < 1e-13
+    assert all(math.log2(a/b) > 2.7 for a,b in zip(errors, errors[1:]))
+
+
+def test_periodic_trilinear_translation_and_zero_reference():
+    def profile(x, y, z):
+        assert all(torch.all((v >= 0) & (v < 1)) for v in (x, y, z))
+        return x*y*z
+
+    x, y, z, coeff, _ = solve_advection_3d((4, 8, 12), 1, 0., initial=profile)
+    velocity = (1., -1., 1.)
+    shifted = coeff.roll((1, -2, 3), dims=(0, 1, 2))
+    time = 2**40 + .25
+    assert error_3d(x, y, z, shifted, time, velocity, initial=profile)["absolute_l2"] < 1e-14
+    sample = exact_solution_3d(x, y[0], z[0], time, velocity, initial=profile)
+    torch.testing.assert_close(sample, ((x-.25)%1)*((y[0]+.25)%1)*((z[0]-.25)%1))
+    assert error_3d(x, y, z, coeff, 0., initial=lambda x,y,z: 0.)["relative_l2"] == math.inf
