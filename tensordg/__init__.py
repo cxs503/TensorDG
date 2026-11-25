@@ -563,6 +563,8 @@ from .poisson_2d import (
     poisson_error_2d,
 )
 
+from .transient_diffusion_2d import solve_transient_diffusion_2d
+
 # ---- poisson_2d_bc
 from .poisson_2d_bc import (
     poisson_face_powers_2d,
@@ -1086,6 +1088,7 @@ __all__ = [
     "solve_periodic_euler_dg_1d",
     "solve_poisson_2d",
     "solve_poisson_2d_bc",
+    "solve_transient_diffusion_2d",
     "solve_poisson_2d_ldg",
     "solve_poisson_2d_matrixfree",
     "solve_poisson_2d_sparse",
