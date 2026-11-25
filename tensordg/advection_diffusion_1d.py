@@ -151,14 +151,25 @@ def _material_ratios(value, widths):
     return ratio,torch.cat((ratio[:1],harmonic,ratio[-1:]))
 
 
-def _interface_profile(value, widths, name):
+def _interface_profile(value, widths, name, periodic=False):
+    faces = widths if periodic else widths[:-1]
     raw = torch.as_tensor(value,device=widths.device)
-    if raw.is_complex() or (raw.ndim and raw.shape!=widths[:-1].shape):
-        raise ValueError(f"{name} must be real and scalar or one value per internal face")
+    if raw.is_complex() or (raw.ndim and raw.shape!=faces.shape):
+        raise ValueError(f"{name} must be real and scalar or one value per coupled face")
     data = torch.as_tensor(value,device=widths.device,dtype=widths.dtype)
     if not torch.isfinite(data).all():
         raise ValueError(f"{name} must be finite")
-    return data.expand_as(widths[:-1])
+    return data.expand_as(faces)
+
+
+def _periodic_seam(face_speeds,face_ratio,widths,flux_laws):
+    if any(offset is not None for offset,_ in flux_laws):
+        raise ValueError("periodic ends cannot prescribe boundary flux or exchange")
+    tol = 64*torch.finfo(widths.dtype).eps*face_speeds.abs().max().clamp_min(1.)
+    if (face_speeds[0]-face_speeds[-1]).abs()>tol:
+        raise ValueError("velocity must agree at periodic endpoints")
+    left,right = face_ratio[-1],face_ratio[0]
+    return 2/(1/left+1/right),left/(left+right),torch.minimum(widths[-1],widths[0])
 
 
 def _boundary_flux_laws(total_flux, boundary_exchange):
@@ -199,7 +210,7 @@ def solve_advection_diffusion_1d(
     advection_scheme: str = "upwind",
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, source=0., reaction=0., total_flux=(None,None), boundary_exchange=(None,None), velocity=None, mean_value=None, cell_edges=None, diffusivity_ratio=1., diffusivity_profile=1., interface_source=0., interface_reaction=0.,
+    *, source=0., reaction=0., total_flux=(None,None), boundary_exchange=(None,None), velocity=None, mean_value=None, cell_edges=None, diffusivity_ratio=1., diffusivity_profile=1., interface_source=0., interface_reaction=0., periodic=False,
 ):
     """Solve (1) on [0, 1] and return (cell_centres, modal_coefficients, metadata).
 
@@ -228,6 +239,10 @@ def solve_advection_diffusion_1d(
         Strictly increasing mesh edges spanning [0,1]. Omit ncells to infer
         it from the edges. The default mesh has 32 equal cells. Pass the same
         edges to sampling, error and flux diagnostics on a nonuniform grid.
+    periodic : bool
+        Couple the last cell to the first. Face source and reaction vectors then
+        have one entry per cell, indexed by its right face (seam last). Supply
+        mean_value for a reaction-free ring with zero integrated net source.
     source, reaction
         Solve (a u - D u')' + reaction*u = source. Each coefficient accepts a
         scalar, one value per cell, or a callable of quadrature coordinates
@@ -306,28 +321,33 @@ def solve_advection_diffusion_1d(
     sink = profile(reaction,"reaction")
     if torch.any(sink < 0):
         raise ValueError("reaction must be nonnegative")
-    uptake = _interface_profile(interface_reaction,h,"interface_reaction")
+    uptake = _interface_profile(interface_reaction,h,"interface_reaction",periodic)
     if torch.any(uptake<0):
         raise ValueError("interface_reaction must be nonnegative")
-    needs_mean = west_flux is not None and east_flux is not None and kw==0 and ke==0 and not torch.any(sink>0) and not torch.any(uptake>0)
+    needs_mean = (periodic or (west_flux is not None and east_flux is not None and kw==0 and ke==0)) and not torch.any(sink>0) and not torch.any(uptake>0)
+    if periodic:
+        seam_ratio,seam_weight,seam_width = _periodic_seam(face_speeds,face_ratio,h,((west_flux,kw),(east_flux,ke)))
     if needs_mean and (mean_value is None or not math.isfinite(mean_value)):
-        raise ValueError("two total flux boundaries require a finite mean_value or nonzero reaction")
+        raise ValueError("closed or periodic boundaries require a finite mean_value or nonzero reaction")
     if not needs_mean and mean_value is not None:
         raise ValueError("mean_value requires two prescribed fluxes and zero reaction")
     reaction_volume = (.5*h[:,None,None])*torch.einsum("cq,q,qi,qj->cij",sink,weights,phi,phi)
     integrated_source = (.5*h[:,None])*profile(source,"source")*weights
-    sheet = _interface_profile(interface_source,h,"interface_source")
+    sheet = _interface_profile(interface_source,h,"interface_source",periodic)
     if needs_mean:
-        residual = sheet.sum() + integrated_source.sum() + west_flux - east_flux
-        scale = sheet.abs().sum() + integrated_source.abs().sum() + abs(west_flux) + abs(east_flux)
+        residual = sheet.sum() + integrated_source.sum() + (west_flux or 0.) - (east_flux or 0.)
+        scale = sheet.abs().sum() + integrated_source.abs().sum() + abs(west_flux or 0.) + abs(east_flux or 0.)
         if residual.abs() > 64*torch.finfo(dtype).eps*scale:
             raise ValueError("incompatible total flux difference and integrated source")
     # A flux jump couples to the complementary average of the test traces:
     # J_minus = J_hat - w*S, J_plus = J_hat + (1-w)*S.
     w = ratio[:-1]/(ratio[:-1]+ratio[1:])
     cell_load = integrated_source @ phi
-    cell_load[:-1] += (w*sheet)[:,None]*phi_right
-    cell_load[1:] += ((1-w)*sheet)[:,None]*phi_left
+    cell_load[:-1] += (w*sheet[:ncells-1])[:,None]*phi_right
+    cell_load[1:] += ((1-w)*sheet[:ncells-1])[:,None]*phi_left
+    if periodic:
+        cell_load[-1] += seam_weight*sheet[-1]*phi_right
+        cell_load[0] += (1-seam_weight)*sheet[-1]*phi_left
     rhs = cell_load.reshape(-1)
     for cell in range(ncells):
         idx = dofs(cell)
@@ -337,23 +357,27 @@ def solve_advection_diffusion_1d(
     jump = torch.cat((phi_right, -phi_left))
     penalties = penalty*modes*modes*face_ratio/_face_widths(h)
     jump_matrix = torch.outer(jump,jump)
-    for cell in range(ncells - 1):
-        average_derivative = diffusivity*face_ratio[cell+1]*torch.cat((dphi_right/h[cell],dphi_left/h[cell+1]))
-        consistency = -torch.outer(jump, average_derivative)
-        diffusion_face = consistency + consistency.T + penalties[cell+1]*jump_matrix
-        idx = torch.cat((dofs(cell), dofs(cell + 1)))
-        trace = torch.cat((w[cell]*phi_right,(1-w[cell])*phi_left))
-        add(idx, idx, diffusion_face + uptake[cell]*torch.outer(trace,trace))
+    def add_interface(cell,other,coefficient,tau,weight):
+        average_derivative = diffusivity*coefficient*torch.cat((dphi_right/h[cell],dphi_left/h[other]))
+        consistency = -torch.outer(jump,average_derivative)
+        diffusion_face = consistency + consistency.T + tau*jump_matrix
+        idx = torch.cat((dofs(cell),dofs(other)))
+        trace = torch.cat((weight*phi_right,(1-weight)*phi_left))
+        add(idx,idx,diffusion_face + uptake[cell]*torch.outer(trace,trace))
+    for cell in range(ncells-1):
+        add_interface(cell,cell+1,face_ratio[cell+1],penalties[cell+1],w[cell])
+    if periodic:
+        add_interface(ncells-1,0,seam_ratio,penalty*modes**2*seam_ratio/seam_width,seam_weight)
 
     # ---- advective faces: one single-valued flux per face -------------------
     # The flux of face f is a * trace(source).  For the upwind scheme the source
     # is the element on the inflow side; the outflow boundary therefore uses the
     # interior trace while the inflow boundary uses the prescribed data.
     upwind = advection_scheme == "upwind"
-    for face in range(ncells + 1):
+    for face in range(ncells if periodic else ncells+1):
         if (face==0 and west_flux is not None) or (face==ncells and east_flux is not None):
             continue
-        left_cell = face - 1 if face > 0 else None
+        left_cell = (face-1)%ncells if periodic or face>0 else None
         right_cell = face if face < ncells else None
         face_speed = face_speeds[face]
         src_is_left = (face_speed > 0.0) == upwind
@@ -377,6 +401,8 @@ def solve_advection_diffusion_1d(
         (ncells - 1, phi_right, dphi_right, 1.0, right_value, east_flux, ke),
     ):
         idx = dofs(cell)
+        if periodic:
+            continue
         if prescribed_flux is not None:
             add(idx,idx,exchange*torch.outer(endpoint,endpoint))
             rhs[idx] -= outward*prescribed_flux*endpoint
@@ -513,7 +539,7 @@ def face_fluxes(
 
 def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., right_value=1.,
                           advection_scheme="upwind", total_flux=(None,None), *, cell_edges=None, diffusivity_ratio=1.,
-                          interface_source=0., interface_reaction=0., return_cell_fluxes=False, boundary_exchange=(None,None), velocity=None, diffusivity_profile=1.):
+                          interface_source=0., interface_reaction=0., return_cell_fluxes=False, boundary_exchange=(None,None), velocity=None, diffusivity_profile=1., periodic=False):
     """Rightward DG flux at n+1 faces, with the weighted flux at internal faces.
 
     With return_cell_fluxes=True return (west, east), each of length ncells,
@@ -525,12 +551,12 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
     _,_,_,_,pl,pr,dl,dr = _operators(modes-1,coeff.device,coeff.dtype)
     west,east = coeff @ pl,coeff @ pr
     (west_flux,kw),(east_flux,ke) = _boundary_flux_laws(total_flux,boundary_exchange)
-    low = torch.cat((west.new_tensor([left_value if west_flux is None else 0.]),east))
-    high = torch.cat((west,east.new_tensor([right_value if east_flux is None else 0.])))
+    low = torch.cat((west.new_tensor([left_value if west_flux is None and not periodic else 0.]),east))
+    high = torch.cat((west,east.new_tensor([right_value if east_flux is None and not periodic else 0.])))
     _,widths = _mesh(ncells,cell_edges,coeff.device,coeff.dtype)
     ratio,face_ratio = _material_ratios(diffusivity_ratio,widths)
-    sheet = _interface_profile(interface_source,widths,"interface_source")
-    uptake = _interface_profile(interface_reaction,widths,"interface_reaction")
+    sheet = _interface_profile(interface_source,widths,"interface_source",periodic)
+    uptake = _interface_profile(interface_reaction,widths,"interface_reaction",periodic)
     if torch.any(uptake<0):
         raise ValueError("interface_reaction must be nonnegative")
     diff_scale = -2*abs(speed)/(peclet*widths)
@@ -541,15 +567,26 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
     face_speeds = _coefficient_at(speed if velocity is None else velocity,points,"velocity")
     advected = torch.where((face_speeds>0)==(advection_scheme=="upwind"),low,high)
     flux = face_speeds*advected + face_ratio*(diffusion + penalty*modes**2*(low-high)/_face_widths(widths))
+    if periodic:
+        seam_ratio,seam_weight,seam_width = _periodic_seam(face_speeds,face_ratio,widths,((west_flux,kw),(east_flux,ke)))
+        adv = east[-1] if (face_speeds[0]>0)==(advection_scheme=="upwind") else west[0]
+        seam = face_speeds[0]*adv + seam_ratio*(.5*(east_diff[-1]+west_diff[0])
+                    + penalty*modes**2*(east[-1]-west[0])/seam_width)
+        flux[0] = flux[-1] = seam
     if west_flux is not None:
         flux[0] = west_flux-kw*west[0]
     if east_flux is not None:
         flux[-1] = east_flux+ke*east[-1]
     if return_cell_fluxes:
         w = ratio[:-1]/(ratio[:-1]+ratio[1:])
-        sheet = sheet-uptake*(w*east[:-1]+(1-w)*west[1:])
+        if periodic:
+            seam_source = sheet[-1]-uptake[-1]*(seam_weight*east[-1]+(1-seam_weight)*west[0])
+        sheet = sheet[:ncells-1]-uptake[:ncells-1]*(w*east[:-1]+(1-w)*west[1:])
         west,east = flux[:-1].clone(),flux[1:].clone()
         west[1:] += (1-w)*sheet
         east[:-1] -= w*sheet
+        if periodic:
+            west[0] += (1-seam_weight)*seam_source
+            east[-1] -= seam_weight*seam_source
         return west,east
     return flux

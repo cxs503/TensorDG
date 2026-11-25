@@ -456,3 +456,33 @@ def test_smooth_diffusivity_with_a_material_jump_and_nonzero_flux():
 def test_diffusivity_must_be_positive_at_interior_and_boundary_points(profile):
     with pytest.raises(ValueError,match="diffusivity_profile"):
         solve_advection_diffusion_1d(4,diffusivity_profile=profile)
+
+
+@pytest.mark.parametrize("speed",[-1.,1.])
+def test_periodic_seam_point_reaction_anchors_ring(speed):
+    from tensordg.advection_diffusion_1d import numerical_face_fluxes
+    edges = torch.tensor([0.,.1,.5,.8,1.],dtype=torch.float64)
+    ratio = edges.new_tensor([.5,.5,2.,2.])
+    slope = edges.new_tensor([1.,1.,-1.,-1.])
+    def u(x):
+        return 1.+torch.minimum(x,1-x)
+    # J_right-J_left = -(D_right*u'_right - D_left*u'_left)
+    jump = .25*(ratio*slope-(ratio*slope).roll(-1))
+    uptake = edges.new_tensor([0.,0.,0.,.7])
+    opts = dict(cell_edges=edges,diffusivity_ratio=ratio,periodic=True,
+                interface_source=jump+uptake*u(edges[1:]),interface_reaction=uptake)
+    x,c,_ = solve_advection_diffusion_1d(degree=1,peclet=4.,speed=speed,source=speed*slope,**opts)
+    pts,uh = sample_solution(x,c,cell_edges=edges)
+    torch.testing.assert_close(uh,u(pts),atol=1e-11,rtol=0.)
+    west,east = numerical_face_fluxes(c,4.,speed,return_cell_fluxes=True,**opts)
+    torch.testing.assert_close(west,speed*u(edges[:-1])-.25*ratio*slope,atol=1e-11,rtol=0.)
+    torch.testing.assert_close(east,speed*u(edges[1:])-.25*ratio*slope,atol=1e-11,rtol=0.)
+
+
+def test_periodic_transport_rejects_incompatible_data():
+    with pytest.raises(ValueError,match="incompatible"):
+        solve_advection_diffusion_1d(4,periodic=True,mean_value=1.,source=1.)
+    with pytest.raises(ValueError,match="periodic ends"):
+        solve_advection_diffusion_1d(4,periodic=True,total_flux=(0.,None))
+    with pytest.raises(ValueError,match="velocity must agree"):
+        solve_advection_diffusion_1d(4,periodic=True,mean_value=1.,velocity=lambda x:x)
