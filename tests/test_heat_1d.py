@@ -720,3 +720,19 @@ def test_wall_admittance_storage_requires_valid_capacities_and_frequency():
                        ([1.j, 0.], 2.), ([float("inf"), 0.], 2.), ([1.], 2.)):
         with pytest.raises(ValueError):
             solve_heat_wall_admittance_1d(*args, wall_areal_heat_capacity=cap, angular_frequency=omega)
+
+
+def test_two_trace_sources_balance_each_side_of_resistive_and_perfect_contacts():
+    from tensordg import compose_heat_wall_admittances_1d
+
+    layer = torch.tensor([[2.+.6j, -.9], [-.9, 1.3+.2j]], dtype=torch.complex128)
+    left = layer.new_tensor([.34-.5j, -.12+.3j])
+    right = layer.new_tensor([.15+.1j, .32-.25j])
+    resistance = left.real.new_tensor([.6, 0.])
+    drive = layer.new_tensor([1.-.3j, .55j])
+    opts = dict(interface_heat_sources=right, interface_left_heat_sources=left)
+    y, offset = compose_heat_wall_admittances_1d([layer]*3, resistance, return_flux_offset=True, **opts)
+    _, t, flux = compose_heat_wall_admittances_1d([layer]*3, resistance, wall_temperatures=drive, **opts)
+    torch.testing.assert_close(y @ drive+offset, torch.stack((flux[0, 0], flux[-1, 1])))
+    torch.testing.assert_close(flux[:-1, 1]+flux[1:, 0], left+right)
+    torch.testing.assert_close(t[:-1, 1]-t[1:, 0], resistance*(left-flux[:-1, 1]))
