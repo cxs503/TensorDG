@@ -599,3 +599,44 @@ def test_stack_with_affine_volume_generation_and_contact_heater(record_property)
         errors.append(row)
     for coarse, fine in zip(errors, errors[1:]):
         assert all(a/b > 8 for a, b in zip(coarse, fine))
+
+
+def test_loaded_wall_flux_offset_against_augmented_transfer(record_property):
+    import numpy as np
+    from scipy.linalg import expm
+    from tensordg import harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
+
+    omega = 2.1
+    layers = [(.31, 1.5, 2., .8j), (.4, .9, 1.1, -.3+.1j), (.2, 2., 1.3, .7)]
+    resistances, heaters = [.12, .25], [.4-.3j, .1j]
+    # Exact propagation of [T, rightward flux, 1] with constant generation.
+    transfer = np.eye(3)
+    for index, (length, k, c, source) in enumerate(layers):
+        generator = np.array([[0, -1/k, 0], [-1j*omega*c, 0, source], [0, 0, 0]])
+        transfer = expm(length*generator) @ transfer
+        if index < len(heaters):
+            transfer = np.array([[1, -resistances[index], 0], [0, 1, heaters[index]], [0, 0, 1]]) @ transfer
+
+    def exact_flux(drive):
+        q = (drive[1]-transfer[0, 0]*drive[0]-transfer[0, 2])/transfer[0, 1]
+        return np.array([q, -(transfer[1] @ [drive[0], q, 1])])
+
+    errors = []
+    for n in (4, 8, 16):
+        matrices, offsets = zip(*(harmonic_heat_wall_admittance_1d(
+            omega, thickness=length, conductivity=k, capacity=c, source=source, ncells=n)
+            for length, k, c, source in layers))
+        opts = dict(layer_flux_offsets=offsets, interface_heat_sources=heaters, return_flux_offset=True)
+        y, offset = compose_heat_wall_admittances_1d(matrices, resistances, **opts)
+        error = np.max(abs(offset.numpy()-exact_flux((0., 0.))))
+        record_property(f"zero_drive_flux_error_{n}_W_per_m2", float(error))
+        for drive in ([.4+.3j, -.1j], [-.3, .7+.1j]):
+            _, _, flux, baseline = compose_heat_wall_admittances_1d(
+                matrices, resistances, wall_temperatures=drive, **opts)
+            prediction = y @ y.new_tensor(drive) + offset
+            torch.testing.assert_close(prediction, torch.stack((flux[0, 0], flux[-1, 1])), rtol=0, atol=1e-12)
+            torch.testing.assert_close(baseline, offset)
+            error = max(error, np.max(abs(prediction.numpy()-exact_flux(drive))))
+        record_property(f"max_wall_flux_error_{n}_W_per_m2", float(error))
+        errors.append(error)
+    assert all(a/b > 8 for a, b in zip(errors, errors[1:]))

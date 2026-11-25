@@ -700,7 +700,8 @@ def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
 def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall_temperatures=None,
                                      interface_heat_sources=None, interface_areal_heat_capacity=None,
                                      angular_frequency=None, interface_film_coefficients=0.,
-                                     interface_ambient_temperatures=0., layer_flux_offsets=None):
+                                     interface_ambient_temperatures=0., layer_flux_offsets=None,
+                                     return_flux_offset=False):
     """Return the complex wall admittance of a stack, ordered left to right.
 
     Supply one 2-by-2 inward-flux matrix per layer at a common
@@ -724,7 +725,10 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     Y maps temperature perturbations at fixed sources; fluxes include the
     full driven response. To include volumetric forcing, supply each layer
     with its pair of zero-wall-temperature inward fluxes in layer_flux_offsets
-    (shape layers by 2, W/m²) alongside the prescribed wall temperatures.
+    (shape layers by 2, W/m²). Set return_flux_offset=True to append the
+    two exterior inward fluxes b at zero wall temperatures. Without a drive
+    this returns (Y, b), so any new temperature pair T gives Y @ T + b
+    while all layer and interface loads remain fixed.
     """
     layers = tuple(admittances)
     if not layers:
@@ -756,8 +760,8 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
             raise ValueError("supply two finite wall temperature phasors")
     sources = matrices[0].new_zeros(len(layers)-1)
     if interface_heat_sources is not None:
-        if wall_temperatures is None:
-            raise ValueError("interface heat sources require prescribed wall temperatures")
+        if wall_temperatures is None and not return_flux_offset:
+            raise ValueError("interface heat sources require wall temperatures or return_flux_offset")
         sources = torch.as_tensor(interface_heat_sources, dtype=matrices[0].dtype, device=matrices[0].device)
         if sources.shape not in ((), (len(layers)-1,)) or not torch.isfinite(sources).all():
             raise ValueError("supply finite heat generation or one value per interface")
@@ -777,15 +781,15 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     interface_admittance = storage + film
     offsets = matrices[0].new_zeros((len(layers), 2))
     if layer_flux_offsets is not None:
-        if wall_temperatures is None:
-            raise ValueError("layer flux offsets require prescribed wall temperatures")
+        if wall_temperatures is None and not return_flux_offset:
+            raise ValueError("layer flux offsets require wall temperatures or return_flux_offset")
         pairs = [torch.as_tensor(pair, dtype=offsets.dtype, device=device) for pair in layer_flux_offsets]
         if len(pairs) != len(layers) or any(pair.shape != (2,) for pair in pairs):
             raise ValueError("supply one pair of inward flux offsets per layer")
         offsets = torch.stack(pairs)
         if not torch.isfinite(offsets).all():
             raise ValueError("layer flux offsets must be finite")
-    right_flux_offset = offsets[0, 1]
+    left_flux_offset, right_flux_offset = offsets[0]
     interfaces = []
     combined = matrices[0]
     for layer, r, source, shunt, layer_offset in zip(
@@ -799,21 +803,24 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
         denominator = d + e + r*d*e
         if denominator == 0:
             raise ValueError("interface temperatures are not uniquely determined")
-        if wall_temperatures is not None:
-            # Rows map the exterior temperatures of this partial stack to
-            # the two material-side temperatures at its newest interface.
-            mapping = -torch.stack((torch.stack((c*(1+r*e), f)),
-                                    torch.stack((c, f*(1+r*d))))) / denominator
+        if wall_temperatures is not None or return_flux_offset:
             source = source-layer_offset[0]
             offset = torch.stack((source-(1+r*e)*right_flux_offset,
                                   (1+r*d)*source-right_flux_offset)) / denominator
-            interfaces.append((mapping, offset))
+            left_flux_offset = left_flux_offset+b*offset[0]
             right_flux_offset = g*offset[1]+layer_offset[1]
+            if wall_temperatures is not None:
+                # Recover the two contact temperatures when the end drive is known.
+                mapping = -torch.stack((torch.stack((c*(1+r*e), f)),
+                                        torch.stack((c, f*(1+r*d))))) / denominator
+                interfaces.append((mapping, offset))
         left = torch.stack((a - b*c*(1+r*e)/denominator, -b*f/denominator))
         right = torch.stack((-g*c/denominator, h - g*f*(1+r*d)/denominator))
         combined = torch.stack((left, right))
+    if return_flux_offset:
+        exterior_offset = torch.stack((left_flux_offset, right_flux_offset))
     if wall_temperatures is None:
-        return combined
+        return (combined, exterior_offset) if return_flux_offset else combined
     temperatures = []
     ends = drive
     for mapping, offset in reversed(interfaces):
@@ -823,7 +830,8 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     temperatures.append(ends)
     temperatures = torch.stack(temperatures[::-1])
     fluxes = (torch.stack(matrices) @ temperatures.unsqueeze(-1)).squeeze(-1)
-    return combined, temperatures, fluxes + offsets
+    result = (combined, temperatures, fluxes + offsets)
+    return (*result, exterior_offset) if return_flux_offset else result
 
 
 def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
