@@ -358,6 +358,22 @@ def mass_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
     return float(coeff[:, :, :, 0, 0, 0].mean().item()) * math.prod(_domain_lengths(lengths))
 
 
+def energy_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
+    """Integrate half the squared real DG field on a uniform periodic box.
+
+    The last three axes store unnormalized Legendre coefficients as returned
+    by solve_advection_3d. Each squared mode has cell-average weight
+    1 / ((2k+1)(2l+1)(2m+1)) by Legendre orthogonality.
+    """
+    if coeff.ndim != 6 or min(coeff.shape) < 1 or not coeff.is_floating_point():
+        raise ValueError("provide a nonempty six-dimensional real modal field")
+    volume = math.prod(_domain_lengths(lengths))
+    weights = [(2*torch.arange(n, dtype=torch.float64, device=coeff.device)+1).reciprocal()
+               for n in coeff.shape[3:]]
+    mean_square = coeff.double().square().mean(dim=(0, 1, 2))
+    return 0.5 * volume * torch.einsum("klm,k,l,m->", mean_square, *weights).item()
+
+
 def error_3d(
     x: torch.Tensor,
     y: torch.Tensor,

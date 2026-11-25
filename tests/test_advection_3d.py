@@ -391,3 +391,42 @@ def test_temporally_localized_velocity_against_fourier_mode(record_property):
         record_property(f"rms_error_{steps}", errors[-1])
         assert abs(mass_3d(result) - 1.) < 1e-14
     assert min(math.log2(a/b) for a, b in zip(errors, errors[1:])) > 3.8
+
+
+def test_modal_energy_on_physical_box(record_property):
+    from tensordg import energy_3d
+
+    lengths = (2., .75, 3.)
+    # P2 represents this triquadratic polynomial pointwise, even though its
+    # traces need not be periodic at t=0. Integrate its square in physical x,y,z.
+    def polynomial(x, y, z):
+        return (1+x*x)*(1-y)*z*z
+
+    _, _, _, coeff, _ = solve_advection_3d((3,2,4), 2, 0., initial=polynomial, lengths=lengths)
+    a,b,c = lengths
+    exact = .5*(a+2*a**3/3+a**5/5)*(b-b*b+b**3/3)*c**5/5
+    relative_error = abs(energy_3d(coeff,lengths=lengths)/exact-1)
+    record_property("relative_energy_error",relative_error)
+    assert relative_error < 2e-14
+
+
+def test_checkerboard_energy_decay_against_upwind_rate(record_property):
+    from tensordg import energy_3d
+
+    counts, lengths = (4,6,2), (2.,3.,2.)
+    velocity = (.75,-.5,.25)
+    sign = [(-1.)**torch.arange(n,dtype=torch.float64) for n in counts]
+    initial = (1 + .4*torch.einsum("i,j,k->ijk",*sign))[...,None,None,None]
+    # Each neighbor has the opposite fluctuation. For P0 the amplitude
+    # decays at twice the sum of the directional upwind Courant rates.
+    rate = 2*sum(abs(v)*n/L for v,n,L in zip(velocity,counts,lengths))
+    end = .25
+    exact = .5*math.prod(lengths)*(1+.4**2*math.exp(-2*rate*end))
+    errors = []
+    for steps in (4,8,16):
+        _,_,_,coeff,_ = solve_advection_3d(counts,0,end,velocity,cfl=1.,
+                                           lengths=lengths,initial=initial,max_dt=end/steps)
+        errors.append(abs(energy_3d(coeff,lengths=lengths)-exact))
+        record_property(f"absolute_energy_error_{steps}", errors[-1])
+        assert abs(mass_3d(coeff,lengths=lengths)-math.prod(lengths)) < 2e-14
+    assert all(14 < a/b < 23 for a,b in zip(errors, errors[1:]))
