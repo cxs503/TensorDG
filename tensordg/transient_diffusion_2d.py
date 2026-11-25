@@ -57,7 +57,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
                                  penalty=20., load_amplitude=None, conductivity=1.,
                                  rannacher=False, return_interval_means=False, load_jump_times=(),
                                  return_load_means=False, source_history=None, wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None,
-                                 trace_heat_capacity=None, trace_power_history=None):
+                                 trace_heat_capacity=None, trace_power_history=None, return_history_heat=False):
     """Solve C*u_t - div(k grad u) + reaction*u = f with optional time-dependent loads.
 
     times specifies strictly increasing output times, each interval taking one
@@ -89,7 +89,9 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     return_interval_means=True appends the time-integrator
     weighted modal field on each requested interval for flux/heat integration.
     return_load_means=True appends the corresponding scalar load amplitude
-    per requested interval (after the optional modal means).
+    per requested interval (after the optional modal means). return_history_heat
+    appends the per-cell heat from source_history and trace_power_history only,
+    in joules for unit depth, accumulated with the actual integration stages.
     """
     times = np.asarray(times,dtype=float)
     if times.ndim != 1 or len(times)<2 or not np.isfinite(times).all() or np.any(np.diff(times)<=0):
@@ -169,6 +171,8 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
         modal_means = np.zeros_like(history[:-1])
     if return_load_means:
         load_means = np.zeros(len(times)-1)
+    if return_history_heat:
+        history_heat = np.zeros((len(times)-1,*shape[:2]))
     start_values = np.ones(len(internal))
     if load_amplitude is not None:
         def sample(t):
@@ -219,7 +223,10 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
             stop = internal[i+1]
             at_jump = stop in jump_set
             source_end = history_load(np.nextafter(stop,internal[i]) if at_jump else stop)
-            rhs += (1-weight)*source_start+weight*source_end
+            history_power = (1-weight)*source_start+weight*source_end
+            rhs += history_power
+            if return_history_heat:
+                history_heat[out] += dt*history_power.reshape(shape)[:,:,0,0]
             source_start = history_load(stop) if at_jump else source_end
         increment = factor.solve(dt*rhs)
         fraction = dt/(times[out+1]-times[out])
@@ -236,6 +243,8 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
         result += (torch.from_numpy(modal_means.reshape((len(times)-1,*shape))),)
     if return_load_means:
         result += (torch.from_numpy(load_means),)
+    if return_history_heat:
+        result += (torch.from_numpy(history_heat),)
     return result
 
 

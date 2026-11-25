@@ -308,11 +308,15 @@ def test_independent_trace_histories_at_off_grid_jumps(damped):
         left,right = [.7,.4]*slope(t)+[transfer,-transfer]
         return {"x":(left*face,right*face)}
     times = [0.,.03,.06,.1,.12]
-    x,_,u = solve_transient_diffusion_2d(lambda x,y:torch.where(x<.5,.25+0*x,-.2+0*x),times,
+    x,_,u,heat = solve_transient_diffusion_2d(lambda x,y:torch.where(x<.5,.25+0*x,-.2+0*x),times,
         ncells=n,degree=2,bc=INSULATED,rannacher=damped,contact_resistance={"x":.3*face},
         trace_heat_capacity={"x":(.7*face,.4*face)},trace_power_history=heaters,
         source_history=lambda t,x,y:torch.where(x<.5,slope(t)[0]+0*x,slope(t)[1]+0*x),
-        load_jump_times=(.04,.07))
+        load_jump_times=(.04,.07),return_history_heat=True)
+    for j,(start,stop) in enumerate(zip(times,times[1:])):
+        # Internal transfer cancels over the domain. Both bulk and trace
+        # histories contribute the change in total bulk plus surface energy.
+        assert abs(heat[j].sum()-np.dot([1.2,.9],field(stop)-field(start)))<1e-13
     for t,state in zip(times,u):
         expected = torch.where(x[:,None]<.5,field(t)[0]+0*x[:,None],field(t)[1]+0*x[:,None])
         assert abs(state[:,:,0,0]-expected).max()<1e-12
