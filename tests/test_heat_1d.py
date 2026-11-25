@@ -462,3 +462,32 @@ def test_physical_thickness_admittance_against_two_layer_transfer_matrix(record_
     for invalid in (0., -1., float("inf"), float("nan")):
         with pytest.raises(ValueError, match="thickness"):
             harmonic_heat_wall_admittance_1d(omega, thickness=invalid)
+
+
+def test_composite_harmonic_admittance_against_contact_transfer(record_property):
+    import cmath
+    import numpy as np
+    from tensordg import compose_heat_wall_admittances_1d, harmonic_heat_wall_admittance_1d
+
+    omega = 3.2
+    layers = [(0.35, 1.3, 2.1), (0.2, 3.7, 1.4), (0.6, 0.9, 1.2)]
+    contacts = [0., 0.27]
+    transfer = np.eye(2)
+    for i, (length, k, c) in enumerate(layers):
+        if i:
+            transfer = np.array([[1., -contacts[i-1]], [0., 1.]]) @ transfer
+        wave = cmath.sqrt(1j*omega*c/k)
+        a, b = cmath.cosh(wave*length), cmath.sinh(wave*length)
+        transfer = np.array([[a, -b/(k*wave)], [-k*wave*b, a]]) @ transfer
+    exact = torch.from_numpy(np.array([[-transfer[0, 0], 1.], [1., -transfer[1, 1]]])/transfer[0, 1])
+    errors = []
+    for n in (4, 8, 16):
+        matrices = [harmonic_heat_wall_admittance_1d(
+            omega, ncells=n, thickness=length, conductivity=k, capacity=c) for length, k, c in layers]
+        combined = compose_heat_wall_admittances_1d(matrices, contacts)
+        reverse = compose_heat_wall_admittances_1d([a.flip((0, 1)) for a in reversed(matrices)], contacts[::-1])
+        torch.testing.assert_close(reverse.flip((0, 1)), combined, atol=1e-13, rtol=0)
+        torch.testing.assert_close(compose_heat_wall_admittances_1d(matrices[:1]), matrices[0])
+        errors.append((combined-exact).abs().max().item())
+        record_property(f"max_stack_admittance_error_{n}_W_per_m2_K", errors[-1])
+    assert all(a/b > 8 for a, b in zip(errors, errors[1:]))

@@ -688,6 +688,42 @@ def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
     return torch.stack(columns, dim=1)
 
 
+def compose_heat_wall_admittances_1d(admittances, contact_resistance=0.):
+    """Return the complex wall admittance of a stack, ordered left to right.
+
+    Supply one 2-by-2 inward-flux matrix per source-free layer at a common
+    frequency and cross section. Each interface conserves heat flux and
+    supports the temperature drop R*q (q positive to the right). R is an
+    areal resistance in m² K/W, scalar or one value per interface.
+    """
+    layers = tuple(admittances)
+    if not layers:
+        raise ValueError("supply at least one layer admittance")
+    matrices = [torch.as_tensor(layer, dtype=torch.complex128) for layer in layers]
+    if any(layer.shape != (2, 2) or not torch.isfinite(layer).all() for layer in matrices):
+        raise ValueError("layer admittances must be finite 2-by-2 matrices")
+    resistance = torch.as_tensor(contact_resistance, device=matrices[0].device)
+    if resistance.is_complex():
+        raise ValueError("contact resistance must be real")
+    resistance = torch.as_tensor(contact_resistance, device=matrices[0].device, dtype=torch.float64)
+    if (resistance.shape not in ((), (len(layers)-1,)) or not torch.isfinite(resistance).all()
+            or (resistance < 0).any()):
+        raise ValueError("supply a nonnegative finite resistance or one per interface")
+    combined = matrices[0]
+    for layer, r in zip(matrices[1:], resistance.expand(len(layers)-1)):
+        (a, b), (c, d) = combined
+        (e, f), (g, h) = layer
+        # Eliminate the two contact temperatures using flux continuity and
+        # the contact jump directly, so perfect contact needs no 1/R limit.
+        denominator = d + e + r*d*e
+        if denominator == 0:
+            raise ValueError("interface temperatures are not uniquely determined")
+        left = torch.stack((a - b*c*(1+r*e)/denominator, -b*f/denominator))
+        right = torch.stack((-g*c/denominator, h - g*f*(1+r*d)/denominator))
+        combined = torch.stack((left, right))
+    return combined
+
+
 def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
                                ncells=16, degree=2, conductivity=1., capacity=1.,
                                heat_loss_coefficient=1., steps_per_interval=8, penalty=20.,
