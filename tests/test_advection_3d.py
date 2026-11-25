@@ -466,3 +466,40 @@ def test_directional_dissipation_matches_modal_energy_derivative(record_property
         error = abs(rate+derivative)/rate
         record_property(f"relative_energy_budget_error_{axis}", error)
         assert error < 1e-13
+
+
+def test_velocity_jumps_resolve_short_pulse_and_reversal(record_property):
+    import cmath
+
+    # Both motion intervals lie between the original five speed samples.
+    start, first, flip, stop, end = .125, .14, .166, .183, .5
+    def velocity(t):
+        return (1.3 if first <= t < flip else -.8 if flip <= t < stop else 0., 0., 0.)
+
+    def wave(x,y,z):
+        return 1 + torch.cos(2*math.pi*x)
+
+    _,_,_,initial,_ = solve_advection_3d(4,0,start,start_time=start,initial=wave)
+    # Four cells give a phase shift of pi/2 per neighbor. Upwind damping
+    # accumulates with total travel while phase accumulates with signed travel.
+    forward, backward = 1.3*(flip-first), .8*(stop-flip)
+    factor = cmath.exp(-4*(forward+backward) - 4j*(forward-backward))
+    cosine = initial-1
+    reference = 1 + factor.real*cosine - factor.imag*cosine.roll(1,dims=0)
+    errors = []
+    for dt in (.008,.004,.002):
+        _,_,_,coeff,meta = solve_advection_3d(
+            4,0,end,velocity,start_time=start,initial=initial,cfl=1.,max_dt=dt,
+            velocity_jump_times=(first,flip,stop))
+        assert meta["max_speed"] == (1.3,0.,0.)
+        assert meta["dt"] <= dt
+        errors.append(float((coeff-reference).square().mean().sqrt()))
+        record_property(f"rms_error_dt_{dt}", errors[-1])
+        assert abs(mass_3d(coeff)-1.) < 1e-14
+    assert all(8 < a/b < 28 for a,b in zip(errors,errors[1:]))
+
+
+@pytest.mark.parametrize("events", [(0.,), (1.,), (.4,.4), (float("nan"),)])
+def test_invalid_velocity_jump_times(events):
+    with pytest.raises(ValueError, match="distinct interior"):
+        solve_advection_3d(2,0,1.,lambda t: (1.,0.,0.),velocity_jump_times=events)
