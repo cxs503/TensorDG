@@ -32,3 +32,12 @@ def test_mixed_boundary_equilibrium_is_stationary():
                 neumann_flux={"top":2.})
     _,_,states = solve_transient_diffusion_2d(exact,[.1,.13,.5],**opts)
     torch.testing.assert_close(states,states[0].expand_as(states),rtol=0.,atol=3e-13)
+
+
+def test_ramped_load_heats_unanchored_mean_on_irregular_grid():
+    times = np.array([.1,.17,.2,.5])
+    _,_,states = solve_transient_diffusion_2d(1.,times,ncells=(2,3),bc=INSULATED,capacity=2.,
+                      forcing=lambda x,y:1+0*x+0*y,neumann_flux={"left":.5},
+                      load_amplitude=lambda t:2*t)
+    means = states[:,:,:,0,0].mean(dim=(1,2)).numpy()
+    np.testing.assert_allclose(means,1+.75*(times**2-times[0]**2),atol=3e-13,rtol=0.)

@@ -13,13 +13,16 @@ from .poisson_2d_bc import assemble_poisson_2d_bc
 def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degree=1,
                                  capacity=1., theta=.5, reaction=0., forcing=None, bc=None,
                                  dirichlet_values=None, neumann_flux=None, robin_films=None,
-                                 penalty=20.):
-    """Solve C*u_t - Δu + reaction*u = f with stationary loads and unit conductivity.
+                                 penalty=20., load_amplitude=None):
+    """Solve C*u_t - Δu + reaction*u = f with separable loads and unit conductivity.
 
     times specifies strictly increasing output times, each interval taking one
     theta step (.5 for Crank–Nicolson, 1 for backward Euler). capacity is a
     positive uniform volumetric heat capacity. Boundary data and reaction use
-    the conventions of assemble_poisson_2d_bc. The initial field can be a
+    the conventions of assemble_poisson_2d_bc. Optional load_amplitude(t)
+    scales the assembled source, prescribed temperature and flux data, and
+    Robin ambient temperature together. Film coefficients and reaction are
+    stationary. By default the amplitude is one. The initial field can be a
     scalar, a function (x,y) projected in L², or previously computed Legendre
     coefficients (nx,ny,degree+1,degree+1). Returns x, y and a CPU float64
     tensor of modal fields with leading time dimension, including the initial state.
@@ -60,6 +63,11 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     mass_matrix = diags(mass,format="csc")
     history = np.empty((len(times),mass.size))
     history[0] = initial.reshape(-1).numpy()
+    amplitudes = np.ones(len(times))
+    if load_amplitude is not None:
+        amplitudes = np.asarray([load_amplitude(float(t)) for t in times],dtype=float)
+        if amplitudes.shape!=times.shape or not np.isfinite(amplitudes).all():
+            raise ValueError("load_amplitude must return a finite scalar at each time")
     last_dt = None
     for i,dt in enumerate(np.diff(times)):
         if dt!=last_dt:
@@ -67,5 +75,6 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
             last_dt = dt
         state = history[i]
         # Solve for the increment to retain stationary states to roundoff.
-        history[i+1] = state+factor.solve(dt*(load.numpy()-operator@state))
+        amplitude = (1-theta)*amplitudes[i]+theta*amplitudes[i+1]
+        history[i+1] = state+factor.solve(dt*(amplitude*load.numpy()-operator@state))
     return x,y,torch.from_numpy(history.reshape((len(times),*shape)))
