@@ -360,3 +360,34 @@ def test_smooth_velocity_reversal_against_continuous_characteristics(record_prop
         errors.append(error_3d(x,y,z,coeff,end,mean_velocity)["absolute_l2"])
         record_property(f"absolute_l2_{n}", errors[-1])
     assert errors[-1] < errors[0] / 10
+
+
+def test_temporally_localized_velocity_against_fourier_mode(record_property):
+    import cmath
+
+    # A pulse between the first two sample times, with integral 1/6.
+    def pulse(t):
+        u = 4 * t
+        return (4 * u * (1 - u) if 0 < u < 1 else 0., 0., 0.)
+
+    def wave(x, y, z):
+        return 1 + torch.cos(2 * math.pi * x)
+
+    _, _, _, initial, _ = solve_advection_3d(4, 0, 0., initial=wave)
+    with pytest.raises(ValueError, match="all sampled velocities vanish"):
+        solve_advection_3d(4, 0, 1., pulse, initial=initial)
+    with pytest.raises(ValueError, match="requested CFL"):
+        solve_advection_3d(4, 0, 1., pulse, max_dt=0.25, initial=initial)
+
+    factor = cmath.exp(4 * (-1-1j) / 6)
+    cosine = initial - 1
+    exact = 1 + factor.real * cosine - factor.imag * cosine.roll(1, dims=0)
+    errors = []
+    for steps in (32, 64, 128):
+        _, _, _, result, meta = solve_advection_3d(
+            4, 0, 1., pulse, initial=initial, max_dt=1/steps, cfl=0.25)
+        assert meta["steps"] == steps
+        errors.append(float((result - exact).square().mean().sqrt()))
+        record_property(f"rms_error_{steps}", errors[-1])
+        assert abs(mass_3d(result) - 1.) < 1e-14
+    assert min(math.log2(a/b) for a, b in zip(errors, errors[1:])) > 3.8

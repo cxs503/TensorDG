@@ -312,6 +312,8 @@ def solve_advection_3d(
         bounds = tuple(map(abs, fixed))
 
     wave_rate = sum(a / h for a, h in zip(bounds, spacing))
+    if variable and duration and not wave_rate and max_speed is None and max_dt is None:
+        raise ValueError("all sampled velocities vanish; supply max_speed or max_dt to resolve the interval")
     steps = math.ceil(duration / (cfl / ((2 * degree + 1) * wave_rate))) if wave_rate else 0
     if max_dt is not None:
         steps = max(steps, math.ceil(duration / max_dt))
@@ -321,6 +323,11 @@ def solve_advection_3d(
         components = _velocity_components(velocity(t)) if variable else fixed
         if variable and max_speed is not None and any(abs(a) > b for a, b in zip(components, bounds)):
             raise ValueError("stage velocity exceeds max_speed")
+        if variable and max_speed is None:
+            stage_rate = sum(abs(a) / h for a, h in zip(components, spacing))
+            stage_cfl = dt * (2 * degree + 1) * stage_rate
+            if stage_cfl > cfl and not math.isclose(stage_cfl, cfl, rel_tol=1e-12):
+                raise ValueError("stage velocity exceeds the requested CFL; supply max_speed or reduce max_dt")
         return _rhs(state, spacing, components, volume, phi_left, phi_right)
 
     for step in range(steps):

@@ -73,3 +73,5 @@ identities, and argument validation.
 ## Continuing a transport segment
 
 Pass the coefficient tensor returned by the previous call as `initial`, using the same mesh, degree and physical box. Set `start_time` to the saved time and `final_time` to the absolute end time. A spatially uniform velocity can be a three-component tuple or a function of the absolute RK stage time. For a rapidly varying velocity, supply component bounds through `max_speed` and a temporal resolution cap through `max_dt`. The three-dimensional tests compare a forward/reverse run to the initial wave and accelerating flow to the integrated characteristic displacement.
+
+Five zero velocity samples cannot distinguish stationary flow from a pulse between samples. For a positive-duration callback in this case, provide a component bound or a time-step cap. Without an explicit speed bound the solver checks the requested CFL at every evaluated RK stage. For pulses shorter than the stage spacing, choose `max_dt` to resolve the pulse. The P0 pulse regression compares against the exact semidiscrete Fourier mode after a parabolic velocity pulse with integrated displacement 1/6.
