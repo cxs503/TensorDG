@@ -319,3 +319,27 @@ def test_directional_conductivity_with_mixed_boundary_powers(sparse):
     yf = torch.arange(4,dtype=y.dtype)/3
     torch.testing.assert_close(qx,-2*(2*xf[:,None]+y)/3,atol=3e-11,rtol=0.)
     torch.testing.assert_close(qy,-5*(2*yf+x[:,None])/4,atol=3e-11,rtol=0.)
+
+
+@pytest.mark.parametrize("cross",[-.8,.8])
+@pytest.mark.parametrize("sparse",[False,True])
+def test_rotated_tensor_mixed_boundary_quadratic(cross,sparse):
+    from tensordg import poisson_face_powers_2d
+    exact = lambda x,y:1+x*x+x*y+y*y
+    gx = lambda x,y:2*(2*x+y)+cross*(2*y+x)
+    gy = lambda x,y:cross*(2*x+y)+5*(2*y+x)
+    opts = dict(conductivity=(2.,5.,cross),bc=dict(left="dirichlet",right="robin",top="neumann",bottom="dirichlet"),
+                dirichlet_values={"left":exact,"bottom":exact},robin_films={"right":(3.,lambda x,y:exact(x,y)+gx(x,y)/3)},
+                neumann_flux={"top":gy})
+    x,y,u,meta = solve_poisson_2d_bc((4,3),2,forcing=lambda x,y:0*x+0*y-14-2*cross,sparse=sparse,**opts)
+    assert meta["matrix_symmetry_error"]<1e-12
+    assert l2_error_2d(x,y,u,exact)["absolute_l2"]<3e-11
+    qx,qy = poisson_face_powers_2d(u,**opts)
+    torch.testing.assert_close(qx,-gx(torch.arange(5,dtype=x.dtype)[:,None]/4,y)/3,atol=3e-11,rtol=0.)
+    torch.testing.assert_close(qy,-gy(x[:,None],torch.arange(4,dtype=x.dtype)/3)/4,atol=3e-11,rtol=0.)
+
+
+@pytest.mark.parametrize("cross",[1.,-1.,1.1])
+def test_reject_non_positive_definite_tensor(cross):
+    with pytest.raises(ValueError,match="positive definite"):
+        solve_poisson_2d_bc(2,conductivity=(1.,1.,cross),forcing=lambda x,y:x+y)

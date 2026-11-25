@@ -85,13 +85,33 @@ def _film_samples(films, side, centers, nodes):
 
 def _cell_conductivity(value, nx, ny, device, dtype):
     k = torch.as_tensor(value,device=device,dtype=dtype)
-    if not torch.isfinite(k).all() or (k<=0).any():
-        raise ValueError("conductivity must be finite and positive")
+    cross = None
     if k.shape in ((),(nx,ny)):
-        return k.expand(nx,ny),k.expand(nx,ny)
-    if k.shape in ((2,),(nx,ny,2)):
-        return k.expand(nx,ny,2).unbind(-1)
-    raise ValueError("supply scalar or (nx,ny) conductivity, or directional values of shape (2,) or (nx,ny,2)")
+        xx = yy = k.expand(nx,ny)
+    elif k.shape in ((2,),(nx,ny,2)):
+        xx,yy = k.expand(nx,ny,2).unbind(-1)
+    elif k.shape in ((3,),(nx,ny,3)):
+        xx,yy,cross = k.expand(nx,ny,3).unbind(-1)
+    else:
+        raise ValueError("supply cellwise or uniform conductivity with one, two or three components")
+    if not torch.isfinite(k).all() or (xx<=0).any() or (yy<=0).any():
+        raise ValueError("conductivity must be finite with positive diagonal entries")
+    if cross is not None and (cross.abs()/xx.sqrt() >= yy.sqrt()).any():
+        raise ValueError("conductivity tensor must be positive definite")
+    return xx,yy,cross
+
+
+def _legendre_derivative(phi):
+    # Coefficient of P_i in dP_j/dxi for j>i with odd j-i is 2*i+1.
+    i = torch.arange(phi.shape[1],device=phi.device)
+    gap = i[None,:]-i[:,None]
+    return phi @ ((2*i[:,None]+1)*((gap>0) & (gap%2==1))).to(phi.dtype)
+
+
+def _tangent_basis(dphi,endpoint,axis,scale):
+    values = (endpoint[None,:,None]*dphi[:,None,:] if axis=="x" else
+              dphi[:,:,None]*endpoint[None,None,:])
+    return scale*values.flatten(1)
 
 
 def _interface_conductivity(left,right):
@@ -117,7 +137,8 @@ def assemble_poisson_2d_bc(
     (x, y). Unspecified Dirichlet traces are zero. neumann_flux supplies inward heat flux n·K grad(u).
     conductivity is a positive scalar or (nx,ny) field of element constants.
     A pair (kx,ky) or an (nx,ny,2) field specifies a diagonal conductivity
-    tensor in grid coordinates.
+    tensor in grid coordinates. Use (Kxx,Kyy,Kxy) or (nx,ny,3) for a symmetric
+    positive-definite tensor with a cross term.
     robin_films maps each Robin side to (h, ambient), implementing outward
     Fourier flux h*(u-ambient); both entries accept scalars or callables.
     reaction is a finite nonnegative scalar or callable of (x,y). Positive
@@ -191,7 +212,12 @@ def assemble_poisson_2d_bc(
     volume_y = (hx / hy) * torch.einsum("ki,lj->klij", mass, stiffness).reshape(
         local_dofs, local_dofs,
     )
-    k_x,k_y = _cell_conductivity(conductivity,nx,ny,dev,dtype)
+    k_x,k_y,cross = _cell_conductivity(conductivity,nx,ny,dev,dtype)
+    if cross is not None:
+        dphi = _legendre_derivative(phi)
+        mixed = (dphi.T*weights) @ phi
+        xy = torch.kron(mixed,mixed.T.contiguous())
+        volume_xy = xy+xy.T
     xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
     coefficient = reaction(xq, yq) if callable(reaction) else reaction
@@ -213,26 +239,36 @@ def assemble_poisson_2d_bc(
             blocks = (hx*hy/4)*(basis.T @ (weighted[...,None]*basis))
         for iy in range(ny):
             block = k_x[ix,iy]*volume_x + k_y[ix,iy]*volume_y + (blocks[iy] if coefficient.ndim else reaction_block)
+            if cross is not None:
+                block = block+cross[ix,iy]*volume_xy
             add(dofs(ix, iy), block)
 
     # ---- interior faces (identical to the Dirichlet-only benchmark) ------
     measure_x, measure_y = 0.5 * hy, 0.5 * hx
-    face_x = interior_face_operator(
-        phi, weights, phi_left, phi_right, dphi_left, dphi_right,
-        "x", hx, measure_x, penalty, modes,
-    )
-    kx = _interface_conductivity(k_x[:-1],k_x[1:])
-    for ix in range(nx - 1):
-        for iy in range(ny):
-            add(torch.cat((dofs(ix, iy), dofs(ix + 1, iy))), kx[ix,iy]*face_x)
-    face_y = interior_face_operator(
-        phi, weights, phi_left, phi_right, dphi_left, dphi_right,
-        "y", hy, measure_y, penalty, modes,
-    )
-    ky = _interface_conductivity(k_y[:,:-1],k_y[:,1:])
-    for ix in range(nx):
-        for iy in range(ny - 1):
-            add(torch.cat((dofs(ix, iy), dofs(ix, iy + 1))), ky[ix,iy]*face_y)
+    for axis,normal,h,measure in (("x",k_x,hx,measure_x),("y",k_y,hy,measure_y)):
+        face = interior_face_operator(phi,weights,phi_left,phi_right,dphi_left,dphi_right,
+                                      axis,h,measure,penalty,modes)
+        sx,sy = int(axis=="x"),int(axis=="y")
+        if cross is not None:
+            tr,_ = _face_basis(phi,phi_right,dphi_right,axis,2/h)
+            tl,_ = _face_basis(phi,phi_left,dphi_left,axis,2/h)
+            jump = torch.cat((tr,-tl),dim=1)
+            tangent_r = _tangent_basis(dphi,phi_right,axis,1/measure)
+            tangent_l = _tangent_basis(dphi,phi_left,axis,1/measure)
+            zero = torch.zeros_like(tangent_l)
+            left_block = -measure/2*(jump.T*weights) @ torch.cat((tangent_r,zero),dim=1)
+            right_block = -measure/2*(jump.T*weights) @ torch.cat((zero,tangent_l),dim=1)
+            left_block = left_block+left_block.T
+            right_block = right_block+right_block.T
+        a,b = normal[:nx-sx,:ny-sy],normal[sx:,sy:]
+        harmonic = _interface_conductivity(a,b)
+        for ix in range(nx-sx):
+            for iy in range(ny-sy):
+                jx,jy = ix+sx,iy+sy
+                block = face
+                if cross is not None:
+                    block = block+(cross[ix,iy]/a[ix,iy])*left_block+(cross[jx,jy]/b[ix,iy])*right_block
+                add(torch.cat((dofs(ix,iy),dofs(jx,jy))),harmonic[ix,iy]*block)
 
     # ---- boundary faces --------------------------------------------------
     load = torch.zeros(ndofs, device=dev, dtype=dtype).view(nx, ny, local_dofs)
@@ -250,9 +286,17 @@ def assemble_poisson_2d_bc(
                 phi, weights, endpoint, d_endpoint, axis, outward,
                 h_normal, measure, penalty, modes,
             )
+            if cross is not None:
+                side_cross = cross[index,:] if axis=="x" else cross[:,index]
+                tangent = outward*_tangent_basis(dphi,endpoint,axis,1/measure)
+                coupling = -measure*(trace.T*weights) @ tangent
+                coupling = coupling+coupling.T
             for line in range(ny if axis == "x" else nx):
                 ix, iy = (index, line) if axis == "x" else (line, index)
-                add(dofs(ix, iy), normal_k[line]*block)
+                boundary = normal_k[line]*block
+                if cross is not None:
+                    boundary = boundary+side_cross[line]*coupling
+                add(dofs(ix, iy), boundary)
             data = traces.get(side)
             if data is None:
                 continue
@@ -276,6 +320,8 @@ def assemble_poisson_2d_bc(
         contribution = measure*((samples*weights) @ test)
         if types[side] == "dirichlet":
             contribution *= normal_k[:,None]
+            if cross is not None:
+                contribution -= measure*side_cross[:,None]*((samples*weights) @ tangent)
         if axis == "x":
             load[index] += contribution
         else:
@@ -393,7 +439,7 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
         raise ValueError("expected square P1 to P3 modal blocks and positive penalty")
     nodes, weights, phi, _, _, pl, pr, dl, dr = _operators(modes-1, coeff.device, coeff.dtype)
     types = _resolve_bc(bc)
-    k_x,k_y = _cell_conductivity(conductivity,nx,ny,coeff.device,coeff.dtype)
+    k_x,k_y,cross = _cell_conductivity(conductivity,nx,ny,coeff.device,coeff.dtype)
     fields = coeff.flatten(2)
     outputs = []
     for axis, count, tangential, low, high in (("x", nx, ny, "left", "right"),
@@ -404,6 +450,13 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
         scale = penalty*modes*modes*count
         interior = -.5*(u[:-1] @ gr.T + u[1:] @ gl.T) + scale*(u[:-1] @ tr.T-u[1:] @ tl.T)
         material = k_x if axis=="x" else k_y.T
+        if cross is not None:
+            dphi = _legendre_derivative(phi)
+            tangent_l = _tangent_basis(dphi,pl,axis,2*tangential)
+            tangent_r = _tangent_basis(dphi,pr,axis,2*tangential)
+            offdiag = cross if axis=="x" else cross.T
+            ratio = (offdiag/material)[...,None]
+            interior -= .5*(ratio[:-1]*(u[:-1] @ tangent_r.T)+ratio[1:]*(u[1:] @ tangent_l.T))
         interior *= _interface_conductivity(material[:-1],material[1:])[...,None]
         result = coeff.new_empty((count+1, tangential))
         result[1:-1] = (interior @ weights)/(2*tangential)
@@ -422,6 +475,9 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
                 flux = -sign*prescribed.expand(tangential, len(nodes))
             else:
                 flux = material[index,:,None]*(-(u[index] @ gradient.T) + sign*scale*(u[index] @ trace.T-prescribed))
+                if cross is not None:
+                    tangent = tangent_l if index==0 else tangent_r
+                    flux -= offdiag[index,:,None]*(u[index] @ tangent.T)
             result[index] = (flux @ weights)/(2*tangential)
         outputs.append(result if axis == "x" else result.T)
     return tuple(outputs)
