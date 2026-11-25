@@ -614,3 +614,17 @@ def test_switched_dirichlet_offsets_match_piecewise_static_ends(speed,rannacher)
     torch.testing.assert_close(history[-1],previous,atol=1e-12,rtol=0.)
     torch.testing.assert_close(west,expected_w,atol=1e-12,rtol=0.)
     torch.testing.assert_close(east,expected_e,atol=1e-12,rtol=0.)
+
+
+def test_simultaneous_mixed_boundary_histories_reproduce_affine_transient():
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d
+    # u=(1+x)*t gives u_t+J_x=1+x+t and J(1,t)=(2-D)*t.
+    times = torch.tensor([0.,.04,.1],dtype=torch.float64)
+    x,u,_,(west,east) = solve_transient_advection_diffusion_1d(times,0.,ncells=5,degree=1,peclet=4.,
+                total_flux=(None,0.),boundary_value_history=lambda t:(t,0.),
+                total_flux_history=lambda t:(0.,1.75*t),source_history=lambda t,x:1+x+t,
+                return_face_transport=True)
+    torch.testing.assert_close(u[:,:,0],times[:,None]*(1+x),atol=1e-12,rtol=0.)
+    integral = .5*times.square().diff()
+    torch.testing.assert_close(west[:,0],.75*integral,atol=1e-12,rtol=0.)
+    torch.testing.assert_close(east[:,-1],1.75*integral,atol=1e-12,rtol=0.)
