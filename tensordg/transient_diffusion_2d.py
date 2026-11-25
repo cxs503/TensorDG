@@ -12,7 +12,8 @@ from .poisson_2d_bc import assemble_poisson_2d_bc
 def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degree=1,
                                  capacity=1., theta=.5, reaction=0., forcing=None, bc=None,
                                  dirichlet_values=None, neumann_flux=None, robin_films=None,
-                                 penalty=20., load_amplitude=None, conductivity=1.):
+                                 penalty=20., load_amplitude=None, conductivity=1.,
+                                 rannacher=False, return_interval_means=False):
     """Solve C*u_t - div(k grad u) + reaction*u = f with separable loads.
 
     times specifies strictly increasing output times, each interval taking one
@@ -26,12 +27,23 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     scalar, a function (x,y) projected in capacity-weighted L², or previously computed Legendre
     coefficients (nx,ny,degree+1,degree+1). Returns x, y and a CPU float64
     tensor of modal fields with leading time dimension, including the initial state.
+    rannacher=True starts Crank–Nicolson with two backward Euler half steps
+    in the first interval. return_interval_means=True appends the time-integrator
+    weighted modal field on each requested interval for flux/heat integration.
+    Weight the prescribed boundary data with the same time rule.
     """
     times = np.asarray(times,dtype=float)
     if times.ndim != 1 or len(times)<2 or not np.isfinite(times).all() or np.any(np.diff(times)<=0):
         raise ValueError("times must be a finite strictly increasing vector")
     if not .5<=theta<=1:
         raise ValueError("require theta in [0.5,1]")
+    if rannacher and theta!=.5:
+        raise ValueError("Rannacher startup requires theta=.5")
+    if rannacher:
+        midpoint = times[0]+.5*(times[1]-times[0])
+        if not times[0]<midpoint<times[1]:
+            raise ValueError("first interval has no representable midpoint")
+        times = np.insert(times,1,midpoint)
     if forcing is None:
         forcing = lambda x,y: torch.zeros_like(x+y)
     operator,load,grid,_ = assemble_poisson_2d_bc(ncells,degree,penalty,bc,forcing,neumann_flux,
@@ -89,13 +101,25 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
         amplitudes = np.asarray([load_amplitude(float(t)) for t in times],dtype=float)
         if amplitudes.shape!=times.shape or not np.isfinite(amplitudes).all():
             raise ValueError("load_amplitude must return a finite scalar at each time")
-    last_dt = None
+    last_shift = None
     for i,dt in enumerate(np.diff(times)):
-        if dt!=last_dt:
-            factor = splu((mass_matrix+theta*dt*operator).tocsc())
-            last_dt = dt
+        weight = 1. if rannacher and i<2 else theta
+        shift = weight*dt
+        if shift!=last_shift:
+            factor = splu((mass_matrix+shift*operator).tocsc())
+            last_shift = shift
         state = history[i]
         # Solve for the increment to retain stationary states to roundoff.
-        amplitude = (1-theta)*amplitudes[i]+theta*amplitudes[i+1]
+        amplitude = (1-weight)*amplitudes[i]+weight*amplitudes[i+1]
         history[i+1] = state+factor.solve(dt*(amplitude*load.numpy()-operator@state))
-    return x,y,torch.from_numpy(history.reshape((len(times),*shape)))
+    fields = torch.from_numpy(history.reshape((len(times),*shape)))
+    if return_interval_means:
+        means = (1-theta)*fields[:-1]+theta*fields[1:]
+        if rannacher:
+            fraction = (times[1]-times[0])/(times[2]-times[0])
+            means[1] = fraction*fields[1]+(1-fraction)*fields[2]
+            means = means[1:]
+    if rannacher:
+        fields = torch.cat((fields[:1],fields[2:]))
+    result = (x,y,fields)
+    return result+(means,) if return_interval_means else result

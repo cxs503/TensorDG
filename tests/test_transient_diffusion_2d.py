@@ -71,3 +71,16 @@ def test_weighted_initial_projection_preserves_total_heat():
                           hx*y[None,:]/6,torch.tensor(hx*hy/36,dtype=x.dtype)),dim=-1)
     heat = (states.flatten(-2)*moments).sum(dim=(1,2,3))*hx*hy
     torch.testing.assert_close(heat,torch.full_like(heat,.25),atol=2e-13,rtol=0.)
+
+
+def test_rannacher_matches_split_solve_and_stage_means():
+    opts = dict(ncells=(3,2),degree=1,load_amplitude=lambda t:1+t*t,
+                dirichlet_values={"left":1.},conductivity=(2.,1.,.2))
+    initial = lambda x,y:x*y+.2
+    _,_,fields,means = solve_transient_diffusion_2d(initial,[.1,.16,.25],rannacher=True,
+                                                       return_interval_means=True,**opts)
+    _,_,be = solve_transient_diffusion_2d(initial,[.1,.13,.16],theta=1.,**opts)
+    _,_,cn = solve_transient_diffusion_2d(be[-1],[.16,.25],**opts)
+    torch.testing.assert_close(fields[1:],cn)
+    torch.testing.assert_close(means[0],be[1:].mean(dim=0))
+    torch.testing.assert_close(means[1],cn.mean(dim=0))
