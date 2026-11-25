@@ -591,3 +591,26 @@ def test_end_flux_history_rejects_dirichlet_load():
     with pytest.raises(ValueError,match="Dirichlet"):
         solve_transient_advection_diffusion_1d([0.,.1],0.,ncells=4,total_flux=(None,0.),
                                                total_flux_history=lambda t:(1.,0.))
+
+
+@pytest.mark.parametrize("speed",[-1.,1.])
+@pytest.mark.parametrize("rannacher",[False,True])
+def test_switched_dirichlet_offsets_match_piecewise_static_ends(speed,rannacher):
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d as solve
+    opts = dict(ncells=5,degree=2,speed=speed,left_value=.2,right_value=-.3,return_face_transport=True)
+    jump,end = .03125,.09375
+    def values(t):
+        return (.8,-.4) if t<jump else (-.3,.6)
+    _,history,_,(west,east) = solve([0.,end],.1,**opts,rannacher=rannacher,
+                        boundary_value_history=values,source_jump_times=[jump])
+    previous = .1
+    expected_w,expected_e = 0.,0.
+    for a,b in ((0.,jump),(jump,end)):
+        l,r = values(a)
+        static = dict(opts,left_value=.2+l,right_value=-.3+r)
+        _,part,_,(w,e) = solve([a,b],previous,**static,rannacher=rannacher)
+        previous = part[-1]
+        expected_w,expected_e = expected_w+w,expected_e+e
+    torch.testing.assert_close(history[-1],previous,atol=1e-12,rtol=0.)
+    torch.testing.assert_close(west,expected_w,atol=1e-12,rtol=0.)
+    torch.testing.assert_close(east,expected_e,atol=1e-12,rtol=0.)

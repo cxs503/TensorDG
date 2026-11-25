@@ -261,7 +261,7 @@ def solve_advection_diffusion_1d(
         ``"downwind"`` exists only as an implementation negative control: it is
         *not* a consistent scheme and must fail the verification gates.
     """
-    centers,h,system,rhs,needs_mean,metadata,_ = _assemble_transport(
+    centers,h,system,rhs,needs_mean,metadata,_,_ = _assemble_transport(
         ncells,degree,peclet,speed,penalty,left_value,right_value,advection_scheme,device,dtype,
         source=source,reaction=reaction,total_flux=total_flux,boundary_exchange=boundary_exchange,
         velocity=velocity,mean_value=mean_value,cell_edges=cell_edges,diffusivity_ratio=diffusivity_ratio,
@@ -412,6 +412,7 @@ def _assemble_transport(
     # The flux of face f is a * trace(source).  For the upwind scheme the source
     # is the element on the inflow side; the outflow boundary therefore uses the
     # interior trace while the inflow boundary uses the prescribed data.
+    value_load = centers.new_zeros((2,modes))
     upwind = advection_scheme == "upwind"
     for face in range(ncells if periodic else ncells+1):
         if (face==0 and west_flux is not None) or (face==ncells and east_flux is not None):
@@ -423,11 +424,10 @@ def _assemble_transport(
         source = left_cell if src_is_left else right_cell
         trace = phi_right if src_is_left else phi_left
         if source is None:
-            boundary_value = left_value if face == 0 else right_value
             if left_cell is not None:
-                rhs[dofs(left_cell)] += -face_speed * boundary_value * phi_right
+                value_load[1] -= face_speed*phi_right
             if right_cell is not None:
-                rhs[dofs(right_cell)] += face_speed * boundary_value * phi_left
+                value_load[0] += face_speed*phi_left
             continue
         if left_cell is not None:
             add(dofs(left_cell), dofs(source), face_speed * torch.outer(phi_right, trace))
@@ -452,7 +452,9 @@ def _assemble_transport(
         block = consistency + consistency.T + penalty_face * torch.outer(endpoint, endpoint)
         add(idx, idx, block)
         # data terms of the Nitsche form: -int (D v' n) g + penalty * int g v
-        rhs[idx] += (-derivative + penalty_face * endpoint) * value
+        side = 0 if cell==0 else 1
+        value_load[side] += -derivative + penalty_face*endpoint
+        rhs[idx] += value_load[side]*value
 
     metadata = {
         "ncells": ncells, "degree": degree, "peclet": peclet, "speed": a,
@@ -464,12 +466,13 @@ def _assemble_transport(
         metadata["diffusivity_ratio"] = ratio.tolist()
     if cell_edges is not None:
         metadata["cell_edges"] = torch.as_tensor(cell_edges,dtype=dtype).tolist()
-    return centers,h,system,rhs,needs_mean,metadata,add_face_sources
+    return centers,h,system,rhs,needs_mean,metadata,add_face_sources,value_load
 
 
 def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_history=None,
                                           source_jump_times=(), interface_source_history=None, rannacher=False,
-                                          return_face_transport=False, total_flux_history=None, **spatial_options):
+                                          return_face_transport=False, total_flux_history=None,
+                                          boundary_value_history=None, **spatial_options):
     """Advance u_t + (a*u-D*u_x)_x + reaction*u = source with fixed coefficients.
 
     Spatial keywords match solve_advection_diffusion_1d. Initial data are a
@@ -480,7 +483,9 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
     interface_source_history(t) adds a scalar or one source per coupled face,
     ordered as for interface_source. total_flux_history(t) adds a pair of
     rightward flux offsets on prescribed flux or exchange boundaries; use
-    zero on any Dirichlet end. List jumps of all time-dependent loads in
+    zero on any Dirichlet end. boundary_value_history(t) adds a pair of
+    concentrations to the static Dirichlet data; use zero on flux and
+    exchange ends. List jumps of all time-dependent loads in
     source_jump_times, with the new source value
     at each jump. Internal subdivisions preserve the requested output times.
     With rannacher=True, replace the first Crank-Nicolson step and the first
@@ -494,7 +499,7 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
         raise ValueError("theta must be in [0.5,1]")
     if rannacher and theta!=.5:
         raise ValueError("Rannacher startup requires theta=.5")
-    centers,widths,operator,load,_,metadata,add_face_sources = _assemble_transport(**spatial_options)
+    centers,widths,operator,load,_,metadata,add_face_sources,value_load = _assemble_transport(**spatial_options)
     grid = torch.as_tensor(times,dtype=torch.float64,device=centers.device)
     if grid.ndim!=1 or len(grid)<2 or not torch.isfinite(grid).all() or torch.any(grid.diff()<=0):
         raise ValueError("times must be finite and strictly increasing")
@@ -535,16 +540,29 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
                         "advection_scheme","total_flux","cell_edges","diffusivity_ratio","interface_reaction",
                         "boundary_exchange","velocity","diffusivity_profile","periodic") if k in spatial_options}
         static_sheet = _interface_profile(spatial_options.get("interface_source",0.),widths,"interface_source",metadata["periodic"])
-    if total_flux_history is not None:
+    changing_boundary = total_flux_history is not None or boundary_value_history is not None
+    if changing_boundary:
         if metadata["periodic"]:
-            raise ValueError("total_flux_history requires open boundaries")
+            raise ValueError("time-dependent end data require open boundaries")
         laws = _boundary_flux_laws(spatial_options.get("total_flux",(None,None)),
                                    spatial_options.get("boundary_exchange",(None,None)))
         fixed_value = torch.tensor([offset is None for offset,_ in laws],device=centers.device)
-        if fixed_value.all():
+        if total_flux_history is not None and fixed_value.all():
             raise ValueError("total_flux_history requires a flux or exchange boundary")
+        if boundary_value_history is not None and not fixed_value.any():
+            raise ValueError("boundary_value_history requires a Dirichlet boundary")
         west_trace = (-1.)**indices
         boundary_integral = centers.new_zeros(2)
+
+    def end_data(values,forbidden,name):
+        raw = torch.as_tensor(values,device=centers.device)
+        if raw.shape!=(2,) or raw.is_complex():
+            raise ValueError(f"{name} must return two real offsets")
+        data = torch.as_tensor(values,device=centers.device,dtype=centers.dtype)
+        if not torch.isfinite(data).all() or torch.any(data[forbidden]!=0):
+            raise ValueError(f"{name} requires finite offsets on matching Dirichlet or flux boundaries")
+        return data
+
     def forcing(time):
         if source_history is None:
             projected = centers.new_zeros((n,degree+1))
@@ -557,18 +575,20 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
             add_face_sources(projected,sheet)
         boundary = 0.
         if total_flux_history is not None:
-            values = total_flux_history(time)
-            raw = torch.as_tensor(values,device=centers.device)
-            if raw.shape!=(2,) or raw.is_complex():
-                raise ValueError("total_flux_history must return two real rightward flux offsets")
-            boundary = torch.as_tensor(values,device=centers.device,dtype=centers.dtype)
-            if not torch.isfinite(boundary).all() or torch.any(boundary[fixed_value]!=0):
-                raise ValueError("boundary flux offsets must be finite and zero on Dirichlet ends")
+            boundary = end_data(total_flux_history(time),fixed_value,"total_flux_history")
             projected[0] += boundary[0]*west_trace
             projected[-1] -= boundary[1]
+        if boundary_value_history is not None:
+            data = end_data(boundary_value_history(time),~fixed_value,"boundary_value_history")
+            terms = data[:,None]*value_load
+            projected[0] += terms[0]
+            projected[-1] += terms[1]
+            # Constant test functions give inward power. Convert both offsets
+            # to the rightward flux convention used by interval diagnostics.
+            boundary = boundary+torch.stack((terms[0,0],-terms[1,0]))
         return projected.reshape(-1),sheet,boundary
     index = 1
-    changing_load = any(v is not None for v in (source_history,interface_source_history,total_flux_history))
+    changing_load = any(v is not None for v in (source_history,interface_source_history,total_flux_history,boundary_value_history))
     if changing_load:
         start_load,start_sheet,start_boundary = forcing(output[0])
     for start,stop in zip(boundaries,boundaries[1:]):
@@ -589,7 +609,7 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
                 stage_load = load+(1-weight)*start_load+weight*end_load
                 if return_face_transport and interface_source_history is not None:
                     sheet_integral = sheet_integral+dt*((1-weight)*start_sheet+weight*end_sheet)
-                if return_face_transport and total_flux_history is not None:
+                if return_face_transport and changing_boundary:
                     boundary_integral = boundary_integral+dt*((1-weight)*start_boundary+weight*end_boundary)
                 start_load,start_sheet,start_boundary = forcing(end) if end in jumps else (end_load,end_sheet,end_boundary)
             rhs = mass*state+dt*(stage_load-(1-weight)*(operator @ state))
@@ -607,7 +627,7 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
                     metadata["peclet"],**flux_options,interface_source=static_sheet+sheet_integral/duration,
                     return_cell_fluxes=True)
                 west_transport[index-1],east_transport[index-1] = duration*west,duration*east
-                if total_flux_history is not None:
+                if changing_boundary:
                     west_transport[index-1,0] += boundary_integral[0]
                     east_transport[index-1,-1] += boundary_integral[1]
                     boundary_integral = torch.zeros_like(boundary_integral)
