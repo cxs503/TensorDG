@@ -311,26 +311,45 @@ class DGAdvection2D:
 
     # -- time integration --------------------------------------------------
     def solve(self, coeff: torch.Tensor, velocity: Velocity, final_time: float,
-              cfl: float = 0.3, max_speed: float | None = None,
-              record_mass: bool = False) -> dict:
-        """Advance to ``final_time`` with RK4; returns ``(coeff, metadata)``."""
-        if final_time < 0.0 or cfl <= 0.0:
-            raise ValueError("final_time must be >= 0 and cfl must be > 0")
+              cfl: float = 0.3, max_speed: float | tuple[float, float] | None = None,
+              record_mass: bool = False, *, max_dt: float | None = None,
+              start_time: float = 0.0) -> dict:
+        """Advance with RK4 using a spatial CFL bound and optional time-resolution cap.
+
+        By default, sample component speeds at the endpoints, midpoint and
+        quarter points. For rapidly varying velocities supply known maximum
+        speeds and set ``max_dt`` to resolve the temporal modulation. The input
+        coefficients are at ``start_time``; velocity callbacks receive absolute
+        stage times up to ``final_time`` so a previous result can be continued.
+        """
+        duration = final_time - start_time
+        if not math.isfinite(duration) or duration < 0.0:
+            raise ValueError("start_time and final_time must define a finite forward interval")
+        if not math.isfinite(cfl) or cfl <= 0.0:
+            raise ValueError("cfl must be finite and positive")
+        if max_dt is not None and (not math.isfinite(max_dt) or max_dt <= 0.0):
+            raise ValueError("max_dt must be finite and positive")
         if max_speed is None:
             max_speed = estimate_max_components(
-                velocity, times=(0.0, 0.5 * final_time, final_time))
+                velocity, times=[start_time + i * (duration / 4) for i in range(5)],
+                device=self.device, dtype=self.dtype)
         if isinstance(max_speed, (tuple, list)):
-            ax_max, ay_max = float(max_speed[0]), float(max_speed[1])
+            if len(max_speed) != 2:
+                raise ValueError("max_speed needs an x and a y component")
+            ax_max, ay_max = map(float, max_speed)
         else:
             ax_max = ay_max = float(max_speed)
+        if not all(math.isfinite(v) and v >= 0.0 for v in (ax_max, ay_max)):
+            raise ValueError("max_speed must contain finite nonnegative bounds")
         rate = (2 * self.degree + 1) * (ax_max / self.hx + ay_max / self.hy)
-        steps = 0 if (final_time == 0.0 or rate == 0.0) else int(
-            math.ceil(final_time * rate / cfl))
-        dt = final_time / steps if steps else 0.0
+        steps = math.ceil(duration * rate / cfl)
+        if max_dt is not None:
+            steps = max(steps, math.ceil(duration / max_dt))
+        dt = duration / steps if steps else 0.0
         mass0 = self.mass(coeff)
         history = [mass0]
         for n in range(steps):
-            t = n * dt
+            t = start_time + n * dt
             k1 = self.rhs(coeff, velocity, t)
             k2 = self.rhs(coeff + 0.5 * dt * k1, velocity, t + 0.5 * dt)
             k3 = self.rhs(coeff + 0.5 * dt * k2, velocity, t + 0.5 * dt)
@@ -341,7 +360,7 @@ class DGAdvection2D:
         mass1 = self.mass(coeff)
         meta = {
             "ncells": list(self.ncells), "degree": self.degree,
-            "final_time": float(final_time), "dt": float(dt), "steps": steps,
+            "start_time": float(start_time), "final_time": float(final_time), "dt": float(dt), "steps": steps,
             "cfl": float(cfl), "max_speed": [ax_max, ay_max],
             "dofs": int(self.nx * self.ny * (self.degree + 1) ** 2),
             "mass_initial": mass0, "mass_final": mass1,
@@ -499,6 +518,10 @@ def estimate_max_components(velocity: Velocity, times: Sequence[float] = (0.0,),
     bx = by = 0.0
     for t in times:
         ax, ay = velocity(X, Y, float(t))
-        bx = max(bx, float(ax.abs().max().item()))
-        by = max(by, float(ay.abs().max().item()))
+        x_peak = float(ax.abs().max().item())
+        y_peak = float(ay.abs().max().item())
+        if not math.isfinite(x_peak) or not math.isfinite(y_peak):
+            raise ValueError("velocity samples must be finite")
+        bx = max(bx, x_peak)
+        by = max(by, y_peak)
     return max(bx, 1e-14), max(by, 1e-14)
