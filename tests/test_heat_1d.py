@@ -217,3 +217,52 @@ def test_slow_two_flux_walls_separate_bulk_storage_from_local_flux():
     torch.testing.assert_close(u[:,0].mean()/bulk,u.new_tensor(1.),atol=5e-15,rtol=0.)
     faces = torch.linspace(0.,1.,17,dtype=x.dtype)
     torch.testing.assert_close(q,power(faces),atol=1e-11,rtol=0.)
+
+
+def test_harmonic_storing_wall_material_flux_and_trace():
+    from itertools import product
+    from tensordg import solve_harmonic_heat_1d
+
+    omega,c,k = 3.,1.4,2.1
+    def temp(x):
+        return (.5+.7j)+(1.-.2j)*x**2
+    def flux(x):
+        return -2*k*(1.-.2j)*x
+    def source(x):
+        return 1j*omega*c*temp(x)-2*k*(1.-.2j)
+    for kinds in product(("dirichlet","neumann","robin"), repeat=2):
+        data,films,cw = [],[],[]
+        for i,kind in enumerate(kinds):
+            cap = 0. if kind=="dirichlet" else (.3,.8)[i]
+            film = (2.,5.)[i] if kind=="robin" else 0.
+            external = (1-2*i)*flux(i)+1j*omega*cap*temp(i)
+            data.append(temp(i)+external/film if film else external if kind=="neumann" else temp(i))
+            films.append(film)
+            cw.append(cap)
+        x,u,q,surface = solve_harmonic_heat_1d(omega,ncells=7,degree=2,capacity=c,conductivity=k,
+            wall_types=kinds,wall_values=data,film_coefficients=films,wall_areal_heat_capacity=cw,
+            source=source,return_wall_temperatures=True)
+        faces = torch.linspace(0.,1.,8,dtype=x.dtype)
+        torch.testing.assert_close(surface,temp(faces[[0,-1]]),rtol=0.,atol=1e-11)
+        torch.testing.assert_close(q,flux(faces),rtol=0.,atol=1e-10)
+
+
+def test_slow_flux_driven_walls_include_surface_storage_in_mean_constraint():
+    from tensordg import solve_harmonic_heat_1d
+
+    omega,c,k = 1e-12,1.5,2.
+    cw = torch.tensor([.3,.9],dtype=torch.float64)
+    ends = torch.tensor([0.,1.],dtype=torch.float64)
+    rate = .8-.6j
+    def local(x):
+        return (.5+.3j)*x*x
+    def flux(x):
+        return -2*k*(.5+.3j)*x
+    input_flux = flux(ends)*torch.tensor([1.,-1.])+cw*(rate+1j*omega*local(ends))
+    def source(x):
+        return c*(rate+1j*omega*local(x))-2*k*(.5+.3j)
+    x,u,q,surface = solve_harmonic_heat_1d(omega,ncells=12,degree=2,capacity=c,conductivity=k,
+        source=source,wall_types=("neumann","neumann"),wall_values=input_flux,
+        wall_areal_heat_capacity=cw,return_wall_temperatures=True)
+    torch.testing.assert_close(q,flux(torch.linspace(0.,1.,13,dtype=x.dtype)),atol=2e-11,rtol=0.)
+    torch.testing.assert_close(1j*omega*surface,rate+1j*omega*local(ends),atol=1e-14,rtol=0.)

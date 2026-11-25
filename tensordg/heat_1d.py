@@ -521,10 +521,17 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
 
 
 def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivity=1., capacity=1.,
-                           source=None, wall_types=("dirichlet","dirichlet"), wall_values=(0.,0.), penalty=20.):
+                           source=None, wall_types=("dirichlet","dirichlet"), wall_values=(0.,0.), penalty=20.,
+                           film_coefficients=(0.,0.), wall_areal_heat_capacity=(0.,0.),
+                           return_wall_temperatures=False):
     """Solve iωcU - kU'' = source on the unit slab with exp(+iωt) convention.
 
-    Each end prescribes a temperature (dirichlet) or inward heat flux (neumann).
+    Each end prescribes a temperature (dirichlet), inward external heat flux
+    (neumann), or ambient temperature (robin). film_coefficients and
+    wall_areal_heat_capacity are left/right pairs in W/(m² K) and J/(m² K).
+    A flux or Robin wall can store heat. The material receives external input
+    minus iω*Cwall*Twall. Set return_wall_temperatures to append both wall
+    temperatures (prescribed on Dirichlet walls, solved traces elsewhere).
     Source phasors may be constant or callable on real cell quadrature points.
     Returns cell centers, complex128 Legendre coefficients and the rightward
     numerical flux at every face. Uses a CPU sparse direct solve.
@@ -537,10 +544,20 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
         raise ValueError("ncells >= 2 and degree >= 1 are required")
     if not all(math.isfinite(v) and v > 0 for v in (angular_frequency,conductivity,capacity,penalty)):
         raise ValueError("frequency, conductivity, capacity and penalty must be positive and finite")
+    if len(wall_types)!=2 or any(kind not in ("dirichlet","neumann","robin") for kind in wall_types):
+        raise ValueError("each wall type must be dirichlet, neumann or robin")
+    film = np.asarray(film_coefficients)
+    wall_capacity = np.asarray(wall_areal_heat_capacity)
+    for data in (film,wall_capacity):
+        if data.shape!=(2,) or np.iscomplexobj(data) or not np.isfinite(data).all() or (data<0).any():
+            raise ValueError("film and wall capacity require finite nonnegative real pairs")
+    kinds = np.asarray(wall_types)
+    if np.any(film[kinds!="robin"]) or np.any(wall_capacity[kinds=="dirichlet"]):
+        raise ValueError("films require Robin walls and storage requires flux or Robin walls")
     h = 1./ncells
     centers = (torch.arange(ncells,dtype=torch.float64)+.5)*h
     stiffness,mass,ops = assemble_heat_1d_sparse(ncells,degree,penalty,centers.device,centers.dtype,
-                                                 wall_types=wall_types)
+                                                 wall_types=tuple("neumann" if kind=="robin" else kind for kind in wall_types))
     nodes,weights,phi,_,_,left,right,dleft,dright = ops
     load = torch.zeros((ncells,degree+1),dtype=torch.complex128) if source is None else _source_load(
         centers,h,nodes,weights,phi,source,dtype=torch.complex128)
@@ -548,27 +565,38 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     strength = penalty*(degree+1)**2/h
     for i,(cell,v,dv,normal) in enumerate(((0,left,dleft,-1),(-1,right,dright,1))):
         boundary = conductivity*(strength*v-normal*2*dv/h) if wall_types[i]=="dirichlet" else v
-        load[cell] += values[i]*boundary
+        applied = film[i]*values[i] if wall_types[i]=="robin" else values[i]
+        load[cell] += applied*boundary
     storage = 1j*angular_frequency*capacity
     system = conductivity*stiffness + storage*mass
+    columns = np.r_[np.arange(degree+1),np.arange(ncells*(degree+1)-degree-1,ncells*(degree+1))]
+    trace = sparse.csr_matrix((np.r_[left.numpy(),right.numpy()],columns,[0,degree+1,2*(degree+1)]),
+                              shape=(2,ncells*(degree+1)))
+    if np.any(film) or np.any(wall_capacity):
+        system += trace.T @ sparse.diags(film+1j*angular_frequency*wall_capacity) @ trace
     rhs = load.detach().numpy().ravel()
     mean = 0j
-    if all(kind=="neumann" for kind in wall_types):
+    if "dirichlet" not in wall_types and not np.any(film):
         # Constant mode has no conductive restoring force. Separate its exact
         # storage response and constrain the remaining fluctuation to zero mean.
-        mean = rhs[::degree+1].sum()/storage
         integral = np.zeros_like(rhs)
-        integral[::degree+1] = h
+        integral[::degree+1] = capacity*h
+        integral += trace.T @ wall_capacity
+        mean = rhs[::degree+1].sum()/(1j*angular_frequency*(capacity+wall_capacity.sum()))
         column = sparse.csc_matrix(integral[:,None])
         bordered = sparse.bmat([[system,column],[column.T,None]],format="csc")
-        state = splu(bordered).solve(np.r_[rhs-storage*mean*integral,0j])[:-1]
+        state = splu(bordered).solve(np.r_[rhs-1j*angular_frequency*mean*integral,0j])[:-1]
     else:
         state = splu(system.tocsc()).solve(rhs)
     coefficients = torch.from_numpy(state.reshape(ncells,degree+1))
     flux = conductivity*sipg_heat_face_fluxes(coefficients,penalty,wall_temperatures=values)
-    if wall_types[0]=="neumann":
-        flux[0] = values[0]
-    if wall_types[1]=="neumann":
-        flux[-1] = -values[1]
+    surface = torch.from_numpy(trace @ state)+mean
+    for i,face in enumerate((0,-1)):
+        if wall_types[i]=="dirichlet":
+            surface[i] = values[i]
+        else:
+            external = film[i]*(values[i]-surface[i]) if wall_types[i]=="robin" else values[i]
+            flux[face] = (1-2*i)*(external-1j*angular_frequency*wall_capacity[i]*surface[i])
     coefficients[:,0] += mean
-    return centers,coefficients,flux
+    result = (centers,coefficients,flux)
+    return (*result,surface) if return_wall_temperatures else result
