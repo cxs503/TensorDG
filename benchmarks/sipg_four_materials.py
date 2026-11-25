@@ -1,4 +1,5 @@
 """Four rectangular materials with crossing interfaces and a separable analytic field."""
+import argparse
 import json
 import math
 from pathlib import Path
@@ -10,7 +11,7 @@ import torch
 from tensordg import l2_error_2d, poisson_face_powers_2d, solve_poisson_2d_bc
 
 
-def measure(n,degree):
+def measure(n,degree,directional=False):
     def material(z,low,high):
         return torch.where(z<.5,torch.full_like(z,low),high)
 
@@ -24,12 +25,22 @@ def measure(n,degree):
         a,b = angles(x,y)
         return torch.sin(a)*torch.cos(b)
 
+    # Multipliers depend only on the tangential coordinate, so normal flux
+    # remains continuous across both interfaces.
+    def multiplier_x(y):
+        return material(y,.7,2.) if directional else 1.
+
+    def multiplier_y(x):
+        return material(x,1.8,.4) if directional else 1.
+
     def source(x,y):
         kx,ky = material(x,1.,3.),material(y,2.,.5)
-        return (4*ky/kx+9*kx/ky)*exact(x,y)
+        return (4*ky/kx*multiplier_x(y)+9*kx/ky*multiplier_y(x))*exact(x,y)
 
     center = (torch.arange(n,dtype=torch.float64)+.5)/n
     k = material(center[:,None],1.,3.)*material(center,2.,.5)
+    if directional:
+        k = torch.stack((k*multiplier_x(center),k*multiplier_y(center[:,None])),dim=-1)
     data = dict(conductivity=k,dirichlet_values=dict.fromkeys(("left","right","top","bottom"),exact))
     x,y,u,_ = solve_poisson_2d_bc(n,degree,forcing=source,sparse=True,**data)
     error = l2_error_2d(x,y,u,exact)["absolute_l2"]
@@ -38,22 +49,25 @@ def measure(n,degree):
     faces = torch.arange(n+1,dtype=x.dtype)/n
     points = center[:,None]+nodes/(2*n)
     a,b = angles(faces[:,None,None],points)
-    ref_x = (-2*material(points,2.,.5)*torch.cos(a)*torch.cos(b))@weights/(2*n)
+    ref_x = (-2*multiplier_x(points)*material(points,2.,.5)*torch.cos(a)*torch.cos(b))@weights/(2*n)
     a,b = angles(points[:,None,:],faces[:,None])
-    ref_y = (3*material(points[:,None,:],1.,3.)*torch.sin(a)*torch.sin(b))@weights/(2*n)
+    ref_y = (3*multiplier_y(points[:,None,:])*material(points[:,None,:],1.,3.)*torch.sin(a)*torch.sin(b))@weights/(2*n)
     net = torch.einsum("ijqr,q,r->ij",source(points[:,None,:,None],points[None,:,None,:]),weights,weights)/(4*n*n)
     # Convert face-integrated power to face-averaged heat flux before comparing grids.
-    return dict(n=n,degree=degree,l2_error=error,
+    return dict(n=n,degree=degree,directional=directional,l2_error=error,
                 flux_error=n*max(float((qx-ref_x).abs().max()),float((qy-ref_y).abs().max())),
                 cell_balance=float((net-qx.diff(dim=0)-qy.diff(dim=1)).abs().max()))
 
 
 if __name__=="__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--directional", action="store_true")
+    args = parser.parse_args()
     rows = []
     for degree in (1,2):
         previous = {}
         for n in (4,8,16,32,64):
-            row = measure(n,degree)
+            row = measure(n,degree,args.directional)
             errors = {k:row[k] for k in ("l2_error","flux_error")}
             rates = {k:math.log2(previous[k]/v) for k,v in errors.items()} if previous else {}
             row.update(orders=rates,passed=row["cell_balance"]<1e-9 and

@@ -302,3 +302,20 @@ def test_two_layer_conductivity_preserves_temperature_and_power(sparse,driven):
     qx,qy = poisson_face_powers_2d(u,**data)
     torch.testing.assert_close(qx,torch.full_like(qx,power/3),atol=2e-11,rtol=0.)
     torch.testing.assert_close(qy,torch.zeros_like(qy),atol=2e-11,rtol=0.)
+
+
+@pytest.mark.parametrize("sparse",[False,True])
+def test_directional_conductivity_with_mixed_boundary_powers(sparse):
+    from tensordg import poisson_face_powers_2d
+    exact = lambda x,y:1.+x*x+x*y+y*y
+    opts = dict(conductivity=(2.,5.),bc=dict(left="dirichlet",right="robin",top="neumann",bottom="dirichlet"),
+                dirichlet_values={"left":exact,"bottom":exact},
+                robin_films={"right":(3.,lambda x,y:exact(x,y)+2*(2*x+y)/3)},
+                neumann_flux={"top":lambda x,y:5*(2*y+x)})
+    x,y,u,_ = solve_poisson_2d_bc((4,3),2,forcing=lambda x,y:-14+0*x+0*y,sparse=sparse,**opts)
+    assert l2_error_2d(x,y,u,exact)["absolute_l2"]<3e-11
+    qx,qy = poisson_face_powers_2d(u,**opts)
+    xf = torch.arange(5,dtype=x.dtype)/4
+    yf = torch.arange(4,dtype=y.dtype)/3
+    torch.testing.assert_close(qx,-2*(2*xf[:,None]+y)/3,atol=3e-11,rtol=0.)
+    torch.testing.assert_close(qy,-5*(2*yf+x[:,None])/4,atol=3e-11,rtol=0.)
