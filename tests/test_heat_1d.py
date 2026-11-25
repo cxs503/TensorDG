@@ -640,3 +640,42 @@ def test_loaded_wall_flux_offset_against_augmented_transfer(record_property):
         record_property(f"max_wall_flux_error_{n}_W_per_m2", float(error))
         errors.append(error)
     assert all(a/b > 8 for a, b in zip(errors, errors[1:]))
+
+def test_loaded_stack_mixed_wall_conditions_against_transfer_solution(record_property):
+    from itertools import product
+    from scipy.linalg import expm
+    import numpy as np
+    from tensordg import (harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d,
+                          solve_heat_wall_admittance_1d)
+
+    omega, resistance = 2.7, .18
+    layers = [(.6, 1.5, 1.2, .5-.2j), (.35, .9, 1.9, -.3j)]
+    initial_t, initial_q = 1.+.2j, .4-.3j
+    state = np.array([initial_t, initial_q, 1.])
+    for i, (length, k, c, source) in enumerate(layers):
+        if i:
+            state[0] -= resistance*state[1]
+        state = expm(length*np.array([[0, -1/k, 0], [-1j*omega*c, 0, source], [0, 0, 0]])) @ state
+    exact_t = np.array([initial_t, state[0]])
+    exact_q = np.array([initial_q, -state[1]])
+    errors = []
+    for n in (4, 8, 16):
+        matrices, offsets = zip(*(harmonic_heat_wall_admittance_1d(
+            omega, thickness=L, conductivity=k, capacity=c, source=s, ncells=n) for L, k, c, s in layers))
+        y, offset = compose_heat_wall_admittances_1d(matrices, resistance, layer_flux_offsets=offsets,
+                                                    return_flux_offset=True)
+        worst_t = worst_q = 0.
+        for kinds in product(("dirichlet", "neumann", "robin"), repeat=2):
+            films, values = [], []
+            for i, kind in enumerate(kinds):
+                h = (1.8, 3.5)[i] if kind == "robin" else 0.
+                films.append(h)
+                values.append(exact_t[i]+exact_q[i]/h if h else exact_q[i] if kind == "neumann" else exact_t[i])
+            t, q = solve_heat_wall_admittance_1d(y, kinds, values, flux_offset=offset, film_coefficients=films)
+            worst_t = max(worst_t, np.max(abs(t.numpy()-exact_t)))
+            worst_q = max(worst_q, np.max(abs(q.numpy()-exact_q)))
+        errors.append((worst_t, worst_q))
+        record_property(f"max_wall_temperature_error_{n}_K", float(worst_t))
+        record_property(f"max_wall_flux_error_{n}_W_per_m2", float(worst_q))
+    for coarse, fine in zip(errors, errors[1:]):
+        assert all(a/b > 8 for a,b in zip(coarse, fine))

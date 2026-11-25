@@ -834,6 +834,42 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     return (*result, exterior_offset) if return_flux_offset else result
 
 
+def solve_heat_wall_admittance_1d(admittance, wall_types, wall_values, *,
+                                  flux_offset=(0., 0.), film_coefficients=(0., 0.)):
+    """Solve two exterior boundary conditions for a harmonic slab or stack.
+
+    Return (wall temperatures in K, inward heat fluxes in W/m²), ordered
+    left, right. Supply Y and the optional offset b in q = Y @ T + b.
+    Dirichlet data prescribe T; Neumann data prescribe inward q; Robin
+    data prescribe ambient temperature Ta with q = h*(Ta-T). Use a
+    nonnegative real film coefficient in W/(m² K) on Robin walls only.
+    """
+    y = torch.as_tensor(admittance, dtype=torch.complex128)
+    if y.shape != (2, 2) or not torch.isfinite(y).all():
+        raise ValueError("supply a finite 2-by-2 admittance matrix")
+    kinds = tuple(wall_types)
+    if len(kinds) != 2 or any(k not in ("dirichlet", "neumann", "robin") for k in kinds):
+        raise ValueError("supply dirichlet, neumann or robin for each wall")
+    values = torch.as_tensor(wall_values, dtype=y.dtype, device=y.device)
+    offset = torch.as_tensor(flux_offset, dtype=y.dtype, device=y.device)
+    if any(v.shape != (2,) or not torch.isfinite(v).all() for v in (values, offset)):
+        raise ValueError("supply two finite wall values and flux offsets")
+    if torch.as_tensor(film_coefficients).is_complex():
+        raise ValueError("film coefficients must be real")
+    film = torch.as_tensor(film_coefficients, dtype=torch.float64, device=y.device)
+    robin = torch.tensor([k == "robin" for k in kinds], device=y.device)
+    fixed = torch.tensor([k == "dirichlet" for k in kinds], device=y.device)
+    if (film.shape != (2,) or not torch.isfinite(film).all() or (film < 0).any()
+            or (film[~robin] != 0).any()):
+        raise ValueError("supply nonnegative finite films on Robin walls and zero elsewhere")
+    identity = torch.eye(2, dtype=y.dtype, device=y.device)
+    operator = torch.where(fixed[:, None], identity, y+film.diag())
+    imposed = torch.where(robin, film*values, values)
+    rhs = torch.where(fixed, values, imposed-offset)
+    temperature = torch.linalg.solve(operator, rhs)
+    return temperature, y @ temperature + offset
+
+
 def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
                                ncells=16, degree=2, conductivity=1., capacity=1.,
                                heat_loss_coefficient=1., steps_per_interval=8, penalty=20.,
