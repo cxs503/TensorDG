@@ -148,25 +148,33 @@ def _rhs(
     return out
 
 
-def _sample_profile(initial, x, y, z):
+def _domain_lengths(lengths):
+    sides = tuple(float(v) for v in lengths)
+    if len(sides) != 3 or any(not math.isfinite(v) or v <= 0 for v in sides):
+        raise ValueError("lengths must contain three finite positive box lengths")
+    return sides
+
+
+def _sample_profile(initial, x, y, z, lengths):
     if initial is None:
-        return 1.0 + (torch.sin(2*math.pi*x) * torch.sin(2*math.pi*y) * torch.sin(2*math.pi*z))
+        sx, sy, sz = (torch.sin(2 * math.pi * q / side) for q, side in zip((x, y, z), lengths))
+        return 1.0 + sx * sy * sz
     x, y, z = torch.broadcast_tensors(x, y, z)
     values = torch.as_tensor(initial(x, y, z), device=x.device, dtype=x.dtype)
     return torch.broadcast_to(values, x.shape)
 
 
-def _sample_slab(initial, xq, yq, zq):
+def _sample_slab(initial, xq, yq, zq, lengths):
     return _sample_profile(initial, xq[:, None, None, :, None, None],
-                           yq[None, :, None, None, :, None], zq[None, None, :, None, None, :])
+                           yq[None, :, None, None, :, None], zq[None, None, :, None, None, :], lengths)
 
 
-def _project_initial(initial, xq, yq, zq, weights, phi):
+def _project_initial(initial, xq, yq, zq, weights, phi, lengths):
     modes = torch.arange(phi.shape[1], device=phi.device, dtype=phi.dtype)
     projector = weights[:, None] * phi * (modes + .5)
     if initial is None:
         # The default product of sines only requires three 1-D projections.
-        axes = [torch.sin(2*math.pi*q) @ projector for q in (xq, yq, zq)]
+        axes = [torch.sin(2*math.pi*q/L) @ projector for q, L in zip((xq, yq, zq), lengths)]
         coeff = torch.einsum("xk,yl,zm->xyzklm", *axes)
         coeff[..., 0, 0, 0] += 1.
         return coeff
@@ -175,7 +183,7 @@ def _project_initial(initial, xq, yq, zq, weights, phi):
     coeff = phi.new_empty(shape)
     for start in range(0, len(xq), 4):
         slab = slice(start, start+4)
-        samples = _sample_slab(initial, xq[slab], yq, zq)
+        samples = _sample_slab(initial, xq[slab], yq, zq, lengths)
         projected_z = torch.einsum("xyzqrs,sm->xyzqrm", samples, projector)
         projected_y = torch.einsum("xyzqrm,rl->xyzqlm", projected_z, projector)
         coeff[slab] = torch.einsum("xyzqlm,qk->xyzklm", projected_y, projector)
@@ -190,12 +198,14 @@ def exact_solution_3d(
     velocity: Velocity3 = (1.0, 0.5, 0.25),
     *,
     initial: Callable | None = None,
+    lengths: tuple[float, float, float] = (1.0, 1.0, 1.0),
 ) -> torch.Tensor:
     """Evaluate the initial profile at the periodic characteristic foot."""
-    ax, ay, az = velocity
-    return _sample_profile(initial, _departure_coordinate(x, final_time, ax),
-                           _departure_coordinate(y, final_time, ay),
-                           _departure_coordinate(z, final_time, az))
+    lengths = _domain_lengths(lengths)
+    feet = [_departure_coordinate(q, final_time, a, L)
+            for q, a, L in zip((x, y, z), velocity, lengths, strict=True)]
+    return _sample_profile(initial, feet[0], feet[1], feet[2], lengths)
+
 
 
 
@@ -218,14 +228,17 @@ def solve_advection_3d(
     dtype: torch.dtype = torch.float64,
     *,
     initial: Callable | None = None,
+    lengths: tuple[float, float, float] = (1.0, 1.0, 1.0),
 ):
-    """Solve ``u_t + a . grad u = 0`` on the periodic unit cube.
+    """Solve ``u_t + a . grad u = 0`` on a periodic box with the given physical side lengths.
 
     ``ncells`` is one integer or ``(nx, ny, nz)``. Returns
     ``(x, y, z, modal_coefficients, metadata)`` where ``x``, ``y``, ``z`` are
     the cell centres and the coefficient array has shape
     ``(nx, ny, nz, degree+1, degree+1, degree+1)`` whose ``[0, 0, 0]`` entry is
-    the cell average. Supply initial(x, y, z) to project a custom periodic field.
+    the cell average. A custom initial(x, y, z) receives physical coordinates
+    in [0, Lx) × [0, Ly) × [0, Lz). The default profile spans one period
+    in each direction. For total mass use mass_3d(coeff, lengths=lengths).
     """
     nx, ny, nz = (
         (ncells, ncells, ncells) if isinstance(ncells, int) else tuple(ncells)
@@ -238,14 +251,15 @@ def solve_advection_3d(
         raise ValueError("velocity must contain exactly three components")
 
     dev = torch.device(device)
-    hx, hy, hz = 1.0 / nx, 1.0 / ny, 1.0 / nz
+    lengths = _domain_lengths(lengths)
+    hx, hy, hz = (L / n for L, n in zip(lengths, (nx, ny, nz)))
     x = (torch.arange(nx, device=dev, dtype=dtype) + 0.5) * hx
     y = (torch.arange(ny, device=dev, dtype=dtype) + 0.5) * hy
     z = (torch.arange(nz, device=dev, dtype=dtype) + 0.5) * hz
     nodes, weights, phi, volume, phi_left, phi_right = _operators(degree, dev, dtype)
 
     xq, yq, zq = (centers[:, None] + .5*h*nodes for centers, h in ((x, hx), (y, hy), (z, hz)))
-    coeff = _project_initial(initial, xq, yq, zq, weights, phi)
+    coeff = _project_initial(initial, xq, yq, zq, weights, phi, lengths)
 
     ax, ay, az = (float(component) for component in velocity)
     wave_rate = abs(ax) / hx + abs(ay) / hy + abs(az) / hz
@@ -276,17 +290,16 @@ def solve_advection_3d(
         coeff = coeff + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
 
     metadata = {
-        "ncells": (nx, ny, nz), "degree": degree, "final_time": final_time,
+        "ncells": (nx, ny, nz), "lengths": lengths, "degree": degree, "final_time": final_time,
         "velocity": velocity3, "dt": dt, "steps": steps,
         "device": str(dev), "cfl": cfl, "dtype": str(dtype),
     }
     return x, y, z, coeff, metadata
 
 
-def mass_3d(coeff: torch.Tensor) -> float:
-    """Total integral of the modal field (``sum`` of cell averages / N)."""
-    nx, ny, nz = coeff.shape[:3]
-    return float(coeff[:, :, :, 0, 0, 0].sum().item()) / (nx * ny * nz)
+def mass_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
+    """Integrate the cell averages over a box of the specified side lengths."""
+    return float(coeff[:, :, :, 0, 0, 0].mean().item()) * math.prod(_domain_lengths(lengths))
 
 
 def error_3d(
@@ -299,16 +312,22 @@ def error_3d(
     x_chunk: int = 4,
     *,
     initial: Callable | None = None,
+    lengths: tuple[float, float, float] | None = None,
 ) -> dict[str, float]:
     """Quadrature-based absolute/relative L2 errors against the closed form.
 
     The quadrature field ``u_h - u_exact`` would be an ``(nx*nq)**3`` tensor, so
     the norm is accumulated in ``x``-slabs to keep the memory footprint bounded
-    for the finest meshes.
+    for the finest meshes. If omitted, lengths are inferred from the returned
+    cell centres of the zero-origin box.
     """
     degree = coeff.shape[-1] - 1
     nx, ny, nz = coeff.shape[:3]
-    hx, hy, hz = 1.0 / nx, 1.0 / ny, 1.0 / nz
+    if lengths is None:
+        # Cell centres begin at h/2 in each direction.
+        lengths = tuple(2 * float(q[0]) * n for q, n in zip((x, y, z), (nx, ny, nz)))
+    lengths = _domain_lengths(lengths)
+    hx, hy, hz = (L / n for L, n in zip(lengths, (nx, ny, nz)))
     nq = max(2 * degree + 4, 6)
     nodes_np, weights_np = np.polynomial.legendre.leggauss(nq)
     nodes = torch.as_tensor(nodes_np, device=coeff.device, dtype=coeff.dtype)
@@ -329,9 +348,9 @@ def error_3d(
     ax, ay, az = velocity
     if x_chunk < 1:
         raise ValueError("x_chunk must be positive")
-    xq = _departure_coordinate(xq, final_time, ax)
-    yq = _departure_coordinate(yq, final_time, ay)
-    zq = _departure_coordinate(zq, final_time, az)
+    xq = _departure_coordinate(xq, final_time, ax, lengths[0])
+    yq = _departure_coordinate(yq, final_time, ay, lengths[1])
+    zq = _departure_coordinate(zq, final_time, az, lengths[2])
 
     # (1, 1, 1, nq, nq, nq) tensor-product quadrature weights, matching the
     # (cell_x, cell_y, cell_z, qx, qy, qz) layout of ``numerical`` below.
@@ -349,7 +368,7 @@ def error_3d(
         numerical = torch.einsum("xyzklm,qk->xyzqlm", slab, phi)
         numerical = torch.einsum("xyzqlm,rl->xyzqrm", numerical, phi)
         numerical = torch.einsum("xyzqrm,sm->xyzqrs", numerical, phi)
-        exact = _sample_slab(initial, xq[start:stop], yq, zq)
+        exact = _sample_slab(initial, xq[start:stop], yq, zq, lengths)
         error2 = error2 + cell_volume * torch.sum(quad_w * (numerical - exact) ** 2)
         norm2 = norm2 + cell_volume * torch.sum(quad_w * exact ** 2)
     absolute = float(torch.sqrt(error2).item())

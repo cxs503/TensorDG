@@ -154,3 +154,49 @@ def test_periodic_trilinear_translation_and_zero_reference():
     sample = exact_solution_3d(x, y[0], z[0], time, velocity, initial=profile)
     torch.testing.assert_close(sample, ((x-.25)%1)*((y[0]+.25)%1)*((z[0]-.25)%1))
     assert error_3d(x, y, z, coeff, 0., initial=lambda x,y,z: 0.)["relative_l2"] == math.inf
+
+
+def test_physical_cuboid_transport_against_characteristics(record_property):
+    lengths = (2., 0.75, 3.)
+    volume = math.prod(lengths)
+    velocity = (0.5, -0.375, 0.75)
+    time = 0.08
+    def wave(x, y, z):
+        return 1 + torch.cos(2 * math.pi * (x/2 - y/0.75 + z/3))
+
+    def transported(x, y, z):
+        return wave(x - velocity[0]*time, y - velocity[1]*time, z - velocity[2]*time)
+
+    errors = []
+    for n in (4, 8, 16):
+        x, y, z, c, meta = solve_advection_3d(
+            (n, n+1, n+2), 2, time, velocity, initial=wave, lengths=lengths)
+        metrics = error_3d(x, y, z, c, 0., initial=transported)
+        measured = error_3d(x, y, z, c, time, velocity, initial=wave, lengths=lengths)
+        assert measured["absolute_l2"] == pytest.approx(metrics["absolute_l2"], abs=2e-14)
+        assert measured["exact_l2"] == pytest.approx(math.sqrt(1.5 * volume), rel=1e-12)
+        assert mass_3d(c, lengths=lengths) == pytest.approx(volume, abs=1e-13)
+        assert meta["lengths"] == lengths
+        errors.append(metrics["absolute_l2"])
+        record_property(f"absolute_l2_n{n}", errors[-1])
+    assert min(math.log2(a/b) for a,b in zip(errors, errors[1:])) > 2.0
+
+
+@pytest.mark.parametrize("axis", [0, 1, 2])
+def test_physical_axis_profile_wraps_after_many_box_crossings(axis, record_property):
+    lengths = (2., .5, 4.)
+    velocity = (-2., .5, 4.)
+    cells = (8, 4, 12)
+    def profile(x, y, z):
+        for q, side in zip((x, y, z), lengths):
+            assert torch.all((q >= 0) & (q < side))
+        return (x, y, z)[axis]
+
+    x, y, z, c, _ = solve_advection_3d(cells, 1, 0, velocity, initial=profile, lengths=lengths)
+    shifted = c.roll((-2, 1, 3), dims=(0, 1, 2))
+    error = error_3d(x, y, z, shifted, 2**40 + .25, velocity, initial=profile, lengths=lengths)
+    record_property("absolute_l2", error["absolute_l2"])
+    assert error["absolute_l2"] < 2e-14
+    assert mass_3d(c, lengths=lengths) == pytest.approx(math.prod(lengths)*lengths[axis]/2)
+    point = exact_solution_3d(x[0], y[0], z[0], 2**40 + .25, velocity, initial=profile, lengths=lengths)
+    assert point.item() == pytest.approx(((x[0], y[0], z[0])[axis].item() - .25*velocity[axis]) % lengths[axis])
