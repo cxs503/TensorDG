@@ -464,26 +464,32 @@ def _assemble_transport(
     return centers,h,system,rhs,needs_mean,metadata
 
 
-def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, **spatial_options):
-    """Advance u_t + (a*u-D*u_x)_x + reaction*u = source with fixed coefficients and loads.
+def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_history=None,
+                                          source_jump_times=(), **spatial_options):
+    """Advance u_t + (a*u-D*u_x)_x + reaction*u = source with fixed coefficients.
 
     Spatial keywords match solve_advection_diffusion_1d. Initial data are a
     scalar, a spatial callable projected onto the modal basis, or previously
     computed coefficients shaped (cells, degree+1). The theta method accepts
-    0.5 through 1. Return centers, modal states at all times, and mesh metadata.
+    0.5 through 1. source_history(t,x) adds a volume source to the stationary
+    loads. Return a scalar or values matching the quadrature coordinates x.
+    List its discontinuities in source_jump_times, with the new source value
+    at each jump. Internal subdivisions preserve the requested output times.
+    Return centers, modal states at all times, and mesh metadata.
     """
     if not math.isfinite(theta) or not .5<=theta<=1:
         raise ValueError("theta must be in [0.5,1]")
     centers,widths,operator,load,_,metadata = _assemble_transport(**spatial_options)
-    grid = torch.as_tensor(times,dtype=centers.dtype,device=centers.device)
+    grid = torch.as_tensor(times,dtype=torch.float64,device=centers.device)
     if grid.ndim!=1 or len(grid)<2 or not torch.isfinite(grid).all() or torch.any(grid.diff()<=0):
         raise ValueError("times must be finite and strictly increasing")
     n,degree = len(widths),metadata["degree"]
     indices = torch.arange(degree+1,device=centers.device)
     mass = (widths[:,None]/(2*indices+1)).reshape(-1)
-    if callable(initial):
+    if callable(initial) or source_history is not None:
         nodes,weights,phi,*_ = _operators(degree,centers.device,centers.dtype)
         x = centers[:,None]+.5*widths[:,None]*nodes
+    if callable(initial):
         values = _coefficient_at(initial,x,"initial")
         coeff = ((values*weights) @ phi)*((2*indices+1)*.5).to(centers.dtype)
     else:
@@ -500,13 +506,32 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, **spatia
     states = [coeff]
     state = coeff.reshape(-1)
     previous_dt = None
-    for dt in grid.diff():
+    output = grid.tolist()
+    jumps = set(float(t) for t in source_jump_times)
+    if not all(output[0]<t<output[-1] for t in jumps):
+        raise ValueError("source_jump_times must be interior times")
+    boundaries = sorted(set(output)|jumps)
+    def forcing(time):
+        values = _coefficient_at(source_history(time,x),x,"source_history")
+        return ((.5*widths[:,None])*((values*weights) @ phi)).reshape(-1)
+    index = 1
+    if source_history is not None:
+        start_load = forcing(output[0])
+    for start,stop in zip(boundaries,boundaries[1:]):
+        dt = stop-start
         if previous_dt is None or dt!=previous_dt:
             factors = torch.linalg.lu_factor(torch.diag(mass)+(theta*dt)*operator)
             previous_dt = dt
-        rhs = mass*state+dt*(load-(1-theta)*(operator @ state))
+        stage_load = load
+        if source_history is not None:
+            end_load = forcing(math.nextafter(stop,start) if stop in jumps else stop)
+            stage_load = load+(1-theta)*start_load+theta*end_load
+            start_load = forcing(stop) if stop in jumps else end_load
+        rhs = mass*state+dt*(stage_load-(1-theta)*(operator @ state))
         state = torch.linalg.lu_solve(*factors,rhs[:,None])[:,0]
-        states.append(state.reshape(n,degree+1))
+        if stop==output[index]:
+            states.append(state.reshape(n,degree+1))
+            index += 1
     return centers,torch.stack(states),metadata
 
 

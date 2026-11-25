@@ -505,3 +505,17 @@ def test_transient_periodic_ring_with_unbalanced_load_and_modal_restart(theta):
         torch.testing.assert_close(delta.sum(),.7*dt,atol=5e-13,rtol=0.)
     _,restarted,_ = solve_transient_advection_diffusion_1d(times[1:],history[1],theta=theta,**opts)
     torch.testing.assert_close(restarted,history[1:])
+
+
+@pytest.mark.parametrize("theta",[.5,1.])
+def test_time_dependent_ring_source_hits_interior_jumps(theta):
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d
+    # Pulse starts and ends strictly between requested output times.
+    times = [0.,.04,.075,.12]
+    def source(t,x):
+        return (3.+torch.sin(2*torch.pi*x))*float(.018<=t<.083)
+    _,u,_ = solve_transient_advection_diffusion_1d(times,0.,theta=theta,ncells=8,
+                periodic=True,source=.5,source_history=source,source_jump_times=(.018,.083))
+    t = u.new_tensor(times)
+    exact_mass = .5*t+3*(t-.018).clamp(min=0,max=.083-.018)
+    torch.testing.assert_close(u[:,:,0].mean(dim=1),exact_mass,atol=2e-12,rtol=0.)
