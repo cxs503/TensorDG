@@ -197,3 +197,37 @@ def test_sampled_solution_is_pointwise_consistent_with_the_modal_coefficients():
     assert float(x.min()) < 0.01 and float(x.max()) > 0.99
     assert bool(torch.all(torch.diff(x) > 0.0)), "sample abscissae must be increasing"
     assert np.all(np.diff(x.numpy()) > 0.0)
+
+
+def test_reverse_flow_resolves_inlet_layer_and_conserves_flux():
+    errors = []
+    for n in (16, 32, 64):
+        x, coeff, meta = solve_advection_diffusion_1d(
+            ncells=n, degree=2, peclet=4, speed=-2, left_value=2, right_value=5,
+        )
+        assert meta["diffusivity"] == 0.5
+        errors.append(advection_diffusion_error(x, coeff, 4, -2, 2, 5)["absolute_l2"])
+    assert min(_eoc(errors)) > 2.8
+    # For u = A + B exp(-4x), the total flux is -2A.
+    expected = -2 * (2 + 3 / (1 - math.exp(-4)))
+    assert exact_flux(4, -2, 2, 5) == pytest.approx(expected)
+    assert (face_fluxes(coeff, 4, -2) - expected).abs().max() < 0.005
+
+
+@pytest.mark.parametrize("speed",[-1.25,1.25])
+@pytest.mark.parametrize("scheme",["upwind","downwind"])
+def test_quadratic_source_and_linear_reaction_close_every_face(speed,scheme):
+    from tensordg.advection_diffusion_1d import numerical_face_fluxes
+    n,pe = 7,4.
+    d = abs(speed)/pe
+    def u(x):
+        return .2+x*(.5-x)
+    def source(x):
+        return speed*(.5-2*x)+2*d+(1+x)*u(x)
+    centers,coeff,_ = solve_advection_diffusion_1d(n,2,pe,speed,left_value=u(0.),right_value=u(1.),
+            source=source,reaction=lambda x:1+x,advection_scheme=scheme)
+    x,values = sample_solution(centers,coeff)
+    torch.testing.assert_close(values,u(x),atol=2e-12,rtol=0.)
+    faces = torch.linspace(0.,1.,n+1,dtype=coeff.dtype)
+    flux = numerical_face_fluxes(coeff,pe,speed,left_value=u(0.),right_value=u(1.),advection_scheme=scheme)
+    torch.testing.assert_close(flux,speed*u(faces)-d*(.5-2*faces),atol=2e-12,rtol=0.)

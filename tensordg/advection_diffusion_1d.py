@@ -7,16 +7,16 @@ diffusion (:mod:`tensordg.heat_1d`, :mod:`tensordg.sipg_sparse`,
 and the 1-D SIPG solvers only ever ran with **homogeneous** Dirichlet data.  This
 module closes that gap with the classical exponential-boundary-layer problem
 
-    a u'(x) - D u''(x) = 0,   u(0) = g_L,  u(1) = g_R,   a > 0, D > 0,      (1)
+    a u'(x) - D u''(x) = 0,   u(0) = g_L,  u(1) = g_R,   a != 0, D > 0,      (1)
 
 whose exact solution is
 
     u(x) = g_L + (g_R - g_L) * (exp(Pe x) - 1) / (exp(Pe) - 1),
-    Pe  = a L / D                                                          (2)
+    Pe  = a L / D (signed in this formula)                                                          (2)
 
 and whose exact *total flux* is constant in x,
 
-    J = a u - D u' = a * (g_R - g_L) / (1 - exp(-Pe)).                      (3)
+    J = a u - D u' = a * (g_L - (g_R - g_L) / (exp(Pe) - 1)).                      (3)
 
 Equation (3) is the discrete-consistency meter used by the tests: for a
 consistent DG discretisation the fluxes recovered on every cell face agree with
@@ -41,19 +41,24 @@ import numpy as np
 import torch
 
 
-def exact_solution(x: torch.Tensor, peclet: float) -> torch.Tensor:
-    """Exact solution (2) of (1) with ``g_L = 0``, ``g_R = 1``."""
-    decay = math.exp(-peclet)
-    return (torch.exp(peclet * (x - 1.0)) - decay) / (1.0 - decay)
+def exact_solution(
+    x: torch.Tensor, peclet: float, speed: float = 1.0,
+    left_value: float = 0.0, right_value: float = 1.0,
+) -> torch.Tensor:
+    """Dirichlet layer profile for Pe = |a|/D on the unit interval."""
+    fraction = torch.expm1(-peclet * x) / math.expm1(-peclet)
+    if speed > 0:
+        fraction = fraction * torch.exp(peclet * (x - 1.0))
+    return left_value + (right_value - left_value) * fraction
 
 
 def exact_flux(
     peclet: float, speed: float = 1.0, left_value: float = 0.0, right_value: float = 1.0,
 ) -> float:
-    """Exact constant total flux (3): ``J = a*[g_L - (g_R - g_L)/(exp(Pe) - 1)]``."""
-    decay = math.exp(-peclet)
-    jump = (right_value - left_value) * decay / (1.0 - decay)
-    return speed * (left_value - jump)
+    """Exact constant total flux with the sign of the physical x direction."""
+    inflow, outflow = (left_value, right_value) if speed > 0 else (right_value, left_value)
+    correction = (outflow - inflow) * math.exp(-peclet) / -math.expm1(-peclet)
+    return speed * (inflow - correction)
 
 
 def _operators(degree: int, device: torch.device, dtype: torch.dtype):
@@ -114,14 +119,19 @@ def solve_advection_diffusion_1d(
     advection_scheme: str = "upwind",
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
+    *, source=0., reaction=0.,
 ):
     """Solve (1) on [0, 1] and return (cell_centres, modal_coefficients, metadata).
 
     Parameters
     ----------
     peclet : float
-        Peclet number ``a L / D`` with ``L = 1``; the diffusivity is
-        ``D = speed / peclet``.
+        Peclet magnitude ``|a| L / D`` with ``L = 1``; the diffusivity is
+        ``D = abs(speed) / peclet``.
+    source, reaction
+        Solve (a u - D u')' + reaction*u = source. Each coefficient accepts a
+        scalar, one value per cell, or a callable of quadrature coordinates
+        of shape (ncells, nq). The reaction coefficient must be nonnegative.
     advection_scheme : {"upwind", "downwind"}
         ``"downwind"`` exists only as an implementation negative control: it is
         *not* a consistent scheme and must fail the verification gates.
@@ -144,11 +154,10 @@ def solve_advection_diffusion_1d(
         nodes, weights, phi, stiffness, volume, phi_left, phi_right,
         dphi_left, dphi_right,
     ) = _operators(degree, dev, dtype)
-    diffusivity = speed / peclet
+    diffusivity = abs(speed) / peclet
     a = float(speed)
 
     system = torch.zeros((ndofs, ndofs), device=dev, dtype=dtype)
-    rhs = torch.zeros(ndofs, device=dev, dtype=dtype)
     local = torch.arange(modes, device=dev)
     dofs = lambda cell: cell * modes + local
     def add(rows, cols, block):
@@ -161,9 +170,28 @@ def solve_advection_diffusion_1d(
     # The two blocks therefore carry *opposite* signs.
     diffusion_volume = diffusivity * (2.0 / h) * stiffness
     advection_volume = -a * volume
+    xq = centers[:, None] + (.5*h)*nodes
+    def profile(value, name):
+        sampled = value(xq) if callable(value) else value
+        data = torch.as_tensor(sampled, device=dev)
+        if data.is_complex():
+            raise ValueError(f"{name} must be real")
+        data = torch.as_tensor(sampled, device=dev, dtype=dtype)
+        if data.shape == (ncells,):
+            data = data[:, None]
+        if data.ndim > 0 and data.shape not in ((ncells, 1), xq.shape):
+            raise ValueError(f"{name} must be scalar, cellwise, or sampled at quadrature points")
+        if not torch.isfinite(data).all():
+            raise ValueError(f"{name} must be finite")
+        return data.expand_as(xq)
+    sink = profile(reaction,"reaction")
+    if torch.any(sink < 0):
+        raise ValueError("reaction must be nonnegative")
+    reaction_volume = (.5*h)*torch.einsum("cq,q,qi,qj->cij",sink,weights,phi,phi)
+    rhs = ((.5*h)*(profile(source,"source")*weights) @ phi).reshape(-1)
     for cell in range(ncells):
         idx = dofs(cell)
-        add(idx, idx, diffusion_volume + advection_volume)
+        add(idx, idx, diffusion_volume + advection_volume + reaction_volume[cell])
 
     # ---- interior diffusive faces: SIPG face block (as in tensordg.heat_1d) --
     jump = torch.cat((phi_right, -phi_left))
@@ -224,6 +252,7 @@ def solve_advection_diffusion_1d(
 
 def advection_diffusion_error(
     centers: torch.Tensor, coeff: torch.Tensor, peclet: float,
+    speed: float = 1.0, left_value: float = 0.0, right_value: float = 1.0,
 ) -> dict[str, float]:
     """Quadrature L2 error of the discrete solution against the exact layer."""
     degree = coeff.shape[1] - 1
@@ -234,12 +263,12 @@ def advection_diffusion_error(
     phi = _legendre_values(nodes_np, degree, coeff.device, coeff.dtype)
     numerical = coeff @ phi.T
     x = centers[:, None] + 0.5 * h * nodes[None, :]
-    exact = exact_solution(x, peclet)
+    exact = exact_solution(x, peclet, speed, left_value, right_value)
     error2 = 0.5 * h * torch.sum(weights[None, :] * (numerical - exact) ** 2)
     norm2 = 0.5 * h * torch.sum(weights[None, :] * exact ** 2)
     absolute = float(torch.sqrt(error2).item())
     norm = float(torch.sqrt(norm2).item())
-    return {"absolute_l2": absolute, "exact_l2": norm, "relative_l2": absolute / norm}
+    return {"absolute_l2": absolute, "exact_l2": norm, "relative_l2": absolute / norm if norm else (0.0 if absolute == 0 else math.inf)}
 
 
 def _legendre_values(nodes_np, degree: int, device, dtype) -> torch.Tensor:
@@ -292,5 +321,22 @@ def face_fluxes(
     dp_right = torch.as_tensor(right_derivatives, device=coeff.device, dtype=coeff.dtype)
     value = coeff @ p_right
     derivative = (2.0 / h) * (coeff @ dp_right)
-    diffusivity = speed / peclet
+    diffusivity = abs(speed) / peclet
     return speed * value - diffusivity * derivative
+
+
+def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., right_value=1.,
+                          advection_scheme="upwind"):
+    """Single-valued rightward DG total flux at all n+1 faces, including Nitsche terms."""
+    if advection_scheme not in ("upwind","downwind"):
+        raise ValueError("unknown advection scheme")
+    ncells,modes = coeff.shape
+    _,_,_,_,_,pl,pr,dl,dr = _operators(modes-1,coeff.device,coeff.dtype)
+    west,east = coeff @ pl,coeff @ pr
+    low = torch.cat((west.new_tensor([left_value]),east))
+    high = torch.cat((west,east.new_tensor([right_value])))
+    diff_scale = -2*ncells*abs(speed)/peclet
+    west_diff,east_diff = diff_scale*(coeff @ dl),diff_scale*(coeff @ dr)
+    diffusion = torch.cat((west_diff[:1],.5*(east_diff[:-1]+west_diff[1:]),east_diff[-1:]))
+    advected = low if (speed>0)==(advection_scheme=="upwind") else high
+    return speed*advected + diffusion + penalty*modes**2*ncells*(low-high)
