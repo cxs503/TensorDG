@@ -271,3 +271,43 @@ def test_temporal_order_against_exact_semidiscrete_mode(method, order, stages, r
     measured = math.log2(errors[-2] / errors[-1])
     record_property("final_observed_order", measured)
     assert abs(measured - order) < 0.2
+
+
+
+@pytest.mark.parametrize("integrator", ["rk4", "rk5"])
+def test_modal_restart_agrees_with_uninterrupted_run(integrator, record_property):
+    options = dict(ncells=(4, 6, 8), degree=2, velocity=(0.5, -0.25, 0.125),
+                   lengths=(1., 1.5, 2.), cfl=0.03125, time_integrator=integrator)
+    _, _, _, whole, meta = solve_advection_3d(final_time=0.125, **options)
+    _, _, _, first, half = solve_advection_3d(final_time=0.0625, **options)
+    saved = first.clone()
+    _, _, _, final, _ = solve_advection_3d(final_time=0.0625, initial=first, **options)
+    assert meta["dt"] == half["dt"]
+    torch.testing.assert_close(first, saved, atol=0, rtol=0)
+    torch.testing.assert_close(whole, final, atol=0, rtol=0)
+    record_property("max_coefficient_difference", float((final-whole).abs().max()))
+
+
+def test_reversed_velocity_recovers_analytic_initial_wave(record_property):
+    forward = (-0.5, 0.25, 0.375)
+    reverse = tuple(-a for a in forward)
+    errors = []
+    for n in (3, 6, 12):
+        x,y,z,turn,_ = solve_advection_3d(n, 3, 0.04, forward)
+        _,_,_,end,_ = solve_advection_3d(n, 3, 0.04, reverse, initial=turn)
+        errors.append(error_3d(x,y,z,end,0.0)["absolute_l2"])
+        record_property(f"absolute_l2_{n}", errors[-1])
+        record_property(f"mass_error_{n}", abs(mass_3d(end)-1))
+        assert abs(mass_3d(end)-1) < 1e-14
+    assert min(math.log2(a/b) for a,b in zip(errors, errors[1:])) > 3.5
+
+
+def test_modal_restart_validates_coefficients_and_preserves_zero_duration():
+    coeff = torch.ones(2, 2, 2, 1, 1, 1, dtype=torch.float32)
+    _, _, _, out, _ = solve_advection_3d(2, 0, 0., initial=coeff)
+    assert out.dtype == torch.float64
+    torch.testing.assert_close(out, coeff.double())
+    with pytest.raises(ValueError, match="shape"):
+        solve_advection_3d(2, 1, 0., initial=coeff)
+    with pytest.raises(ValueError, match="finite"):
+        solve_advection_3d(2, 0, 0., initial=coeff * float("nan"))

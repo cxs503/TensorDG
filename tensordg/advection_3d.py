@@ -228,7 +228,7 @@ def solve_advection_3d(
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     *,
-    initial: Callable | None = None,
+    initial: Callable | torch.Tensor | None = None,
     time_integrator: str = "rk4",
     lengths: tuple[float, float, float] = (1.0, 1.0, 1.0),
 ):
@@ -241,7 +241,9 @@ def solve_advection_3d(
     the cell average. A custom initial(x, y, z) receives physical coordinates
     in [0, Lx) × [0, Ly) × [0, Lz). The default profile spans one period
     in each direction. For total mass use mass_3d(coeff, lengths=lengths).
-    The time integrator can be any registered explicit Runge–Kutta tableau.
+    A tensor passed as ``initial`` supplies modal coefficients on the same
+    physical box and mesh. In that case ``final_time`` is the duration of
+    this segment. The time integrator can be any registered explicit RK tableau.
     """
     tableau = get_tableau(time_integrator)
     nx, ny, nz = (
@@ -264,8 +266,19 @@ def solve_advection_3d(
     z = (torch.arange(nz, device=dev, dtype=dtype) + 0.5) * hz
     nodes, weights, phi, volume, phi_left, phi_right = _operators(degree, dev, dtype)
 
-    xq, yq, zq = (centers[:, None] + .5*h*nodes for centers, h in ((x, hx), (y, hy), (z, hz)))
-    coeff = _project_initial(initial, xq, yq, zq, weights, phi, lengths)
+    if isinstance(initial, torch.Tensor):
+        shape = (nx, ny, nz) + (degree + 1,) * 3
+        if tuple(initial.shape) != shape:
+            raise ValueError(f"initial modal coefficients must have shape {shape}")
+        if not initial.is_floating_point():
+            raise ValueError("initial modal coefficients must be real floating-point values")
+        coeff = initial.to(device=dev, dtype=dtype, copy=True)
+        if not torch.isfinite(coeff).all():
+            raise ValueError("initial modal coefficients must be finite")
+    else:
+        xq, yq, zq = (centers[:, None] + .5*h*nodes
+                      for centers, h in ((x, hx), (y, hy), (z, hz)))
+        coeff = _project_initial(initial, xq, yq, zq, weights, phi, lengths)
 
     ax, ay, az = (float(component) for component in velocity)
     wave_rate = abs(ax) / hx + abs(ay) / hy + abs(az) / hz
