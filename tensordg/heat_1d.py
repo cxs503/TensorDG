@@ -77,6 +77,34 @@ def _source_load(centers, h, nodes, weights, phi, source):
     return (.5*h)*((values*weights) @ phi)
 
 
+def _wall_pair(wall_temperatures, like):
+    if wall_temperatures is None:
+        return like.new_zeros(2)
+    pair = torch.as_tensor(wall_temperatures, device=like.device, dtype=like.dtype)
+    if pair.shape != (2,) or not torch.isfinite(pair).all():
+        raise ValueError("wall_temperatures must contain two finite temperatures")
+    return pair
+
+
+def _stationary_load(centers, h, operators, source, penalty, wall_temperatures):
+    nodes, weights, phi, _, _, left, right, dleft, dright = operators
+    load = None if source is None else _source_load(centers,h,nodes,weights,phi,source)
+    if wall_temperatures is not None:
+        walls = _wall_pair(wall_temperatures, centers)
+        if load is None:
+            load = centers.new_zeros((centers.numel(), phi.shape[1]))
+        strength = penalty*phi.shape[1]**2/h
+        # The Nitsche load is g*(penalty*v - outward_normal*dv/dx).
+        load[0] = load[0] + walls[0]*(strength*left + (2/h)*dleft)
+        load[-1] = load[-1] + walls[1]*(strength*right - (2/h)*dright)
+    return load
+
+
+def _integrated_face_heat(coefficients, penalty, walls, duration):
+    integrated_walls = duration*_wall_pair(walls, coefficients)
+    return sipg_heat_face_fluxes(coefficients, penalty, wall_temperatures=integrated_walls).tolist()
+
+
 def _add_block(matrix, indices, block):
     matrix[indices[:, None], indices[None, :]] += block
 
@@ -87,10 +115,11 @@ def assemble_sipg_1d(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, initial_temperature=None, source=None,
+    *, initial_temperature=None, source=None, wall_temperatures=None,
 ):
     """Assemble the SIPG mass/diffusion matrices for ``u_t = u_xx`` on (0,1).
 
+    source_load includes prescribed volumetric and Dirichlet terms.
     The same operator is used by the Crank--Nicolson driver
     :func:`solve_heat_1d`, the matrix-exponential driver
     :func:`solve_heat_1d_exact_time` and any external study of the semi-discrete
@@ -106,10 +135,8 @@ def assemble_sipg_1d(
     dev = torch.device(device)
     h = 1.0 / ncells
     centers = (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * h
-    (
-        nodes, weights, phi, mass, stiffness, phi_left, phi_right,
-        dphi_left, dphi_right,
-    ) = _operators(degree, dev, dtype)
+    operators = _operators(degree, dev, dtype)
+    nodes, weights, phi, mass, stiffness, phi_left, phi_right, dphi_left, dphi_right = operators
     modes = degree + 1
     ndofs = ncells * modes
     diffusion = torch.zeros((ndofs, ndofs), device=dev, dtype=dtype)
@@ -155,7 +182,7 @@ def assemble_sipg_1d(
         "mass_matrix": mass_matrix,
         "diffusion": diffusion,
         "initial_coefficients": coeff,
-        "source_load": None if source is None else _source_load(centers,h,nodes,weights,phi,source),
+        "source_load": _stationary_load(centers,h,operators,source,penalty,wall_temperatures),
         "penalty": penalty,
     }
 
@@ -178,15 +205,17 @@ def solve_heat_1d(
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     backend: str = "dense",
-    *, integrate_face_fluxes: bool = False, initial_temperature=None, source=None,
+    *, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
 ):
-    """Solve u_t=u_xx with zero Dirichlet data and a projected initial profile.
+    """Solve the forced heat equation with fixed Dirichlet data and a projected initial profile.
 
     Crank--Nicolson is used for the global method-of-lines system. If
     ``time_steps`` is omitted, dt is approximately ``0.02*cell_width``.
 
     Parameters
     ----------
+    wall_temperatures : optional pair
+        Constant left and right temperatures, default (0, 0).
     source : optional scalar or callable of x
         Stationary volumetric source for u_t = u_xx + source on the unit slab.
     initial_temperature : optional callable
@@ -207,13 +236,13 @@ def solve_heat_1d(
         from tensordg.sipg_sparse import solve_heat_1d_sparse
         return solve_heat_1d_sparse(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source,
+            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
         )
     elif backend == "matrix-free":
         from tensordg.sipg_matrixfree import solve_heat_1d_matrixfree
         return solve_heat_1d_matrixfree(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source,
+            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
         )
 
     # backend == "dense": original implementation
@@ -223,7 +252,7 @@ def solve_heat_1d(
         raise ValueError("final_time must be >= 0 and time_steps must be positive")
     dev = torch.device(device)
     assembly = assemble_sipg_1d(
-        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source,
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
     )
     h = assembly["h"]
     modes = degree + 1
@@ -258,7 +287,7 @@ def solve_heat_1d(
     }
     if integrated is not None:
         integrated_coeff = torch.as_tensor(integrated, dtype=dtype, device=dev).reshape(ncells, modes)
-        metadata["integrated_face_fluxes"] = sipg_heat_face_fluxes(integrated_coeff, penalty).tolist()
+        metadata["integrated_face_fluxes"] = _integrated_face_heat(integrated_coeff, penalty, wall_temperatures, final_time)
     return centers, coeff, metadata
 
 
@@ -269,7 +298,7 @@ def solve_heat_1d_exact_time(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, initial_temperature=None, source=None, integrate_face_fluxes: bool = False,
+    *, initial_temperature=None, source=None, wall_temperatures=None, integrate_face_fluxes: bool = False,
 ):
     """SIPG heat solution with the semi-discrete system integrated *exactly* in time.
 
@@ -291,7 +320,7 @@ def solve_heat_1d_exact_time(
     from scipy.linalg import expm
 
     system = assemble_sipg_1d(
-        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source,
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
     )
     mass = system["mass_matrix"].detach().cpu().numpy()
     diffusion = system["diffusion"].detach().cpu().numpy()
@@ -337,7 +366,7 @@ def solve_heat_1d_exact_time(
             rhs += final_time*system["source_load"].detach().cpu().numpy().reshape(-1)
         integrated = np.linalg.solve(diffusion, rhs).reshape(ncells, degree+1)
         modes = torch.as_tensor(integrated, device=coeff.device, dtype=coeff.dtype)
-        metadata["integrated_face_fluxes"] = sipg_heat_face_fluxes(modes, penalty).tolist()
+        metadata["integrated_face_fluxes"] = _integrated_face_heat(modes, penalty, wall_temperatures, final_time)
     return system["centers"], coeff, metadata
 
 
@@ -369,11 +398,11 @@ def heat_error(
     return {"absolute_l2": absolute, "exact_l2": norm, "relative_l2": absolute / norm}
 
 
-def sipg_heat_face_fluxes(coefficients: torch.Tensor, penalty: float = 20.) -> torch.Tensor:
+def sipg_heat_face_fluxes(coefficients: torch.Tensor, penalty: float = 20., *, wall_temperatures=None) -> torch.Tensor:
     """Return conductive flux toward +x at all faces of the uniform unit slab.
 
     Uses the modal coefficients returned by solve_heat_1d, unit diffusivity,
-    homogeneous Dirichlet wall data and the solver's SIPG penalty parameter.
+    the prescribed left and right wall temperatures (default zero) and the solver's SIPG penalty parameter.
     For cell i the inward net power is flux[i] - flux[i+1].
     """
     if coefficients.ndim != 2 or min(coefficients.shape) < 2:
@@ -386,5 +415,6 @@ def sipg_heat_face_fluxes(coefficients: torch.Tensor, penalty: float = 20.) -> t
     grad_l, grad_r = (2*cells)*(coefficients @ dleft), (2*cells)*(coefficients @ dright)
     strength = penalty*modes**2*cells
     interior = -.5*(grad_r[:-1]+grad_l[1:]) + strength*(trace_r[:-1]-trace_l[1:])
-    return torch.cat((-grad_l[:1]-strength*trace_l[:1], interior,
-                      -grad_r[-1:]+strength*trace_r[-1:]))
+    walls = _wall_pair(wall_temperatures, coefficients)
+    return torch.cat((-grad_l[:1]-strength*(trace_l[:1]-walls[0]), interior,
+                      -grad_r[-1:]+strength*(trace_r[-1:]-walls[1])))

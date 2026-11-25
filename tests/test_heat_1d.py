@@ -100,3 +100,26 @@ def test_stationary_quartic_source_profile_preserves_equilibrium_and_wall_flux()
         heat = torch.tensor(meta["integrated_face_fluxes"],dtype=coeff.dtype)
         torch.testing.assert_close(heat,.013*(4*faces**3-1),atol=5e-10,rtol=0.)
         assert heat_error(centers,coeff,.013,reference=lambda x,t: initial(x))["absolute_l2"] < 2e-11
+
+
+def test_unequal_walls_and_volume_heating_all_backends():
+    from tensordg.heat_1d import solve_heat_1d_exact_time, sipg_heat_face_fluxes
+
+    # T=2-3x+x(1-x), -T''=2, rightward flux=2+2x.
+    def profile(x):
+        return 2-3*x+x*(1-x)
+    walls = (2.,-1.)
+    duration = .025
+    options = dict(ncells=6,degree=2,final_time=duration,wall_temperatures=walls,
+                   initial_temperature=profile,source=2.,integrate_face_fluxes=True)
+    for backend in ("dense","sparse","matrix-free","exact-time"):
+        if backend == "exact-time":
+            centers, coeff, meta = solve_heat_1d_exact_time(**options)
+        else:
+            centers, coeff, meta = solve_heat_1d(**options,backend=backend,time_steps=8)
+        target = 2+2*torch.linspace(0.,1.,7,dtype=coeff.dtype)
+        instantaneous = sipg_heat_face_fluxes(coeff,wall_temperatures=walls)
+        cumulative = coeff.new_tensor(meta["integrated_face_fluxes"])
+        torch.testing.assert_close(instantaneous,target,atol=5e-8,rtol=0.)
+        torch.testing.assert_close(cumulative,duration*target,atol=5e-9,rtol=0.)
+        assert heat_error(centers,coeff,duration,reference=lambda x,t: profile(x))["absolute_l2"] < 2e-10
