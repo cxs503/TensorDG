@@ -129,6 +129,19 @@ def _film_samples(films, side, centers, nodes, load_dtype=None):
     return h, temperature
 
 
+def _contact_faces(data,nx,ny,device,dtype):
+    faces = {}
+    for axis,value in (data or {}).items():
+        if axis not in ("x","y") or torch.is_complex(torch.as_tensor(value)):
+            raise ValueError("contact resistance requires real x or y face data")
+        field = torch.as_tensor(value,device=device,dtype=dtype)
+        shape = (nx-1,ny) if axis=="x" else (nx,ny-1)
+        if field.shape not in ((),shape) or not torch.isfinite(field).all() or (field<0).any():
+            raise ValueError(f"{axis} contact resistance must be finite, nonnegative and scalar or shaped {shape}")
+        faces[axis] = field.expand(shape)
+    return faces
+
+
 def _cell_conductivity(value, nx, ny, device, dtype):
     k = torch.as_tensor(value,device=device,dtype=dtype)
     cross = None
@@ -175,7 +188,7 @@ def assemble_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1., complex_load=False,
+    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1., complex_load=False, contact_resistance=None,
 ):
     """Assemble ``-div(k grad u) + reaction*u = f`` with per-side Dirichlet/Neumann data.
 
@@ -185,6 +198,9 @@ def assemble_poisson_2d_bc(
     A pair (kx,ky) or an (nx,ny,2) field specifies a diagonal conductivity
     tensor in grid coordinates. Use (Kxx,Kyy,Kxy) or (nx,ny,3) for a symmetric
     positive-definite tensor with a cross term.
+    contact_resistance maps x or y to nonnegative face resistances (m² K/W),
+    scalar or arrays shaped (nx-1,ny) or (nx,ny-1). Positive faces enforce
+    q=(T_left-T_right)/R; zero uses the ordinary SIPG interface.
     robin_films maps each Robin side to (h, ambient), implementing outward
     Fourier flux h*(u-ambient); both entries accept scalars or callables.
     reaction is a finite nonnegative scalar or callable of (x,y). Positive
@@ -292,14 +308,18 @@ def assemble_poisson_2d_bc(
 
     # ---- interior faces (identical to the Dirichlet-only benchmark) ------
     measure_x, measure_y = 0.5 * hy, 0.5 * hx
+    contacts = _contact_faces(contact_resistance,nx,ny,dev,dtype)
     for axis,normal,h,measure in (("x",k_x,hx,measure_x),("y",k_y,hy,measure_y)):
         face = interior_face_operator(phi,weights,phi_left,phi_right,dphi_left,dphi_right,
                                       axis,h,measure,penalty,modes)
         sx,sy = int(axis=="x"),int(axis=="y")
-        if cross is not None:
+        if cross is not None or axis in contacts:
             tr,_ = _face_basis(phi,phi_right,dphi_right,axis,2/h)
             tl,_ = _face_basis(phi,phi_left,dphi_left,axis,2/h)
             jump = torch.cat((tr,-tl),dim=1)
+        if axis in contacts:
+            contact_block = measure*(jump.T*weights) @ jump
+        if cross is not None:
             tangent_r = _tangent_basis(dphi,phi_right,axis,1/measure)
             tangent_l = _tangent_basis(dphi,phi_left,axis,1/measure)
             zero = torch.zeros_like(tangent_l)
@@ -312,6 +332,9 @@ def assemble_poisson_2d_bc(
         for ix in range(nx-sx):
             for iy in range(ny-sy):
                 jx,jy = ix+sx,iy+sy
+                if axis in contacts and contacts[axis][ix,iy]>0:
+                    add(torch.cat((dofs(ix,iy),dofs(jx,jy))),contact_block/contacts[axis][ix,iy])
+                    continue
                 block = face
                 if cross is not None:
                     block = block+(cross[ix,iy]/a[ix,iy])*left_block+(cross[jx,jy]/b[ix,iy])*right_block
@@ -408,7 +431,7 @@ def solve_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1.,
+    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1., contact_resistance=None,
 ):
     """Solve the Poisson problem with dense torch or CPU SciPy sparse direct algebra.
 
@@ -418,7 +441,7 @@ def solve_poisson_2d_bc(
     matrix, rhs, grid, metadata = assemble_poisson_2d_bc(
         ncells=ncells, degree=degree, penalty=penalty, bc=bc,
         forcing=forcing, neumann_flux=neumann_flux, device=device, dtype=dtype,
-        dirichlet_values=dirichlet_values, robin_films=robin_films, sparse=sparse, reaction=reaction, conductivity=conductivity,
+        dirichlet_values=dirichlet_values, robin_films=robin_films, sparse=sparse, reaction=reaction, conductivity=conductivity, contact_resistance=contact_resistance,
     )
     nx, ny = metadata["ncells"]
     local_dofs = (degree + 1) ** 2
@@ -477,7 +500,7 @@ def solve_poisson_2d_bc(
 
 
 def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None, neumann_flux=None, robin_films=None, conductivity=1.,
-                           wall_areal_heat_capacity=None, temperature_rate=None):
+                           wall_areal_heat_capacity=None, temperature_rate=None, contact_resistance=None):
     """Integrate SIPG numerical heat flux over each face for unit depth.
 
     Returns arrays (nx+1, ny) and (nx, ny+1) oriented in increasing x and y.
@@ -499,6 +522,7 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
         coeff = coeff.to(torch.promote_types(coeff.dtype,temperature_rate.dtype))
     nodes, weights, phi, _, _, pl, pr, dl, dr = _operators(modes-1, coeff.device, coeff.real.dtype)
     k_x,k_y,cross = _cell_conductivity(conductivity,nx,ny,coeff.device,coeff.real.dtype)
+    contacts = _contact_faces(contact_resistance,nx,ny,coeff.device,coeff.real.dtype)
     fields = coeff.flatten(2)
     outputs = []
     for axis, count, tangential, low, high in (("x", nx, ny, "left", "right"),
@@ -519,6 +543,11 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
             ratio = (offdiag/material)[...,None]
             interior -= .5*(ratio[:-1]*(u[:-1] @ tangent_r.T)+ratio[1:]*(u[1:] @ tangent_l.T))
         interior *= _interface_conductivity(material[:-1],material[1:])[...,None]
+        if axis in contacts:
+            resistance = contacts[axis] if axis=="x" else contacts[axis].T
+            mask = resistance>0
+            jump = u[:-1] @ tr.T-u[1:] @ tl.T
+            interior[mask] = jump[mask]/resistance[mask][:,None]
         result = coeff.new_empty((count+1, tangential))
         result[1:-1] = (interior @ weights.to(coeff.dtype))/(2*tangential)
         centers = (torch.arange(tangential, device=coeff.device, dtype=coeff.real.dtype)+.5)/tangential

@@ -343,3 +343,24 @@ def test_rotated_tensor_mixed_boundary_quadratic(cross,sparse):
 def test_reject_non_positive_definite_tensor(cross):
     with pytest.raises(ValueError,match="positive definite"):
         solve_poisson_2d_bc(2,conductivity=(1.,1.,cross),forcing=lambda x,y:x+y)
+
+
+@pytest.mark.parametrize("axis",["x","y"])
+def test_resistive_interface_exact_series_heat_flow(axis):
+    from tensordg import solve_poisson_2d_bc, poisson_face_powers_2d
+    n = 6
+    r = torch.zeros((n-1,n),dtype=torch.float64)
+    r[n//2-1] = .35
+    contacts = {axis:r if axis=="x" else r.T}
+    hot,cold,low,high = ("left","right","bottom","top") if axis=="x" else ("bottom","top","left","right")
+    k = torch.ones(n,n,dtype=torch.float64)
+    k[n//2:] = 4.
+    options = dict(bc={low:"neumann",high:"neumann"},dirichlet_values={hot:1.,cold:0.},
+                   conductivity=k if axis=="x" else k.T,contact_resistance=contacts)
+    x,y,u,_ = solve_poisson_2d_bc(n,1,forcing=lambda x,y:torch.zeros_like(x+y),sparse=True,**options)
+    current = 1/(.5+.35+.5/4)
+    ref = torch.where(x<.5,1-current*x,current*(1-x)/4)
+    mean = u[:,:,0,0] if axis=="x" else u[:,:,0,0].T
+    assert abs(mean-ref[:,None]).max()<1e-11
+    qx,qy = poisson_face_powers_2d(u,**options)
+    assert abs((qx if axis=="x" else qy)*n-current).max()<1e-10
