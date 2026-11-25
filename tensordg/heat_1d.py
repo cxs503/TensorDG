@@ -835,14 +835,20 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
 
 
 def solve_heat_wall_admittance_1d(admittance, wall_types, wall_values, *,
-                                  flux_offset=(0., 0.), film_coefficients=(0., 0.)):
+                                  flux_offset=(0., 0.), film_coefficients=(0., 0.),
+                                  wall_areal_heat_capacity=(0., 0.), angular_frequency=None,
+                                  return_external_flux=False):
     """Solve two exterior boundary conditions for a harmonic slab or stack.
 
     Return (wall temperatures in K, inward heat fluxes in W/m²), ordered
     left, right. Supply Y and the optional offset b in q = Y @ T + b.
-    Dirichlet data prescribe T; Neumann data prescribe inward q; Robin
-    data prescribe ambient temperature Ta with q = h*(Ta-T). Use a
-    nonnegative real film coefficient in W/(m² K) on Robin walls only.
+    The returned q enters the material. Each wall may additionally store
+    heat with areal capacity Cw in J/(m² K); supply the common angular
+    frequency in rad/s for nonzero capacities. Its external supply is
+    q_ext = q + i*omega*Cw*T. Dirichlet data prescribe T, Neumann data
+    prescribe q_ext, and Robin data prescribe Ta with q_ext = h*(Ta-T).
+    Use a nonnegative real film coefficient in W/(m² K) on Robin walls only.
+    Set return_external_flux=True to append q_ext (W/m²).
     """
     y = torch.as_tensor(admittance, dtype=torch.complex128)
     if y.shape != (2, 2) or not torch.isfinite(y).all():
@@ -862,12 +868,27 @@ def solve_heat_wall_admittance_1d(admittance, wall_types, wall_values, *,
     if (film.shape != (2,) or not torch.isfinite(film).all() or (film < 0).any()
             or (film[~robin] != 0).any()):
         raise ValueError("supply nonnegative finite films on Robin walls and zero elsewhere")
+    if torch.as_tensor(wall_areal_heat_capacity).is_complex():
+        raise ValueError("wall areal heat capacities must be real")
+    capacity = torch.as_tensor(wall_areal_heat_capacity, dtype=torch.float64, device=y.device)
+    if capacity.shape != (2,) or not torch.isfinite(capacity).all() or (capacity < 0).any():
+        raise ValueError("supply two nonnegative finite wall areal heat capacities")
+    if angular_frequency is None:
+        if capacity.any():
+            raise ValueError("storing walls require an angular frequency")
+        angular_frequency = 0.
+    elif not math.isfinite(angular_frequency) or angular_frequency <= 0:
+        raise ValueError("angular_frequency must be finite and positive")
+    storage = 1j*angular_frequency*capacity
     identity = torch.eye(2, dtype=y.dtype, device=y.device)
-    operator = torch.where(fixed[:, None], identity, y+film.diag())
+    operator = torch.where(fixed[:, None], identity, y+(film+storage).diag())
     imposed = torch.where(robin, film*values, values)
     rhs = torch.where(fixed, values, imposed-offset)
     temperature = torch.linalg.solve(operator, rhs)
-    return temperature, y @ temperature + offset
+    material_flux = y @ temperature + offset
+    if return_external_flux:
+        return temperature, material_flux, material_flux + storage*temperature
+    return temperature, material_flux
 
 
 def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
