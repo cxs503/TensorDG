@@ -428,3 +428,37 @@ def test_wall_admittance_and_cell_means_against_hyperbolic_slab(record_property)
         errors.append(row)
     for coarse, fine in zip(errors, errors[1:]):
         assert all(a/b > 3.5 for a, b in zip(coarse, fine))
+
+
+def test_physical_thickness_admittance_against_two_layer_transfer_matrix(record_property):
+    import cmath
+    import numpy as np
+    import pytest
+    from tensordg import harmonic_heat_wall_admittance_1d
+
+    k, c, omega = 1.6, 2.2, 1.7
+    for length in (0.25, 2.5):
+        # Transfer state [T, -k*dT/dx] from left to right through both layers.
+        transfer = np.eye(2)
+        for loss in (0.3, 3.4):
+            b = cmath.sqrt((loss+1j*omega*c)/k)
+            cosh, sinh = cmath.cosh(b*length/2), cmath.sinh(b*length/2)
+            transfer = np.array([[cosh, -sinh/(k*b)], [-k*b*sinh, cosh]]) @ transfer
+        a, off = transfer[0]
+        exact = torch.from_numpy(np.array([[-a, 1.], [1., -transfer[1, 1]]])/off)
+        errors = []
+        for n in (8, 16, 32):
+            opts = dict(thickness=length, ncells=n, degree=2, conductivity=k, capacity=c)
+            def physical_loss(x):
+                return 0.3 + 3.1*(x >= length/2).to(x.dtype)
+            y = harmonic_heat_wall_admittance_1d(omega, heat_loss_coefficient=physical_loss, **opts)
+            per_cell = [0.3]*(n//2) + [3.4]*(n//2)
+            sampled = harmonic_heat_wall_admittance_1d(omega, heat_loss_coefficient=per_cell, **opts)
+            torch.testing.assert_close(y, sampled, atol=2e-12, rtol=1e-12)
+            error = (y-exact).abs().max().item()
+            errors.append(error)
+            record_property(f"max_admittance_error_L{length}_{n}_W_per_m2_K", error)
+        assert all(a/b > 8 for a, b in zip(errors, errors[1:]))
+    for invalid in (0., -1., float("inf"), float("nan")):
+        with pytest.raises(ValueError, match="thickness"):
+            harmonic_heat_wall_admittance_1d(omega, thickness=invalid)

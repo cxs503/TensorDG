@@ -659,20 +659,30 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
 
 def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
                                      conductivity=1., capacity=1., penalty=20.,
-                                     heat_loss_coefficient=None):
+                                     heat_loss_coefficient=None, thickness=1.):
     """Map two prescribed wall-temperature phasors to inward heat fluxes.
 
-    For the unit-length SIPG slab, return a complex128 matrix Y with rows
+    For a SIPG slab of the specified thickness in meters, return a complex128 matrix Y with rows
     and columns ordered left, right. Y @ temperatures gives the pair of
     inward fluxes in W/m². Sources and the bulk reservoir temperature are
     zero, so the response is linear. The frequency and material arguments
-    follow solve_harmonic_heat_1d, including spatially varying bulk loss.
+    follow solve_harmonic_heat_1d, including spatially varying bulk loss. Loss callbacks receive
+    physical coordinates measured from the left wall.
     """
+    if not math.isfinite(thickness) or thickness <= 0:
+        raise ValueError("thickness must be positive and finite")
+    # Map x=L*xi: conduction scales as k/L, volumetric terms as L.
+    # Inward wall fluxes retain their physical units under this change.
+    def scaled_loss(xi):
+        return thickness*_bulk_profile(heat_loss_coefficient, thickness*xi, torch.float64)
+
+    loss = None if heat_loss_coefficient is None else scaled_loss
+
     columns = []
     for drive in ((1., 0.), (0., 1.)):
         _, _, flux = solve_harmonic_heat_1d(
-            angular_frequency, ncells=ncells, degree=degree, conductivity=conductivity,
-            capacity=capacity, penalty=penalty, heat_loss_coefficient=heat_loss_coefficient,
+            angular_frequency, ncells=ncells, degree=degree, conductivity=conductivity/thickness,
+            capacity=capacity*thickness, penalty=penalty, heat_loss_coefficient=loss,
             wall_values=drive)
         columns.append(torch.stack((flux[0], -flux[-1])))
     return torch.stack(columns, dim=1)
