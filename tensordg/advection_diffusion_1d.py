@@ -261,7 +261,7 @@ def solve_advection_diffusion_1d(
         ``"downwind"`` exists only as an implementation negative control: it is
         *not* a consistent scheme and must fail the verification gates.
     """
-    centers,h,system,rhs,needs_mean,metadata = _assemble_transport(
+    centers,h,system,rhs,needs_mean,metadata,_ = _assemble_transport(
         ncells,degree,peclet,speed,penalty,left_value,right_value,advection_scheme,device,dtype,
         source=source,reaction=reaction,total_flux=total_flux,boundary_exchange=boundary_exchange,
         velocity=velocity,mean_value=mean_value,cell_edges=cell_edges,diffusivity_ratio=diffusivity_ratio,
@@ -378,12 +378,15 @@ def _assemble_transport(
     # A flux jump couples to the complementary average of the test traces:
     # J_minus = J_hat - w*S, J_plus = J_hat + (1-w)*S.
     w = ratio[:-1]/(ratio[:-1]+ratio[1:])
+    def add_face_sources(cell_load,sheet):
+        cell_load[:-1] += (w*sheet[:ncells-1])[:,None]*phi_right
+        cell_load[1:] += ((1-w)*sheet[:ncells-1])[:,None]*phi_left
+        if periodic:
+            cell_load[-1] += seam_weight*sheet[-1]*phi_right
+            cell_load[0] += (1-seam_weight)*sheet[-1]*phi_left
+
     cell_load = integrated_source @ phi
-    cell_load[:-1] += (w*sheet[:ncells-1])[:,None]*phi_right
-    cell_load[1:] += ((1-w)*sheet[:ncells-1])[:,None]*phi_left
-    if periodic:
-        cell_load[-1] += seam_weight*sheet[-1]*phi_right
-        cell_load[0] += (1-seam_weight)*sheet[-1]*phi_left
+    add_face_sources(cell_load,sheet)
     rhs = cell_load.reshape(-1)
     for cell in range(ncells):
         idx = dofs(cell)
@@ -461,11 +464,11 @@ def _assemble_transport(
         metadata["diffusivity_ratio"] = ratio.tolist()
     if cell_edges is not None:
         metadata["cell_edges"] = torch.as_tensor(cell_edges,dtype=dtype).tolist()
-    return centers,h,system,rhs,needs_mean,metadata
+    return centers,h,system,rhs,needs_mean,metadata,add_face_sources
 
 
 def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_history=None,
-                                          source_jump_times=(), **spatial_options):
+                                          source_jump_times=(), interface_source_history=None, **spatial_options):
     """Advance u_t + (a*u-D*u_x)_x + reaction*u = source with fixed coefficients.
 
     Spatial keywords match solve_advection_diffusion_1d. Initial data are a
@@ -473,13 +476,15 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
     computed coefficients shaped (cells, degree+1). The theta method accepts
     0.5 through 1. source_history(t,x) adds a volume source to the stationary
     loads. Return a scalar or values matching the quadrature coordinates x.
-    List its discontinuities in source_jump_times, with the new source value
+    interface_source_history(t) adds a scalar or one source per coupled face,
+    ordered as for interface_source. List jumps of either load in
+    source_jump_times, with the new source value
     at each jump. Internal subdivisions preserve the requested output times.
     Return centers, modal states at all times, and mesh metadata.
     """
     if not math.isfinite(theta) or not .5<=theta<=1:
         raise ValueError("theta must be in [0.5,1]")
-    centers,widths,operator,load,_,metadata = _assemble_transport(**spatial_options)
+    centers,widths,operator,load,_,metadata,add_face_sources = _assemble_transport(**spatial_options)
     grid = torch.as_tensor(times,dtype=torch.float64,device=centers.device)
     if grid.ndim!=1 or len(grid)<2 or not torch.isfinite(grid).all() or torch.any(grid.diff()<=0):
         raise ValueError("times must be finite and strictly increasing")
@@ -512,10 +517,18 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
         raise ValueError("source_jump_times must be interior times")
     boundaries = sorted(set(output)|jumps)
     def forcing(time):
-        values = _coefficient_at(source_history(time,x),x,"source_history")
-        return ((.5*widths[:,None])*((values*weights) @ phi)).reshape(-1)
+        if source_history is None:
+            projected = centers.new_zeros((n,degree+1))
+        else:
+            values = _coefficient_at(source_history(time,x),x,"source_history")
+            projected = (.5*widths[:,None])*((values*weights) @ phi)
+        if interface_source_history is not None:
+            sheet = _interface_profile(interface_source_history(time),widths,"interface_source_history",metadata["periodic"])
+            add_face_sources(projected,sheet)
+        return projected.reshape(-1)
     index = 1
-    if source_history is not None:
+    changing_load = source_history is not None or interface_source_history is not None
+    if changing_load:
         start_load = forcing(output[0])
     for start,stop in zip(boundaries,boundaries[1:]):
         dt = stop-start
@@ -523,7 +536,7 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
             factors = torch.linalg.lu_factor(torch.diag(mass)+(theta*dt)*operator)
             previous_dt = dt
         stage_load = load
-        if source_history is not None:
+        if changing_load:
             end_load = forcing(math.nextafter(stop,start) if stop in jumps else stop)
             stage_load = load+(1-theta)*start_load+theta*end_load
             start_load = forcing(stop) if stop in jumps else end_load

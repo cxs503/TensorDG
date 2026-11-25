@@ -519,3 +519,21 @@ def test_time_dependent_ring_source_hits_interior_jumps(theta):
     t = u.new_tensor(times)
     exact_mass = .5*t+3*(t-.018).clamp(min=0,max=.083-.018)
     torch.testing.assert_close(u[:,:,0].mean(dim=1),exact_mass,atol=2e-12,rtol=0.)
+
+
+@pytest.mark.parametrize("periodic",[False,True])
+def test_jump_in_interface_source_matches_manual_substeps(periodic):
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d as solve
+    edges = torch.tensor([0.,.2,.5,.8,1.],dtype=torch.float64)
+    loads = edges.new_tensor([-.2,.7,.1,.3] if periodic else [-.2,.7,.1])
+    opts = dict(cell_edges=edges,diffusivity_ratio=[.5,2.,1.,.7],degree=2,periodic=periodic,
+                total_flux=(None,None) if periodic else (0.,0.))
+    def pulse(t):
+        return loads*float(.021<=t<.075)
+    _,u,_ = solve([0.,.048,.1],0.,interface_source_history=pulse,source_jump_times=[.021,.075],**opts)
+    state = 0.
+    for a,b in zip([0.,.021,.048,.075],[.021,.048,.075,.1]):
+        _,part,_ = solve([a,b],state,interface_source=pulse(a),**opts)
+        state = part[-1]
+    torch.testing.assert_close(u[-1],state,atol=1e-13,rtol=0.)
+    torch.testing.assert_close(u[-1,:,0] @ edges.diff(),loads.sum()*.054,atol=1e-13,rtol=0.)
