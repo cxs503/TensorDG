@@ -256,3 +256,24 @@ def test_sparse_float32_neumann_affine_solution():
     )
     torch.testing.assert_close(coeff[:, :, 0, 0], (y-.5).expand(3, 4), atol=5e-5, rtol=0)
     assert info["linear_residual"] < 1e-4
+
+
+@pytest.mark.parametrize("sparse",[False,True])
+@pytest.mark.parametrize("reaction",[2.,lambda x,y: 1+x+2*y])
+def test_reaction_anchors_neumann_affine_field(sparse,reaction):
+    exact = lambda x,y: 1.+x-2*y
+    def source(x,y):
+        return (reaction(x,y) if callable(reaction) else reaction)*exact(x,y)
+    fluxes = dict(left=-1.,right=1.,bottom=2.,top=-2.)
+    x,y,u,meta = solve_poisson_2d_bc((3,4),2,forcing=source,bc=NEUMANN_ALL,
+                                      neumann_flux=fluxes,reaction=reaction,sparse=sparse)
+    assert meta["gauge"] == "none"
+    assert meta["matrix_symmetry_error"] < 1e-12
+    assert l2_error_2d(x,y,u,exact)["absolute_l2"] < 2e-12
+
+
+def test_zero_reaction_preserves_neumann_compatibility():
+    with pytest.raises(ValueError,match="incompatible"):
+        solve_poisson_2d_bc(2,bc=NEUMANN_ALL,forcing=lambda x,y:1+x+y,reaction=lambda x,y:0*x)
+    with pytest.raises(ValueError,match="reaction"):
+        solve_poisson_2d_bc(2,forcing=lambda x,y:x+y,reaction=-1.)

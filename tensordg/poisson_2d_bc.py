@@ -92,14 +92,16 @@ def assemble_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None, robin_films=None, sparse=False,
+    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0.,
 ):
-    """Assemble ``-Delta u = f`` with per-side Dirichlet/Neumann data.
+    """Assemble ``-Delta u + reaction*u = f`` with per-side Dirichlet/Neumann data.
 
     dirichlet_values maps prescribed sides to scalar values or callables of
     (x, y). Unspecified Dirichlet traces are zero. neumann_flux supplies du/dn.
     robin_films maps each Robin side to (h, ambient), implementing outward
     Fourier flux h*(u-ambient); both entries accept scalars or callables.
+    reaction is a finite nonnegative scalar or callable of (x,y). Positive
+    reaction on part of the domain fixes the mean even with all-Neumann data.
     Returns ``(matrix, rhs, grid, metadata)`` where ``grid`` holds the element
     centres and sizes needed by :func:`l2_error_2d`. With sparse=True the
     CPU operator is a SciPy CSR matrix. The default returns a torch tensor.
@@ -170,9 +172,28 @@ def assemble_poisson_2d_bc(
         local_dofs, local_dofs,
     )
     volume = volume_x + volume_y
+    xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
+    yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
+    coefficient = reaction(xq, yq) if callable(reaction) else reaction
+    coefficient = torch.as_tensor(coefficient, device=dev, dtype=dtype)
+    if not torch.isfinite(coefficient).all() or (coefficient < 0).any():
+        raise ValueError("reaction must be finite and nonnegative")
+    if coefficient.ndim == 0:
+        if coefficient > 0:
+            anchored = True
+            volume = volume + (hx*hy/4)*coefficient*torch.kron(mass,mass)
+    else:
+        coefficient = torch.broadcast_to(coefficient,(nx,ny,len(nodes),len(nodes)))
+        anchored = anchored or bool((coefficient > 0).any())
+        basis = (phi[:,None,:,None]*phi[None,:,None,:]).reshape(-1,local_dofs)
+        product_weights = weights[:,None]*weights
     for ix in range(nx):
+        if coefficient.ndim:
+            weighted = (coefficient[ix]*product_weights).flatten(1)
+            blocks = volume + (hx*hy/4)*(basis.T @ (weighted[...,None]*basis))
         for iy in range(ny):
-            add(dofs(ix, iy), volume)
+            block = blocks[iy] if coefficient.ndim else volume
+            add(dofs(ix, iy), block)
 
     # ---- interior faces (identical to the Dirichlet-only benchmark) ------
     measure_x, measure_y = 0.5 * hy, 0.5 * hx
@@ -236,8 +257,6 @@ def assemble_poisson_2d_bc(
             load[:,index] += contribution
 
     # ---- forcing ---------------------------------------------------------
-    xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
-    yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
     f = forcing(xq, yq)
     load += (0.25 * hx * hy * torch.einsum(
         "xyqr,q,r,qk,rl->xykl", f, weights, weights, phi, phi,
@@ -269,7 +288,7 @@ def solve_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None, robin_films=None, sparse=False,
+    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0.,
 ):
     """Solve the Poisson problem with dense torch or CPU SciPy sparse direct algebra.
 
@@ -279,7 +298,7 @@ def solve_poisson_2d_bc(
     matrix, rhs, grid, metadata = assemble_poisson_2d_bc(
         ncells=ncells, degree=degree, penalty=penalty, bc=bc,
         forcing=forcing, neumann_flux=neumann_flux, device=device, dtype=dtype,
-        dirichlet_values=dirichlet_values, robin_films=robin_films, sparse=sparse,
+        dirichlet_values=dirichlet_values, robin_films=robin_films, sparse=sparse, reaction=reaction,
     )
     nx, ny = metadata["ncells"]
     local_dofs = (degree + 1) ** 2
