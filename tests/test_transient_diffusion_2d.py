@@ -322,3 +322,31 @@ def test_independent_trace_histories_at_off_grid_jumps(damped):
         assert abs(state[:,:,0,0]-expected).max()<1e-12
         assert abs(state[:,:,1:,:]).max()<1e-12
         assert abs(state[:,:,:,1:]).max()<1e-12
+
+
+@pytest.mark.parametrize("reaction",[2.,1e5])
+def test_sdirk2_uniform_decay_amplification_and_stage_means(reaction):
+    dt = .2
+    gamma = 1-1/np.sqrt(2.)
+    z = dt*reaction
+    first = 1/(1+gamma*z)
+    final = (1-(1-2*gamma)*z)/(1+gamma*z)**2
+    _,_,u,mean = solve_transient_diffusion_2d(1.,[0.,dt],ncells=3,bc=INSULATED,
+                    reaction=reaction,method="sdirk2",return_interval_means=True)
+    assert abs(u[-1,:,:,0,0]-final).max()<2e-13
+    assert abs(mean[0,:,:,0,0]-((1-gamma)*first+gamma*final)).max()<2e-13
+    assert abs(u[-1,:,:,0,0]-1+z*mean[0,:,:,0,0]).max()<1e-12
+
+
+def test_sdirk2_counts_short_pulse_and_linear_load_inside_one_output_interval():
+    # The entire pulse occurs between outputs. Linear time dependence is
+    # integrated exactly by this second-order scheme, even at its cutoff.
+    def pulse(t,x,y):
+        return 4.+3*t if .031<=t<.042 else 0.
+    _,_,u,amplitude,heat = solve_transient_diffusion_2d(0.,[0.,.1],ncells=(3,4),bc=INSULATED,
+             forcing=lambda x,y:torch.ones_like(x+y),load_amplitude=lambda t:2*t,source_history=pulse,
+             method="sdirk2",load_jump_times=(.031,.042),return_load_means=True,return_history_heat=True)
+    exact = .011*(4+3*(.031+.042)/2)
+    assert abs(heat.sum()-exact)<1e-13
+    assert abs(amplitude.item()-.1)<1e-13
+    assert abs(u[-1,:,:,0,0]-(exact+.01)).max()<1e-12

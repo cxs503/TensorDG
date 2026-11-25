@@ -57,7 +57,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
                                  penalty=20., load_amplitude=None, conductivity=1.,
                                  rannacher=False, return_interval_means=False, load_jump_times=(),
                                  return_load_means=False, source_history=None, wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None,
-                                 trace_heat_capacity=None, trace_power_history=None, return_history_heat=False):
+                                 trace_heat_capacity=None, trace_power_history=None, return_history_heat=False, method="theta"):
     """Solve C*u_t - div(k grad u) + reaction*u = f with optional time-dependent loads.
 
     times specifies strictly increasing output times, each interval taking one
@@ -81,6 +81,9 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     scalar, a function (x,y) projected in capacity-weighted L², or previously computed Legendre
     coefficients (nx,ny,degree+1,degree+1). Returns x, y and a CPU float64
     tensor of modal fields with leading time dimension, including the initial state.
+    method="sdirk2" selects a two-stage, second-order L-stable integrator
+    with a shared stage factorization. Inputs, field means, and deposited heat
+    use both stage times. theta and rannacher apply to method="theta".
     rannacher=True starts Crank–Nicolson with two backward Euler half steps
     in the first interval and after each declared load jump. load_jump_times
     lists distinct interior times at which load_amplitude changes discontinuously;
@@ -100,6 +103,11 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
         raise ValueError("require theta in [0.5,1]")
     if rannacher and theta!=.5:
         raise ValueError("Rannacher startup requires theta=.5")
+    if method not in ("theta","sdirk2"):
+        raise ValueError("method must be theta or sdirk2")
+    sdirk = method=="sdirk2"
+    if sdirk and (rannacher or theta!=.5):
+        raise ValueError("sdirk2 cannot be combined with Rannacher or a theta override")
     jumps = np.asarray(load_jump_times,dtype=float)
     if (jumps.ndim!=1 or not np.isfinite(jumps).all() or len(np.unique(jumps))!=len(jumps)
             or np.any(jumps<=times[0]) or np.any(jumps>=times[-1])):
@@ -112,6 +120,12 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
         raise ValueError("damped interval has no representable midpoint")
     internal = np.union1d(segments,midpoints)
     weights = np.where(np.isin(internal[:-1],np.r_[starts,midpoints]),1.,theta)
+    first_times = internal[:-1]
+    if sdirk:
+        weights.fill(1.-1./np.sqrt(2.))
+        first_times = first_times+weights*np.diff(internal)
+        if np.any((first_times<=internal[:-1]) | (first_times>=internal[1:])):
+            raise ValueError("SDIRK interval has no representable stage time")
     if forcing is None:
         forcing = lambda x,y: torch.zeros_like(x+y)
     operator,load,grid,metadata = assemble_poisson_2d_bc(ncells,degree,penalty,bc,forcing,neumann_flux,
@@ -173,16 +187,19 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
         load_means = np.zeros(len(times)-1)
     if return_history_heat:
         history_heat = np.zeros((len(times)-1,*shape[:2]))
-    start_values = np.ones(len(internal))
+    start_values = np.ones(len(first_times))
+    end_values = np.ones(len(first_times))
     if load_amplitude is not None:
         def sample(t):
             value = np.asarray(load_amplitude(float(t)),dtype=float)
             if value.ndim or not np.isfinite(value):
                 raise ValueError("load_amplitude must return a finite scalar at each time")
             return float(value)
-        start_values = np.asarray([sample(t) for t in internal])
-    end_values = start_values[1:].copy()
-    if load_amplitude is not None:
+        start_values = np.asarray([sample(t) for t in first_times])
+        if sdirk:
+            end_values = np.asarray([sample(t) for t in internal[1:]])
+        else:
+            end_values = np.r_[start_values[1:],sample(internal[-1])]
         for j in np.searchsorted(internal,jumps):
             end_values[j-1] = sample(np.nextafter(internal[j],internal[j-1]))
 
@@ -207,7 +224,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
 
     has_history = source_history is not None or trace_power_history is not None
     if has_history:
-        source_start = history_load(internal[0])
+        source_start = None if sdirk else history_load(internal[0])
         jump_set = set(jumps)
     last_shift = None
     out = 0
@@ -218,23 +235,36 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
             factor = splu((mass_matrix+shift*operator).tocsc())
             last_shift = shift
         amplitude = (1-weight)*start_values[i]+weight*end_values[i]
-        rhs = amplitude*load.numpy()-operator@state
+        applied = amplitude*load.numpy()
         if has_history:
+            if sdirk:
+                source_start = history_load(first_times[i])
             stop = internal[i+1]
             at_jump = stop in jump_set
             source_end = history_load(np.nextafter(stop,internal[i]) if at_jump else stop)
             history_power = (1-weight)*source_start+weight*source_end
-            rhs += history_power
+            applied += history_power
             if return_history_heat:
                 history_heat[out] += dt*history_power.reshape(shape)[:,:,0,0]
-            source_start = history_load(stop) if at_jump else source_end
-        increment = factor.solve(dt*rhs)
+        if sdirk:
+            stored = mass_matrix@state
+            first_power = start_values[i]*load.numpy()
+            if has_history:
+                first_power += source_start
+            first_state = factor.solve(stored+shift*first_power)
+            end_state = factor.solve(stored+dt*(applied-(1-weight)*(operator@first_state)))
+        else:
+            if has_history:
+                source_start = history_load(stop) if at_jump else source_end
+            first_state = state
+            increment = factor.solve(dt*(applied-operator@state))
+            end_state = state+increment
         fraction = dt/(times[out+1]-times[out])
         if return_interval_means:
-            modal_means[out] += fraction*(state+weight*increment)
+            modal_means[out] += fraction*((1-weight)*first_state+weight*end_state)
         if return_load_means:
             load_means[out] += fraction*amplitude
-        state = state+increment
+        state = end_state
         if internal[i+1]==times[out+1]:
             out += 1
             history[out] = state
