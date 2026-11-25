@@ -116,7 +116,7 @@ def test_anisotropic_mesh_and_degree_zero_are_supported():
     "kwargs",
     [
         {"ncells": 1, "degree": 1},
-        {"ncells": 4, "degree": 4},
+        {"ncells": 4, "degree": 9},
         {"ncells": 4, "degree": 1, "final_time": -1.0},
         {"ncells": 4, "degree": 1, "cfl": 0.0},
         {"ncells": 4, "degree": 1, "velocity": (1.0, 1.0)},
@@ -221,3 +221,18 @@ def test_long_translation_retains_fractional_turn_before_product_rounding(record
     result = exact_solution_3d(sample, sample, sample, huge, (0., huge, 0.),
                                initial=lambda x,y,z: y, lengths=sides)
     torch.testing.assert_close(result, torch.tensor([2.25], dtype=torch.float64), rtol=0, atol=0)
+
+
+@pytest.mark.parametrize("degree", [4, 5, 6, 7, 8])
+def test_high_order_modes_transport_a_translated_wave(degree, record_property):
+    velocity = (-0.5, 0.25, 0.375)
+    errors = []
+    for n in ((3, 6, 12) if degree == 4 else (3, 6)):
+        x, y, z, coeff, _ = solve_advection_3d(n, degree, 0.03, velocity)
+        metrics = error_3d(x, y, z, coeff, 0.03, velocity)
+        errors.append(metrics["absolute_l2"])
+        drift = abs(mass_3d(coeff) - 1.0)
+        record_property(f"absolute_l2_{n}", errors[-1])
+        record_property(f"mass_error_{n}", drift)
+        assert drift < 2e-14
+    assert min(math.log2(a/b) for a, b in zip(errors, errors[1:])) > degree + 0.5

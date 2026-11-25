@@ -41,7 +41,7 @@ import math
 import numpy as np
 import torch
 
-from .advection_1d import _departure_coordinate
+from .advection_1d import MAX_DEGREE, _departure_coordinate
 
 Velocity3 = tuple[float, float, float]
 
@@ -243,8 +243,10 @@ def solve_advection_3d(
     nx, ny, nz = (
         (ncells, ncells, ncells) if isinstance(ncells, int) else tuple(ncells)
     )
-    if min(nx, ny, nz) < 2 or degree not in (0, 1, 2, 3):
-        raise ValueError("ncells must be >= 2 and degree must be in [0, 3]")
+    if min(nx, ny, nz) < 2:
+        raise ValueError("ncells must be >= 2 along every axis")
+    if isinstance(degree, bool) or not isinstance(degree, (int, np.integer)) or not 0 <= degree <= MAX_DEGREE:
+        raise ValueError(f"degree must be an integer in [0, {MAX_DEGREE}]")
     if final_time < 0.0 or cfl <= 0.0:
         raise ValueError("final_time must be >= 0 and cfl must be > 0")
     if len(velocity) != 3:
