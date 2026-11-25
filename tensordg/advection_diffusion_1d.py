@@ -330,7 +330,7 @@ def solve_advection_diffusion_1d(
     if needs_mean and (mean_value is None or not math.isfinite(mean_value)):
         raise ValueError("closed or periodic boundaries require a finite mean_value or nonzero reaction")
     if not needs_mean and mean_value is not None:
-        raise ValueError("mean_value requires two prescribed fluxes and zero reaction")
+        raise ValueError("mean_value requires periodic or two prescribed flux boundaries and zero reaction")
     reaction_volume = (.5*h[:,None,None])*torch.einsum("cq,q,qi,qj->cij",sink,weights,phi,phi)
     integrated_source = (.5*h[:,None])*profile(source,"source")*weights
     sheet = _interface_profile(interface_source,h,"interface_source",periodic)
@@ -431,7 +431,7 @@ def solve_advection_diffusion_1d(
     metadata = {
         "ncells": ncells, "degree": degree, "peclet": peclet, "speed": a,
         "diffusivity": diffusivity, "penalty": penalty, "dofs": ndofs,
-        "advection_scheme": advection_scheme, "h": 1./ncells if cell_edges is None else None,
+        "advection_scheme": advection_scheme, "periodic": periodic, "h": 1./ncells if cell_edges is None else None,
         "device": str(dev),
     }
     if torch.any(ratio!=1):
@@ -543,7 +543,9 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
     """Rightward DG flux at n+1 faces, with the weighted flux at internal faces.
 
     With return_cell_fluxes=True return (west, east), each of length ncells,
-    including the source-induced jump across each internal face.
+    including the source-induced jump across each internal face. On a ring,
+    flux endpoints duplicate the weighted seam flux. With return_cell_fluxes,
+    the first west and final east entries report its two material-side fluxes.
     """
     if advection_scheme not in ("upwind","downwind"):
         raise ValueError("unknown advection scheme")
