@@ -491,3 +491,39 @@ def test_composite_harmonic_admittance_against_contact_transfer(record_property)
         errors.append((combined-exact).abs().max().item())
         record_property(f"max_stack_admittance_error_{n}_W_per_m2_K", errors[-1])
     assert all(a/b > 8 for a, b in zip(errors, errors[1:]))
+
+
+def test_harmonic_stack_internal_states_against_propagated_traces(record_property):
+    import cmath
+    import numpy as np
+    from tensordg import harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
+
+    omega = 2.7
+    layers = [(0.5, 1.4, 2.1), (0.2, 2.6, 1.2), (0.3, 1.8, 1.4)]
+    resistances = [0.23, 0.]
+    temperature, q = 1.2+0.4j, 0.8-0.15j
+    reference_t, reference_q = [], []
+    for i, (length, k, capacity) in enumerate(layers):
+        wave = cmath.sqrt(1j*omega*capacity/k)
+        co, si = cmath.cosh(wave*length), cmath.sinh(wave*length)
+        right_t, right_q = co*temperature-si*q/(k*wave), -k*wave*si*temperature+co*q
+        reference_t.append((temperature, right_t))
+        reference_q.append((q, -right_q))
+        if i < len(resistances):
+            temperature, q = right_t-resistances[i]*right_q, right_q
+    drive = [reference_t[0][0], reference_t[-1][1]]
+    errors = []
+    for n in (4, 8, 16):
+        matrices = [harmonic_heat_wall_admittance_1d(
+            omega, ncells=n, thickness=length, conductivity=k, capacity=c) for length, k, c in layers]
+        y, t, flux = compose_heat_wall_admittances_1d(matrices, resistances, wall_temperatures=drive)
+        torch.testing.assert_close(y @ t.new_tensor(drive), torch.stack((flux[0, 0], flux[-1, 1])))
+        torch.testing.assert_close(flux[:-1, 1], -flux[1:, 0], atol=1e-12, rtol=0)
+        torch.testing.assert_close(t[:-1, 1]-t[1:, 0], t.new_tensor(resistances)*flux[1:, 0],
+                                   atol=1e-12, rtol=0)
+        row = [np.max(np.abs(t.numpy()-reference_t)), np.max(np.abs(flux.numpy()-reference_q))]
+        record_property(f"max_trace_error_{n}_K", float(row[0]))
+        record_property(f"max_flux_error_{n}_W_per_m2", float(row[1]))
+        errors.append(row)
+    for coarse, fine in zip(errors, errors[1:]):
+        assert all(a/b > 8 for a, b in zip(coarse, fine))
