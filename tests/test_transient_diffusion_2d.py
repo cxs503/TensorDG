@@ -41,3 +41,33 @@ def test_ramped_load_heats_unanchored_mean_on_irregular_grid():
                       load_amplitude=lambda t:2*t)
     means = states[:,:,:,0,0].mean(dim=(1,2)).numpy()
     np.testing.assert_allclose(means,1+.75*(times**2-times[0]**2),atol=3e-13,rtol=0.)
+
+
+def test_smooth_capacity_reproduces_linear_temperature_ramp():
+    capacity = lambda x,y:1.+x+2*y+x*y
+    initial = lambda x,y:x*x+y
+    x,y,history = solve_transient_diffusion_2d(initial,[0.,.02,.09],ncells=(3,4),degree=2,
+                    capacity=capacity,bc=INSULATED,neumann_flux=dict(right=2.,bottom=-1.,top=1.),
+                    forcing=lambda x,y:capacity(x,y)-2)
+    change = torch.zeros_like(history[0])
+    change[:,:,0,0] = .09
+    torch.testing.assert_close(history[-1]-history[0],change,rtol=0.,atol=5e-13)
+
+
+@pytest.mark.parametrize("invalid",[0.,lambda x,y:x-1.,torch.ones(4)])
+def test_invalid_capacity(invalid):
+    with pytest.raises(ValueError,match="capacity"):
+        solve_transient_diffusion_2d(0.,[0.,.1],capacity=invalid,ncells=(2,3))
+
+
+def test_weighted_initial_projection_preserves_total_heat():
+    # For C=1+xy and T=x²y, integral(C*T) = 1/6+1/12.
+    capacity = lambda x,y:1+x*y
+    x,y,states = solve_transient_diffusion_2d(lambda x,y:x.square()*y,[0.,.01,.04],
+                                    ncells=(3,4),degree=1,capacity=capacity,bc=INSULATED)
+    # Integrate each product with the four modal basis functions analytically.
+    hx,hy = 1/len(x),1/len(y)
+    moments = torch.stack(torch.broadcast_tensors(1+x[:,None]*y,x[:,None]*hy/6,
+                          hx*y[None,:]/6,torch.tensor(hx*hy/36,dtype=x.dtype)),dim=-1)
+    heat = (states.flatten(-2)*moments).sum(dim=(1,2,3))*hx*hy
+    torch.testing.assert_close(heat,torch.full_like(heat,.25),atol=2e-13,rtol=0.)
