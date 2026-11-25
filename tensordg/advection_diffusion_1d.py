@@ -469,7 +469,7 @@ def _assemble_transport(
 
 def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_history=None,
                                           source_jump_times=(), interface_source_history=None, rannacher=False,
-                                          return_face_transport=False, **spatial_options):
+                                          return_face_transport=False, total_flux_history=None, **spatial_options):
     """Advance u_t + (a*u-D*u_x)_x + reaction*u = source with fixed coefficients.
 
     Spatial keywords match solve_advection_diffusion_1d. Initial data are a
@@ -478,7 +478,9 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
     0.5 through 1. source_history(t,x) adds a volume source to the stationary
     loads. Return a scalar or values matching the quadrature coordinates x.
     interface_source_history(t) adds a scalar or one source per coupled face,
-    ordered as for interface_source. List jumps of either load in
+    ordered as for interface_source. total_flux_history(t) adds a pair of
+    rightward flux offsets on prescribed flux or exchange boundaries; use
+    zero on any Dirichlet end. List jumps of all time-dependent loads in
     source_jump_times, with the new source value
     at each jump. Internal subdivisions preserve the requested output times.
     With rannacher=True, replace the first Crank-Nicolson step and the first
@@ -533,6 +535,16 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
                         "advection_scheme","total_flux","cell_edges","diffusivity_ratio","interface_reaction",
                         "boundary_exchange","velocity","diffusivity_profile","periodic") if k in spatial_options}
         static_sheet = _interface_profile(spatial_options.get("interface_source",0.),widths,"interface_source",metadata["periodic"])
+    if total_flux_history is not None:
+        if metadata["periodic"]:
+            raise ValueError("total_flux_history requires open boundaries")
+        laws = _boundary_flux_laws(spatial_options.get("total_flux",(None,None)),
+                                   spatial_options.get("boundary_exchange",(None,None)))
+        fixed_value = torch.tensor([offset is None for offset,_ in laws],device=centers.device)
+        if fixed_value.all():
+            raise ValueError("total_flux_history requires a flux or exchange boundary")
+        west_trace = (-1.)**indices
+        boundary_integral = centers.new_zeros(2)
     def forcing(time):
         if source_history is None:
             projected = centers.new_zeros((n,degree+1))
@@ -543,11 +555,22 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
         if interface_source_history is not None:
             sheet = _interface_profile(interface_source_history(time),widths,"interface_source_history",metadata["periodic"])
             add_face_sources(projected,sheet)
-        return projected.reshape(-1),sheet
+        boundary = 0.
+        if total_flux_history is not None:
+            values = total_flux_history(time)
+            raw = torch.as_tensor(values,device=centers.device)
+            if raw.shape!=(2,) or raw.is_complex():
+                raise ValueError("total_flux_history must return two real rightward flux offsets")
+            boundary = torch.as_tensor(values,device=centers.device,dtype=centers.dtype)
+            if not torch.isfinite(boundary).all() or torch.any(boundary[fixed_value]!=0):
+                raise ValueError("boundary flux offsets must be finite and zero on Dirichlet ends")
+            projected[0] += boundary[0]*west_trace
+            projected[-1] -= boundary[1]
+        return projected.reshape(-1),sheet,boundary
     index = 1
-    changing_load = source_history is not None or interface_source_history is not None
+    changing_load = any(v is not None for v in (source_history,interface_source_history,total_flux_history))
     if changing_load:
-        start_load,start_sheet = forcing(output[0])
+        start_load,start_sheet,start_boundary = forcing(output[0])
     for start,stop in zip(boundaries,boundaries[1:]):
         damp = rannacher and (start==output[0] or start in jumps)
         endpoints = (start+(stop-start)/2,stop) if damp else (stop,)
@@ -562,11 +585,13 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
                 previous_scale = scale
             stage_load = load
             if changing_load:
-                end_load,end_sheet = forcing(math.nextafter(end,start) if end in jumps else end)
+                end_load,end_sheet,end_boundary = forcing(math.nextafter(end,start) if end in jumps else end)
                 stage_load = load+(1-weight)*start_load+weight*end_load
                 if return_face_transport and interface_source_history is not None:
                     sheet_integral = sheet_integral+dt*((1-weight)*start_sheet+weight*end_sheet)
-                start_load,start_sheet = forcing(end) if end in jumps else (end_load,end_sheet)
+                if return_face_transport and total_flux_history is not None:
+                    boundary_integral = boundary_integral+dt*((1-weight)*start_boundary+weight*end_boundary)
+                start_load,start_sheet,start_boundary = forcing(end) if end in jumps else (end_load,end_sheet,end_boundary)
             rhs = mass*state+dt*(stage_load-(1-weight)*(operator @ state))
             updated = torch.linalg.lu_solve(*factors,rhs[:,None])[:,0]
             if return_face_transport:
@@ -582,6 +607,10 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
                     metadata["peclet"],**flux_options,interface_source=static_sheet+sheet_integral/duration,
                     return_cell_fluxes=True)
                 west_transport[index-1],east_transport[index-1] = duration*west,duration*east
+                if total_flux_history is not None:
+                    west_transport[index-1,0] += boundary_integral[0]
+                    east_transport[index-1,-1] += boundary_integral[1]
+                    boundary_integral = torch.zeros_like(boundary_integral)
                 state_integral = torch.zeros_like(state)
                 sheet_integral = torch.zeros_like(sheet_integral)
             states.append(state.reshape(n,degree+1))

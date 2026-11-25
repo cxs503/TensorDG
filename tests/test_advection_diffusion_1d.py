@@ -571,3 +571,23 @@ def test_interval_face_transport_balances_pulses_and_distributed_load(rannacher,
     torch.testing.assert_close(delta,west-east+.7*on[:,None]*edges.diff(),atol=2e-12,rtol=0.)
     jump = west.roll(-1,dims=1)-east if periodic else west[:,1:]-east[:,:-1]
     torch.testing.assert_close(jump,on[:,None]*pulse+.1*edges.new_tensor(times).diff()[:,None],atol=2e-12,rtol=0.)
+
+
+@pytest.mark.parametrize("rannacher",[False,True])
+def test_pulsed_end_fluxes_and_constant_offsets(rannacher):
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d
+    t = [0.,.041,.11]
+    _,u,_,(west,east) = solve_transient_advection_diffusion_1d(t,.2,ncells=6,total_flux=(.2,-.1),
+              total_flux_history=lambda t:(1.,-.4) if .018<=t<.067 else (0.,0.),source_jump_times=(.018,.067),
+              rannacher=rannacher,return_face_transport=True)
+    dt,on = u.new_tensor(t).diff(),u.new_tensor([.023,.026])
+    torch.testing.assert_close(west[:,0],.2*dt+on,atol=1e-14,rtol=0.)
+    torch.testing.assert_close(east[:,-1],-.1*dt-.4*on,atol=1e-14,rtol=0.)
+    torch.testing.assert_close(u[:,:,0].diff(dim=0)/6,west-east,atol=1e-12,rtol=0.)
+
+
+def test_end_flux_history_rejects_dirichlet_load():
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d
+    with pytest.raises(ValueError,match="Dirichlet"):
+        solve_transient_advection_diffusion_1d([0.,.1],0.,ncells=4,total_flux=(None,0.),
+                                               total_flux_history=lambda t:(1.,0.))
