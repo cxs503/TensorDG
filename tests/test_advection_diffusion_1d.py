@@ -403,3 +403,22 @@ def test_insulating_exchange_requires_mean_and_valid_coefficients():
         solve_advection_diffusion_1d(boundary_exchange=((0.,1.),(0.,2.)))
     with pytest.raises(ValueError,match="boundary exchange"):
         solve_advection_diffusion_1d(boundary_exchange=((-.2,1.),None))
+
+
+@pytest.mark.parametrize("orientation",[-1.,1.])
+def test_conservative_variable_velocity_with_interior_stagnation(orientation):
+    from tensordg.advection_diffusion_1d import numerical_face_fluxes
+    edges = torch.tensor([0.,.12,.25,.48,.7,1.],dtype=torch.float64)
+    def velocity(x):
+        return orientation*2*(x-.25)
+    def u(x):
+        return .8+.6*x-.3*x*x
+    def flux(x):
+        return velocity(x)*u(x)-.2*(.6-.6*x)
+    opts = dict(cell_edges=edges,velocity=velocity,left_value=u(0.),right_value=u(1.))
+    centers,c,_ = solve_advection_diffusion_1d(degree=2,peclet=5.,**opts,
+                 source=lambda x:2*orientation*u(x)+velocity(x)*(.6-.6*x)+.12)
+    x,uh = sample_solution(centers,c,cell_edges=edges)
+    torch.testing.assert_close(uh,u(x),atol=5e-12,rtol=0.)
+    torch.testing.assert_close(numerical_face_fluxes(c,5.,**opts),flux(edges),atol=5e-12,rtol=0.)
+    torch.testing.assert_close(face_fluxes(c,5.,cell_edges=edges,velocity=velocity),flux(edges[1:]),atol=5e-12,rtol=0.)
