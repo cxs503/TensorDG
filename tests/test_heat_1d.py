@@ -768,3 +768,20 @@ def test_left_film_equals_reflected_right_film(r):
     yr, br = compose_heat_wall_admittances_1d(reverse, r, return_flux_offset=True, **right)
     torch.testing.assert_close(y, yr.flip((0, 1)))
     torch.testing.assert_close(offset, br.flip((0,)))
+
+
+@pytest.mark.parametrize("backend", ["dense", "sparse", "matrix-free", "exact-time"])
+def test_ramped_wall_interval_temperature_modes(backend):
+    from tensordg.heat_1d import solve_heat_1d_wall_history
+
+    times = torch.tensor([0., .03, .1], dtype=torch.float64)
+    walls = torch.stack((times, 3*times), dim=1)
+    centers, _, meta = solve_heat_1d_wall_history(
+        times, walls, 6, 2, backend=backend, source=lambda x: 1+2*x,
+        initial_temperature=torch.zeros_like, return_interval_temperatures=True)
+    means = centers.new_tensor(meta["interval_temperature_modes"])
+    midpoint = (times[1:]+times[:-1])/2
+    expected = torch.zeros_like(means)
+    expected[:, :, 0] = midpoint[:, None]*(1+2*centers)
+    expected[:, :, 1] = midpoint[:, None]/6
+    torch.testing.assert_close(means, expected, atol=1e-10, rtol=0.)

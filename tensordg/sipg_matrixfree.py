@@ -520,7 +520,7 @@ def solve_heat_1d_matrixfree(
     dtype: torch.dtype = torch.float64,
     rtol: float = 1e-12,
     maxiter: int = 5_000,
-    *, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
+    *, integrate_temperature: bool = False, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
 ) -> tuple:
     """Matrix-free CN heat solve: each time step uses PCG."""
     from tensordg.heat_1d import _integrated_face_heat, _operators, _project_initial, _stationary_load
@@ -548,7 +548,7 @@ def solve_heat_1d_matrixfree(
     if load is not None:
         increment = dt*load.reshape(-1)
     state = coeff.reshape(-1)
-    integrated = torch.zeros_like(state) if integrate_face_fluxes else None
+    integrated = torch.zeros_like(state) if integrate_face_fluxes or integrate_temperature else None
 
     # Build diagonal preconditioner for system = M + 0.5*dt*D
     volume_mass = 0.5 * h * mass
@@ -623,5 +623,8 @@ def solve_heat_1d_matrixfree(
     }
     if integrated is not None:
         integrated_coeff = torch.as_tensor(integrated, dtype=dtype, device=dev).reshape(ncells, modes)
-        metadata["integrated_face_fluxes"] = _integrated_face_heat(integrated_coeff, penalty, wall_temperatures, final_time)
+        if integrate_temperature:
+            metadata["integrated_temperature_modes"] = integrated_coeff.tolist()
+        if integrate_face_fluxes:
+            metadata["integrated_face_fluxes"] = _integrated_face_heat(integrated_coeff, penalty, wall_temperatures, final_time)
     return centers, coeff, metadata

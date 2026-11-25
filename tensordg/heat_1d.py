@@ -211,7 +211,7 @@ def solve_heat_1d(
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     backend: str = "dense",
-    *, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
+    *, integrate_temperature: bool = False, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
 ):
     """Solve the forced heat equation with fixed Dirichlet data and a projected initial profile.
 
@@ -227,6 +227,8 @@ def solve_heat_1d(
     initial_temperature : optional callable or modal coefficient tensor
         Evaluated on cell quadrature points and projected onto the modal basis.
         The default profile is sin(pi*x).
+    integrate_temperature : bool
+        Include time-integrated Legendre coefficients under "integrated_temperature_modes".
     integrate_face_fluxes : bool
         Include the time-integrated flux toward +x at all faces in metadata
         under "integrated_face_fluxes", using Crank–Nicolson stage values.
@@ -242,13 +244,13 @@ def solve_heat_1d(
         from tensordg.sipg_sparse import solve_heat_1d_sparse
         return solve_heat_1d_sparse(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
+            integrate_temperature=integrate_temperature, integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
         )
     elif backend == "matrix-free":
         from tensordg.sipg_matrixfree import solve_heat_1d_matrixfree
         return solve_heat_1d_matrixfree(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
+            integrate_temperature=integrate_temperature, integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures,
         )
 
     # backend == "dense": original implementation
@@ -273,7 +275,7 @@ def solve_heat_1d(
     ) if final_time > 0.0 else 0
     dt = final_time / steps if steps else 0.0
     state = coeff.reshape(-1)
-    integrated = torch.zeros_like(state) if integrate_face_fluxes else None
+    integrated = torch.zeros_like(state) if integrate_face_fluxes or integrate_temperature else None
     if steps:
         load = assembly["source_load"]
         increment = 0. if load is None else dt*load.reshape(-1)
@@ -293,7 +295,10 @@ def solve_heat_1d(
     }
     if integrated is not None:
         integrated_coeff = torch.as_tensor(integrated, dtype=dtype, device=dev).reshape(ncells, modes)
-        metadata["integrated_face_fluxes"] = _integrated_face_heat(integrated_coeff, penalty, wall_temperatures, final_time)
+        if integrate_temperature:
+            metadata["integrated_temperature_modes"] = integrated_coeff.tolist()
+        if integrate_face_fluxes:
+            metadata["integrated_face_fluxes"] = _integrated_face_heat(integrated_coeff, penalty, wall_temperatures, final_time)
     return centers, coeff, metadata
 
 
@@ -304,7 +309,7 @@ def solve_heat_1d_exact_time(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, initial_temperature=None, source=None, wall_temperatures=None, integrate_face_fluxes: bool = False,
+    *, initial_temperature=None, source=None, wall_temperatures=None, integrate_face_fluxes: bool = False, integrate_temperature: bool = False,
 ):
     """SIPG heat solution with the semi-discrete system integrated *exactly* in time.
 
@@ -365,14 +370,17 @@ def solve_heat_1d_exact_time(
         "stiffness_eigenvalue_max": float(eigenvalues.real.max()),
         "time_step_limit": float(2.0 / eigenvalues.real.max()),
     }
-    if integrate_face_fluxes:
+    if integrate_face_fluxes or integrate_temperature:
         # Integrate M du/dt = f-Ku before recovering the numerical face flux.
         rhs = mass @ (initial-state)
         if system["source_load"] is not None:
             rhs += final_time*system["source_load"].detach().cpu().numpy().reshape(-1)
         integrated = np.linalg.solve(diffusion, rhs).reshape(ncells, degree+1)
         modes = torch.as_tensor(integrated, device=coeff.device, dtype=coeff.dtype)
-        metadata["integrated_face_fluxes"] = _integrated_face_heat(modes, penalty, wall_temperatures, final_time)
+        if integrate_temperature:
+            metadata["integrated_temperature_modes"] = modes.tolist()
+        if integrate_face_fluxes:
+            metadata["integrated_face_fluxes"] = _integrated_face_heat(modes, penalty, wall_temperatures, final_time)
     return system["centers"], coeff, metadata
 
 
@@ -429,7 +437,7 @@ def sipg_heat_face_fluxes(coefficients: torch.Tensor, penalty: float = 20., *, w
 def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_temperatures,
                                wall_rates, initial_temperature=None, source=None, backend="dense",
                                time_steps=None, penalty=20., device="cpu", dtype=torch.float64,
-                               integrate_face_fluxes=False):
+                               integrate_face_fluxes=False, integrate_temperature=False):
     """Solve with wall values g(0)+t*wall_rates, homogeneous material, and stationary source.
 
     The returned coefficients describe the physical temperature, and the metadata
@@ -447,7 +455,7 @@ def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_tempe
 
     options = dict(ncells=ncells,degree=degree,final_time=final_time,wall_temperatures=walls,
                    initial_temperature=initial_temperature,source=lifted_source,penalty=penalty,
-                   device=device,dtype=dtype,integrate_face_fluxes=integrate_face_fluxes)
+                   device=device,dtype=dtype,integrate_face_fluxes=integrate_face_fluxes, integrate_temperature=integrate_temperature)
     if backend == "exact-time":
         if time_steps is not None:
             raise ValueError("time_steps applies only to Crank–Nicolson backends")
@@ -458,6 +466,9 @@ def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_tempe
     lift = torch.zeros_like(coeff)
     lift[:,0] = final_time*(rates[0]+slope*centers)
     lift[:,1] = final_time*slope/(2*ncells)
+    if integrate_temperature:
+        integrated = coeff.new_tensor(meta["integrated_temperature_modes"])
+        meta["integrated_temperature_modes"] = (integrated + 0.5*final_time*lift).tolist()
     meta["final_wall_temperatures"] = (walls+final_time*rates).tolist()
     if integrate_face_fluxes:
         heat = coeff.new_tensor(meta["integrated_face_fluxes"])
@@ -468,7 +479,7 @@ def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_tempe
 def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
                                initial_temperature=None, source=None, interval_sources=None, backend="dense",
                                steps_per_interval=None, penalty=20., device="cpu",
-                               dtype=torch.float64, integrate_face_fluxes=False):
+                               dtype=torch.float64, integrate_face_fluxes=False, return_interval_temperatures=False):
     """Evolve piecewise-linear left/right wall temperatures on a uniform unit slab.
 
     Supply wall_temperatures as (knots, 2) for continuous histories or
@@ -478,6 +489,8 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
     the first knot. Return centers, modal fields at every knot (including the
     initial field), and metadata. interval_face_heat contains the rightward
     transfer at each face over each individual interval, when requested.
+    return_interval_temperatures adds interval_temperature_modes to metadata,
+    the time-mean Legendre coefficients with shape (interval, cell, mode).
     steps_per_interval is the number of CN steps per segment, or None to use
     the solver default. Use backend="exact-time" for semi-discrete exponential
     evolution. Supply a stationary source, or interval_sources with one
@@ -509,6 +522,7 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
     state = _project_initial(centers, 1/ncells, nodes, weights, phi, initial_temperature)
     history = [state]
     transfers = []
+    means = []
     intervals = []
     for i, duration in enumerate(times.diff().tolist()):
         rates = (end[i]-start[i])/duration
@@ -516,16 +530,21 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
         _, state, meta = solve_heat_1d_ramped_walls(
             ncells, degree, duration, wall_temperatures=start[i], wall_rates=rates,
             initial_temperature=state, source=generation, backend=backend, time_steps=steps_per_interval,
-            penalty=penalty, device=device, dtype=dtype, integrate_face_fluxes=integrate_face_fluxes)
+            penalty=penalty, device=device, dtype=dtype, integrate_face_fluxes=integrate_face_fluxes,
+            integrate_temperature=return_interval_temperatures)
         history.append(state)
         if integrate_face_fluxes:
             transfers.append(meta.pop("integrated_face_fluxes"))
+        if return_interval_temperatures:
+            means.append((state.new_tensor(meta.pop("integrated_temperature_modes"))/duration).tolist())
         intervals.append(meta)
     metadata = {"times": times.tolist(), "intervals": intervals}
     if integrate_face_fluxes:
         heat = state.new_tensor(transfers)
         metadata["interval_face_heat"] = transfers
         metadata["integrated_face_fluxes"] = heat.sum(dim=0).tolist()
+    if return_interval_temperatures:
+        metadata["interval_temperature_modes"] = means
     return centers, torch.stack(history), metadata
 
 

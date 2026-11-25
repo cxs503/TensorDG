@@ -302,7 +302,7 @@ def solve_heat_1d_sparse(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
+    *, integrate_temperature: bool = False, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
 ) -> tuple:
     """Sparse SIPG heat solve.  Signature mirrors ``solve_heat_1d``."""
     from tensordg.heat_1d import _integrated_face_heat, _operators, _project_initial, _stationary_load
@@ -332,7 +332,7 @@ def solve_heat_1d_sparse(
         increment = dt*load.reshape(-1)
         increment = increment.cpu().numpy()
     state = coeff.reshape(-1).cpu().numpy().astype(np.float64)
-    integrated = np.zeros_like(state) if integrate_face_fluxes else None
+    integrated = np.zeros_like(state) if integrate_face_fluxes or integrate_temperature else None
 
     if steps:
         system = mass_csr + 0.5 * dt * diffusion_csr
@@ -358,5 +358,8 @@ def solve_heat_1d_sparse(
     }
     if integrated is not None:
         integrated_coeff = torch.as_tensor(integrated, dtype=dtype, device=dev).reshape(ncells, modes)
-        metadata["integrated_face_fluxes"] = _integrated_face_heat(integrated_coeff, penalty, wall_temperatures, final_time)
+        if integrate_temperature:
+            metadata["integrated_temperature_modes"] = integrated_coeff.tolist()
+        if integrate_face_fluxes:
+            metadata["integrated_face_fluxes"] = _integrated_face_heat(integrated_coeff, penalty, wall_temperatures, final_time)
     return centers, coeff, metadata
