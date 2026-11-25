@@ -364,3 +364,25 @@ def test_resistive_interface_exact_series_heat_flow(axis):
     assert abs(mean-ref[:,None]).max()<1e-11
     qx,qy = poisson_face_powers_2d(u,**options)
     assert abs((qx if axis=="x" else qy)*n-current).max()<1e-10
+
+
+@pytest.mark.parametrize("axis",["x","y"])
+def test_two_contact_heaters_split_into_rods_and_contact(axis):
+    from tensordg import solve_poisson_2d_bc, poisson_face_powers_2d
+
+    n = 6
+    face = torch.zeros((n-1,n),dtype=torch.float64)
+    face[n//2-1] = 1.
+    if axis=="y":
+        face = face.T
+    insulated = ("top","bottom") if axis=="x" else ("left","right")
+    data = dict(contact_resistance={axis:.4*face},bc=dict.fromkeys(insulated,"neumann"))
+    _,_,u,_ = solve_poisson_2d_bc(n,1,forcing=lambda x,y:torch.zeros_like(x+y),sparse=True,
+                                  trace_power={axis:(2*face,-.3*face)},**data)
+    # Each half rod has conductance 2. A positive transfer leaves the first trace.
+    transfer = (2.+.3)/(2*.4+2)
+    fx,fy = poisson_face_powers_2d(u,**data)
+    q = (fx if axis=="x" else fy.T).sum(1)
+    assert abs(q[n//2]-transfer)<1e-11
+    assert abs(q[0]-(transfer-2))<1e-11
+    assert abs(q[-1]-(transfer-.3))<1e-11

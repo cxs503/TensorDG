@@ -56,7 +56,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
                                  dirichlet_values=None, neumann_flux=None, robin_films=None,
                                  penalty=20., load_amplitude=None, conductivity=1.,
                                  rannacher=False, return_interval_means=False, load_jump_times=(),
-                                 return_load_means=False, source_history=None, wall_areal_heat_capacity=None, contact_resistance=None):
+                                 return_load_means=False, source_history=None, wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None):
     """Solve C*u_t - div(k grad u) + reaction*u = f with optional time-dependent loads.
 
     times specifies strictly increasing output times, each interval taking one
@@ -108,7 +108,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
         forcing = lambda x,y: torch.zeros_like(x+y)
     operator,load,grid,metadata = assemble_poisson_2d_bc(ncells,degree,penalty,bc,forcing,neumann_flux,
                     sparse=True,reaction=reaction,conductivity=conductivity,dirichlet_values=dirichlet_values,robin_films=robin_films,
-                    contact_resistance=contact_resistance)
+                    contact_resistance=contact_resistance,trace_power=trace_power)
     x,y = grid["x"],grid["y"]
     hx,hy = grid["hx"],grid["hy"]
     modes = degree+1
@@ -221,12 +221,12 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
 
 
 def _frequency_system(ncells,degree,penalty,bc,forcing,neumann_flux,reaction,conductivity,
-                      dirichlet_values,robin_films,capacity,complex_load,wall_areal_heat_capacity,contact_resistance):
+                      dirichlet_values,robin_films,capacity,complex_load,wall_areal_heat_capacity,contact_resistance,trace_power):
     if forcing is None:
         forcing = lambda x,y: torch.zeros_like(x+y)
     stiffness,load,grid,metadata = assemble_poisson_2d_bc(
         ncells,degree,penalty,bc,forcing,neumann_flux,sparse=True,reaction=reaction,
-        conductivity=conductivity,dirichlet_values=dirichlet_values,robin_films=robin_films,complex_load=complex_load,contact_resistance=contact_resistance)
+        conductivity=conductivity,dirichlet_values=dirichlet_values,robin_films=robin_films,complex_load=complex_load,contact_resistance=contact_resistance,trace_power=trace_power)
     quadrature = _capacity_quadrature(grid) if callable(capacity) else None
     mass = _capacity_operator(grid,capacity,quadrature)[0]
     if wall_areal_heat_capacity:
@@ -237,7 +237,7 @@ def _frequency_system(ncells,degree,penalty,bc,forcing,neumann_flux,reaction,con
 
 def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conductivity=1.,
                                      reaction=0., forcing=None, bc=None, dirichlet_values=None,
-                                     neumann_flux=None, robin_films=None, penalty=20., wall_areal_heat_capacity=None, contact_resistance=None):
+                                     neumann_flux=None, robin_films=None, penalty=20., wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None):
     """Return x, y, U0 and U1 for the SIPG temperature U0 + iω U1 + O(ω²).
 
     Real, frequency-independent data follow solve_transient_diffusion_2d.
@@ -247,7 +247,7 @@ def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conduc
     Robin sides to nonnegative scalars or functions of (x,y) in J/(m² K).
     """
     stiffness,mass,load,grid,metadata = _frequency_system(ncells,degree,penalty,bc,forcing,
-        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,False,wall_areal_heat_capacity,contact_resistance)
+        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,False,wall_areal_heat_capacity,contact_resistance,trace_power)
     anchored = metadata["temperature_anchored"]
     stride = (degree+1)**2
     rhs = load.numpy()
@@ -275,7 +275,7 @@ def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conduc
 
 def solve_harmonic_diffusion_2d(angular_frequency, *, ncells=16, degree=1, capacity=1.,
                                 conductivity=1., reaction=0., forcing=None, bc=None,
-                                dirichlet_values=None, neumann_flux=None, robin_films=None, penalty=20., wall_areal_heat_capacity=None, contact_resistance=None):
+                                dirichlet_values=None, neumann_flux=None, robin_films=None, penalty=20., wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None):
     """Solve (K + iω M)U = F for exp(+iωt) and positive angular frequency.
 
     Volume forcing, prescribed temperatures, inward flux and film ambient
@@ -287,7 +287,7 @@ def solve_harmonic_diffusion_2d(angular_frequency, *, ncells=16, degree=1, capac
     if not np.isfinite(angular_frequency) or angular_frequency<=0:
         raise ValueError("angular frequency must be positive and finite")
     stiffness,mass,load,grid,metadata = _frequency_system(ncells,degree,penalty,bc,forcing,
-        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,True,wall_areal_heat_capacity,contact_resistance)
+        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,True,wall_areal_heat_capacity,contact_resistance,trace_power)
     field = splu((stiffness+1j*angular_frequency*mass).tocsc()).solve(load.numpy())
     shape = (*metadata["ncells"],degree+1,degree+1)
     return grid["x"],grid["y"],torch.from_numpy(field.reshape(shape))

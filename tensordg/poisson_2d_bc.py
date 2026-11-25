@@ -142,6 +142,23 @@ def _contact_faces(data,nx,ny,device,dtype):
     return faces
 
 
+def _trace_face_data(data,nx,ny,device,dtype):
+    """Validate one constant per face on each of its two traces."""
+    for axis,pair in (data or {}).items():
+        if axis not in ("x","y") or len(pair)!=2:
+            raise ValueError("trace data require an x or y pair in increasing coordinate order")
+        shape = (nx-1,ny) if axis=="x" else (nx,ny-1)
+        fields = []
+        for value in pair:
+            if torch.is_complex(torch.as_tensor(value)) and not dtype.is_complex:
+                raise ValueError("complex trace data require a complex load")
+            field = torch.as_tensor(value,device=device,dtype=dtype)
+            if field.shape not in ((),shape) or not torch.isfinite(field).all():
+                raise ValueError(f"{axis} trace data must be finite and scalar or shaped {shape}")
+            fields.append(field.expand(shape))
+        yield axis,fields
+
+
 def _cell_conductivity(value, nx, ny, device, dtype):
     k = torch.as_tensor(value,device=device,dtype=dtype)
     cross = None
@@ -188,7 +205,7 @@ def assemble_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1., complex_load=False, contact_resistance=None,
+    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1., complex_load=False, contact_resistance=None, trace_power=None,
 ):
     """Assemble ``-div(k grad u) + reaction*u = f`` with per-side Dirichlet/Neumann data.
 
@@ -201,6 +218,9 @@ def assemble_poisson_2d_bc(
     contact_resistance maps x or y to nonnegative face resistances (m² K/W),
     scalar or arrays shaped (nx-1,ny) or (nx,ny-1). Positive faces enforce
     q=(T_left-T_right)/R; zero uses the ordinary SIPG interface.
+    trace_power maps x or y to a pair of heat inputs in W/m², applied to
+    the lower- and higher-coordinate elements respectively. Each entry is
+    constant on a face and has the same shape options as contact_resistance.
     robin_films maps each Robin side to (h, ambient), implementing outward
     Fourier flux h*(u-ambient); both entries accept scalars or callables.
     reaction is a finite nonnegative scalar or callable of (x,y). Positive
@@ -343,6 +363,13 @@ def assemble_poisson_2d_bc(
     # ---- boundary faces --------------------------------------------------
     load_dtype = torch.complex(torch.empty((),dtype=dtype),torch.empty((),dtype=dtype)).dtype if complex_load else dtype
     load = torch.zeros(ndofs, device=dev, dtype=load_dtype).view(nx, ny, local_dofs)
+    for axis,(lower,upper) in _trace_face_data(trace_power,nx,ny,dev,load_dtype):
+        sx,sy = int(axis=="x"),int(axis=="y")
+        measure = measure_x if sx else measure_y
+        high,_ = _face_basis(phi,phi_right,dphi_right,axis,1.)
+        low,_ = _face_basis(phi,phi_left,dphi_left,axis,1.)
+        load[:nx-sx,:ny-sy] += lower[...,None]*(measure*(weights @ high))
+        load[sx:,sy:] += upper[...,None]*(measure*(weights @ low))
     sides = (
         ("left", "x", 0.0, 0, phi_left, dphi_left, -1.0, hx, measure_x),
         ("right", "x", 1.0, nx - 1, phi_right, dphi_right, 1.0, hx, measure_x),
@@ -431,7 +458,7 @@ def solve_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1., contact_resistance=None,
+    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1., contact_resistance=None, trace_power=None,
 ):
     """Solve the Poisson problem with dense torch or CPU SciPy sparse direct algebra.
 
@@ -441,7 +468,7 @@ def solve_poisson_2d_bc(
     matrix, rhs, grid, metadata = assemble_poisson_2d_bc(
         ncells=ncells, degree=degree, penalty=penalty, bc=bc,
         forcing=forcing, neumann_flux=neumann_flux, device=device, dtype=dtype,
-        dirichlet_values=dirichlet_values, robin_films=robin_films, sparse=sparse, reaction=reaction, conductivity=conductivity, contact_resistance=contact_resistance,
+        dirichlet_values=dirichlet_values, robin_films=robin_films, sparse=sparse, reaction=reaction, conductivity=conductivity, contact_resistance=contact_resistance, trace_power=trace_power,
     )
     nx, ny = metadata["ncells"]
     local_dofs = (degree + 1) ** 2
