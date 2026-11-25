@@ -297,3 +297,33 @@ def test_nonuniform_flux_driven_solution_and_width_weighted_mean():
 def test_reject_invalid_transport_edges(edges):
     with pytest.raises(ValueError,match="cell_edges"):
         solve_advection_diffusion_1d(cell_edges=edges)
+
+
+@pytest.mark.parametrize("speed",[-1.3,1.3])
+def test_layered_quadratic_transport_in_resistance_coordinate(speed):
+    from tensordg.advection_diffusion_1d import numerical_face_fluxes
+    edges = torch.tensor([0.,.08,.3,.5,.7,1.],dtype=torch.float64)
+    ratio = edges.new_tensor([.4,.4,3.,3.,3.])
+    def y(x):
+        return torch.minimum(x,x.new_tensor(.3))/.4+torch.clamp(x-.3,min=0.)/3.
+    def u(x):
+        z = y(x)
+        return .7+z*(.25-z)
+    d = abs(speed)/3.
+    def flux(x):
+        return speed*u(x)-d*(.25-2*y(x))
+    ends = u(edges)[[0,-1]].tolist()
+    opts = dict(left_value=ends[0],right_value=ends[1],cell_edges=edges,diffusivity_ratio=ratio)
+    centers,coeff,_ = solve_advection_diffusion_1d(degree=2,peclet=3.,speed=speed,**opts,
+                    source=lambda x:(speed*(.25-2*y(x))+2*d)/ratio[:,None])
+    x,uh = sample_solution(centers,coeff,cell_edges=edges)
+    torch.testing.assert_close(uh,u(x),atol=2e-11,rtol=0.)
+    torch.testing.assert_close(numerical_face_fluxes(coeff,3.,speed,**opts),flux(edges),atol=2e-11,rtol=0.)
+    torch.testing.assert_close(face_fluxes(coeff,3.,speed,cell_edges=edges,diffusivity_ratio=ratio),
+                               flux(edges[1:]),atol=2e-11,rtol=0.)
+
+
+@pytest.mark.parametrize("ratio",[0.,-.1,float("nan"),[1.,2.],1.+.1j])
+def test_reject_invalid_transport_diffusivity_ratio(ratio):
+    with pytest.raises(ValueError,match="diffusivity_ratio"):
+        solve_advection_diffusion_1d(3,diffusivity_ratio=ratio)
