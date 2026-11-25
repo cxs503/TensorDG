@@ -1,4 +1,5 @@
 """Decay of an exact thermal mode with unequal storing Robin walls on a unit slab."""
+import argparse
 import json
 import math
 from pathlib import Path
@@ -9,7 +10,7 @@ import torch
 from tensordg import solve_transient_diffusion_2d, poisson_face_powers_2d, l2_error_2d
 
 
-def measure(n,steps,degree=2):
+def measure(n,steps,degree=2,method="theta"):
     k,c,beta,center = 1.4,2.,1.8,.35
     decay = k*beta**2/c
     surface = np.array([.3,.8])
@@ -26,13 +27,15 @@ def measure(n,steps,degree=2):
     def initial(x,y):
         return torch.cos(beta*(x-center))
     x,y,fields,means = solve_transient_diffusion_2d(initial,times,ncells=(n,2),degree=degree,
-                      capacity=c,return_interval_means=True,**options)
+                      capacity=c,method=method,return_interval_means=True,**options)
     dt = np.diff(times)
     signal = np.exp(-decay*times)
     # Integrate the trace in y and evaluate in x at the two ends.
     modes = fields[:,:,:,:,0].mean(2).numpy()
     wall = np.stack([modes[:,0] @ ((-1.)**np.arange(degree+1)),modes[:,-1].sum(1)],axis=1)
-    room_heat = dt[:,None]*films*(wall[1:]+wall[:-1])/2
+    average = means[:,:,:,:,0].mean(2).numpy()
+    mean_wall = np.stack([average[:,0] @ ((-1.)**np.arange(degree+1)),average[:,-1].sum(1)],axis=1)
+    room_heat = dt[:,None]*films*mean_wall
     material_heat = []
     cell_residual = 0.
     for i,step in enumerate(dt):
@@ -51,11 +54,14 @@ def measure(n,steps,degree=2):
 
 
 if __name__=="__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--method", choices=("theta","sdirk2"), default="theta")
+    method = parser.parse_args().method
     rows = []
     for study in ("space","time"):
         previous = None
         for level in (1,2,4):
-            row = measure(4*level,128,2) if study=="space" else measure(12,4*level,3)
+            row = measure(4*level,128,2,method) if study=="space" else measure(12,4*level,3,method)
             error = row["relative_l2"]
             order = math.log2(previous/error) if previous else None
             row.update(study=study,order=order,passed=(max(row["cell_balance_J"],row["wall_balance_J_m2"])<1e-10
@@ -64,5 +70,5 @@ if __name__=="__main__":
             rows.append(row)
             previous = error
     rev = subprocess.check_output(["git","rev-parse","HEAD"],cwd=Path(__file__).parent,text=True).strip()
-    print(json.dumps(dict(commit=rev,runs=rows),indent=2,allow_nan=False))
+    print(json.dumps(dict(commit=rev,method=method,runs=rows),indent=2,allow_nan=False))
     raise SystemExit(0 if all(row["passed"] for row in rows) else 1)
