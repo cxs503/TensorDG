@@ -143,6 +143,24 @@ def _interface_profile(value, widths, name):
     return data.expand_as(widths[:-1])
 
 
+def _boundary_flux_laws(total_flux, boundary_exchange):
+    """Rightward offsets and nonnegative outward exchange coefficients."""
+    west_flux,east_flux = total_flux
+    west_exchange,east_exchange = boundary_exchange
+    laws = []
+    for normal,offset,exchange in ((-1,west_flux,west_exchange),(1,east_flux,east_exchange)):
+        if offset is not None and not math.isfinite(offset):
+            raise ValueError("boundary total flux must be finite")
+        coefficient = 0.
+        if exchange is not None:
+            coefficient,ambient = exchange
+            if not math.isfinite(coefficient) or coefficient<0 or not math.isfinite(ambient):
+                raise ValueError("boundary exchange requires finite nonnegative coefficient and finite ambient")
+            offset = (0. if offset is None else offset)-normal*coefficient*ambient
+        laws.append((offset,coefficient))
+    return laws
+
+
 from .registry import capability
 @capability(
     name="advection-diffusion-1d",
@@ -163,7 +181,7 @@ def solve_advection_diffusion_1d(
     advection_scheme: str = "upwind",
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, source=0., reaction=0., total_flux=(None,None), mean_value=None, cell_edges=None, diffusivity_ratio=1., interface_source=0., interface_reaction=0.,
+    *, source=0., reaction=0., total_flux=(None,None), boundary_exchange=(None,None), mean_value=None, cell_edges=None, diffusivity_ratio=1., interface_source=0., interface_reaction=0.,
 ):
     """Solve (1) on [0, 1] and return (cell_centres, modal_coefficients, metadata).
 
@@ -195,6 +213,10 @@ def solve_advection_diffusion_1d(
         With two prescribed fluxes and zero volume and interface reaction, supply mean_value
         to select a unique solution; the flux difference must equal the
         integrated volume source plus all interface sources. The unit interval has length one.
+    boundary_exchange : (left, right)
+        An entry (k, ambient) prescribes outward total flux k*(u-ambient).
+        A total_flux on the same end adds a rightward offset. A zero k
+        gives the specified offset alone. None uses the usual boundary data.
     advection_scheme : {"upwind", "downwind"}
         ``"downwind"`` exists only as an implementation negative control: it is
         *not* a consistent scheme and must fail the verification gates.
@@ -249,17 +271,14 @@ def solve_advection_diffusion_1d(
         if not torch.isfinite(data).all():
             raise ValueError(f"{name} must be finite")
         return data.expand_as(xq)
-    west_flux,east_flux = total_flux
-    for value in (west_flux,east_flux):
-        if value is not None and not math.isfinite(value):
-            raise ValueError("boundary total flux must be finite")
+    (west_flux,kw),(east_flux,ke) = _boundary_flux_laws(total_flux,boundary_exchange)
     sink = profile(reaction,"reaction")
     if torch.any(sink < 0):
         raise ValueError("reaction must be nonnegative")
     uptake = _interface_profile(interface_reaction,h,"interface_reaction")
     if torch.any(uptake<0):
         raise ValueError("interface_reaction must be nonnegative")
-    needs_mean = west_flux is not None and east_flux is not None and not torch.any(sink>0) and not torch.any(uptake>0)
+    needs_mean = west_flux is not None and east_flux is not None and kw==0 and ke==0 and not torch.any(sink>0) and not torch.any(uptake>0)
     if needs_mean and (mean_value is None or not math.isfinite(mean_value)):
         raise ValueError("two total flux boundaries require a finite mean_value or nonzero reaction")
     if not needs_mean and mean_value is not None:
@@ -321,12 +340,13 @@ def solve_advection_diffusion_1d(
             add(dofs(right_cell), dofs(source), -a * torch.outer(phi_left, trace))
 
     # ---- Dirichlet boundary terms for the diffusive operator (Nitsche) ------
-    for cell, endpoint, derivative_endpoint, outward, value, prescribed_flux in (
-        (0, phi_left, dphi_left, -1.0, left_value, west_flux),
-        (ncells - 1, phi_right, dphi_right, 1.0, right_value, east_flux),
+    for cell, endpoint, derivative_endpoint, outward, value, prescribed_flux, exchange in (
+        (0, phi_left, dphi_left, -1.0, left_value, west_flux, kw),
+        (ncells - 1, phi_right, dphi_right, 1.0, right_value, east_flux, ke),
     ):
         idx = dofs(cell)
         if prescribed_flux is not None:
+            add(idx,idx,exchange*torch.outer(endpoint,endpoint))
             rhs[idx] -= outward*prescribed_flux*endpoint
             continue
         derivative = outward * local_diffusivity[cell] * (2.0 / h[cell]) * derivative_endpoint
@@ -441,7 +461,7 @@ def face_fluxes(
 
 def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., right_value=1.,
                           advection_scheme="upwind", total_flux=(None,None), *, cell_edges=None, diffusivity_ratio=1.,
-                          interface_source=0., interface_reaction=0., return_cell_fluxes=False):
+                          interface_source=0., interface_reaction=0., return_cell_fluxes=False, boundary_exchange=(None,None)):
     """Rightward DG flux at n+1 faces, with the weighted flux at internal faces.
 
     With return_cell_fluxes=True return (west, east), each of length ncells,
@@ -452,7 +472,7 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
     ncells,modes = coeff.shape
     _,_,_,_,_,pl,pr,dl,dr = _operators(modes-1,coeff.device,coeff.dtype)
     west,east = coeff @ pl,coeff @ pr
-    west_flux,east_flux = total_flux
+    (west_flux,kw),(east_flux,ke) = _boundary_flux_laws(total_flux,boundary_exchange)
     low = torch.cat((west.new_tensor([left_value if west_flux is None else 0.]),east))
     high = torch.cat((west,east.new_tensor([right_value if east_flux is None else 0.])))
     _,widths = _mesh(ncells,cell_edges,coeff.device,coeff.dtype)
@@ -467,9 +487,9 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
     advected = low if (speed>0)==(advection_scheme=="upwind") else high
     flux = speed*advected + face_ratio*(diffusion + penalty*modes**2*(low-high)/_face_widths(widths))
     if west_flux is not None:
-        flux[0] = west_flux
+        flux[0] = west_flux-kw*west[0]
     if east_flux is not None:
-        flux[-1] = east_flux
+        flux[-1] = east_flux+ke*east[-1]
     if return_cell_fluxes:
         w = ratio[:-1]/(ratio[:-1]+ratio[1:])
         sheet = sheet-uptake*(w*east[:-1]+(1-w)*west[1:])

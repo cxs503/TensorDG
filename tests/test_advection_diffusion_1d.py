@@ -376,3 +376,30 @@ def test_point_reaction_anchors_two_flux_boundaries(speed):
 def test_invalid_internal_face_law(options):
     with pytest.raises(ValueError,match="interface_"):
         solve_advection_diffusion_1d(ncells=4,**options)
+
+
+@pytest.mark.parametrize("speed",[-1.25,1.25])
+@pytest.mark.parametrize("kw,ke",[(0.,2.),(1.3,0.),(1.3,2.)])
+def test_exchange_and_flux_offsets_with_no_volume_reaction(speed,kw,ke):
+    from tensordg.advection_diffusion_1d import numerical_face_fluxes
+    pe = 4.
+    def field(x):
+        return .4+.3*x-.8*x*x
+    def flux(x):
+        return speed*field(x)-abs(speed)/pe*(.3-1.6*x)
+    ambient = (1.2,-.1)
+    offsets = (flux(0.)+kw*(field(0.)-ambient[0]),flux(1.)-ke*(field(1.)-ambient[1]))
+    opts = dict(total_flux=offsets,boundary_exchange=((kw,ambient[0]),(ke,ambient[1])))
+    centers,c,_ = solve_advection_diffusion_1d(8,2,pe,speed,**opts,
+                                source=lambda x:speed*(.3-1.6*x)+1.6*abs(speed)/pe)
+    pts,uh = sample_solution(centers,c)
+    torch.testing.assert_close(uh,field(pts),atol=1e-11,rtol=0.)
+    actual = numerical_face_fluxes(c,pe,speed,**opts)
+    torch.testing.assert_close(actual,flux(torch.linspace(0.,1.,9,dtype=c.dtype)),atol=1e-11,rtol=0.)
+
+
+def test_insulating_exchange_requires_mean_and_valid_coefficients():
+    with pytest.raises(ValueError,match="mean_value"):
+        solve_advection_diffusion_1d(boundary_exchange=((0.,1.),(0.,2.)))
+    with pytest.raises(ValueError,match="boundary exchange"):
+        solve_advection_diffusion_1d(boundary_exchange=((-.2,1.),None))

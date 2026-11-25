@@ -26,22 +26,26 @@ def measure(n,degree,speed,boundary,mean_constrained):
     west,east = field(faces)[[0,-1]].tolist()
     exact_wall = flux(faces)[[0,-1]].tolist()
     imposed = tuple(q if kind=="F" else None for kind,q in zip(boundary,exact_wall))
+    exchange = tuple((k,wall-normal*q/k) if kind=="R" else None for kind,k,wall,normal,q in
+                     zip(boundary,(1.3,2.),(west,east),(-1.,1.),exact_wall))
     centers,coeff,_ = solve_advection_diffusion_1d(n,degree,pe,speed,left_value=west,right_value=east,
-                                                   reaction=reaction,source=source,total_flux=imposed,
+                                                   reaction=reaction,source=source,total_flux=imposed,boundary_exchange=exchange,
                                                    mean_value=.65 if mean_constrained else None)
     x,uh = sample_solution(centers,coeff,samples_per_cell=16)
     weights = torch.from_numpy(np.polynomial.legendre.leggauss(16)[1])/(2*n)
     l2 = torch.sqrt(((uh-field(x)).square().reshape(n,-1) @ weights).sum())
-    actual = numerical_face_fluxes(coeff,pe,speed,left_value=west,right_value=east,total_flux=imposed)
+    actual = numerical_face_fluxes(coeff,pe,speed,left_value=west,right_value=east,total_flux=imposed,boundary_exchange=exchange)
     net = (source(x)-reaction(x)*uh).reshape(n,-1) @ weights
-    return dict(l2=float(l2),face_flux_max=float((actual-flux(faces)).abs().max()),
+    signs = coeff.new_tensor([(-1.)**j for j in range(degree+1)])
+    wall_error = max(abs(float(coeff[0] @ signs)-west),abs(float(coeff[-1].sum())-east))
+    return dict(wall_value_max=wall_error,global_balance=float(abs(actual[-1]-actual[0]-net.sum())),l2=float(l2),face_flux_max=float((actual-flux(faces)).abs().max()),
                 cell_balance_max=float((actual.diff()-net).abs().max()))
 
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--boundary", choices=("DD","DF","FD","FF"), default="DD",
-                        help="left/right boundary type: D for value, F for rightward total flux")
+    parser.add_argument("--boundary", choices=("DD","DF","FD","FF","RD","DR","RF","FR","RR"), default="DD",
+                        help="left/right boundary type: D for value, F for rightward total flux, R for outward reservoir exchange")
     parser.add_argument("--mean-constrained",action="store_true",
                         help="set reaction to zero and impose the exact mean under two flux boundaries")
     args = parser.parse_args()
@@ -56,7 +60,7 @@ if __name__=="__main__":
                 errors = measure(n,degree,speed,boundary,args.mean_constrained)
                 order = float(np.log2(previous/errors["l2"])) if previous else None
                 rows.append(dict(cells=n,degree=degree,speed=speed,errors=errors,l2_order=order,
-                                 passed=errors["cell_balance_max"]<1e-10 and
+                                 passed=errors["cell_balance_max"]<1e-10 and errors["global_balance"]<1e-9 and
                                  (order is None or order>degree+.75)))
                 previous = errors["l2"]
     revision = subprocess.check_output(["git","rev-parse","HEAD"],cwd=Path(__file__).parent,text=True).strip()
