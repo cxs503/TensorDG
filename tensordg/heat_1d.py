@@ -587,7 +587,16 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
         bordered = sparse.bmat([[system,column],[column.T,None]],format="csc")
         state = splu(bordered).solve(np.r_[rhs-1j*angular_frequency*mean*integral,0j])[:-1]
     else:
-        state = splu(system.tocsc()).solve(rhs)
+        factor = splu(system.tocsc())
+        state = factor.solve(rhs)
+        # Evaluate the weak-form residual before combining diffusion, volume
+        # storage and surface terms. Small wall admittances otherwise lose
+        # precision when added to the much larger penalty entries.
+        trial = state.astype(np.clongdouble)
+        residual = rhs - conductivity*(stiffness @ trial) - storage*(mass @ trial)
+        admittance = film+1j*angular_frequency*wall_capacity
+        residual -= trace.T @ (admittance*(trace @ trial))
+        state += factor.solve(residual.astype(np.complex128))
     coefficients = torch.from_numpy(state.reshape(ncells,degree+1))
     flux = conductivity*sipg_heat_face_fluxes(coefficients,penalty,wall_temperatures=values)
     surface = torch.from_numpy(trace @ state)+mean

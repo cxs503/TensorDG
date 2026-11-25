@@ -266,3 +266,19 @@ def test_slow_flux_driven_walls_include_surface_storage_in_mean_constraint():
         wall_areal_heat_capacity=cw,return_wall_temperatures=True)
     torch.testing.assert_close(q,flux(torch.linspace(0.,1.,13,dtype=x.dtype)),atol=2e-11,rtol=0.)
     torch.testing.assert_close(1j*omega*surface,rate+1j*omega*local(ends),atol=1e-14,rtol=0.)
+
+
+def test_uniform_harmonic_field_with_two_storing_films_has_zero_material_flux():
+    from tensordg import solve_harmonic_heat_1d
+
+    temperature = .8+.4j
+    capacity = 1.7
+    films = (2.,5.)
+    surface_capacity = (.35,1.1)
+    ambient = [temperature*(1+1j*c/h) for c,h in zip(surface_capacity,films)]
+    _,u,q,wall = solve_harmonic_heat_1d(1.,ncells=128,degree=2,conductivity=2.3,capacity=capacity,
+        source=1j*capacity*temperature,wall_types=("robin","robin"),wall_values=ambient,
+        film_coefficients=films,wall_areal_heat_capacity=surface_capacity,return_wall_temperatures=True)
+    assert (wall-temperature).abs().max()<5e-13
+    assert (u[:,0]-temperature).abs().max()<5e-13
+    assert q[[0,-1]].abs().max()<1e-12
