@@ -471,6 +471,9 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
                                dtype=torch.float64, integrate_face_fluxes=False):
     """Evolve piecewise-linear left/right wall temperatures on a uniform unit slab.
 
+    Supply wall_temperatures as (knots, 2) for continuous histories or
+    (intervals, 2, 2) for jumps. Each interval then specifies its start and end
+    (left, right) pairs independently; the modal state is continuous at a jump.
     times are strictly increasing knot times. The initial field is defined at
     the first knot. Return centers, modal fields at every knot (including the
     initial field), and metadata. interval_face_heat contains the rightward
@@ -484,8 +487,14 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
     walls = torch.as_tensor(wall_temperatures, dtype=dtype, device=device)
     if times.ndim != 1 or times.numel() < 2 or not torch.isfinite(times).all() or (times.diff() <= 0).any():
         raise ValueError("times must contain at least two finite, strictly increasing knot times")
-    if walls.shape != (times.numel(), 2) or not torch.isfinite(walls).all():
-        raise ValueError("wall_temperatures must contain one finite left/right pair per knot")
+    if walls.shape == (times.numel(), 2):
+        start, end = walls[:-1], walls[1:]
+    elif walls.shape == (times.numel()-1, 2, 2):
+        start, end = walls[:, 0], walls[:, 1]
+    else:
+        raise ValueError("wall_temperatures requires (knots, 2) or (intervals, 2, 2)")
+    if not torch.isfinite(walls).all():
+        raise ValueError("wall_temperatures must be finite")
     if ncells < 2 or degree < 1 or not math.isfinite(penalty) or penalty <= 0:
         raise ValueError("ncells >= 2, degree >= 1 and finite positive penalty are required")
     if steps_per_interval is not None and (not isinstance(steps_per_interval, int) or steps_per_interval < 1):
@@ -502,10 +511,10 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
     transfers = []
     intervals = []
     for i, duration in enumerate(times.diff().tolist()):
-        rates = (walls[i+1]-walls[i])/duration
+        rates = (end[i]-start[i])/duration
         generation = source if interval_sources is None else interval_sources[i]
         _, state, meta = solve_heat_1d_ramped_walls(
-            ncells, degree, duration, wall_temperatures=walls[i], wall_rates=rates,
+            ncells, degree, duration, wall_temperatures=start[i], wall_rates=rates,
             initial_temperature=state, source=generation, backend=backend, time_steps=steps_per_interval,
             penalty=penalty, device=device, dtype=dtype, integrate_face_fluxes=integrate_face_fluxes)
         history.append(state)

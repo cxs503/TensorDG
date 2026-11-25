@@ -163,6 +163,21 @@ def test_piecewise_wall_history_restarts_modes_and_conserves_interval_heat():
         torch.testing.assert_close(tail,states[1:],atol=5e-11,rtol=0.)
 
 
+def test_wall_history_jump_between_independent_ramps():
+    from tensordg import solve_heat_1d_wall_history
+
+    times = [0., .017, .043]
+    walls = [[[0., 1.], [.3, .7]], [[-.4, .8], [.2, .1]]]
+    opts = dict(ncells=5, degree=2, backend="exact-time", integrate_face_fluxes=True)
+    _, history, meta = solve_heat_1d_wall_history(times, walls, initial_temperature=lambda x: x, **opts)
+    for i, endpoints in enumerate(walls):
+        _, segment, single = solve_heat_1d_wall_history(
+            times[i:i+2], endpoints, initial_temperature=history[i], **opts)
+        torch.testing.assert_close(segment[-1], history[i+1])
+        torch.testing.assert_close(torch.tensor(single["interval_face_heat"][0], dtype=history.dtype),
+                                   torch.tensor(meta["interval_face_heat"][i], dtype=history.dtype))
+
+
 def test_switched_volume_heating_cell_energy_for_every_backend():
     from tensordg import solve_heat_1d_wall_history
 
