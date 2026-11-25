@@ -430,3 +430,39 @@ def test_checkerboard_energy_decay_against_upwind_rate(record_property):
         record_property(f"absolute_energy_error_{steps}", errors[-1])
         assert abs(mass_3d(coeff,lengths=lengths)-math.prod(lengths)) < 2e-14
     assert all(14 < a/b < 23 for a,b in zip(errors, errors[1:]))
+
+
+def test_directional_dissipation_checkerboard(record_property):
+    from tensordg import upwind_dissipation_3d
+
+    counts, lengths = (4, 6, 2), (1., 3., 2.)
+    signs = [(-1.)**torch.arange(n, dtype=torch.float64) for n in counts]
+    field = (1.25 + .375*torch.einsum("i,j,k->ijk", *signs))[..., None, None, None]
+    speeds = (-.7, 0., 1.1)
+    rates = upwind_dissipation_3d(field, speeds, lengths=lengths)
+    for i, rate in enumerate(rates):
+        exact = .5*abs(speeds[i])*(2*.375)**2*math.prod(lengths)*counts[i]/lengths[i]
+        record_property(f"absolute_rate_error_{i}", abs(rate-exact))
+        assert rate == pytest.approx(exact, abs=2e-14, rel=0.)
+
+
+def test_directional_dissipation_matches_modal_energy_derivative(record_property):
+    from tensordg import energy_3d, upwind_dissipation_3d
+    from tensordg.advection_3d import _operators, _rhs
+
+    counts, lengths, speeds = (3,4,2), (1., 2., 1.5), (.8,-.3,.6)
+    generator = torch.Generator().manual_seed(917)
+    field = torch.randn((*counts, 4,4,4), dtype=torch.float64, generator=generator)
+    spacing = tuple(L/n for L,n in zip(lengths,counts))
+    *_, volume, left, right = _operators(3, field.device, field.dtype)
+    rates = upwind_dissipation_3d(field, speeds, lengths=lengths)
+    for axis, rate in enumerate(rates):
+        velocity = tuple(v if i==axis else 0. for i,v in enumerate(speeds))
+        rhs = _rhs(field, spacing, velocity, volume, left, right)
+        # Polarization is exact for quadratic energy, with no timestep error.
+        scale = .02
+        derivative = (energy_3d(field+scale*rhs, lengths=lengths)
+                      - energy_3d(field-scale*rhs, lengths=lengths))/(2*scale)
+        error = abs(rate+derivative)/rate
+        record_property(f"relative_energy_budget_error_{axis}", error)
+        assert error < 1e-13

@@ -82,6 +82,7 @@ from .advection_3d import (
     solve_advection_3d,
     mass_3d,
     energy_3d,
+    upwind_dissipation_3d,
     error_3d,
 )
 
@@ -958,6 +959,7 @@ __all__ = [
     "manning_normal_depth",
     "mass_3d",
     "energy_3d",
+    "upwind_dissipation_3d",
     "mass_balance_trace",
     "math_sqrt2",
     "matvec_heat_diffusion_1d",

@@ -358,6 +358,13 @@ def mass_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
     return float(coeff[:, :, :, 0, 0, 0].mean().item()) * math.prod(_domain_lengths(lengths))
 
 
+def _modal_mean_weights(coeff):
+    if coeff.ndim != 6 or min(coeff.shape) < 1 or not coeff.is_floating_point():
+        raise ValueError("provide a nonempty six-dimensional real modal field")
+    return [(2*torch.arange(n, dtype=torch.float64, device=coeff.device)+1).reciprocal()
+            for n in coeff.shape[3:]]
+
+
 def energy_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
     """Integrate half the squared real DG field on a uniform periodic box.
 
@@ -365,13 +372,38 @@ def energy_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
     by solve_advection_3d. Each squared mode has cell-average weight
     1 / ((2k+1)(2l+1)(2m+1)) by Legendre orthogonality.
     """
-    if coeff.ndim != 6 or min(coeff.shape) < 1 or not coeff.is_floating_point():
-        raise ValueError("provide a nonempty six-dimensional real modal field")
+    weights = _modal_mean_weights(coeff)
     volume = math.prod(_domain_lengths(lengths))
-    weights = [(2*torch.arange(n, dtype=torch.float64, device=coeff.device)+1).reciprocal()
-               for n in coeff.shape[3:]]
     mean_square = coeff.double().square().mean(dim=(0, 1, 2))
     return 0.5 * volume * torch.einsum("klm,k,l,m->", mean_square, *weights).item()
+
+
+def upwind_dissipation_3d(coeff: torch.Tensor, velocity: Velocity3, *,
+                          lengths=(1.0, 1.0, 1.0)) -> tuple[float, float, float]:
+    """Directional rates of scalar energy loss for periodic upwind advection.
+
+    Each entry integrates half the absolute normal speed times the squared
+    trace jump over that axis's faces, each counted once. Their sum equals
+    minus the semidiscrete time derivative of energy_3d.
+    """
+    weights = _modal_mean_weights(coeff)
+    lengths = _domain_lengths(lengths)
+    speeds = _velocity_components(velocity)
+    modes = coeff.double()
+    rates = []
+    for axis, speed in enumerate(speeds):
+        # P_k(1)=1; P_k(-1)=(-1)^k on the neighbor's lower face.
+        normal_modes = modes.movedim(3+axis, -1)
+        signs = torch.ones_like(weights[axis])
+        signs[1::2] = -1.
+        lower = normal_modes @ signs
+        jump = normal_modes.sum(dim=-1) - lower.roll(-1, dims=axis)
+        mean_square = jump.square().mean(dim=(0, 1, 2))
+        tangential = weights[:axis] + weights[axis+1:]
+        face_mean = torch.einsum("ij,i,j->", mean_square, *tangential)
+        area = math.prod(lengths) * coeff.shape[axis] / lengths[axis]
+        rates.append(.5 * abs(speed) * area * face_mean.item())
+    return tuple(rates)
 
 
 def error_3d(
