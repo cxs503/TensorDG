@@ -57,7 +57,13 @@ def _operators(degree: int, device: torch.device, dtype: torch.dtype):
 
 
 def _project_initial(centers, h, nodes, weights, phi, initial_temperature):
-    """Quadrature L2 projection onto the cellwise Legendre basis."""
+    """Project a physical profile, or resume from its cellwise Legendre coefficients."""
+    if isinstance(initial_temperature, torch.Tensor):
+        if initial_temperature.shape != (centers.numel(), phi.shape[1]):
+            raise ValueError("initial modal coefficients must have shape (ncells, degree+1)")
+        if initial_temperature.is_complex() or not torch.isfinite(initial_temperature).all():
+            raise ValueError("initial modal coefficients must be finite and real")
+        return initial_temperature.to(centers)
     x = centers[:, None] + .5*h*nodes
     values = torch.sin(math.pi*x) if initial_temperature is None else initial_temperature(x)
     values = torch.as_tensor(values, device=x.device, dtype=x.dtype).expand_as(x)
@@ -218,7 +224,7 @@ def solve_heat_1d(
         Constant left and right temperatures, default (0, 0).
     source : optional scalar or callable of x
         Stationary volumetric source for u_t = u_xx + source on the unit slab.
-    initial_temperature : optional callable
+    initial_temperature : optional callable or modal coefficient tensor
         Evaluated on cell quadrature points and projected onto the modal basis.
         The default profile is sin(pi*x).
     integrate_face_fluxes : bool
@@ -457,3 +463,51 @@ def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_tempe
         heat = coeff.new_tensor(meta["integrated_face_fluxes"])
         meta["integrated_face_fluxes"] = (heat-.5*final_time**2*slope).tolist()
     return centers, coeff+lift, meta
+
+
+def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
+                               initial_temperature=None, source=None, backend="dense",
+                               steps_per_interval=None, penalty=20., device="cpu",
+                               dtype=torch.float64, integrate_face_fluxes=False):
+    """Evolve piecewise-linear left/right wall temperatures on a uniform unit slab.
+
+    times are strictly increasing knot times. The initial field is defined at
+    the first knot. Return centers, modal fields at every knot (including the
+    initial field), and metadata. interval_face_heat contains the rightward
+    transfer at each face over each individual interval, when requested.
+    steps_per_interval is the number of CN steps per segment, or None to use
+    the solver default. Use backend="exact-time" for semi-discrete exponential
+    evolution. The volumetric source is stationary across the entire history.
+    """
+    times = torch.as_tensor(times, dtype=torch.float64)
+    walls = torch.as_tensor(wall_temperatures, dtype=dtype, device=device)
+    if times.ndim != 1 or times.numel() < 2 or not torch.isfinite(times).all() or (times.diff() <= 0).any():
+        raise ValueError("times must contain at least two finite, strictly increasing knot times")
+    if walls.shape != (times.numel(), 2) or not torch.isfinite(walls).all():
+        raise ValueError("wall_temperatures must contain one finite left/right pair per knot")
+    if ncells < 2 or degree < 1 or not math.isfinite(penalty) or penalty <= 0:
+        raise ValueError("ncells >= 2, degree >= 1 and finite positive penalty are required")
+    if steps_per_interval is not None and (not isinstance(steps_per_interval, int) or steps_per_interval < 1):
+        raise ValueError("steps_per_interval must be a positive integer")
+    centers = (torch.arange(ncells, dtype=dtype, device=device)+.5)/ncells
+    nodes, weights, phi, *_ = _operators(degree, centers.device, dtype)
+    state = _project_initial(centers, 1/ncells, nodes, weights, phi, initial_temperature)
+    history = [state]
+    transfers = []
+    intervals = []
+    for i, duration in enumerate(times.diff().tolist()):
+        rates = (walls[i+1]-walls[i])/duration
+        _, state, meta = solve_heat_1d_ramped_walls(
+            ncells, degree, duration, wall_temperatures=walls[i], wall_rates=rates,
+            initial_temperature=state, source=source, backend=backend, time_steps=steps_per_interval,
+            penalty=penalty, device=device, dtype=dtype, integrate_face_fluxes=integrate_face_fluxes)
+        history.append(state)
+        if integrate_face_fluxes:
+            transfers.append(meta.pop("integrated_face_fluxes"))
+        intervals.append(meta)
+    metadata = {"times": times.tolist(), "intervals": intervals}
+    if integrate_face_fluxes:
+        heat = state.new_tensor(transfers)
+        metadata["interval_face_heat"] = transfers
+        metadata["integrated_face_fluxes"] = heat.sum(dim=0).tolist()
+    return centers, torch.stack(history), metadata

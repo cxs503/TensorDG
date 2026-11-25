@@ -140,3 +140,23 @@ def test_ramped_walls_recover_cubic_field_and_integrated_flux():
         exact_heat = t*(2.5-2*x+1.5*x**2)+1.5*t*t
         torch.testing.assert_close(coeff.new_tensor(meta["integrated_face_fluxes"]),exact_heat,atol=5e-9,rtol=0.)
         assert heat_error(centers,coeff,t,reference=lambda x,t: initial(x)+t*(2-3*x))["absolute_l2"] < 5e-10
+
+
+def test_piecewise_wall_history_restarts_modes_and_conserves_interval_heat():
+    from tensordg import solve_heat_1d_wall_history
+
+    times = [.2,.23,.24,.28]
+    walls = [[.1,.4],[.3,.2],[.3,.2],[.15,.25]]
+    for backend in ("dense","sparse","matrix-free","exact-time"):
+        x, states, meta = solve_heat_1d_wall_history(times,walls,5,2,backend=backend,
+            steps_per_interval=None if backend=="exact-time" else 4,source=lambda x: 1+x,
+            initial_temperature=lambda x: .1+.3*x,integrate_face_fluxes=True)
+        heat = states.new_tensor(meta["interval_face_heat"])
+        dt = states.new_tensor(times).diff()
+        residual = states[:,:,0].diff(dim=0)/5+heat.diff(dim=1)-dt[:,None]*(1+x)/5
+        assert residual.abs().max() < 5e-10
+        torch.testing.assert_close(heat.sum(dim=0),states.new_tensor(meta["integrated_face_fluxes"]))
+        torch.testing.assert_close(states[0,:,0],.1+.3*x)
+        _,tail,_ = solve_heat_1d_wall_history(times[1:],walls[1:],5,2,backend=backend,
+            steps_per_interval=None if backend=="exact-time" else 4,source=lambda x: 1+x,initial_temperature=states[1])
+        torch.testing.assert_close(tail,states[1:],atol=5e-11,rtol=0.)
