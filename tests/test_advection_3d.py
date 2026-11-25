@@ -200,3 +200,24 @@ def test_physical_axis_profile_wraps_after_many_box_crossings(axis, record_prope
     assert mass_3d(c, lengths=lengths) == pytest.approx(math.prod(lengths)*lengths[axis]/2)
     point = exact_solution_3d(x[0], y[0], z[0], 2**40 + .25, velocity, initial=profile, lengths=lengths)
     assert point.item() == pytest.approx(((x[0], y[0], z[0])[axis].item() - .25*velocity[axis]) % lengths[axis])
+
+
+
+def test_long_translation_retains_fractional_turn_before_product_rounding(record_property):
+    sides = (1., 3., 2.)
+    velocity = (1.5, -1.5, 1.)
+    def field(x, y, z):
+        return x + y - z
+    x, y, z, coeff, _ = solve_advection_3d((4, 6, 4), 1, 0., lengths=sides, initial=field)
+    # t=2^52+1 translates by +1/2, -1/2 and +1/2 turns respectively.
+    shifted = coeff.roll((2, -3, 2), dims=(0, 1, 2))
+    time = float(2**52 + 1)
+    metrics = error_3d(x, y, z, shifted, time, velocity, initial=field, lengths=sides)
+    record_property("absolute_l2", metrics["absolute_l2"])
+    assert metrics["absolute_l2"] < 2e-14
+    # 2^2046 has residue 1 modulo 3, although the unreduced product overflows float64.
+    huge = float(2**1023)
+    sample = torch.tensor([0.25], dtype=torch.float64)
+    result = exact_solution_3d(sample, sample, sample, huge, (0., huge, 0.),
+                               initial=lambda x,y,z: y, lengths=sides)
+    torch.testing.assert_close(result, torch.tensor([2.25], dtype=torch.float64), rtol=0, atol=0)

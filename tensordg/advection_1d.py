@@ -16,6 +16,7 @@ now be supplied as a callable, which is what makes discontinuous-data
 from __future__ import annotations
 
 import math
+from fractions import Fraction
 from typing import Callable, Sequence
 
 import numpy as np
@@ -231,11 +232,16 @@ def _basis(degree: int, nodes, device, dtype):
 
 def _departure_coordinate(x, final_time, speed, period=1.0):
     """Periodic characteristic foot in [0, period)."""
-    # Remove full revolutions before subtracting from the quadrature nodes
-    # so long translations retain the local sub-cell coordinates.
-    foot = torch.remainder(x - math.fmod(speed * final_time, period), period)
-    # A negative foot very close to zero can round to 1 after remainder.
+    # Reduce the product of the *represented* scalar inputs before rounding:
+    # even two exactly representable floats can have a product that loses a
+    # fractional turn or overflows. Tensor arithmetic only needs the small shift.
+    box = Fraction.from_float(float(period))
+    shift = (Fraction.from_float(float(speed)) * Fraction.from_float(float(final_time))) % box
+    if 2 * shift > box:
+        shift -= box
+    foot = torch.remainder(x - float(shift), period)
     return torch.where(foot == period, 0., foot)
+
 
 
 def _translated_profile(x, final_time, speed, exact):
