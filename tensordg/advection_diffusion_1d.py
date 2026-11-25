@@ -163,7 +163,7 @@ def solve_advection_diffusion_1d(
     advection_scheme: str = "upwind",
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, source=0., reaction=0., total_flux=(None,None), mean_value=None, cell_edges=None, diffusivity_ratio=1., interface_source=0.,
+    *, source=0., reaction=0., total_flux=(None,None), mean_value=None, cell_edges=None, diffusivity_ratio=1., interface_source=0., interface_reaction=0.,
 ):
     """Solve (1) on [0, 1] and return (cell_centres, modal_coefficients, metadata).
 
@@ -178,6 +178,9 @@ def solve_advection_diffusion_1d(
     interface_source : scalar or internal-face vector
         Point sources on mesh faces give J_right - J_left = interface_source.
         Positive values supply transported quantity per unit time.
+    interface_reaction : nonnegative scalar or internal-face vector
+        A first-order sink modifies the point source to S - k*u_interface.
+        The concentration uses the same weighted test trace as the point load.
     cell_edges : optional vector
         Strictly increasing mesh edges spanning [0,1]. Omit ncells to infer
         it from the edges. The default mesh has 32 equal cells. Pass the same
@@ -189,7 +192,7 @@ def solve_advection_diffusion_1d(
     total_flux : (left, right)
         A finite scalar prescribes the rightward advective plus diffusive
         flux in place of that end's Dirichlet value. None uses Dirichlet data.
-        With two prescribed fluxes and zero reaction, supply mean_value
+        With two prescribed fluxes and zero volume and interface reaction, supply mean_value
         to select a unique solution; the flux difference must equal the
         integrated volume source plus all interface sources. The unit interval has length one.
     advection_scheme : {"upwind", "downwind"}
@@ -253,7 +256,10 @@ def solve_advection_diffusion_1d(
     sink = profile(reaction,"reaction")
     if torch.any(sink < 0):
         raise ValueError("reaction must be nonnegative")
-    needs_mean = west_flux is not None and east_flux is not None and not torch.any(sink>0)
+    uptake = _interface_profile(interface_reaction,h,"interface_reaction")
+    if torch.any(uptake<0):
+        raise ValueError("interface_reaction must be nonnegative")
+    needs_mean = west_flux is not None and east_flux is not None and not torch.any(sink>0) and not torch.any(uptake>0)
     if needs_mean and (mean_value is None or not math.isfinite(mean_value)):
         raise ValueError("two total flux boundaries require a finite mean_value or nonzero reaction")
     if not needs_mean and mean_value is not None:
@@ -286,7 +292,8 @@ def solve_advection_diffusion_1d(
         consistency = -torch.outer(jump, average_derivative)
         diffusion_face = consistency + consistency.T + penalties[cell+1]*jump_matrix
         idx = torch.cat((dofs(cell), dofs(cell + 1)))
-        add(idx, idx, diffusion_face)
+        trace = torch.cat((w[cell]*phi_right,(1-w[cell])*phi_left))
+        add(idx, idx, diffusion_face + uptake[cell]*torch.outer(trace,trace))
 
     # ---- advective faces: one single-valued flux per face -------------------
     # The flux of face f is a * trace(source).  For the upwind scheme the source
@@ -434,7 +441,7 @@ def face_fluxes(
 
 def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., right_value=1.,
                           advection_scheme="upwind", total_flux=(None,None), *, cell_edges=None, diffusivity_ratio=1.,
-                          interface_source=0., return_cell_fluxes=False):
+                          interface_source=0., interface_reaction=0., return_cell_fluxes=False):
     """Rightward DG flux at n+1 faces, with the weighted flux at internal faces.
 
     With return_cell_fluxes=True return (west, east), each of length ncells,
@@ -451,6 +458,9 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
     _,widths = _mesh(ncells,cell_edges,coeff.device,coeff.dtype)
     ratio,face_ratio = _material_ratios(diffusivity_ratio,widths)
     sheet = _interface_profile(interface_source,widths,"interface_source")
+    uptake = _interface_profile(interface_reaction,widths,"interface_reaction")
+    if torch.any(uptake<0):
+        raise ValueError("interface_reaction must be nonnegative")
     diff_scale = -2*abs(speed)/(peclet*widths)
     west_diff,east_diff = diff_scale*(coeff @ dl),diff_scale*(coeff @ dr)
     diffusion = torch.cat((west_diff[:1],.5*(east_diff[:-1]+west_diff[1:]),east_diff[-1:]))
@@ -462,6 +472,7 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
         flux[-1] = east_flux
     if return_cell_fluxes:
         w = ratio[:-1]/(ratio[:-1]+ratio[1:])
+        sheet = sheet-uptake*(w*east[:-1]+(1-w)*west[1:])
         west,east = flux[:-1].clone(),flux[1:].clone()
         west[1:] += (1-w)*sheet
         east[:-1] -= w*sheet

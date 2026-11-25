@@ -349,3 +349,30 @@ def test_face_heating_on_a_graded_material_interface(speed):
     west,east = numerical_face_fluxes(c,4.,speed,total_flux=total,return_cell_fluxes=True,**opts)
     torch.testing.assert_close(west,speed*u(edges[:-1])-ratio*slopes/4,atol=2e-11,rtol=0.)
     torch.testing.assert_close(east,speed*u(edges[1:])-ratio*slopes/4,atol=2e-11,rtol=0.)
+
+
+@pytest.mark.parametrize("speed",[-1.3,1.3])
+def test_point_reaction_anchors_two_flux_boundaries(speed):
+    from tensordg.advection_diffusion_1d import numerical_face_fluxes
+    edges = torch.tensor([0.,.2,.4,.7,1.],dtype=torch.float64)
+    # u is continuous with slope 1 to the left and 2 to the right of x=.4.
+    # At that face J_right-J_left=-D, fixing the absolute value through k*u.
+    x0,k,d = .4,1.7,abs(speed)/4
+    def u(x):
+        return .8+x+(x-x0).clamp_min(0.)
+    surface_source = d*(-1)+k*(.8+x0)
+    opts = dict(cell_edges=edges,interface_source=[0.,surface_source,0.],
+                interface_reaction=[0.,k,0.],total_flux=(speed*.8-d,speed*2.4-2*d))
+    centers,c,_ = solve_advection_diffusion_1d(degree=1,peclet=4.,speed=speed,
+                        source=speed*edges.new_tensor([1.,1.,2.,2.]),**opts)
+    x,uh = sample_solution(centers,c,cell_edges=edges)
+    torch.testing.assert_close(uh,u(x),atol=2e-11,rtol=0.)
+    west,east = numerical_face_fluxes(c,4.,speed,return_cell_fluxes=True,**opts)
+    torch.testing.assert_close(west[1:]-east[:-1],edges.new_tensor([0.,-d,0.]),atol=2e-11,rtol=0.)
+
+
+@pytest.mark.parametrize("options",[{"interface_source":[1.,2.]},{"interface_source":1j},
+                                    {"interface_reaction":-.1},{"interface_reaction":float("nan")}])
+def test_invalid_internal_face_law(options):
+    with pytest.raises(ValueError,match="interface_"):
+        solve_advection_diffusion_1d(ncells=4,**options)
