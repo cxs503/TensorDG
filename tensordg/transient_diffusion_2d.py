@@ -205,6 +205,18 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     return result
 
 
+def _frequency_system(ncells,degree,penalty,bc,forcing,neumann_flux,reaction,conductivity,
+                      dirichlet_values,robin_films,capacity,complex_load):
+    if forcing is None:
+        forcing = lambda x,y: torch.zeros_like(x+y)
+    stiffness,load,grid,metadata = assemble_poisson_2d_bc(
+        ncells,degree,penalty,bc,forcing,neumann_flux,sparse=True,reaction=reaction,
+        conductivity=conductivity,dirichlet_values=dirichlet_values,robin_films=robin_films,complex_load=complex_load)
+    quadrature = _capacity_quadrature(grid) if callable(capacity) else None
+    mass = _capacity_operator(grid,capacity,quadrature)[0]
+    return stiffness,mass,load,grid,metadata
+
+
 def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conductivity=1.,
                                      reaction=0., forcing=None, bc=None, dirichlet_values=None,
                                      neumann_flux=None, robin_films=None, penalty=20.):
@@ -215,13 +227,8 @@ def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conduc
     problem requires zero integrated load and selects zero capacity-weighted
     mean at both orders, as in the finite-frequency limit.
     """
-    if forcing is None:
-        forcing = lambda x,y: torch.zeros_like(x+y)
-    stiffness,load,grid,metadata = assemble_poisson_2d_bc(
-        ncells,degree,penalty,bc,forcing,neumann_flux,sparse=True,reaction=reaction,
-        conductivity=conductivity,dirichlet_values=dirichlet_values,robin_films=robin_films)
-    quadrature = _capacity_quadrature(grid) if callable(capacity) else None
-    mass = _capacity_operator(grid,capacity,quadrature)[0]
+    stiffness,mass,load,grid,metadata = _frequency_system(ncells,degree,penalty,bc,forcing,
+        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,False)
     anchored = metadata["temperature_anchored"]
     stride = (degree+1)**2
     rhs = load.numpy()
@@ -244,3 +251,23 @@ def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conduc
     first = solve(-(mass@steady))
     shape = (*metadata["ncells"],degree+1,degree+1)
     return grid["x"],grid["y"],torch.from_numpy(steady.reshape(shape)),torch.from_numpy(first.reshape(shape))
+
+
+
+def solve_harmonic_diffusion_2d(angular_frequency, *, ncells=16, degree=1, capacity=1.,
+                                conductivity=1., reaction=0., forcing=None, bc=None,
+                                dirichlet_values=None, neumann_flux=None, robin_films=None, penalty=20.):
+    """Solve (K + iω M)U = F for exp(+iωt) and positive angular frequency.
+
+    Volume forcing, prescribed temperatures, inward flux and film ambient
+    temperatures may be complex. Materials and film coefficients are real.
+    Return x, y and CPU complex128 Legendre coefficients. Face powers can be
+    evaluated with poisson_face_powers_2d and the same boundary data.
+    """
+    if not np.isfinite(angular_frequency) or angular_frequency<=0:
+        raise ValueError("angular frequency must be positive and finite")
+    stiffness,mass,load,grid,metadata = _frequency_system(ncells,degree,penalty,bc,forcing,
+        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,True)
+    field = splu((stiffness+1j*angular_frequency*mass).tocsc()).solve(load.numpy())
+    shape = (*metadata["ncells"],degree+1,degree+1)
+    return grid["x"],grid["y"],torch.from_numpy(field.reshape(shape))

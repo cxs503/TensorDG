@@ -63,21 +63,21 @@ def _resolve_bc(bc) -> dict[str, str]:
     return resolved
 
 
-def _boundary_samples(data, side, centers, nodes):
+def _boundary_samples(data, side, centers, nodes, dtype=None):
     """One row per face, one column per tangential quadrature point."""
     along = centers[:, None] + nodes[None, :]/(2*len(centers))
     fixed = torch.full_like(along, float(side in ("right", "top")))
     x, y = (fixed, along) if side in ("left", "right") else (along, fixed)
     values = data(x, y) if callable(data) else data
-    return torch.broadcast_to(torch.as_tensor(values, device=along.device, dtype=along.dtype), along.shape)
+    return torch.broadcast_to(torch.as_tensor(values, device=along.device, dtype=dtype or along.dtype), along.shape)
 
 
-def _film_samples(films, side, centers, nodes):
+def _film_samples(films, side, centers, nodes, load_dtype=None):
     if films is None or side not in films:
         raise ValueError(f"Robin side {side} requires (coefficient, ambient temperature)")
     coefficient, ambient = films[side]
     h = _boundary_samples(coefficient, side, centers, nodes)
-    temperature = _boundary_samples(ambient, side, centers, nodes)
+    temperature = _boundary_samples(ambient, side, centers, nodes, load_dtype)
     if not torch.isfinite(h).all() or torch.any(h < 0) or not torch.isfinite(temperature).all():
         raise ValueError("Robin coefficients must be finite and nonnegative and ambient data finite")
     return h, temperature
@@ -129,7 +129,7 @@ def assemble_poisson_2d_bc(
     neumann_flux=None,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1.,
+    *, dirichlet_values=None, robin_films=None, sparse=False, reaction=0., conductivity=1., complex_load=False,
 ):
     """Assemble ``-div(k grad u) + reaction*u = f`` with per-side Dirichlet/Neumann data.
 
@@ -145,7 +145,8 @@ def assemble_poisson_2d_bc(
     reaction on part of the domain fixes the mean even with all-Neumann data.
     Returns ``(matrix, rhs, grid, metadata)`` where ``grid`` holds the element
     centres and sizes needed by :func:`l2_error_2d`. With sparse=True the
-    CPU operator is a SciPy CSR matrix. The default returns a torch tensor.
+    CPU operator is a SciPy CSR matrix. complex_load=True assembles complex
+    volume and boundary loads with real material and geometry data. The default returns a torch tensor.
     """
     nx, ny = (ncells, ncells) if isinstance(ncells, int) else tuple(ncells)
     if nx < 2 or ny < 2 or degree not in (1, 2, 3):
@@ -271,7 +272,8 @@ def assemble_poisson_2d_bc(
                 add(torch.cat((dofs(ix,iy),dofs(jx,jy))),harmonic[ix,iy]*block)
 
     # ---- boundary faces --------------------------------------------------
-    load = torch.zeros(ndofs, device=dev, dtype=dtype).view(nx, ny, local_dofs)
+    load_dtype = torch.complex(torch.empty((),dtype=dtype),torch.empty((),dtype=dtype)).dtype if complex_load else dtype
+    load = torch.zeros(ndofs, device=dev, dtype=load_dtype).view(nx, ny, local_dofs)
     sides = (
         ("left", "x", 0.0, 0, phi_left, dphi_left, -1.0, hx, measure_x),
         ("right", "x", 1.0, nx - 1, phi_right, dphi_right, 1.0, hx, measure_x),
@@ -303,7 +305,7 @@ def assemble_poisson_2d_bc(
             _, derivative = _face_basis(phi, endpoint, d_endpoint, axis, 2/h_normal, outward)
             test = penalty*modes**2/h_normal*trace - derivative
         elif types[side] == "robin":
-            h, ambient = _film_samples(robin_films, side, centers, nodes)
+            h, ambient = _film_samples(robin_films, side, centers, nodes, load_dtype)
             anchored = anchored or bool((h > 0).any())
             test, _ = _face_basis(phi, endpoint, d_endpoint, axis, 2/h_normal, outward)
             blocks = measure*torch.einsum("iq,q,qk,ql->ikl", h, weights, test, test)
@@ -316,21 +318,22 @@ def assemble_poisson_2d_bc(
             if data is None:
                 continue
             test, _ = _face_basis(phi, endpoint, d_endpoint, axis, 2/h_normal, outward)
-        samples = _boundary_samples(data, side, centers, nodes)
-        contribution = measure*((samples*weights) @ test)
+        samples = _boundary_samples(data, side, centers, nodes, load_dtype)
+        contribution = measure*((samples*weights) @ test.to(load_dtype))
         if types[side] == "dirichlet":
             contribution *= normal_k[:,None]
             if cross is not None:
-                contribution -= measure*side_cross[:,None]*((samples*weights) @ tangent)
+                contribution -= measure*side_cross[:,None]*((samples*weights) @ tangent.to(load_dtype))
         if axis == "x":
             load[index] += contribution
         else:
             load[:,index] += contribution
 
     # ---- forcing ---------------------------------------------------------
-    f = forcing(xq, yq)
+    f = torch.broadcast_to(torch.as_tensor(forcing(xq,yq),device=dev,dtype=load_dtype),
+                           (nx,ny,len(nodes),len(nodes)))
     load += (0.25 * hx * hy * torch.einsum(
-        "xyqr,q,r,qk,rl->xykl", f, weights, weights, phi, phi,
+        "xyqr,q,r,qk,rl->xykl", f, weights.to(load_dtype), weights.to(load_dtype), phi.to(load_dtype), phi.to(load_dtype),
     )).reshape(nx, ny, local_dofs)
 
     if sparse:
@@ -437,9 +440,9 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
     nx, ny, modes, last = coeff.shape
     if modes != last or modes not in (2, 3, 4) or min(nx, ny) < 2 or penalty <= 0:
         raise ValueError("expected square P1 to P3 modal blocks and positive penalty")
-    nodes, weights, phi, _, _, pl, pr, dl, dr = _operators(modes-1, coeff.device, coeff.dtype)
+    nodes, weights, phi, _, _, pl, pr, dl, dr = _operators(modes-1, coeff.device, coeff.real.dtype)
     types = _resolve_bc(bc)
-    k_x,k_y,cross = _cell_conductivity(conductivity,nx,ny,coeff.device,coeff.dtype)
+    k_x,k_y,cross = _cell_conductivity(conductivity,nx,ny,coeff.device,coeff.real.dtype)
     fields = coeff.flatten(2)
     outputs = []
     for axis, count, tangential, low, high in (("x", nx, ny, "left", "right"),
@@ -447,6 +450,7 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
         u = fields if axis == "x" else fields.transpose(0, 1)
         tl, gl = _face_basis(phi, pl, dl, axis, 2*count)
         tr, gr = _face_basis(phi, pr, dr, axis, 2*count)
+        tl,gl,tr,gr = (v.to(coeff.dtype) for v in (tl,gl,tr,gr))
         scale = penalty*modes*modes*count
         interior = -.5*(u[:-1] @ gr.T + u[1:] @ gl.T) + scale*(u[:-1] @ tr.T-u[1:] @ tl.T)
         material = k_x if axis=="x" else k_y.T
@@ -454,23 +458,24 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
             dphi = _legendre_derivative(phi)
             tangent_l = _tangent_basis(dphi,pl,axis,2*tangential)
             tangent_r = _tangent_basis(dphi,pr,axis,2*tangential)
+            tangent_l,tangent_r = tangent_l.to(coeff.dtype),tangent_r.to(coeff.dtype)
             offdiag = cross if axis=="x" else cross.T
             ratio = (offdiag/material)[...,None]
             interior -= .5*(ratio[:-1]*(u[:-1] @ tangent_r.T)+ratio[1:]*(u[1:] @ tangent_l.T))
         interior *= _interface_conductivity(material[:-1],material[1:])[...,None]
         result = coeff.new_empty((count+1, tangential))
-        result[1:-1] = (interior @ weights)/(2*tangential)
-        centers = (torch.arange(tangential, device=coeff.device, dtype=coeff.dtype)+.5)/tangential
+        result[1:-1] = (interior @ weights.to(coeff.dtype))/(2*tangential)
+        centers = (torch.arange(tangential, device=coeff.device, dtype=coeff.real.dtype)+.5)/tangential
         for side, index, sign, trace, gradient in ((low, 0, -1, tl, gl), (high, -1, 1, tr, gr)):
             if types[side] == "robin":
-                h, ambient = _film_samples(robin_films, side, centers, nodes)
+                h, ambient = _film_samples(robin_films, side, centers, nodes, coeff.dtype)
                 flux = sign*h*(u[index] @ trace.T-ambient)
-                result[index] = (flux @ weights)/(2*tangential)
+                result[index] = (flux @ weights.to(coeff.dtype))/(2*tangential)
                 continue
             neumann = types[side] == "neumann"
             data = ((neumann_flux if neumann else dirichlet_values) or {}).get(side)
             prescribed = torch.zeros_like(result[index, :, None]) if data is None else _boundary_samples(
-                data, side, centers, nodes)
+                data, side, centers, nodes, coeff.dtype)
             if neumann:
                 flux = -sign*prescribed.expand(tangential, len(nodes))
             else:
@@ -478,12 +483,12 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
                 if cross is not None:
                     tangent = tangent_l if index==0 else tangent_r
                     flux -= offdiag[index,:,None]*(u[index] @ tangent.T)
-            result[index] = (flux @ weights)/(2*tangential)
+            result[index] = (flux @ weights.to(coeff.dtype))/(2*tangential)
         outputs.append(result if axis == "x" else result.T)
     return tuple(outputs)
 
 
-def l2_error_2d(x, y, coeff, exact, remove_constant: bool = False) -> dict[str, float]:
+def l2_error_2d(x, y, coeff, exact, remove_constant: bool = False) -> dict[str, float | complex]:
     """Relative L2 error of a modal field against a callable ``exact(x, y)``.
 
     ``remove_constant`` subtracts the mean of the pointwise difference before
@@ -494,8 +499,8 @@ def l2_error_2d(x, y, coeff, exact, remove_constant: bool = False) -> dict[str, 
     nx, ny = coeff.shape[:2]
     hx, hy = 1.0 / nx, 1.0 / ny
     nodes_np, weights_np = np.polynomial.legendre.leggauss(max(2 * degree + 4, 8))
-    nodes = torch.as_tensor(nodes_np, device=coeff.device, dtype=coeff.dtype)
-    weights = torch.as_tensor(weights_np, device=coeff.device, dtype=coeff.dtype)
+    nodes = torch.as_tensor(nodes_np, device=coeff.device, dtype=coeff.real.dtype)
+    weights = torch.as_tensor(weights_np, device=coeff.device, dtype=coeff.real.dtype)
     basis = []
     for k in range(degree + 1):
         polynomial = np.zeros(k + 1)
@@ -516,12 +521,12 @@ def l2_error_2d(x, y, coeff, exact, remove_constant: bool = False) -> dict[str, 
     reference = reference.expand_as(difference)
     if remove_constant:
         total = nx * ny * float(torch.sum(weight * quadrature).item())
-        offset = float(torch.sum(weight * quadrature * difference).item()) / total
+        offset = torch.sum(weight * quadrature * difference).item() / total
         difference = difference - offset
-    error2 = weight * torch.sum(quadrature * difference ** 2)
+    error2 = weight * torch.sum(quadrature * difference.abs() ** 2)
     if remove_constant:
         reference = reference - (weight * torch.sum(quadrature * reference))/total
-    norm2 = weight * torch.sum(quadrature * reference**2)
+    norm2 = weight * torch.sum(quadrature * reference.abs()**2)
     absolute = float(torch.sqrt(error2).item())
     norm = float(torch.sqrt(norm2).item())
     return {

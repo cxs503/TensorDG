@@ -147,3 +147,34 @@ def test_low_frequency_linear_capacity_energy_at_both_orders():
         assert abs(moments.mean())<1e-13
     with pytest.raises(ValueError,match="zero net load"):
         solve_low_frequency_diffusion_2d(ncells=3,bc=INSULATED,neumann_flux={"left":1.})
+
+
+def test_harmonic_affine_field_with_complex_mixed_boundary_data():
+    from tensordg import solve_harmonic_diffusion_2d
+
+    omega = 3.
+    a,b = .3+.2j,-.4j
+    def exact(x,y):
+        return 1j+a*x+b*y
+    # Constant anisotropic conductivity gives constant exact Fourier flux.
+    k = (2.,1.4,.3)
+    gx,gy = k[0]*a+k[2]*b,k[2]*a+k[1]*b
+    data = dict(bc=dict(left="dirichlet",right="robin",bottom="neumann",top="neumann"),
+                dirichlet_values={"left":exact},neumann_flux={"top":gy,"bottom":-gy},
+                robin_films={"right":(3.,lambda x,y:exact(x,y)+gx/3)},conductivity=k)
+    x,y,u = solve_harmonic_diffusion_2d(omega,ncells=(4,3),degree=2,capacity=lambda x,y:1+x,
+                  reaction=.5,forcing=lambda x,y:(.5+1j*omega*(1+x))*exact(x,y),**data)
+    torch.testing.assert_close(u[:,:,0,0],exact(x[:,None],y),rtol=0.,atol=1e-11)
+    qx,qy = poisson_face_powers_2d(u,**data)
+    assert abs(qx*len(y)+gx).max()<1e-10
+    assert abs(qy*len(x)+gy).max()<1e-10
+
+
+def test_insulated_harmonic_uniform_unbalanced_source():
+    from tensordg import solve_harmonic_diffusion_2d
+
+    _,_,field = solve_harmonic_diffusion_2d(2.,ncells=3,bc=INSULATED,capacity=3.,
+                                             forcing=lambda x,y:1.+.5j)
+    assert abs(field[:,:,0,0]-(1.+.5j)/6j).max()<1e-12
+    with pytest.raises(ValueError,match="angular frequency"):
+        solve_harmonic_diffusion_2d(0.)

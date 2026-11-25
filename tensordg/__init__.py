@@ -563,7 +563,7 @@ from .poisson_2d import (
     poisson_error_2d,
 )
 
-from .transient_diffusion_2d import solve_transient_diffusion_2d, solve_low_frequency_diffusion_2d
+from .transient_diffusion_2d import solve_transient_diffusion_2d, solve_low_frequency_diffusion_2d, solve_harmonic_diffusion_2d
 
 # ---- poisson_2d_bc
 from .poisson_2d_bc import (
@@ -1090,6 +1090,7 @@ __all__ = [
     "solve_poisson_2d_bc",
     "solve_transient_diffusion_2d",
     "solve_low_frequency_diffusion_2d",
+    "solve_harmonic_diffusion_2d",
     "solve_poisson_2d_ldg",
     "solve_poisson_2d_matrixfree",
     "solve_poisson_2d_sparse",
