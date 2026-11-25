@@ -386,3 +386,30 @@ def test_two_contact_heaters_split_into_rods_and_contact(axis):
     assert abs(q[n//2]-transfer)<1e-11
     assert abs(q[0]-(transfer-2))<1e-11
     assert abs(q[-1]-(transfer-.3))<1e-11
+
+
+@pytest.mark.parametrize("axis", ["x", "y"])
+def test_complex_cubic_interface_samples(axis):
+    import numpy as np
+    from numpy.polynomial import legendre
+    from tensordg import poisson_interface_traces_2d
+
+    nx, ny = 3, 5
+    rng = np.random.default_rng(721)
+    shape = (nx, ny, 4, 4)
+    coeff = rng.normal(size=shape) + 1j*rng.normal(size=shape)
+    samples = [-1., -.21, .64, 1.]
+    face = 2
+    fields = poisson_interface_traces_2d(torch.from_numpy(coeff), axis, face,
+                                         conductivity=(2., 3., -.4), points=samples)
+    for side, endpoint in enumerate((1., -1.)):
+        for j in range(ny if axis == "x" else nx):
+            index = face-1+side
+            block = coeff[index, j] if axis == "x" else coeff[j, index]
+            for i, sample in enumerate(samples):
+                point = (endpoint, sample) if axis == "x" else (sample, endpoint)
+                t = legendre.legval2d(*point, block)
+                gx = 2*nx*legendre.legval2d(*point, legendre.legder(block, axis=0))
+                gy = 2*ny*legendre.legval2d(*point, legendre.legder(block, axis=1))
+                truth = (t, gx, -2*gx+.4*gy) if axis == "x" else (t, gy, .4*gx-3*gy)
+                np.testing.assert_allclose([v[side,j,i].item() for v in fields], truth, atol=2e-12)

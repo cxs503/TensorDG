@@ -535,6 +535,57 @@ def solve_poisson_2d_bc(
     return grid["x"], grid["y"], coeff, metadata
 
 
+def poisson_interface_traces_2d(coeff, axis, face, *, conductivity=1., points=(0.,)):
+    """Sample the two material traces on a grid-aligned interior cut of the unit square.
+
+    Return temperature (K), coordinate-normal derivative (K/m) and conductive
+    flux density (W/m²), all shaped (2, tangential cells, sample points).
+    Side 0 belongs to the lower-coordinate material and side 1 to the higher.
+    Both fluxes are positive along increasing axis. The material gradients
+    give one-sided physical fluxes; poisson_face_powers_2d integrates the SIPG
+    numerical flux. Face indices start at 1 for the first interior cut. Sample
+    points are local tangential Legendre coordinates in [-1, 1] per face.
+    """
+    if coeff.ndim != 4 or coeff.shape[2] != coeff.shape[3] or coeff.shape[2] not in (2, 3, 4):
+        raise ValueError("expected square P1 to P3 modal blocks")
+    if axis not in ("x", "y") or not (coeff.is_floating_point() or coeff.is_complex()):
+        raise ValueError("expected axis x or y and floating or complex coefficients")
+    nx, ny, modes, _ = coeff.shape
+    cells = coeff if axis == "x" else coeff.transpose(0, 1)
+    count, tangent_count = cells.shape[:2]
+    if not isinstance(face, (int, np.integer)) or not 0 < face < count:
+        raise ValueError("face must index an interior cut")
+    raw = torch.as_tensor(points, device=coeff.device)
+    if raw.is_complex():
+        raise ValueError("sample points must be real")
+    z = torch.as_tensor(points, device=coeff.device, dtype=coeff.real.dtype)
+    if z.ndim != 1 or not z.numel() or not ((z >= -1) & (z <= 1)).all():
+        raise ValueError("provide a nonempty vector of sample points in [-1, 1]")
+    values = [torch.ones_like(z), z]
+    for j in range(2, modes):
+        values.append(((2*j-1)*z*values[-1] - (j-1)*values[-2])/j)
+    phi = torch.stack(values, dim=1)
+    dphi = _legendre_derivative(phi)
+    _, _, _, _, _, pl, pr, dl, dr = _operators(modes-1, coeff.device, coeff.real.dtype)
+    xx, yy, cross = _cell_conductivity(conductivity, nx, ny, coeff.device, coeff.real.dtype)
+    kn = xx if axis == "x" else yy.T
+    if cross is not None and axis == "y":
+        cross = cross.T
+    temperatures, gradients, fluxes = [], [], []
+    for index, endpoint, derivative in ((face-1, pr, dr), (face, pl, dl)):
+        block = cells[index].flatten(1)
+        trace, normal = _face_basis(phi, endpoint, derivative, axis, 2*count)
+        gradient = block @ normal.T.to(coeff.dtype)
+        flux = -kn[index, :, None]*gradient
+        if cross is not None:
+            tangent = _tangent_basis(dphi, endpoint, axis, 2*tangent_count)
+            flux -= cross[index, :, None]*(block @ tangent.T.to(coeff.dtype))
+        temperatures.append(block @ trace.T.to(coeff.dtype))
+        gradients.append(gradient)
+        fluxes.append(flux)
+    return torch.stack(temperatures), torch.stack(gradients), torch.stack(fluxes)
+
+
 def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None, neumann_flux=None, robin_films=None, conductivity=1.,
                            wall_areal_heat_capacity=None, temperature_rate=None, contact_resistance=None):
     """Integrate SIPG numerical heat flux over each face for unit depth.
