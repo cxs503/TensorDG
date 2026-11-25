@@ -123,3 +123,20 @@ def test_unequal_walls_and_volume_heating_all_backends():
         torch.testing.assert_close(instantaneous,target,atol=5e-8,rtol=0.)
         torch.testing.assert_close(cumulative,duration*target,atol=5e-9,rtol=0.)
         assert heat_error(centers,coeff,duration,reference=lambda x,t: profile(x))["absolute_l2"] < 2e-10
+
+
+def test_ramped_walls_recover_cubic_field_and_integrated_flux():
+    from tensordg import solve_heat_1d_ramped_walls
+
+    # u=1-2x+t*(2-3x)+x²-x³/2-x/2 satisfies u_t=u_xx.
+    def initial(x):
+        return 1-2*x+x*x-.5*x**3-.5*x
+    t = .07
+    for backend in ("dense","sparse","matrix-free","exact-time"):
+        centers,coeff,meta = solve_heat_1d_ramped_walls(5,3,t,wall_temperatures=(1.,-1.),
+            wall_rates=(2.,-1.),initial_temperature=initial,backend=backend,
+            time_steps=None if backend=="exact-time" else 8,integrate_face_fluxes=True)
+        x = torch.linspace(0.,1.,6,dtype=coeff.dtype)
+        exact_heat = t*(2.5-2*x+1.5*x**2)+1.5*t*t
+        torch.testing.assert_close(coeff.new_tensor(meta["integrated_face_fluxes"]),exact_heat,atol=5e-9,rtol=0.)
+        assert heat_error(centers,coeff,t,reference=lambda x,t: initial(x)+t*(2-3*x))["absolute_l2"] < 5e-10

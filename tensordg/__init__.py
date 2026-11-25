@@ -476,6 +476,8 @@ from .heat_1d import (
     assemble_sipg_1d,
     solve_heat_1d,
     solve_heat_1d_exact_time,
+    solve_heat_1d_ramped_walls,
+    sipg_heat_face_fluxes,
     heat_error,
 )
 
@@ -1076,6 +1078,8 @@ __all__ = [
     "solve_euler_dg_2d_vortex",
     "solve_heat_1d",
     "solve_heat_1d_exact_time",
+    "solve_heat_1d_ramped_walls",
+    "sipg_heat_face_fluxes",
     "solve_heat_1d_matrixfree",
     "solve_heat_1d_sparse",
     "solve_heat_conduction_dg_2d",

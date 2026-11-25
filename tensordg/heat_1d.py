@@ -418,3 +418,42 @@ def sipg_heat_face_fluxes(coefficients: torch.Tensor, penalty: float = 20., *, w
     walls = _wall_pair(wall_temperatures, coefficients)
     return torch.cat((-grad_l[:1]-strength*(trace_l[:1]-walls[0]), interior,
                       -grad_r[-1:]+strength*(trace_r[-1:]-walls[1])))
+
+
+def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_temperatures,
+                               wall_rates, initial_temperature=None, source=None, backend="dense",
+                               time_steps=None, penalty=20., device="cpu", dtype=torch.float64,
+                               integrate_face_fluxes=False):
+    """Solve with wall values g(0)+t*wall_rates, homogeneous material, and stationary source.
+
+    The returned coefficients describe the physical temperature, and the metadata
+    reports both final wall temperatures. backend="exact-time" evolves the lifted
+    semi-discrete problem by matrix exponential. Other backends use Crank–Nicolson.
+    """
+    like = torch.empty(0, device=device, dtype=dtype)
+    walls = _wall_pair(wall_temperatures, like)
+    rates = _wall_pair(wall_rates, like)
+    slope = rates[1]-rates[0]
+
+    def lifted_source(x):
+        generation = source(x) if callable(source) else (0. if source is None else source)
+        return generation-(rates[0]+slope*x)
+
+    options = dict(ncells=ncells,degree=degree,final_time=final_time,wall_temperatures=walls,
+                   initial_temperature=initial_temperature,source=lifted_source,penalty=penalty,
+                   device=device,dtype=dtype,integrate_face_fluxes=integrate_face_fluxes)
+    if backend == "exact-time":
+        if time_steps is not None:
+            raise ValueError("time_steps applies only to Crank–Nicolson backends")
+        centers, coeff, meta = solve_heat_1d_exact_time(**options)
+    else:
+        centers, coeff, meta = solve_heat_1d(**options,backend=backend,time_steps=time_steps)
+    # The spatially affine lift occupies only the constant and linear Legendre modes.
+    lift = torch.zeros_like(coeff)
+    lift[:,0] = final_time*(rates[0]+slope*centers)
+    lift[:,1] = final_time*slope/(2*ncells)
+    meta["final_wall_temperatures"] = (walls+final_time*rates).tolist()
+    if integrate_face_fluxes:
+        heat = coeff.new_tensor(meta["integrated_face_fluxes"])
+        meta["integrated_face_fluxes"] = (heat-.5*final_time**2*slope).tolist()
+    return centers, coeff+lift, meta
