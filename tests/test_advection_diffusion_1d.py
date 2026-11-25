@@ -327,3 +327,25 @@ def test_layered_quadratic_transport_in_resistance_coordinate(speed):
 def test_reject_invalid_transport_diffusivity_ratio(ratio):
     with pytest.raises(ValueError,match="diffusivity_ratio"):
         solve_advection_diffusion_1d(3,diffusivity_ratio=ratio)
+
+
+@pytest.mark.parametrize("speed",[-1.,1.])
+def test_face_heating_on_a_graded_material_interface(speed):
+    from tensordg.advection_diffusion_1d import numerical_face_fluxes
+    edges = torch.tensor([0.,.1,.3,.65,1.],dtype=torch.float64)
+    ratio = edges.new_tensor([2.,2.,.5,.5])
+    slopes = edges.new_tensor([.7,.7,-.8,-.8])
+    def u(x):
+        return 1.+.7*x-1.5*(x-.3).clamp_min(0.)
+    sheet = edges.new_zeros(3)
+    sheet[1] = (2*.7+.5*.8)/4
+    opts = dict(cell_edges=edges,diffusivity_ratio=ratio,interface_source=sheet)
+    total = (speed*u(edges[0])-ratio[0]*slopes[0]/4,speed*u(edges[-1])-ratio[-1]*slopes[-1]/4)
+    mean = float(((u(edges[:-1])+u(edges[1:]))*edges.diff()/2).sum())
+    x,c,_ = solve_advection_diffusion_1d(degree=1,peclet=4.,speed=speed,total_flux=total,
+                 source=speed*slopes,mean_value=mean,**opts)
+    pts,values = sample_solution(x,c,cell_edges=edges)
+    torch.testing.assert_close(values,u(pts),atol=2e-11,rtol=0.)
+    west,east = numerical_face_fluxes(c,4.,speed,total_flux=total,return_cell_fluxes=True,**opts)
+    torch.testing.assert_close(west,speed*u(edges[:-1])-ratio*slopes/4,atol=2e-11,rtol=0.)
+    torch.testing.assert_close(east,speed*u(edges[1:])-ratio*slopes/4,atol=2e-11,rtol=0.)

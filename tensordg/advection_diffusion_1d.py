@@ -133,6 +133,16 @@ def _material_ratios(value, widths):
     return ratio,torch.cat((ratio[:1],harmonic,ratio[-1:]))
 
 
+def _interface_profile(value, widths, name):
+    raw = torch.as_tensor(value,device=widths.device)
+    if raw.is_complex() or (raw.ndim and raw.shape!=widths[:-1].shape):
+        raise ValueError(f"{name} must be real and scalar or one value per internal face")
+    data = torch.as_tensor(value,device=widths.device,dtype=widths.dtype)
+    if not torch.isfinite(data).all():
+        raise ValueError(f"{name} must be finite")
+    return data.expand_as(widths[:-1])
+
+
 from .registry import capability
 @capability(
     name="advection-diffusion-1d",
@@ -153,7 +163,7 @@ def solve_advection_diffusion_1d(
     advection_scheme: str = "upwind",
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, source=0., reaction=0., total_flux=(None,None), mean_value=None, cell_edges=None, diffusivity_ratio=1.,
+    *, source=0., reaction=0., total_flux=(None,None), mean_value=None, cell_edges=None, diffusivity_ratio=1., interface_source=0.,
 ):
     """Solve (1) on [0, 1] and return (cell_centres, modal_coefficients, metadata).
 
@@ -165,6 +175,9 @@ def solve_advection_diffusion_1d(
     diffusivity_ratio : scalar or cell vector
         Multiply the reference diffusivity |speed|/peclet by these positive
         material ratios. Interfaces must coincide with mesh faces.
+    interface_source : scalar or internal-face vector
+        Point sources on mesh faces give J_right - J_left = interface_source.
+        Positive values supply transported quantity per unit time.
     cell_edges : optional vector
         Strictly increasing mesh edges spanning [0,1]. Omit ncells to infer
         it from the edges. The default mesh has 32 equal cells. Pass the same
@@ -178,7 +191,7 @@ def solve_advection_diffusion_1d(
         flux in place of that end's Dirichlet value. None uses Dirichlet data.
         With two prescribed fluxes and zero reaction, supply mean_value
         to select a unique solution; the flux difference must equal the
-        integrated source. The unit interval has length one.
+        integrated volume source plus all interface sources. The unit interval has length one.
     advection_scheme : {"upwind", "downwind"}
         ``"downwind"`` exists only as an implementation negative control: it is
         *not* a consistent scheme and must fail the verification gates.
@@ -247,12 +260,19 @@ def solve_advection_diffusion_1d(
         raise ValueError("mean_value requires two prescribed fluxes and zero reaction")
     reaction_volume = (.5*h[:,None,None])*torch.einsum("cq,q,qi,qj->cij",sink,weights,phi,phi)
     integrated_source = (.5*h[:,None])*profile(source,"source")*weights
+    sheet = _interface_profile(interface_source,h,"interface_source")
     if needs_mean:
-        residual = integrated_source.sum() + west_flux - east_flux
-        scale = integrated_source.abs().sum() + abs(west_flux) + abs(east_flux)
+        residual = sheet.sum() + integrated_source.sum() + west_flux - east_flux
+        scale = sheet.abs().sum() + integrated_source.abs().sum() + abs(west_flux) + abs(east_flux)
         if residual.abs() > 64*torch.finfo(dtype).eps*scale:
             raise ValueError("incompatible total flux difference and integrated source")
-    rhs = (integrated_source @ phi).reshape(-1)
+    # A flux jump couples to the complementary average of the test traces:
+    # J_minus = J_hat - w*S, J_plus = J_hat + (1-w)*S.
+    w = ratio[:-1]/(ratio[:-1]+ratio[1:])
+    cell_load = integrated_source @ phi
+    cell_load[:-1] += (w*sheet)[:,None]*phi_right
+    cell_load[1:] += ((1-w)*sheet)[:,None]*phi_left
+    rhs = cell_load.reshape(-1)
     for cell in range(ncells):
         idx = dofs(cell)
         add(idx, idx, diffusion_volume[cell] + advection_volume + reaction_volume[cell])
@@ -413,8 +433,13 @@ def face_fluxes(
 
 
 def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., right_value=1.,
-                          advection_scheme="upwind", total_flux=(None,None), *, cell_edges=None, diffusivity_ratio=1.):
-    """Single-valued rightward DG total flux at all n+1 faces, including Nitsche terms."""
+                          advection_scheme="upwind", total_flux=(None,None), *, cell_edges=None, diffusivity_ratio=1.,
+                          interface_source=0., return_cell_fluxes=False):
+    """Rightward DG flux at n+1 faces, with the weighted flux at internal faces.
+
+    With return_cell_fluxes=True return (west, east), each of length ncells,
+    including the source-induced jump across each internal face.
+    """
     if advection_scheme not in ("upwind","downwind"):
         raise ValueError("unknown advection scheme")
     ncells,modes = coeff.shape
@@ -424,7 +449,8 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
     low = torch.cat((west.new_tensor([left_value if west_flux is None else 0.]),east))
     high = torch.cat((west,east.new_tensor([right_value if east_flux is None else 0.])))
     _,widths = _mesh(ncells,cell_edges,coeff.device,coeff.dtype)
-    _,face_ratio = _material_ratios(diffusivity_ratio,widths)
+    ratio,face_ratio = _material_ratios(diffusivity_ratio,widths)
+    sheet = _interface_profile(interface_source,widths,"interface_source")
     diff_scale = -2*abs(speed)/(peclet*widths)
     west_diff,east_diff = diff_scale*(coeff @ dl),diff_scale*(coeff @ dr)
     diffusion = torch.cat((west_diff[:1],.5*(east_diff[:-1]+west_diff[1:]),east_diff[-1:]))
@@ -434,4 +460,10 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
         flux[0] = west_flux
     if east_flux is not None:
         flux[-1] = east_flux
+    if return_cell_fluxes:
+        w = ratio[:-1]/(ratio[:-1]+ratio[1:])
+        west,east = flux[:-1].clone(),flux[1:].clone()
+        west[1:] += (1-w)*sheet
+        east[:-1] -= w*sheet
+        return west,east
     return flux
