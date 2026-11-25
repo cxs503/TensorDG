@@ -6,7 +6,7 @@ from scipy.sparse import bsr_matrix, diags
 from scipy.sparse.linalg import splu
 
 from .poisson_2d import _operators
-from .poisson_2d_bc import assemble_poisson_2d_bc
+from .poisson_2d_bc import assemble_poisson_2d_bc, _wall_mass_matrix
 
 
 def _capacity_quadrature(grid):
@@ -206,7 +206,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
 
 
 def _frequency_system(ncells,degree,penalty,bc,forcing,neumann_flux,reaction,conductivity,
-                      dirichlet_values,robin_films,capacity,complex_load):
+                      dirichlet_values,robin_films,capacity,complex_load,wall_areal_heat_capacity):
     if forcing is None:
         forcing = lambda x,y: torch.zeros_like(x+y)
     stiffness,load,grid,metadata = assemble_poisson_2d_bc(
@@ -214,21 +214,24 @@ def _frequency_system(ncells,degree,penalty,bc,forcing,neumann_flux,reaction,con
         conductivity=conductivity,dirichlet_values=dirichlet_values,robin_films=robin_films,complex_load=complex_load)
     quadrature = _capacity_quadrature(grid) if callable(capacity) else None
     mass = _capacity_operator(grid,capacity,quadrature)[0]
+    if wall_areal_heat_capacity:
+        mass += _wall_mass_matrix(grid,metadata["bc"],wall_areal_heat_capacity)
     return stiffness,mass,load,grid,metadata
 
 
 def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conductivity=1.,
                                      reaction=0., forcing=None, bc=None, dirichlet_values=None,
-                                     neumann_flux=None, robin_films=None, penalty=20.):
+                                     neumann_flux=None, robin_films=None, penalty=20., wall_areal_heat_capacity=None):
     """Return x, y, U0 and U1 for the SIPG temperature U0 + iω U1 + O(ω²).
 
     Real, frequency-independent data follow solve_transient_diffusion_2d.
     Both fields are CPU float64 Legendre coefficients. A lossless Neumann
     problem requires zero integrated load and selects zero capacity-weighted
-    mean at both orders, as in the finite-frequency limit.
+    mean at both orders, including surface storage. wall_areal_heat_capacity maps
+    Robin sides to nonnegative scalars or functions of (x,y) in J/(m² K).
     """
     stiffness,mass,load,grid,metadata = _frequency_system(ncells,degree,penalty,bc,forcing,
-        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,False)
+        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,False,wall_areal_heat_capacity)
     anchored = metadata["temperature_anchored"]
     stride = (degree+1)**2
     rhs = load.numpy()
@@ -256,18 +259,19 @@ def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conduc
 
 def solve_harmonic_diffusion_2d(angular_frequency, *, ncells=16, degree=1, capacity=1.,
                                 conductivity=1., reaction=0., forcing=None, bc=None,
-                                dirichlet_values=None, neumann_flux=None, robin_films=None, penalty=20.):
+                                dirichlet_values=None, neumann_flux=None, robin_films=None, penalty=20., wall_areal_heat_capacity=None):
     """Solve (K + iω M)U = F for exp(+iωt) and positive angular frequency.
 
     Volume forcing, prescribed temperatures, inward flux and film ambient
     temperatures may be complex. Materials and film coefficients are real.
     Return x, y and CPU complex128 Legendre coefficients. Face powers can be
-    evaluated with poisson_face_powers_2d and the same boundary data.
+    evaluated with poisson_face_powers_2d and the same boundary data. For storing
+    Robin faces supply wall_areal_heat_capacity by side and use rate iωU.
     """
     if not np.isfinite(angular_frequency) or angular_frequency<=0:
         raise ValueError("angular frequency must be positive and finite")
     stiffness,mass,load,grid,metadata = _frequency_system(ncells,degree,penalty,bc,forcing,
-        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,True)
+        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,True,wall_areal_heat_capacity)
     field = splu((stiffness+1j*angular_frequency*mass).tocsc()).solve(load.numpy())
     shape = (*metadata["ncells"],degree+1,degree+1)
     return grid["x"],grid["y"],torch.from_numpy(field.reshape(shape))

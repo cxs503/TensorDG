@@ -72,6 +72,48 @@ def _boundary_samples(data, side, centers, nodes, dtype=None):
     return torch.broadcast_to(torch.as_tensor(values, device=along.device, dtype=dtype or along.dtype), along.shape)
 
 
+def _surface_capacity_samples(data,side,centers,nodes):
+    def checked(x,y):
+        value = data(x,y) if callable(data) else data
+        if torch.is_complex(torch.as_tensor(value)):
+            raise ValueError("wall capacity must be real")
+        return value
+    capacity = _boundary_samples(checked,side,centers,nodes)
+    if not torch.isfinite(capacity).all() or (capacity<0).any():
+        raise ValueError("wall capacity must be finite and nonnegative")
+    return capacity
+
+
+def _check_storage_sides(capacities,types):
+    if any(types.get(side)!="robin" for side in capacities):
+        raise ValueError("wall capacity requires a Robin side")
+
+
+def _wall_mass_matrix(grid,types,capacities):
+    from scipy.sparse import coo_matrix
+
+    _check_storage_sides(capacities,types)
+    x,y,degree = grid["x"],grid["y"],grid["degree"]
+    nodes,w,phi,_,_,pl,pr,dl,dr = _operators(degree,x.device,x.dtype)
+    local = (degree+1)**2
+    dofs = np.arange(len(x)*len(y)*local).reshape(len(x),len(y),local)
+    rows,cols,values = [],[],[]
+    for side,data in capacities.items():
+        horizontal = side in ("left","right")
+        low = side in ("left","bottom")
+        centers = y if horizontal else x
+        samples = _surface_capacity_samples(data,side,centers,nodes)
+        trace,_ = _face_basis(phi,pl if low else pr,dl if low else dr,"x" if horizontal else "y",1.)
+        blocks = torch.einsum("iq,q,qk,ql->ikl",samples,w,trace,trace)/(2*len(centers))
+        index = 0 if low else -1
+        ids = dofs[index,:] if horizontal else dofs[:,index]
+        rows.append(np.broadcast_to(ids[:,:,None],blocks.shape).ravel())
+        cols.append(np.broadcast_to(ids[:,None,:],blocks.shape).ravel())
+        values.append(blocks.numpy().ravel())
+    return coo_matrix((np.concatenate(values),(np.concatenate(rows),np.concatenate(cols))),
+                      shape=(dofs.size,dofs.size)).tocsc()
+
+
 def _film_samples(films, side, centers, nodes, load_dtype=None):
     if films is None or side not in films:
         raise ValueError(f"Robin side {side} requires (coefficient, ambient temperature)")
@@ -430,11 +472,15 @@ def solve_poisson_2d_bc(
     return grid["x"], grid["y"], coeff, metadata
 
 
-def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None, neumann_flux=None, robin_films=None, conductivity=1.):
+def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None, neumann_flux=None, robin_films=None, conductivity=1.,
+                           wall_areal_heat_capacity=None, temperature_rate=None):
     """Integrate SIPG numerical heat flux over each face for unit depth.
 
     Returns arrays (nx+1, ny) and (nx, ny+1) oriented in increasing x and y.
     Supply the same conductivity, penalty and boundary data as the solve. For each cell,
+    With wall_areal_heat_capacity, supply modal temperature_rate (iωU for harmonic
+    fields, U0 for first-order coefficients). Returned wall power then includes
+    storage and measures heat crossing into the material. In steady state,
     right minus left plus top minus bottom equals its integrated source minus reaction loss in steady state.
     """
     nx, ny, modes, last = coeff.shape
@@ -443,6 +489,10 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
     nodes, weights, phi, _, _, pl, pr, dl, dr = _operators(modes-1, coeff.device, coeff.real.dtype)
     types = _resolve_bc(bc)
     k_x,k_y,cross = _cell_conductivity(conductivity,nx,ny,coeff.device,coeff.real.dtype)
+    capacities = wall_areal_heat_capacity or {}
+    _check_storage_sides(capacities,types)
+    if capacities and (temperature_rate is None or temperature_rate.shape!=coeff.shape):
+        raise ValueError("wall capacity requires matching temperature_rate coefficients")
     fields = coeff.flatten(2)
     outputs = []
     for axis, count, tangential, low, high in (("x", nx, ny, "left", "right"),
@@ -470,6 +520,10 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
             if types[side] == "robin":
                 h, ambient = _film_samples(robin_films, side, centers, nodes, coeff.dtype)
                 flux = sign*h*(u[index] @ trace.T-ambient)
+                if side in capacities:
+                    surface = _surface_capacity_samples(capacities[side],side,centers,nodes)
+                    boundary_rate = temperature_rate[index,:] if axis=="x" else temperature_rate[:,index]
+                    flux += sign*surface*(boundary_rate.flatten(1).to(coeff.dtype) @ trace.T)
                 result[index] = (flux @ weights.to(coeff.dtype))/(2*tangential)
                 continue
             neumann = types[side] == "neumann"

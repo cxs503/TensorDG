@@ -178,3 +178,39 @@ def test_insulated_harmonic_uniform_unbalanced_source():
     assert abs(field[:,:,0,0]-(1.+.5j)/6j).max()<1e-12
     with pytest.raises(ValueError,match="angular frequency"):
         solve_harmonic_diffusion_2d(0.)
+
+
+def test_harmonic_wall_storage_all_sides_affine_exact():
+    from tensordg import solve_harmonic_diffusion_2d
+
+    omega = 2.
+    gx,gy = .3+.4j,-.7j
+    def exact(x,y):
+        return 1.+.2j+gx*x+gy*y
+    bc = dict.fromkeys(INSULATED,"robin")
+    surface = dict.fromkeys(bc,lambda x,y:.4+x+.5*y)
+    outward = dict(left=gx,right=-gx,bottom=gy,top=-gy)
+    films = {s:(3.,lambda x,y,s=s: exact(x,y)+(1j*omega*surface[s](x,y)*exact(x,y)-outward[s])/3)
+             for s in bc}
+    opts = dict(bc=bc,robin_films=films,wall_areal_heat_capacity=surface)
+    x,y,u = solve_harmonic_diffusion_2d(omega,ncells=(4,3),degree=2,
+                                        forcing=lambda x,y:1j*omega*exact(x,y),**opts)
+    torch.testing.assert_close(u[:,:,0,0],exact(x[:,None],y),rtol=0.,atol=1e-12)
+    qx,qy = poisson_face_powers_2d(u,temperature_rate=1j*omega*u,**opts)
+    assert abs(qx*len(y)+gx).max()<1e-11
+    assert abs(qy*len(x)+gy).max()<1e-11
+
+
+def test_closed_surface_capacity_sets_dc_mean_and_first_order_flux():
+    from tensordg import solve_low_frequency_diffusion_2d
+
+    bc = dict(INSULATED,right="robin")
+    opts = dict(bc=bc,robin_films={"right":(0.,0.)},wall_areal_heat_capacity={"right":2.})
+    # Source and left flux balance. U0 has curvature -1 and zero right derivative.
+    x,y,u,v = solve_low_frequency_diffusion_2d(ncells=(6,3),degree=3,forcing=lambda x,y:1.,
+                                               neumann_flux={"left":-1.},**opts)
+    for field in (u,v):
+        right_trace = field[-1,:,:,0].sum(1).mean()
+        assert abs(field[:,:,0,0].mean()+2*right_trace)<1e-12
+    fx,fy = poisson_face_powers_2d(v,temperature_rate=u,**opts)
+    assert abs(fx.diff(dim=0)+fy.diff(dim=1)+u[:,:,0,0]/(len(x)*len(y))).max()<1e-11
