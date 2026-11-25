@@ -650,3 +650,33 @@ def test_invalid_cell_storage(storage):
 
     with pytest.raises(ValueError, match="storage"):
         solve_transient_advection_diffusion_1d([0.,.1], 0., ncells=4, storage=storage)
+
+
+def test_spatial_storage_initial_moments_and_cell_balance():
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d
+
+    edges = np.array([0., .2, .55, 1.])
+    times = [0., .02, .06]
+    def storage(x):
+        return 1.+3*x*x
+    def initial(x):
+        return x**4-.3*x
+    _,states,_,(west,east) = solve_transient_advection_diffusion_1d(
+        times, initial, storage=storage, degree=1, cell_edges=edges, return_face_transport=True)
+    xi,w = np.polynomial.legendre.leggauss(12)
+    h = np.diff(edges)[:,None]
+    x = edges[:-1,None]+h*(1+xi)/2
+    measure = h*w*storage(x)/2
+    basis = np.polynomial.legendre.legvander(xi,1)
+    samples = states.numpy() @ basis.T
+    np.testing.assert_allclose(((samples[0]-initial(x))*measure) @ basis,0.,atol=1e-15)
+    np.testing.assert_allclose(np.diff((samples*measure).sum(axis=-1),axis=0),
+                               (west-east).numpy(),atol=1e-12)
+
+
+@pytest.mark.parametrize("bad", [lambda x: -x, lambda x: x*float("nan"), lambda x: x[:,0]])
+def test_invalid_callable_storage(bad):
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d
+
+    with pytest.raises(ValueError, match="storage"):
+        solve_transient_advection_diffusion_1d([0.,.1],0.,storage=bad,ncells=4)

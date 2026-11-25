@@ -121,8 +121,8 @@ def _coefficient_at(value, points, name):
     values = torch.as_tensor(value,device=points.device,dtype=points.dtype)
     if not torch.isfinite(values).all():
         raise ValueError(f"{name} must be finite")
-    if name=="diffusivity_profile" and torch.any(values<=0):
-        raise ValueError("diffusivity_profile must be positive")
+    if name in ("diffusivity_profile","storage") and torch.any(values<=0):
+        raise ValueError(f"{name} must be positive")
     return values.expand_as(points)
 
 
@@ -480,7 +480,9 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
                                           boundary_value_history=None, storage=1., **spatial_options):
     """Advance storage*u_t + (a*u-D*u_x)_x + reaction*u = source with fixed coefficients.
 
-    Storage is a positive scalar or one positive coefficient per cell.
+    Storage is a positive scalar, one positive coefficient per cell, or a
+    spatial callable evaluated at cell quadrature points. For a callable,
+    the initial projection and the time derivative use the same weighted mass.
     Spatial keywords match solve_advection_diffusion_1d. Initial data are a
     scalar, a spatial callable projected onto the modal basis, or previously
     computed coefficients shaped (cells, degree+1). The theta method accepts
@@ -511,14 +513,24 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
         raise ValueError("times must be finite and strictly increasing")
     n,degree = len(widths),metadata["degree"]
     indices = torch.arange(degree+1,device=centers.device)
-    stored_width = widths*_positive_cell_values(storage,widths,"storage")
-    mass = (stored_width[:,None]/(2*indices+1)).reshape(-1)
-    if callable(initial) or source_history is not None:
+    if callable(storage) or callable(initial) or source_history is not None:
         nodes,weights,phi,*_ = _operators(degree,centers.device,centers.dtype)
         x = centers[:,None]+.5*widths[:,None]*nodes
+    if callable(storage):
+        weighted_measure = .5*widths[:,None]*weights*_coefficient_at(storage,x,"storage")
+        mass_blocks = phi.T @ (weighted_measure[:,:,None]*phi)
+        mass_matrix = torch.block_diag(*mass_blocks.unbind())
+    else:
+        stored_width = widths*_positive_cell_values(storage,widths,"storage")
+        mass_diagonal = (stored_width[:,None]/(2*indices+1)).reshape(-1)
+        mass_matrix = torch.diag(mass_diagonal)
     if callable(initial):
         values = _coefficient_at(initial,x,"initial")
-        coeff = ((values*weights) @ phi)*((2*indices+1)*.5).to(centers.dtype)
+        if callable(storage):
+            moments = (weighted_measure*values) @ phi
+            coeff = torch.linalg.solve(mass_blocks,moments.unsqueeze(-1)).squeeze(-1)
+        else:
+            coeff = ((values*weights) @ phi)*((2*indices+1)*.5).to(centers.dtype)
     else:
         raw = torch.as_tensor(initial,device=centers.device)
         if raw.is_complex() or raw.ndim and raw.shape!=(n,degree+1):
@@ -608,7 +620,7 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
                 raise ValueError("Rannacher step requires a representable midpoint")
             scale = weight*dt
             if scale!=previous_scale:
-                factors = torch.linalg.lu_factor(torch.diag(mass)+scale*operator)
+                factors = torch.linalg.lu_factor(mass_matrix+scale*operator)
                 previous_scale = scale
             stage_load = load
             if changing_load:
@@ -619,7 +631,8 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
                 if return_face_transport and changing_boundary:
                     boundary_integral = boundary_integral+dt*((1-weight)*start_boundary+weight*end_boundary)
                 start_load,start_sheet,start_boundary = forcing(end) if end in jumps else (end_load,end_sheet,end_boundary)
-            rhs = mass*state+dt*(stage_load-(1-weight)*(operator @ state))
+            stored_state = (mass_blocks @ state.reshape(n,-1,1)).reshape(-1) if callable(storage) else mass_diagonal*state
+            rhs = stored_state+dt*(stage_load-(1-weight)*(operator @ state))
             updated = torch.linalg.lu_solve(*factors,rhs[:,None])[:,0]
             if return_face_transport:
                 state_integral = state_integral+dt*((1-weight)*state+weight*updated)
