@@ -523,7 +523,7 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
 def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivity=1., capacity=1.,
                            source=None, wall_types=("dirichlet","dirichlet"), wall_values=(0.,0.), penalty=20.,
                            film_coefficients=(0.,0.), wall_areal_heat_capacity=(0.,0.),
-                           return_wall_temperatures=False):
+                           return_wall_temperatures=False, heat_loss_coefficient=None, bulk_ambient_temperature=0.):
     """Solve iωcU - kU'' = source on the unit slab with exp(+iωt) convention.
 
     Each end prescribes a temperature (dirichlet), inward external heat flux
@@ -532,6 +532,9 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     A flux or Robin wall can store heat. The material receives external input
     minus iω*Cwall*Twall. Set return_wall_temperatures to append both wall
     temperatures (prescribed on Dirichlet walls, solved traces elsewhere).
+    The optional bulk exchange H*(Tambient-U) enters as a volumetric source.
+    H in W/(m³ K) is finite, real and nonnegative. H and Tambient accept
+    constants, one value per cell, or functions of physical quadrature points.
     Source phasors may be constant or callable on real cell quadrature points.
     Returns cell centers, complex128 Legendre coefficients and the rightward
     numerical flux at every face. Uses a CPU sparse direct solve.
@@ -561,6 +564,28 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     nodes,weights,phi,_,_,left,right,dleft,dright = ops
     load = torch.zeros((ncells,degree+1),dtype=torch.complex128) if source is None else _source_load(
         centers,h,nodes,weights,phi,source,dtype=torch.complex128)
+    exchange = None
+    if heat_loss_coefficient is not None:
+        points = centers[:,None] + .5*h*nodes
+        def sample(profile, dtype):
+            raw = profile(points) if callable(profile) else profile
+            if dtype == torch.float64 and torch.is_complex(torch.as_tensor(raw)):
+                raise ValueError("heat_loss_coefficient must be real")
+            values = torch.as_tensor(raw,dtype=dtype)
+            if not callable(profile) and values.shape == (ncells,):
+                values = values[:,None]
+            if not torch.isfinite(values).all():
+                raise ValueError("bulk exchange profiles must be finite")
+            return values.expand_as(points)
+        loss = sample(heat_loss_coefficient,torch.float64)
+        if torch.any(loss<0):
+            raise ValueError("heat_loss_coefficient must be nonnegative")
+        ambient = sample(bulk_ambient_temperature,torch.complex128)
+        if torch.any(loss):
+            weighted = (.5*h)*loss*weights
+            blocks = torch.einsum("eq,qi,qj->eij",weighted,phi,phi)
+            exchange = sparse.bsr_matrix((blocks.detach().numpy(),np.arange(ncells),np.arange(ncells+1))).tocsr()
+            load += (weighted*ambient) @ phi.to(load.dtype)
     values = _wall_pair(wall_values,load)
     strength = penalty*(degree+1)**2/h
     for i,(cell,v,dv,normal) in enumerate(((0,left,dleft,-1),(-1,right,dright,1))):
@@ -569,6 +594,8 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
         load[cell] += applied*boundary
     storage = 1j*angular_frequency*capacity
     system = conductivity*stiffness + storage*mass
+    if exchange is not None:
+        system += exchange
     columns = np.r_[np.arange(degree+1),np.arange(ncells*(degree+1)-degree-1,ncells*(degree+1))]
     trace = sparse.csr_matrix((np.r_[left.numpy(),right.numpy()],columns,[0,degree+1,2*(degree+1)]),
                               shape=(2,ncells*(degree+1)))
@@ -576,7 +603,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
         system += trace.T @ sparse.diags(film+1j*angular_frequency*wall_capacity) @ trace
     rhs = load.detach().numpy().ravel()
     mean = 0j
-    if "dirichlet" not in wall_types and not np.any(film):
+    if exchange is None and "dirichlet" not in wall_types and not np.any(film):
         # Constant mode has no conductive restoring force. Separate its exact
         # storage response and constrain the remaining fluctuation to zero mean.
         integral = np.zeros_like(rhs)
@@ -594,6 +621,8 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
         # precision when added to the much larger penalty entries.
         trial = state.astype(np.clongdouble)
         residual = rhs - conductivity*(stiffness @ trial) - storage*(mass @ trial)
+        if exchange is not None:
+            residual -= exchange @ trial
         admittance = film+1j*angular_frequency*wall_capacity
         residual -= trace.T @ (admittance*(trace @ trial))
         state += factor.solve(residual.astype(np.complex128))

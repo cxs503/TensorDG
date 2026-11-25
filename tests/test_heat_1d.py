@@ -282,3 +282,36 @@ def test_uniform_harmonic_field_with_two_storing_films_has_zero_material_flux():
     assert (wall-temperature).abs().max()<5e-13
     assert (u[:,0]-temperature).abs().max()<5e-13
     assert q[[0,-1]].abs().max()<1e-12
+
+
+def test_graded_bulk_exchange_complex_ambient_and_flux_walls():
+    from tensordg import solve_harmonic_heat_1d
+
+    n,k,c,omega = 12,1.4,2.,.8
+    def temp(x):
+        return .3+.6j+(.7-.4j)*x**2
+    def ambient(x):
+        return 1+.1j-(.5+.2j)*x
+    def loss(x):
+        return 1+x*x
+    def source(x):
+        return 1j*omega*c*temp(x)-2*k*(.7-.4j)+loss(x)*(temp(x)-ambient(x))
+    x,u,q = solve_harmonic_heat_1d(omega,ncells=n,degree=2,conductivity=k,capacity=c,
+        wall_types=("neumann","neumann"),wall_values=(0.,2*k*(.7-.4j)),
+        heat_loss_coefficient=loss,bulk_ambient_temperature=ambient,source=source)
+    faces = torch.linspace(0.,1.,n+1,dtype=x.dtype)
+    torch.testing.assert_close(u[:,0],temp(x)+(.7-.4j)/(12*n*n),rtol=0.,atol=2e-12)
+    torch.testing.assert_close(q,-2*k*(.7-.4j)*faces,rtol=0.,atol=2e-11)
+
+
+def test_layerwise_bulk_reservoir_pins_uniform_insulated_slab():
+    from tensordg import solve_harmonic_heat_1d
+
+    n,omega = 8,1e-12
+    h = torch.linspace(.4,2.,n,dtype=torch.float64)
+    target = .4-.8j
+    ambient = target*(1+1j*omega/h)
+    x,u,q = solve_harmonic_heat_1d(omega,ncells=n,degree=2,wall_types=("neumann","neumann"),
+        heat_loss_coefficient=h,bulk_ambient_temperature=ambient)
+    torch.testing.assert_close(u[:,0],torch.full_like(u[:,0],target),rtol=0.,atol=2e-12)
+    assert q.abs().max()<2e-11
