@@ -399,3 +399,32 @@ def test_switched_films_and_wall_storage_match_time_linear_quadratic_solution():
     torch.testing.assert_close(wall["mean_temperature"],.5*(exact_knots[:-1]+exact_knots[1:]),atol=2e-12,rtol=0.)
     torch.testing.assert_close(wall["external_heat"],torch.stack(heats),atol=2e-12,rtol=0.)
     assert (c*u[:,:,0].diff(dim=0)/7+q.diff(dim=1)-bulk).abs().max()<2e-12
+
+
+def test_wall_admittance_and_cell_means_against_hyperbolic_slab(record_property):
+    from tensordg import harmonic_heat_wall_admittance_1d, solve_harmonic_heat_1d
+
+    k, c, loss, omega = 1.7, 2.1, 0.8, 4.
+    wave = torch.tensor(((loss+1j*omega*c)/k)**0.5, dtype=torch.complex128)
+    # U is the sum of the two normalized sinh profiles. Fourier's law at
+    # either wall gives Y_ii=k*b*coth(b) and Y_ij=-k*b/sinh(b).
+    exact_y = (k*wave/wave.sinh()) * torch.stack((
+        torch.stack((wave.cosh(), -torch.ones_like(wave))),
+        torch.stack((-torch.ones_like(wave), wave.cosh()))))
+    drive = torch.tensor([1.+.3j, -.2+.7j], dtype=wave.dtype)
+    errors = []
+    for n in (8, 16, 32):
+        opts = dict(ncells=n, degree=2, conductivity=k, capacity=c, heat_loss_coefficient=loss)
+        admittance = harmonic_heat_wall_admittance_1d(omega, **opts)
+        _, coeff, flux = solve_harmonic_heat_1d(omega, wall_values=drive, **opts)
+        inward = torch.stack((flux[0], -flux[-1]))
+        torch.testing.assert_close(admittance @ drive, inward, atol=2e-11, rtol=0)
+        x = torch.linspace(0, 1, n+1, dtype=torch.float64)
+        primitive = (-drive[0]*(wave*(1-x)).cosh()+drive[1]*(wave*x).cosh())/(wave*wave.sinh())
+        exact_means = n*primitive.diff()
+        row = [(admittance-exact_y).abs().max().item(), (coeff[:, 0]-exact_means).abs().max().item()]
+        record_property(f"max_admittance_error_{n}_W_per_m2_K", row[0])
+        record_property(f"max_cell_mean_error_{n}_K", row[1])
+        errors.append(row)
+    for coarse, fine in zip(errors, errors[1:]):
+        assert all(a/b > 3.5 for a, b in zip(coarse, fine))

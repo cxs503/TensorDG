@@ -657,6 +657,27 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     return (*result,surface) if return_wall_temperatures else result
 
 
+def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
+                                     conductivity=1., capacity=1., penalty=20.,
+                                     heat_loss_coefficient=None):
+    """Map two prescribed wall-temperature phasors to inward heat fluxes.
+
+    For the unit-length SIPG slab, return a complex128 matrix Y with rows
+    and columns ordered left, right. Y @ temperatures gives the pair of
+    inward fluxes in W/m². Sources and the bulk reservoir temperature are
+    zero, so the response is linear. The frequency and material arguments
+    follow solve_harmonic_heat_1d, including spatially varying bulk loss.
+    """
+    columns = []
+    for drive in ((1., 0.), (0., 1.)):
+        _, _, flux = solve_harmonic_heat_1d(
+            angular_frequency, ncells=ncells, degree=degree, conductivity=conductivity,
+            capacity=capacity, penalty=penalty, heat_loss_coefficient=heat_loss_coefficient,
+            wall_values=drive)
+        columns.append(torch.stack((flux[0], -flux[-1])))
+    return torch.stack(columns, dim=1)
+
+
 def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
                                ncells=16, degree=2, conductivity=1., capacity=1.,
                                heat_loss_coefficient=1., steps_per_interval=8, penalty=20.,
