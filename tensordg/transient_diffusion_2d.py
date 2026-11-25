@@ -337,24 +337,26 @@ def _frequency_system(ncells,degree,penalty,bc,forcing,neumann_flux,reaction,con
 def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conductivity=1.,
                                      reaction=0., forcing=None, bc=None, dirichlet_values=None,
                                      neumann_flux=None, robin_films=None, penalty=20., wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None,
-                                     trace_heat_capacity=None):
+                                     trace_heat_capacity=None, complex_load=False):
     """Return x, y, U0 and U1 for the SIPG temperature U0 + iω U1 + O(ω²).
 
     Real, frequency-independent data follow solve_transient_diffusion_2d.
-    Both fields are CPU float64 Legendre coefficients. A lossless Neumann
+    Pass complex_load=True for frequency-independent complex load phasors and
+    complex128 outputs. Real inputs default to CPU float64 coefficients. A lossless Neumann
     problem requires zero integrated load and selects zero capacity-weighted
     mean at both orders, including surface storage. wall_areal_heat_capacity maps
     Robin sides to nonnegative scalars or functions of (x,y) in J/(m² K).
     trace_heat_capacity uses the axis and trace ordering of trace_power.
     """
     stiffness,mass,load,grid,metadata = _frequency_system(ncells,degree,penalty,bc,forcing,
-        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,False,wall_areal_heat_capacity,contact_resistance,trace_power,trace_heat_capacity)
+        neumann_flux,reaction,conductivity,dirichlet_values,robin_films,capacity,complex_load,wall_areal_heat_capacity,contact_resistance,trace_power,trace_heat_capacity)
     anchored = metadata["temperature_anchored"]
     stride = (degree+1)**2
     rhs = load.numpy()
     if not anchored and abs(rhs[::stride].sum())>128*np.finfo(float).eps*np.abs(rhs).sum():
         raise ValueError("insulated low-frequency diffusion requires zero net load")
-    factor = splu((stiffness if anchored else stiffness[1:,1:]).tocsc())
+    matrix = stiffness if anchored else stiffness[1:,1:]
+    factor = splu(matrix.astype(rhs.dtype,copy=False).tocsc())
 
     if not anchored:
         weights = np.asarray(mass[::stride,:].sum(axis=0)).ravel()

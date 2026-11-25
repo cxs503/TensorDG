@@ -350,3 +350,20 @@ def test_sdirk2_counts_short_pulse_and_linear_load_inside_one_output_interval():
     assert abs(heat.sum()-exact)<1e-13
     assert abs(amplitude.item()-.1)<1e-13
     assert abs(u[-1,:,:,0,0]-(exact+.01)).max()<1e-12
+
+
+@pytest.mark.parametrize("anchored",[False,True])
+def test_complex_low_frequency_coefficients_superpose_independent_loads(anchored):
+    from tensordg import solve_low_frequency_diffusion_2d
+    options = dict(ncells=(5,3),degree=2,bc=None if anchored else INSULATED)
+    real = lambda x,y: x-.5
+    imag = lambda x,y: (y-.5)*(x+1.)
+    _,_,a,b = solve_low_frequency_diffusion_2d(**options,forcing=real)
+    _,_,c,d = solve_low_frequency_diffusion_2d(**options,forcing=imag)
+    _,_,steady,lag = solve_low_frequency_diffusion_2d(**options,complex_load=True,
+                                                       forcing=lambda x,y: real(x,y)+1j*imag(x,y))
+    torch.testing.assert_close(steady, torch.complex(a,c), rtol=1e-10,atol=1e-12)
+    torch.testing.assert_close(lag, torch.complex(b,d), rtol=1e-10,atol=1e-12)
+    if not anchored:
+        with pytest.raises(ValueError,match="zero net load"):
+            solve_low_frequency_diffusion_2d(**options,complex_load=True,forcing=lambda x,y:1j)
