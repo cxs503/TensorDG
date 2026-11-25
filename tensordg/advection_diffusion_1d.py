@@ -89,10 +89,9 @@ def _operators(degree: int, device: torch.device, dtype: torch.dtype):
         )
     phi = torch.stack(values, dim=1)
     dphi = torch.stack(derivatives, dim=1)
-    stiffness = torch.einsum("q,qk,qi->ki", weights, dphi, dphi)
     tensor = lambda data: torch.as_tensor(data, device=device, dtype=dtype)
     return (
-        nodes, weights, phi, stiffness, dphi, tensor(left), tensor(right),
+        nodes, weights, phi, dphi, tensor(left), tensor(right),
         tensor(deriv_left), tensor(deriv_right),
     )
 
@@ -114,23 +113,25 @@ def _mesh(ncells, cell_edges, device, dtype):
     return edges[:-1]+.5*widths, widths
 
 
-def _velocity_at(velocity, points):
-    value = velocity(points) if callable(velocity) else velocity
+def _coefficient_at(value, points, name):
+    value = value(points) if callable(value) else value
     raw = torch.as_tensor(value,device=points.device)
     if raw.is_complex() or (raw.ndim and raw.shape!=points.shape):
-        raise ValueError("velocity must return real values at the requested coordinates")
+        raise ValueError(f"{name} must return real values at the requested coordinates")
     values = torch.as_tensor(value,device=points.device,dtype=points.dtype)
     if not torch.isfinite(values).all():
-        raise ValueError("velocity must be finite")
+        raise ValueError(f"{name} must be finite")
+    if name=="diffusivity_profile" and torch.any(values<=0):
+        raise ValueError("diffusivity_profile must be positive")
     return values.expand_as(points)
 
 
-def _face_velocity(velocity, speed, widths, cell_edges):
+def _face_points(widths, cell_edges):
     if cell_edges is None:
         points = torch.linspace(0.,1.,len(widths)+1,device=widths.device,dtype=widths.dtype)
     else:
         points = torch.as_tensor(cell_edges,device=widths.device,dtype=widths.dtype)
-    return _velocity_at(speed if velocity is None else velocity,points)
+    return points
 
 
 def _face_widths(widths):
@@ -198,7 +199,7 @@ def solve_advection_diffusion_1d(
     advection_scheme: str = "upwind",
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, source=0., reaction=0., total_flux=(None,None), boundary_exchange=(None,None), velocity=None, mean_value=None, cell_edges=None, diffusivity_ratio=1., interface_source=0., interface_reaction=0.,
+    *, source=0., reaction=0., total_flux=(None,None), boundary_exchange=(None,None), velocity=None, mean_value=None, cell_edges=None, diffusivity_ratio=1., diffusivity_profile=1., interface_source=0., interface_reaction=0.,
 ):
     """Solve (1) on [0, 1] and return (cell_centres, modal_coefficients, metadata).
 
@@ -214,6 +215,9 @@ def solve_advection_diffusion_1d(
     diffusivity_ratio : scalar or cell vector
         Multiply the reference diffusivity |speed|/peclet by these positive
         material ratios. Interfaces must coincide with mesh faces.
+    diffusivity_profile : positive scalar or continuous function of x
+        Additional multiplier of the cell material diffusivity, evaluated
+        at volume quadrature points and faces.
     interface_source : scalar or internal-face vector
         Point sources on mesh faces give J_right - J_left = interface_source.
         Positive values supply transported quantity per unit time.
@@ -257,7 +261,7 @@ def solve_advection_diffusion_1d(
     modes = degree + 1
     ndofs = ncells * modes
     (
-        nodes, weights, phi, stiffness, dphi, phi_left, phi_right,
+        nodes, weights, phi, dphi, phi_left, phi_right,
         dphi_left, dphi_right,
     ) = _operators(degree, dev, dtype)
     diffusivity = abs(speed) / peclet
@@ -276,11 +280,15 @@ def solve_advection_diffusion_1d(
     # B_diff is the SIPG form of -D u'' (same matrix as tensordg.heat_1d) and
     # A_adv(u, v_i) = a * int_K u v_i' - a * f_hat_R v_i(1) + a * f_hat_L v_i(-1).
     # The two blocks therefore carry *opposite* signs.
-    diffusion_volume = (2*local_diffusivity/h)[:,None,None] * stiffness
     xq = centers[:, None] + (.5*h[:,None])*nodes
-    vq = _velocity_at(a if velocity is None else velocity,xq)
+    multiplier = _coefficient_at(diffusivity_profile,xq,"diffusivity_profile")
+    stiffness = torch.einsum("cq,q,qi,qj->cij",multiplier,weights,dphi,dphi)
+    diffusion_volume = (2*local_diffusivity/h)[:,None,None]*stiffness
+    vq = _coefficient_at(a if velocity is None else velocity,xq,"velocity")
     advection_volume = -torch.einsum("cq,q,qj,qi->cij",vq,weights,phi,dphi)
-    face_speeds = _face_velocity(velocity,a,h,cell_edges)
+    face_points = _face_points(h,cell_edges)
+    face_ratio = face_ratio*_coefficient_at(diffusivity_profile,face_points,"diffusivity_profile")
+    face_speeds = _coefficient_at(a if velocity is None else velocity,face_points,"velocity")
     def profile(value, name):
         sampled = value(xq) if callable(value) else value
         data = torch.as_tensor(sampled, device=dev)
@@ -373,7 +381,7 @@ def solve_advection_diffusion_1d(
             add(idx,idx,exchange*torch.outer(endpoint,endpoint))
             rhs[idx] -= outward*prescribed_flux*endpoint
             continue
-        derivative = outward * local_diffusivity[cell] * (2.0 / h[cell]) * derivative_endpoint
+        derivative = outward * diffusivity * face_ratio[0 if cell==0 else -1] * (2.0 / h[cell]) * derivative_endpoint
         penalty_face = penalties[0 if cell==0 else -1]
         consistency = -torch.outer(endpoint, derivative)
         block = consistency + consistency.T + penalty_face * torch.outer(endpoint, endpoint)
@@ -457,7 +465,7 @@ def sample_solution(
 
 
 def sample_transport_flux(centers, coeff, peclet, speed=1., samples_per_cell=8, *,
-                          cell_edges=None, diffusivity_ratio=1., velocity=None):
+                          cell_edges=None, diffusivity_ratio=1., velocity=None, diffusivity_profile=1.):
     """Return Gauss coordinates and the physical flux a(x) u_h - D du_h/dx inside each cell."""
     x,u = sample_solution(centers,coeff,samples_per_cell,cell_edges=cell_edges)
     n,modes = coeff.shape
@@ -466,12 +474,13 @@ def sample_transport_flux(centers, coeff, peclet, speed=1., samples_per_cell=8, 
     _,widths = _mesh(n,cell_edges,coeff.device,coeff.dtype)
     ratio,_ = _material_ratios(diffusivity_ratio,widths)
     diffusive = (-2*abs(speed)/peclet*ratio/widths)[:,None]*(coeff @ derivative.T)
-    speeds = _velocity_at(speed if velocity is None else velocity,x.reshape(n,-1))
+    speeds = _coefficient_at(speed if velocity is None else velocity,x.reshape(n,-1),"velocity")
+    diffusive = diffusive*_coefficient_at(diffusivity_profile,x.reshape(n,-1),"diffusivity_profile")
     return x,(speeds*u.reshape(n,-1)+diffusive).reshape(-1)
 
 
 def face_fluxes(
-    coeff: torch.Tensor, peclet: float, speed: float = 1.0, *, cell_edges=None, diffusivity_ratio=1., velocity=None,
+    coeff: torch.Tensor, peclet: float, speed: float = 1.0, *, cell_edges=None, diffusivity_ratio=1., velocity=None, diffusivity_profile=1.,
 ) -> torch.Tensor:
     """Total flux ``a u - D u'`` evaluated at every cell's right face.
 
@@ -496,13 +505,15 @@ def face_fluxes(
     derivative = (2.0 / h) * (coeff @ dp_right)
     diffusivity = abs(speed) / peclet
     ratio,_ = _material_ratios(diffusivity_ratio,h)
-    face_speeds = _face_velocity(velocity,speed,h,cell_edges)
+    points = _face_points(h,cell_edges)
+    ratio = ratio*_coefficient_at(diffusivity_profile,points[1:],"diffusivity_profile")
+    face_speeds = _coefficient_at(speed if velocity is None else velocity,points,"velocity")
     return face_speeds[1:] * value - diffusivity * ratio * derivative
 
 
 def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., right_value=1.,
                           advection_scheme="upwind", total_flux=(None,None), *, cell_edges=None, diffusivity_ratio=1.,
-                          interface_source=0., interface_reaction=0., return_cell_fluxes=False, boundary_exchange=(None,None), velocity=None):
+                          interface_source=0., interface_reaction=0., return_cell_fluxes=False, boundary_exchange=(None,None), velocity=None, diffusivity_profile=1.):
     """Rightward DG flux at n+1 faces, with the weighted flux at internal faces.
 
     With return_cell_fluxes=True return (west, east), each of length ncells,
@@ -511,7 +522,7 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
     if advection_scheme not in ("upwind","downwind"):
         raise ValueError("unknown advection scheme")
     ncells,modes = coeff.shape
-    _,_,_,_,_,pl,pr,dl,dr = _operators(modes-1,coeff.device,coeff.dtype)
+    _,_,_,_,pl,pr,dl,dr = _operators(modes-1,coeff.device,coeff.dtype)
     west,east = coeff @ pl,coeff @ pr
     (west_flux,kw),(east_flux,ke) = _boundary_flux_laws(total_flux,boundary_exchange)
     low = torch.cat((west.new_tensor([left_value if west_flux is None else 0.]),east))
@@ -525,7 +536,9 @@ def numerical_face_fluxes(coeff, peclet, speed=1., penalty=20., left_value=0., r
     diff_scale = -2*abs(speed)/(peclet*widths)
     west_diff,east_diff = diff_scale*(coeff @ dl),diff_scale*(coeff @ dr)
     diffusion = torch.cat((west_diff[:1],.5*(east_diff[:-1]+west_diff[1:]),east_diff[-1:]))
-    face_speeds = _face_velocity(velocity,speed,widths,cell_edges)
+    points = _face_points(widths,cell_edges)
+    face_ratio = face_ratio*_coefficient_at(diffusivity_profile,points,"diffusivity_profile")
+    face_speeds = _coefficient_at(speed if velocity is None else velocity,points,"velocity")
     advected = torch.where((face_speeds>0)==(advection_scheme=="upwind"),low,high)
     flux = face_speeds*advected + face_ratio*(diffusion + penalty*modes**2*(low-high)/_face_widths(widths))
     if west_flux is not None:

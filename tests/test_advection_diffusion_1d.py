@@ -422,3 +422,37 @@ def test_conservative_variable_velocity_with_interior_stagnation(orientation):
     torch.testing.assert_close(uh,u(x),atol=5e-12,rtol=0.)
     torch.testing.assert_close(numerical_face_fluxes(c,5.,**opts),flux(edges),atol=5e-12,rtol=0.)
     torch.testing.assert_close(face_fluxes(c,5.,cell_edges=edges,velocity=velocity),flux(edges[1:]),atol=5e-12,rtol=0.)
+
+
+def test_smooth_diffusivity_with_a_material_jump_and_nonzero_flux():
+    from tensordg.advection_diffusion_1d import sample_transport_flux,numerical_face_fluxes
+    edges = torch.tensor([0.,.12,.35,.6,1.],dtype=torch.float64)
+    ratio = edges.new_tensor([.5,.5,2.,2.])
+    def profile(x):
+        return 1.+x+x*x
+    def field(x):
+        return .4+.2*x+.3*x*x
+    def derivative(x):
+        return .2+.6*x
+    def flux(x,material):
+        return field(x)-.25*material*profile(x)*derivative(x)
+    def source(x):
+        return derivative(x)-.25*ratio[:,None]*((1+2*x)*derivative(x)+.6*profile(x))
+    sheet = edges.new_zeros(3)
+    sheet[1] = flux(edges[2],2.)-flux(edges[2],.5)
+    opts = dict(cell_edges=edges,diffusivity_ratio=ratio,diffusivity_profile=profile)
+    x,c,_ = solve_advection_diffusion_1d(degree=2,peclet=4.,source=source,interface_source=sheet,
+                                         left_value=field(0.),right_value=field(1.),**opts)
+    pts,j = sample_transport_flux(x,c,4.,**opts)
+    torch.testing.assert_close(j.reshape(4,-1),flux(pts.reshape(4,-1),ratio[:,None]),atol=2e-11,rtol=0.)
+    west,east = numerical_face_fluxes(c,4.,interface_source=sheet,return_cell_fluxes=True,
+                                      left_value=field(0.),right_value=field(1.),**opts)
+    torch.testing.assert_close(west,flux(edges[:-1],ratio),atol=2e-11,rtol=0.)
+    torch.testing.assert_close(east,flux(edges[1:],ratio),atol=2e-11,rtol=0.)
+    torch.testing.assert_close(face_fluxes(c,4.,**opts),flux(edges[1:],ratio),atol=2e-11,rtol=0.)
+
+
+@pytest.mark.parametrize("profile",[0.,-1.,float("nan"),1j,lambda x:x*(1-x)])
+def test_diffusivity_must_be_positive_at_interior_and_boundary_points(profile):
+    with pytest.raises(ValueError,match="diffusivity_profile"):
+        solve_advection_diffusion_1d(4,diffusivity_profile=profile)
