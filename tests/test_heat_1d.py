@@ -495,7 +495,8 @@ def test_composite_harmonic_admittance_against_contact_transfer(record_property)
 
 
 @pytest.mark.parametrize("heated", [False, True])
-def test_harmonic_stack_internal_states_against_propagated_traces(heated, record_property):
+@pytest.mark.parametrize("storing", [False, True])
+def test_harmonic_stack_internal_states_against_propagated_traces(heated, storing, record_property):
     import cmath
     import numpy as np
     from tensordg import harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
@@ -504,6 +505,7 @@ def test_harmonic_stack_internal_states_against_propagated_traces(heated, record
     layers = [(0.5, 1.4, 2.1), (0.2, 2.6, 1.2), (0.3, 1.8, 1.4)]
     resistances = [0.23, 0.]
     sources = [0.43+0.18j, -0.27j] if heated else [0., 0.]
+    surface_capacity = [0.7, 0.19] if storing else [0., 0.]
     temperature, q = 1.2+0.4j, 0.8-0.15j
     reference_t, reference_q = [], []
     for i, (length, k, capacity) in enumerate(layers):
@@ -513,18 +515,25 @@ def test_harmonic_stack_internal_states_against_propagated_traces(heated, record
         reference_t.append((temperature, right_t))
         reference_q.append((q, -right_q))
         if i < len(resistances):
-            temperature, q = right_t-resistances[i]*right_q, right_q+sources[i]
+            temperature = right_t-resistances[i]*right_q
+            q = right_q+sources[i]-1j*omega*surface_capacity[i]*temperature
     drive = [reference_t[0][0], reference_t[-1][1]]
     errors = []
     for n in (4, 8, 16):
         matrices = [harmonic_heat_wall_admittance_1d(
             omega, ncells=n, thickness=length, conductivity=k, capacity=c) for length, k, c in layers]
         opts = dict(interface_heat_sources=sources) if heated else {}
+        if storing:
+            opts.update(interface_areal_heat_capacity=surface_capacity, angular_frequency=omega)
         y, t, flux = compose_heat_wall_admittances_1d(matrices, resistances, wall_temperatures=drive, **opts)
         _, _, base_flux = compose_heat_wall_admittances_1d(matrices, resistances, wall_temperatures=(0., 0.), **opts)
+        if storing and not heated:
+            reduced = compose_heat_wall_admittances_1d(matrices, resistances, **opts)
+            torch.testing.assert_close(reduced, y)
         response = flux - base_flux
         torch.testing.assert_close(y @ t.new_tensor(drive), torch.stack((response[0, 0], response[-1, 1])))
-        torch.testing.assert_close(flux[:-1, 1]+flux[1:, 0], t.new_tensor(sources), atol=1e-12, rtol=0)
+        stored_power = 1j*omega*t.new_tensor(surface_capacity)*t[1:, 0]
+        torch.testing.assert_close(flux[:-1, 1]+flux[1:, 0]+stored_power, t.new_tensor(sources), atol=1e-12, rtol=0)
         torch.testing.assert_close(t[:-1, 1]-t[1:, 0], -t.new_tensor(resistances)*flux[:-1, 1],
                                    atol=1e-12, rtol=0)
         row = [np.max(np.abs(t.numpy()-reference_t)), np.max(np.abs(flux.numpy()-reference_q))]
@@ -533,3 +542,12 @@ def test_harmonic_stack_internal_states_against_propagated_traces(heated, record
         errors.append(row)
     for coarse, fine in zip(errors, errors[1:]):
         assert all(a/b > 8 for a, b in zip(coarse, fine))
+
+def test_stack_rejects_undefined_interface_storage():
+    from tensordg import compose_heat_wall_admittances_1d
+
+    layers = [torch.eye(2)]*2
+    for capacity, omega in ((1., None), (-1., 2.), (float("nan"), 2.), ([1., 2.], 2.), (1j, 2.)):
+        with pytest.raises(ValueError):
+            compose_heat_wall_admittances_1d(layers, interface_areal_heat_capacity=capacity,
+                                             angular_frequency=omega)

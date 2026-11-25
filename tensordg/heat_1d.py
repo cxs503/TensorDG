@@ -689,11 +689,12 @@ def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
 
 
 def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall_temperatures=None,
-                                     interface_heat_sources=None):
+                                     interface_heat_sources=None, interface_areal_heat_capacity=None,
+                                     angular_frequency=None):
     """Return the complex wall admittance of a stack, ordered left to right.
 
     Supply one 2-by-2 inward-flux matrix per source-free layer at a common
-    frequency and cross section. Each unheated interface conserves heat flux and
+    frequency and cross section. Each unheated, massless interface conserves heat flux and
     supports the temperature drop R*q (q positive to the right). R is an
     areal resistance in m² K/W, scalar or one value per interface.
 
@@ -703,7 +704,10 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     Temperatures are in K and fluxes in W/m². With prescribed wall temperatures,
     interface_heat_sources supplies heat generation (W/m², scalar or one
     complex phasor per contact) immediately to the right of each resistance.
-    The rightward flux increases by this source after the contact drop.
+    Optional interface_areal_heat_capacity (J/(m² K), scalar or one per
+    contact) places storage at the same right-hand trace. Supply the common
+    angular_frequency (rad/s) of the layer matrices for storing interfaces.
+    The rightward flux increases by source minus i*omega*C_surface*T_right.
     Y maps temperature perturbations at fixed sources; fluxes include the
     full driven response.
     """
@@ -734,13 +738,30 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
         if len(layers) == 1 and sources.any():
             raise ValueError("interface heating requires at least two layers")
         sources = sources.expand(len(layers)-1)
+    storage = matrices[0].new_zeros(len(layers)-1)
+    if angular_frequency is not None and (not math.isfinite(angular_frequency) or angular_frequency <= 0):
+        raise ValueError("angular_frequency must be finite and positive")
+    if interface_areal_heat_capacity is not None:
+        raw = torch.as_tensor(interface_areal_heat_capacity, device=storage.device)
+        if raw.is_complex():
+            raise ValueError("interface areal heat capacity must be real")
+        capacity = torch.as_tensor(interface_areal_heat_capacity, device=storage.device, dtype=torch.float64)
+        if (capacity.shape not in ((), (len(layers)-1,)) or not torch.isfinite(capacity).all()
+                or (capacity < 0).any()):
+            raise ValueError("supply a nonnegative finite areal heat capacity or one per interface")
+        if capacity.any():
+            if len(layers) == 1 or angular_frequency is None:
+                raise ValueError("interface storage requires two or more layers and an angular frequency")
+            storage = 1j*angular_frequency*capacity.expand(len(layers)-1)
     right_flux_offset = matrices[0].new_zeros(())
     interfaces = []
     combined = matrices[0]
-    for layer, r, source in zip(matrices[1:], resistance.expand(len(layers)-1), sources):
+    for layer, r, source, shunt in zip(matrices[1:], resistance.expand(len(layers)-1), sources, storage):
         (a, b), (c, d) = combined
         (e, f), (g, h) = layer
-        # Eliminate the two contact temperatures using flux continuity and
+        # The right trace feeds both the layer and the surface storage.
+        e = e + shunt
+        # Eliminate the two contact temperatures using the heat balance and
         # the contact jump directly, so perfect contact needs no 1/R limit.
         denominator = d + e + r*d*e
         if denominator == 0:
