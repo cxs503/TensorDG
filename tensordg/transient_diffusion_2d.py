@@ -56,7 +56,8 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
                                  dirichlet_values=None, neumann_flux=None, robin_films=None,
                                  penalty=20., load_amplitude=None, conductivity=1.,
                                  rannacher=False, return_interval_means=False, load_jump_times=(),
-                                 return_load_means=False, source_history=None, wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None):
+                                 return_load_means=False, source_history=None, wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None,
+                                 trace_heat_capacity=None):
     """Solve C*u_t - div(k grad u) + reaction*u = f with optional time-dependent loads.
 
     times specifies strictly increasing output times, each interval taking one
@@ -68,7 +69,10 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     Robin ambient temperature together. Film coefficients and reaction are
     stationary. wall_areal_heat_capacity maps Robin sides to nonnegative
     J/(m² K) values or functions of (x,y). The wall shares the material trace
-    temperature. Its storage also contributes to the initial projection.
+    temperature. trace_heat_capacity assigns independent capacities to the
+    two internal traces using the same face arrays as trace_power. For callable
+    initial data, surface storage uses one-sided temperatures from the adjoining
+    elements in the initial projection.
     By default the amplitude is one. source_history(t,x,y) adds
     an independently varying volume source in physical units, sampled at
     element quadrature points. Its jumps also belong in load_jump_times. The initial field can be a
@@ -139,17 +143,23 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
             initial = constant
     if initial.shape!=shape or not torch.isfinite(initial).all():
         raise ValueError("provide a finite initial temperature or matching modal coefficients")
-    if wall_areal_heat_capacity:
-        surface,wall_load = _wall_storage(grid,metadata["bc"],wall_areal_heat_capacity,
-                         initial_temperature if callable(initial_temperature) else None)
-        if wall_load is not None:
-            # Bulk projection already represents all volume moments of C*T0.
-            initial_load = mass_matrix@initial.reshape(-1).numpy()+wall_load
-        mass_matrix = (mass_matrix+surface).tocsc()
-        if wall_load is not None:
-            initial = torch.from_numpy(splu(mass_matrix).solve(initial_load).reshape(shape))
+    if wall_areal_heat_capacity or trace_heat_capacity:
+        initial_fn = initial_temperature if callable(initial_temperature) else None
+        initial_load = mass_matrix@initial.reshape(-1).numpy() if initial_fn is not None else None
+        if wall_areal_heat_capacity:
+            surface,wall_load = _wall_storage(grid,metadata["bc"],wall_areal_heat_capacity,initial_fn)
+            mass_matrix = mass_matrix+surface
+            if initial_fn is not None:
+                initial_load += wall_load
+        if trace_heat_capacity:
+            surface,trace_load = _trace_storage(grid,trace_heat_capacity,initial_fn)
+            mass_matrix = mass_matrix+surface
+            if initial_fn is not None:
+                initial_load += trace_load
+        if initial_load is not None:
+            initial = torch.from_numpy(splu(mass_matrix.tocsc()).solve(initial_load).reshape(shape))
             if not torch.isfinite(initial).all():
-                raise ValueError("initial wall temperature must be finite")
+                raise ValueError("initial surface temperature must be finite")
     history = np.empty((len(times),operator.shape[0]))
     state = history[0]
     state[:] = initial.reshape(-1).numpy()
@@ -220,11 +230,12 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     return result
 
 
-def _trace_capacity_matrix(grid,capacities):
+def _trace_storage(grid,capacities,initial_temperature=None):
     x,y,degree = grid["x"],grid["y"],grid["degree"]
     nx,ny = len(x),len(y)
-    _,weights,phi,_,_,pl,pr,dl,dr = _operators(degree,x.device,x.dtype)
+    nodes,weights,phi,_,_,pl,pr,dl,dr = _operators(degree,x.device,x.dtype)
     dofs = np.arange(nx*ny*(degree+1)**2).reshape(nx,ny,-1)
+    load = np.zeros(dofs.size) if initial_temperature is not None else None
     rows,cols,values = [],[],[]
     for axis,pair in _trace_face_data(capacities,nx,ny,x.device,x.dtype):
         measure = .5/(ny if axis=="x" else nx)
@@ -236,11 +247,25 @@ def _trace_capacity_matrix(grid,capacities):
             gram = measure*(trace.T*weights) @ trace
             blocks = capacity[ix,iy,None,None]*gram
             ids = dofs[ix.numpy()+upper*(axis=="x"),iy.numpy()+upper*(axis=="y")]
+            if load is not None and ix.numel():
+                # Sample just inside each element so a discontinuity exactly
+                # on a grid face supplies the correct one-sided initial data.
+                if axis=="x":
+                    face = (ix.to(x.dtype)+1)/nx
+                    xq = torch.nextafter(face,x[ix+upper])[:,None]
+                    yq = y[iy,None]+measure*nodes
+                else:
+                    face = (iy.to(y.dtype)+1)/ny
+                    yq = torch.nextafter(face,y[iy+upper])[:,None]
+                    xq = x[ix,None]+measure*nodes
+                temp = torch.as_tensor(initial_temperature(xq,yq),dtype=x.dtype)
+                temp = torch.broadcast_to(temp,(ix.numel(),len(nodes)))
+                load[ids] += (measure*capacity[ix,iy,None]*((temp*weights) @ trace)).numpy()
             rows.append(np.broadcast_to(ids[:,:,None],blocks.shape).ravel())
             cols.append(np.broadcast_to(ids[:,None,:],blocks.shape).ravel())
             values.append(blocks.numpy().ravel())
     return coo_matrix((np.concatenate(values),(np.concatenate(rows),np.concatenate(cols))),
-                      shape=(dofs.size,dofs.size)).tocsc()
+                      shape=(dofs.size,dofs.size)).tocsc(),load
 
 
 def _frequency_system(ncells,degree,penalty,bc,forcing,neumann_flux,reaction,conductivity,
@@ -256,7 +281,8 @@ def _frequency_system(ncells,degree,penalty,bc,forcing,neumann_flux,reaction,con
         surface,_ = _wall_storage(grid,metadata["bc"],wall_areal_heat_capacity)
         mass += surface
     if trace_heat_capacity:
-        mass += _trace_capacity_matrix(grid,trace_heat_capacity)
+        surface,_ = _trace_storage(grid,trace_heat_capacity)
+        mass += surface
     return stiffness,mass,load,grid,metadata
 
 

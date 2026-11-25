@@ -267,3 +267,25 @@ def test_storing_contact_low_frequency_limit_from_rod_admittance(axis):
         np.testing.assert_allclose(traces,reference,atol=1e-11,rtol=0)
     with pytest.raises(ValueError,match="nonnegative"):
         solve_harmonic_diffusion_2d(1.,**dict(options,trace_heat_capacity={axis:(-face,face)}))
+
+
+@pytest.mark.parametrize("axis",["x","y"])
+def test_initial_contact_traces_and_restart_conserve_stored_heat(axis):
+    n = 4
+    face = torch.zeros((n-1,n),dtype=torch.float64)
+    face[n//2-1] = 1.
+    if axis=="y":
+        face = face.T
+    def initial(x,y):
+        t = x if axis=="x" else y
+        return torch.where(t<.5,t**2,2+t**2)
+    opts = dict(ncells=n,degree=1,bc=INSULATED,contact_resistance={axis:.3*face},
+                trace_heat_capacity={axis:(.7*face,.4*face)})
+    _,_,fields = solve_transient_diffusion_2d(initial,[0.,.02,.09],**opts)
+    for field in fields:
+        u = field if axis=="x" else field.permute(1,0,3,2)
+        modes = u[:,:,:,0].mean(1)
+        energy = modes[:,0].mean()+.7*modes[1].sum()+.4*(modes[2,0]-modes[2,1])
+        assert abs(energy-(1/3+1+.7*.25+.4*2.25))<1e-12
+    _,_,restart = solve_transient_diffusion_2d(fields[1],[.02,.09],**opts)
+    torch.testing.assert_close(restart[-1],fields[-1],atol=1e-12,rtol=0)
