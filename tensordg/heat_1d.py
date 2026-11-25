@@ -709,7 +709,8 @@ def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
 def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall_temperatures=None,
                                      interface_heat_sources=None, interface_left_heat_sources=None, interface_areal_heat_capacity=None,
                                      interface_left_areal_heat_capacity=None, angular_frequency=None, interface_film_coefficients=0.,
-                                     interface_ambient_temperatures=0., layer_flux_offsets=None,
+                                     interface_ambient_temperatures=0., interface_left_film_coefficients=0.,
+                                     interface_left_ambient_temperatures=0., layer_flux_offsets=None,
                                      return_flux_offset=False):
     """Return the complex wall admittance of a stack, ordered left to right.
 
@@ -726,15 +727,17 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     complex phasor per contact) immediately to the right of each resistance.
     interface_left_heat_sources independently loads the left trace in W/m².
     With left input S, the flux crossing the resistance is S plus the
-    rightward flux exiting the left material minus the left trace storage rate.
+    rightward flux exiting the left material plus left film input minus the left trace storage rate.
     Optional interface_areal_heat_capacity (J/(m² K), scalar or one per
     contact) places storage at the right-hand trace. interface_left_areal_heat_capacity
     places independent storage at the left-hand trace in the same units. Supply the common
     angular_frequency (rad/s) of the layer matrices for storing interfaces.
     At each right-hand trace a film coefficient h (W/(m² K)) and ambient
     temperature phasor Ta (K) add the input h*(Ta-T_right). Supply either
-    scalars or one value per interface. The rightward material flux increases by
-    S_left + S_right + h*(Ta-T_right) - i*omega*(C_left*T_left + C_right*T_right).
+    scalars or one value per interface. interface_left_film_coefficients and
+    interface_left_ambient_temperatures define an independent film on the left.
+    The rightward material flux increases by both trace sources and film inputs
+    minus i*omega*(C_left*T_left + C_right*T_right).
     Y maps temperature perturbations at fixed sources; fluxes include the
     full driven response. To include volumetric forcing, supply each layer
     with its pair of zero-wall-temperature inward fluxes in layer_flux_offsets
@@ -760,13 +763,18 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
             raise ValueError(f"supply a nonnegative finite {name} or one per interface")
         return values
 
+    def film_parameters(coefficients, temperatures):
+        film = real_parameter(coefficients, "film coefficient")
+        ambient = torch.as_tensor(temperatures, dtype=matrices[0].dtype, device=device)
+        if ambient.shape not in ((), (count,)) or not torch.isfinite(ambient).all():
+            raise ValueError("supply a finite ambient temperature or one per interface")
+        if count == 0 and film.any():
+            raise ValueError("interface films require at least two layers")
+        return film, film*ambient
+
     resistance = real_parameter(contact_resistance, "contact resistance")
-    film = real_parameter(interface_film_coefficients, "film coefficient")
-    ambient = torch.as_tensor(interface_ambient_temperatures, dtype=matrices[0].dtype, device=device)
-    if ambient.shape not in ((), (count,)) or not torch.isfinite(ambient).all():
-        raise ValueError("supply a finite ambient temperature or one per interface")
-    if count == 0 and film.any():
-        raise ValueError("interface films require at least two layers")
+    film, film_input = film_parameters(interface_film_coefficients, interface_ambient_temperatures)
+    left_film, left_input = film_parameters(interface_left_film_coefficients, interface_left_ambient_temperatures)
     if wall_temperatures is not None:
         drive = torch.as_tensor(wall_temperatures, device=matrices[0].device, dtype=torch.complex128)
         if drive.shape != (2,) or not torch.isfinite(drive).all():
@@ -797,9 +805,10 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
             return 1j*angular_frequency*capacity.expand(count)
         return matrices[0].new_zeros(count)
 
-    left_storage = storage_admittance(interface_left_areal_heat_capacity)
+    left_admittance = storage_admittance(interface_left_areal_heat_capacity) + left_film
     storage = storage_admittance(interface_areal_heat_capacity)
-    sources = sources + film*ambient
+    sources = sources + film_input
+    left_sources = left_sources + left_input
     interface_admittance = storage + film
     offsets = matrices[0].new_zeros((len(layers), 2))
     if layer_flux_offsets is not None:
@@ -815,10 +824,10 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     interfaces = []
     combined = matrices[0]
     for layer, r, source, left_source, left_shunt, shunt, layer_offset in zip(
-            matrices[1:], resistance.expand(count), sources, left_sources, left_storage, interface_admittance, offsets[1:]):
+            matrices[1:], resistance.expand(count), sources, left_sources, left_admittance, interface_admittance, offsets[1:]):
         (a, b), (c, d) = combined
         (e, f), (g, h) = layer
-        # Each trace supplies its own local storage in addition to material power.
+        # Both local storage and film exchange contribute to the trace admittance.
         d = d + left_shunt
         e = e + shunt
         # Eliminate the two contact temperatures using the heat balance and

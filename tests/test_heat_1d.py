@@ -753,3 +753,18 @@ def test_independent_contact_storage_rates(resistance):
     through = .4+.1j-flux[0, 1]-1j*omega*cl*t[0, 1]
     torch.testing.assert_close(t[0, 1]-t[1, 0], resistance*through)
     torch.testing.assert_close(flux[1, 0], through-.2j-1j*omega*cr*t[1, 0])
+
+
+@pytest.mark.parametrize("r", [0., .35])
+def test_left_film_equals_reflected_right_film(r):
+    from tensordg import compose_heat_wall_admittances_1d
+
+    layer = torch.tensor([[2.+.6j, -.9], [-.9, 1.3+.2j]], dtype=torch.complex128)
+    layers = [layer, .7*layer]
+    reverse = [m.flip((0, 1)) for m in reversed(layers)]
+    left = dict(interface_left_film_coefficients=2.1, interface_left_ambient_temperatures=.32-.46j)
+    right = dict(interface_film_coefficients=2.1, interface_ambient_temperatures=.32-.46j)
+    y, offset = compose_heat_wall_admittances_1d(layers, r, return_flux_offset=True, **left)
+    yr, br = compose_heat_wall_admittances_1d(reverse, r, return_flux_offset=True, **right)
+    torch.testing.assert_close(y, yr.flip((0, 1)))
+    torch.testing.assert_close(offset, br.flip((0,)))
