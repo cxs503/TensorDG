@@ -256,3 +256,19 @@ def test_rightward_boundary_flux_with_variable_reaction(speed,ends):
 def test_two_flux_walls_need_reaction_anchor():
     with pytest.raises(ValueError,match="nonzero reaction"):
         solve_advection_diffusion_1d(total_flux=(.1,.1))
+
+
+@pytest.mark.parametrize("speed",[-1.,1.])
+def test_flux_pair_with_mean_selects_exponential_stationary_mode(speed):
+    from tensordg.advection_diffusion_1d import numerical_face_fluxes
+    pe,n = 3.,20
+    x,coeff,_ = solve_advection_diffusion_1d(n,3,pe,speed,total_flux=(.4,.4),mean_value=1.7)
+    pts,uh = sample_solution(x,coeff)
+    exponent = speed*pe
+    expected = .4/speed+(1.7-.4/speed)*exponent*torch.exp(exponent*pts)/math.expm1(exponent)
+    torch.testing.assert_close(uh,expected,atol=2e-6,rtol=0.)
+    torch.testing.assert_close(coeff[:,0].mean(),coeff.new_tensor(1.7),atol=5e-13,rtol=0.)
+    flux = numerical_face_fluxes(coeff,pe,speed,total_flux=(.4,.4))
+    torch.testing.assert_close(flux,torch.full_like(flux,.4),atol=2e-10,rtol=0.)
+    with pytest.raises(ValueError,match="incompatible"):
+        solve_advection_diffusion_1d(n,2,pe,speed,total_flux=(.4,.41),mean_value=1.7)

@@ -119,7 +119,7 @@ def solve_advection_diffusion_1d(
     advection_scheme: str = "upwind",
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, source=0., reaction=0., total_flux=(None,None),
+    *, source=0., reaction=0., total_flux=(None,None), mean_value=None,
 ):
     """Solve (1) on [0, 1] and return (cell_centres, modal_coefficients, metadata).
 
@@ -135,7 +135,9 @@ def solve_advection_diffusion_1d(
     total_flux : (left, right)
         A finite scalar prescribes the rightward advective plus diffusive
         flux in place of that end's Dirichlet value. None uses Dirichlet data.
-        Two prescribed fluxes require nonzero reaction in the domain.
+        With two prescribed fluxes and zero reaction, supply mean_value
+        to select a unique solution; the flux difference must equal the
+        integrated source. The unit interval has length one.
     advection_scheme : {"upwind", "downwind"}
         ``"downwind"`` exists only as an implementation negative control: it is
         *not* a consistent scheme and must fail the verification gates.
@@ -195,10 +197,19 @@ def solve_advection_diffusion_1d(
     sink = profile(reaction,"reaction")
     if torch.any(sink < 0):
         raise ValueError("reaction must be nonnegative")
-    if west_flux is not None and east_flux is not None and not torch.any(sink>0):
-        raise ValueError("two total flux boundaries require a nonzero reaction")
+    needs_mean = west_flux is not None and east_flux is not None and not torch.any(sink>0)
+    if needs_mean and (mean_value is None or not math.isfinite(mean_value)):
+        raise ValueError("two total flux boundaries require a finite mean_value or nonzero reaction")
+    if not needs_mean and mean_value is not None:
+        raise ValueError("mean_value requires two prescribed fluxes and zero reaction")
     reaction_volume = (.5*h)*torch.einsum("cq,q,qi,qj->cij",sink,weights,phi,phi)
-    rhs = ((.5*h)*(profile(source,"source")*weights) @ phi).reshape(-1)
+    integrated_source = (.5*h)*profile(source,"source")*weights
+    if needs_mean:
+        residual = integrated_source.sum() + west_flux - east_flux
+        scale = integrated_source.abs().sum() + abs(west_flux) + abs(east_flux)
+        if residual.abs() > 64*torch.finfo(dtype).eps*scale:
+            raise ValueError("incompatible total flux difference and integrated source")
+    rhs = (integrated_source @ phi).reshape(-1)
     for cell in range(ncells):
         idx = dofs(cell)
         add(idx, idx, diffusion_volume + advection_volume + reaction_volume[cell])
@@ -254,7 +265,18 @@ def solve_advection_diffusion_1d(
         # data terms of the Nitsche form: -int (D v' n) g + penalty * int g v
         rhs[idx] += (-derivative + penalty_face * endpoint) * value
 
-    state = torch.linalg.solve(system, rhs)
+    if needs_mean:
+        # A bordered system retains each local balance and fixes the mean.
+        # Its multiplier is a spatially uniform source, zero for compatible data.
+        mean_row = rhs.new_zeros(ndofs)
+        mean_row[::modes] = h
+        constrained = system.new_zeros((ndofs+1,ndofs+1))
+        constrained[:-1,:-1] = system
+        constrained[-1,:-1] = mean_row
+        constrained[:-1,-1] = mean_row
+        state = torch.linalg.solve(constrained,torch.cat((rhs,rhs.new_tensor([mean_value]))))[:-1]
+    else:
+        state = torch.linalg.solve(system, rhs)
     coeff = state.reshape(ncells, modes)
     metadata = {
         "ncells": ncells, "degree": degree, "peclet": peclet, "speed": a,
