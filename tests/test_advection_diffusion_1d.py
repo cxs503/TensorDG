@@ -537,3 +537,17 @@ def test_jump_in_interface_source_matches_manual_substeps(periodic):
         state = part[-1]
     torch.testing.assert_close(u[-1],state,atol=1e-13,rtol=0.)
     torch.testing.assert_close(u[-1,:,0] @ edges.diff(),loads.sum()*.054,atol=1e-13,rtol=0.)
+
+
+def test_transport_damping_restarts_after_internal_jump():
+    from tensordg.advection_diffusion_1d import solve_transient_advection_diffusion_1d as solve
+    opts = dict(periodic=True,ncells=6,degree=2)
+    time = [0.,.03125,.0625,.125]
+    jump = .09375
+    distribution = torch.tensor([0.,1.,0.,0.,-.5,0.],dtype=torch.float64)
+    _,auto,_ = solve(time,0.,rannacher=True,source_jump_times=[jump],
+                     interface_source_history=lambda t:distribution*(1. if t<jump else -1.),**opts)
+    _,early,_ = solve([0.,.015625,.03125],0.,theta=1.,interface_source=distribution,**opts)
+    _,mid,_ = solve([.03125,.0625,jump],early[-1],interface_source=distribution,**opts)
+    _,late,_ = solve([jump,.109375,.125],mid[-1],theta=1.,interface_source=-distribution,**opts)
+    torch.testing.assert_close(auto,torch.stack((early[0],early[-1],mid[1],late[-1])),atol=2e-14,rtol=0.)

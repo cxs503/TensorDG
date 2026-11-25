@@ -45,14 +45,15 @@ def measure(n,steps,speed,**options):
 if __name__=="__main__":
     rows = []
     for speed in (-1.,1.):
-        previous = {}
-        for steps in (32,64,128,256):
-            err = measure(32,steps,speed)
-            order = {k:float(np.log2(previous[k]/err[k])) for k in ("first_four_modes","post_pulse_l2")} if previous else {}
-            rows.append(dict(speed=speed,nominal_steps=steps,errors=err,orders=order,
-                             passed=err["mass"]<1e-10 and all(v>0 for v in order.values()) and
-                             (steps<256 or order["first_four_modes"]>1.8)))
-            previous = err
+        for damp in (False,True):
+            previous = {}
+            for steps in (32,64,128,256):
+                err = measure(32,steps,speed,rannacher=damp)
+                order = {k:float(np.log2(previous[k]/err[k])) for k in ("first_four_modes","post_pulse_l2")} if previous else {}
+                rows.append(dict(rannacher=damp,speed=speed,nominal_steps=steps,errors=err,orders=order,
+                                 passed=err["mass"]<1e-10 and all(v>0 for v in order.values()) and
+                                 (steps<256 or order["first_four_modes"]>1.8)))
+                previous = err
     rev = subprocess.check_output(["git","rev-parse","HEAD"],cwd=Path(__file__).parent,text=True).strip()
     print(json.dumps(dict(commit=rev,observations_s=OBSERVE.tolist(),runs=rows),indent=2,allow_nan=False))
     raise SystemExit(0 if all(row["passed"] for row in rows) else 1)

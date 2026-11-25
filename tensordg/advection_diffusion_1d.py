@@ -468,7 +468,7 @@ def _assemble_transport(
 
 
 def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_history=None,
-                                          source_jump_times=(), interface_source_history=None, **spatial_options):
+                                          source_jump_times=(), interface_source_history=None, rannacher=False, **spatial_options):
     """Advance u_t + (a*u-D*u_x)_x + reaction*u = source with fixed coefficients.
 
     Spatial keywords match solve_advection_diffusion_1d. Initial data are a
@@ -480,10 +480,14 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
     ordered as for interface_source. List jumps of either load in
     source_jump_times, with the new source value
     at each jump. Internal subdivisions preserve the requested output times.
+    With rannacher=True, replace the first Crank-Nicolson step and the first
+    step after each jump by two backward Euler half steps.
     Return centers, modal states at all times, and mesh metadata.
     """
     if not math.isfinite(theta) or not .5<=theta<=1:
         raise ValueError("theta must be in [0.5,1]")
+    if rannacher and theta!=.5:
+        raise ValueError("Rannacher startup requires theta=.5")
     centers,widths,operator,load,_,metadata,add_face_sources = _assemble_transport(**spatial_options)
     grid = torch.as_tensor(times,dtype=torch.float64,device=centers.device)
     if grid.ndim!=1 or len(grid)<2 or not torch.isfinite(grid).all() or torch.any(grid.diff()<=0):
@@ -510,7 +514,7 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
             coeff[:,0] = data
     states = [coeff]
     state = coeff.reshape(-1)
-    previous_dt = None
+    previous_scale = None
     output = grid.tolist()
     jumps = set(float(t) for t in source_jump_times)
     if not all(output[0]<t<output[-1] for t in jumps):
@@ -531,17 +535,25 @@ def solve_transient_advection_diffusion_1d(times, initial, *, theta=.5, source_h
     if changing_load:
         start_load = forcing(output[0])
     for start,stop in zip(boundaries,boundaries[1:]):
-        dt = stop-start
-        if previous_dt is None or dt!=previous_dt:
-            factors = torch.linalg.lu_factor(torch.diag(mass)+(theta*dt)*operator)
-            previous_dt = dt
-        stage_load = load
-        if changing_load:
-            end_load = forcing(math.nextafter(stop,start) if stop in jumps else stop)
-            stage_load = load+(1-theta)*start_load+theta*end_load
-            start_load = forcing(stop) if stop in jumps else end_load
-        rhs = mass*state+dt*(stage_load-(1-theta)*(operator @ state))
-        state = torch.linalg.lu_solve(*factors,rhs[:,None])[:,0]
+        damp = rannacher and (start==output[0] or start in jumps)
+        endpoints = (start+(stop-start)/2,stop) if damp else (stop,)
+        weight = 1. if damp else theta
+        for end in endpoints:
+            dt = end-start
+            if dt<=0:
+                raise ValueError("Rannacher step requires a representable midpoint")
+            scale = weight*dt
+            if scale!=previous_scale:
+                factors = torch.linalg.lu_factor(torch.diag(mass)+scale*operator)
+                previous_scale = scale
+            stage_load = load
+            if changing_load:
+                end_load = forcing(math.nextafter(end,start) if end in jumps else end)
+                stage_load = load+(1-weight)*start_load+weight*end_load
+                start_load = forcing(end) if end in jumps else end_load
+            rhs = mass*state+dt*(stage_load-(1-weight)*(operator @ state))
+            state = torch.linalg.lu_solve(*factors,rhs[:,None])[:,0]
+            start = end
         if stop==output[index]:
             states.append(state.reshape(n,degree+1))
             index += 1
