@@ -289,3 +289,32 @@ def test_initial_contact_traces_and_restart_conserve_stored_heat(axis):
         assert abs(energy-(1/3+1+.7*.25+.4*2.25))<1e-12
     _,_,restart = solve_transient_diffusion_2d(fields[1],[.02,.09],**opts)
     torch.testing.assert_close(restart[-1],fields[-1],atol=1e-12,rtol=0)
+
+
+@pytest.mark.parametrize("damped",[False,True])
+def test_independent_trace_histories_at_off_grid_jumps(damped):
+    # A manufactured piecewise-linear temperature on each half slab. Bulk
+    # sources carry the local ramp and each trace supplies its own storage
+    # plus its signed heat loss to the other side.
+    n = 4
+    face = np.zeros((n-1,n))
+    face[n//2-1] = 1.
+    def field(t):
+        return np.array([.25+t-1.5*max(0.,t-.04),-.2+2*max(0.,t-.07)])
+    def slope(t):
+        return np.array([1.-1.5*(t>=.04),2.*(t>=.07)])
+    def heaters(t):
+        transfer = (field(t)[0]-field(t)[1])/.3
+        left,right = [.7,.4]*slope(t)+[transfer,-transfer]
+        return {"x":(left*face,right*face)}
+    times = [0.,.03,.06,.1,.12]
+    x,_,u = solve_transient_diffusion_2d(lambda x,y:torch.where(x<.5,.25+0*x,-.2+0*x),times,
+        ncells=n,degree=2,bc=INSULATED,rannacher=damped,contact_resistance={"x":.3*face},
+        trace_heat_capacity={"x":(.7*face,.4*face)},trace_power_history=heaters,
+        source_history=lambda t,x,y:torch.where(x<.5,slope(t)[0]+0*x,slope(t)[1]+0*x),
+        load_jump_times=(.04,.07))
+    for t,state in zip(times,u):
+        expected = torch.where(x[:,None]<.5,field(t)[0]+0*x[:,None],field(t)[1]+0*x[:,None])
+        assert abs(state[:,:,0,0]-expected).max()<1e-12
+        assert abs(state[:,:,1:,:]).max()<1e-12
+        assert abs(state[:,:,:,1:]).max()<1e-12

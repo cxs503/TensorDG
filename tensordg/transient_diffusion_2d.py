@@ -6,7 +6,7 @@ from scipy.sparse import bsr_matrix, coo_matrix, diags
 from scipy.sparse.linalg import splu
 
 from .poisson_2d import _operators, _face_basis
-from .poisson_2d_bc import assemble_poisson_2d_bc, _wall_storage, _trace_face_data
+from .poisson_2d_bc import assemble_poisson_2d_bc, _wall_storage, _trace_face_data, _add_trace_power
 
 
 def _capacity_quadrature(grid):
@@ -57,7 +57,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
                                  penalty=20., load_amplitude=None, conductivity=1.,
                                  rannacher=False, return_interval_means=False, load_jump_times=(),
                                  return_load_means=False, source_history=None, wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None,
-                                 trace_heat_capacity=None):
+                                 trace_heat_capacity=None, trace_power_history=None):
     """Solve C*u_t - div(k grad u) + reaction*u = f with optional time-dependent loads.
 
     times specifies strictly increasing output times, each interval taking one
@@ -75,7 +75,9 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     elements in the initial projection.
     By default the amplitude is one. source_history(t,x,y) adds
     an independently varying volume source in physical units, sampled at
-    element quadrature points. Its jumps also belong in load_jump_times. The initial field can be a
+    element quadrature points. trace_power_history(t) adds time-dependent
+    internal face powers using the mapping and units of trace_power. Include
+    jumps of either history in load_jump_times. The initial field can be a
     scalar, a function (x,y) projected in capacity-weighted L², or previously computed Legendre
     coefficients (nx,ny,degree+1,degree+1). Returns x, y and a CPU float64
     tensor of modal fields with leading time dimension, including the initial state.
@@ -191,10 +193,17 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
             values = torch.broadcast_to(sampled,quadrature_shape)
         except RuntimeError as exc:
             raise ValueError("source_history must broadcast to the quadrature grid") from exc
-        return modal_moments(values).reshape(-1).numpy()
+        return modal_moments(values)
 
-    if source_history is not None:
-        source_start = volume_load(internal[0])
+    def history_load(t):
+        result = volume_load(t) if source_history is not None else torch.zeros(shape,dtype=x.dtype)
+        if trace_power_history is not None:
+            _add_trace_power(result,trace_power_history(float(t)))
+        return result.reshape(-1).numpy()
+
+    has_history = source_history is not None or trace_power_history is not None
+    if has_history:
+        source_start = history_load(internal[0])
         jump_set = set(jumps)
     last_shift = None
     out = 0
@@ -206,12 +215,12 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
             last_shift = shift
         amplitude = (1-weight)*start_values[i]+weight*end_values[i]
         rhs = amplitude*load.numpy()-operator@state
-        if source_history is not None:
+        if has_history:
             stop = internal[i+1]
             at_jump = stop in jump_set
-            source_end = volume_load(np.nextafter(stop,internal[i]) if at_jump else stop)
+            source_end = history_load(np.nextafter(stop,internal[i]) if at_jump else stop)
             rhs += (1-weight)*source_start+weight*source_end
-            source_start = volume_load(stop) if at_jump else source_end
+            source_start = history_load(stop) if at_jump else source_end
         increment = factor.solve(dt*rhs)
         fraction = dt/(times[out+1]-times[out])
         if return_interval_means:

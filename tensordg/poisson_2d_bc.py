@@ -159,6 +159,20 @@ def _trace_face_data(data,nx,ny,device,dtype):
         yield axis,fields
 
 
+def _add_trace_power(load,data):
+    nx,ny,modes,_ = load.shape
+    # A face-constant source tests only the constant tangential Legendre
+    # mode. Normal basis values at the two endpoints are 1 and (-1)^p.
+    low = (-1.)**torch.arange(modes,dtype=load.real.dtype,device=load.device)
+    for axis,(lower,upper) in _trace_face_data(data,nx,ny,load.device,load.dtype):
+        if axis=="x":
+            load[:-1,:,:,0] += lower[...,None]/ny
+            load[1:,:,:,0] += upper[...,None]*low/ny
+        else:
+            load[:,:-1,0,:] += lower[...,None]/nx
+            load[:,1:,0,:] += upper[...,None]*low/nx
+
+
 def _cell_conductivity(value, nx, ny, device, dtype):
     k = torch.as_tensor(value,device=device,dtype=dtype)
     cross = None
@@ -363,13 +377,8 @@ def assemble_poisson_2d_bc(
     # ---- boundary faces --------------------------------------------------
     load_dtype = torch.complex(torch.empty((),dtype=dtype),torch.empty((),dtype=dtype)).dtype if complex_load else dtype
     load = torch.zeros(ndofs, device=dev, dtype=load_dtype).view(nx, ny, local_dofs)
-    for axis,(lower,upper) in _trace_face_data(trace_power,nx,ny,dev,load_dtype):
-        sx,sy = int(axis=="x"),int(axis=="y")
-        measure = measure_x if sx else measure_y
-        high,_ = _face_basis(phi,phi_right,dphi_right,axis,1.)
-        low,_ = _face_basis(phi,phi_left,dphi_left,axis,1.)
-        load[:nx-sx,:ny-sy] += lower[...,None]*(measure*(weights @ high))
-        load[sx:,sy:] += upper[...,None]*(measure*(weights @ low))
+    if trace_power:
+        _add_trace_power(load.view(nx,ny,modes,modes),trace_power)
     sides = (
         ("left", "x", 0.0, 0, phi_left, dphi_left, -1.0, hx, measure_x),
         ("right", "x", 1.0, nx - 1, phi_right, dphi_right, 1.0, hx, measure_x),
