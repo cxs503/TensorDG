@@ -81,3 +81,22 @@ def test_asymmetric_modal_heat_transfer_with_custom_profile():
         flux = modes.new_tensor(info["integrated_face_fluxes"])
         torch.testing.assert_close(flux, exact, atol=3e-6, rtol=0.)
         torch.testing.assert_close(coeff[:, 0], reference[:, 0], atol=6e-6, rtol=0.)
+
+
+def test_stationary_quartic_source_profile_preserves_equilibrium_and_wall_flux():
+    from tensordg.heat_1d import solve_heat_1d_exact_time
+
+    # u=x-x⁴ has -u''=12x², homogeneous endpoints, and nonzero wall fluxes.
+    initial = lambda x: x-x**4
+    opts = dict(ncells=5, degree=4, final_time=.013, source=lambda x: 12*x*x,
+                initial_temperature=initial)
+    for backend in ("dense", "sparse", "matrix-free", "exact-time"):
+        if backend == "exact-time":
+            centers, coeff, _ = solve_heat_1d_exact_time(**opts)
+        else:
+            centers, coeff, meta = solve_heat_1d(**opts, backend=backend, time_steps=5,
+                                                 integrate_face_fluxes=True)
+            faces = torch.linspace(0.,1.,6,dtype=coeff.dtype)
+            heat = torch.tensor(meta["integrated_face_fluxes"],dtype=coeff.dtype)
+            torch.testing.assert_close(heat,.013*(4*faces**3-1),atol=5e-10,rtol=0.)
+        assert heat_error(centers,coeff,.013,reference=lambda x,t: initial(x))["absolute_l2"] < 2e-11

@@ -297,10 +297,10 @@ def solve_heat_1d_sparse(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, integrate_face_fluxes: bool = False, initial_temperature=None,
+    *, integrate_face_fluxes: bool = False, initial_temperature=None, source=None,
 ) -> tuple:
     """Sparse SIPG heat solve.  Signature mirrors ``solve_heat_1d``."""
-    from tensordg.heat_1d import sipg_heat_face_fluxes, _operators, _project_initial
+    from tensordg.heat_1d import sipg_heat_face_fluxes, _operators, _project_initial, _source_load
 
     dev = torch.device(device)
     h = 1.0 / ncells
@@ -321,6 +321,10 @@ def solve_heat_1d_sparse(
     ) if final_time > 0.0 else 0
     dt = final_time / steps if steps else 0.0
 
+    increment = 0.
+    if source is not None:
+        increment = dt*_source_load(centers,h,nodes,weights,phi,source).reshape(-1)
+        increment = increment.cpu().numpy()
     state = coeff.reshape(-1).cpu().numpy().astype(np.float64)
     integrated = np.zeros_like(state) if integrate_face_fluxes else None
 
@@ -331,7 +335,7 @@ def solve_heat_1d_sparse(
         lu = spla.splu(system.tocsc())
         for _ in range(steps):
             previous = state
-            state = lu.solve(explicit @ state)
+            state = lu.solve(explicit @ state + increment)
             if integrated is not None:
                 integrated += (.5 * dt) * (previous + state)
 

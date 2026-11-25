@@ -67,6 +67,16 @@ def _project_initial(centers, h, nodes, weights, phi, initial_temperature):
     return ((values*weights) @ phi) * (modes + .5)
 
 
+def _source_load(centers, h, nodes, weights, phi, source):
+    """Integrate a stationary physical source against the modal test functions."""
+    x = centers[:, None] + .5*h*nodes
+    values = source(x) if callable(source) else source
+    values = torch.as_tensor(values, dtype=x.dtype, device=x.device).expand_as(x)
+    if not torch.isfinite(values).all():
+        raise ValueError("source must be finite at quadrature nodes")
+    return (.5*h)*((values*weights) @ phi)
+
+
 def _add_block(matrix, indices, block):
     matrix[indices[:, None], indices[None, :]] += block
 
@@ -77,7 +87,7 @@ def assemble_sipg_1d(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, initial_temperature=None,
+    *, initial_temperature=None, source=None,
 ):
     """Assemble the SIPG mass/diffusion matrices for ``u_t = u_xx`` on (0,1).
 
@@ -145,6 +155,7 @@ def assemble_sipg_1d(
         "mass_matrix": mass_matrix,
         "diffusion": diffusion,
         "initial_coefficients": coeff,
+        "source_load": None if source is None else _source_load(centers,h,nodes,weights,phi,source),
         "penalty": penalty,
     }
 
@@ -167,7 +178,7 @@ def solve_heat_1d(
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     backend: str = "dense",
-    *, integrate_face_fluxes: bool = False, initial_temperature=None,
+    *, integrate_face_fluxes: bool = False, initial_temperature=None, source=None,
 ):
     """Solve u_t=u_xx with zero Dirichlet data and a projected initial profile.
 
@@ -176,6 +187,8 @@ def solve_heat_1d(
 
     Parameters
     ----------
+    source : optional scalar or callable of x
+        Stationary volumetric source for u_t = u_xx + source on the unit slab.
     initial_temperature : optional callable
         Evaluated on cell quadrature points and projected onto the modal basis.
         The default profile is sin(pi*x).
@@ -194,13 +207,13 @@ def solve_heat_1d(
         from tensordg.sipg_sparse import solve_heat_1d_sparse
         return solve_heat_1d_sparse(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature,
+            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source,
         )
     elif backend == "matrix-free":
         from tensordg.sipg_matrixfree import solve_heat_1d_matrixfree
         return solve_heat_1d_matrixfree(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature,
+            integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source,
         )
 
     # backend == "dense": original implementation
@@ -210,7 +223,7 @@ def solve_heat_1d(
         raise ValueError("final_time must be >= 0 and time_steps must be positive")
     dev = torch.device(device)
     assembly = assemble_sipg_1d(
-        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature,
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source,
     )
     h = assembly["h"]
     modes = degree + 1
@@ -227,11 +240,13 @@ def solve_heat_1d(
     state = coeff.reshape(-1)
     integrated = torch.zeros_like(state) if integrate_face_fluxes else None
     if steps:
+        load = assembly["source_load"]
+        increment = 0. if load is None else dt*load.reshape(-1)
         system = mass_matrix + 0.5 * dt * diffusion
         explicit = mass_matrix - 0.5 * dt * diffusion
         for _ in range(steps):
             previous = state
-            state = torch.linalg.solve(system, explicit @ state)
+            state = torch.linalg.solve(system, explicit @ state + increment)
             if integrated is not None:
                 integrated += (.5 * dt) * (previous + state)
     coeff = state.reshape(ncells, modes)
@@ -254,11 +269,12 @@ def solve_heat_1d_exact_time(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, initial_temperature=None,
+    *, initial_temperature=None, source=None,
 ):
     """SIPG heat solution with the semi-discrete system integrated *exactly* in time.
 
-    The semi-discrete system is linear and autonomous, ``M du/dt = -K u``, so the
+    A stationary source is integrated by augmenting the state with a constant.
+    For zero source the semi-discrete system is linear and autonomous, ``M du/dt = -K u``, so the
     solution is ``u(t) = exp(-t M^{-1} K) u(0)``.  Evaluating the matrix
     exponential (SciPy's Pade implementation) removes the temporal error of
     Crank--Nicolson, which for high polynomial degrees is otherwise *larger*
@@ -272,7 +288,7 @@ def solve_heat_1d_exact_time(
     from scipy.linalg import expm
 
     system = assemble_sipg_1d(
-        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature,
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source,
     )
     mass = system["mass_matrix"].detach().cpu().numpy()
     diffusion = system["diffusion"].detach().cpu().numpy()
@@ -284,7 +300,16 @@ def solve_heat_1d_exact_time(
     eigenvalues = np.linalg.eigvals(generator)
     if eigenvalues.real.min() <= 0.0:
         raise RuntimeError("the SIPG stiffness is not positive definite")
-    state = expm(-final_time * generator) @ initial if final_time > 0.0 else initial
+    state = initial
+    if final_time > 0.:
+        if system["source_load"] is None:
+            state = expm(-final_time * generator) @ initial
+        else:
+            load = system["source_load"].detach().cpu().numpy().reshape(-1)
+            augmented = np.zeros((len(initial)+1, len(initial)+1), dtype=mass.dtype)
+            augmented[:-1, :-1] = -generator
+            augmented[:-1, -1] = np.linalg.solve(mass, load)
+            state = (expm(final_time*augmented) @ np.r_[initial, 1.])[:-1]
     coeff = torch.as_tensor(
         state.reshape(ncells, degree + 1),
         device=torch.device(device), dtype=dtype,
