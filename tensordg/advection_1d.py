@@ -229,12 +229,23 @@ def _basis(degree: int, nodes, device, dtype):
     return torch.stack(basis, dim=1)
 
 
+def _translated_profile(x, final_time, speed, exact):
+    """Evaluate a periodic initial profile at the characteristic's foot."""
+    # Remove full revolutions before subtracting from the quadrature nodes
+    # so long translations retain the local sub-cell coordinates.
+    foot = torch.remainder(x - math.fmod(speed * final_time, 1.0), 1.0)
+    # A negative foot very close to zero can round to 1 after remainder.
+    foot = torch.where(foot == 1, 0., foot)
+    return (_sine if exact is None else exact)(foot)
+
+
 def l2_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
              speed: float = 1.0,
              exact: Callable[[torch.Tensor], torch.Tensor] | None = None) -> float:
     """Quadrature-based L2 error against the exact translated wave.
 
-    ``exact`` defaults to the translated sine wave ``sin(2*pi*(x - speed*t))``.
+    ``exact`` is the initial profile on [0, 1), sampled at (x - speed*t) mod 1.
+    Its default is sin(2*pi*x).
     """
     degree = coeff.shape[1] - 1
     x_np, w_np = np.polynomial.legendre.leggauss(max(2 * degree + 4, 6))
@@ -244,8 +255,7 @@ def l2_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
     phi = _basis(degree, x_np, coeff.device, coeff.dtype)
     uh = coeff @ phi.T
     x = centers[:, None] + 0.5 * h * xq[None, :]
-    truth = (_sine(x - speed * final_time) if exact is None
-             else exact(x - speed * final_time))
+    truth = _translated_profile(x, final_time, speed, exact)
     err2 = 0.5 * h * torch.sum(wq[None, :] * (uh - truth) ** 2)
     return float(torch.sqrt(err2).item())
 
@@ -272,6 +282,7 @@ def l1_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
              jumps: Sequence[float] = (), nsub: int = 4) -> float:
     """Quadrature-based L1 error, robust to discontinuities.
 
+    The optional exact profile receives periodic departure coordinates in [0, 1).
     The quadrature is composite Gauss on each cell, split at every interior
     point of ``jumps`` (the exact jump abscissas of the reference solution,
     modulo the domain) and further subdivided into ``nsub`` panels.  A kinked
@@ -306,8 +317,7 @@ def l1_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
     cf = coeff.detach().cpu().numpy()
     uh = np.einsum("pqm,pm->pq", vals, cf[cell])
     xa = torch.as_tensor(nodes, dtype=coeff.dtype, device=coeff.device)
-    truth = (_sine(xa - speed * final_time) if exact is None
-             else exact(xa - speed * final_time))
+    truth = _translated_profile(xa, final_time, speed, exact)
     diff = np.abs(uh - truth.detach().cpu().numpy())
     return float(np.sum(0.5 * width[:, None] * diff * w_np[None, :]))
 
@@ -318,6 +328,7 @@ def linf_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
                nsub: int = 8, nq: int = 16) -> float:
     """Discrete L-infinity error (max over a dense sub-cell quadrature net).
 
+    The optional exact profile receives periodic departure coordinates in [0, 1).
     Used for Gibbs-overshoot studies, where the extremum sits inside the cell
     that contains the discontinuity.
     """
@@ -336,6 +347,5 @@ def linf_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
     cf = coeff.detach().cpu().numpy()
     uh = np.einsum("pqm,pm->pq", vals, cf[cell])
     xa = torch.as_tensor(nodes, dtype=coeff.dtype, device=coeff.device)
-    truth = (_sine(xa - speed * final_time) if exact is None
-             else exact(xa - speed * final_time))
+    truth = _translated_profile(xa, final_time, speed, exact)
     return float(np.max(np.abs(uh - truth.detach().cpu().numpy())))
