@@ -428,11 +428,13 @@ def advection_diffusion_error(
     return {"absolute_l2": absolute, "exact_l2": norm, "relative_l2": absolute / norm if norm else (0.0 if absolute == 0 else math.inf)}
 
 
-def _legendre_values(nodes_np, degree: int, device, dtype) -> torch.Tensor:
+def _legendre_values(nodes_np, degree: int, device, dtype, *, derivative=False) -> torch.Tensor:
     basis = []
     for k in range(degree + 1):
         polynomial = np.zeros(k + 1)
         polynomial[-1] = 1.0
+        if derivative:
+            polynomial = np.polynomial.legendre.legder(polynomial)
         basis.append(torch.as_tensor(
             np.polynomial.legendre.legval(nodes_np, polynomial), device=device, dtype=dtype,
         ))
@@ -452,6 +454,20 @@ def sample_solution(
     )[None, :]).reshape(-1)
     values = (coeff @ phi.T).reshape(-1)
     return x, values
+
+
+def sample_transport_flux(centers, coeff, peclet, speed=1., samples_per_cell=8, *,
+                          cell_edges=None, diffusivity_ratio=1., velocity=None):
+    """Return Gauss coordinates and the physical flux a(x) u_h - D du_h/dx inside each cell."""
+    x,u = sample_solution(centers,coeff,samples_per_cell,cell_edges=cell_edges)
+    n,modes = coeff.shape
+    nodes,_ = np.polynomial.legendre.leggauss(x.numel()//n)
+    derivative = _legendre_values(nodes,modes-1,coeff.device,coeff.dtype,derivative=True)
+    _,widths = _mesh(n,cell_edges,coeff.device,coeff.dtype)
+    ratio,_ = _material_ratios(diffusivity_ratio,widths)
+    diffusive = (-2*abs(speed)/peclet*ratio/widths)[:,None]*(coeff @ derivative.T)
+    speeds = _velocity_at(speed if velocity is None else velocity,x.reshape(n,-1))
+    return x,(speeds*u.reshape(n,-1)+diffusive).reshape(-1)
 
 
 def face_fluxes(
