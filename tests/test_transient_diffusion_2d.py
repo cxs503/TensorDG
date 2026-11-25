@@ -214,3 +214,11 @@ def test_closed_surface_capacity_sets_dc_mean_and_first_order_flux():
         assert abs(field[:,:,0,0].mean()+2*right_trace)<1e-12
     fx,fy = poisson_face_powers_2d(v,temperature_rate=u,**opts)
     assert abs(fx.diff(dim=0)+fy.diff(dim=1)+u[:,:,0,0]/(len(x)*len(y))).max()<1e-11
+
+
+def test_storage_flux_preserves_imaginary_rate_for_real_trace():
+    coeff = torch.zeros((2,3,2,2),dtype=torch.float64)
+    coeff[:,:,0,0] = 1.
+    qx,_ = poisson_face_powers_2d(coeff,bc={"right":"robin"},robin_films={"right":(1.,1.)},
+                                  wall_areal_heat_capacity={"right":2.},temperature_rate=3j*coeff)
+    assert abs(qx[-1]-2j).max()<1e-14

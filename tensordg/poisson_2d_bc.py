@@ -477,22 +477,24 @@ def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None
     """Integrate SIPG numerical heat flux over each face for unit depth.
 
     Returns arrays (nx+1, ny) and (nx, ny+1) oriented in increasing x and y.
-    Supply the same conductivity, penalty and boundary data as the solve. For each cell,
+    Supply the same conductivity, penalty and boundary data as the solve.
     With wall_areal_heat_capacity, supply modal temperature_rate (iωU for harmonic
     fields, U0 for first-order coefficients). Returned wall power then includes
     storage and measures heat crossing into the material. In steady state,
-    right minus left plus top minus bottom equals its integrated source minus reaction loss in steady state.
+    each cell’s net outward power equals its integrated source minus reaction loss.
     """
     nx, ny, modes, last = coeff.shape
     if modes != last or modes not in (2, 3, 4) or min(nx, ny) < 2 or penalty <= 0:
         raise ValueError("expected square P1 to P3 modal blocks and positive penalty")
-    nodes, weights, phi, _, _, pl, pr, dl, dr = _operators(modes-1, coeff.device, coeff.real.dtype)
-    types = _resolve_bc(bc)
-    k_x,k_y,cross = _cell_conductivity(conductivity,nx,ny,coeff.device,coeff.real.dtype)
     capacities = wall_areal_heat_capacity or {}
+    types = _resolve_bc(bc)
     _check_storage_sides(capacities,types)
-    if capacities and (temperature_rate is None or temperature_rate.shape!=coeff.shape):
-        raise ValueError("wall capacity requires matching temperature_rate coefficients")
+    if capacities:
+        if temperature_rate is None or temperature_rate.shape!=coeff.shape:
+            raise ValueError("wall capacity requires matching temperature_rate coefficients")
+        coeff = coeff.to(torch.promote_types(coeff.dtype,temperature_rate.dtype))
+    nodes, weights, phi, _, _, pl, pr, dl, dr = _operators(modes-1, coeff.device, coeff.real.dtype)
+    k_x,k_y,cross = _cell_conductivity(conductivity,nx,ny,coeff.device,coeff.real.dtype)
     fields = coeff.flatten(2)
     outputs = []
     for axis, count, tangential, low, high in (("x", nx, ny, "left", "right"),
