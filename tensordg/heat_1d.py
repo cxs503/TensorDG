@@ -676,8 +676,9 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
     h*(Tfluid-Twall). Supply wall_ambient_intervals with the same shape as
     inward_flux_intervals. A surface capacity in J/(m² K) stores heat at
     the DG endpoint trace, initially the trace of the projected field.
-    return_wall_history appends knot temperatures and interval inward
-    external heat for the two walls, in a dict.
+    return_wall_history appends a dict with knot temperatures (temperature,
+    K), interval-mean traces (mean_temperature, K) and interval inward
+    external heat (external_heat, J/m²), each ordered left then right.
     """
     from scipy import sparse
     from scipy.sparse.linalg import splu
@@ -725,7 +726,7 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
     history = [torch.from_numpy(state.reshape(shape))]
     face_heat,bulk_heat = [],[]
     surface = trace @ state
-    wall_history,external_history = [surface],[]
+    wall_history,mean_wall_history,external_history = [surface],[],[]
     gamma = 1-1/math.sqrt(2.)
     for duration,pair,ends,air in zip(np.diff(knots),ambient_intervals,inward,ambient_wall):
         if len(pair)!=2:
@@ -751,11 +752,13 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
         modes = torch.from_numpy(integral.reshape(shape))
         flux = conductivity*sipg_heat_face_fluxes(modes,penalty)
         next_surface = trace @ state
-        external = duration*(ends+film*air).mean(axis=0) - film*(trace @ integral)
+        integrated_surface = trace @ integral
+        external = duration*(ends+film*air).mean(axis=0) - film*integrated_surface
         flux[[0,-1]] = torch.from_numpy((external-cw*(next_surface-surface))*[1.,-1.])
         surface = next_surface
         if return_wall_history:
             wall_history.append(surface)
+            mean_wall_history.append(integrated_surface/duration)
             external_history.append(external)
         if exchange is not None:
             net -= exchange@integral
@@ -765,5 +768,6 @@ def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
     result = (x,torch.stack(history),torch.stack(face_heat),torch.stack(bulk_heat))
     if return_wall_history:
         return (*result,dict(temperature=torch.from_numpy(np.stack(wall_history)),
+                             mean_temperature=torch.from_numpy(np.stack(mean_wall_history)),
                              external_heat=torch.from_numpy(np.stack(external_history))))
     return result
