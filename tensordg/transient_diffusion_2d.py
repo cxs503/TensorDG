@@ -9,6 +9,48 @@ from .poisson_2d import _operators
 from .poisson_2d_bc import assemble_poisson_2d_bc
 
 
+def _capacity_quadrature(grid):
+    x,y = grid["x"],grid["y"]
+    hx,hy,degree = grid["hx"],grid["hy"],grid["degree"]
+    z,w,phi,*_ = _operators(degree,x.device,x.dtype)
+    xq = x[:,None,None,None]+hx*z[None,None,:,None]/2
+    yq = y[None,:,None,None]+hy*z/2
+    return xq,yq,z,w,phi
+
+
+def _capacity_operator(grid,capacity,quadrature):
+    x,y = grid["x"],grid["y"]
+    hx,hy = grid["hx"],grid["hy"]
+    modes = grid["degree"]+1
+    shape = (len(x),len(y),modes,modes)
+    samples = None
+    if callable(capacity):
+        xq,yq,z,w,phi = quadrature
+        quadrature_shape = (*shape[:2],len(z),len(z))
+    indices = torch.arange(modes,dtype=x.dtype)
+    modal_norm = 1/(2*indices+1)
+    local_mass = hx*hy*modal_norm[:,None]*modal_norm
+    heat_capacity = torch.as_tensor(capacity(xq,yq) if callable(capacity) else capacity,dtype=x.dtype)
+    if not torch.isfinite(heat_capacity).all() or (heat_capacity<=0).any():
+        raise ValueError("capacity must be finite and positive")
+    if heat_capacity.ndim==0 or (not callable(capacity) and heat_capacity.shape==shape[:2]):
+        mass = (heat_capacity[...,None,None]*local_mass).expand(shape)
+        mass_matrix = diags(mass.reshape(-1).numpy(),format="csc")
+        blocks = None
+    elif callable(capacity):
+        samples = torch.broadcast_to(heat_capacity,quadrature_shape)
+        basis = (phi[:,None,:,None]*phi[None,:,None,:]).reshape(len(z)**2,modes**2)
+        weighted = (samples*(w[:,None]*w)).flatten(2)
+        blocks = (hx*hy/4)*((basis.T*weighted[...,None,:]) @ basis)
+        count = len(x)*len(y)
+        data = blocks.reshape(count,modes**2,modes**2).numpy()
+        mass_matrix = bsr_matrix((data,np.arange(count),np.arange(count+1)),
+                                 shape=(count*modes**2,count*modes**2)).tocsc()
+    else:
+        raise ValueError("capacity must be scalar, an (nx,ny) field, or a function of (x,y)")
+    return mass_matrix,local_mass,blocks,samples
+
+
 def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degree=1,
                                  capacity=1., theta=.5, reaction=0., forcing=None, bc=None,
                                  dirichlet_values=None, neumann_flux=None, robin_films=None,
@@ -67,36 +109,16 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     hx,hy = grid["hx"],grid["hy"]
     modes = degree+1
     shape = (len(x),len(y),modes,modes)
-    indices = torch.arange(modes,dtype=x.dtype)
-    modal_norm = 1/(2*indices+1)
-    local_mass = hx*hy*modal_norm[:,None]*modal_norm
+    quadrature = None
     if callable(capacity) or callable(initial_temperature) or source_history is not None:
-        z,w,phi,*_ = _operators(degree,x.device,x.dtype)
-        xq = x[:,None,None,None]+hx*z[None,None,:,None]/2
-        yq = y[None,:,None,None]+hy*z/2
+        quadrature = _capacity_quadrature(grid)
+        xq,yq,z,w,phi = quadrature
         quadrature_shape = (*shape[:2],len(z),len(z))
 
         def modal_moments(values):
             return (hx*hy/4)*torch.einsum("xyqr,q,r,qi,rj->xyij",values,w,w,phi,phi)
 
-    heat_capacity = torch.as_tensor(capacity(xq,yq) if callable(capacity) else capacity,dtype=x.dtype)
-    if not torch.isfinite(heat_capacity).all() or (heat_capacity<=0).any():
-        raise ValueError("capacity must be finite and positive")
-    if heat_capacity.ndim==0 or (not callable(capacity) and heat_capacity.shape==shape[:2]):
-        mass = (heat_capacity[...,None,None]*local_mass).expand(shape)
-        mass_matrix = diags(mass.reshape(-1).numpy(),format="csc")
-        blocks = None
-    elif callable(capacity):
-        samples = torch.broadcast_to(heat_capacity,quadrature_shape)
-        basis = (phi[:,None,:,None]*phi[None,:,None,:]).reshape(len(z)**2,modes**2)
-        weighted = (samples*(w[:,None]*w)).flatten(2)
-        blocks = (hx*hy/4)*((basis.T*weighted[...,None,:]) @ basis)
-        count = len(x)*len(y)
-        data = blocks.reshape(count,modes**2,modes**2).numpy()
-        mass_matrix = bsr_matrix((data,np.arange(count),np.arange(count+1)),
-                                 shape=operator.shape).tocsc()
-    else:
-        raise ValueError("capacity must be scalar, an (nx,ny) field, or a function of (x,y)")
+    mass_matrix,local_mass,blocks,samples = _capacity_operator(grid,capacity,quadrature)
     if callable(initial_temperature):
         values = torch.as_tensor(initial_temperature(xq,yq),dtype=x.dtype)
         values = torch.broadcast_to(values,quadrature_shape)
@@ -181,3 +203,44 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     if return_load_means:
         result += (torch.from_numpy(load_means),)
     return result
+
+
+def solve_low_frequency_diffusion_2d(*, ncells=16, degree=1, capacity=1., conductivity=1.,
+                                     reaction=0., forcing=None, bc=None, dirichlet_values=None,
+                                     neumann_flux=None, robin_films=None, penalty=20.):
+    """Return x, y, U0 and U1 for the SIPG temperature U0 + iω U1 + O(ω²).
+
+    Real, frequency-independent data follow solve_transient_diffusion_2d.
+    Both fields are CPU float64 Legendre coefficients. A lossless Neumann
+    problem requires zero integrated load and selects zero capacity-weighted
+    mean at both orders, as in the finite-frequency limit.
+    """
+    if forcing is None:
+        forcing = lambda x,y: torch.zeros_like(x+y)
+    stiffness,load,grid,metadata = assemble_poisson_2d_bc(
+        ncells,degree,penalty,bc,forcing,neumann_flux,sparse=True,reaction=reaction,
+        conductivity=conductivity,dirichlet_values=dirichlet_values,robin_films=robin_films)
+    quadrature = _capacity_quadrature(grid) if callable(capacity) else None
+    mass = _capacity_operator(grid,capacity,quadrature)[0]
+    anchored = metadata["temperature_anchored"]
+    stride = (degree+1)**2
+    rhs = load.numpy()
+    if not anchored and abs(rhs[::stride].sum())>128*np.finfo(float).eps*np.abs(rhs).sum():
+        raise ValueError("insulated low-frequency diffusion requires zero net load")
+    factor = splu((stiffness if anchored else stiffness[1:,1:]).tocsc())
+
+    if not anchored:
+        weights = np.asarray(mass[::stride,:].sum(axis=0)).ravel()
+
+    def solve(vector):
+        if anchored:
+            return factor.solve(vector)
+        coeff = np.zeros_like(vector)
+        coeff[1:] = factor.solve(vector[1:])
+        coeff[::stride] -= (weights@coeff)/weights[::stride].sum()
+        return coeff
+
+    steady = solve(rhs)
+    first = solve(-(mass@steady))
+    shape = (*metadata["ncells"],degree+1,degree+1)
+    return grid["x"],grid["y"],torch.from_numpy(steady.reshape(shape)),torch.from_numpy(first.reshape(shape))

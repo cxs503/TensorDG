@@ -132,3 +132,18 @@ def test_independent_uniform_source_jump_conserves_heat(damped):
 def test_invalid_source_history(value):
     with pytest.raises(ValueError,match="source_history"):
         solve_transient_diffusion_2d(0.,[0.,.1],ncells=2,source_history=lambda t,x,y:value)
+
+
+def test_low_frequency_linear_capacity_energy_at_both_orders():
+    from tensordg import solve_low_frequency_diffusion_2d
+
+    # U0=x-a, C=1+x. The constant a enforces integral C*U0=0.
+    a = 5/9
+    x,y,u,v = solve_low_frequency_diffusion_2d(ncells=(4,3),degree=2,bc=INSULATED,
+                   capacity=lambda x,y:1+x,neumann_flux={"left":-1.,"right":1.})
+    torch.testing.assert_close(u[:,:,0,0],(x[:,None]-a).expand(-1,len(y)),atol=1e-12,rtol=0.)
+    for field in (u,v):
+        moments = (1+x[:,None])*field[:,:,0,0]+field[:,:,1,0]/(6*len(x))
+        assert abs(moments.mean())<1e-13
+    with pytest.raises(ValueError,match="zero net load"):
+        solve_low_frequency_diffusion_2d(ncells=3,bc=INSULATED,neumann_flux={"left":1.})
