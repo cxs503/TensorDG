@@ -1297,7 +1297,7 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
     from scipy.linalg import expm
     from tensordg import compose_heat_wall_admittances_1d, harmonic_heat_wall_admittance_1d
 
-    from tensordg import sample_heat_stack_fields, solve_harmonic_heat_layer_1d
+    from tensordg import integrate_heat_stack_energy, sample_heat_stack_fields, solve_harmonic_heat_layer_1d
 
     references = []
     omega, resistance = 3.2, .27
@@ -1317,6 +1317,17 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
             contact_rate = rightward
             traces = np.array([temperature, temperature-resistance*rightward])
             temperature = traces[1]
+    # The control volume includes the contact and cuts both materials off-grid.
+    portions = [(layers[0][0]/3, layers[0][0]), (0., 2*layers[1][0]/3)]
+    exact_energy = 0j
+    ambient_power = []
+    for layer, (west, east), (matrix, initial) in zip(layers, portions, references):
+        _, _, c, h, a, b = layer
+        ambient = h*(a*(east-west) + b*(east**2-west**2)/2)
+        ambient_power.append(ambient)
+        # Analytically integrate q' = H*Ta - (H+iωC)*T.
+        q_change = ((expm(east*matrix)-expm(west*matrix)) @ initial)[1]
+        exact_energy += c*(ambient-q_change)/(h+1j*omega*c)
     previous = None
     for n in (4, 8, 16, 32):
         matrices, offsets = [], []
@@ -1333,12 +1344,23 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
         errors = {"temperature_K": max(abs(contact-traces)), "flux_W_m2": max(abs(transfer-contact_rate))}
         fractions = np.array([.12, .37, .84])
         interior_errors = np.zeros(2)
+        layer_modes, cut_fluxes = [], []
+        exchange = 0j
         for i, (length, k, c, h, a, b) in enumerate(layers):
             centers, modes, faces = solve_harmonic_heat_layer_1d(
                 omega, surfaces[i], ncells=n, degree=2, thickness=length, conductivity=k,
                 capacity=c, heat_loss_coefficient=h, bulk_ambient_temperature=lambda x: a+b*x)
             torch.testing.assert_close(faces[[0, -1]], inward[i]*faces.new_tensor([1, -1]), atol=1e-10, rtol=0)
             field, flux = sample_heat_stack_fields(modes[None], [length], k, fractions)
+            layer_modes.append(modes)
+            west, east = portions[i]
+            energy = integrate_heat_stack_energy(modes[None], [length], c, west, east).item()
+            exchange += ambient_power[i] - h*energy/c
+            cut_position = west if i == 0 else east
+            coordinate = n*cut_position/length
+            cell = math.floor(coordinate)
+            _, cut_flux = sample_heat_stack_fields(modes[None], [length], k, [coordinate-cell])
+            cut_fluxes.append(cut_flux[0, cell, 0].item())
             positions = (np.arange(n)[:, None]+fractions)*length/n
             np.testing.assert_allclose(centers.numpy(), (np.arange(n)+.5)*length/n)
             matrix, initial = references[i]
@@ -1346,6 +1368,18 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
             observed = np.column_stack((field.numpy().ravel(), flux.numpy().ravel()))
             interior_errors = np.maximum(interior_errors, abs(observed-exact).max(axis=0))
         errors.update(interior_temperature_K=interior_errors[0], interior_flux_W_m2=interior_errors[1])
+        stored = integrate_heat_stack_energy(torch.stack(layer_modes), [row[0] for row in layers],
+                                             [row[2] for row in layers], portions[0][0],
+                                             layers[0][0]+portions[1][1]).item()
+        energy_error = abs(stored-exact_energy)
+        power_error = abs(cut_fluxes[0]-cut_fluxes[1]+exchange-1j*omega*stored)
+        record_property(f"n{n}_interval_energy_error_J_m2", energy_error)
+        record_property(f"n{n}_interval_power_residual_W_m2", power_error)
+        if previous is not None:
+            record_property(f"n{n}_interval_energy_order", math.log2(previous_energy/energy_error))
+            record_property(f"n{n}_interval_power_order", math.log2(previous_power/power_error))
+            assert energy_error < previous_energy/2 and power_error < previous_power/2
+        previous_energy, previous_power = energy_error, power_error
         balance = abs(transfer[0]-transfer[1])
         jump = abs(contact[0]-contact[1]-resistance*transfer[0])
         record_property(f"n{n}_flux_balance_W_m2", float(balance))
