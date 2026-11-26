@@ -1364,6 +1364,9 @@ def test_interface_power_channels_for_loaded_three_layer_stack(record_property):
     import numpy as np
     from tensordg import compose_heat_wall_admittances_1d, harmonic_heat_wall_admittance_1d
 
+    from tensordg import solve_harmonic_heat_layer_1d, solve_heat_wall_admittance_1d
+
+    layer_options = []
     omega = 3.2
     lengths = [.45, .7, 1.1]
     conductivities = [1.3, .8, 2.1]
@@ -1376,9 +1379,13 @@ def test_interface_power_channels_for_loaded_three_layer_stack(record_property):
     for i, (length, k, q) in enumerate(zip(lengths, conductivities, rates)):
         right = left-length*q/k
         walls.append([left, right])
-        matrix, offset = harmonic_heat_wall_admittance_1d(
-            omega, thickness=length, conductivity=k, capacity=1., ncells=6, degree=2,
-            source=lambda x: 1j*omega*(left-x*q/k))
+        # Constant bulk ambient with H=1: choose generation so source+exchange
+        # equals the harmonic storage pointwise in this linear field.
+        options = dict(thickness=length, conductivity=k, capacity=1., ncells=6, degree=2,
+                       heat_loss_coefficient=1., bulk_ambient_temperature=.3+.2j,
+                       source=lambda x, t=left, slope=q/k: (1+1j*omega)*(t-x*slope)-(.3+.2j))
+        layer_options.append(options)
+        matrix, offset = harmonic_heat_wall_admittance_1d(omega, **options)
         matrices.append(matrix)
         offsets.append(offset)
         if i < len(through):
@@ -1391,13 +1398,31 @@ def test_interface_power_channels_for_loaded_three_layer_stack(record_property):
     exchange = film*(ambient-traces)
     stored = 1j*omega*capacity*traces
     source = stored-exchange+np.column_stack((through-rates[:-1], rates[1:]-through))
-    _, _, inward, _, power = compose_heat_wall_admittances_1d(
-        matrices, resistances, wall_temperatures=walls[[0,-1],[0,1]], angular_frequency=omega,
+    contact_options = dict(angular_frequency=omega,
         layer_flux_offsets=offsets, interface_left_heat_sources=source[:,0], interface_heat_sources=source[:,1],
         interface_left_areal_heat_capacity=capacity[:,0], interface_areal_heat_capacity=capacity[:,1],
         interface_left_film_coefficients=film[:,0], interface_film_coefficients=film[:,1],
         interface_left_ambient_temperatures=ambient[:,0], interface_ambient_temperatures=ambient[:,1],
-        return_flux_offset=True, return_interface_power=True)
+        return_flux_offset=True)
+    y, offset = compose_heat_wall_admittances_1d(matrices, resistances, **contact_options)
+    outer_t = walls[[0,-1],[0,1]]
+    outer_q = rates[[0,-1]]*np.array([1., -1.])
+    outer_mass = np.array([.42, .57])
+    outer_film = np.array([1.3, .85])
+    heaters = np.array([.2+.3j, -.4j])
+    outer_stored = 1j*omega*outer_mass*outer_t
+    air = outer_t+(outer_q+outer_stored-heaters)/outer_film
+    ends, _, wall_power = solve_heat_wall_admittance_1d(
+        y, ("robin", "robin"), air, flux_offset=offset, angular_frequency=omega,
+        wall_areal_heat_capacity=outer_mass, film_coefficients=outer_film,
+        wall_applied_flux=heaters, return_wall_power=True)
+    _, solved_t, inward, _, power = compose_heat_wall_admittances_1d(
+        matrices, resistances, wall_temperatures=ends, **contact_options, return_interface_power=True)
+    for name, reference in (("storage",outer_stored), ("film",outer_film*(air-outer_t)),
+                            ("material",outer_q), ("external",outer_q+outer_stored)):
+        error = np.max(abs(wall_power[name].numpy()-reference))
+        record_property("outer_"+name+"_error_W_m2", float(error))
+        assert error < 1e-11
     for name, reference in (("source",source), ("film",exchange), ("storage",stored), ("through",through)):
         error = np.max(abs(power[name].numpy()-reference))
         record_property(name+"_max_error_W_m2", float(error))
@@ -1405,3 +1430,14 @@ def test_interface_power_channels_for_loaded_three_layer_stack(record_property):
     residual = (power["source"]+power["film"]-power["storage"]).sum(1)-inward[:-1,1]-inward[1:,0]
     record_property("interface_balance_W_m2", residual.abs().max().item())
     assert residual.abs().max() < 1e-12
+
+    supplied = (wall_power["applied"]+wall_power["film"]).sum() + (power["source"]+power["film"]).sum()
+    accumulated = wall_power["storage"].sum() + power["storage"].sum()
+    for i, options in enumerate(layer_options):
+        _, _, _, cell = solve_harmonic_heat_layer_1d(
+            omega, solved_t[i], **options, return_cell_power=True)
+        supplied += (cell["source"]+cell["bulk"]).sum()
+        accumulated += cell["storage"].sum()
+    global_balance = abs(supplied-accumulated).item()
+    record_property("whole_stack_balance_W_m2", global_balance)
+    assert global_balance < 1e-11

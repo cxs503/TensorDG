@@ -1246,7 +1246,7 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
 def solve_heat_wall_admittance_1d(admittance, wall_types, wall_values, *,
                                   flux_offset=(0., 0.), film_coefficients=(0., 0.),
                                   wall_areal_heat_capacity=(0., 0.), angular_frequency=None,
-                                  return_external_flux=False, wall_applied_flux=(0., 0.)):
+                                  return_external_flux=False, wall_applied_flux=(0., 0.), return_wall_power=False):
     """Solve two exterior boundary conditions for a harmonic slab or stack.
 
     Return (wall temperatures in K, inward heat fluxes in W/m²), ordered
@@ -1259,7 +1259,10 @@ def solve_heat_wall_admittance_1d(admittance, wall_types, wall_values, *,
     wall_applied_flux adds independent inward heater phasors (W/m²) to the
     prescribed Neumann or Robin supply on either end. Use a nonnegative real
     film coefficient in W/(m² K) on Robin walls only.
-    Set return_external_flux=True to append q_ext (W/m²).
+    Set return_external_flux=True to append q_ext (W/m²). return_wall_power
+    appends a dict after any external flux. Each entry is a left/right pair:
+    external, material and storage give the total supply, inward material flux
+    and wall storage. applied and film isolate heater and Robin inputs.
     """
     y = torch.as_tensor(admittance, dtype=torch.complex128)
     if y.shape != (2, 2) or not torch.isfinite(y).all():
@@ -1298,9 +1301,16 @@ def solve_heat_wall_admittance_1d(admittance, wall_types, wall_values, *,
     rhs = torch.where(fixed, values, imposed-offset)
     temperature = torch.linalg.solve(operator, rhs)
     material_flux = y @ temperature + offset
-    if return_external_flux:
-        return temperature, material_flux, material_flux + storage*temperature
-    return temperature, material_flux
+    result = (temperature, material_flux)
+    if return_external_flux or return_wall_power:
+        stored = storage*temperature
+        external = material_flux + stored
+        if return_external_flux:
+            result += (external,)
+        if return_wall_power:
+            result += (dict(external=external, material=material_flux, storage=stored,
+                            applied=heater, film=film*(values-temperature)),)
+    return result
 
 
 def solve_heat_1d_bulk_history(times, ambient_intervals, *, initial_temperature,
