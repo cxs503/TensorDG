@@ -1,0 +1,28 @@
+{
+  "source_commit": "09dff3b51d13b231980f065aaa8326c404076f92",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 98,
+  "failures": 0,
+  "reference": "Direct modal loading of an off-grid strip in a harmonic layer. Check both heater-edge temperatures against piecewise exact transfer, cell-integrated source against geometric overlap and both boundary reactions against reciprocal flux predictions.",
+  "measurements": {
+    "n8_edge_temperature_error_K": 0.00013057993093493873,
+    "n8_direct_reciprocal_mismatch_W_m2": 9.449387654586577e-16,
+    "n8_wall_error_W_m2": 8.476416627566993e-06,
+    "n8_generation_error_W_m2": 0.0,
+    "n16_edge_temperature_error_K": 2.311667836037997e-05,
+    "n16_direct_reciprocal_mismatch_W_m2": 1.860257797275312e-15,
+    "n16_wall_error_W_m2": 4.519894324453596e-07,
+    "n16_generation_error_W_m2": 5.551115123125783e-17,
+    "n16_order": 4.229093552099465,
+    "n32_edge_temperature_error_K": 8.486825192323327e-06,
+    "n32_direct_reciprocal_mismatch_W_m2": 6.922568298053505e-16,
+    "n32_wall_error_W_m2": 3.089514144966267e-08,
+    "n32_generation_error_W_m2": 0.0,
+    "n32_order": 3.870837158918419,
+    "n64_edge_temperature_error_K": 1.8736923388140737e-06,
+    "n64_direct_reciprocal_mismatch_W_m2": 1.9353917300739752e-15,
+    "n64_wall_error_W_m2": 2.090720128342687e-09,
+    "n64_generation_error_W_m2": 5.551115123125783e-17,
+    "n64_order": 3.885308123277939
+  }
+}
