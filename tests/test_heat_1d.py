@@ -1813,3 +1813,61 @@ def test_modal_volume_load_combines_with_profile_and_truncates_orthogonal_modes(
         torch.testing.assert_close(found, expected, atol=1e-12, rtol=0)
     with pytest.raises(ValueError, match="source_modes"):
         solve_harmonic_heat_1d(2., source_modes=modal[:-1], **opts)
+
+
+def test_strip_heater_across_resistive_contact(record_property):
+    import numpy as np
+    from scipy.linalg import expm
+    from tensordg import project_stack_strip_source, harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
+
+    lengths, ks, capacities = [.47, .76], [1.7, .8], [2.2, 1.3]
+    west, east, resistance, omega = .163, .939, .21, 2.9
+    heaters = [.47-.82j, -.3+.6j]
+    transfer = np.eye(3)
+    for i, pieces in enumerate((((west, 0.), (lengths[0]-west, heaters[0])),
+                                ((east-lengths[0], heaters[1]), (sum(lengths)-east, 0.)))):
+        for width, power in pieces:
+            generator = [[0., -1/ks[i], 0.], [-1j*omega*capacities[i], 0., power], [0., 0., 0.]]
+            transfer = expm(width*np.array(generator)) @ transfer
+        if i == 0:
+            contact = transfer.copy()
+            transfer = np.array([[1., -resistance, 0.], [0., 1., 0.], [0., 0., 1.]]) @ transfer
+    left_flux = -transfer[0, 2]/transfer[0, 1]
+    initial = [0., left_flux, 1.]
+    wall_flux = np.array([left_flux, -(transfer@initial)[1]])
+    contact_flux = (contact@initial)[1]
+    generation = np.array(heaters)*[lengths[0]-west, east-lengths[0]]
+    previous = {}
+    for n in (8, 16, 32, 64):
+        loads = project_stack_strip_source(heaters, lengths, west, east, ncells=n, degree=2)
+        observed = loads[:, :, 0].sum(dim=1).numpy()*np.array(lengths)/n
+        source_error = np.max(abs(observed-generation))
+        record_property(f"n{n}_layer_generation_error_W_m2", float(source_error))
+        assert source_error < 1e-14
+        matrices, offsets = zip(*(harmonic_heat_wall_admittance_1d(
+            omega, thickness=length, conductivity=k, capacity=c, ncells=n, degree=2, source_modes=source)
+            for length, k, c, source in zip(lengths, ks, capacities, loads)))
+        _, traces, inward = compose_heat_wall_admittances_1d(
+            matrices, resistance, layer_flux_offsets=offsets, wall_temperatures=(0., 0.))
+        jump = (traces[0, 1]-traces[1, 0]).item()
+        residual = abs((inward[0, 1]+inward[1, 0]).item())
+        record_property(f"n{n}_flux_continuity_W_m2", residual)
+        assert residual < 1e-11
+        for name, error in (("wall_W_m2", np.max(abs(inward.diagonal().numpy()-wall_flux))),
+                            ("jump_K", abs(jump-resistance*contact_flux))):
+            record_property(f"n{n}_{name}", float(error))
+            if name in previous:
+                order = math.log2(previous[name]/error)
+                record_property(f"n{n}_{name}_order", order)
+                # The fractional cut positions change as this mesh is refined.
+                assert error < previous[name]
+            previous[name] = error
+    assert previous["wall_W_m2"] < 1e-8 and previous["jump_K"] < 1e-8
+
+
+def test_stack_heater_wholly_in_one_layer():
+    from tensordg import project_stack_strip_source, project_uniform_strip_source
+
+    loads = project_stack_strip_source(1.5, [.25,.5,.25], .25, .75, ncells=3, degree=2)
+    assert not loads[[0,2]].count_nonzero()
+    torch.testing.assert_close(loads[1], project_uniform_strip_source(1.5, .5, 0., .5, ncells=3, degree=2))

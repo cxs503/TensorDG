@@ -1024,6 +1024,32 @@ def project_uniform_strip_source(amplitude, thickness, start, end, *, ncells, de
     return value*value.new_tensor(integrals*inverse_mass)
 
 
+def project_stack_strip_source(amplitude, lengths, start, end, *, ncells, degree):
+    """Project one heater in global stack coordinates onto each material layer.
+
+    lengths, start and end are in metres. Use a uniform volumetric amplitude
+    (W/m³) or one value per material. The result has shape (layers, cells,
+    degree+1); each layer's slice can be supplied as source_modes.
+    """
+    lengths = lengths.detach().cpu().numpy() if torch.is_tensor(lengths) else np.asarray(lengths)
+    if (lengths.ndim != 1 or not lengths.size or np.iscomplexobj(lengths)
+            or not np.isfinite(lengths).all() or (lengths <= 0).any()):
+        raise ValueError("provide a positive finite length for each layer")
+    boundaries = np.r_[0., np.cumsum(lengths, dtype=float)]
+    if not 0 <= start <= end <= boundaries[-1]:
+        raise ValueError("provide an ordered heater interval inside the stack")
+    raw = torch.as_tensor(amplitude)
+    values = torch.as_tensor(amplitude, dtype=torch.complex128 if raw.is_complex() else torch.float64,
+                             device=raw.device)
+    if values.shape not in ((), (len(lengths),)):
+        raise ValueError("provide a scalar heater amplitude or one amplitude per layer")
+    layers = []
+    for value, origin, length in zip(values.expand(len(lengths)), boundaries[:-1], lengths):
+        west, east = np.clip([start-origin, end-origin], 0., length)
+        layers.append(project_uniform_strip_source(value, length, west, east, ncells=ncells, degree=degree))
+    return torch.stack(layers)
+
+
 def reciprocal_bulk_wall_flux(unit_wall_modes, source_modes, cell_width):
     """Inward wall flux phasor (W/m²) contributed by a layer's volume source.
 
