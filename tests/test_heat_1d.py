@@ -1299,6 +1299,8 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
 
     from tensordg import integrate_heat_stack_energy, sample_heat_stack_fields, solve_harmonic_heat_layer_1d
 
+    from tensordg import reconstruct_modal_heat_flux
+
     references = []
     omega, resistance = 3.2, .27
     layers = [(.65, 1.7, 1.3, 1.1, .6-.3j, -.35+.4j),
@@ -1344,7 +1346,7 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
         errors = {"temperature_K": max(abs(contact-traces)), "flux_W_m2": max(abs(transfer-contact_rate))}
         fractions = np.array([.12, .37, .84])
         interior_errors = np.zeros(2)
-        layer_modes, cut_fluxes = [], []
+        layer_modes, cut_fluxes, conservative_cuts = [], [], []
         exchange = 0j
         for i, (length, k, c, h, a, b) in enumerate(layers):
             centers, modes, faces = solve_harmonic_heat_layer_1d(
@@ -1361,6 +1363,18 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
             cell = math.floor(coordinate)
             _, cut_flux = sample_heat_stack_fields(modes[None], [length], k, [coordinate-cell])
             cut_fluxes.append(cut_flux[0, cell, 0].item())
+            width = length/n
+            # The affine ambient field has only constant and linear Legendre modes.
+            net_power = -(h+1j*omega*c)*modes
+            net_power[:, 0] += h*(a+b*centers)
+            net_power[:, 1] += h*b*width/2
+            local_flux = reconstruct_modal_heat_flux(faces, net_power, width, [0., coordinate-cell, 1.])
+            torch.testing.assert_close(local_flux[:, 0], faces[:-1], rtol=0, atol=1e-13)
+            torch.testing.assert_close(local_flux[:, -1], faces[1:], rtol=0, atol=1e-13)
+            conservative_cuts.append(local_flux[cell, 1].item())
+            cut_matrix, cut_initial = references[i]
+            exact_cut = (expm(cut_position*cut_matrix) @ cut_initial)[1]
+            errors[f"layer{i}_reconstructed_flux_W_m2"] = abs(conservative_cuts[-1]-exact_cut)
             positions = (np.arange(n)[:, None]+fractions)*length/n
             np.testing.assert_allclose(centers.numpy(), (np.arange(n)+.5)*length/n)
             matrix, initial = references[i]
@@ -1373,6 +1387,9 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
                                              layers[0][0]+portions[1][1]).item()
         energy_error = abs(stored-exact_energy)
         power_error = abs(cut_fluxes[0]-cut_fluxes[1]+exchange-1j*omega*stored)
+        residual = abs(conservative_cuts[0]-conservative_cuts[1]+exchange-1j*omega*stored)
+        record_property(f"n{n}_reconstructed_balance_W_m2", residual)
+        assert residual < 1e-10
         record_property(f"n{n}_interval_energy_error_J_m2", energy_error)
         record_property(f"n{n}_interval_power_residual_W_m2", power_error)
         if previous is not None:
@@ -1512,3 +1529,19 @@ def test_harmonic_off_grid_energy_refinement(record_property):
             record_property(f"cells{cells}_order", math.log2(previous/error))
             assert error < previous/4
         previous = error
+
+
+def test_modal_flux_reconstruction_uses_faces_for_mean_power():
+    import numpy as np
+    from tensordg import reconstruct_modal_heat_flux
+
+    power = np.array([[8., 2., -1., .2, .4], [-3., .2, .7, -.1, -.5]])
+    faces = torch.tensor([2., -.4, .9], dtype=torch.float64)
+    width = .37
+    fractions = np.array([0., .33, .85, 1.])
+    flux = reconstruct_modal_heat_flux(faces, power, width, fractions)
+    for cell, modes in enumerate(power.copy()):
+        modes[0] = (faces[cell+1]-faces[cell]).item()/width
+        primitive = np.polynomial.legendre.legint(modes, lbnd=-1)
+        exact = faces[cell].item() + width/2*np.polynomial.legendre.legval(2*fractions-1, primitive)
+        np.testing.assert_allclose(flux[cell].numpy(), exact, rtol=0, atol=1e-14)

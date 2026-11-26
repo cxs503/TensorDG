@@ -884,6 +884,45 @@ def _stack_flux_polynomial(face_flux, lengths, fractions, source_gradient, sourc
     return q, f, width, quadratic, cubic
 
 
+def reconstruct_modal_heat_flux(face_flux, net_power_modes, cell_width, fractions):
+    """Recover rightward heat flux (W/m²) inside uniform cells of one layer.
+
+    Supply the cells+1 SIPG face fluxes and Legendre coefficients of the net
+    volumetric power dq/dx (W/m³), shaped (cells, modes). For harmonic heat
+    these represent generation plus bulk exchange minus iωCT. Both face
+    fluxes fix the mean power; modes of degree one and above set its variation.
+    Returns (cells, samples) at cell fractions between zero and one.
+    """
+    q = torch.as_tensor(face_flux)
+    if q.ndim != 1 or q.numel() < 2 or not (q.is_floating_point() or q.is_complex()):
+        raise ValueError("provide a real or complex flux vector with at least two faces")
+    power = torch.as_tensor(net_power_modes, device=q.device)
+    if power.ndim != 2 or power.shape[0] != q.numel()-1 or power.shape[1] < 1:
+        raise ValueError("provide one or more net power modes per cell")
+    if not torch.isfinite(q).all() or not torch.isfinite(power).all():
+        raise ValueError("face fluxes and net power modes must be finite")
+    if not math.isfinite(cell_width) or cell_width <= 0:
+        raise ValueError("cell width must be finite and positive")
+    dtype = torch.promote_types(q.dtype, power.dtype)
+    q = q.to(dtype)
+    power = torch.as_tensor(net_power_modes, dtype=dtype, device=q.device)
+    if torch.as_tensor(fractions).is_complex():
+        raise ValueError("cell fractions must be real")
+    f = torch.as_tensor(fractions, dtype=q.real.dtype, device=q.device)
+    if f.ndim != 1 or not f.numel() or not ((f >= 0) & (f <= 1)).all():
+        raise ValueError("provide a nonempty vector of cell fractions in [0, 1]")
+    flux = q[:-1, None]*(1-f) + q[1:, None]*f
+    # Integral of P_m from -1 to xi is (P_{m+1}-P_{m-1})/(2m+1).
+    # These primitives vanish at both ends for every m >= 1.
+    xi = 2*f-1
+    lower, current = torch.ones_like(f), xi
+    for m in range(1, power.shape[1]):
+        higher = ((2*m+1)*xi*current - m*lower)/(m+1)
+        flux = flux + (cell_width/(2*(2*m+1)))*power[:, m:m+1]*(higher-lower)
+        lower, current = current, higher
+    return flux
+
+
 def reconstruct_heat_stack_flux(face_flux, lengths, fractions, *, source_gradient=0., source_curvature=0.):
     """Recover conservative rightward flux density inside drifting stack cells.
 
