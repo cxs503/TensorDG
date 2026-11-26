@@ -75,12 +75,18 @@ def test_smooth_sine_converges_at_design_order(degree):
     assert rate < (degree + 1) + 0.6, (degree, errs, rate)
 
 
-@pytest.mark.xfail(strict=False, reason=(
-    "open (m3320): the kink in |u_h - u_exact| inside a panel leaves a residual "
-    "quadrature sensitivity that exceeds the 1e-8 relative tolerance; the "
-    "measured L1 orders are nevertheless stable across grids (pairwise "
-    "0.728/0.737 at P1). See docs/reports/tensordg-advection-1d-highorder.md §4."))
-def test_l1_estimator_is_converged_in_its_panel_quadrature():
+def test_l1_estimator_integrates_two_interior_crossings(record_property):
+    # Integral of |(x-a)(x-b)| on [0, 1] from the cubic antiderivative.
+    a, b = 0.173, 0.431
+    centers, coeff, _ = solve_advection(ncells=2, degree=2, final_time=0.,
+                                        initial=lambda x: (x-a)*(x-b))
+    reference = 1/3 - (a+b)/2 + a*b + (b-a)**3/3
+    measured = l1_error(centers, coeff, 0., exact=lambda x: 0*x, nsub=1)
+    record_property("abs_difference", abs(measured-reference))
+    assert measured == pytest.approx(reference, abs=1e-13, rel=0)
+
+
+def test_l1_estimator_is_converged_in_its_panel_quadrature(record_property):
     """The L1 rule must not depend on how finely each panel is quadratured.
 
     ``l1_error`` splits every cell at the analytic jump abscissas and then into
@@ -101,6 +107,7 @@ def test_l1_estimator_is_converged_in_its_panel_quadrature():
                                         cfl=0.05, initial=_square)
     coarse = l1_error(centers, coeff, 0.5, exact=_square, jumps=(0.75, 0.25), nsub=6)
     fine = l1_error(centers, coeff, 0.5, exact=_square, jumps=(0.75, 0.25), nsub=12)
+    record_property("relative_change", abs(coarse-fine)/coarse)
     assert coarse > 1e-3, coarse
     assert abs(coarse - fine) < 1e-8 * coarse, (coarse, fine)
 

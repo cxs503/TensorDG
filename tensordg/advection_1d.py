@@ -312,12 +312,12 @@ def l1_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
     The optional exact profile receives periodic departure coordinates in [0, 1).
     The quadrature is composite Gauss on each cell, split at every interior
     point of ``jumps`` (the exact jump abscissas of the reference solution,
-    modulo the domain) and further subdivided into ``nsub`` panels.  A kinked
-    integrand ``|u_h - u_exact|`` is therefore integrated panel-by-panel
-    instead of across the kink, which is what makes an observed L1 *order*
-    trustworthy: with a plain single Gauss rule per cell the quadrature error
-    of the kink swamps the O(h^{p+1/2}) discretisation error being measured.
+    modulo the domain) and further subdivided into ``nsub`` panels. Panels
+    with a sampled sign change in the signed error are bisected, up to 20
+    times, to resolve the kink introduced by taking its absolute value.
     """
+    if nsub < 1:
+        raise ValueError("nsub must be positive")
     degree = coeff.shape[1] - 1
     nq = max(2 * degree + 4, 12)
     x_np, w_np = np.polynomial.legendre.leggauss(nq)
@@ -336,17 +336,37 @@ def l1_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
     a = np.array([q[0] for q in panels])
     b = np.array([q[1] for q in panels])
     cell = np.array([q[2] for q in panels])
-    width = b - a
-    nodes = 0.5 * (a[:, None] + b[:, None]) + 0.5 * width[:, None] * x_np[None, :]
-    centre = lo_all[cell] + 0.5 * h
-    mu = (nodes - centre[:, None]) / (0.5 * h)
-    vals = _vector_legendre(mu.ravel(), degree).reshape(len(panels), nq, degree + 1)
+    # Sample just inside both ends to catch crossings beyond the Gauss nodes.
+    probes = np.concatenate(([-1.0 + 1e-9], x_np, [1.0 - 1e-9]))
     cf = coeff.detach().cpu().numpy()
-    uh = np.einsum("pqm,pm->pq", vals, cf[cell])
-    xa = torch.as_tensor(nodes, dtype=coeff.dtype, device=coeff.device)
-    truth = _translated_profile(xa, final_time, speed, exact)
-    diff = np.abs(uh - truth.detach().cpu().numpy())
-    return float(np.sum(0.5 * width[:, None] * diff * w_np[None, :]))
+    total = 0.0
+    for depth in range(21):
+        midpoint = 0.5 * (a + b)
+        half_width = 0.5 * (b - a)
+        nodes = midpoint[:, None] + half_width[:, None] * probes
+        centre = lo_all[cell] + 0.5 * h
+        mu = (nodes - centre[:, None]) / (0.5 * h)
+        vals = _vector_legendre(mu.ravel(), degree).reshape(len(a), nq + 2, degree + 1)
+        uh = np.einsum("pqm,pm->pq", vals, cf[cell])
+        xa = torch.as_tensor(nodes, dtype=coeff.dtype, device=coeff.device)
+        truth = _translated_profile(xa, final_time, speed, exact)
+        truth_np = truth.detach().cpu().numpy()
+        diff = uh - truth_np
+        integral = half_width * np.sum(np.abs(diff[:, 1:-1]) * w_np, axis=1)
+        if depth == 20:
+            return total + float(integral.sum())
+        # Cancellation near an exact match can make roundoff alternate sign.
+        # Scale the sign test by the state represented in each cell.
+        scale = np.sum(np.abs(cf[cell]), axis=1) + np.max(np.broadcast_to(np.abs(truth_np), uh.shape), axis=1)
+        noise = 32 * np.finfo(cf.dtype).eps * scale
+        refine = (diff.min(axis=1) < -noise) & (diff.max(axis=1) > noise)
+        total += float(integral[~refine].sum())
+        if not np.any(refine):
+            break
+        mid = midpoint[refine]
+        a, b = np.concatenate((a[refine], mid)), np.concatenate((mid, b[refine]))
+        cell = np.tile(cell[refine], 2)
+    return total
 
 
 def linf_error(centers: torch.Tensor, coeff: torch.Tensor, final_time: float,
