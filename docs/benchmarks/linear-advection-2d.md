@@ -19,6 +19,18 @@ The documented case uses P1 on a 24x24 mesh, velocity `(1,0.5)`, CFL 0.08,
 and final time 1. Its relative L2 error must be below 3%; the regression
 suite also checks second-order convergence and negative velocity components.
 
+For a physical rectangle, pass the same side lengths to the solver and the
+error integral. A custom initial profile receives physical coordinates.
+
+```python
+from tensordg import error_2d, solve_advection_2d
+
+lengths = (3.0, 0.5)
+velocity = (-0.75, 0.25)
+x, y, coeff, meta = solve_advection_2d((24, 26), 2, 0.125, velocity, lengths=lengths)
+metrics = error_2d(x, y, coeff, 0.125, velocity, lengths=meta["lengths"])
+```
+
 ## Run
 
 ```bash
