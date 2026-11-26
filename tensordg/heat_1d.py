@@ -92,6 +92,15 @@ def _wall_pair(wall_temperatures, like):
     return pair
 
 
+def _surface_heater(wall_applied_flux, wall_types, like):
+    heater = torch.as_tensor(wall_applied_flux, dtype=like.dtype, device=like.device)
+    if heater.shape != (2,) or not torch.isfinite(heater).all():
+        raise ValueError("wall_applied_flux must contain two finite inward fluxes")
+    if any(kind == "dirichlet" and heater[i] != 0 for i, kind in enumerate(wall_types)):
+        raise ValueError("wall_applied_flux requires a Neumann or Robin wall")
+    return heater
+
+
 def _wall_penalty(penalty, wall_penalty):
     """Dirichlet coefficient, independent of the interior face penalty."""
     value = penalty if wall_penalty is None else wall_penalty
@@ -676,11 +685,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
         ambient = _bulk_profile(bulk_ambient_temperature,points,torch.complex128)
         load += (weighted*ambient) @ phi.to(load.dtype)
     values = _wall_pair(wall_values,load)
-    heater = torch.as_tensor(wall_applied_flux, dtype=load.dtype, device=load.device)
-    if heater.shape != (2,) or not torch.isfinite(heater).all():
-        raise ValueError("wall_applied_flux must contain two finite inward fluxes")
-    if any(kind == "dirichlet" and heater[i] != 0 for i, kind in enumerate(wall_types)):
-        raise ValueError("wall_applied_flux requires a Neumann or Robin wall")
+    heater = _surface_heater(wall_applied_flux, wall_types, load)
     strength = penalty*(degree+1)**2/h
     for i,(cell,v,dv,normal) in enumerate(((0,left,dleft,-1),(-1,right,dright,1))):
         boundary = conductivity*(strength*v-normal*2*dv/h) if wall_types[i]=="dirichlet" else v
@@ -1200,7 +1205,7 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
 def solve_heat_wall_admittance_1d(admittance, wall_types, wall_values, *,
                                   flux_offset=(0., 0.), film_coefficients=(0., 0.),
                                   wall_areal_heat_capacity=(0., 0.), angular_frequency=None,
-                                  return_external_flux=False):
+                                  return_external_flux=False, wall_applied_flux=(0., 0.)):
     """Solve two exterior boundary conditions for a harmonic slab or stack.
 
     Return (wall temperatures in K, inward heat fluxes in W/m²), ordered
@@ -1210,7 +1215,9 @@ def solve_heat_wall_admittance_1d(admittance, wall_types, wall_values, *,
     frequency in rad/s for nonzero capacities. Its external supply is
     q_ext = q + i*omega*Cw*T. Dirichlet data prescribe T, Neumann data
     prescribe q_ext, and Robin data prescribe Ta with q_ext = h*(Ta-T).
-    Use a nonnegative real film coefficient in W/(m² K) on Robin walls only.
+    wall_applied_flux adds independent inward heater phasors (W/m²) to the
+    prescribed Neumann or Robin supply on either end. Use a nonnegative real
+    film coefficient in W/(m² K) on Robin walls only.
     Set return_external_flux=True to append q_ext (W/m²).
     """
     y = torch.as_tensor(admittance, dtype=torch.complex128)
@@ -1245,7 +1252,8 @@ def solve_heat_wall_admittance_1d(admittance, wall_types, wall_values, *,
     storage = 1j*angular_frequency*capacity
     identity = torch.eye(2, dtype=y.dtype, device=y.device)
     operator = torch.where(fixed[:, None], identity, y+(film+storage).diag())
-    imposed = torch.where(robin, film*values, values)
+    heater = _surface_heater(wall_applied_flux, kinds, y)
+    imposed = torch.where(robin, film*values, values) + heater
     rhs = torch.where(fixed, values, imposed-offset)
     temperature = torch.linalg.solve(operator, rhs)
     material_flux = y @ temperature + offset

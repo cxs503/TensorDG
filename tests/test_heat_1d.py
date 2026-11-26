@@ -685,20 +685,22 @@ def test_loaded_stack_mixed_wall_conditions_against_transfer_solution(storing, r
                                                     return_flux_offset=True)
         worst_t = worst_q = worst_external = 0.
         for kinds in product(("dirichlet", "neumann", "robin"), repeat=2):
-            films, values = [], []
+            films, values, heaters = [], [], []
             for i, kind in enumerate(kinds):
                 h = (1.8, 3.5)[i] if kind == "robin" else 0.
+                heater = (1.3+.7j, -.8+.5j)[i] if kind != "dirichlet" else 0.
+                heaters.append(heater)
                 films.append(h)
                 if kind == "robin":
-                    values.append(exact_t[i]+exact_external[i]/h)
+                    values.append(exact_t[i]+(exact_external[i]-heater)/h)
                 elif kind == "neumann":
-                    values.append(exact_external[i])
+                    values.append(exact_external[i]-heater)
                 else:
                     values.append(exact_t[i])
             t, q, external = solve_heat_wall_admittance_1d(
                 y, kinds, values, flux_offset=offset, film_coefficients=films,
                 wall_areal_heat_capacity=capacities, angular_frequency=omega,
-                return_external_flux=True)
+                return_external_flux=True, wall_applied_flux=heaters)
             worst_external = max(worst_external, np.max(abs(external.numpy()-exact_external)))
             worst_t = max(worst_t, np.max(abs(t.numpy()-exact_t)))
             worst_q = max(worst_q, np.max(abs(q.numpy()-exact_q)))
@@ -1195,3 +1197,36 @@ def test_surface_heater_with_zero_film_and_floating_slab():
     torch.testing.assert_close(flux.diff(), rate.new_full((4,), -.25))
     with pytest.raises(ValueError, match="Neumann or Robin"):
         solve_harmonic_heat_1d(1., wall_applied_flux=(1., 0.))
+
+
+def test_loaded_wall_admittance_recovers_direct_polynomial_solution(record_property):
+    from tensordg import (harmonic_heat_wall_admittance_1d, solve_heat_wall_admittance_1d,
+                          solve_harmonic_heat_1d)
+
+    omega, cap, k = 2.5, 1.4, .8
+    def field(x):
+        return .7+.2j+(.4-.3j)*x+(.1+.5j)*x**2
+    def source(x):
+        return 1j*omega*cap*field(x)-2*k*(.1+.5j)
+    ends = torch.tensor([0., 1.], dtype=torch.float64)
+    exact = field(ends)
+    material = k*(.4-.3j+2*(.1+.5j)*ends)*ends.new_tensor([-1., 1.])
+    wall_mass = ends.new_tensor([.3, .7])
+    supply = material+1j*omega*wall_mass*exact
+    heater = exact.new_tensor([.6j, 1.-.2j])
+    values = (exact[0]+(supply[0]-heater[0])/2., supply[1]-heater[1])
+    options = dict(wall_types=("robin","neumann"), wall_values=values,
+                   film_coefficients=(2.,0.), wall_areal_heat_capacity=wall_mass, wall_applied_flux=heater)
+    slab = dict(ncells=8, conductivity=k, capacity=cap, source=source)
+    _, _, _, direct, powers = solve_harmonic_heat_1d(
+        omega, **slab, **options, return_wall_temperatures=True, return_wall_power=True)
+    y, offset = harmonic_heat_wall_admittance_1d(omega, **slab)
+    surface, flux, external = solve_heat_wall_admittance_1d(
+        y, **options, flux_offset=offset, angular_frequency=omega, return_external_flux=True)
+    for name, reduced, full, reference in (("temperature_K",surface,direct,exact),
+                                            ("material_W_m2",flux,powers["material"],material),
+                                            ("external_W_m2",external,powers["external"],supply)):
+        for comparison, target in (("direct",full), ("analytic",reference)):
+            error = (reduced-target).abs().max().item()
+            record_property(comparison+"_"+name,error)
+            assert error < 1e-11
