@@ -1960,6 +1960,15 @@ def test_switched_strip_cumulative_heat_against_sine_series(record_property):
     cold_energy = np.sum(temperature*decay*(1-parity)/wave)
     emitted = temperature*(-np.expm1(-wave**2*cooling_time))/wave
     cooling_reference = np.array([emitted.sum(), -np.sum(parity*emitted)])
+    # Both cuts are grid faces on every mesh; only the eastern cut is heated.
+    cuts = np.array([.125, .625])
+    cosine = np.cos(cuts[:, None]*wave)
+    steady_flux = power*(np.clip(cuts-west, 0., east-west) - (east-west)*(1-(west+east)/2))
+    heating_cuts = duration*steady_flux + cosine @ (temperature/wave)
+    cooling_cuts = -(cosine @ emitted)
+    spatial_weights = (cosine[0]-cosine[1])/wave
+    storage_changes = [spatial_weights @ temperature, spatial_weights @ (temperature*(decay-1))]
+    local_input = power*duration*(min(east,cuts[1])-max(west,cuts[0]))
     previous_cooling = None
     previous = None
     for n in (8, 16, 32, 64):
@@ -1969,6 +1978,20 @@ def test_switched_strip_cumulative_heat_against_sine_series(record_property):
             interval_source_modes=[load, None], initial_temperature=torch.zeros_like,
             backend="exact-time", integrate_face_fluxes=True)
         flux, cooling_flux = meta["interval_face_heat"]
+        first, last = (cuts*n).astype(int)
+        for step, (label, transferred, target, deposited) in enumerate((
+                ("heating", flux, heating_cuts, local_input), ("cooling", cooling_flux, cooling_cuts, 0.))):
+            observed = np.array(transferred)[[first, last]]
+            stored_change = (history[step+1, first:last, 0]-history[step, first:last, 0]).sum().item()/n
+            cut_error = np.max(abs(observed-target))
+            storage_error = abs(stored_change-storage_changes[step])
+            residual = abs(stored_change-deposited-observed[0]+observed[1])
+            record_property(f"n{n}_{label}_cut_error_J_m2", float(cut_error))
+            record_property(f"n{n}_{label}_local_storage_error_J_m2", storage_error)
+            record_property(f"n{n}_{label}_local_balance_J_m2", residual)
+            assert residual < 1e-10
+            if n == 64:
+                assert max(cut_error, storage_error) < 1e-8
         energy = history[1, :, 0].mean().item()
         final_energy = history[2, :, 0].mean().item()
         cooling_error = np.max(abs(np.array([-cooling_flux[0], cooling_flux[-1]])-cooling_reference))
