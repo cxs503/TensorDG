@@ -1,0 +1,23 @@
+{
+  "source_commit": "7ef3a677c1df62a9441f5cb128315907a3534f35",
+  "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python -m pytest -q tests/test_advection_1d.py tests/test_advection_1d_highorder.py tests/test_runge_kutta_orders.py tests/test_advection_porder_convergence.py tests/test_limiter_ao.py tests/test_repro_cks1998.py -o junit_family=legacy --junitxml=/tmp/l1-release.xml",
+  "references": [
+    "Piecewise cubic antiderivative of abs((x-0.173)*(x-0.431))",
+    "Translated square wave at t=0.5 with six and twelve panels per jump-split segment"
+  ],
+  "measurements": {
+    "test_l1_estimator_integrates_two_interior_crossings": {
+      "abs_difference": 8.326672684688674e-17
+    },
+    "test_l1_estimator_is_converged_in_its_panel_quadrature": {
+      "relative_change": 1.1415863729513067e-15
+    }
+  },
+  "suite": "82 passed, one failed",
+  "open_failure": {
+    "test": "tests/test_repro_cks1998.py::test_sod_via_dg_p2_matches_exact_riemann_solution_within_three_percent",
+    "velocity_relative_l2": 0.038383502337476685,
+    "threshold": 0.03,
+    "reproduced_on_parent": "5f015ac24116ee7258f927179b8095bc2ece9f22"
+  }
+}
