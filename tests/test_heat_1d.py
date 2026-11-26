@@ -1264,3 +1264,51 @@ def test_admittance_stack_with_independent_bulk_reservoir_profiles(record_proper
         error = (result-result.new_tensor(reference)).abs().max().item()
         record_property("max_"+name, error)
         assert error < 1e-11
+
+
+def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
+    import numpy as np
+    from scipy.linalg import expm
+    from tensordg import compose_heat_wall_admittances_1d, harmonic_heat_wall_admittance_1d
+
+    omega, resistance = 3.2, .27
+    layers = [(.65, 1.7, 1.3, 1.1, .6-.3j, -.35+.4j),
+              (.85, 1.2, .8, 2.2, -.2+.7j, .55-.1j)]
+    left = .4+.6j
+    temperature, rightward = left, -.35+.1j
+    # Propagate [T, q, 1, x] exactly for an affine reservoir Ta=a+b*x
+    # using q=-k*T' and q'=H*Ta-(H+i*omega*C)*T. Restart x at each layer.
+    for i, (length, k, c, h, a, b) in enumerate(layers):
+        matrix = np.array([[0., -1/k, 0., 0.], [-(h+1j*omega*c), 0., h*a, h*b],
+                           [0., 0., 0., 0.], [0., 0., 1., 0.]])
+        temperature, rightward, _, _ = expm(length*matrix) @ [temperature, rightward, 1., 0.]
+        if i == 0:
+            contact_rate = rightward
+            traces = np.array([temperature, temperature-resistance*rightward])
+            temperature = traces[1]
+    previous = None
+    for n in (4, 8, 16, 32):
+        matrices, offsets = [], []
+        for length, k, c, h, a, b in layers:
+            y, offset = harmonic_heat_wall_admittance_1d(
+                omega, ncells=n, degree=2, thickness=length, conductivity=k, capacity=c,
+                heat_loss_coefficient=h, bulk_ambient_temperature=lambda x: a+b*x)
+            matrices.append(y)
+            offsets.append(offset)
+        _, surfaces, inward = compose_heat_wall_admittances_1d(
+            matrices, resistance, layer_flux_offsets=offsets, wall_temperatures=(left, temperature))
+        contact = np.array([surfaces[0, 1].item(), surfaces[1, 0].item()])
+        transfer = np.array([-inward[0, 1].item(), inward[1, 0].item()])
+        errors = {"temperature_K": max(abs(contact-traces)), "flux_W_m2": max(abs(transfer-contact_rate))}
+        balance = abs(transfer[0]-transfer[1])
+        jump = abs(contact[0]-contact[1]-resistance*transfer[0])
+        record_property(f"n{n}_flux_balance_W_m2", float(balance))
+        record_property(f"n{n}_jump_residual_K", float(jump))
+        assert balance < 1e-11 and jump < 1e-11
+        for name, error in errors.items():
+            record_property(f"n{n}_{name}", float(error))
+            if previous is not None:
+                order = math.log2(previous[name]/error)
+                record_property(f"n{n}_{name}_order", order)
+                assert order > 2.8
+        previous = errors
