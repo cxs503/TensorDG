@@ -58,6 +58,13 @@ CFL at the stages. For right-continuous jumps pass the interior switch times
 in `velocity_jump_times`. To verify a known displacement, use its components
 as the velocity in `error_2d` with elapsed time set to one.
 
+Use `fx, fy = advection_face_fluxes_2d(coeff, velocity, lengths=lengths)`
+from `tensordg` to obtain instantaneous transport rates. The two entries
+at `[i,j]` are the face integrals on the right and top of that cell, signed
+in the positive coordinate directions. Summing `fx[i,:]` gives the rate
+across the entire vertical section. For a velocity callback, supply its value
+at the output time.
+
 ## Run
 
 ```bash

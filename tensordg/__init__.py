@@ -56,6 +56,7 @@ from .advection_1d import (
 # ---- advection_2d
 from .advection_2d import (
     solve_advection_2d,
+    advection_face_fluxes_2d,
     error_2d,
 )
 
@@ -891,6 +892,7 @@ __all__ = [
     "elastic_rod_parameters",
     "elastic_rod_sample",
     "elastic_wave_speed",
+    "advection_face_fluxes_2d",
     "error_2d",
     "error_3d",
     "estimate_max_components",

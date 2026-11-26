@@ -13,7 +13,7 @@ import numpy as np
 import torch
 
 from .runge_kutta import get_tableau
-from ._advection_time import advance_transport
+from ._advection_time import advance_transport, velocity_components
 from .advection_1d import _copy_modal_state, _departure_coordinate
 
 # The tensor-product operators are built from Legendre values/derivatives at
@@ -215,6 +215,34 @@ def solve_advection_2d(
         "steps": steps, "device": str(dev), "cfl": cfl,
     }
     return x, y, coeff, metadata
+
+
+def advection_face_fluxes_2d(coeff: torch.Tensor, velocity: tuple[float, float], *,
+                             lengths=(1.0, 1.0)) -> tuple[torch.Tensor, torch.Tensor]:
+    """Return the instantaneous signed scalar transport rates across periodic faces.
+
+    Both arrays have shape (nx, ny). Entries [i,j] integrate the numerical
+    flux on the right and top faces of cell (i,j), respectively, positive
+    towards increasing coordinates. Each shared face is counted once. For
+    time-dependent transport pass the instantaneous velocity components.
+    """
+    if coeff.ndim != 4 or min(coeff.shape) < 1 or not coeff.is_floating_point():
+        raise ValueError("provide a nonempty four-dimensional real modal field")
+    lx, ly = _domain_lengths(lengths)
+    ax, ay = velocity_components(velocity, 2)
+    # Tangential Legendre modes of order > 0 integrate to zero. At an
+    # upper normal endpoint every basis value is 1; at a lower one they alternate.
+    fluxes = []
+    faces = ((coeff[:, :, :, 0], ly/coeff.shape[1], ax),
+             (coeff[:, :, 0, :], lx/coeff.shape[0], ay))
+    for axis, (modes, width, speed) in enumerate(faces):
+        if speed >= 0:
+            upwind = modes.sum(dim=-1)
+        else:
+            lower = modes[..., ::2].sum(dim=-1) - modes[..., 1::2].sum(dim=-1)
+            upwind = lower.roll(-1, dims=axis)
+        fluxes.append(speed*width*upwind)
+    return fluxes[0], fluxes[1]
 
 
 def error_2d(

@@ -209,3 +209,40 @@ def test_velocity_switch_matches_two_constant_translations(record_property):
     record_property("relative_l2_vs_translation", relative)
     assert difference < 5e-15
     assert relative < .005
+
+
+@pytest.mark.parametrize("velocity", [(-.75, .5), (.75, -.5), (0., -.5)])
+def test_modal_face_rates_close_each_cell(velocity, record_property):
+    import numpy as np
+    from numpy.polynomial.legendre import leggauss, legval2d
+    from tensordg import advection_face_fluxes_2d
+
+    nx, ny, degree = 5, 8, 3
+    lengths = (2.5, 2.)
+    hx, hy = lengths[0]/nx, lengths[1]/ny
+    modes = torch.randn(nx, ny, degree+1, degree+1, dtype=torch.float64,
+                        generator=torch.Generator().manual_seed(42))
+    fx, fy = advection_face_fluxes_2d(modes, velocity, lengths=lengths)
+    nodes, weights = leggauss(5)
+    ax, ay = velocity
+    end_x = np.full_like(nodes, 1. if ax >= 0 else -1.)
+    end_y = np.full_like(nodes, 1. if ay >= 0 else -1.)
+    expected_x, expected_y = np.empty((nx, ny)), np.empty((nx, ny))
+    for i, j in np.ndindex(nx, ny):
+        donor_x = modes[(i + (ax < 0)) % nx, j].numpy()
+        donor_y = modes[i, (j + (ay < 0)) % ny].numpy()
+        expected_x[i,j] = .5*hy*ax*(weights @ legval2d(end_x, nodes, donor_x))
+        expected_y[i,j] = .5*hx*ay*(weights @ legval2d(nodes, end_y, donor_y))
+    face_error = max(np.max(abs(fx.numpy()-expected_x)), np.max(abs(fy.numpy()-expected_y)))
+
+    dt = 1/512
+    _, _, advanced, info = solve_advection_2d((nx, ny), degree, dt, velocity, initial=modes,
+                                               lengths=lengths, time_integrator="euler")
+    assert info["steps"] == 1
+    outward = fx-fx.roll(1, 0) + fy-fy.roll(1, 1)
+    residual = (advanced[...,0,0]-modes[...,0,0])*hx*hy + dt*outward
+    balance_error = float(residual.abs().max())
+    record_property("max_face_quadrature_error", face_error)
+    record_property("max_cell_mass_balance_error", balance_error)
+    assert face_error < 3e-15
+    assert balance_error < 1e-16
