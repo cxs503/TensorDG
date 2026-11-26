@@ -1,0 +1,12 @@
+{
+  "source_commit": "2965f43c6c4de8f9893877f430b4a5be32673d71",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q tests/test_transient_diffusion_2d.py tests/test_poisson_2d_bc.py -o junit_family=legacy --junitxml=/tmp/dg-cell-flux-integral.xml",
+  "reference": "P2 anisotropic DG with T=A(t)*(x\u00b2+xy+y). The affine flux is exact at each centroid. A reverses sign, with a slope switch inside the first output interval. Compare CN/SDIRK2 to the exact piecewise-linear time integral, and backward Euler/Rannacher to independent endpoint quadratures on their respective substeps.",
+  "passed": 108,
+  "max_cell_flux_integral_error_J_m2": {
+    "test_cell_flux_integral_across_ramp_reversal[theta-0.5-False]": 4.2021941482062175e-14,
+    "test_cell_flux_integral_across_ramp_reversal[sdirk2-0.5-False]": 1.865174681370263e-14,
+    "test_cell_flux_integral_across_ramp_reversal[theta-1.0-False]": 4.4672598953354736e-14,
+    "test_cell_flux_integral_across_ramp_reversal[theta-0.5-True]": 2.8492833092919057e-14
+  }
+}
