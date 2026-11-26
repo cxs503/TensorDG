@@ -1,0 +1,20 @@
+{
+  "source_commit": "331ce589071536cb4a4cc6f4c120a1ab09469959",
+  "reference": "P0 upwind Fourier mode with analytically integrated time-dependent x and y velocities on a 2 by 3 periodic box, RK4 at 4, 8 and 16 steps. A separate P2 step-change case compares automatic event splitting with two fixed-velocity restarts and with the exact continuum displacement.",
+  "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python -m pytest -q tests/test_advection_2d.py tests/test_advection_3d.py tests/test_runge_kutta_orders.py -o junit_family=legacy --junitxml=/tmp/dg2-velocity.xml",
+  "passed": 93,
+  "measurements": {
+    "test_time_varying_velocity_against_integrated_fourier_mode": {
+      "max_cell_error_4": 3.0228768447826404e-06,
+      "mass_error_4": 0.0,
+      "max_cell_error_8": 1.8143947455584453e-07,
+      "mass_error_8": 0.0,
+      "max_cell_error_16": 1.110349329147553e-08,
+      "mass_error_16": 0.0
+    },
+    "test_velocity_switch_matches_two_constant_translations": {
+      "max_split_modal_difference": 8.881784197001252e-16,
+      "relative_l2_vs_translation": 0.0010740821629430745
+    }
+  }
+}
