@@ -845,3 +845,39 @@ def test_separate_harmonic_mean_requires_unanchored_slab():
 
     with pytest.raises(ValueError, match="without temperature or exchange anchors"):
         solve_harmonic_heat_1d(2., separate_mean=True)
+
+
+@pytest.mark.parametrize("omega,rate", [(0., 0.), (0., .75), (0., -.5), (.3, .75)])
+def test_constant_load_heating_rate_and_relative_profile(omega, rate, record_property):
+    from tensordg import solve_harmonic_heat_1d
+
+    n, c, k = 8, 2., 3.
+    wall_c = torch.tensor([.25, .75], dtype=torch.float64)
+    ends = torch.tensor([0., 1.], dtype=torch.float64)
+    # Relative profile x²-x/2 shifted to have zero bulk + wall stored energy.
+    offset = (c/12+wall_c[1]/2)/(c+wall_c.sum())
+
+    def local(x):
+        return x**2-x/2-offset
+
+    def source(x):
+        return c*(rate+1j*omega*local(x))-2*k
+
+    def flux(x):
+        return -k*(2*x-.5)
+
+    external = torch.tensor([1., -1.])*flux(ends)+wall_c*(rate+1j*omega*local(ends))
+    x, u, q, surface, measured = solve_harmonic_heat_1d(
+        omega, ncells=n, degree=2, capacity=c, conductivity=k, source=source,
+        wall_types=("neumann", "neumann"), wall_values=external,
+        wall_areal_heat_capacity=wall_c, return_wall_temperatures=True, return_mean_rate=True)
+    for name, err in (
+        ("cell_mean_K", u[:, 0]-local(x)-1/(12*n**2)),
+        ("wall_trace_K", surface-local(ends)),
+        ("face_flux_W_m2", q-flux(torch.linspace(0., 1., n+1, dtype=x.dtype))),
+        ("mean_rate_K_s", measured-rate),
+        ("relative_stored_energy_J_m2", c*u[:, 0].mean()+(wall_c*surface).sum()),
+    ):
+        maximum = err.abs().max().item()
+        record_property(name, maximum)
+        assert maximum < 2e-11

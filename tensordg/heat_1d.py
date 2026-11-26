@@ -599,7 +599,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
                            source=None, wall_types=("dirichlet","dirichlet"), wall_values=(0.,0.), penalty=20.,
                            film_coefficients=(0.,0.), wall_areal_heat_capacity=(0.,0.),
                            return_wall_temperatures=False, heat_loss_coefficient=None, bulk_ambient_temperature=0.,
-                           separate_mean=False):
+                           separate_mean=False, return_mean_rate=False):
     """Solve iωcU - kU'' = source on the unit slab with exp(+iωt) convention.
 
     Each end prescribes a temperature (dirichlet), inward external heat flux
@@ -618,6 +618,10 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     exchange anchors, return temperature coefficients and optional wall traces
     relative to the capacity-weighted mean (including wall storage). Append
     that uniform phasor in K as the last result. Fluxes retain physical values.
+    Alternatively, return_mean_rate=True appends the mean heating rate in K/s
+    and returns the same relative temperatures. This mode also supports zero
+    frequency: under constant loads the absolute temperature is the stationary
+    relative profile plus a spatially uniform temperature rising at this rate.
     """
     from scipy import sparse
     from scipy.sparse.linalg import splu
@@ -625,8 +629,14 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
 
     if ncells < 2 or degree < 1:
         raise ValueError("ncells >= 2 and degree >= 1 are required")
-    if not all(math.isfinite(v) and v > 0 for v in (angular_frequency,conductivity,capacity,penalty)):
-        raise ValueError("frequency, conductivity, capacity and penalty must be positive and finite")
+    if not math.isfinite(angular_frequency) or angular_frequency < 0:
+        raise ValueError("frequency must be finite and nonnegative")
+    if angular_frequency == 0 and not return_mean_rate:
+        raise ValueError("zero frequency requires return_mean_rate")
+    if separate_mean and return_mean_rate:
+        raise ValueError("choose either separate_mean or return_mean_rate")
+    if not all(math.isfinite(v) and v > 0 for v in (conductivity,capacity,penalty)):
+        raise ValueError("conductivity, capacity and penalty must be positive and finite")
     if len(wall_types)!=2 or any(kind not in ("dirichlet","neumann","robin") for kind in wall_types):
         raise ValueError("each wall type must be dirichlet, neumann or robin")
     film = np.asarray(film_coefficients)
@@ -665,20 +675,22 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     if np.any(film) or np.any(wall_capacity):
         system += trace.T @ sparse.diags(film+1j*angular_frequency*wall_capacity) @ trace
     rhs = load.detach().numpy().ravel()
-    mean = 0j
+    mean = rate = 0j
     unanchored = exchange is None and "dirichlet" not in wall_types and not np.any(film)
-    if separate_mean and not unanchored:
-        raise ValueError("separate_mean requires a slab without temperature or exchange anchors")
+    if (separate_mean or return_mean_rate) and not unanchored:
+        raise ValueError("mean separation requires a slab without temperature or exchange anchors")
     if unanchored:
         # Constant mode has no conductive restoring force. Separate its exact
         # storage response and constrain the remaining fluctuation to zero mean.
         integral = np.zeros_like(rhs)
         integral[::degree+1] = capacity*h
         integral += trace.T @ wall_capacity
-        mean = rhs[::degree+1].sum()/(1j*angular_frequency*(capacity+wall_capacity.sum()))
+        rate = rhs[::degree+1].sum()/(capacity+wall_capacity.sum())
+        if not return_mean_rate:
+            mean = rate/(1j*angular_frequency)
         column = sparse.csc_matrix(integral[:,None])
         bordered = sparse.bmat([[system,column],[column.T,None]],format="csc")
-        state = splu(bordered).solve(np.r_[rhs-1j*angular_frequency*mean*integral,0j])[:-1]
+        state = splu(bordered).solve(np.r_[rhs-rate*integral,0j])[:-1]
     else:
         factor = splu(system.tocsc())
         state = factor.solve(rhs)
@@ -701,13 +713,15 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
         else:
             external = film[i]*(values[i]-surface[i]) if wall_types[i]=="robin" else values[i]
             storage_flux = 1j*angular_frequency*wall_capacity[i]
-            flux[face] = (1-2*i)*(external-storage_flux*mean-storage_flux*surface[i])
-    if not separate_mean:
+            flux[face] = (1-2*i)*(external-wall_capacity[i]*rate-storage_flux*surface[i])
+    if not (separate_mean or return_mean_rate):
         coefficients[:,0] += mean
         surface += mean
     result = (centers,coefficients,flux)
     if return_wall_temperatures:
         result += (surface,)
+    if return_mean_rate:
+        return (*result, coefficients.new_tensor(rate))
     return (*result, coefficients.new_tensor(mean)) if separate_mean else result
 
 
