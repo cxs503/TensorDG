@@ -1941,7 +1941,8 @@ def test_stack_ramp_with_material_specific_endpoint_amplitudes():
 
 def test_switched_strip_cumulative_heat_against_sine_series(record_property):
     import numpy as np
-    from tensordg import integrate_heat_stack_energy, project_uniform_strip_source, solve_heat_1d_wall_history
+    from tensordg import (integrate_heat_stack_energy, project_uniform_strip_source,
+                          sample_heat_stack_fields, solve_heat_1d_wall_history)
 
     west, east, power, duration = .213, .786, 1.7, .07
     # Zero initial and wall temperatures, unit k and volumetric capacity.
@@ -1971,6 +1972,10 @@ def test_switched_strip_cumulative_heat_against_sine_series(record_property):
     storage_changes = [spatial_weights @ temperature, spatial_weights @ (temperature*(decay-1))]
     edge_weights = (cosine[2]-cosine[3])/wave
     edge_changes = [edge_weights @ temperature, edge_weights @ (temperature*(decay-1))]
+    mean_modes = [(forcing-temperature/duration)/wave**2, emitted/(cooling_time*wave)]
+    locations = np.array([.09, west, .4, east, .93])
+    mean_probes = np.sin(locations[:, None]*wave) @ np.stack(mean_modes, axis=1)
+    strip_means = np.array(mean_modes) @ edge_weights / (east-west)
     local_input = power*duration*(min(east,cuts[1])-max(west,cuts[0]))
     previous_cooling = None
     previous = None
@@ -1979,11 +1984,23 @@ def test_switched_strip_cumulative_heat_against_sine_series(record_property):
         _, history, meta = solve_heat_1d_wall_history(
             [0., duration, duration+cooling_time], [(0., 0.)]*3, ncells=n, degree=2,
             interval_source_modes=[load, None], initial_temperature=torch.zeros_like,
-            backend="exact-time", integrate_face_fluxes=True)
+            backend="exact-time", integrate_face_fluxes=True, return_interval_temperatures=True)
         flux, cooling_flux = meta["interval_face_heat"]
+        means = history.new_tensor(meta["interval_temperature_modes"])
+        cells = (locations*n).astype(int)
         first, last = (cuts*n).astype(int)
         for step, (label, transferred, target, deposited) in enumerate((
                 ("heating", flux, heating_cuts, local_input), ("cooling", cooling_flux, cooling_cuts, 0.))):
+            field = means[step:step+1]
+            sampled, _ = sample_heat_stack_fields(field, [1.], 1., locations*n-cells)
+            values = sampled[0, cells, np.arange(len(cells))].numpy()
+            mean_error = float(np.max(abs(values-mean_probes[:, step])))
+            strip_mean = integrate_heat_stack_energy(field, [1.], 1., west, east).item()/(east-west)
+            strip_error = abs(strip_mean-strip_means[step])
+            record_property(f"n{n}_{label}_mean_probe_error_K", mean_error)
+            record_property(f"n{n}_{label}_strip_mean_error_K", strip_error)
+            if n == 64:
+                assert mean_error < 1e-5 and strip_error < 1e-6
             observed = np.array(transferred)[[first, last]]
             stored_change = (history[step+1, first:last, 0]-history[step, first:last, 0]).sum().item()/n
             cut_error = np.max(abs(observed-target[:2]))
