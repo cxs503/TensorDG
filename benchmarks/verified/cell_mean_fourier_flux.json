@@ -1,0 +1,15 @@
+{
+  "source_commit": "d608bda24a91b67ebacbd572fd46fef819a285cb",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q tests/test_transient_diffusion_2d.py tests/test_poisson_2d_bc.py -o junit_family=legacy --junitxml=/tmp/dg-cell-mean-flux.xml",
+  "reference": "Independent Gauss integration of the four one-sided boundary temperatures of each cell via the divergence theorem for complex P1-P3 states with heterogeneous tensor K. Dense and sparse mixed-boundary SIPG solutions additionally compare to an exact quadratic field and its affine flux.",
+  "passed": 104,
+  "max_cell_flux_error_W_m2": {
+    "test_rotated_tensor_mixed_boundary_quadratic[False--0.8]": 2.1938006966593093e-12,
+    "test_rotated_tensor_mixed_boundary_quadratic[False-0.8]": 2.6787461138155777e-12,
+    "test_rotated_tensor_mixed_boundary_quadratic[True--0.8]": 2.190247982980509e-12,
+    "test_rotated_tensor_mixed_boundary_quadratic[True-0.8]": 1.3651302310790925e-12,
+    "test_cell_mean_flux_against_face_integrals[1]": 2.0097183471152322e-14,
+    "test_cell_mean_flux_against_face_integrals[2]": 7.32410687763558e-15,
+    "test_cell_mean_flux_against_face_integrals[3]": 2.1316282072803006e-14
+  }
+}
