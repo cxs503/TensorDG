@@ -1,0 +1,48 @@
+{
+  "commit": "b5d88760aab56ddf41bb8ba1ed775684c1e19c94",
+  "reproduction": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat-results.xml",
+  "tests_passed": 58,
+  "reference": "Unit slab with quadratic relative temperature, two storing flux walls, eight P2 cells. Case parameters are angular frequency and mean heating rate.",
+  "runs": [
+    {
+      "case": "test_constant_load_heating_rate_and_relative_profile[0.0-0.0]",
+      "max_absolute_errors": {
+        "cell_mean_K": 4.702184822069633e-15,
+        "wall_trace_K": 4.440892098500626e-15,
+        "face_flux_W_m2": 2.1738166822160565e-13,
+        "mean_rate_K_s": 0.0,
+        "relative_stored_energy_J_m2": 9.575673587391975e-15
+      }
+    },
+    {
+      "case": "test_constant_load_heating_rate_and_relative_profile[0.0-0.75]",
+      "max_absolute_errors": {
+        "cell_mean_K": 4.716062609877447e-15,
+        "wall_trace_K": 4.9404924595819466e-15,
+        "face_flux_W_m2": 2.401828735898448e-13,
+        "mean_rate_K_s": 0.0,
+        "relative_stored_energy_J_m2": 1.2961853812498703e-14
+      }
+    },
+    {
+      "case": "test_constant_load_heating_rate_and_relative_profile[0.0--0.5]",
+      "max_absolute_errors": {
+        "cell_mean_K": 4.702184822069633e-15,
+        "wall_trace_K": 4.440892098500626e-15,
+        "face_flux_W_m2": 2.1738166822160565e-13,
+        "mean_rate_K_s": 0.0,
+        "relative_stored_energy_J_m2": 9.575673587391975e-15
+      }
+    },
+    {
+      "case": "test_constant_load_heating_rate_and_relative_profile[0.3-0.75]",
+      "max_absolute_errors": {
+        "cell_mean_K": 2.32858080447512e-14,
+        "wall_trace_K": 2.4544606812454538e-14,
+        "face_flux_W_m2": 4.4432862957218697e-13,
+        "mean_rate_K_s": 2.3129646346357427e-18,
+        "relative_stored_energy_J_m2": 1.8735386163020866e-14
+      }
+    }
+  ]
+}
