@@ -475,7 +475,7 @@ def sipg_heat_face_fluxes(coefficients: torch.Tensor, penalty: float = 20., *, w
 
 
 def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_temperatures,
-                               wall_rates, initial_temperature=None, source=None, backend="dense",
+                               wall_rates, initial_temperature=None, source=None, source_modes=None, backend="dense",
                                time_steps=None, penalty=20., wall_penalty=None, device="cpu", dtype=torch.float64,
                                integrate_face_fluxes=False, integrate_temperature=False):
     """Solve with wall values g(0)+t*wall_rates, homogeneous material, and stationary source.
@@ -494,7 +494,7 @@ def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_tempe
         return generation-(rates[0]+slope*x)
 
     options = dict(ncells=ncells,degree=degree,final_time=final_time,wall_temperatures=walls,
-                   initial_temperature=initial_temperature,source=lifted_source,penalty=penalty,wall_penalty=wall_penalty,
+                   initial_temperature=initial_temperature,source=lifted_source,source_modes=source_modes,penalty=penalty,wall_penalty=wall_penalty,
                    device=device,dtype=dtype,integrate_face_fluxes=integrate_face_fluxes, integrate_temperature=integrate_temperature)
     if backend == "exact-time":
         if time_steps is not None:
@@ -517,7 +517,7 @@ def solve_heat_1d_ramped_walls(ncells=16, degree=2, final_time=.1, *, wall_tempe
 
 
 def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
-                               initial_temperature=None, source=None, interval_sources=None, backend="dense",
+                               initial_temperature=None, source=None, interval_sources=None, interval_source_modes=None, backend="dense",
                                steps_per_interval=None, penalty=20., wall_penalty=None, device="cpu",
                                dtype=torch.float64, integrate_face_fluxes=False, return_interval_temperatures=False):
     """Evolve piecewise-linear left/right wall temperatures on a uniform unit slab.
@@ -535,6 +535,8 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
     the solver default. Use backend="exact-time" for semi-discrete exponential
     evolution. Supply a stationary source, or interval_sources with one
     scalar or callable of x per interval. None denotes zero generation.
+    interval_source_modes optionally adds cellwise Legendre source coefficients
+    for each interval. A None entry adds zero modal load during that interval.
     """
     times = torch.as_tensor(times, dtype=torch.float64)
     walls = torch.as_tensor(wall_temperatures, dtype=dtype, device=device)
@@ -557,6 +559,8 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
             raise ValueError("provide source or interval_sources, not both")
         if len(interval_sources) != times.numel()-1:
             raise ValueError("interval_sources must contain one profile per interval")
+    if interval_source_modes is not None and len(interval_source_modes) != times.numel()-1:
+        raise ValueError("interval_source_modes must contain one entry per interval")
     centers = (torch.arange(ncells, dtype=dtype, device=device)+.5)/ncells
     nodes, weights, phi, *_ = _operators(degree, centers.device, dtype)
     state = _project_initial(centers, 1/ncells, nodes, weights, phi, initial_temperature)
@@ -569,7 +573,8 @@ def solve_heat_1d_wall_history(times, wall_temperatures, ncells=16, degree=2, *,
         generation = source if interval_sources is None else interval_sources[i]
         _, state, meta = solve_heat_1d_ramped_walls(
             ncells, degree, duration, wall_temperatures=start[i], wall_rates=rates,
-            initial_temperature=state, source=generation, backend=backend, time_steps=steps_per_interval,
+            initial_temperature=state, source=generation,
+            source_modes=None if interval_source_modes is None else interval_source_modes[i], backend=backend, time_steps=steps_per_interval,
             penalty=penalty, wall_penalty=wall_penalty, device=device, dtype=dtype, integrate_face_fluxes=integrate_face_fluxes,
             integrate_temperature=return_interval_temperatures)
         history.append(state)

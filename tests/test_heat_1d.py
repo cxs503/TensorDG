@@ -1941,7 +1941,7 @@ def test_stack_ramp_with_material_specific_endpoint_amplitudes():
 
 def test_switched_strip_cumulative_heat_against_sine_series(record_property):
     import numpy as np
-    from tensordg import project_uniform_strip_source, solve_heat_1d_exact_time
+    from tensordg import project_uniform_strip_source, solve_heat_1d_wall_history
 
     west, east, power, duration = .213, .786, 1.7, .07
     # Zero initial and wall temperatures, unit k and volumetric capacity.
@@ -1955,14 +1955,31 @@ def test_switched_strip_cumulative_heat_against_sine_series(record_property):
     # Integrate the steady wall flux minus its exponentially decaying correction.
     west_heat = generated*(1-(west+east)/2) - np.sum(temperature/wave)
     east_heat = generated*(west+east)/2 + np.sum(parity*temperature/wave)
+    cooling_time = .045
+    decay = np.exp(-wave**2*cooling_time)
+    cold_energy = np.sum(temperature*decay*(1-parity)/wave)
+    emitted = temperature*(-np.expm1(-wave**2*cooling_time))/wave
+    cooling_reference = np.array([emitted.sum(), -np.sum(parity*emitted)])
+    previous_cooling = None
     previous = None
     for n in (8, 16, 32, 64):
         load = project_uniform_strip_source(power, 1., west, east, ncells=n, degree=2)
-        _, fields, meta = solve_heat_1d_exact_time(
-            n, 2, duration, source_modes=load, initial_temperature=torch.zeros_like,
-            integrate_face_fluxes=True)
-        flux = meta["integrated_face_fluxes"]
-        energy = fields[:, 0].mean().item()
+        _, history, meta = solve_heat_1d_wall_history(
+            [0., duration, duration+cooling_time], [(0., 0.)]*3, ncells=n, degree=2,
+            interval_source_modes=[load, None], initial_temperature=torch.zeros_like,
+            backend="exact-time", integrate_face_fluxes=True)
+        flux, cooling_flux = meta["interval_face_heat"]
+        energy = history[1, :, 0].mean().item()
+        final_energy = history[2, :, 0].mean().item()
+        cooling_error = np.max(abs(np.array([-cooling_flux[0], cooling_flux[-1]])-cooling_reference))
+        cooling_balance = abs(final_energy-energy-cooling_flux[0]+cooling_flux[-1])
+        record_property(f"n{n}_cooling_wall_error_J_m2", float(cooling_error))
+        record_property(f"n{n}_cooling_storage_error_J_m2", abs(final_energy-cold_energy))
+        record_property(f"n{n}_cooling_balance_J_m2", cooling_balance)
+        assert cooling_balance < 1e-10
+        if previous_cooling is not None:
+            assert cooling_error < previous_cooling
+        previous_cooling = cooling_error
         error = max(abs(-flux[0]-west_heat), abs(flux[-1]-east_heat))
         balance = abs(energy-flux[0]+flux[-1]-generated)
         record_property(f"n{n}_wall_error_J_m2", error)
@@ -1972,6 +1989,7 @@ def test_switched_strip_cumulative_heat_against_sine_series(record_property):
         if previous is not None:
             assert error < previous/2
         previous = error
+    assert cooling_error < 1e-8 and abs(final_energy-cold_energy) < 1e-8
     assert error < 1e-8 and abs(energy-stored) < 1e-8
 
 
