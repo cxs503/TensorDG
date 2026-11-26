@@ -1,0 +1,16 @@
+{
+  "source_commit": "48871dd772f05e01bdf5ef46c63582901ad0b3bf",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 90,
+  "failures": 0,
+  "reference": "Integral of C exp(-sqrt(i omega C/k) x) on [0.173,0.717] m for a unit P2 SIPG slab with prescribed end temperatures. Separate two-layer test integrates discontinuous quadratic modes with heterogeneous capacity.",
+  "measurements": {
+    "cells8_error_J_m2": 3.209371366281551e-05,
+    "cells16_error_J_m2": 8.140908708850533e-07,
+    "cells16_order": 5.300957087001892,
+    "cells32_error_J_m2": 1.6154185764053313e-07,
+    "cells32_order": 2.3332818059524225,
+    "cells64_error_J_m2": 4.935410645926107e-09,
+    "cells64_order": 5.032594096897488
+  }
+}
