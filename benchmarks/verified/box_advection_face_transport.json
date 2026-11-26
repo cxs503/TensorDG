@@ -1,0 +1,45 @@
+{
+  "source_commit": "b40ae432f69d65cfac04ff6d64b3e171a220f849",
+  "reference": "3 x 4 x 5 periodic elements on [0,1.5] x [0,1] x [0,5]. Direct tensor-product 4-point Gauss-Legendre integration of each P2 upwind polynomial. Verify local mass balance across a three-component velocity switch for seven explicit RK methods and compare uniform scalar transport with the analytic signed displacement times face area.",
+  "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python -m pytest -q tests/test_advection_2d.py tests/test_advection_3d.py tests/test_runge_kutta_orders.py -o junit_family=legacy --junitxml=/tmp/dg3-flux.xml",
+  "passed": 115,
+  "measurements": {
+    "test_3d_face_rates_match_surface_quadrature[velocity0]": {
+      "max_surface_quadrature_error": 5.551115123125783e-16
+    },
+    "test_3d_face_rates_match_surface_quadrature[velocity1]": {
+      "max_surface_quadrature_error": 4.718447854656915e-16
+    },
+    "test_3d_face_rates_match_surface_quadrature[velocity2]": {
+      "max_surface_quadrature_error": 4.440892098500626e-16
+    },
+    "test_3d_interval_face_transport_at_velocity_switch[euler]": {
+      "max_cell_mass_residual": 1.0408340855860843e-16,
+      "max_uniform_transport_error": 1.734723475976807e-18
+    },
+    "test_3d_interval_face_transport_at_velocity_switch[rk2]": {
+      "max_cell_mass_residual": 1.942890293094024e-16,
+      "max_uniform_transport_error": 1.734723475976807e-18
+    },
+    "test_3d_interval_face_transport_at_velocity_switch[rk3]": {
+      "max_cell_mass_residual": 1.1796119636642288e-16,
+      "max_uniform_transport_error": 3.469446951953614e-18
+    },
+    "test_3d_interval_face_transport_at_velocity_switch[ssp_rk3]": {
+      "max_cell_mass_residual": 2.2898349882893854e-16,
+      "max_uniform_transport_error": 3.469446951953614e-18
+    },
+    "test_3d_interval_face_transport_at_velocity_switch[rk4]": {
+      "max_cell_mass_residual": 2.393918396847994e-16,
+      "max_uniform_transport_error": 5.204170427930421e-18
+    },
+    "test_3d_interval_face_transport_at_velocity_switch[ssp_rk54]": {
+      "max_cell_mass_residual": 3.3133218391157016e-16,
+      "max_uniform_transport_error": 8.673617379884035e-18
+    },
+    "test_3d_interval_face_transport_at_velocity_switch[rk5]": {
+      "max_cell_mass_residual": 1.734723475976807e-16,
+      "max_uniform_transport_error": 1.734723475976807e-18
+    }
+  }
+}
