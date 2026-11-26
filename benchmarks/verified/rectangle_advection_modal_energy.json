@@ -1,0 +1,20 @@
+{
+  "source_commit": "39427b37635cd53c2366c618de58372215054ddd",
+  "reference": "5x6 periodic P3 cells over [0,2.5] x [0,1.5]. For each velocity compare modal energy against 5x5 point Gauss integration of u\u00b2/2 and directional upwind losses against independent Gauss integration of u times the DG spatial operator. An additional analytic jump test uses a uniform background of 2^60 with unit x slope and double y slope, giving losses 6 and 32.",
+  "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python -m pytest -q tests/test_advection_2d.py tests/test_advection_3d.py tests/test_runge_kutta_orders.py -o junit_family=legacy --junitxml=/tmp/dg2-energy.xml",
+  "passed": 119,
+  "measurements": {
+    "test_modal_energy_and_upwind_power[velocity0]": {
+      "relative_energy_error": 4.440892098500626e-16,
+      "relative_power_balance_error": 9.992007221626409e-16
+    },
+    "test_modal_energy_and_upwind_power[velocity1]": {
+      "relative_energy_error": 4.440892098500626e-16,
+      "relative_power_balance_error": 3.3306690738754696e-16
+    },
+    "test_modal_energy_and_upwind_power[velocity2]": {
+      "relative_energy_error": 4.440892098500626e-16,
+      "relative_power_balance_error": 1.2212453270876722e-15
+    }
+  }
+}
