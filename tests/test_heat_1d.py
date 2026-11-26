@@ -1294,12 +1294,13 @@ def test_admittance_stack_with_independent_bulk_reservoir_profiles(record_proper
 
 def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
     import numpy as np
+    from scipy.integrate import quad
     from scipy.linalg import expm
     from tensordg import compose_heat_wall_admittances_1d, harmonic_heat_wall_admittance_1d
 
     from tensordg import integrate_heat_stack_energy, sample_heat_stack_fields, solve_harmonic_heat_layer_1d
 
-    from tensordg import reconstruct_modal_heat_flux, reconstruct_modal_heat_temperature
+    from tensordg import harmonic_cell_conduction_form, reconstruct_modal_heat_flux, reconstruct_modal_heat_temperature
 
     references = []
     omega, resistance = 3.2, .27
@@ -1330,6 +1331,10 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
         # Analytically integrate q' = H*Ta - (H+iωC)*T.
         q_change = ((expm(east*matrix)-expm(west*matrix)) @ initial)[1]
         exact_energy += c*(ambient-q_change)/(h+1j*omega*c)
+    exact_forms = []
+    for (length, k, *_), (matrix, initial) in zip(layers, references):
+        exact_forms.append(quad(lambda x: abs((expm(x*matrix) @ initial)[1])**2/(2*k), 0., length)[0])
+    exact_contact_form = resistance*abs(contact_rate)**2/2
     previous = None
     for n in (4, 8, 16, 32):
         matrices, offsets = [], []
@@ -1344,6 +1349,9 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
         contact = np.array([surfaces[0, 1].item(), surfaces[1, 0].item()])
         transfer = np.array([-inward[0, 1].item(), inward[1, 0].item()])
         errors = {"temperature_K": max(abs(contact-traces)), "flux_W_m2": max(abs(transfer-contact_rate))}
+        contact_form = ((contact[0]-contact[1])*transfer[0].conjugate()).real/2
+        errors["contact_form_W_K_m2"] = abs(contact_form-exact_contact_form)
+        bulk_forms = []
         fractions = np.array([.12, .37, .84])
         interior_errors = np.zeros(2)
         layer_modes, cut_fluxes, conservative_cuts = [], [], []
@@ -1368,6 +1376,10 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
             net_power = -(h+1j*omega*c)*modes
             net_power[:, 0] += h*(a+b*centers)
             net_power[:, 1] += h*b*width/2
+            cell_forms = harmonic_cell_conduction_form(faces, net_power, width, k)
+            assert (cell_forms >= 0).all()
+            bulk_forms.append(cell_forms.sum().item())
+            errors[f"layer{i}_form_W_K_m2"] = abs(bulk_forms[-1]-exact_forms[i])
             local_flux = reconstruct_modal_heat_flux(faces, net_power, width, [0., coordinate-cell, 1.])
             torch.testing.assert_close(local_flux[:, 0], faces[:-1], rtol=0, atol=1e-13)
             torch.testing.assert_close(local_flux[:, -1], faces[1:], rtol=0, atol=1e-13)
@@ -1386,6 +1398,7 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
             errors[f"layer{i}_recovered_trace_K"] = abs(interface_value.item()-traces[i])
             observed = np.column_stack((field.numpy().ravel(), flux.numpy().ravel()))
             interior_errors = np.maximum(interior_errors, abs(observed-exact).max(axis=0))
+        errors["total_form_W_K_m2"] = abs(sum(bulk_forms)+contact_form-sum(exact_forms)-exact_contact_form)
         errors.update(interior_temperature_K=interior_errors[0], interior_flux_W_m2=interior_errors[1])
         stored = integrate_heat_stack_energy(torch.stack(layer_modes), [row[0] for row in layers],
                                              [row[2] for row in layers], portions[0][0],
@@ -1571,3 +1584,16 @@ def test_modal_temperature_preserves_complex_means_and_fourier_law():
     for cell in range(len(means)):
         poly = np.polynomial.Polynomial.fit(points, u[cell].numpy(), 5)
         np.testing.assert_allclose(-k[cell]/.6*poly.deriv()(np.array([0.,1.])), faces[cell:cell+2].numpy(), atol=2e-12)
+
+
+def test_harmonic_cell_conduction_form_for_linear_flux():
+    from tensordg import harmonic_cell_conduction_form
+
+    faces = torch.tensor([2+1j, -.3+.5j, 1.-.7j], dtype=torch.complex128)
+    width = .37
+    k = torch.tensor([1.4, .8], dtype=torch.float64)
+    west, east = faces[:-1], faces[1:]
+    exact = width/(6*k)*(west.abs()**2 + east.abs()**2 + (west*east.conj()).real)
+    for phase in (1., 1j):
+        observed = harmonic_cell_conduction_form(phase*faces, torch.zeros((2, 1)), width, k)
+        torch.testing.assert_close(observed, exact, rtol=1e-14, atol=1e-15)

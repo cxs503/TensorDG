@@ -965,6 +965,28 @@ def reconstruct_modal_heat_temperature(cell_means, face_flux, net_power_modes, c
     return mean[:, None] + (cell_width/k).reshape(-1, 1)*(west_offset[:, None]-drop)
 
 
+def harmonic_cell_conduction_form(face_flux, net_power_modes, cell_width, conductivity):
+    """Cycle mean of the conductive quadratic form per cell (W K/m²).
+
+    For peak harmonic phasors, integrate |q|²/(2k) over each cell, where
+    q is its reconstructed conservative flux. Conductivity is positive and
+    constant within each cell. For a resistive contact carrying a continuous
+    peak flux Q, the separate interface contribution is R*|Q|²/2.
+    """
+    modes = torch.as_tensor(net_power_modes)
+    if modes.ndim != 2 or modes.shape[1] < 1:
+        raise ValueError("provide one or more net power modes per cell")
+    # With M power modes q has degree at most M, so M+1 points integrate |q|².
+    nodes, weights = np.polynomial.legendre.leggauss(modes.shape[1]+1)
+    q = reconstruct_modal_heat_flux(face_flux, net_power_modes, cell_width, (nodes+1)/2)
+    if torch.as_tensor(conductivity).is_complex():
+        raise ValueError("conductivity must be real")
+    k = torch.as_tensor(conductivity, device=q.device, dtype=q.real.dtype)
+    if k.shape not in ((), (q.shape[0],)) or not torch.isfinite(k).all() or (k <= 0).any():
+        raise ValueError("provide positive finite conductivity, scalar or per cell")
+    return (q.abs().square() @ q.real.new_tensor(weights)) * (cell_width/(4*k))
+
+
 def reconstruct_heat_stack_flux(face_flux, lengths, fractions, *, source_gradient=0., source_curvature=0.):
     """Recover conservative rightward flux density inside drifting stack cells.
 
