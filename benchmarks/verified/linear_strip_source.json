@@ -1,0 +1,20 @@
+{
+  "source_commit": "e52587b10ef09a7bffc05c768f78ea5363ae0c41",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 101,
+  "failures": 0,
+  "reference": "Three-segment exact transfer for an affine complex heater with two off-grid edges; separate adaptive quadrature of all P2 coefficients in both cut cells.",
+  "measurements": {
+    "n8_cut_mode_error_W_m3": 2.779024842816778e-16,
+    "n8_wall_flux_error_W_m2": 5.71651013262478e-06,
+    "n16_cut_mode_error_W_m3": 1.4331986786446158e-15,
+    "n16_wall_flux_error_W_m2": 1.2474698740736703e-07,
+    "n16_order": 5.518057785522887,
+    "n32_cut_mode_error_W_m3": 2.842610011005922e-15,
+    "n32_wall_flux_error_W_m2": 2.3035677855555195e-08,
+    "n32_order": 2.437063018537021,
+    "n64_cut_mode_error_W_m3": 5.600852339972846e-15,
+    "n64_wall_flux_error_W_m2": 1.5418685002519111e-09,
+    "n64_order": 3.90111841782461
+  }
+}
