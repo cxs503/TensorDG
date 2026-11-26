@@ -535,6 +535,31 @@ def solve_poisson_2d_bc(
     return grid["x"], grid["y"], coeff, metadata
 
 
+def poisson_cell_mean_flux_2d(coeff, *, conductivity=1.):
+    """Return the cell-mean physical Fourier flux (..., nx, ny, 2) in W/m².
+
+    Integrates -K grad(T) within each cell of the uniform unit-square mesh.
+    P1-P3 modal fields may be real or complex and have leading batch dimensions.
+    Conductivity is constant within each cell, as in the SIPG assembly.
+    """
+    if (coeff.ndim < 4 or coeff.shape[-2] != coeff.shape[-1] or coeff.shape[-1] not in (2, 3, 4)
+            or not (coeff.is_floating_point() or coeff.is_complex())):
+        raise ValueError("expected real or complex square P1 to P3 modal blocks")
+    nx, ny = coeff.shape[-4:-2]
+    if min(nx, ny) < 1:
+        raise ValueError("at least one cell required in each direction")
+    xx, yy, cross = _cell_conductivity(conductivity, nx, ny, coeff.device, coeff.real.dtype)
+    # Tangential integration keeps only P0. In the differentiated direction
+    # the integral is Pj(1)-Pj(-1), which equals two for odd j and zero otherwise.
+    dx = (2*nx)*coeff[..., 1::2, 0].sum(-1)
+    dy = (2*ny)*coeff[..., 0, 1::2].sum(-1)
+    qx, qy = -xx*dx, -yy*dy
+    if cross is not None:
+        qx = qx - cross*dy
+        qy = qy - cross*dx
+    return torch.stack((qx, qy), dim=-1)
+
+
 def poisson_interface_traces_2d(coeff, axis, face, *, conductivity=1., points=(0.,)):
     """Sample the two material traces on a grid-aligned interior cut of the unit square.
 

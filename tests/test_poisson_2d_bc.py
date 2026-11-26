@@ -323,8 +323,8 @@ def test_directional_conductivity_with_mixed_boundary_powers(sparse):
 
 @pytest.mark.parametrize("cross",[-.8,.8])
 @pytest.mark.parametrize("sparse",[False,True])
-def test_rotated_tensor_mixed_boundary_quadratic(cross,sparse):
-    from tensordg import poisson_face_powers_2d
+def test_rotated_tensor_mixed_boundary_quadratic(cross,sparse,record_property):
+    from tensordg import poisson_cell_mean_flux_2d, poisson_face_powers_2d
     exact = lambda x,y:1+x*x+x*y+y*y
     gx = lambda x,y:2*(2*x+y)+cross*(2*y+x)
     gy = lambda x,y:cross*(2*x+y)+5*(2*y+x)
@@ -334,6 +334,11 @@ def test_rotated_tensor_mixed_boundary_quadratic(cross,sparse):
     x,y,u,meta = solve_poisson_2d_bc((4,3),2,forcing=lambda x,y:0*x+0*y-14-2*cross,sparse=sparse,**opts)
     assert meta["matrix_symmetry_error"]<1e-12
     assert l2_error_2d(x,y,u,exact)["absolute_l2"]<3e-11
+    # This exact flux is affine, so its cell mean equals its centroid value.
+    reference = -torch.stack((gx(x[:, None], y), gy(x[:, None], y)), dim=-1)
+    cell_error = (poisson_cell_mean_flux_2d(u, conductivity=opts["conductivity"])-reference).abs().max()
+    record_property("max_cell_flux_error_W_m2", float(cell_error))
+    assert cell_error < 3e-11
     qx,qy = poisson_face_powers_2d(u,**opts)
     torch.testing.assert_close(qx,-gx(torch.arange(5,dtype=x.dtype)[:,None]/4,y)/3,atol=3e-11,rtol=0.)
     torch.testing.assert_close(qy,-gy(x[:,None],torch.arange(4,dtype=x.dtype)/3)/4,atol=3e-11,rtol=0.)
@@ -500,3 +505,29 @@ def test_subulp_contact_counterflow_at_linear_face_tip(axis, orientation, record
     record_property("reverse_relative_error", error)
     assert error < 1e-14
     assert parts["forward"].item() == pytest.approx(.125*(1-eps)**2, rel=1e-14)
+
+
+@pytest.mark.parametrize("degree", [1, 2, 3])
+def test_cell_mean_flux_against_face_integrals(degree, record_property):
+    import numpy as np
+    from numpy.polynomial import legendre
+    from tensordg import poisson_cell_mean_flux_2d
+
+    rng = np.random.default_rng(452)
+    shape = (2, 3, 4, degree+1, degree+1)
+    field = rng.normal(size=shape) + 1j*rng.normal(size=shape)
+    k = rng.uniform(1., 3., (3, 4, 3))
+    k[..., 2] = rng.uniform(-.4, .4, (3, 4))
+    actual = poisson_cell_mean_flux_2d(torch.from_numpy(field), conductivity=k).numpy()
+    z, w = legendre.leggauss(3)
+    reference = np.empty_like(actual)
+    for batch, i, j in np.ndindex(field.shape[:3]):
+        c = field[batch,i,j]
+        one = np.ones_like(z)
+        dx = 3*(w @ (legendre.legval2d(one,z,c)-legendre.legval2d(-one,z,c)))/2
+        dy = 4*(w @ (legendre.legval2d(z,one,c)-legendre.legval2d(z,-one,c)))/2
+        xx, yy, xy = k[i,j]
+        reference[batch,i,j] = [-xx*dx-xy*dy, -xy*dx-yy*dy]
+    error = np.max(abs(actual-reference))
+    record_property("max_cell_flux_error_W_m2", float(error))
+    assert error < 1e-13
