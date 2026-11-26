@@ -892,3 +892,18 @@ def test_drifting_heat_stack_single_layer_linear_profile():
     torch.testing.assert_close(flux, torch.full_like(flux, .6), atol=1e-12, rtol=0.)
     torch.testing.assert_close(walls, walls.new_tensor([[.2, -.2]]), atol=1e-12, rtol=0.)
     assert rate == .5
+
+
+def test_drifting_stack_uses_crossing_flux_for_storing_contact_jump():
+    from tensordg import solve_drifting_heat_stack_1d
+
+    _, u, q, traces, rate = solve_drifting_heat_stack_1d(
+        [1., 1.], 1., 1., (4., 0.), contact_resistance=.25, ncells=4,
+        interface_left_areal_heat_capacity=.5, interface_areal_heat_capacity=1.5)
+    assert rate == 1.
+    # Four units of incoming heat supply two bulk units and two surface units.
+    torch.testing.assert_close(q[:, [0, -1]], q.new_tensor([[4., 3.], [1., 0.]]))
+    crossing = (traces[0, 1]-traces[1, 0])/.25
+    torch.testing.assert_close(crossing, q.new_tensor(2.5), atol=1e-12, rtol=0.)
+    energy = u[:, :, 0].mean(1).sum()+.5*traces[0, 1]+1.5*traces[1, 0]
+    assert energy.abs() < 1e-12
