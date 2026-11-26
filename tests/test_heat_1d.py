@@ -1046,3 +1046,47 @@ def test_stack_temperature_reconstruction_preserves_arbitrary_cell_means():
     t = reconstruct_heat_stack_temperature(means, flux, [1., 2.], [1., 4.],
                                            [.5-offset, .5+offset], source_gradient=[.5, -2.])
     torch.testing.assert_close(t.mean(-1), means, rtol=0., atol=1e-14)
+
+
+def test_quadratic_generation_in_drifting_stack(record_property):
+    from tensordg import (solve_drifting_heat_stack_1d, reconstruct_heat_stack_flux,
+                          reconstruct_heat_stack_temperature)
+
+    # T = a*x^4+b*x^3+offset, q = -k*T'. Start x at each layer's
+    # midpoint. Prescribe the source from energy balance, enforcing a common
+    # interface flux via the linear term of each temperature polynomial.
+    import numpy as np
+    from numpy.polynomial import Polynomial
+    lengths, ks, capacities = [1.5, .75], [1.2, 2.5], [.8, 1.7]
+    drift, resistance, incoming = .35, .2, .6
+    walls, fields, fluxes, means, gradients, curvatures = [], [], [], [], [], []
+    left_temp = 0.
+    for length, k, c, a, b in zip(lengths, ks, capacities, [.12, -.28], [-.07, .13]):
+        left, right = -length/2, length/2
+        t = Polynomial([0., -incoming/k-4*a*left**3-3*b*left**2, 0., b, a])
+        t += left_temp-t(left)
+        q = -k*t.deriv()
+        source = q.deriv()+drift*c
+        means.append((source.integ()(right)-source.integ()(left))/length)
+        gradients.append(source.deriv()(0.))
+        curvatures.append(source.deriv(2)(0.))
+        walls.append([t(left), t(right)])
+        fields.append(t)
+        fluxes.append(q)
+        incoming = q(right)
+        left_temp = t(right)-incoming*resistance
+    params = dict(source_gradient=gradients, source_curvature=curvatures)
+    _, modes, faces, traces, rate = solve_drifting_heat_stack_1d(
+        lengths, ks, capacities, (.6, -incoming), ncells=6, degree=4,
+        source=means, contact_resistance=resistance, **params)
+    fractions = np.array([0., .21, .72, 1.])
+    heat = reconstruct_heat_stack_flux(faces, lengths, fractions, **params)
+    temp = reconstruct_heat_stack_temperature(modes[:, :, 0], faces, lengths, ks, fractions, **params)
+    offset = sum(c*(t.integ()(h/2)-t.integ()(-h/2)) for c,t,h in zip(capacities,fields,lengths))/np.dot(capacities,lengths)
+    points = [(np.arange(6)[:, None]+fractions)*h/6-h/2 for h in lengths]
+    errors = dict(rate_K_s=abs(rate-drift), trace_K=np.max(abs(traces.numpy()-walls+offset)),
+                  temperature_K=np.max(abs(temp.numpy()-[t(x) for t,x in zip(fields,points)]+offset)),
+                  flux_W_m2=np.max(abs(heat.numpy()-[q(x) for q,x in zip(fluxes,points)])))
+    for key, error in errors.items():
+        record_property(key, float(error))
+        assert error < 2e-10
