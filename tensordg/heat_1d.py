@@ -884,15 +884,7 @@ def _stack_flux_polynomial(face_flux, lengths, fractions, source_gradient, sourc
     return q, f, width, quadratic, cubic
 
 
-def reconstruct_modal_heat_flux(face_flux, net_power_modes, cell_width, fractions):
-    """Recover rightward heat flux (W/m²) inside uniform cells of one layer.
-
-    Supply the cells+1 SIPG face fluxes and Legendre coefficients of the net
-    volumetric power dq/dx (W/m³), shaped (cells, modes). For harmonic heat
-    these represent generation plus bulk exchange minus iωCT. Both face
-    fluxes fix the mean power; modes of degree one and above set its variation.
-    Returns (cells, samples) at cell fractions between zero and one.
-    """
+def _modal_flux_inputs(face_flux, net_power_modes, cell_width, fractions):
     q = torch.as_tensor(face_flux)
     if q.ndim != 1 or q.numel() < 2 or not (q.is_floating_point() or q.is_complex()):
         raise ValueError("provide a real or complex flux vector with at least two faces")
@@ -911,6 +903,23 @@ def reconstruct_modal_heat_flux(face_flux, net_power_modes, cell_width, fraction
     f = torch.as_tensor(fractions, dtype=q.real.dtype, device=q.device)
     if f.ndim != 1 or not f.numel() or not ((f >= 0) & (f <= 1)).all():
         raise ValueError("provide a nonempty vector of cell fractions in [0, 1]")
+    return q, power, f
+
+
+def reconstruct_modal_heat_flux(face_flux, net_power_modes, cell_width, fractions):
+    """Recover rightward heat flux (W/m²) inside uniform cells of one layer.
+
+    Supply the cells+1 SIPG face fluxes and Legendre coefficients of the net
+    volumetric power dq/dx (W/m³), shaped (cells, modes). For harmonic heat
+    these represent generation plus bulk exchange minus iωCT. Both face
+    fluxes fix the mean power; modes of degree one and above set its variation.
+    Returns (cells, samples) at cell fractions between zero and one.
+    """
+    q, power, f = _modal_flux_inputs(face_flux, net_power_modes, cell_width, fractions)
+    return _evaluate_modal_flux(q, power, cell_width, f)
+
+
+def _evaluate_modal_flux(q, power, cell_width, f):
     flux = q[:-1, None]*(1-f) + q[1:, None]*f
     # Integral of P_m from -1 to xi is (P_{m+1}-P_{m-1})/(2m+1).
     # These primitives vanish at both ends for every m >= 1.
@@ -921,6 +930,39 @@ def reconstruct_modal_heat_flux(face_flux, net_power_modes, cell_width, fraction
         flux = flux + (cell_width/(2*(2*m+1)))*power[:, m:m+1]*(higher-lower)
         lower, current = current, higher
     return flux
+
+
+def reconstruct_modal_heat_temperature(cell_means, face_flux, net_power_modes, cell_width,
+                                       conductivity, fractions):
+    """Recover temperature (K) by integrating the conservative flux in each cell.
+
+    Use the same power modes, face fluxes and cell fractions as
+    reconstruct_modal_heat_flux. Supply one mean temperature per cell and
+    positive conductivity (scalar or per cell, W/m/K). Each cell keeps its own
+    mean, so temperature traces can differ across material interfaces.
+    """
+    q, power, f = _modal_flux_inputs(face_flux, net_power_modes, cell_width, fractions)
+    mean = torch.as_tensor(cell_means, device=q.device)
+    if mean.shape != q[:-1].shape or not torch.isfinite(mean).all():
+        raise ValueError("provide one finite mean temperature per cell")
+    mean = torch.as_tensor(cell_means, dtype=torch.promote_types(mean.dtype, q.dtype), device=q.device)
+    if torch.as_tensor(conductivity).is_complex():
+        raise ValueError("conductivity must be real")
+    k = torch.as_tensor(conductivity, dtype=q.real.dtype, device=q.device)
+    if k.shape not in ((), mean.shape) or not torch.isfinite(k).all() or (k <= 0).any():
+        raise ValueError("provide positive finite conductivity, scalar or per cell")
+
+    # T(f) = mean + h/k [integral_0^1 (1-s)q(s) ds - integral_0^f q(s) ds].
+    # The weighted flux has degree at most modes+1, so both Gauss rules are exact.
+    nodes, weights = np.polynomial.legendre.leggauss((power.shape[1]+3)//2)
+    nodes = f.new_tensor((1+nodes)/2)
+    weights = f.new_tensor(weights/2)
+    points = torch.cat((nodes, (f[:, None]*nodes).reshape(-1)))
+    flux = _evaluate_modal_flux(q, power, cell_width, points)
+    west_offset = (flux[:, :nodes.numel()] * (1-nodes) * weights).sum(dim=-1)
+    partial = flux[:, nodes.numel():].reshape(q.numel()-1, f.numel(), nodes.numel())
+    drop = (partial * weights).sum(dim=-1)*f
+    return mean[:, None] + (cell_width/k).reshape(-1, 1)*(west_offset[:, None]-drop)
 
 
 def reconstruct_heat_stack_flux(face_flux, lengths, fractions, *, source_gradient=0., source_curvature=0.):

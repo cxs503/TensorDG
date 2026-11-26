@@ -1299,7 +1299,7 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
 
     from tensordg import integrate_heat_stack_energy, sample_heat_stack_fields, solve_harmonic_heat_layer_1d
 
-    from tensordg import reconstruct_modal_heat_flux
+    from tensordg import reconstruct_modal_heat_flux, reconstruct_modal_heat_temperature
 
     references = []
     omega, resistance = 3.2, .27
@@ -1379,6 +1379,11 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
             np.testing.assert_allclose(centers.numpy(), (np.arange(n)+.5)*length/n)
             matrix, initial = references[i]
             exact = np.array([(expm(x*matrix) @ initial)[:2] for x in positions.ravel()])
+            recovered = reconstruct_modal_heat_temperature(modes[:, 0], faces, net_power, width, k,
+                                                           np.r_[fractions, 0., 1.])
+            errors[f"layer{i}_recovered_temperature_K"] = abs(recovered[:, :-2].numpy().ravel()-exact[:, 0]).max()
+            interface_value = recovered[-1, -1] if i == 0 else recovered[0, -2]
+            errors[f"layer{i}_recovered_trace_K"] = abs(interface_value.item()-traces[i])
             observed = np.column_stack((field.numpy().ravel(), flux.numpy().ravel()))
             interior_errors = np.maximum(interior_errors, abs(observed-exact).max(axis=0))
         errors.update(interior_temperature_K=interior_errors[0], interior_flux_W_m2=interior_errors[1])
@@ -1545,3 +1550,24 @@ def test_modal_flux_reconstruction_uses_faces_for_mean_power():
         primitive = np.polynomial.legendre.legint(modes, lbnd=-1)
         exact = faces[cell].item() + width/2*np.polynomial.legendre.legval(2*fractions-1, primitive)
         np.testing.assert_allclose(flux[cell].numpy(), exact, rtol=0, atol=1e-14)
+
+
+def test_modal_temperature_preserves_complex_means_and_fourier_law():
+    import numpy as np
+    from tensordg import reconstruct_modal_heat_temperature
+
+    means = torch.tensor([2.+.3j, -1.+.9j], dtype=torch.complex128)
+    faces = torch.tensor([1.+.2j, .3-.5j, -.4+.8j], dtype=means.dtype)
+    power = torch.tensor([[0., .2, -.4, .7], [0., -.6, .8, .3]], dtype=means.dtype)
+    k = [1.5, .8]
+    nodes, weights = np.polynomial.legendre.leggauss(5)
+    f = (1+nodes)/2
+    recovered = reconstruct_modal_heat_temperature(means, faces, power, .6, k, f)
+    torch.testing.assert_close(recovered @ means.new_tensor(weights/2), means, atol=1e-14, rtol=0)
+    # Differentiate the recovered polynomial independently at both boundaries.
+    # Degree-five temperature needs six samples for exact differentiation.
+    points = np.linspace(0., 1., 6)
+    u = reconstruct_modal_heat_temperature(means, faces, power, .6, k, points)
+    for cell in range(len(means)):
+        poly = np.polynomial.Polynomial.fit(points, u[cell].numpy(), 5)
+        np.testing.assert_allclose(-k[cell]/.6*poly.deriv()(np.array([0.,1.])), faces[cell:cell+2].numpy(), atol=2e-12)
