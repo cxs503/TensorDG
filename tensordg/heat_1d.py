@@ -725,6 +725,41 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     return (*result, coefficients.new_tensor(mean)) if separate_mean else result
 
 
+def sample_heat_stack_fields(coefficients, lengths, conductivity, fractions):
+    """Sample DG temperature and rightward Fourier flux within each layer cell.
+
+    coefficients has shape (layers, cells_per_layer, modes), as returned by
+    solve_drifting_heat_stack_1d. fractions is a vector of cell coordinates
+    from 0 (west) to 1 (east). Both outputs have shape (layers, cells, samples).
+    Flux is the derivative-based material estimate in W/m². At endpoints
+    the solve also supplies the conservative SIPG numerical face flux.
+    """
+    from .curved_geometry import legendre_derivative_matrix, legendre_eval_matrix
+
+    u = torch.as_tensor(coefficients)
+    if u.ndim != 3 or min(u.shape) < 1 or not (u.is_floating_point() or u.is_complex()):
+        raise ValueError("provide floating-point modal coefficients shaped (layers, cells, modes)")
+    f = np.asarray(fractions)
+    if f.ndim != 1 or not f.size or np.iscomplexobj(f) or not np.all((f >= 0) & (f <= 1)):
+        raise ValueError("provide a nonempty vector of cell fractions in [0, 1]")
+    layers, cells, modes = u.shape
+    h = torch.as_tensor(lengths, device=u.device)
+    k = torch.as_tensor(conductivity, device=u.device)
+    for values in (h, k):
+        if values.is_complex() or not torch.isfinite(values).all() or (values <= 0).any():
+            raise ValueError("layer lengths and conductivity must be finite, real and positive")
+    if h.shape != (layers,) or k.shape not in ((), (layers,)):
+        raise ValueError("provide a length per layer and scalar or per-layer conductivity")
+    # Convert the original inputs at field precision, including Python lists.
+    h = torch.as_tensor(lengths, dtype=u.real.dtype, device=u.device)
+    k = torch.as_tensor(conductivity, dtype=u.real.dtype, device=u.device)
+    basis = legendre_eval_matrix(modes-1, 2.*f-1.)
+    derivative = basis @ legendre_derivative_matrix(modes-1)
+    temperature = u @ u.new_tensor(basis.T)
+    flux = (-2*cells*k/h)[:, None, None]*(u @ u.new_tensor(derivative.T))
+    return temperature, flux
+
+
 def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_flux, *,
                                  source=0., source_gradient=0., contact_resistance=0., area=1., ncells=16, degree=2,
                                  shoulder_areal_heat_capacity=0., end_areal_heat_capacity=0.,

@@ -965,7 +965,7 @@ def test_drifting_stack_storing_ends_share_the_bulk_heating_rate():
 @pytest.mark.parametrize("degree,n", [(2, 4), (2, 8), (2, 16), (3, 6)])
 @pytest.mark.parametrize("sign", [-1., 1.])
 def test_drifting_stack_affine_generation(degree, n, sign, record_property):
-    from tensordg import solve_drifting_heat_stack_1d
+    from tensordg import sample_heat_stack_fields, solve_drifting_heat_stack_1d
 
     length = [1.5, .5]
     area = [1., 2.]
@@ -978,10 +978,17 @@ def test_drifting_stack_affine_generation(degree, n, sign, record_property):
         length, k, capacity, (power, -power/2), area=area, contact_resistance=resistance,
         source=[c*target_rate for c in capacity], source_gradient=gradients, ncells=n, degree=degree)
     expected_means, expected_fluxes, expected_walls = [], [], []
+    fractions = [.13, .41, .78]
+    sampled_t, sampled_q = sample_heat_stack_fields(u, length, k, fractions)
+    target_t, target_q = [], []
     temperature = 0.
     for h, section, cond, gradient in zip(length, area, k, gradients):
         x = torch.linspace(0., h, n+1, dtype=u.dtype)
         # Integrate dq/dx = G*(x-h/2), then Fourier's law and the cell mean.
+        points = x[:-1, None]+(h/n)*u.new_tensor(fractions)
+        target_q.append(power/section+gradient*points*(points-h)/2)
+        target_t.append(temperature-power*points/(section*cond)
+                        -gradient*(points**3/6-h*points**2/4)/cond)
         expected_fluxes.append(power/section + gradient*x*(x-h)/2)
         primitive = (temperature*x-power*x**2/(2*section*cond)
                      -gradient*(x**4/24-h*x**3/12)/cond)
@@ -996,7 +1003,22 @@ def test_drifting_stack_affine_generation(degree, n, sign, record_property):
                   trace_K=(walls-u.new_tensor(expected_walls)+shift).abs().max().item(),
                   face_flux_W_m2=(q-torch.stack(expected_fluxes)).abs().max().item(),
                   rate_K_s=abs(rate-target_rate))
+    interior_t = (sampled_t-torch.stack(target_t)+shift).abs().max().item()
+    interior_q = (sampled_q-torch.stack(target_q)).abs().max().item()
+    record_property("interior_temperature_K", interior_t)
+    record_property("interior_flux_W_m2", interior_q)
+    assert interior_t < (2e-10 if degree == 3 else .1/n**3)
+    assert interior_q < (2e-10 if degree == 3 else .5/n**2)
     for name, error in errors.items():
         record_property(name, error)
     assert errors["rate_K_s"] < 1e-13
     assert max(errors.values()) < (2e-10 if degree == 3 else .1/n**2)
+
+
+def test_heat_stack_sampling_retains_separate_endpoint_traces():
+    from tensordg import sample_heat_stack_fields
+
+    coeff = torch.tensor([[[1+2j, 2.], [-3., 1j]]], dtype=torch.complex128)
+    t, q = sample_heat_stack_fields(coeff, [2.], 3., [0., 1.])
+    torch.testing.assert_close(t, coeff.new_tensor([[[-1+2j, 3+2j], [-3-1j, -3+1j]]]))
+    torch.testing.assert_close(q, coeff.new_tensor([[[-12., -12.], [-6j, -6j]]]))
