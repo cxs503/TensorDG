@@ -1,0 +1,24 @@
+{
+  "source_commit": "9efd928c6657d85bfcc1c71e62a7f56ec2d5dc97",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 95,
+  "failures": 0,
+  "reference": "Cross admittance is the inverse off-diagonal transfer coefficient B for a unit-determinant transfer in (temperature, rightward flux). Separately compare grounded wall currents under bilateral contact heaters with the unconjugated unit-wall-drive trace prediction.",
+  "measurements": {
+    "n4_cross_error_W_m2_K": 2.193792783702151e-06,
+    "n4_reciprocity_W_m2_K": 1.0235750533041806e-15,
+    "n4_heater_reciprocity_W_m2": 3.1410444697291337e-16,
+    "n8_cross_error_W_m2_K": 1.3771433012947393e-07,
+    "n8_reciprocity_W_m2_K": 1.5700924586837752e-16,
+    "n8_heater_reciprocity_W_m2": 8.328056056920883e-17,
+    "n8_cross_order": 3.9936766665601198,
+    "n16_cross_error_W_m2_K": 8.624675505646851e-09,
+    "n16_reciprocity_W_m2_K": 7.71185559270127e-15,
+    "n16_heater_reciprocity_W_m2": 2.66306355864529e-15,
+    "n16_cross_order": 3.9970647015515373,
+    "n32_cross_error_W_m2_K": 5.401702827009816e-10,
+    "n32_reciprocity_W_m2_K": 4.965068306494546e-16,
+    "n32_heater_reciprocity_W_m2": 1.210334856124346e-16,
+    "n32_cross_order": 3.996984000187718
+  }
+}
