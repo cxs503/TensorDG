@@ -1441,3 +1441,40 @@ def test_interface_power_channels_for_loaded_three_layer_stack(record_property):
     global_balance = abs(supplied-accumulated).item()
     record_property("whole_stack_balance_W_m2", global_balance)
     assert global_balance < 1e-11
+
+
+def test_off_grid_energy_across_discontinuous_layers():
+    from tensordg import integrate_heat_stack_energy
+
+    # One P2 cell per layer, independent local Legendre coefficients.
+    u = torch.tensor([[[1., 2., .5]], [[-3., 1., -.8]]], dtype=torch.float64)
+    lengths, capacities = [.4, .7], [2., 4.]
+    def primitive(xi, a, b, c):
+        return a*xi + b*xi**2/2 + c*(xi**3-xi)/2
+    exact = (2*.2*(primitive(1, 1, 2, .5)-primitive(-.5, 1, 2, .5))
+             + 4*.35*(primitive(0, -3, 1, -.8)-primitive(-1, -3, 1, -.8)))
+    value = integrate_heat_stack_energy(u, lengths, capacities, .1, .75)
+    assert abs(value.item()-exact) < 1e-14
+    assert integrate_heat_stack_energy(u, lengths, capacities, .4, .4).item() == 0.
+
+
+def test_harmonic_off_grid_energy_refinement(record_property):
+    import cmath
+    from tensordg import integrate_heat_stack_energy, solve_harmonic_heat_layer_1d
+
+    k, capacity, omega = .6, 2.3, 4.
+    a, b = .173, .717
+    wave = cmath.sqrt(1j*omega*capacity/k)
+    # Dirichlet data chosen from T=exp(-wave*x).
+    exact = capacity*(cmath.exp(-wave*a)-cmath.exp(-wave*b))/wave
+    previous = None
+    for cells in (8, 16, 32, 64):
+        _, modes, _ = solve_harmonic_heat_layer_1d(
+            omega, (1., cmath.exp(-wave)), ncells=cells, degree=2, conductivity=k, capacity=capacity)
+        energy = integrate_heat_stack_energy(modes[None], [1.], capacity, a, b)
+        error = abs(energy.item()-exact)
+        record_property(f"cells{cells}_error_J_m2", error)
+        if previous is not None:
+            record_property(f"cells{cells}_order", math.log2(previous/error))
+            assert error < previous/4
+        previous = error

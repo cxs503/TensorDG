@@ -816,6 +816,44 @@ def sample_heat_stack_fields(coefficients, lengths, conductivity, fractions):
     return temperature, flux
 
 
+def integrate_heat_stack_energy(coefficients, lengths, capacity, start, end):
+    """Thermal energy per unit cross section over [start, end] in metres.
+
+    Integrate C*T for real or harmonic Legendre temperature coefficients shaped
+    (layers, cells, modes), with uniform cells and constant volumetric capacity
+    within each layer. Returns a scalar in J/m², complex for a phasor field.
+    Layer interfaces may have distinct one-sided traces. Only bulk storage is
+    included.
+    """
+    u = torch.as_tensor(coefficients)
+    if u.ndim != 3 or min(u.shape) < 1 or not (u.is_floating_point() or u.is_complex()):
+        raise ValueError("provide floating-point modal coefficients shaped (layers, cells, modes)")
+    layers, cells, modes = u.shape
+    geometry = lengths.detach().cpu().numpy() if torch.is_tensor(lengths) else np.asarray(lengths)
+    if (geometry.shape != (layers,) or np.iscomplexobj(geometry)
+            or not np.isfinite(geometry).all() or (geometry <= 0).any()):
+        raise ValueError("provide one finite positive length per layer")
+    if torch.as_tensor(capacity).is_complex():
+        raise ValueError("capacity must be real")
+    cap = torch.as_tensor(capacity, dtype=u.real.dtype, device=u.device)
+    if cap.shape not in ((), (layers,)) or not torch.isfinite(cap).all() or (cap <= 0).any():
+        raise ValueError("provide positive finite volumetric capacity, scalar or per layer")
+    boundaries = np.r_[0., np.cumsum(geometry, dtype=float)]
+    if not (0 <= start <= end <= boundaries[-1]):
+        raise ValueError("interval must be ordered and inside the stack")
+    edges = np.linspace(boundaries[:-1], boundaries[1:], cells+1, axis=1)
+    west, east = edges[:, :-1], edges[:, 1:]
+    left = np.clip(start, west, east)
+    width = np.clip(end, west, east) - left
+    # M Legendre modes have degree M-1. A ceil(M/2)-point Gauss rule
+    # integrates them exactly on each clipped cell, even across a trace jump.
+    nodes, weights = np.polynomial.legendre.leggauss((modes+1)//2)
+    local = (2*(left-west)[..., None] + width[..., None]*(1+nodes))/(east-west)[..., None] - 1
+    basis = np.polynomial.legendre.legvander(local, modes-1)
+    integrals = np.einsum("lcqm,q->lcm", basis, weights) * (width/2)[..., None]
+    return ((u*u.new_tensor(integrals)).sum(dim=(1, 2))*cap).sum()
+
+
 def _stack_flux_polynomial(face_flux, lengths, fractions, source_gradient, source_curvature):
     q = torch.as_tensor(face_flux)
     if q.ndim != 2 or q.shape[0] < 1 or q.shape[1] < 2 or not q.is_floating_point():
