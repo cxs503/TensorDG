@@ -1941,7 +1941,7 @@ def test_stack_ramp_with_material_specific_endpoint_amplitudes():
 
 def test_switched_strip_cumulative_heat_against_sine_series(record_property):
     import numpy as np
-    from tensordg import project_uniform_strip_source, solve_heat_1d_wall_history
+    from tensordg import integrate_heat_stack_energy, project_uniform_strip_source, solve_heat_1d_wall_history
 
     west, east, power, duration = .213, .786, 1.7, .07
     # Zero initial and wall temperatures, unit k and volumetric capacity.
@@ -1962,12 +1962,15 @@ def test_switched_strip_cumulative_heat_against_sine_series(record_property):
     cooling_reference = np.array([emitted.sum(), -np.sum(parity*emitted)])
     # Both cuts are grid faces on every mesh; only the eastern cut is heated.
     cuts = np.array([.125, .625])
-    cosine = np.cos(cuts[:, None]*wave)
-    steady_flux = power*(np.clip(cuts-west, 0., east-west) - (east-west)*(1-(west+east)/2))
+    probes = np.r_[cuts, west, east]
+    cosine = np.cos(probes[:, None]*wave)
+    steady_flux = power*(np.clip(probes-west, 0., east-west) - (east-west)*(1-(west+east)/2))
     heating_cuts = duration*steady_flux + cosine @ (temperature/wave)
     cooling_cuts = -(cosine @ emitted)
     spatial_weights = (cosine[0]-cosine[1])/wave
     storage_changes = [spatial_weights @ temperature, spatial_weights @ (temperature*(decay-1))]
+    edge_weights = (cosine[2]-cosine[3])/wave
+    edge_changes = [edge_weights @ temperature, edge_weights @ (temperature*(decay-1))]
     local_input = power*duration*(min(east,cuts[1])-max(west,cuts[0]))
     previous_cooling = None
     previous = None
@@ -1983,7 +1986,7 @@ def test_switched_strip_cumulative_heat_against_sine_series(record_property):
                 ("heating", flux, heating_cuts, local_input), ("cooling", cooling_flux, cooling_cuts, 0.))):
             observed = np.array(transferred)[[first, last]]
             stored_change = (history[step+1, first:last, 0]-history[step, first:last, 0]).sum().item()/n
-            cut_error = np.max(abs(observed-target))
+            cut_error = np.max(abs(observed-target[:2]))
             storage_error = abs(stored_change-storage_changes[step])
             residual = abs(stored_change-deposited-observed[0]+observed[1])
             record_property(f"n{n}_{label}_cut_error_J_m2", float(cut_error))
@@ -1992,6 +1995,27 @@ def test_switched_strip_cumulative_heat_against_sine_series(record_property):
             assert residual < 1e-10
             if n == 64:
                 assert max(cut_error, storage_error) < 1e-8
+            # Integrate the balance from the left face to each physical heater edge.
+            # The partial-cell source uses actual overlap and the storage uses
+            # the numerical temperature change, integrated in its Legendre basis.
+            delta = (history[step+1]-history[step])[None]
+            edge_flux = []
+            for x in (west, east):
+                cell = math.floor(x*n)
+                face = cell/n
+                partial_storage = integrate_heat_stack_energy(delta, [1.], 1., face, x).item()
+                overlap = max(0., min(x, east)-max(face, west))
+                partial_input = power*duration*overlap if step == 0 else 0.
+                edge_flux.append(transferred[cell] + partial_input - partial_storage)
+            edge_error = np.max(abs(np.array(edge_flux)-target[2:]))
+            strip_storage = integrate_heat_stack_energy(delta, [1.], 1., west, east).item()
+            edge_residual = abs(strip_storage - (generated if step == 0 else 0.) - edge_flux[0]+edge_flux[1])
+            record_property(f"n{n}_{label}_heater_edge_error_J_m2", float(edge_error))
+            record_property(f"n{n}_{label}_heater_storage_error_J_m2", abs(strip_storage-edge_changes[step]))
+            record_property(f"n{n}_{label}_heater_balance_J_m2", edge_residual)
+            assert edge_residual < 1e-10
+            if n == 64:
+                assert max(edge_error, abs(strip_storage-edge_changes[step])) < 1e-7
         energy = history[1, :, 0].mean().item()
         final_energy = history[2, :, 0].mean().item()
         cooling_error = np.max(abs(np.array([-cooling_flux[0], cooling_flux[-1]])-cooling_reference))
