@@ -1,0 +1,20 @@
+{
+  "source_commit": "dc932e5e2c48f94d0c51c646587d65e3b67604c9",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 96,
+  "failures": 0,
+  "reference": "Inward flux at both grounded walls of a two-material slab with affine complex volume sources, losses and thermal contact resistance. Compare reciprocal unit-drive predictions against direct loaded solves and continuum transfer of [T,q,1,x].",
+  "measurements": {
+    "n4_direct_mismatch_W_m2": 8.968100940422724e-16,
+    "n4_reference_error_W_m2": 4.5533338944209206e-07,
+    "n8_direct_mismatch_W_m2": 1.8728330450731676e-15,
+    "n8_reference_error_W_m2": 2.8494134093058312e-08,
+    "n8_order": 3.9981863991068027,
+    "n16_direct_mismatch_W_m2": 2.0518486441330165e-15,
+    "n16_reference_error_W_m2": 1.7829187299691375e-09,
+    "n16_order": 3.9983521035357867,
+    "n32_direct_mismatch_W_m2": 6.407872222066844e-16,
+    "n32_reference_error_W_m2": 1.1145728200682059e-10,
+    "n32_order": 3.9996781601413565
+  }
+}
