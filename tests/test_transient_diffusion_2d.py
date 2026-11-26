@@ -398,3 +398,40 @@ def test_directional_resistive_contact_heat_reversal(axis, method, record_proper
         px, py = poisson_face_powers_2d(field, bc=INSULATED, contact_resistance={axis: mask})
         flux = px[2, :] if axis == "x" else py[:, 2]
         torch.testing.assert_close(contact["forward"][i]-contact["reverse"][i], dt*flux, rtol=0., atol=1e-13)
+
+
+@pytest.mark.parametrize("method,theta,damped", [
+    ("theta", .5, False), ("sdirk2", .5, False), ("theta", 1., False), ("theta", .5, True)])
+def test_cell_flux_integral_across_ramp_reversal(method, theta, damped, record_property):
+    # T = A(t)*(x² + xy + y). A is continuous but changes slope inside
+    # the first output interval. div(K grad(T)) = 5*A.
+    shape = lambda x,y: x*x+x*y+y
+    switch = .06
+    times = np.array([0., .1, .21])
+    def amplitude(t):
+        return 1-20*t if t < switch else 1-20*switch+4*(t-switch)
+    x,y,_,heat = solve_transient_diffusion_2d(
+        shape, times, ncells=(3, 4), degree=2, conductivity=(2., 3., .5),
+        dirichlet_values=dict.fromkeys(("left", "right", "top", "bottom"), shape),
+        forcing=lambda x,y: -5+0*(x+y), load_amplitude=amplitude,
+        source_history=lambda t,x,y: (-20 if t < switch else 4)*shape(x,y),
+        load_jump_times=[switch], method=method, theta=theta, rannacher=damped,
+        return_cell_flux_integral=True)
+    dx,dy = torch.broadcast_tensors(2*x[:,None]+y, x[:,None]+1)
+    flux = -torch.stack((2*dx+.5*dy, .5*dx+3*dy), dim=-1)
+    # For the two second-order methods midpoint integration of each ramp
+    # is exact. Backward Euler uses the endpoint, including on damping steps.
+    segments = [(0.,switch), (switch,.1), (.1,.21)]
+    integral = np.zeros(2)
+    for j,(a,b) in enumerate(segments):
+        if damped and j < 2:
+            average = .5*(amplitude((a+b)/2)+amplitude(b))
+        elif theta == 1.:
+            average = amplitude(b)
+        else:
+            average = .5*(amplitude(a)+amplitude(b))
+        integral[int(j==2)] += (b-a)*average
+    expected = torch.from_numpy(integral)[:,None,None,None]*flux
+    error = (heat-expected).abs().max().item()
+    record_property("max_cell_flux_integral_error_J_m2", error)
+    assert error < 2e-12

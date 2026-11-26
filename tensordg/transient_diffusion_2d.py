@@ -6,7 +6,7 @@ from scipy.sparse import bsr_matrix, coo_matrix, diags
 from scipy.sparse.linalg import splu
 
 from .poisson_2d import _operators, _face_basis
-from .poisson_2d_bc import assemble_poisson_2d_bc, _wall_storage, _trace_face_data, _add_trace_power, _contact_faces
+from .poisson_2d_bc import assemble_poisson_2d_bc, poisson_cell_mean_flux_2d, _wall_storage, _trace_face_data, _add_trace_power, _contact_faces
 
 
 def _capacity_quadrature(grid):
@@ -58,7 +58,7 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
                                  rannacher=False, return_interval_means=False, load_jump_times=(),
                                  return_load_means=False, source_history=None, wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None,
                                  trace_heat_capacity=None, trace_power_history=None, return_history_heat=False, method="theta",
-                                 return_directional_contact_heat=False):
+                                 return_directional_contact_heat=False, return_cell_flux_integral=False):
     """Solve C*u_t - div(k grad u) + reaction*u = f with optional time-dependent loads.
 
     times specifies strictly increasing output times, each interval taking one
@@ -103,6 +103,9 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     linearly in time from its weighted stage mean and final power. The signed
     difference gives the native integrated transfer; load jumps and damping
     substeps split the time integration.
+    return_cell_flux_integral appends the signed time integral of the cell-mean
+    physical Fourier flux in J/m², shaped (interval, nx, ny, 2). It uses the
+    actual stages and substeps within each requested output interval.
     """
     times = np.asarray(times,dtype=float)
     if times.ndim != 1 or len(times)<2 or not np.isfinite(times).all() or np.any(np.diff(times)<=0):
@@ -213,6 +216,9 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     state[:] = initial.reshape(-1).numpy()
     if return_interval_means:
         modal_means = np.zeros_like(history[:-1])
+    if return_cell_flux_integral:
+        cell_flux_integral = torch.zeros((len(times)-1, len(x), len(y), 2), dtype=x.dtype)
+        integrated_state = np.zeros_like(state)
     if return_load_means:
         load_means = np.zeros(len(times)-1)
     if return_history_heat:
@@ -302,12 +308,20 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
                 directional[axis]["forward"][out] += torch.from_numpy(dt*(np.maximum(mean, 0.)+minor))
                 directional[axis]["reverse"][out] += torch.from_numpy(dt*(np.maximum(-mean, 0.)+minor))
         fraction = dt/(times[out+1]-times[out])
-        if return_interval_means:
-            modal_means[out] += fraction*((1-weight)*first_state+weight*end_state)
+        if return_interval_means or return_cell_flux_integral:
+            stage = (1-weight)*first_state+weight*end_state
+            if return_interval_means:
+                modal_means[out] += fraction*stage
+            if return_cell_flux_integral:
+                integrated_state += dt*stage
         if return_load_means:
             load_means[out] += fraction*amplitude
         state = end_state
         if internal[i+1]==times[out+1]:
+            if return_cell_flux_integral:
+                cell_flux_integral[out] = poisson_cell_mean_flux_2d(
+                    torch.from_numpy(integrated_state.reshape(shape)), conductivity=conductivity)
+                integrated_state.fill(0.)
             out += 1
             history[out] = state
     result = (x,y,torch.from_numpy(history.reshape((len(times),*shape))))
@@ -319,6 +333,8 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
         result += (torch.from_numpy(history_heat),)
     if return_directional_contact_heat:
         result += (directional,)
+    if return_cell_flux_integral:
+        result += (cell_flux_integral,)
     return result
 
 
