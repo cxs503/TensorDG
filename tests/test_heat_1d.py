@@ -1300,7 +1300,7 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
 
     from tensordg import integrate_heat_stack_energy, sample_heat_stack_fields, solve_harmonic_heat_layer_1d
 
-    from tensordg import harmonic_cell_conduction_form, reconstruct_modal_heat_flux, reconstruct_modal_heat_temperature
+    from tensordg import harmonic_cell_pairing, harmonic_cell_conduction_form, reconstruct_modal_heat_flux, reconstruct_modal_heat_temperature
 
     references = []
     omega, resistance = 3.2, .27
@@ -1352,6 +1352,7 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
         contact_form = ((contact[0]-contact[1])*transfer[0].conjugate()).real/2
         errors["contact_form_W_K_m2"] = abs(contact_form-exact_contact_form)
         bulk_forms = []
+        reservoir_input, reactive_storage = 0j, 0j
         fractions = np.array([.12, .37, .84])
         interior_errors = np.zeros(2)
         layer_modes, cut_fluxes, conservative_cuts = [], [], []
@@ -1376,6 +1377,11 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
             net_power = -(h+1j*omega*c)*modes
             net_power[:, 0] += h*(a+b*centers)
             net_power[:, 1] += h*b*width/2
+            ambient_modes = torch.stack((a+b*centers, torch.full_like(centers, width/2)*b), dim=1)
+            temperature_norm = harmonic_cell_pairing(modes, modes, width).sum().item()
+            ambient_pairing = harmonic_cell_pairing(modes, ambient_modes, width).sum().item()
+            reservoir_input += h*(ambient_pairing-temperature_norm)
+            reactive_storage += 1j*omega*c*temperature_norm
             cell_forms = harmonic_cell_conduction_form(faces, net_power, width, k)
             assert (cell_forms >= 0).all()
             bulk_forms.append(cell_forms.sum().item())
@@ -1398,6 +1404,13 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
             errors[f"layer{i}_recovered_trace_K"] = abs(interface_value.item()-traces[i])
             observed = np.column_stack((field.numpy().ravel(), flux.numpy().ravel()))
             interior_errors = np.maximum(interior_errors, abs(observed-exact).max(axis=0))
+        wall_input = (left.conjugate()*inward[0, 0] + temperature.conjugate()*inward[-1, 1]).item()/2
+        # Integration by parts for q' = H(Ta-T)-iωCT with the two exterior
+        # inward fluxes and the real contact contribution R|q_contact|²/2.
+        form_residual = wall_input + reservoir_input - sum(bulk_forms) - contact_form - reactive_storage
+        record_property(f"n{n}_form_balance_imag_W_K_m2", abs(form_residual.imag))
+        assert abs(form_residual.imag) < 1e-10
+        errors["form_balance_real_W_K_m2"] = abs(form_residual.real)
         errors["total_form_W_K_m2"] = abs(sum(bulk_forms)+contact_form-sum(exact_forms)-exact_contact_form)
         errors.update(interior_temperature_K=interior_errors[0], interior_flux_W_m2=interior_errors[1])
         stored = integrate_heat_stack_energy(torch.stack(layer_modes), [row[0] for row in layers],
@@ -1597,3 +1610,20 @@ def test_harmonic_cell_conduction_form_for_linear_flux():
     for phase in (1., 1j):
         observed = harmonic_cell_conduction_form(phase*faces, torch.zeros((2, 1)), width, k)
         torch.testing.assert_close(observed, exact, rtol=1e-14, atol=1e-15)
+
+
+def test_harmonic_cell_pairing_against_physical_quadrature():
+    import numpy as np
+    from tensordg import harmonic_cell_pairing
+
+    test = torch.tensor([[1+.7j, -.2j, .5+.3j], [-.5, 1j, .1]], dtype=torch.complex128)
+    load = torch.tensor([[.6j, 1.3], [.4+.8j, 1.2j]], dtype=torch.complex128)
+    width = .23
+    xi, weights = np.polynomial.legendre.leggauss(4)
+    exact = []
+    for a, b in zip(test.numpy(), load.numpy()):
+        product = np.polynomial.legendre.legval(xi, a).conj()*np.polynomial.legendre.legval(xi, b)
+        exact.append(width/4*np.dot(weights, product))
+    actual = harmonic_cell_pairing(test, load, width)
+    np.testing.assert_allclose(actual.numpy(), exact, atol=1e-15, rtol=0)
+    torch.testing.assert_close(harmonic_cell_pairing(load, test, width), actual.conj())

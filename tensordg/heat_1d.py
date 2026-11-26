@@ -965,6 +965,29 @@ def reconstruct_modal_heat_temperature(cell_means, face_flux, net_power_modes, c
     return mean[:, None] + (cell_width/k).reshape(-1, 1)*(west_offset[:, None]-drop)
 
 
+def harmonic_cell_pairing(test_modes, load_modes, cell_width):
+    """Integrate conj(test)*load/2 per uniform Legendre cell for peak phasors.
+
+    Both inputs have shape (cells, modes); their degrees may differ. The real
+    part is the period-averaged product. For temperature in K and volumetric
+    power in W/m³ the complex pairing has units W K/m².
+    """
+    test = torch.as_tensor(test_modes)
+    load = torch.as_tensor(load_modes, device=test.device)
+    if (test.ndim != 2 or load.ndim != 2 or test.shape[0] != load.shape[0]
+            or min(*test.shape, *load.shape) < 1):
+        raise ValueError("provide nonempty modal matrices with matching cell counts")
+    if not math.isfinite(cell_width) or cell_width <= 0:
+        raise ValueError("cell width must be positive and finite")
+    for field in (test, load):
+        if not (field.is_floating_point() or field.is_complex()) or not torch.isfinite(field).all():
+            raise ValueError("modal fields must be finite floating-point or complex data")
+    count = min(test.shape[1], load.shape[1])
+    product = test[:, :count].conj()*load[:, :count]
+    degree = torch.arange(count, device=product.device, dtype=product.real.dtype)
+    return (product/(2*degree+1)).sum(dim=1)*(cell_width/2)
+
+
 def harmonic_cell_conduction_form(face_flux, net_power_modes, cell_width, conductivity):
     """Cycle mean of the conductive quadratic form per cell (W K/m²).
 
