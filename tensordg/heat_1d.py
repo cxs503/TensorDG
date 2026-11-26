@@ -1001,6 +1001,38 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
     return torch.stack(centers), u, torch.stack(fluxes), traces-shift, float(rate)
 
 
+def solve_harmonic_heat_layer_1d(angular_frequency, wall_temperatures, *, ncells=16, degree=2,
+                                 conductivity=1., capacity=1., penalty=20., heat_loss_coefficient=None,
+                                 thickness=1., source=None, bulk_ambient_temperature=None):
+    """Recover a physical layer from two prescribed wall phasors, including stack contact traces.
+
+    Return layer-local cell centers in m, complex Legendre temperature modes in K,
+    and rightward numerical face fluxes in W/m². All profiles use local meters
+    measured from the left face. Pass the same material, loads and mesh used for
+    harmonic_heat_wall_admittance_1d. sample_heat_stack_fields accepts a layer
+    dimension on the coefficients and evaluates temperature and Fourier flux.
+    """
+    if not math.isfinite(thickness) or thickness <= 0:
+        raise ValueError("thickness must be positive and finite")
+
+    def scaled_loss(xi):
+        return thickness*_bulk_profile(heat_loss_coefficient, thickness*xi, torch.float64)
+
+    def scaled_source(xi):
+        return thickness*_bulk_profile(source, thickness*xi, torch.complex128)
+
+    def ambient_profile(xi):
+        return _bulk_profile(bulk_ambient_temperature, thickness*xi, torch.complex128)
+
+    centers, modes, flux = solve_harmonic_heat_1d(
+        angular_frequency, ncells=ncells, degree=degree, conductivity=conductivity/thickness,
+        capacity=capacity*thickness, penalty=penalty, wall_values=wall_temperatures,
+        heat_loss_coefficient=scaled_loss if heat_loss_coefficient is not None else None,
+        source=scaled_source if source is not None else None,
+        bulk_ambient_temperature=ambient_profile if bulk_ambient_temperature is not None else 0.)
+    return thickness*centers, modes, flux
+
+
 def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
                                      conductivity=1., capacity=1., penalty=20.,
                                      heat_loss_coefficient=None, thickness=1., source=None,
@@ -1016,34 +1048,17 @@ def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
     follow solve_harmonic_heat_1d, including spatially varying bulk loss. Profile callbacks receive
     physical coordinates measured from the left wall.
     """
-    if not math.isfinite(thickness) or thickness <= 0:
-        raise ValueError("thickness must be positive and finite")
-    # Map x=L*xi: conduction scales as k/L, volumetric terms as L.
-    # Inward wall fluxes retain their physical units under this change.
-    def scaled_loss(xi):
-        return thickness*_bulk_profile(heat_loss_coefficient, thickness*xi, torch.float64)
-
-    loss = None if heat_loss_coefficient is None else scaled_loss
-
-    def inward_flux(drive, generation=None, ambient=0.):
-        _, _, flux = solve_harmonic_heat_1d(
-            angular_frequency, ncells=ncells, degree=degree, conductivity=conductivity/thickness,
-            capacity=capacity*thickness, penalty=penalty, heat_loss_coefficient=loss,
-            wall_values=drive, source=generation, bulk_ambient_temperature=ambient)
+    def inward_flux(drive, generation=None, ambient=None):
+        _, _, flux = solve_harmonic_heat_layer_1d(
+            angular_frequency, drive, ncells=ncells, degree=degree, conductivity=conductivity,
+            capacity=capacity, penalty=penalty, thickness=thickness, heat_loss_coefficient=heat_loss_coefficient,
+            source=generation, bulk_ambient_temperature=ambient)
         return torch.stack((flux[0], -flux[-1]))
 
     matrix = torch.stack((inward_flux((1., 0.)), inward_flux((0., 1.))), dim=1)
     if source is None and bulk_ambient_temperature is None:
         return matrix
-
-    def scaled_source(xi):
-        return thickness*_bulk_profile(source, thickness*xi, torch.complex128)
-
-    def ambient_profile(xi):
-        return _bulk_profile(bulk_ambient_temperature, thickness*xi, torch.complex128)
-
-    return matrix, inward_flux((0., 0.), scaled_source if source is not None else None,
-                               ambient_profile if bulk_ambient_temperature is not None else 0.)
+    return matrix, inward_flux((0., 0.), source, bulk_ambient_temperature)
 
 
 def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall_temperatures=None,

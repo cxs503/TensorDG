@@ -1271,6 +1271,9 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
     from scipy.linalg import expm
     from tensordg import compose_heat_wall_admittances_1d, harmonic_heat_wall_admittance_1d
 
+    from tensordg import sample_heat_stack_fields, solve_harmonic_heat_layer_1d
+
+    references = []
     omega, resistance = 3.2, .27
     layers = [(.65, 1.7, 1.3, 1.1, .6-.3j, -.35+.4j),
               (.85, 1.2, .8, 2.2, -.2+.7j, .55-.1j)]
@@ -1281,7 +1284,9 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
     for i, (length, k, c, h, a, b) in enumerate(layers):
         matrix = np.array([[0., -1/k, 0., 0.], [-(h+1j*omega*c), 0., h*a, h*b],
                            [0., 0., 0., 0.], [0., 0., 1., 0.]])
-        temperature, rightward, _, _ = expm(length*matrix) @ [temperature, rightward, 1., 0.]
+        initial = [temperature, rightward, 1., 0.]
+        references.append((matrix, initial))
+        temperature, rightward, _, _ = expm(length*matrix) @ initial
         if i == 0:
             contact_rate = rightward
             traces = np.array([temperature, temperature-resistance*rightward])
@@ -1300,6 +1305,21 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
         contact = np.array([surfaces[0, 1].item(), surfaces[1, 0].item()])
         transfer = np.array([-inward[0, 1].item(), inward[1, 0].item()])
         errors = {"temperature_K": max(abs(contact-traces)), "flux_W_m2": max(abs(transfer-contact_rate))}
+        fractions = np.array([.12, .37, .84])
+        interior_errors = np.zeros(2)
+        for i, (length, k, c, h, a, b) in enumerate(layers):
+            centers, modes, faces = solve_harmonic_heat_layer_1d(
+                omega, surfaces[i], ncells=n, degree=2, thickness=length, conductivity=k,
+                capacity=c, heat_loss_coefficient=h, bulk_ambient_temperature=lambda x: a+b*x)
+            torch.testing.assert_close(faces[[0, -1]], inward[i]*faces.new_tensor([1, -1]), atol=1e-10, rtol=0)
+            field, flux = sample_heat_stack_fields(modes[None], [length], k, fractions)
+            positions = (np.arange(n)[:, None]+fractions)*length/n
+            np.testing.assert_allclose(centers.numpy(), (np.arange(n)+.5)*length/n)
+            matrix, initial = references[i]
+            exact = np.array([(expm(x*matrix) @ initial)[:2] for x in positions.ravel()])
+            observed = np.column_stack((field.numpy().ravel(), flux.numpy().ravel()))
+            interior_errors = np.maximum(interior_errors, abs(observed-exact).max(axis=0))
+        errors.update(interior_temperature_K=interior_errors[0], interior_flux_W_m2=interior_errors[1])
         balance = abs(transfer[0]-transfer[1])
         jump = abs(contact[0]-contact[1]-resistance*transfer[0])
         record_property(f"n{n}_flux_balance_W_m2", float(balance))
@@ -1310,5 +1330,5 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
             if previous is not None:
                 order = math.log2(previous[name]/error)
                 record_property(f"n{n}_{name}_order", order)
-                assert order > 2.8
+                assert order > (1.7 if name == "interior_flux_W_m2" else 2.8)
         previous = errors
