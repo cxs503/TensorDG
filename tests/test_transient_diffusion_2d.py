@@ -367,3 +367,34 @@ def test_complex_low_frequency_coefficients_superpose_independent_loads(anchored
     if not anchored:
         with pytest.raises(ValueError,match="zero net load"):
             solve_low_frequency_diffusion_2d(**options,complex_load=True,forcing=lambda x,y:1j)
+
+
+@pytest.mark.parametrize("axis", ["x", "y"])
+@pytest.mark.parametrize("method", ["theta", "sdirk2"])
+def test_directional_resistive_contact_heat_reversal(axis, method, record_property):
+    # Unit jump resistance. Temperatures are 1-t on the low side and zero
+    # on the high side. Trace loads cancel transfer and a bulk sink drives
+    # the prescribed temperature ramp. Each face has length 1/3.
+    shape = (4, 3) if axis == "x" else (3, 4)
+    mask = np.zeros((3, 3))
+    mask[1, :] = 1.
+    if axis == "y":
+        mask = mask.T
+    def low(x, y):
+        return ((x if axis == "x" else y) < .5).double()
+    opts = dict(ncells=shape, degree=2, bc=INSULATED, contact_resistance={axis: mask})
+    times = np.array([0., .5, 1.5, 2.])
+    _, _, _, means, parts = solve_transient_diffusion_2d(
+        low, times, method=method, source_history=lambda t,x,y: -low(x,y),
+        trace_power_history=lambda t: {axis: ((1-t)*mask, (t-1)*mask)},
+        return_directional_contact_heat=True, return_interval_means=True, **opts)
+    contact = parts[axis]
+    np.testing.assert_array_equal(contact["indices"], np.argwhere(mask))
+    for name, expected in (("forward", [.375, .125, 0.]), ("reverse", [0., .125, .375])):
+        error = np.max(abs(contact[name].numpy()-np.array(expected)[:, None]/3))
+        record_property(f"{name}_max_error_J", error)
+        assert error < 1e-12
+    for i, (dt, field) in enumerate(zip(np.diff(times), means)):
+        px, py = poisson_face_powers_2d(field, bc=INSULATED, contact_resistance={axis: mask})
+        flux = px[2, :] if axis == "x" else py[:, 2]
+        torch.testing.assert_close(contact["forward"][i]-contact["reverse"][i], dt*flux, rtol=0., atol=1e-13)

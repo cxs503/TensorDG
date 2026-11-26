@@ -6,7 +6,7 @@ from scipy.sparse import bsr_matrix, coo_matrix, diags
 from scipy.sparse.linalg import splu
 
 from .poisson_2d import _operators, _face_basis
-from .poisson_2d_bc import assemble_poisson_2d_bc, _wall_storage, _trace_face_data, _add_trace_power
+from .poisson_2d_bc import assemble_poisson_2d_bc, _wall_storage, _trace_face_data, _add_trace_power, _contact_faces
 
 
 def _capacity_quadrature(grid):
@@ -57,7 +57,8 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
                                  penalty=20., load_amplitude=None, conductivity=1.,
                                  rannacher=False, return_interval_means=False, load_jump_times=(),
                                  return_load_means=False, source_history=None, wall_areal_heat_capacity=None, contact_resistance=None, trace_power=None,
-                                 trace_heat_capacity=None, trace_power_history=None, return_history_heat=False, method="theta"):
+                                 trace_heat_capacity=None, trace_power_history=None, return_history_heat=False, method="theta",
+                                 return_directional_contact_heat=False):
     """Solve C*u_t - div(k grad u) + reaction*u = f with optional time-dependent loads.
 
     times specifies strictly increasing output times, each interval taking one
@@ -95,6 +96,13 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     per requested interval (after the optional modal means). return_history_heat
     appends the per-cell heat from source_history and trace_power_history only,
     in joules for unit depth, accumulated with the actual integration stages.
+    return_directional_contact_heat appends a dict keyed by supplied contact
+    axis. Each entry stores indices (i,j) of positive-resistance interior
+    faces and forward/reverse heat magnitudes in J (interval, selected face).
+    Forward is increasing coordinate. Reconstruct each face-integrated power
+    linearly in time from its weighted stage mean and final power. The signed
+    difference gives the native integrated transfer; load jumps and damping
+    substeps split the time integration.
     """
     times = np.asarray(times,dtype=float)
     if times.ndim != 1 or len(times)<2 or not np.isfinite(times).all() or np.any(np.diff(times)<=0):
@@ -135,6 +143,28 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
     hx,hy = grid["hx"],grid["hy"]
     modes = degree+1
     shape = (len(x),len(y),modes,modes)
+    if return_directional_contact_heat:
+        directional = {}
+        contact_geometry = {}
+        signs = (-1.)**np.arange(modes)
+        for axis, resistance in _contact_faces(contact_resistance, len(x), len(y), x.device, x.dtype).items():
+            i, j = np.nonzero(resistance.numpy() > 0)
+            length = hy if axis == "x" else hx
+            contact_geometry[axis] = (i, j, length/resistance.numpy()[i, j])
+            directional[axis] = dict(indices=torch.from_numpy(np.column_stack((i, j))),
+                                     forward=torch.zeros((len(times)-1, len(i)), dtype=x.dtype),
+                                     reverse=torch.zeros((len(times)-1, len(i)), dtype=x.dtype))
+
+        def contact_power(state, axis, i, j, conductance):
+            field = state.reshape(shape)
+            # Integration over the transverse coordinate retains its constant
+            # Legendre coefficient. Normal traces use P_m(+1)=1, P_m(-1)=(-1)^m.
+            if axis == "x":
+                jump = field[i, j, :, 0].sum(axis=1)-field[i+1, j, :, 0] @ signs
+            else:
+                jump = field[i, j, 0, :].sum(axis=1)-field[i, j+1, 0, :] @ signs
+            return conductance*jump
+
     quadrature = None
     if callable(capacity) or callable(initial_temperature) or source_history is not None:
         quadrature = _capacity_quadrature(grid)
@@ -259,6 +289,18 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
             first_state = state
             increment = factor.solve(dt*(applied-operator@state))
             end_state = state+increment
+        if return_directional_contact_heat:
+            for axis, geometry in contact_geometry.items():
+                first = contact_power(first_state, axis, *geometry)
+                last = contact_power(end_state, axis, *geometry)
+                mean = (1-weight)*first+weight*last
+                start = 2*(1-weight)*first+(2*weight-1)*last
+                crossing = ((start < 0) & (last > 0)) | ((start > 0) & (last < 0))
+                small, large = np.minimum(abs(start), abs(last)), np.maximum(abs(start), abs(last))
+                ratio = small/np.where(large > 0, large, 1.)
+                minor = np.where(crossing, .5*small*(ratio/(1+ratio)), 0.)
+                directional[axis]["forward"][out] += torch.from_numpy(dt*(np.maximum(mean, 0.)+minor))
+                directional[axis]["reverse"][out] += torch.from_numpy(dt*(np.maximum(-mean, 0.)+minor))
         fraction = dt/(times[out+1]-times[out])
         if return_interval_means:
             modal_means[out] += fraction*((1-weight)*first_state+weight*end_state)
@@ -275,6 +317,8 @@ def solve_transient_diffusion_2d(initial_temperature, times, *, ncells=16, degre
         result += (torch.from_numpy(load_means),)
     if return_history_heat:
         result += (torch.from_numpy(history_heat),)
+    if return_directional_contact_heat:
+        result += (directional,)
     return result
 
 
