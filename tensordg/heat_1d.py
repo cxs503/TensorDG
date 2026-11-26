@@ -599,7 +599,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
                            source=None, wall_types=("dirichlet","dirichlet"), wall_values=(0.,0.), penalty=20.,
                            film_coefficients=(0.,0.), wall_areal_heat_capacity=(0.,0.),
                            return_wall_temperatures=False, heat_loss_coefficient=None, bulk_ambient_temperature=0.,
-                           separate_mean=False, return_mean_rate=False):
+                           separate_mean=False, return_mean_rate=False, return_cell_power=False):
     """Solve iωcU - kU'' = source on the unit slab with exp(+iωt) convention.
 
     Each end prescribes a temperature (dirichlet), inward external heat flux
@@ -614,6 +614,11 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     Source phasors may be constant or callable on real cell quadrature points.
     Returns cell centers, complex128 Legendre coefficients and the rightward
     numerical flux at every face. Uses a CPU sparse direct solve.
+    return_cell_power appends a dict after optional wall temperatures and
+    before any mean or rate. Its source, bulk and storage entries are complex
+    cell-integrated powers per unit area (W/m²). Positive bulk exchange heats
+    the material; storage equals source + bulk + left flux - right flux.
+    Wall storage is accounted for separately in the boundary face fluxes.
     With separate_mean=True on a slab without temperature, film or bulk
     exchange anchors, return temperature coefficients and optional wall traces
     relative to the capacity-weighted mean (including wall storage). Append
@@ -654,6 +659,8 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     nodes,weights,phi,_,_,left,right,dleft,dright = ops
     load = torch.zeros((ncells,degree+1),dtype=torch.complex128) if source is None else _source_load(
         centers,h,nodes,weights,phi,source,dtype=torch.complex128)
+    if return_cell_power:
+        source_power = load[:, 0].clone()
     exchange = None
     if heat_loss_coefficient is not None:
         points = centers[:,None] + .5*h*nodes
@@ -714,12 +721,23 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
             external = film[i]*(values[i]-surface[i]) if wall_types[i]=="robin" else values[i]
             storage_flux = 1j*angular_frequency*wall_capacity[i]
             flux[face] = (1-2*i)*(external-wall_capacity[i]*rate-storage_flux*surface[i])
+    if return_cell_power:
+        # For floating slabs the solve returns a relative state. Compute its
+        # storage before adding the uniform phasor, which can be huge at low ω.
+        storage_power = capacity*h*(rate + 1j*angular_frequency*coefficients[:, 0])
+        bulk_power = torch.zeros_like(source_power)
+        if exchange is not None:
+            field = coefficients @ phi.to(coefficients.dtype).T
+            bulk_power = (weighted*(ambient-field)).sum(dim=1)
+        cell_power = dict(source=source_power, bulk=bulk_power, storage=storage_power)
     if not (separate_mean or return_mean_rate):
         coefficients[:,0] += mean
         surface += mean
     result = (centers,coefficients,flux)
     if return_wall_temperatures:
         result += (surface,)
+    if return_cell_power:
+        result += (cell_power,)
     if return_mean_rate:
         return (*result, coefficients.new_tensor(rate))
     return (*result, coefficients.new_tensor(mean)) if separate_mean else result

@@ -1107,3 +1107,55 @@ def test_quadratic_generation_in_drifting_stack(degree, record_property):
                 record_property(f"n{n}_{key}_order", order)
                 assert order > expected_order-.25
         previous = errors
+
+
+def test_harmonic_cell_powers_against_polynomial_slab(record_property):
+    import numpy as np
+    from numpy.polynomial import Polynomial
+    from tensordg import solve_harmonic_heat_1d
+
+    n, k, c, omega = 9, 1.7, 2.1, 3.
+    field = Polynomial([.4+.2j, -.7+.5j, .9-.4j])
+    ambient = Polynomial([-.3j, .8+.2j])
+    loss = Polynomial([.5, 1.1])
+    bulk = loss*(ambient-field)
+    storage = 1j*omega*c*field
+    source = storage-k*field.deriv(2)-bulk
+    ends = np.array([0., 1.])
+    wall_mass = np.array([.3, .7])
+    film = np.array([3., 4.])
+    inward = np.array([-1, 1])*k*field.deriv()(ends)
+    fluid = field(ends)+(inward+1j*omega*wall_mass*field(ends))/film
+
+    def profile(poly):
+        return lambda x: sum(a*x**i for i, a in enumerate(poly.coef))
+
+    _, _, flux, surface, powers = solve_harmonic_heat_1d(
+        omega, ncells=n, degree=2, conductivity=k, capacity=c, source=profile(source),
+        heat_loss_coefficient=profile(loss), bulk_ambient_temperature=profile(ambient),
+        wall_types=("robin", "robin"), wall_values=fluid, film_coefficients=film,
+        wall_areal_heat_capacity=wall_mass, return_wall_temperatures=True, return_cell_power=True)
+    faces = np.linspace(0., 1., n+1)
+    for channel, polynomial in (("bulk", bulk), ("source", source), ("storage", storage)):
+        reference = np.diff(polynomial.integ()(faces))
+        error = np.max(abs(powers[channel].numpy()-reference))
+        record_property(channel+"_max_error_W_m2", float(error))
+        assert error < 1e-12
+    balance = powers["source"]+powers["bulk"]-flux.diff()-powers["storage"]
+    record_property("max_balance_error_W_m2", balance.abs().max().item())
+    assert balance.abs().max() < 1e-11
+    np.testing.assert_allclose(surface.numpy(), field(ends), atol=1e-12, rtol=0)
+
+
+@pytest.mark.parametrize("omega", [0., 1e-16])
+def test_floating_cell_power_retains_common_heating_rate(omega):
+    from tensordg import solve_harmonic_heat_1d
+
+    _, _, flux, powers, rate = solve_harmonic_heat_1d(
+        omega, ncells=6, capacity=2., source=2., wall_types=("neumann", "neumann"),
+        wall_values=(.2, .5), wall_areal_heat_capacity=(.2, .5),
+        return_cell_power=True, return_mean_rate=True)
+    torch.testing.assert_close(rate, rate.new_tensor(1.))
+    torch.testing.assert_close(powers["storage"], powers["source"], atol=1e-14, rtol=0)
+    torch.testing.assert_close(powers["bulk"], torch.zeros_like(powers["bulk"]))
+    torch.testing.assert_close(flux, torch.zeros_like(flux), atol=1e-13, rtol=0)
