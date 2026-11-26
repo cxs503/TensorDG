@@ -1109,7 +1109,8 @@ def test_quadratic_generation_in_drifting_stack(degree, record_property):
         previous = errors
 
 
-def test_harmonic_cell_powers_against_polynomial_slab(record_property):
+@pytest.mark.parametrize("kinds", [("robin", "robin"), ("dirichlet", "neumann"), ("neumann", "dirichlet")])
+def test_harmonic_cell_powers_against_polynomial_slab(kinds, record_property):
     import numpy as np
     from numpy.polynomial import Polynomial
     from tensordg import solve_harmonic_heat_1d
@@ -1125,16 +1126,28 @@ def test_harmonic_cell_powers_against_polynomial_slab(record_property):
     wall_mass = np.array([.3, .7])
     film = np.array([3., 4.])
     inward = np.array([-1, 1])*k*field.deriv()(ends)
-    fluid = field(ends)+(inward+1j*omega*wall_mass*field(ends))/film
+    wall_mass[np.array(kinds) == "dirichlet"] = 0.
+    stored = 1j*omega*wall_mass*field(ends)
+    inputs = inward+stored
+    values = [dict(robin=field(x)+inputs[i]/film[i], dirichlet=field(x), neumann=inputs[i])[kind]
+              for i, (kind, x) in enumerate(zip(kinds, ends))]
+    film[np.array(kinds) != "robin"] = 0.
 
     def profile(poly):
         return lambda x: sum(a*x**i for i, a in enumerate(poly.coef))
 
-    _, _, flux, surface, powers = solve_harmonic_heat_1d(
+    _, _, flux, surface, powers, wall = solve_harmonic_heat_1d(
         omega, ncells=n, degree=2, conductivity=k, capacity=c, source=profile(source),
         heat_loss_coefficient=profile(loss), bulk_ambient_temperature=profile(ambient),
-        wall_types=("robin", "robin"), wall_values=fluid, film_coefficients=film,
-        wall_areal_heat_capacity=wall_mass, return_wall_temperatures=True, return_cell_power=True)
+        wall_types=kinds, wall_values=values, film_coefficients=film, wall_areal_heat_capacity=wall_mass,
+        return_wall_temperatures=True, return_cell_power=True, return_wall_power=True)
+    for name, reference in (("external", inputs), ("storage", stored), ("material", inward)):
+        error = np.max(abs(wall[name].numpy()-reference))
+        record_property("wall_"+name+"_error_W_m2", float(error))
+        assert error < 1e-11
+    residual = (wall["external"]-wall["material"]-wall["storage"]).abs().max().item()
+    record_property("wall_balance_W_m2", residual)
+    assert residual < 1e-13
     faces = np.linspace(0., 1., n+1)
     for channel, polynomial in (("bulk", bulk), ("source", source), ("storage", storage)):
         reference = np.diff(polynomial.integ()(faces))
@@ -1151,10 +1164,13 @@ def test_harmonic_cell_powers_against_polynomial_slab(record_property):
 def test_floating_cell_power_retains_common_heating_rate(omega):
     from tensordg import solve_harmonic_heat_1d
 
-    _, _, flux, powers, rate = solve_harmonic_heat_1d(
+    _, _, flux, powers, wall, rate = solve_harmonic_heat_1d(
         omega, ncells=6, capacity=2., source=2., wall_types=("neumann", "neumann"),
         wall_values=(.2, .5), wall_areal_heat_capacity=(.2, .5),
-        return_cell_power=True, return_mean_rate=True)
+        return_cell_power=True, return_wall_power=True, return_mean_rate=True)
+    torch.testing.assert_close(wall["storage"], rate.new_tensor([.2, .5]))
+    torch.testing.assert_close(wall["external"], wall["storage"])
+    torch.testing.assert_close(wall["material"], torch.zeros_like(wall["material"]), atol=1e-13, rtol=0)
     torch.testing.assert_close(rate, rate.new_tensor(1.))
     torch.testing.assert_close(powers["storage"], powers["source"], atol=1e-14, rtol=0)
     torch.testing.assert_close(powers["bulk"], torch.zeros_like(powers["bulk"]))

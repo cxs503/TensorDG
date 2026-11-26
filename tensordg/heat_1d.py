@@ -599,7 +599,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
                            source=None, wall_types=("dirichlet","dirichlet"), wall_values=(0.,0.), penalty=20.,
                            film_coefficients=(0.,0.), wall_areal_heat_capacity=(0.,0.),
                            return_wall_temperatures=False, heat_loss_coefficient=None, bulk_ambient_temperature=0.,
-                           separate_mean=False, return_mean_rate=False, return_cell_power=False):
+                           separate_mean=False, return_mean_rate=False, return_cell_power=False, return_wall_power=False):
     """Solve iωcU - kU'' = source on the unit slab with exp(+iωt) convention.
 
     Each end prescribes a temperature (dirichlet), inward external heat flux
@@ -618,7 +618,10 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     before any mean or rate. Its source, bulk and storage entries are complex
     cell-integrated powers per unit area (W/m²). Positive bulk exchange heats
     the material; storage equals source + bulk + left flux - right flux.
-    Wall storage is accounted for separately in the boundary face fluxes.
+    return_wall_power appends a dict after any cell powers and before the mean
+    or rate. Each entry is a left/right pair in W/m²: external power into the
+    wall, storage in its areal capacity, and material power into the slab.
+    At a Dirichlet wall external power is the numerical boundary reaction.
     With separate_mean=True on a slab without temperature, film or bulk
     exchange anchors, return temperature coefficients and optional wall traces
     relative to the capacity-weighted mean (including wall storage). Append
@@ -714,13 +717,25 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     coefficients = torch.from_numpy(state.reshape(ncells,degree+1))
     flux = conductivity*sipg_heat_face_fluxes(coefficients,penalty,wall_temperatures=values)
     surface = torch.from_numpy(trace @ state)
+    if return_wall_power:
+        wall_power = {name: torch.empty_like(surface) for name in ("external", "storage", "material")}
     for i,face in enumerate((0,-1)):
         if wall_types[i]=="dirichlet":
             surface[i] = values[i]
+            external = (1-2*i)*flux[face]
+            stored = 0.
         else:
             external = film[i]*(values[i]-surface[i]) if wall_types[i]=="robin" else values[i]
-            storage_flux = 1j*angular_frequency*wall_capacity[i]
-            flux[face] = (1-2*i)*(external-wall_capacity[i]*rate-storage_flux*surface[i])
+            common_storage = wall_capacity[i]*rate
+            relative_storage = (1j*angular_frequency*wall_capacity[i])*surface[i]
+            stored = common_storage + relative_storage
+            # Subtract the common heating first to retain the smaller relative
+            # storage term when the prescribed input balances the common part.
+            flux[face] = (1-2*i)*(external-common_storage-relative_storage)
+        if return_wall_power:
+            wall_power["external"][i] = external
+            wall_power["storage"][i] = stored
+            wall_power["material"][i] = (1-2*i)*flux[face]
     if return_cell_power:
         # For floating slabs the solve returns a relative state. Compute its
         # storage before adding the uniform phasor, which can be huge at low ω.
@@ -738,6 +753,8 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
         result += (surface,)
     if return_cell_power:
         result += (cell_power,)
+    if return_wall_power:
+        result += (wall_power,)
     if return_mean_rate:
         return (*result, coefficients.new_tensor(rate))
     return (*result, coefficients.new_tensor(mean)) if separate_mean else result
