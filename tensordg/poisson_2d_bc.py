@@ -587,6 +587,54 @@ def poisson_interface_traces_2d(coeff, axis, face, *, conductivity=1., points=(0
     return torch.stack(temperatures, -3), torch.stack(gradients, -3), torch.stack(fluxes, -3)
 
 
+def directional_contact_face_powers_2d(coeff, contact_resistance):
+    """Resolve instantaneous counterflow along each finite-resistance face.
+
+    For a real P1-P3 modal field, integrate the positive and negative parts of
+    the temperature jump divided by areal resistance along each selected face.
+    Return a dict per supplied axis with interior-face indices (i,j) and
+    nonnegative forward/reverse powers in W for unit depth. Forward denotes
+    increasing coordinate. Roots split the tangential polynomial before
+    quadrature so oppositely directed local fluxes contribute separately.
+    """
+    if coeff.ndim != 4 or not coeff.is_floating_point() or not torch.isfinite(coeff).all():
+        raise ValueError("provide a finite real floating-point modal field")
+    nx, ny, modes, last = coeff.shape
+    if modes != last or modes not in (2, 3, 4) or min(nx, ny) < 2:
+        raise ValueError("expected square P1 to P3 modal blocks")
+    contacts = _contact_faces(contact_resistance, nx, ny, coeff.device, coeff.dtype)
+    signs = coeff.new_tensor([(-1)**i for i in range(modes)])
+    # Two Gauss points integrate every supported polynomial on a sign interval.
+    gauss = np.array([-1., 1.])/np.sqrt(3.)
+    result = {}
+    for axis, resistance in contacts.items():
+        indices = torch.nonzero(resistance > 0)
+        i, j = indices.unbind(dim=1)
+        if axis == "x":
+            jump = coeff[i,j].sum(dim=1)-(coeff[i+1,j]*signs[:, None]).sum(dim=1)
+            length = 1/ny
+        else:
+            jump = coeff[i,j].sum(dim=2)-(coeff[i,j+1]*signs).sum(dim=2)
+            length = 1/nx
+        flux = jump/resistance[i,j,None]
+        forward, reverse = [], []
+        for row in flux:
+            roots = np.polynomial.legendre.legroots(row.detach().cpu().double().numpy())
+            interior = roots.real[(roots.imag == 0) & (roots.real > -1) & (roots.real < 1)]
+            bounds = np.r_[-1., np.sort(interior), 1.]
+            half = np.diff(bounds)/2
+            nodes = bounds[:-1,None]+half[:,None]*(1+gauss)
+            basis = row.new_tensor(np.polynomial.legendre.legvander(nodes, modes-1))
+            sampled = basis @ row
+            weights = row.new_tensor(half*length/2)
+            forward.append(weights @ sampled.clamp_min(0).sum(dim=1))
+            reverse.append(weights @ (-sampled).clamp_min(0).sum(dim=1))
+        result[axis] = dict(indices=indices,
+                            forward=torch.stack(forward) if forward else coeff.new_empty(0),
+                            reverse=torch.stack(reverse) if reverse else coeff.new_empty(0))
+    return result
+
+
 def poisson_face_powers_2d(coeff, *, penalty=20., bc=None, dirichlet_values=None, neumann_flux=None, robin_films=None, conductivity=1.,
                            wall_areal_heat_capacity=None, temperature_rate=None, contact_resistance=None):
     """Integrate SIPG numerical heat flux over each face for unit depth.

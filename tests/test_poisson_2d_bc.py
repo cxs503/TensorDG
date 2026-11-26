@@ -430,3 +430,47 @@ def test_interface_traces_preserve_leading_dimensions(axis):
             expected = poisson_interface_traces_2d(coeff[batch,time], axis, 2, **options)
             for sampled, single in zip(actual, expected):
                 torch.testing.assert_close(sampled[batch,time], single)
+
+
+@pytest.mark.parametrize("axis", ["x", "y"])
+@pytest.mark.parametrize("degree,roots", [(1, [0.]), (2, [-.7, .27]), (3, [-.8, .13, .73])])
+def test_resolve_counterflow_along_contact_face(axis, degree, roots, record_property):
+    import numpy as np
+    from tensordg import directional_contact_face_powers_2d, poisson_face_powers_2d
+
+    # The trace jump includes nonconstant normal modes on both sides.
+    # Its quotient by R is the known monic polynomial in local tangential position.
+    polynomial = np.polynomial.Polynomial.fromroots(roots)
+    modal = torch.from_numpy(polynomial.convert(kind=np.polynomial.Legendre).coef)
+    field = torch.zeros((2, 4, degree+1, degree+1), dtype=torch.float64)
+    resistance = torch.zeros((1, 4), dtype=torch.float64)
+    resistance[0, 2] = .5
+    field[0, 2, 1, :] = .2*modal
+    field[1, 2, 1, :] = .3*modal
+    if axis == "y":
+        field = field.permute(1, 0, 3, 2)
+        resistance = resistance.T
+    opts = {axis: resistance}
+    contact = directional_contact_face_powers_2d(field, opts)[axis]
+    torch.testing.assert_close(contact["indices"], torch.nonzero(resistance))
+    integrals = np.diff(polynomial.integ()(np.r_[-1., roots, 1.]))/8
+    # Face length 1/4 and reference-to-face Jacobian 1/8.
+    for key, expected in (("forward", integrals.clip(min=0).sum()),
+                          ("reverse", -integrals.clip(max=0).sum())):
+        error = abs(contact[key].item()-expected)
+        record_property(f"{key}_error_W", error)
+        assert error < 1e-14 and contact[key].item() > 0
+    px, py = poisson_face_powers_2d(field, contact_resistance=opts)
+    net = px[1, 2] if axis == "x" else py[2, 1]
+    assert abs((contact["forward"]-contact["reverse"]).item()-net.item()) < 1e-14
+
+
+def test_contact_face_counterflow_uniform_jump_and_empty_axis():
+    from tensordg import directional_contact_face_powers_2d
+    field = torch.zeros((2, 3, 2, 2), dtype=torch.float64)
+    field[0, :, 0, 0] = torch.tensor([0., -2., 1.])
+    parts = directional_contact_face_powers_2d(field, {"x": 2., "y": 0.})
+    torch.testing.assert_close(parts["x"]["forward"], field.new_tensor([0., 0., 1/6]))
+    torch.testing.assert_close(parts["x"]["reverse"], field.new_tensor([0., 1/3, 0.]))
+    assert parts["y"]["indices"].shape == (0, 2)
+    assert parts["y"]["forward"].numel() == parts["y"]["reverse"].numel() == 0

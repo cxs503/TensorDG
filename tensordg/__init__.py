@@ -592,6 +592,7 @@ from .transient_diffusion_2d import solve_transient_diffusion_2d, solve_low_freq
 # ---- poisson_2d_bc
 from .poisson_2d_bc import (
     poisson_face_powers_2d,
+    directional_contact_face_powers_2d,
     poisson_interface_traces_2d,
     assemble_poisson_2d_bc,
     solve_poisson_2d_bc,
@@ -802,6 +803,7 @@ __all__ = [
     "assemble_ldg_dirichlet_1d",
     "assemble_operator",
     "poisson_face_powers_2d",
+    "directional_contact_face_powers_2d",
     "poisson_interface_traces_2d",
     "assemble_poisson_2d_bc",
     "assemble_poisson_2d_sparse",
