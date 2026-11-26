@@ -1,0 +1,31 @@
+{
+  "source_commit": "84637d5e49d5583771b0563342d001edabe17391",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 90,
+  "failures": 0,
+  "reference": "Two harmonic layers with resistive contact and affine ambient temperatures. Propagate the continuum state by a matrix exponential and integrate the balance analytically on each side of the contact. Compare stored energy and the net power from reconstructed off-grid Fourier fluxes and bulk exchange.",
+  "measurements": {
+    "n4_interval_energy_error_J_m2": 2.7349516995820383e-05,
+    "n4_interval_power_residual_W_m2": 0.017982767002266378,
+    "n4_flux_balance_W_m2": 3.1401849173675503e-16,
+    "n4_jump_residual_K": 2.2887833992611187e-16,
+    "n8_interval_energy_error_J_m2": 1.864129583477949e-06,
+    "n8_interval_power_residual_W_m2": 0.004621462511404483,
+    "n8_interval_energy_order": 3.874941298247421,
+    "n8_interval_power_order": 1.9601936395923372,
+    "n8_flux_balance_W_m2": 3.1401849173675503e-16,
+    "n8_jump_residual_K": 5.551115123125783e-17,
+    "n16_interval_energy_error_J_m2": 1.11230578874436e-07,
+    "n16_interval_power_residual_W_m2": 0.001137832171447028,
+    "n16_interval_energy_order": 4.06687678610117,
+    "n16_interval_power_order": 2.022061702261185,
+    "n16_flux_balance_W_m2": 9.155133597044475e-16,
+    "n16_jump_residual_K": 3.1401849173675503e-16,
+    "n32_interval_energy_error_J_m2": 7.107348455193284e-09,
+    "n32_interval_power_residual_W_m2": 0.0002865354606541484,
+    "n32_interval_energy_order": 3.9680982171348136,
+    "n32_interval_power_order": 1.9895021797881158,
+    "n32_flux_balance_W_m2": 8.005932084973442e-16,
+    "n32_jump_residual_K": 1.7554167342883506e-16
+  }
+}
