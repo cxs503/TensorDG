@@ -726,14 +726,16 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
 
 
 def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_flux, *,
-                                 source=0., contact_resistance=0., area=1., ncells=16, degree=2,
+                                 source=0., source_gradient=0., contact_resistance=0., area=1., ncells=16, degree=2,
                                  shoulder_areal_heat_capacity=0., end_areal_heat_capacity=0.,
                                  interface_left_areal_heat_capacity=0., interface_areal_heat_capacity=0.,
                                  interface_left_heat_sources=0., interface_heat_sources=0.):
     """Stationary relative temperature of a stepped stack under constant loads.
 
     lengths (m), conductivity (W/m/K) and volumetric capacity (J/m³/K)
-    describe homogeneous layers. Source (W/m³) is constant per layer.
+    describe homogeneous layers. source (W/m³) is the layer mean. Within
+    each layer the generation is source + source_gradient*(x-x_mid), with
+    gradient in W/m⁴ and x_mid the physical layer midpoint.
     area (m²) is constant per layer. Contacts cover the smaller adjoining
     section. The insulated shoulder stores shoulder_areal_heat_capacity
     (J/m²/K) times the exposed area at the larger section’s trace temperature.
@@ -769,6 +771,7 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
     k = profile(conductivity, layers, "conductivity", positive=True)
     c = profile(capacity, layers, "capacity", positive=True)
     generation = profile(source, layers, "source")
+    gradients = profile(source_gradient, layers, "source gradient")
     resistance = profile(contact_resistance, layers-1, "contact resistance")
     if np.any(resistance < 0):
         raise ValueError("contact resistance must be nonnegative")
@@ -807,9 +810,12 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
     centers, modes, fluxes, traces = [], [], [], []
     origin = 0.
     for i, length in enumerate(lengths):
+        def local_load(x):
+            return volume[i]*(generation[i]+gradients[i]*length*(x-.5))
+
         x, u, q, walls, _ = solve_harmonic_heat_1d(
             0., ncells=ncells, degree=degree, conductivity=k[i]*area[i]/length, capacity=mass[i],
-            source=volume[i]*generation[i], wall_types=("neumann", "neumann"),
+            source=local_load, wall_types=("neumann", "neumann"),
             wall_values=(cuts[i]+wall_load[i, 0], -cuts[i+1]+wall_load[i, 1]),
             wall_areal_heat_capacity=wall_mass[i],
             return_mean_rate=True, return_wall_temperatures=True)

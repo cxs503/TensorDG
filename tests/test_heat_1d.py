@@ -960,3 +960,43 @@ def test_drifting_stack_storing_ends_share_the_bulk_heating_rate():
     torch.testing.assert_close(q[0, [0, -1]], q.new_tensor([3., 2.]))
     energy = 2*u[0, :, 0].mean()+2*t[0, 0]+4*t[0, 1]
     assert energy.abs() < 1e-12
+
+
+@pytest.mark.parametrize("degree,n", [(2, 4), (2, 8), (2, 16), (3, 6)])
+@pytest.mark.parametrize("sign", [-1., 1.])
+def test_drifting_stack_affine_generation(degree, n, sign, record_property):
+    from tensordg import solve_drifting_heat_stack_1d
+
+    length = [1.5, .5]
+    area = [1., 2.]
+    k = [2., .8]
+    capacity = [1., 1.5]
+    gradients = [sign*2., -sign*.75]
+    # Uniform external through-power plus zero-integral generation gradients.
+    power, resistance, target_rate = .3, .4, .5
+    _, u, q, walls, rate = solve_drifting_heat_stack_1d(
+        length, k, capacity, (power, -power/2), area=area, contact_resistance=resistance,
+        source=[c*target_rate for c in capacity], source_gradient=gradients, ncells=n, degree=degree)
+    expected_means, expected_fluxes, expected_walls = [], [], []
+    temperature = 0.
+    for h, section, cond, gradient in zip(length, area, k, gradients):
+        x = torch.linspace(0., h, n+1, dtype=u.dtype)
+        # Integrate dq/dx = G*(x-h/2), then Fourier's law and the cell mean.
+        expected_fluxes.append(power/section + gradient*x*(x-h)/2)
+        primitive = (temperature*x-power*x**2/(2*section*cond)
+                     -gradient*(x**4/24-h*x**3/12)/cond)
+        expected_means.append(primitive.diff()/(h/n))
+        east = temperature-power*h/(section*cond)+gradient*h**3/(12*cond)
+        expected_walls.append([temperature, east])
+        temperature = east-resistance*power
+    means = torch.stack(expected_means)
+    masses = u.new_tensor([h*a*c for h, a, c in zip(length, area, capacity)])
+    shift = masses@means.mean(1)/masses.sum()
+    errors = dict(cell_mean_K=(u[:, :, 0]-means+shift).abs().max().item(),
+                  trace_K=(walls-u.new_tensor(expected_walls)+shift).abs().max().item(),
+                  face_flux_W_m2=(q-torch.stack(expected_fluxes)).abs().max().item(),
+                  rate_K_s=abs(rate-target_rate))
+    for name, error in errors.items():
+        record_property(name, error)
+    assert errors["rate_K_s"] < 1e-13
+    assert max(errors.values()) < (2e-10 if degree == 3 else .1/n**2)
