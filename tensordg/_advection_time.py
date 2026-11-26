@@ -12,7 +12,7 @@ def velocity_components(values, dimension):
 
 
 def advance_transport(coeff, spatial_rhs, spacing, degree, tableau, velocity, start_time,
-                      final_time, cfl, max_speed, max_dt, velocity_jump_times):
+                      final_time, cfl, max_speed, max_dt, velocity_jump_times, accumulate_stage=None):
     if max_dt is not None and (not math.isfinite(max_dt) or max_dt <= 0.0):
         raise ValueError("max_dt must be positive and finite")
 
@@ -62,6 +62,10 @@ def advance_transport(coeff, spatial_rhs, spacing, degree, tableau, velocity, st
             stage_cfl = dt * (2 * degree + 1) * stage_rate
             if stage_cfl > cfl and not math.isclose(stage_cfl, cfl, rel_tol=1e-12):
                 raise ValueError("stage velocity exceeds the requested CFL; supply max_speed or reduce max_dt")
+        if accumulate_stage is not None:
+            weight = next(stage_weights)
+            if weight:
+                accumulate_stage(state, components, dt*weight)
         return spatial_rhs(state, components)
 
     for begin, end, last in intervals:
@@ -73,6 +77,8 @@ def advance_transport(coeff, spatial_rhs, spacing, degree, tableau, velocity, st
         steps += segment_steps
         largest_dt = max(largest_dt, dt)
         for step in range(segment_steps):
+            if accumulate_stage is not None:
+                stage_weights = iter(tableau.b)
             if variable:
                 coeff = rk_step(rhs, coeff, dt, tableau, time=begin + step * dt)
             elif tableau.name == "rk4":

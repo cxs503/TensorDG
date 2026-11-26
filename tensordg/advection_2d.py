@@ -146,6 +146,7 @@ def solve_advection_2d(
     max_speed: tuple[float, float] | None = None,
     max_dt: float | None = None,
     velocity_jump_times: tuple[float, ...] = (),
+    return_integrated_fluxes: bool = False,
     lengths: tuple[float, float] = (1.0, 1.0),
 ):
     """Solve ``u_t + ax*u_x + ay*u_y = 0`` on a periodic rectangle with side lengths (Lx, Ly).
@@ -163,7 +164,10 @@ def solve_advection_2d(
 
     Returns ``(x_centers, y_centers, modal_coefficients, metadata)``. The
     coefficient array has shape ``(nx,ny,degree+1,degree+1)``; its ``[0,0]``
-    mode is the cell average.
+    mode is the cell average. With return_integrated_fluxes=True, append
+    (Fx, Fy), the signed face transports integrated from start_time to
+    final_time with the same RK stages as the solution. Face indices and
+    orientations follow advection_face_fluxes_2d.
     """
     tableau = get_tableau(time_integrator)
     nx, ny = (ncells, ncells) if isinstance(ncells, int) else ncells
@@ -205,16 +209,29 @@ def solve_advection_2d(
     def spatial_rhs(state, components):
         return _rhs(state, hx, hy, components, volume, phi_left, phi_right)
 
+    accumulate_stage = None
+    if return_integrated_fluxes:
+        fx_total = coeff.new_zeros((nx, ny))
+        fy_total = coeff.new_zeros((nx, ny))
+
+        def accumulate_stage(state, components, weighted_dt):
+            fx, fy = advection_face_fluxes_2d(state, components, lengths=lengths)
+            fx_total.add_(fx, alpha=weighted_dt)
+            fy_total.add_(fy, alpha=weighted_dt)
+
     coeff, velocity_info, bounds, steps, dt = advance_transport(
         coeff, spatial_rhs, (hx, hy), degree, tableau, velocity, start_time, final_time,
-        cfl, max_speed, max_dt, velocity_jump_times)
+        cfl, max_speed, max_dt, velocity_jump_times, accumulate_stage)
     metadata = {
         "ncells": (nx, ny), "lengths": lengths, "degree": degree, "final_time": final_time,
         "velocity": velocity_info, "max_speed": bounds, "start_time": start_time, "dt": dt,
         "time_integrator": tableau.name, "rk_order": tableau.order, "rk_stages": tableau.stages,
         "steps": steps, "device": str(dev), "cfl": cfl,
     }
-    return x, y, coeff, metadata
+    result = (x, y, coeff, metadata)
+    if return_integrated_fluxes:
+        return (*result, (fx_total, fy_total))
+    return result
 
 
 def advection_face_fluxes_2d(coeff: torch.Tensor, velocity: tuple[float, float], *,

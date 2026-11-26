@@ -65,6 +65,13 @@ in the positive coordinate directions. Summing `fx[i,:]` gives the rate
 across the entire vertical section. For a velocity callback, supply its value
 at the output time.
 
+For cumulative transport, pass `return_integrated_fluxes=True` to
+`solve_advection_2d` and unpack `x, y, coeff, meta, (Fx, Fy)`. Both face
+arrays cover the full interval from `start_time` to `final_time`. They use
+the same stage velocities, upwind states and Runge–Kutta weights as the cell
+update. The cell mass gain equals
+`Fx.roll(1, 0) - Fx + Fy.roll(1, 1) - Fy`, including across periodic seams.
+
 ## Run
 
 ```bash

@@ -246,3 +246,47 @@ def test_modal_face_rates_close_each_cell(velocity, record_property):
     record_property("max_cell_mass_balance_error", balance_error)
     assert face_error < 3e-15
     assert balance_error < 1e-16
+
+
+@pytest.mark.parametrize("method", ["euler", "rk2", "rk3", "ssp_rk3", "rk4", "ssp_rk54", "rk5"])
+def test_integrated_fluxes_close_switched_cell_budget(method, record_property):
+    nx, ny = 5, 6
+    lengths = (2.5, 1.5)
+    hx, hy = lengths[0]/nx, lengths[1]/ny
+    end, switch = .125, .04
+    velocity = lambda t: (.75, -.25) if t < switch else (-.5, 1.)
+    opts = dict(ncells=(nx, ny), degree=2, final_time=end, lengths=lengths, velocity=velocity,
+                velocity_jump_times=(switch,), time_integrator=method, return_integrated_fluxes=True)
+    initial = torch.randn(nx, ny, 3, 3, dtype=torch.float64, generator=torch.Generator().manual_seed(17))
+    _, _, final, _, (fx, fy) = solve_advection_2d(initial=initial, **opts)
+    change = (final[..., 0, 0] - initial[..., 0, 0])*hx*hy
+    residual = change + fx-fx.roll(1, 0) + fy-fy.roll(1, 1)
+    error = float(residual.abs().max())
+    uniform = torch.zeros_like(initial)
+    uniform[..., 0, 0] = 2.
+    _, _, _, _, (fx, fy) = solve_advection_2d(initial=uniform, **opts)
+    expected_x = 2*hy*(.75*switch-.5*(end-switch))
+    expected_y = 2*hx*(-.25*switch+(end-switch))
+    uniform_error = max(float((fx-expected_x).abs().max()), float((fy-expected_y).abs().max()))
+    record_property("max_cell_balance_error", error)
+    record_property("max_uniform_transport_error", uniform_error)
+    assert error < 3e-15
+    assert uniform_error < 3e-15
+
+
+def test_zero_duration_face_transports():
+    _, _, _, meta, fluxes = solve_advection_2d((3, 4), 1, 2., start_time=2., return_integrated_fluxes=True)
+    assert meta["steps"] == 0
+    assert all(q.shape == (3, 4) and torch.count_nonzero(q) == 0 for q in fluxes)
+
+
+def test_fixed_velocity_rk4_face_transports_add_across_restart(record_property):
+    opts = dict(ncells=(4, 6), degree=1, lengths=(2., 3.), velocity=(-.5, .75), max_dt=1/128,
+                return_integrated_fluxes=True)
+    _, _, full, _, totals = solve_advection_2d(final_time=.125, **opts)
+    _, _, middle, _, first = solve_advection_2d(final_time=.0625, **opts)
+    _, _, final, _, second = solve_advection_2d(start_time=.0625, final_time=.125, initial=middle, **opts)
+    error = max(float((q-(a+b)).abs().max()) for q,a,b in zip(totals, first, second))
+    record_property("max_restart_transport_difference", error)
+    assert torch.equal(full, final)
+    assert error < 2e-15
