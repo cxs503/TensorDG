@@ -727,7 +727,8 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
 
 def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_flux, *,
                                  source=0., contact_resistance=0., ncells=16, degree=2,
-                                 interface_left_areal_heat_capacity=0., interface_areal_heat_capacity=0.):
+                                 interface_left_areal_heat_capacity=0., interface_areal_heat_capacity=0.,
+                                 interface_left_heat_sources=0., interface_heat_sources=0.):
     """Stationary relative temperature of a unit-area stack under constant loads.
 
     lengths (m), conductivity (W/m/K) and volumetric capacity (J/m³/K)
@@ -736,6 +737,8 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
     interface_left_areal_heat_capacity and interface_areal_heat_capacity
     store heat on its left and right traces respectively (J/m²/K). The
     returned face fluxes are inside the material on each side of the contact.
+    interface_left_heat_sources and interface_heat_sources inject heat on the
+    left and right traces respectively (W/m², negative for extraction).
     Flux at both external walls is positive inward. Scalars for material,
     source or contact data apply throughout. ncells is the count per layer.
     Return physical centers, Legendre coefficients, rightward face fluxes
@@ -771,9 +774,13 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
         raise ValueError("contact capacities must be nonnegative")
     wall_mass = np.column_stack((np.r_[0., right], np.r_[left, 0.]))
     layer_mass = mass+wall_mass.sum(axis=1)
-    rate = (west+east+lengths@generation)/layer_mass.sum()
+    left_load = profile(interface_left_heat_sources, layers-1, "left contact source")
+    right_load = profile(interface_heat_sources, layers-1, "right contact source")
+    wall_load = np.column_stack((np.r_[0., right_load], np.r_[left_load, 0.]))
+    layer_input = lengths*generation + wall_load.sum(axis=1)
+    rate = (west+east+layer_input.sum())/layer_mass.sum()
     # Layer energy balance fixes every interface flux before choosing a gauge.
-    cuts = np.r_[west, west+np.cumsum(lengths*generation-layer_mass*rate)]
+    cuts = np.r_[west, west+np.cumsum(layer_input-layer_mass*rate)]
     cuts[-1] = -east
     centers, modes, fluxes, traces = [], [], [], []
     origin = 0.
@@ -781,7 +788,8 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
         x, u, q, walls, _ = solve_harmonic_heat_1d(
             0., ncells=ncells, degree=degree, conductivity=k[i]/length, capacity=mass[i],
             source=length*generation[i], wall_types=("neumann", "neumann"),
-            wall_values=(cuts[i], -cuts[i+1]), wall_areal_heat_capacity=wall_mass[i],
+            wall_values=(cuts[i]+wall_load[i, 0], -cuts[i+1]+wall_load[i, 1]),
+            wall_areal_heat_capacity=wall_mass[i],
             return_mean_rate=True, return_wall_temperatures=True)
         if i:
             offset = traces[-1][1]-resistance[i-1]*cuts[i]-walls[0]

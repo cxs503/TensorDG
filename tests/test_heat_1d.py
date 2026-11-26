@@ -907,3 +907,16 @@ def test_drifting_stack_uses_crossing_flux_for_storing_contact_jump():
     torch.testing.assert_close(crossing, q.new_tensor(2.5), atol=1e-12, rtol=0.)
     energy = u[:, :, 0].mean(1).sum()+.5*traces[0, 1]+1.5*traces[1, 0]
     assert energy.abs() < 1e-12
+
+
+def test_balanced_contact_heater_and_sink_drive_an_internal_temperature_jump():
+    from tensordg import solve_drifting_heat_stack_1d
+
+    _, u, q, walls, rate = solve_drifting_heat_stack_1d(
+        [1., 1.], 1., 1., (0., 0.), contact_resistance=.4, ncells=3,
+        interface_left_heat_sources=1.5, interface_heat_sources=-1.5)
+    assert rate == 0.
+    torch.testing.assert_close(q, torch.zeros_like(q), atol=1e-12, rtol=0.)
+    expected = walls.new_tensor([.3, -.3])[:, None]
+    torch.testing.assert_close(walls, expected.expand_as(walls), atol=1e-12, rtol=0.)
+    torch.testing.assert_close(u[:, :, 0], expected.expand_as(u[:, :, 0]), atol=1e-12, rtol=0.)
