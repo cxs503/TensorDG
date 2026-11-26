@@ -1,0 +1,33 @@
+{
+  "source_commit": "256dbac881534b467772a3329957e34032f88916",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 107,
+  "failures": 0,
+  "reference": "Cumulative rightward flux at x=0.125 and 0.625 m and change of stored heat between them. Compare both pulse intervals to the 20000-mode continuum sine series and check the partial heater input.",
+  "measurements": {
+    "n8_heating_cut_error_J_m2": 8.651239904282348e-07,
+    "n8_heating_local_storage_error_J_m2": 1.2028729225108115e-06,
+    "n8_heating_local_balance_J_m2": 2.086872341600099e-15,
+    "n8_cooling_cut_error_J_m2": 9.025027617425019e-07,
+    "n8_cooling_local_storage_error_J_m2": 1.321774192404937e-06,
+    "n8_cooling_local_balance_J_m2": 2.063453574674412e-15,
+    "n16_heating_cut_error_J_m2": 7.200422482214752e-08,
+    "n16_heating_local_storage_error_J_m2": 1.0473438488700637e-07,
+    "n16_heating_local_balance_J_m2": 2.714842239903703e-15,
+    "n16_cooling_cut_error_J_m2": 8.666769272733243e-08,
+    "n16_cooling_local_storage_error_J_m2": 1.3118262200476072e-07,
+    "n16_cooling_local_balance_J_m2": 1.1622647289044608e-15,
+    "n32_heating_cut_error_J_m2": 1.2899669180055362e-09,
+    "n32_heating_local_storage_error_J_m2": 1.3224178072035464e-09,
+    "n32_heating_local_balance_J_m2": 1.0526302052227265e-14,
+    "n32_cooling_cut_error_J_m2": 2.738574792285342e-10,
+    "n32_cooling_local_storage_error_J_m2": 3.741939119672466e-10,
+    "n32_cooling_local_balance_J_m2": 1.0189765697887765e-14,
+    "n64_heating_cut_error_J_m2": 2.738693265225134e-10,
+    "n64_heating_local_storage_error_J_m2": 3.3626372519801606e-10,
+    "n64_heating_local_balance_J_m2": 1.656574183384052e-14,
+    "n64_cooling_cut_error_J_m2": 3.012008194941407e-10,
+    "n64_cooling_local_storage_error_J_m2": 3.965765962149481e-10,
+    "n64_cooling_local_balance_J_m2": 1.3753755079282115e-14
+  }
+}
