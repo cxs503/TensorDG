@@ -760,6 +760,39 @@ def sample_heat_stack_fields(coefficients, lengths, conductivity, fractions):
     return temperature, flux
 
 
+def reconstruct_heat_stack_flux(face_flux, lengths, fractions, *, source_gradient=0.):
+    """Recover conservative rightward flux density inside drifting stack cells.
+
+    Supply face_flux (W/m²) from solve_drifting_heat_stack_1d and the same
+    layer lengths (m) and source_gradient (W/m⁴). The uniform heating rate
+    makes dq/dx = source - capacity*rate affine in each homogeneous layer.
+    Each cell's two numerical fluxes fix the integration constants and its
+    source gradient fixes the curvature. Each layer owns its contact traces.
+    The result is shaped (layers, cells, samples) at fractions from 0 to 1.
+    """
+    q = torch.as_tensor(face_flux)
+    if q.ndim != 2 or q.shape[0] < 1 or q.shape[1] < 2 or not q.is_floating_point():
+        raise ValueError("provide real floating-point fluxes shaped (layers, cells+1)")
+    if not torch.isfinite(q).all():
+        raise ValueError("face fluxes must be finite")
+
+    def real_data(value):
+        if torch.is_complex(torch.as_tensor(value)):
+            raise ValueError("lengths, fractions and source gradients must be real")
+        return torch.as_tensor(value, dtype=q.dtype, device=q.device)
+
+    length, f, g = map(real_data, (lengths, fractions, source_gradient))
+    if length.shape != (q.shape[0],) or not torch.isfinite(length).all() or (length <= 0).any():
+        raise ValueError("provide one finite positive length per layer")
+    if g.shape not in ((), length.shape) or not torch.isfinite(g).all():
+        raise ValueError("provide a finite scalar or per-layer source gradient")
+    if f.ndim != 1 or not f.numel() or not ((f >= 0) & (f <= 1)).all():
+        raise ValueError("provide a nonempty vector of cell fractions in [0, 1]")
+    width = length/(q.shape[1]-1)
+    curvature = (.5*g*width.square())[:, None, None]
+    return q[:, :-1, None]*(1-f) + q[:, 1:, None]*f + curvature*f*(f-1)
+
+
 def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_flux, *,
                                  source=0., source_gradient=0., contact_resistance=0., area=1., ncells=16, degree=2,
                                  shoulder_areal_heat_capacity=0., end_areal_heat_capacity=0.,

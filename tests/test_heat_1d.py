@@ -965,7 +965,7 @@ def test_drifting_stack_storing_ends_share_the_bulk_heating_rate():
 @pytest.mark.parametrize("degree,n", [(2, 4), (2, 8), (2, 16), (3, 6)])
 @pytest.mark.parametrize("sign", [-1., 1.])
 def test_drifting_stack_affine_generation(degree, n, sign, record_property):
-    from tensordg import sample_heat_stack_fields, solve_drifting_heat_stack_1d
+    from tensordg import reconstruct_heat_stack_flux, sample_heat_stack_fields, solve_drifting_heat_stack_1d
 
     length = [1.5, .5]
     area = [1., 2.]
@@ -980,6 +980,9 @@ def test_drifting_stack_affine_generation(degree, n, sign, record_property):
     expected_means, expected_fluxes, expected_walls = [], [], []
     fractions = [.13, .41, .78]
     sampled_t, sampled_q = sample_heat_stack_fields(u, length, k, fractions)
+    recovered = reconstruct_heat_stack_flux(q, length, [0., *fractions, 1.], source_gradient=gradients)
+    torch.testing.assert_close(recovered[:, :, 0], q[:, :-1], atol=0., rtol=0.)
+    torch.testing.assert_close(recovered[:, :, -1], q[:, 1:], atol=0., rtol=0.)
     target_t, target_q = [], []
     temperature = 0.
     for h, section, cond, gradient in zip(length, area, k, gradients):
@@ -1003,6 +1006,9 @@ def test_drifting_stack_affine_generation(degree, n, sign, record_property):
                   trace_K=(walls-u.new_tensor(expected_walls)+shift).abs().max().item(),
                   face_flux_W_m2=(q-torch.stack(expected_fluxes)).abs().max().item(),
                   rate_K_s=abs(rate-target_rate))
+    recovered_error = (recovered[:, :, 1:-1]-torch.stack(target_q)).abs().max().item()
+    record_property("conservative_interior_flux_W_m2", recovered_error)
+    assert recovered_error < 2e-11
     interior_t = (sampled_t-torch.stack(target_t)+shift).abs().max().item()
     interior_q = (sampled_q-torch.stack(target_q)).abs().max().item()
     record_property("interior_temperature_K", interior_t)
