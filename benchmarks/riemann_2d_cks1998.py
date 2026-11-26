@@ -253,6 +253,54 @@ def self_convergence_l1(coarse_means, fine_means):
     )
 
 
+def self_convergence_l2(coarse_means, fine_means):
+    """Relative L2 distance between a coarse mesh and the block-averaged fine mesh.
+
+    Same block-averaging as ``self_convergence_l1`` but with the L2 norm
+    (``sqrt(sum((folded - coarse)^2))``), normalised by the L2 norm of the
+    folded fine field.  Used together with L1 to report the mesh self-
+    convergence *order* (EOC) of the 2-D Riemann ladder.
+    """
+    factor = int(fine_means.shape[0]) // int(coarse_means.shape[0])
+    folded = block_average(fine_means, factor)
+    return float(torch.sqrt(torch.sum((folded - coarse_means) ** 2))) / max(
+        float(torch.sqrt(torch.sum(folded ** 2))), 1e-30
+    )
+
+
+def self_convergence_eoc(l1_pairs, l2_pairs=None):
+    """Empirical order of convergence (EOC) of a factor-2 mesh ladder.
+
+    ``l1_pairs`` is an ordered list of ``(coarse_n, fine_n, l1)`` for
+    consecutive refinement levels (e.g. ``[(32, 64, l1_32vs64),
+    (64, 128, l1_64vs128)]``).  With at least two pairs the EOC is
+
+        EOC = log2( L1(coarse vs mid) / L1(mid vs fine) )
+
+    i.e. the factor by which the self-distance shrinks when the mesh is
+    refined by 2.  ``None`` is returned when fewer than two pairs are
+    available (a two-level ladder cannot define an order).  When ``l2_pairs``
+    is given the same computation is done on the L2 column and the *worst*
+    (minimum) of the two is returned, so a single reported number is the
+    conservative one.
+    """
+    if l1_pairs is None or len(l1_pairs) < 2:
+        return None
+    eocs = []
+    for (l1_a, l1_b) in zip(l1_pairs, l1_pairs[1:]):
+        if l1_a <= 0.0 or l1_b <= 0.0:
+            return None
+        eocs.append(math.log2(l1_a / l1_b))
+    if l2_pairs is not None and len(l2_pairs) >= 2:
+        for (l2_a, l2_b) in zip(l2_pairs, l2_pairs[1:]):
+            if l2_a <= 0.0 or l2_b <= 0.0:
+                return None
+            eocs.append(math.log2(l2_a / l2_b))
+    return float(min(eocs)) if eocs else None
+
+
+
+
 # ---------------------------------------------------------------------------
 # Single run
 # ---------------------------------------------------------------------------
@@ -757,6 +805,138 @@ def merge_legs(output_dir, final_time=0.25, cfl=0.2, degrees=(1, 2),
 
 
 # ---------------------------------------------------------------------------
+# EOC (empirical order of convergence) study
+# ---------------------------------------------------------------------------
+
+def run_eoc_study(output_dir, final_time=0.25, cfl=0.2, degrees=(1, 2),
+                  meshes=(32, 64, 128)):
+    """Compute the mesh self-convergence ORDER (EOC) from persisted legs.
+
+    Loads every leg in ``legs/`` for the given (degree, mesh) at the given
+    time/CFL, groups by degree, sorts by mesh size, and for each degree
+    computes:
+
+      * L1/L2 self-convergence for every consecutive pair,
+      * EOC = log2(L1(coarse vs mid) / L1(mid vs fine)) when >=3 levels.
+
+    A degree with only 2 levels reports its L1/L2 pair but EOC=None (an
+    order needs three levels).  The returned record is written to
+    ``convergence_order.json`` and is the machine-readable evidence for the
+    "mesh self-convergence order >= 1" acceptance criterion.
+    """
+    legs = {}
+    missing = []
+    for degree in degrees:
+        for ncells in meshes:
+            record = load_leg(output_dir, degree, ncells, final_time, cfl)
+            if record is None:
+                missing.append(leg_stem(degree, ncells, final_time, cfl))
+            else:
+                legs[(int(degree), int(ncells))] = record
+    # A degree with fewer than two available levels cannot enter the ladder at
+    # all; a degree with exactly two levels reports its L1/L2 pair but has no
+    # EOC (an order needs three levels).  Missing legs are listed, not silently
+    # dropped, so the caller can see exactly what the EOC study is built on.
+    if missing:
+        print("  run_eoc_study: legs not present (excluded from the ladder): "
+              + ", ".join(sorted(missing)), flush=True)
+
+    l1_by_degree = {}
+    l2_by_degree = {}
+    eoc_by_degree = {}
+    for degree in degrees:
+        available = [n for n in meshes if (int(degree), int(n)) in legs]
+        if len(available) < 2:
+            continue
+        ladder = [legs[(int(degree), int(n))] for n in available]
+        l1_pairs = []
+        l2_pairs = []
+        for coarse, fine in zip(ladder, ladder[1:]):
+            l1 = self_convergence_l1(coarse["cell_means_rho"], fine["cell_means_rho"])
+            l2 = self_convergence_l2(coarse["cell_means_rho"], fine["cell_means_rho"])
+            l1_pairs.append((coarse["ncells"], fine["ncells"], l1))
+            l2_pairs.append((coarse["ncells"], fine["ncells"], l2))
+        l1_by_degree[f"p{degree}"] = {
+            f"{c}_vs_{f}": v for (c, f, v) in l1_pairs
+        }
+        l2_by_degree[f"p{degree}"] = {
+            f"{c}_vs_{f}": v for (c, f, v) in l2_pairs
+        }
+        eoc_by_degree[f"p{degree}"] = self_convergence_eoc(
+            [v for (_, _, v) in l1_pairs], [v for (_, _, v) in l2_pairs]
+        )
+
+    # Convergence-curve figure: L1/L2 self-distance vs mesh size (log-log).
+    figure_name = "riemann_2d_convergence_order.png"
+    plot_convergence_curve(l1_by_degree, l2_by_degree, meshes,
+                           output_dir / figure_name)
+
+    eoc_values = [v for v in eoc_by_degree.values() if v is not None]
+    return {
+        "benchmark": "riemann_2d_cks1998",
+        "profile": "eoc",
+        "config": "Lax_Liu_1998_config_3",
+        "final_time": float(final_time),
+        "cfl": float(cfl),
+        "degrees": [int(d) for d in degrees],
+        "meshes": [int(n) for n in meshes],
+        "l1_by_degree": l1_by_degree,
+        "l2_by_degree": l2_by_degree,
+        "eoc_by_degree": eoc_by_degree,
+        "eoc_gate": {
+            "min_eoc": (min(eoc_values) if eoc_values else None),
+            "tolerance": 1.0,
+            "passed": bool(eoc_values) and all(v >= 1.0 for v in eoc_values),
+        },
+        "provenance": {
+            "command": ("python -m benchmarks.riemann_2d_cks1998 --eoc "
+                        "--time 0.25 --cfl 0.2"),
+            "method": "EOC recomputed from legs/*.npz cell-mean arrays",
+            "figure": figure_name,
+            "legs": [
+                {"stem": leg_stem(d, n, final_time, cfl),
+                 "wall_seconds": legs[(int(d), int(n))]["wall_seconds"]}
+                for d in degrees for n in meshes
+                if (int(d), int(n)) in legs
+            ],
+        },
+        "reference": "Lax & Liu (1998), SIAM J. Sci. Comput. 19(2), 319-340",
+        "notes": (
+            "No closed-form solution exists for this 2-D Riemann problem, so "
+            "the convergence order is the empirical self-convergence order "
+            "EOC = log2(L1(coarse vs mid) / L1(mid vs fine)) of the block-"
+            "averaged cell-mean density ladder. A degree with only two levels "
+            "cannot define an order and reports EOC=None."
+        ),
+    }
+
+
+def plot_convergence_curve(l1_by_degree, l2_by_degree, meshes, output_path):
+    """Log-log plot of the L1/L2 self-convergence distance vs mesh size."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    for degree_key, l1_pairs in l1_by_degree.items():
+        # x = coarse mesh size of each pair, y = L1 self-distance
+        xs = [int(pair.split("_vs_")[0]) for pair in l1_pairs]
+        ys = list(l1_pairs.values())
+        ax.loglog(xs, ys, "o-", label=f"{degree_key} L1")
+        l2_pairs = l2_by_degree[degree_key]
+        ys2 = list(l2_pairs.values())
+        ax.loglog(xs, ys2, "s--", label=f"{degree_key} L2")
+    ax.set_xlabel("coarse mesh size N (cells per side)")
+    ax.set_ylabel("relative self-convergence distance")
+    ax.set_title("2-D Riemann (Lax-Liu Config 3): mesh self-convergence")
+    ax.grid(True, which="both", ls=":", alpha=0.6)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(output_path, dpi=150)
+    plt.close(fig)
+
+
+# ---------------------------------------------------------------------------
 # Figures
 # ---------------------------------------------------------------------------
 
@@ -1038,6 +1218,16 @@ def main():
                         default=None,
                         help="path of the merged full record "
                              "(default: <output-dir>/metrics_full.json)")
+    parser.add_argument("--eoc", action="store_true",
+                        help="compute the mesh self-convergence ORDER (EOC) from "
+                             "persisted legs (needs >=3 levels per degree); writes "
+                             "convergence_order.json + a log-log convergence figure")
+    parser.add_argument("--eoc-degrees", default="1,2",
+                        help="degrees to include in the EOC study (default 1,2)")
+    parser.add_argument("--eoc-meshes", default="32,64,128",
+                        help="mesh ladder for the EOC study, comma-separated "
+                             "(default 32,64,128; a degree with fewer levels "
+                             "reports L1/L2 pairs but EOC=None)")
     args = parser.parse_args()
 
     torch.set_num_threads(int(os.environ.get("TORCH_THREADS", "1")))
@@ -1095,6 +1285,26 @@ def main():
         print(f"\nAll scored gates (full profile): "
               f"{'PASS' if all_pass else 'FAIL'}")
         sys.exit(0 if all_pass else 1)
+
+    if args.eoc:
+        degrees = [int(d) for d in args.eoc_degrees.split(",") if d.strip()]
+        meshes = [int(m) for m in args.eoc_meshes.split(",") if m.strip()]
+        print(f"[EOC] mesh self-convergence order from legs, t={args.time}, "
+              f"CFL={args.cfl}, degrees={degrees}, meshes={meshes} ...")
+        record = run_eoc_study(output, final_time=args.time, cfl=args.cfl,
+                               degrees=degrees, meshes=meshes)
+        eoc_path = output / "convergence_order.json"
+        eoc_path.write_text(json.dumps(record, indent=2, default=str),
+                            encoding="utf-8")
+        print(f"  EOC record written: {eoc_path}", flush=True)
+        # Machine assertion: every computable EOC must be >= 1.0
+        eoc_values = [v for v in record["eoc_by_degree"].values() if v is not None]
+        gate_ok = bool(eoc_values) and all(v >= 1.0 for v in eoc_values)
+        print(f"  EOC gate (>=1.0): {'PASS' if gate_ok else 'FAIL'}  "
+              f"eoc={record['eoc_by_degree']}")
+        print(f"  L1 pairs: {json.dumps(record['l1_by_degree'], indent=1)}")
+        print(f"  L2 pairs: {json.dumps(record['l2_by_degree'], indent=1)}")
+        sys.exit(0 if gate_ok else 1)
 
     if args.quick:
         config = QUICK_CONFIG
