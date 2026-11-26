@@ -930,3 +930,21 @@ def test_stepped_drifting_stack_conserves_power_across_an_insulated_shoulder():
     assert rate == 0.
     torch.testing.assert_close(flux, flux.new_tensor([[1.], [.25]]).expand_as(flux))
     torch.testing.assert_close(trace[0, 1]-trace[1, 0], flux.new_tensor(.6))
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_drifting_stack_shoulder_storage_follows_large_section(reverse):
+    from tensordg import solve_drifting_heat_stack_1d
+
+    area = [3., 1.] if reverse else [1., 3.]
+    ends = (0., 6.) if reverse else (6., 0.)
+    _, _, q, trace, rate = solve_drifting_heat_stack_1d(
+        [1., 1.], 1., 1., ends, area=area, shoulder_areal_heat_capacity=1.,
+        contact_resistance=.2, ncells=4)
+    assert rate == 1.
+    # Heating the smaller layer consumes 1 W. The remaining 5 W crosses
+    # the contact and supplies 3 W to the larger bulk and 2 W to the shoulder.
+    crossing = (trace[0, 1]-trace[1, 0])/.2
+    torch.testing.assert_close(crossing, q.new_tensor(-5. if reverse else 5.))
+    stored = area[0]*q[0, -1]-area[1]*q[1, 0]
+    torch.testing.assert_close(stored, q.new_tensor(2.))

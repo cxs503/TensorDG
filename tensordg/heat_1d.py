@@ -727,6 +727,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
 
 def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_flux, *,
                                  source=0., contact_resistance=0., area=1., ncells=16, degree=2,
+                                 shoulder_areal_heat_capacity=0.,
                                  interface_left_areal_heat_capacity=0., interface_areal_heat_capacity=0.,
                                  interface_left_heat_sources=0., interface_heat_sources=0.):
     """Stationary relative temperature of a stepped stack under constant loads.
@@ -734,7 +735,8 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
     lengths (m), conductivity (W/m/K) and volumetric capacity (J/m³/K)
     describe homogeneous layers. Source (W/m³) is constant per layer.
     area (m²) is constant per layer. Contacts cover the smaller adjoining
-    section; exposed shoulders are insulated and have zero heat capacity.
+    section. The insulated shoulder stores shoulder_areal_heat_capacity
+    (J/m²/K) times the exposed area at the larger section’s trace temperature.
     Contact data use the overlap area, external wall fluxes use the local
     end areas, and returned flux densities use their layer areas.
     Each contact obeys T_left-T_right=R*q for the crossing flux, R in m² K/W.
@@ -781,6 +783,12 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
     if np.any(left < 0) or np.any(right < 0):
         raise ValueError("contact capacities must be nonnegative")
     wall_mass = np.column_stack((np.r_[0., right*overlap], np.r_[left*overlap, 0.]))
+    shoulder = profile(shoulder_areal_heat_capacity, layers-1, "shoulder capacity")
+    if np.any(shoulder < 0):
+        raise ValueError("shoulder capacity must be nonnegative")
+    area_step = np.diff(area)
+    wall_mass[1:, 0] += shoulder*np.maximum(area_step, 0.)
+    wall_mass[:-1, 1] += shoulder*np.maximum(-area_step, 0.)
     layer_mass = mass+wall_mass.sum(axis=1)
     left_load = profile(interface_left_heat_sources, layers-1, "left contact source")
     right_load = profile(interface_heat_sources, layers-1, "right contact source")
