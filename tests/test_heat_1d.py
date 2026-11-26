@@ -1871,3 +1871,46 @@ def test_stack_heater_wholly_in_one_layer():
     loads = project_stack_strip_source(1.5, [.25,.5,.25], .25, .75, ncells=3, degree=2)
     assert not loads[[0,2]].count_nonzero()
     torch.testing.assert_close(loads[1], project_uniform_strip_source(1.5, .5, 0., .5, ncells=3, degree=2))
+
+
+def test_linear_strip_projection_and_wall_response(record_property):
+    import numpy as np
+    from scipy.integrate import quad_vec
+    from scipy.linalg import expm
+    from scipy.special import eval_legendre
+    from tensordg import project_linear_strip_source, solve_harmonic_heat_layer_1d
+
+    length, west, east, omega, k, c = 1.2, .213, .786, 3.4, 1.3, 2.1
+    left, right = .8-.4j, -.2+.7j
+    slope = (right-left)/(east-west)
+    # Fourth state tracks global x, so the affine source is left+slope*(x-west).
+    transfer = np.eye(4)
+    for width, offset, gradient in ((west, 0., 0.), (east-west, left-slope*west, slope),
+                                    (length-east, 0., 0.)):
+        generator = np.array([[0., -1/k, 0., 0.], [-1j*omega*c, 0., offset, gradient],
+                              [0., 0., 0., 0.], [0., 0., 1., 0.]])
+        transfer = expm(width*generator) @ transfer
+    incoming = -transfer[0, 2]/transfer[0, 1]
+    exact = np.array([incoming, -(transfer @ [0., incoming, 1., 0.])[1]])
+    previous = None
+    for n in (8, 16, 32, 64):
+        width = length/n
+        modes = project_linear_strip_source(left, right, length, west, east, ncells=n, degree=2)
+        _, _, faces = solve_harmonic_heat_layer_1d(omega, (0., 0.), thickness=length, conductivity=k,
+                                                   capacity=c, ncells=n, degree=2, source_modes=modes)
+        # Independently integrate all three test functions in both cut cells.
+        degrees = np.arange(3)
+        moment_error = 0.
+        for cell in (int(west/width), int(east/width)):
+            lo, hi = max(west, cell*width), min(east, (cell+1)*width)
+            moments, _ = quad_vec(lambda x: (left+slope*(x-west))*eval_legendre(degrees, 2*(x/width-cell)-1),
+                                  lo, hi)
+            moment_error = max(moment_error, np.max(abs(modes[cell].numpy()-moments*(2*degrees+1)/width)))
+        error = np.max(abs(np.array([faces[0].item(), -faces[-1].item()])-exact))
+        record_property(f"n{n}_cut_mode_error_W_m3", float(moment_error))
+        record_property(f"n{n}_wall_flux_error_W_m2", float(error))
+        assert moment_error < 1e-13
+        if previous is not None:
+            record_property(f"n{n}_order", math.log2(previous/error))
+            assert error < previous/4
+        previous = error

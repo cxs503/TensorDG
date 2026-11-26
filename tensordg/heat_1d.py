@@ -855,15 +855,19 @@ def integrate_heat_stack_energy(coefficients, lengths, capacity, start, end):
     return ((u*u.new_tensor(integrals)).sum(dim=(1, 2))*cap).sum()
 
 
-def _clipped_legendre_integrals(edges, modes, start, end):
+def _clipped_legendre_integrals(edges, modes, start, end, *, ramp=False):
     west, east = edges[:, :-1], edges[:, 1:]
     left = np.clip(start, west, east)
     width = np.clip(end, west, east) - left
     # M Legendre modes have degree M-1. A ceil(M/2)-point Gauss rule
     # integrates them exactly on each clipped cell, even across a trace jump.
-    nodes, weights = np.polynomial.legendre.leggauss((modes+1)//2)
+    nodes, weights = np.polynomial.legendre.leggauss((modes+1+int(ramp))//2)
     local = (2*(left-west)[..., None] + width[..., None]*(1+nodes))/(east-west)[..., None] - 1
     basis = np.polynomial.legendre.legvander(local, modes-1)
+    if ramp and end > start:
+        # Distance from the heater start avoids subtracting nearby global coordinates.
+        fraction = ((left-start)[..., None] + width[..., None]*(1+nodes)/2)/(end-start)
+        basis *= np.clip(fraction, 0., 1.)[..., None]
     return np.einsum("lcqm,q->lcm", basis, weights) * (width/2)[..., None]
 
 
@@ -1022,6 +1026,26 @@ def project_uniform_strip_source(amplitude, thickness, start, end, *, ncells, de
     integrals = _clipped_legendre_integrals(edges, degree+1, start, end)[0]
     inverse_mass = (2*np.arange(degree+1)+1)/(thickness/ncells)
     return value*value.new_tensor(integrals*inverse_mass)
+
+
+def project_linear_strip_source(start_amplitude, end_amplitude, thickness, start, end, *, ncells, degree):
+    """Project a finite heater interpolated linearly between its endpoint phasors.
+
+    The source is zero outside [start, end] (metres); the endpoint amplitudes
+    are volumetric heat generation in W/m³. The returned cellwise Legendre
+    coefficients can be supplied as source_modes to a harmonic layer solve.
+    """
+    base = project_uniform_strip_source(start_amplitude, thickness, start, end, ncells=ncells, degree=degree)
+    raw = torch.as_tensor(end_amplitude)
+    right = torch.as_tensor(end_amplitude, dtype=torch.complex128 if raw.is_complex() else torch.float64,
+                            device=base.device)
+    if right.ndim != 0 or not torch.isfinite(right):
+        raise ValueError("provide a finite scalar end amplitude")
+    left = torch.as_tensor(start_amplitude, dtype=base.dtype, device=base.device)
+    edges = np.linspace(0., thickness, ncells+1)[None, :]
+    moments = _clipped_legendre_integrals(edges, degree+1, start, end, ramp=True)[0]
+    inverse_mass = (2*np.arange(degree+1)+1)/(thickness/ncells)
+    return base + (right-left)*base.real.new_tensor(moments*inverse_mass)
 
 
 def project_stack_strip_source(amplitude, lengths, start, end, *, ncells, degree):
