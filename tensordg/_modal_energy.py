@@ -18,10 +18,25 @@ def _weighted_mean_square(modes, cell_axes, weights):
     return value.item()
 
 
-def modal_energy(coeff, lengths):
+def modal_energy(coeff, lengths, reference):
     dimension = len(lengths)
     weights = _mean_weights(coeff, dimension)
-    mean_square = _weighted_mean_square(coeff.double(), tuple(range(dimension)), weights)
+    if reference is not None and not math.isfinite(reference):
+        raise ValueError("energy reference must be finite or None")
+    modes = coeff.double()
+    if reference != 0.:
+        # Shift only the cell-average mode. Never reconstruct the large
+        # background or subtract two nearly equal integrated energies.
+        modes = modes.clone()
+        averages = modes[(Ellipsis,) + (0,)*dimension]
+        if reference is None:
+            # The absolute mean can lie between adjacent floats. Center in
+            # offsets from one cell so that its fractional part is retained.
+            offsets = averages - averages[(0,)*dimension]
+            averages.copy_(offsets - offsets.mean())
+        else:
+            averages.sub_(reference)
+    mean_square = _weighted_mean_square(modes, tuple(range(dimension)), weights)
     return .5*math.prod(lengths)*mean_square
 
 

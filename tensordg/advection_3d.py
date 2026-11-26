@@ -343,14 +343,17 @@ def mass_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
     return float(coeff[:, :, :, 0, 0, 0].mean().item()) * math.prod(_domain_lengths(lengths))
 
 
-def energy_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
+def energy_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0), reference: float | None = 0.) -> float:
     """Integrate half the squared real DG field on a uniform periodic box.
+
+    A scalar reference gives half the integral of (u-reference)²; None
+    measures fluctuations about the volume mean.
 
     The last three axes store unnormalized Legendre coefficients as returned
     by solve_advection_3d. Each squared mode has cell-average weight
     1 / ((2k+1)(2l+1)(2m+1)) by Legendre orthogonality.
     """
-    return modal_energy(coeff, _domain_lengths(lengths))
+    return modal_energy(coeff, _domain_lengths(lengths), reference)
 
 
 def upwind_dissipation_3d(coeff: torch.Tensor, velocity: Velocity3, *,

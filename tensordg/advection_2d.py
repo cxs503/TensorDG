@@ -254,9 +254,13 @@ def advection_face_fluxes_2d(coeff: torch.Tensor, velocity: tuple[float, float],
             upwind_face_rate(coeff[:, :, 0, :], 1, lx/coeff.shape[0], ay))
 
 
-def energy_2d(coeff: torch.Tensor, *, lengths=(1.0, 1.0)) -> float:
-    """Integrate half the squared real DG field over the periodic rectangle."""
-    return modal_energy(coeff, _domain_lengths(lengths))
+def energy_2d(coeff: torch.Tensor, *, lengths=(1.0, 1.0), reference: float | None = 0.) -> float:
+    """Integrate half the squared real DG field over the periodic rectangle.
+
+    A scalar reference gives half the integral of (u-reference)²; None
+    measures fluctuations about the volume mean.
+    """
+    return modal_energy(coeff, _domain_lengths(lengths), reference)
 
 
 def upwind_dissipation_2d(coeff: torch.Tensor, velocity: tuple[float, float], *,

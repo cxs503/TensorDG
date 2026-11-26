@@ -73,7 +73,10 @@ update. The cell mass gain equals
 `Fx.roll(1, 0) - Fx + Fy.roll(1, 1) - Fy`, including across periodic seams.
 
 For the quadratic scalar energy, call `energy_2d(coeff, lengths=lengths)`.
-It integrates half the squared field including all Legendre modes.
+It integrates half the squared field including all Legendre modes. Set
+`reference=None` for half the integral of the squared departure from the
+domain mean, or supply a scalar background such as `reference=1.0`.
+The same options apply to `energy_3d`.
 `upwind_dissipation_2d(coeff, velocity, lengths=lengths)` returns the
 nonnegative x and y contributions to the instantaneous energy loss.
 Their sum equals the negative semidiscrete energy derivative for periodic

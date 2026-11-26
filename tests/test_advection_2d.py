@@ -332,3 +332,31 @@ def test_upwind_loss_resolves_modes_on_large_uniform_background():
     field[..., 0, 1] = 2.
     field[..., 0, 0] = 2.**60
     assert upwind_dissipation_2d(field, (1., -1.)) == (6., 32.)
+
+
+@pytest.mark.parametrize("dimension", [2, 3])
+def test_modal_fluctuation_energy_with_unrepresentable_mean(dimension, record_property):
+    from fractions import Fraction
+    from tensordg import energy_2d, energy_3d
+
+    lengths = (2., 3., .5)[:dimension]
+    cells = (3, 2, 4)[:dimension]
+    field = torch.zeros(cells+(2,)*dimension, dtype=torch.float64)
+    constant = (Ellipsis,) + (0,)*dimension
+    field[constant] = 2.**52
+    field[constant][0] += 1.
+    field[(Ellipsis,) + (1,)*dimension] = .25
+    before = field.clone()
+    energy = energy_2d if dimension == 2 else energy_3d
+    # A third of the cells have offset one. Its population variance is 2/9;
+    # the tensor product of unit linear Legendre modes has mean square 1/3^d.
+    modal_square = Fraction(1, 16*3**dimension)
+    errors = []
+    for reference, constant_square in [(None, Fraction(2, 9)), (2.**52, Fraction(1, 3))]:
+        expected = .5*math.prod(lengths)*float(constant_square + modal_square)
+        measured = energy(field, lengths=lengths, reference=reference)
+        errors.append(abs(measured/expected-1))
+    record_property("max_relative_energy_error", max(errors))
+    assert max(errors) < 1e-15
+    assert torch.equal(field, before)
+    assert energy(field, lengths=lengths) == energy(field, lengths=lengths, reference=0.)
