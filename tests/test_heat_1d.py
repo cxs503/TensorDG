@@ -1627,3 +1627,54 @@ def test_harmonic_cell_pairing_against_physical_quadrature():
     actual = harmonic_cell_pairing(test, load, width)
     np.testing.assert_allclose(actual.numpy(), exact, atol=1e-15, rtol=0)
     torch.testing.assert_close(harmonic_cell_pairing(load, test, width), actual.conj())
+
+
+def test_wall_and_contact_heater_reciprocity(record_property):
+    """Exchange wall drive and observation ports in a storing, lossy contact."""
+    import numpy as np
+    from scipy.linalg import expm
+    from tensordg import compose_heat_wall_admittances_1d, harmonic_heat_wall_admittance_1d
+
+    omega, resistance = 2.7, .23
+    layers = [(.41, 1.3, 2.1, .8), (.67, 2.2, 1.1, .3)]
+    film = (.6, 1.2)
+    storage = (.35, .11)
+    sheets = [np.array([[1., 0.], [-h-1j*omega*c, 1.]]) for h, c in zip(film, storage)]
+    bulk = [expm(length*np.array([[0., -1/k], [-h-1j*omega*c, 0.]])) for length, k, c, h in layers]
+    jump = np.array([[1., -resistance], [0., 1.]])
+    transfer = bulk[1] @ sheets[1] @ jump @ sheets[0] @ bulk[0]
+    # Each transfer has determinant one, so both cross admittances equal 1/B.
+    reference = 1/transfer[0, 1]
+    heaters = (.45+.2j, -.16+.5j)
+    previous = None
+    for n in (4, 8, 16, 32):
+        matrices = [harmonic_heat_wall_admittance_1d(
+            omega, ncells=n, degree=2, thickness=length, conductivity=k,
+            capacity=c, heat_loss_coefficient=h) for length, k, c, h in layers]
+        options = dict(angular_frequency=omega, interface_left_areal_heat_capacity=storage[0],
+                       interface_areal_heat_capacity=storage[1], interface_left_film_coefficients=film[0],
+                       interface_film_coefficients=film[1])
+        _, _, heated = compose_heat_wall_admittances_1d(
+            matrices, resistance, wall_temperatures=(0., 0.), interface_left_heat_sources=heaters[0],
+            interface_heat_sources=heaters[1], **options)
+        cross = []
+        heater_errors = []
+        for side, drive in enumerate(((1., 0.), (0., 1.))):
+            _, traces, inward = compose_heat_wall_admittances_1d(
+                matrices, resistance, wall_temperatures=drive, **options)
+            cross.append(inward[1-side, 1-side].item())
+            # Unconjugated thermal reciprocity maps both contact heaters to the
+            # grounded wall flux via the traces from a unit drive at that wall.
+            heater_errors.append(abs((heated[side, side] + heaters[0]*traces[0, 1]
+                                      + heaters[1]*traces[1, 0]).item()))
+        error = max(abs(value-reference) for value in cross)
+        mismatch = abs(cross[0]-cross[1])
+        record_property(f"n{n}_cross_error_W_m2_K", error)
+        record_property(f"n{n}_reciprocity_W_m2_K", mismatch)
+        record_property(f"n{n}_heater_reciprocity_W_m2", max(heater_errors))
+        assert mismatch < 1e-11 and max(heater_errors) < 1e-11
+        if previous is not None:
+            order = math.log2(previous/error)
+            record_property(f"n{n}_cross_order", order)
+            assert order > 3.5
+        previous = error
