@@ -1,0 +1,36 @@
+{
+  "source_commit": "0cdb196353112ee33b234669c60b16db92216e94",
+  "reference": "One P0 upwind step on an 8 by 12 periodic mesh over [0,2] x [0,3], velocity (-1,0.5), dt=1/16. Evaluate the exact spatial Fourier eigenvalue at (2*pi/8,4*pi/12) and solve the dense Butcher stability system independently of the DG time loop. Compare all updated cell averages and total mass against the mode plus a unit background.",
+  "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python -m pytest -q tests/test_advection_2d.py tests/test_advection_porder_convergence.py tests/test_runge_kutta_orders.py tests/test_rk_stability.py -o junit_family=legacy --junitxml=/tmp/dg-2d-rk.xml",
+  "passed": 83,
+  "measurements": {
+    "test_rectangular_rk_fourier_amplification[euler]": {
+      "max_cell_average_error": 3.3306690738754696e-16,
+      "mass_error": 0.0
+    },
+    "test_rectangular_rk_fourier_amplification[rk2]": {
+      "max_cell_average_error": 2.220446049250313e-16,
+      "mass_error": 0.0
+    },
+    "test_rectangular_rk_fourier_amplification[rk3]": {
+      "max_cell_average_error": 4.440892098500626e-16,
+      "mass_error": 0.0
+    },
+    "test_rectangular_rk_fourier_amplification[ssp_rk3]": {
+      "max_cell_average_error": 4.440892098500626e-16,
+      "mass_error": 0.0
+    },
+    "test_rectangular_rk_fourier_amplification[rk4]": {
+      "max_cell_average_error": 4.440892098500626e-16,
+      "mass_error": 0.0
+    },
+    "test_rectangular_rk_fourier_amplification[ssp_rk54]": {
+      "max_cell_average_error": 4.440892098500626e-16,
+      "mass_error": 0.0
+    },
+    "test_rectangular_rk_fourier_amplification[rk5]": {
+      "max_cell_average_error": 4.440892098500626e-16,
+      "mass_error": 0.0
+    }
+  }
+}
