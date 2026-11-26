@@ -599,12 +599,15 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
                            source=None, wall_types=("dirichlet","dirichlet"), wall_values=(0.,0.), penalty=20.,
                            film_coefficients=(0.,0.), wall_areal_heat_capacity=(0.,0.),
                            return_wall_temperatures=False, heat_loss_coefficient=None, bulk_ambient_temperature=0.,
-                           separate_mean=False, return_mean_rate=False, return_cell_power=False, return_wall_power=False):
+                           separate_mean=False, return_mean_rate=False, return_cell_power=False, return_wall_power=False,
+                           wall_applied_flux=(0., 0.)):
     """Solve iωcU - kU'' = source on the unit slab with exp(+iωt) convention.
 
     Each end prescribes a temperature (dirichlet), inward external heat flux
     (neumann), or ambient temperature (robin). film_coefficients and
     wall_areal_heat_capacity are left/right pairs in W/(m² K) and J/(m² K).
+    wall_applied_flux adds an independent inward surface heater (W/m²,
+    left/right phasors) to a Neumann or Robin wall.
     A flux or Robin wall can store heat. The material receives external input
     minus iω*Cwall*Twall. Set return_wall_temperatures to append both wall
     temperatures (prescribed on Dirichlet walls, solved traces elsewhere).
@@ -621,6 +624,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     return_wall_power appends a dict after any cell powers and before the mean
     or rate. Each entry is a left/right pair in W/m²: external power into the
     wall, storage in its areal capacity, and material power into the slab.
+    The applied and film entries isolate the extra heater and Robin exchange.
     At a Dirichlet wall external power is the numerical boundary reaction.
     With separate_mean=True on a slab without temperature, film or bulk
     exchange anchors, return temperature coefficients and optional wall traces
@@ -672,11 +676,16 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
         ambient = _bulk_profile(bulk_ambient_temperature,points,torch.complex128)
         load += (weighted*ambient) @ phi.to(load.dtype)
     values = _wall_pair(wall_values,load)
+    heater = torch.as_tensor(wall_applied_flux, dtype=load.dtype, device=load.device)
+    if heater.shape != (2,) or not torch.isfinite(heater).all():
+        raise ValueError("wall_applied_flux must contain two finite inward fluxes")
+    if any(kind == "dirichlet" and heater[i] != 0 for i, kind in enumerate(wall_types)):
+        raise ValueError("wall_applied_flux requires a Neumann or Robin wall")
     strength = penalty*(degree+1)**2/h
     for i,(cell,v,dv,normal) in enumerate(((0,left,dleft,-1),(-1,right,dright,1))):
         boundary = conductivity*(strength*v-normal*2*dv/h) if wall_types[i]=="dirichlet" else v
         applied = film[i]*values[i] if wall_types[i]=="robin" else values[i]
-        load[cell] += applied*boundary
+        load[cell] += (applied+heater[i])*boundary
     storage = 1j*angular_frequency*capacity
     system = conductivity*stiffness + storage*mass
     if exchange is not None:
@@ -719,13 +728,20 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     surface = torch.from_numpy(trace @ state)
     if return_wall_power:
         wall_power = {name: torch.empty_like(surface) for name in ("external", "storage", "material")}
+        wall_power.update(applied=heater.clone(), film=torch.zeros_like(surface))
     for i,face in enumerate((0,-1)):
         if wall_types[i]=="dirichlet":
             surface[i] = values[i]
             external = (1-2*i)*flux[face]
             stored = 0.
         else:
-            external = film[i]*(values[i]-surface[i]) if wall_types[i]=="robin" else values[i]
+            if wall_types[i]=="robin":
+                film_power = film[i]*(values[i]-surface[i])
+                external = film_power + heater[i]
+                if return_wall_power:
+                    wall_power["film"][i] = film_power
+            else:
+                external = values[i] + heater[i]
             common_storage = wall_capacity[i]*rate
             relative_storage = (1j*angular_frequency*wall_capacity[i])*surface[i]
             stored = common_storage + relative_storage

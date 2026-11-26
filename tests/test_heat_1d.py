@@ -1129,7 +1129,11 @@ def test_harmonic_cell_powers_against_polynomial_slab(kinds, record_property):
     wall_mass[np.array(kinds) == "dirichlet"] = 0.
     stored = 1j*omega*wall_mass*field(ends)
     inputs = inward+stored
-    values = [dict(robin=field(x)+inputs[i]/film[i], dirichlet=field(x), neumann=inputs[i])[kind]
+    heater = np.array([.45+.3j, -.25+.6j])
+    heater[np.array(kinds) == "dirichlet"] = 0.
+    primary = inputs-heater
+    film_reference = np.where(np.array(kinds) == "robin", primary, 0.)
+    values = [dict(robin=field(x)+primary[i]/film[i], dirichlet=field(x), neumann=primary[i])[kind]
               for i, (kind, x) in enumerate(zip(kinds, ends))]
     film[np.array(kinds) != "robin"] = 0.
 
@@ -1140,8 +1144,10 @@ def test_harmonic_cell_powers_against_polynomial_slab(kinds, record_property):
         omega, ncells=n, degree=2, conductivity=k, capacity=c, source=profile(source),
         heat_loss_coefficient=profile(loss), bulk_ambient_temperature=profile(ambient),
         wall_types=kinds, wall_values=values, film_coefficients=film, wall_areal_heat_capacity=wall_mass,
+        wall_applied_flux=heater,
         return_wall_temperatures=True, return_cell_power=True, return_wall_power=True)
-    for name, reference in (("external", inputs), ("storage", stored), ("material", inward)):
+    for name, reference in (("external", inputs), ("storage", stored), ("material", inward),
+                            ("applied", heater), ("film", film_reference)):
         error = np.max(abs(wall[name].numpy()-reference))
         record_property("wall_"+name+"_error_W_m2", float(error))
         assert error < 1e-11
@@ -1175,3 +1181,17 @@ def test_floating_cell_power_retains_common_heating_rate(omega):
     torch.testing.assert_close(powers["storage"], powers["source"], atol=1e-14, rtol=0)
     torch.testing.assert_close(powers["bulk"], torch.zeros_like(powers["bulk"]))
     torch.testing.assert_close(flux, torch.zeros_like(flux), atol=1e-13, rtol=0)
+
+
+def test_surface_heater_with_zero_film_and_floating_slab():
+    from tensordg import solve_harmonic_heat_1d
+
+    _, _, flux, wall, rate = solve_harmonic_heat_1d(
+        0., ncells=4, wall_types=("robin", "neumann"), wall_values=(7., .25),
+        wall_applied_flux=(1., -.25), return_mean_rate=True, return_wall_power=True)
+    torch.testing.assert_close(rate, rate.new_tensor(1.))
+    torch.testing.assert_close(wall["film"], rate.new_zeros(2))
+    torch.testing.assert_close(wall["material"], rate.new_tensor([1., 0.]))
+    torch.testing.assert_close(flux.diff(), rate.new_full((4,), -.25))
+    with pytest.raises(ValueError, match="Neumann or Robin"):
+        solve_harmonic_heat_1d(1., wall_applied_flux=(1., 0.))
