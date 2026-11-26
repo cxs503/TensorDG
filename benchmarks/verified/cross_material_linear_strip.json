@@ -1,0 +1,31 @@
+{
+  "source_commit": "7733d55c48d260cf74cf6c1348d038f97665608c",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 103,
+  "failures": 0,
+  "reference": "Four-segment continuum transfer with global affine generation spanning a resistive contact. Compare integrated generation in each layer, wall responses, contact flux continuity and temperature jump.",
+  "measurements": {
+    "n8_layer_generation_error_W_m2": 5.721958498152797e-17,
+    "n8_flux_continuity_W_m2": 2.3273757686693185e-17,
+    "n8_wall_W_m2": 3.9763137135083945e-07,
+    "n8_jump_K": 8.851149807842306e-08,
+    "n16_layer_generation_error_W_m2": 3.1031676915590914e-17,
+    "n16_flux_continuity_W_m2": 1.5515838457795457e-17,
+    "n16_wall_W_m2": 2.034186289476654e-08,
+    "n16_wall_W_m2_order": 4.288907872182301,
+    "n16_jump_K": 4.3765220184820016e-09,
+    "n16_jump_K_order": 4.3380081466784235,
+    "n32_layer_generation_error_W_m2": 2.8609792490763984e-17,
+    "n32_flux_continuity_W_m2": 1.4304896245381992e-17,
+    "n32_wall_W_m2": 8.594353468687776e-10,
+    "n32_wall_W_m2_order": 4.564918882593935,
+    "n32_jump_K": 1.9429068745810966e-10,
+    "n32_jump_K_order": 4.493496170837242,
+    "n64_layer_generation_error_W_m2": 4.2207643840401616e-17,
+    "n64_flux_continuity_W_m2": 7.757919228897728e-18,
+    "n64_wall_W_m2": 1.1170665303285706e-10,
+    "n64_wall_W_m2_order": 2.9436740009987212,
+    "n64_jump_K": 1.0832935964177688e-11,
+    "n64_jump_K_order": 4.164720549625449
+  }
+}
