@@ -760,16 +760,7 @@ def sample_heat_stack_fields(coefficients, lengths, conductivity, fractions):
     return temperature, flux
 
 
-def reconstruct_heat_stack_flux(face_flux, lengths, fractions, *, source_gradient=0.):
-    """Recover conservative rightward flux density inside drifting stack cells.
-
-    Supply face_flux (W/m²) from solve_drifting_heat_stack_1d and the same
-    layer lengths (m) and source_gradient (W/m⁴). The uniform heating rate
-    makes dq/dx = source - capacity*rate affine in each homogeneous layer.
-    Each cell's two numerical fluxes fix the integration constants and its
-    source gradient fixes the curvature. Each layer owns its contact traces.
-    The result is shaped (layers, cells, samples) at fractions from 0 to 1.
-    """
+def _stack_flux_polynomial(face_flux, lengths, fractions, source_gradient):
     q = torch.as_tensor(face_flux)
     if q.ndim != 2 or q.shape[0] < 1 or q.shape[1] < 2 or not q.is_floating_point():
         raise ValueError("provide real floating-point fluxes shaped (layers, cells+1)")
@@ -790,7 +781,46 @@ def reconstruct_heat_stack_flux(face_flux, lengths, fractions, *, source_gradien
         raise ValueError("provide a nonempty vector of cell fractions in [0, 1]")
     width = length/(q.shape[1]-1)
     curvature = (.5*g*width.square())[:, None, None]
+    return q, f, width, curvature
+
+
+def reconstruct_heat_stack_flux(face_flux, lengths, fractions, *, source_gradient=0.):
+    """Recover conservative rightward flux density inside drifting stack cells.
+
+    Supply face_flux (W/m²) from solve_drifting_heat_stack_1d and the same
+    layer lengths (m) and source_gradient (W/m⁴). The uniform heating rate
+    makes dq/dx = source - capacity*rate affine in each homogeneous layer.
+    Each cell's two numerical fluxes fix the integration constants and its
+    source gradient fixes the curvature. Each layer owns its contact traces.
+    The result is shaped (layers, cells, samples) at fractions from 0 to 1.
+    """
+    q, f, _, curvature = _stack_flux_polynomial(face_flux, lengths, fractions, source_gradient)
     return q[:, :-1, None]*(1-f) + q[:, 1:, None]*f + curvature*f*(f-1)
+
+
+def reconstruct_heat_stack_temperature(cell_means, face_flux, lengths, conductivity, fractions, *,
+                                       source_gradient=0.):
+    """Integrate the conservative stack flux and retain each input cell mean.
+
+    Supply the zeroth DG modes in K (layers, cells), conductivities in W/m/K,
+    and the same data as reconstruct_heat_stack_flux. The resulting cubic
+    temperature uses the gauge of cell_means and keeps separate contact traces.
+    """
+    q, f, width, curvature = _stack_flux_polynomial(face_flux, lengths, fractions, source_gradient)
+    if torch.is_complex(torch.as_tensor(cell_means)) or torch.is_complex(torch.as_tensor(conductivity)):
+        raise ValueError("cell means and conductivity must be real")
+    mean = torch.as_tensor(cell_means, dtype=q.dtype, device=q.device)
+    k = torch.as_tensor(conductivity, dtype=q.dtype, device=q.device)
+    if mean.shape != q[:, :-1].shape or not torch.isfinite(mean).all():
+        raise ValueError("provide a finite mean temperature for every cell")
+    if k.shape not in ((), width.shape) or not torch.isfinite(k).all() or (k <= 0).any():
+        raise ValueError("provide a positive finite scalar or per-layer conductivity")
+    # Each basis term integrates to zero over f in [0,1]. Its derivative
+    # recovers one term of the quadratic flux in local cell coordinates.
+    west = q[:, :-1, None]
+    slope = q.diff(dim=1)[:, :, None]-curvature
+    drop = west*(f-.5) + slope*(f.square()-1/3)/2 + curvature*(f**3-.25)/3
+    return mean[:, :, None]-(width/k)[:, None, None]*drop
 
 
 def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_flux, *,

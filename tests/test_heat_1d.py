@@ -965,7 +965,8 @@ def test_drifting_stack_storing_ends_share_the_bulk_heating_rate():
 @pytest.mark.parametrize("degree,n", [(2, 4), (2, 8), (2, 16), (3, 6)])
 @pytest.mark.parametrize("sign", [-1., 1.])
 def test_drifting_stack_affine_generation(degree, n, sign, record_property):
-    from tensordg import reconstruct_heat_stack_flux, sample_heat_stack_fields, solve_drifting_heat_stack_1d
+    from tensordg import (reconstruct_heat_stack_flux, reconstruct_heat_stack_temperature,
+                          sample_heat_stack_fields, solve_drifting_heat_stack_1d)
 
     length = [1.5, .5]
     area = [1., 2.]
@@ -983,6 +984,8 @@ def test_drifting_stack_affine_generation(degree, n, sign, record_property):
     recovered = reconstruct_heat_stack_flux(q, length, [0., *fractions, 1.], source_gradient=gradients)
     torch.testing.assert_close(recovered[:, :, 0], q[:, :-1], atol=0., rtol=0.)
     torch.testing.assert_close(recovered[:, :, -1], q[:, 1:], atol=0., rtol=0.)
+    reconstructed_t = reconstruct_heat_stack_temperature(
+        u[:, :, 0], q, length, k, [0., *fractions, 1.], source_gradient=gradients)
     target_t, target_q = [], []
     temperature = 0.
     for h, section, cond, gradient in zip(length, area, k, gradients):
@@ -1006,6 +1009,10 @@ def test_drifting_stack_affine_generation(degree, n, sign, record_property):
                   trace_K=(walls-u.new_tensor(expected_walls)+shift).abs().max().item(),
                   face_flux_W_m2=(q-torch.stack(expected_fluxes)).abs().max().item(),
                   rate_K_s=abs(rate-target_rate))
+    errors["reconstructed_interior_K"] = (reconstructed_t[:, :, 1:-1]-torch.stack(target_t)+shift).abs().max().item()
+    jump = reconstructed_t[0, -1, -1]-reconstructed_t[1, 0, 0]
+    errors["reconstructed_contact_jump_K"] = abs(jump.item()-resistance*power)
+    assert max(errors["reconstructed_interior_K"], errors["reconstructed_contact_jump_K"]) < 2e-11
     recovered_error = (recovered[:, :, 1:-1]-torch.stack(target_q)).abs().max().item()
     record_property("conservative_interior_flux_W_m2", recovered_error)
     assert recovered_error < 2e-11
@@ -1028,3 +1035,14 @@ def test_heat_stack_sampling_retains_separate_endpoint_traces():
     t, q = sample_heat_stack_fields(coeff, [2.], 3., [0., 1.])
     torch.testing.assert_close(t, coeff.new_tensor([[[-1+2j, 3+2j], [-3-1j, -3+1j]]]))
     torch.testing.assert_close(q, coeff.new_tensor([[[-12., -12.], [-6j, -6j]]]))
+
+def test_stack_temperature_reconstruction_preserves_arbitrary_cell_means():
+    from tensordg import reconstruct_heat_stack_temperature
+
+    means = torch.tensor([[2., -1.], [.4, 1.3]], dtype=torch.float64)
+    flux = means.new_tensor([[4., -3., 2.], [1., 7., -.2]])
+    # Two-point Gauss quadrature integrates each reconstructed cubic exactly.
+    offset = .5/math.sqrt(3)
+    t = reconstruct_heat_stack_temperature(means, flux, [1., 2.], [1., 4.],
+                                           [.5-offset, .5+offset], source_gradient=[.5, -2.])
+    torch.testing.assert_close(t.mean(-1), means, rtol=0., atol=1e-14)
