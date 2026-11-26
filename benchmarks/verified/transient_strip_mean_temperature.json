@@ -1,0 +1,26 @@
+{
+  "source_commit": "7531bac9c23af065523e43afc865b1765c500dd4",
+  "reference": "Unit slab, zero wall and initial temperatures. Integrate 20000 Fourier sine modes over the heating and cooling intervals. Compare five probe values and the spatial average over the heater strip.",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=/tmp/dg_strip_mean_temp.xml",
+  "tests": 107,
+  "failures": 0,
+  "errors": 0,
+  "errors_by_mesh": {
+    "n8_heating_mean_probe_error_K": 0.00018175808305113256,
+    "n8_heating_strip_mean_error_K": 2.5172104270859696e-05,
+    "n8_cooling_mean_probe_error_K": 3.6618909186665605e-05,
+    "n8_cooling_strip_mean_error_K": 4.816850515010351e-06,
+    "n16_heating_mean_probe_error_K": 3.2196060963753104e-05,
+    "n16_heating_strip_mean_error_K": 6.04484894312779e-06,
+    "n16_cooling_mean_probe_error_K": 2.7886651383923766e-06,
+    "n16_cooling_strip_mean_error_K": 5.546568953851416e-07,
+    "n32_heating_mean_probe_error_K": 1.0785847026736212e-05,
+    "n32_heating_strip_mean_error_K": 1.5244139910108867e-07,
+    "n32_cooling_mean_probe_error_K": 6.980328228836652e-07,
+    "n32_cooling_strip_mean_error_K": 3.986434821134921e-09,
+    "n64_heating_mean_probe_error_K": 3.52217614833783e-06,
+    "n64_heating_strip_mean_error_K": 7.965392828657158e-08,
+    "n64_cooling_mean_probe_error_K": 7.910776226444094e-08,
+    "n64_cooling_strip_mean_error_K": 1.8241008148400795e-09
+  }
+}
