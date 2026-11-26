@@ -1,0 +1,80 @@
+{
+  "commit": "e7ee398fa9178027c6c06431ab23e48dd08fe477",
+  "reproduction": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat-results.xml",
+  "reference": "Piecewise cubic temperature and quadratic Fourier flux, two layers with unequal lengths and areas, finite contact resistance. Case parameters are gradient sign, DG degree and cells per layer.",
+  "tests_passed": 73,
+  "runs": [
+    {
+      "case": "test_drifting_stack_affine_generation[-1.0-2-4]",
+      "max_absolute_errors": {
+        "cell_mean_K": 6.161737786669619e-15,
+        "trace_K": 6.772360450213455e-15,
+        "face_flux_W_m2": 3.430589146091734e-14,
+        "rate_K_s": 0.0
+      }
+    },
+    {
+      "case": "test_drifting_stack_affine_generation[-1.0-2-8]",
+      "max_absolute_errors": {
+        "cell_mean_K": 8.548717289613705e-15,
+        "trace_K": 8.770761894538737e-15,
+        "face_flux_W_m2": 7.116529587847253e-14,
+        "rate_K_s": 0.0
+      }
+    },
+    {
+      "case": "test_drifting_stack_affine_generation[-1.0-2-16]",
+      "max_absolute_errors": {
+        "cell_mean_K": 4.6074255521943996e-14,
+        "trace_K": 4.2743586448068527e-14,
+        "face_flux_W_m2": 1.8629542353210127e-13,
+        "rate_K_s": 0.0
+      }
+    },
+    {
+      "case": "test_drifting_stack_affine_generation[-1.0-3-6]",
+      "max_absolute_errors": {
+        "cell_mean_K": 3.552713678800501e-15,
+        "trace_K": 3.552713678800501e-15,
+        "face_flux_W_m2": 8.548717289613705e-14,
+        "rate_K_s": 0.0
+      }
+    },
+    {
+      "case": "test_drifting_stack_affine_generation[1.0-2-4]",
+      "max_absolute_errors": {
+        "cell_mean_K": 1.9845236565174673e-15,
+        "trace_K": 2.6229018956769323e-15,
+        "face_flux_W_m2": 1.0810796702287462e-14,
+        "rate_K_s": 0.0
+      }
+    },
+    {
+      "case": "test_drifting_stack_affine_generation[1.0-2-8]",
+      "max_absolute_errors": {
+        "cell_mean_K": 2.345346139520643e-15,
+        "trace_K": 2.8727020762175925e-15,
+        "face_flux_W_m2": 2.4064084058750268e-14,
+        "rate_K_s": 0.0
+      }
+    },
+    {
+      "case": "test_drifting_stack_affine_generation[1.0-2-16]",
+      "max_absolute_errors": {
+        "cell_mean_K": 5.898059818321144e-15,
+        "trace_K": 5.842548667089886e-15,
+        "face_flux_W_m2": 6.902811655606911e-14,
+        "rate_K_s": 0.0
+      }
+    },
+    {
+      "case": "test_drifting_stack_affine_generation[1.0-3-6]",
+      "max_absolute_errors": {
+        "cell_mean_K": 1.7208456881689926e-15,
+        "trace_K": 1.4849232954361469e-15,
+        "face_flux_W_m2": 3.3306690738754696e-14,
+        "rate_K_s": 0.0
+      }
+    }
+  ]
+}
