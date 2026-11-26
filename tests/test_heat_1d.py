@@ -1738,12 +1738,16 @@ def test_off_grid_strip_wall_flux_against_piecewise_transfer(record_property):
     from scipy.linalg import expm
     from tensordg import project_uniform_strip_source, reciprocal_bulk_wall_flux, solve_harmonic_heat_layer_1d
 
+    from tensordg import sample_heat_stack_fields, harmonic_heat_wall_admittance_1d
+
     length, k, capacity, omega = 1.2, 1.3, 2.1, 3.4
     west, east, heater = .213, .786, .47-.82j
     # Propagate [T,q,1] with generation confined to the middle segment.
+    segments = []
     transfer = np.eye(3)
     for width, power in ((west, 0.), (east-west, heater), (length-east, 0.)):
         generator = np.array([[0., -1/k, 0.], [-1j*omega*capacity, 0., power], [0., 0., 0.]])
+        segments.append((generator, transfer))
         transfer = expm(width*generator) @ transfer
     left = -transfer[0, 2]/transfer[0, 1]
     exact = np.array([left, -(transfer @ [0., left, 1.])[1]])
@@ -1757,6 +1761,32 @@ def test_off_grid_strip_wall_flux_against_piecewise_transfer(record_property):
             _, modes, _ = solve_harmonic_heat_layer_1d(
                 omega, drive, ncells=n, degree=2, thickness=length, conductivity=k, capacity=capacity)
             predicted.append(reciprocal_bulk_wall_flux(modes, source, length/n).item())
+        opts = dict(ncells=n, degree=2, thickness=length, conductivity=k, capacity=capacity,
+                    source_modes=source)
+        _, field, faces, powers = solve_harmonic_heat_layer_1d(
+            omega, (0., 0.), return_cell_power=True, **opts)
+        direct = torch.stack((faces[0], -faces[-1]))
+        _, offset = harmonic_heat_wall_admittance_1d(omega, **opts)
+        torch.testing.assert_close(direct, offset, atol=1e-12, rtol=0)
+        mismatch = np.max(abs(predicted-direct.numpy()))
+        assert mismatch < 1e-11
+        width = length/n
+        edges = np.linspace(0, length, n+1)
+        overlap = np.maximum(0, np.minimum(east, edges[1:])-np.maximum(west, edges[:-1]))
+        np.testing.assert_allclose(powers["source"].numpy(), heater*overlap, atol=1e-14, rtol=0)
+        cut_errors = []
+        for edge, segment in ((west, 0), (east, 1)):
+            cell = math.floor(edge/width)
+            sampled, _ = sample_heat_stack_fields(field[None], [length], k, [edge/width-cell])
+            generator, prefix = segments[segment]
+            local_x = edge-(0., west)[segment]
+            state = expm(local_x*generator) @ prefix @ [0., left, 1.]
+            cut_errors.append(abs(sampled[0, cell, 0].item()-state[0]))
+        record_property(f"n{n}_edge_temperature_error_K", max(cut_errors))
+        record_property(f"n{n}_direct_reciprocal_mismatch_W_m2", float(mismatch))
+        if previous is not None:
+            assert max(cut_errors) < previous_edge
+        previous_edge = max(cut_errors)
         error = np.max(abs(predicted-exact))
         record_property(f"n{n}_wall_error_W_m2", float(error))
         record_property(f"n{n}_generation_error_W_m2", total_error)
@@ -1764,3 +1794,22 @@ def test_off_grid_strip_wall_flux_against_piecewise_transfer(record_property):
             record_property(f"n{n}_order", math.log2(previous/error))
             assert error < previous/2
         previous = error
+
+
+def test_modal_volume_load_combines_with_profile_and_truncates_orthogonal_modes():
+    from tensordg import solve_harmonic_heat_1d
+
+    n = 7
+    opts = dict(ncells=n, degree=2, return_cell_power=True)
+    modal = torch.zeros((n, 5), dtype=torch.complex128)
+    modal[:, 0] = .3j
+    modal[:, 1] = .2/n
+    modal[:, 4] = 1.7
+    centers = (torch.arange(n, dtype=torch.float64)+.5)/n
+    # Add a constant load to a zero-order plus local linear modal source.
+    actual = solve_harmonic_heat_1d(2., source=.4, source_modes=modal, **opts)
+    exact = solve_harmonic_heat_1d(2., source=lambda x: .4+.3j+.4*(x-centers[:, None]), **opts)
+    for found, expected in zip(actual, exact):
+        torch.testing.assert_close(found, expected, atol=1e-12, rtol=0)
+    with pytest.raises(ValueError, match="source_modes"):
+        solve_harmonic_heat_1d(2., source_modes=modal[:-1], **opts)

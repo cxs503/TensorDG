@@ -609,7 +609,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
                            film_coefficients=(0.,0.), wall_areal_heat_capacity=(0.,0.),
                            return_wall_temperatures=False, heat_loss_coefficient=None, bulk_ambient_temperature=0.,
                            separate_mean=False, return_mean_rate=False, return_cell_power=False, return_wall_power=False,
-                           wall_applied_flux=(0., 0.)):
+                           wall_applied_flux=(0., 0.), source_modes=None):
     """Solve iωcU - kU'' = source on the unit slab with exp(+iωt) convention.
 
     Each end prescribes a temperature (dirichlet), inward external heat flux
@@ -624,6 +624,8 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     H in W/(m³ K) is finite, real and nonnegative. H and Tambient accept
     constants, one value per cell, or functions of physical quadrature points.
     Source phasors may be constant or callable on real cell quadrature points.
+    source_modes adds cellwise Legendre coefficients of generation in W/m³,
+    shaped (cells, modes). Orthogonality gives their exact DG load moments.
     Returns cell centers, complex128 Legendre coefficients and the rightward
     numerical flux at every face. Uses a CPU sparse direct solve.
     return_cell_power appends a dict after optional wall temperatures and
@@ -675,6 +677,13 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     nodes,weights,phi,_,_,left,right,dleft,dright = ops
     load = torch.zeros((ncells,degree+1),dtype=torch.complex128) if source is None else _source_load(
         centers,h,nodes,weights,phi,source,dtype=torch.complex128)
+    if source_modes is not None:
+        modal = torch.as_tensor(source_modes, dtype=load.dtype, device=load.device)
+        if modal.ndim != 2 or modal.shape[0] != ncells or modal.shape[1] < 1 or not torch.isfinite(modal).all():
+            raise ValueError("source_modes requires finite Legendre coefficients for each cell")
+        count = min(degree+1, modal.shape[1])
+        orders = torch.arange(count, dtype=centers.dtype, device=centers.device)
+        load[:, :count] += modal[:, :count]*(h/(2*orders+1))
     if return_cell_power:
         source_power = load[:, 0].clone()
     exchange = None
@@ -1208,7 +1217,8 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
 
 def solve_harmonic_heat_layer_1d(angular_frequency, wall_temperatures, *, ncells=16, degree=2,
                                  conductivity=1., capacity=1., penalty=20., heat_loss_coefficient=None,
-                                 thickness=1., source=None, bulk_ambient_temperature=None, return_cell_power=False):
+                                 thickness=1., source=None, bulk_ambient_temperature=None, return_cell_power=False,
+                                 source_modes=None):
     """Recover a physical layer from two prescribed wall phasors, including stack contact traces.
 
     Return layer-local cell centers in m, complex Legendre temperature modes in K,
@@ -1216,6 +1226,7 @@ def solve_harmonic_heat_layer_1d(angular_frequency, wall_temperatures, *, ncells
     measured from the left face. Pass the same material, loads and mesh used for
     harmonic_heat_wall_admittance_1d. sample_heat_stack_fields accepts a layer
     dimension on the coefficients and evaluates temperature and Fourier flux.
+    source_modes adds physical cellwise Legendre source coefficients in W/m³.
     return_cell_power appends a dict of source, bulk exchange and storage
     powers integrated over each physical cell per unit cross section (W/m²).
     """
@@ -1235,6 +1246,7 @@ def solve_harmonic_heat_layer_1d(angular_frequency, wall_temperatures, *, ncells
         angular_frequency, ncells=ncells, degree=degree, conductivity=conductivity/thickness,
         capacity=capacity*thickness, penalty=penalty, wall_values=wall_temperatures,
         return_cell_power=return_cell_power,
+        source_modes=None if source_modes is None else thickness*torch.as_tensor(source_modes, dtype=torch.complex128),
         heat_loss_coefficient=scaled_loss if heat_loss_coefficient is not None else None,
         source=scaled_source if source is not None else None,
         bulk_ambient_temperature=ambient_profile if bulk_ambient_temperature is not None else 0.)
@@ -1244,29 +1256,30 @@ def solve_harmonic_heat_layer_1d(angular_frequency, wall_temperatures, *, ncells
 def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
                                      conductivity=1., capacity=1., penalty=20.,
                                      heat_loss_coefficient=None, thickness=1., source=None,
-                                     bulk_ambient_temperature=None):
+                                     bulk_ambient_temperature=None, source_modes=None):
     """Map two prescribed wall-temperature phasors to inward heat fluxes.
 
     For a SIPG slab of the specified thickness in meters, return a complex128 matrix Y with rows
     and columns ordered left, right. Y @ temperatures gives the pair of
-    inward fluxes in W/m² for an unforced layer. If source (W/m³) or bulk_ambient_temperature (K) is supplied,
+    inward fluxes in W/m² for an unforced layer. If source (W/m³),
+    bulk_ambient_temperature (K), or cellwise Legendre source_modes (W/m³) is supplied,
     return (Y, offset): inward flux = Y @ temperatures + offset. The bulk
     reservoir temperature defaults to zero. Both loads accept scalar, per-cell
     or callable profiles. The reservoir adds H*(Tambient-T) per unit volume. The frequency and material arguments
     follow solve_harmonic_heat_1d, including spatially varying bulk loss. Profile callbacks receive
     physical coordinates measured from the left wall.
     """
-    def inward_flux(drive, generation=None, ambient=None):
+    def inward_flux(drive, generation=None, ambient=None, modal=None):
         _, _, flux = solve_harmonic_heat_layer_1d(
             angular_frequency, drive, ncells=ncells, degree=degree, conductivity=conductivity,
             capacity=capacity, penalty=penalty, thickness=thickness, heat_loss_coefficient=heat_loss_coefficient,
-            source=generation, bulk_ambient_temperature=ambient)
+            source=generation, bulk_ambient_temperature=ambient, source_modes=modal)
         return torch.stack((flux[0], -flux[-1]))
 
     matrix = torch.stack((inward_flux((1., 0.)), inward_flux((0., 1.))), dim=1)
-    if source is None and bulk_ambient_temperature is None:
+    if source is None and bulk_ambient_temperature is None and source_modes is None:
         return matrix
-    return matrix, inward_flux((0., 0.), source, bulk_ambient_temperature)
+    return matrix, inward_flux((0., 0.), source, bulk_ambient_temperature, source_modes)
 
 
 def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall_temperatures=None,
