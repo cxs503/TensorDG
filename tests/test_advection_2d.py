@@ -1,5 +1,6 @@
 import math
 
+import pytest
 import torch
 
 from tensordg import error_2d, solve_advection_2d
@@ -131,3 +132,31 @@ def test_zero_duration_restart_copies_and_converts_modes():
     assert torch.equal(result, initial.double())
     _, _, copied, _ = solve_advection_2d((2, 3), 1, 4., start_time=4., initial=result)
     assert copied.data_ptr() != result.data_ptr()
+
+@pytest.mark.parametrize("method", ["euler", "rk2", "rk3", "ssp_rk3", "rk4", "ssp_rk54", "rk5"])
+def test_rectangular_rk_fourier_amplification(method, record_property):
+    import cmath
+    from tensordg.rk_stability import stability_function_dense
+    from tensordg.runge_kutta import get_tableau
+
+    nx, ny = 8, 12
+    lengths, velocity = (2., 3.), (-1., .5)
+    tx, ty = 2*math.pi/nx, 4*math.pi/ny
+    phase = tx*torch.arange(nx, dtype=torch.float64)[:, None] + ty*torch.arange(ny, dtype=torch.float64)
+    initial = (1 + phase.cos())[:, :, None, None]
+    dt = .0625
+    _, _, result, meta = solve_advection_2d((nx, ny), 0, dt, velocity, cfl=.5,
+            initial=initial, lengths=lengths, time_integrator=method)
+    # For P0 the upwind stencil samples i+1 and j-1 on this velocity field.
+    eigenvalue = (nx/lengths[0])*(cmath.exp(1j*tx)-1) + (.5*ny/lengths[1])*(cmath.exp(-1j*ty)-1)
+    tableau = get_tableau(method)
+    gain = stability_function_dense(tableau, dt*eigenvalue)[0]
+    expected = 1 + gain.real*phase.cos() - gain.imag*phase.sin()
+    error = float((result[..., 0, 0]-expected).abs().max())
+    mass_error = abs(float(result.mean())*6.-6.)
+    record_property("max_cell_average_error", error)
+    record_property("mass_error", mass_error)
+    assert meta["steps"] == 1 and meta["time_integrator"] == method
+    assert (meta["rk_order"], meta["rk_stages"]) == (tableau.order, tableau.stages)
+    assert error < 2e-15
+    assert mass_error < 2e-15

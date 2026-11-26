@@ -11,9 +11,13 @@ mass-conservation check nontrivial.
 
 - Uniform Cartesian mesh with tensor-product modal Legendre bases P0--P3.
 - Dimension-by-dimension weak DG volume terms and upwind face fluxes.
-- Classical RK4 with `dt = CFL / ((2*p+1)*(|ax|/hx+|ay|/hy))`.
+- Classical RK4 by default, with `dt = CFL / ((2*p+1)*(|ax|/hx+|ay|/hy))`.
 - Gauss--Legendre initial projection and L2-error quadrature.
 - PyTorch tensors for the state and semi-discrete operator.
+
+The solver also accepts `time_integrator="euler"`, `"rk2"`, `"rk3"`,
+`"ssp_rk3"`, `"ssp_rk54"` and `"rk5"`. The returned metadata records the
+selected method, its order and its number of stages.
 
 The documented case uses P1 on a 24x24 mesh, velocity `(1,0.5)`, CFL 0.08,
 and final time 1. Its relative L2 error must be below 3%; the regression

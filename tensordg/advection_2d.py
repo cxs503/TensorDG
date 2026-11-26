@@ -1,7 +1,7 @@
 """Two-dimensional periodic linear advection with tensor-product DG.
 
 The discretization uses modal Legendre polynomials on a uniform Cartesian
-mesh, an upwind numerical flux, Gauss--Legendre projection, and classical RK4.
+mesh, an upwind numerical flux, Gauss--Legendre projection, and explicit Runge--Kutta time stepping (RK4 by default).
 The exact solution is a periodically translated smooth trigonometric profile.
 """
 from __future__ import annotations
@@ -12,6 +12,7 @@ import math
 import numpy as np
 import torch
 
+from .runge_kutta import get_tableau, rk_step
 from .advection_1d import _copy_modal_state, _departure_coordinate
 
 # The tensor-product operators are built from Legendre values/derivatives at
@@ -140,6 +141,7 @@ def solve_advection_2d(
     *,
     initial: Callable | torch.Tensor | None = None,
     start_time: float = 0.0,
+    time_integrator: str = "rk4",
     lengths: tuple[float, float] = (1.0, 1.0),
 ):
     """Solve ``u_t + ax*u_x + ay*u_y = 0`` on a periodic rectangle with side lengths (Lx, Ly).
@@ -150,10 +152,13 @@ def solve_advection_2d(
     A tensor passed as initial contains modal coefficients on the same mesh and
     physical rectangle at start_time. final_time is the absolute end time.
 
+    time_integrator selects a registered explicit Runge--Kutta tableau.
+
     Returns ``(x_centers, y_centers, modal_coefficients, metadata)``. The
     coefficient array has shape ``(nx,ny,degree+1,degree+1)``; its ``[0,0]``
     mode is the cell average.
     """
+    tableau = get_tableau(time_integrator)
     nx, ny = (ncells, ncells) if isinstance(ncells, int) else ncells
     if nx < 2 or ny < 2 or not 0 <= degree <= MAX_DEGREE:
         raise ValueError(
@@ -202,25 +207,24 @@ def solve_advection_2d(
         steps = math.ceil(duration / dt_nominal)
     dt = duration / steps if steps else 0.0
 
+    def rhs(state):
+        return _rhs(state, hx, hy, (ax, ay), volume, phi_left, phi_right)
+
     for _ in range(steps):
-        k1 = _rhs(coeff, hx, hy, (ax, ay), volume, phi_left, phi_right)
-        k2 = _rhs(
-            coeff + 0.5 * dt * k1, hx, hy, (ax, ay),
-            volume, phi_left, phi_right,
-        )
-        k3 = _rhs(
-            coeff + 0.5 * dt * k2, hx, hy, (ax, ay),
-            volume, phi_left, phi_right,
-        )
-        k4 = _rhs(
-            coeff + dt * k3, hx, hy, (ax, ay),
-            volume, phi_left, phi_right,
-        )
-        coeff = coeff + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        if time_integrator == "rk4":
+            # Preserve the established summation order of the default.
+            k1 = rhs(coeff)
+            k2 = rhs(coeff + 0.5 * dt * k1)
+            k3 = rhs(coeff + 0.5 * dt * k2)
+            k4 = rhs(coeff + dt * k3)
+            coeff = coeff + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+        else:
+            coeff = rk_step(rhs, coeff, dt, tableau)
 
     metadata = {
         "ncells": (nx, ny), "lengths": lengths, "degree": degree, "final_time": final_time,
         "velocity": (ax, ay), "start_time": start_time, "dt": dt,
+        "time_integrator": tableau.name, "rk_order": tableau.order, "rk_stages": tableau.stages,
         "steps": steps, "device": str(dev), "cfl": cfl,
     }
     return x, y, coeff, metadata
