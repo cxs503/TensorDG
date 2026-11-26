@@ -881,3 +881,14 @@ def test_constant_load_heating_rate_and_relative_profile(omega, rate, record_pro
         maximum = err.abs().max().item()
         record_property(name, maximum)
         assert maximum < 2e-11
+
+
+def test_drifting_heat_stack_single_layer_linear_profile():
+    from tensordg import solve_drifting_heat_stack_1d
+
+    x, modes, flux, walls, rate = solve_drifting_heat_stack_1d(
+        [2.], 3., 1.5, (.6, -.6), source=.75, ncells=5, degree=1)
+    torch.testing.assert_close(modes[:, :, 0], -.2*(x-1.), atol=1e-12, rtol=0.)
+    torch.testing.assert_close(flux, torch.full_like(flux, .6), atol=1e-12, rtol=0.)
+    torch.testing.assert_close(walls, walls.new_tensor([[.2, -.2]]), atol=1e-12, rtol=0.)
+    assert rate == .5
