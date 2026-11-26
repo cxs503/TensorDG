@@ -50,6 +50,14 @@ metrics = error_2d(x, y, continued, 0.25, velocity, lengths=lengths)
 For an exact translation check, pass the elapsed time since the analytic
 initial profile was prescribed to `error_2d`.
 
+A spatially uniform `velocity(t)` may vary in time. Each Runge–Kutta stage
+uses its absolute time. Set `max_speed=(ax_max, ay_max)` for known absolute
+component bounds and `max_dt` to resolve short pulses. Without explicit
+bounds, the solver samples each smooth interval at five times and checks the
+CFL at the stages. For right-continuous jumps pass the interior switch times
+in `velocity_jump_times`. To verify a known displacement, use its components
+as the velocity in `error_2d` with elapsed time set to one.
+
 ## Run
 
 ```bash

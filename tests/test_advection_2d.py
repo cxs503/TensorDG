@@ -160,3 +160,52 @@ def test_rectangular_rk_fourier_amplification(method, record_property):
     assert (meta["rk_order"], meta["rk_stages"]) == (tableau.order, tableau.stages)
     assert error < 2e-15
     assert mass_error < 2e-15
+
+
+def test_time_varying_velocity_against_integrated_fourier_mode(record_property):
+    import cmath
+
+    nx, ny = 8, 12
+    tx, ty = 2*math.pi/nx, 4*math.pi/ny
+    phase = tx*torch.arange(nx, dtype=torch.float64)[:, None] + ty*torch.arange(ny, dtype=torch.float64)
+    initial = (1 + phase.cos())[:, :, None, None]
+    start, span = 2., .25
+
+    def velocity(t):
+        return -(1 + (t-start)), .5 + (t-start)**2
+
+    # The two P0 upwind operators commute. Integrate each signed speed
+    # exactly before exponentiating the combined Fourier eigenvalue.
+    distance_x = span + span**2/2
+    distance_y = .5*span + span**3/3
+    gain = cmath.exp(4*distance_x*(cmath.exp(1j*tx)-1) + 4*distance_y*(cmath.exp(-1j*ty)-1))
+    exact = 1 + gain.real*phase.cos() - gain.imag*phase.sin()
+    errors = []
+    for steps in (4, 8, 16):
+        _, _, coeff, info = solve_advection_2d((nx, ny), 0, start+span, velocity,
+                lengths=(2., 3.), initial=initial, start_time=start, cfl=1., max_dt=span/steps)
+        assert info["steps"] == steps
+        errors.append(float((coeff[..., 0, 0]-exact).abs().max()))
+        mass_error = abs(float(coeff.mean())*6.-6.)
+        record_property(f"max_cell_error_{steps}", errors[-1])
+        record_property(f"mass_error_{steps}", mass_error)
+        assert mass_error < 2e-15
+    assert min(math.log2(a/b) for a,b in zip(errors, errors[1:])) > 3.8
+
+
+def test_velocity_switch_matches_two_constant_translations(record_property):
+    start, switch, end = 3., 3.0625, 3.1875
+    first, second = (.5, -.25), (-.25, .5)
+    opts = dict(ncells=(8, 12), degree=2, lengths=(2., 3.), max_speed=(.5, .5), max_dt=1/64, cfl=.5)
+    x, y, switched, _ = solve_advection_2d(final_time=end, start_time=start,
+        velocity=lambda t: first if t < switch else second, velocity_jump_times=(switch,), **opts)
+    _, _, checkpoint, _ = solve_advection_2d(start_time=start, final_time=switch, velocity=first, **opts)
+    _, _, restarted, _ = solve_advection_2d(start_time=switch, final_time=end,
+                                            velocity=second, initial=checkpoint, **opts)
+    difference = float((switched-restarted).abs().max())
+    displacement = tuple((switch-start)*a+(end-switch)*b for a,b in zip(first, second))
+    relative = error_2d(x, y, switched, 1., displacement, lengths=opts["lengths"])["relative_l2"]
+    record_property("max_split_modal_difference", difference)
+    record_property("relative_l2_vs_translation", relative)
+    assert difference < 5e-15
+    assert relative < .005

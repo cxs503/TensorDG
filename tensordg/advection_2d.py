@@ -12,7 +12,8 @@ import math
 import numpy as np
 import torch
 
-from .runge_kutta import get_tableau, rk_step
+from .runge_kutta import get_tableau
+from ._advection_time import advance_transport
 from .advection_1d import _copy_modal_state, _departure_coordinate
 
 # The tensor-product operators are built from Legendre values/derivatives at
@@ -134,7 +135,7 @@ def solve_advection_2d(
     ncells: int | tuple[int, int] = 24,
     degree: int = 1,
     final_time: float = 1.0,
-    velocity: tuple[float, float] = (1.0, 0.5),
+    velocity: tuple[float, float] | Callable[[float], tuple[float, float]] = (1.0, 0.5),
     cfl: float = 0.08,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
@@ -142,16 +143,22 @@ def solve_advection_2d(
     initial: Callable | torch.Tensor | None = None,
     start_time: float = 0.0,
     time_integrator: str = "rk4",
+    max_speed: tuple[float, float] | None = None,
+    max_dt: float | None = None,
+    velocity_jump_times: tuple[float, ...] = (),
     lengths: tuple[float, float] = (1.0, 1.0),
 ):
     """Solve ``u_t + ax*u_x + ay*u_y = 0`` on a periodic rectangle with side lengths (Lx, Ly).
 
     The initial/exact profile is ``1 + sin(2*pi*x/Lx) * sin(2*pi*y/Ly)`` translated
-    by ``velocity * (final_time - start_time)``. Supply ``initial(x, y)`` to project another periodic profile. ``ncells`` can be one integer or ``(nx,ny)``.
+    by the time integral of the spatially uniform velocity. Supply ``initial(x, y)`` to project another periodic profile. ``ncells`` can be one integer or ``(nx,ny)``.
 
     A tensor passed as initial contains modal coefficients on the same mesh and
     physical rectangle at start_time. final_time is the absolute end time.
 
+    A velocity(t) callback receives absolute stage times. Supply max_speed
+    for componentwise bounds, max_dt to resolve rapid variation and
+    velocity_jump_times for known right-continuous interior switches.
     time_integrator selects a registered explicit Runge--Kutta tableau.
 
     Returns ``(x_centers, y_centers, modal_coefficients, metadata)``. The
@@ -169,8 +176,6 @@ def solve_advection_2d(
         raise ValueError("start_time and final_time must define a finite forward interval")
     if not math.isfinite(cfl) or cfl <= 0.:
         raise ValueError("cfl must be positive and finite")
-    if len(velocity) != 2:
-        raise ValueError("velocity must contain exactly two components")
 
     dev = torch.device(device)
     lengths = _domain_lengths(lengths)
@@ -197,33 +202,15 @@ def solve_advection_2d(
         ).reshape(degree + 1, degree + 1)
         coeff = coeff * norm[None, None, :, :]
 
-    ax, ay = float(velocity[0]), float(velocity[1])
-    wave_rate = abs(ax) / hx + abs(ay) / hy
-    if duration == 0.0 or wave_rate == 0.0:
-        steps = 0
-        dt_nominal = float("inf")
-    else:
-        dt_nominal = cfl / ((2 * degree + 1) * wave_rate)
-        steps = math.ceil(duration / dt_nominal)
-    dt = duration / steps if steps else 0.0
+    def spatial_rhs(state, components):
+        return _rhs(state, hx, hy, components, volume, phi_left, phi_right)
 
-    def rhs(state):
-        return _rhs(state, hx, hy, (ax, ay), volume, phi_left, phi_right)
-
-    for _ in range(steps):
-        if time_integrator == "rk4":
-            # Preserve the established summation order of the default.
-            k1 = rhs(coeff)
-            k2 = rhs(coeff + 0.5 * dt * k1)
-            k3 = rhs(coeff + 0.5 * dt * k2)
-            k4 = rhs(coeff + dt * k3)
-            coeff = coeff + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
-        else:
-            coeff = rk_step(rhs, coeff, dt, tableau)
-
+    coeff, velocity_info, bounds, steps, dt = advance_transport(
+        coeff, spatial_rhs, (hx, hy), degree, tableau, velocity, start_time, final_time,
+        cfl, max_speed, max_dt, velocity_jump_times)
     metadata = {
         "ncells": (nx, ny), "lengths": lengths, "degree": degree, "final_time": final_time,
-        "velocity": (ax, ay), "start_time": start_time, "dt": dt,
+        "velocity": velocity_info, "max_speed": bounds, "start_time": start_time, "dt": dt,
         "time_integrator": tableau.name, "rk_order": tableau.order, "rk_stages": tableau.stages,
         "steps": steps, "device": str(dev), "cfl": cfl,
     }
