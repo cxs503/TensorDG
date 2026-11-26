@@ -803,3 +803,45 @@ def test_independent_wall_penalty_changes_only_two_trace_blocks():
     for value in (0., -1., math.nan, math.inf):
         with pytest.raises(ValueError, match="wall_penalty"):
             assemble_sipg_1d(n, wall_penalty=value)
+
+
+@pytest.mark.parametrize("omega", [1e-14, 1e-8, 1.])
+def test_separated_wall_and_cell_temperature_fluctuations(omega, record_property):
+    from tensordg import solve_harmonic_heat_1d
+
+    n, c, k = 12, 1.5, 2.
+    walls = torch.tensor([.3, .9], dtype=torch.float64)
+    ends = torch.tensor([0., 1.], dtype=torch.float64)
+    a, b, rate = .5+.3j, -.2+.6j, .8-.6j
+    # Shift the quadratic to zero integrated storage, including the two walls.
+    shift = (c*(a/3+b/2)+walls[1]*(a+b))/(c+walls.sum())
+
+    def local(x):
+        return a*x**2+b*x-shift
+
+    def flux(x):
+        return -k*(2*a*x+b)
+
+    def source(x):
+        return c*(rate+1j*omega*local(x))-2*k*a
+
+    loads = flux(ends)*ends.new_tensor([1., -1.])+walls*(rate+1j*omega*local(ends))
+    x, u, q, surface, mean = solve_harmonic_heat_1d(
+        omega, ncells=n, degree=2, capacity=c, conductivity=k, source=source,
+        wall_types=("neumann", "neumann"), wall_values=loads,
+        wall_areal_heat_capacity=walls, return_wall_temperatures=True, separate_mean=True)
+    for name, actual, expected in (
+        ("cell_mean_K", u[:, 0], local(x)+a/(12*n**2)),
+        ("wall_trace_K", surface, local(ends)),
+        ("face_flux_W_m2", q, flux(torch.linspace(0., 1., n+1, dtype=x.dtype))),
+        ("mean_rate_K_s", 1j*omega*mean, mean.new_tensor(rate)),
+    ):
+        record_property(name, (actual-expected).abs().max().item())
+        torch.testing.assert_close(actual, expected, atol=2e-11, rtol=0.)
+
+
+def test_separate_harmonic_mean_requires_unanchored_slab():
+    from tensordg import solve_harmonic_heat_1d
+
+    with pytest.raises(ValueError, match="without temperature or exchange anchors"):
+        solve_harmonic_heat_1d(2., separate_mean=True)

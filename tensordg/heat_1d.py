@@ -598,7 +598,8 @@ def _slab_trace_matrix(ncells, degree, left, right):
 def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivity=1., capacity=1.,
                            source=None, wall_types=("dirichlet","dirichlet"), wall_values=(0.,0.), penalty=20.,
                            film_coefficients=(0.,0.), wall_areal_heat_capacity=(0.,0.),
-                           return_wall_temperatures=False, heat_loss_coefficient=None, bulk_ambient_temperature=0.):
+                           return_wall_temperatures=False, heat_loss_coefficient=None, bulk_ambient_temperature=0.,
+                           separate_mean=False):
     """Solve iωcU - kU'' = source on the unit slab with exp(+iωt) convention.
 
     Each end prescribes a temperature (dirichlet), inward external heat flux
@@ -613,6 +614,10 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     Source phasors may be constant or callable on real cell quadrature points.
     Returns cell centers, complex128 Legendre coefficients and the rightward
     numerical flux at every face. Uses a CPU sparse direct solve.
+    With separate_mean=True on a slab without temperature, film or bulk
+    exchange anchors, return temperature coefficients and optional wall traces
+    relative to the capacity-weighted mean (including wall storage). Append
+    that uniform phasor in K as the last result. Fluxes retain physical values.
     """
     from scipy import sparse
     from scipy.sparse.linalg import splu
@@ -661,7 +666,10 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
         system += trace.T @ sparse.diags(film+1j*angular_frequency*wall_capacity) @ trace
     rhs = load.detach().numpy().ravel()
     mean = 0j
-    if exchange is None and "dirichlet" not in wall_types and not np.any(film):
+    unanchored = exchange is None and "dirichlet" not in wall_types and not np.any(film)
+    if separate_mean and not unanchored:
+        raise ValueError("separate_mean requires a slab without temperature or exchange anchors")
+    if unanchored:
         # Constant mode has no conductive restoring force. Separate its exact
         # storage response and constrain the remaining fluctuation to zero mean.
         integral = np.zeros_like(rhs)
@@ -686,16 +694,21 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
         state += factor.solve(residual.astype(np.complex128))
     coefficients = torch.from_numpy(state.reshape(ncells,degree+1))
     flux = conductivity*sipg_heat_face_fluxes(coefficients,penalty,wall_temperatures=values)
-    surface = torch.from_numpy(trace @ state)+mean
+    surface = torch.from_numpy(trace @ state)
     for i,face in enumerate((0,-1)):
         if wall_types[i]=="dirichlet":
             surface[i] = values[i]
         else:
             external = film[i]*(values[i]-surface[i]) if wall_types[i]=="robin" else values[i]
-            flux[face] = (1-2*i)*(external-1j*angular_frequency*wall_capacity[i]*surface[i])
-    coefficients[:,0] += mean
+            storage_flux = 1j*angular_frequency*wall_capacity[i]
+            flux[face] = (1-2*i)*(external-storage_flux*mean-storage_flux*surface[i])
+    if not separate_mean:
+        coefficients[:,0] += mean
+        surface += mean
     result = (centers,coefficients,flux)
-    return (*result,surface) if return_wall_temperatures else result
+    if return_wall_temperatures:
+        result += (surface,)
+    return (*result, coefficients.new_tensor(mean)) if separate_mean else result
 
 
 def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
