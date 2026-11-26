@@ -1,0 +1,49 @@
+{
+  "source_commit": "78631920d4b1797b4031639b5fa38021c31edca4",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q tests/test_transient_diffusion_2d.py tests/test_poisson_2d_bc.py -o junit_family=legacy --junitxml=/tmp/dg_spatial_counterflow.xml",
+  "reference": "Instantaneous flux along one 0.25 m contact face is a monic polynomial of local tangential coordinate. Analytic primitive differences between adjacent known roots give the positive and negative integrals separately. Check both x and y orientations, and independently compare the signed difference to SIPG net face power.",
+  "roots_by_degree": [
+    [
+      0.0
+    ],
+    [
+      -0.7,
+      0.27
+    ],
+    [
+      -0.8,
+      0.13,
+      0.73
+    ]
+  ],
+  "tests": 97,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "cases": {
+    "test_resolve_counterflow_along_contact_face[1-roots0-x]": {
+      "forward_error_W": 0.0,
+      "reverse_error_W": 0.0
+    },
+    "test_resolve_counterflow_along_contact_face[1-roots0-y]": {
+      "forward_error_W": 0.0,
+      "reverse_error_W": 0.0
+    },
+    "test_resolve_counterflow_along_contact_face[2-roots1-x]": {
+      "forward_error_W": 0.0,
+      "reverse_error_W": 0.0
+    },
+    "test_resolve_counterflow_along_contact_face[2-roots1-y]": {
+      "forward_error_W": 0.0,
+      "reverse_error_W": 0.0
+    },
+    "test_resolve_counterflow_along_contact_face[3-roots2-x]": {
+      "forward_error_W": 6.938893903907228e-18,
+      "reverse_error_W": 3.469446951953614e-18
+    },
+    "test_resolve_counterflow_along_contact_face[3-roots2-y]": {
+      "forward_error_W": 6.938893903907228e-18,
+      "reverse_error_W": 3.469446951953614e-18
+    }
+  }
+}
