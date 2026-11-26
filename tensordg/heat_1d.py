@@ -1069,7 +1069,7 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
                                      interface_left_areal_heat_capacity=None, angular_frequency=None, interface_film_coefficients=0.,
                                      interface_ambient_temperatures=0., interface_left_film_coefficients=0.,
                                      interface_left_ambient_temperatures=0., layer_flux_offsets=None,
-                                     return_flux_offset=False):
+                                     return_flux_offset=False, return_interface_power=False):
     """Return the complex wall admittance of a stack, ordered left to right.
 
     Supply one 2-by-2 inward-flux matrix per layer at a common
@@ -1103,7 +1103,14 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     two exterior inward fluxes b at zero wall temperatures. Without a drive
     this returns (Y, b), so any new temperature pair T gives Y @ T + b
     while all layer and interface loads remain fixed.
+    With prescribed wall temperatures, return_interface_power appends a dict
+    after any flux offset. source, film and storage are (contacts, 2) powers
+    in W/m², ordered left and right trace. Positive source and film heat the
+    trace; storage is its accumulation. through is one rightward crossing
+    flux per contact, including at zero resistance.
     """
+    if return_interface_power and wall_temperatures is None:
+        raise ValueError("interface power requires wall temperatures")
     layers = tuple(admittances)
     if not layers:
         raise ValueError("supply at least one layer admittance")
@@ -1163,10 +1170,11 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
             return 1j*angular_frequency*capacity.expand(count)
         return matrices[0].new_zeros(count)
 
-    left_admittance = storage_admittance(interface_left_areal_heat_capacity) + left_film
+    left_storage = storage_admittance(interface_left_areal_heat_capacity)
+    left_admittance = left_storage + left_film
     storage = storage_admittance(interface_areal_heat_capacity)
-    sources = sources + film_input
-    left_sources = left_sources + left_input
+    right_drive = sources + film_input
+    left_drive = left_sources + left_input
     interface_admittance = storage + film
     offsets = matrices[0].new_zeros((len(layers), 2))
     if layer_flux_offsets is not None:
@@ -1182,7 +1190,7 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     interfaces = []
     combined = matrices[0]
     for layer, r, source, left_source, left_shunt, shunt, layer_offset in zip(
-            matrices[1:], resistance.expand(count), sources, left_sources, left_admittance, interface_admittance, offsets[1:]):
+            matrices[1:], resistance.expand(count), right_drive, left_drive, left_admittance, interface_admittance, offsets[1:]):
         (a, b), (c, d) = combined
         (e, f), (g, h) = layer
         # Both local storage and film exchange contribute to the trace admittance.
@@ -1221,8 +1229,18 @@ def compose_heat_wall_admittances_1d(admittances, contact_resistance=0., *, wall
     temperatures.append(ends)
     temperatures = torch.stack(temperatures[::-1])
     fluxes = (torch.stack(matrices) @ temperatures.unsqueeze(-1)).squeeze(-1)
-    result = (combined, temperatures, fluxes + offsets)
-    return (*result, exterior_offset) if return_flux_offset else result
+    fluxes = fluxes + offsets
+    result = (combined, temperatures, fluxes)
+    if return_flux_offset:
+        result += (exterior_offset,)
+    if return_interface_power:
+        left_t, right_t = temperatures[:-1, 1], temperatures[1:, 0]
+        generation = torch.stack((left_sources, sources), dim=1)
+        exchange = torch.stack((left_input-left_film*left_t, film_input-film*right_t), dim=1)
+        stored = torch.stack((left_storage*left_t, storage*right_t), dim=1)
+        crossing = generation[:, 0]+exchange[:, 0]-stored[:, 0]-fluxes[:-1, 1]
+        result += (dict(source=generation, film=exchange, storage=stored, through=crossing),)
+    return result
 
 
 def solve_heat_wall_admittance_1d(admittance, wall_types, wall_values, *,

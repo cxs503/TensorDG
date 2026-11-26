@@ -1358,3 +1358,50 @@ def test_affine_bulk_reservoir_stack_contact_refinement(record_property):
                 record_property(f"n{n}_{name}_order", order)
                 assert order > (1.7 if name == "interior_flux_W_m2" else 2.8)
         previous = errors
+
+
+def test_interface_power_channels_for_loaded_three_layer_stack(record_property):
+    import numpy as np
+    from tensordg import compose_heat_wall_admittances_1d, harmonic_heat_wall_admittance_1d
+
+    omega = 3.2
+    lengths = [.45, .7, 1.1]
+    conductivities = [1.3, .8, 2.1]
+    # Linear temperature in each material gives a known constant Fourier flux.
+    rates = np.array([.4+.3j, -.2+.5j, .7-.1j])
+    through = np.array([.65+.2j, -.4+.15j])
+    resistances = np.array([0., .24])
+    left = .7-.3j
+    walls, matrices, offsets = [], [], []
+    for i, (length, k, q) in enumerate(zip(lengths, conductivities, rates)):
+        right = left-length*q/k
+        walls.append([left, right])
+        matrix, offset = harmonic_heat_wall_admittance_1d(
+            omega, thickness=length, conductivity=k, capacity=1., ncells=6, degree=2,
+            source=lambda x: 1j*omega*(left-x*q/k))
+        matrices.append(matrix)
+        offsets.append(offset)
+        if i < len(through):
+            left = right-resistances[i]*through[i]
+    walls = np.array(walls)
+    traces = np.column_stack((walls[:-1, 1], walls[1:, 0]))
+    film = np.array([[.85, .4], [.6, 1.2]])
+    ambient = np.array([[.4j, .6], [-.3j, .8-.5j]])
+    capacity = np.array([[.45, .6], [.3, .7]])
+    exchange = film*(ambient-traces)
+    stored = 1j*omega*capacity*traces
+    source = stored-exchange+np.column_stack((through-rates[:-1], rates[1:]-through))
+    _, _, inward, _, power = compose_heat_wall_admittances_1d(
+        matrices, resistances, wall_temperatures=walls[[0,-1],[0,1]], angular_frequency=omega,
+        layer_flux_offsets=offsets, interface_left_heat_sources=source[:,0], interface_heat_sources=source[:,1],
+        interface_left_areal_heat_capacity=capacity[:,0], interface_areal_heat_capacity=capacity[:,1],
+        interface_left_film_coefficients=film[:,0], interface_film_coefficients=film[:,1],
+        interface_left_ambient_temperatures=ambient[:,0], interface_ambient_temperatures=ambient[:,1],
+        return_flux_offset=True, return_interface_power=True)
+    for name, reference in (("source",source), ("film",exchange), ("storage",stored), ("through",through)):
+        error = np.max(abs(power[name].numpy()-reference))
+        record_property(name+"_max_error_W_m2", float(error))
+        assert error < 1e-11
+    residual = (power["source"]+power["film"]-power["storage"]).sum(1)-inward[:-1,1]-inward[1:,0]
+    record_property("interface_balance_W_m2", residual.abs().max().item())
+    assert residual.abs().max() < 1e-12
