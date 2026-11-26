@@ -1,0 +1,39 @@
+{
+  "source_commit": "d9a144abc5eae0e6b794afc9c97f6805178e788e",
+  "reference": "On 5 by 6 rectangular P2 cells, compare mass changes against the signed divergence of time-integrated face transport through a velocity reversal, for all seven explicit RK methods. For a uniform field compare with its value times face width times analytic signed displacement. A separate fixed-velocity RK4 restart checks interval additivity.",
+  "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python -m pytest -q tests/test_advection_2d.py tests/test_advection_3d.py tests/test_runge_kutta_orders.py -o junit_family=legacy --junitxml=/tmp/dg2-intflux-final.xml",
+  "passed": 105,
+  "measurements": {
+    "test_integrated_fluxes_close_switched_cell_budget[euler]": {
+      "max_cell_balance_error": 1.5265566588595902e-16,
+      "max_uniform_transport_error": 2.7755575615628914e-17
+    },
+    "test_integrated_fluxes_close_switched_cell_budget[rk2]": {
+      "max_cell_balance_error": 1.249000902703301e-16,
+      "max_uniform_transport_error": 9.71445146547012e-17
+    },
+    "test_integrated_fluxes_close_switched_cell_budget[rk3]": {
+      "max_cell_balance_error": 3.5214886562329184e-16,
+      "max_uniform_transport_error": 4.163336342344337e-17
+    },
+    "test_integrated_fluxes_close_switched_cell_budget[ssp_rk3]": {
+      "max_cell_balance_error": 1.734723475976807e-16,
+      "max_uniform_transport_error": 4.163336342344337e-17
+    },
+    "test_integrated_fluxes_close_switched_cell_budget[rk4]": {
+      "max_cell_balance_error": 1.3877787807814457e-16,
+      "max_uniform_transport_error": 9.71445146547012e-17
+    },
+    "test_integrated_fluxes_close_switched_cell_budget[ssp_rk54]": {
+      "max_cell_balance_error": 2.688821387764051e-16,
+      "max_uniform_transport_error": 8.326672684688674e-17
+    },
+    "test_integrated_fluxes_close_switched_cell_budget[rk5]": {
+      "max_cell_balance_error": 1.3183898417423734e-16,
+      "max_uniform_transport_error": 1.474514954580286e-17
+    },
+    "test_fixed_velocity_rk4_face_transports_add_across_restart": {
+      "max_restart_transport_difference": 2.7755575615628914e-17
+    }
+  }
+}
