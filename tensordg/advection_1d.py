@@ -116,15 +116,16 @@ from .registry import capability
 def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
                     speed: float = 1.0, cfl: float = 0.08,
                     device: str = "cpu", dtype: torch.dtype = torch.float64,
-                    initial: Callable[[torch.Tensor], torch.Tensor] | None = None,
+                    initial: Callable[[torch.Tensor], torch.Tensor] | torch.Tensor | None = None,
                     limiter: str | None = None, tvb_constant: float = 1.0,
                     time_integrator: str = "rk4", troubled_policy: str = "tvb",
-                    weno_variant: str = "js"):
+                    weno_variant: str = "js", *, start_time: float = 0.0):
     """Solve u_t + speed*u_x = 0 on [0,1] with periodic BC.
 
     ``initial`` defaults to ``sin(2*pi*x)`` (the historical benchmark); pass a
     callable to project any other profile (e.g. a square wave) as ``initial(x)``
-    with ``x`` in physical coordinates in ``[0, 1]``.
+    with ``x`` in physical coordinates in ``[0, 1]``. A tensor supplies modal
+    coefficients on the same mesh at start_time. Advance to the absolute final_time.
 
     ``limiter`` enables the Cockburn-Shu shock-capturing path: ``None`` (the
     historical behaviour) leaves the scheme unlimited, ``"tvb"`` applies the
@@ -155,8 +156,11 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
         raise ValueError(
             f"ncells must be >= 2 and degree must be in [0, {MAX_DEGREE}]"
         )
-    if final_time < 0 or cfl <= 0:
-        raise ValueError("final_time must be >= 0 and cfl must be > 0")
+    duration = final_time - start_time
+    if not math.isfinite(duration) or duration < 0.:
+        raise ValueError("start_time and final_time must define a finite forward interval")
+    if not math.isfinite(cfl) or cfl <= 0.:
+        raise ValueError("cfl must be positive and finite")
     if time_integrator not in ("rk4", "ssp_rk3", *_GENERIC_TABLEAUS):
         raise ValueError(
             "time_integrator must be one of "
@@ -164,26 +168,29 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
         )
     if troubled_policy not in ("tvb", "all"):
         raise ValueError("troubled_policy must be 'tvb' (paper indicator) or 'all' (strict)")
-    profile = _sine if initial is None else initial
     dev = torch.device(device)
     h = 1.0 / ncells
     centers = (torch.arange(ncells, device=dev, dtype=dtype) + 0.5) * h
     xq, wq, phi, volume, phi_l, phi_r = _operators(degree, dev, dtype)
-    # L2 projection of the initial condition into each element's modal space.
-    x_phys = centers[:, None] + 0.5 * h * xq[None, :]
-    u0 = profile(x_phys)
-    coeff = torch.empty((ncells, degree + 1), device=dev, dtype=dtype)
-    for k in range(degree + 1):
-        coeff[:, k] = (2 * k + 1) * 0.5 * torch.sum(
-            wq[None, :] * u0 * phi[:, k][None, :], dim=1
-        )
-    if final_time == 0 or speed == 0:
+    if isinstance(initial, torch.Tensor):
+        coeff = _copy_modal_state(initial, (ncells, degree + 1), dev, dtype)
+    else:
+        profile = _sine if initial is None else initial
+        # L2 projection of the initial condition into each element's modal space.
+        x_phys = centers[:, None] + 0.5 * h * xq[None, :]
+        u0 = profile(x_phys)
+        coeff = torch.empty((ncells, degree + 1), device=dev, dtype=dtype)
+        for k in range(degree + 1):
+            coeff[:, k] = (2 * k + 1) * 0.5 * torch.sum(
+                wq[None, :] * u0 * phi[:, k][None, :], dim=1
+            )
+    if duration == 0 or speed == 0:
         dt_nominal = float("inf")
         steps = 0
     else:
         dt_nominal = cfl * h / (abs(speed) * (2 * degree + 1))
-        steps = math.ceil(final_time / dt_nominal)
-    dt = final_time / steps if steps else 0.0
+        steps = math.ceil(duration / dt_nominal)
+    dt = duration / steps if steps else 0.0
     lim = lambda c: _limit(  # noqa: E731
         c, h, limiter, tvb_constant, troubled_policy, weno_variant
     )
@@ -214,7 +221,7 @@ def solve_advection(ncells: int = 40, degree: int = 1, final_time: float = 1.0,
         k4 = _rhs(u4, h, speed, volume, phi_l, phi_r)
         coeff = lim(coeff + (dt / 6.0) * (k1 + 2*k2 + 2*k3 + k4))
     meta = {"ncells": ncells, "degree": degree, "final_time": final_time,
-            "speed": speed, "dt": dt, "steps": steps, "device": str(dev),
+            "speed": speed, "start_time": start_time, "dt": dt, "steps": steps, "device": str(dev),
             "limiter": limiter or "none", "tvb_constant": tvb_constant,
             "time_integrator": time_integrator, "troubled_policy": troubled_policy,
             "rk_order": reported.order, "rk_stages": reported.stages}

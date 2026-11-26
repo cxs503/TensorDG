@@ -48,3 +48,37 @@ def test_translated_sawtooth_error_norms(speed, final_time):
         shifted = modes.clone()
         shifted[:, 0] += 0.125
         assert norm(x, shifted, final_time, speed, exact=profile) == pytest.approx(0.125)
+
+
+@pytest.mark.parametrize("method,limiter", [("rk4", None), ("ssp_rk3", "tvb"), ("rk5", None)])
+def test_restart_modal_transport_on_absolute_clock(method, limiter, record_property):
+    opts = dict(ncells=64, degree=2, speed=-1., cfl=.15625, time_integrator=method, limiter=limiter)
+    start = 2.**34
+    span = 1/32
+    def profile(x):
+        return 1. + torch.sin(2*math.pi*x)
+    x, full, info = solve_advection(initial=profile, start_time=start, final_time=start+span, **opts)
+    _, middle, first = solve_advection(initial=profile, start_time=start, final_time=start+span/2, **opts)
+    saved = middle.clone()
+    _, result, second = solve_advection(initial=middle, start_time=first["final_time"],
+                                         final_time=start+span, **opts)
+    assert info["steps"] == first["steps"] + second["steps"] == 64
+    assert first["dt"] == second["dt"] == info["dt"]
+    assert torch.equal(middle, saved)
+    difference = float((result-full).abs().max())
+    error = l2_error(x, result, span, speed=-1., exact=profile)
+    mass_error = abs(float(result[:,0].mean())-1.)
+    record_property("max_modal_difference", difference)
+    record_property("absolute_l2_vs_translation", error)
+    record_property("mass_error", mass_error)
+    assert difference == 0.
+    assert error < .005
+    assert mass_error < 1e-14
+
+
+def test_zero_duration_modal_restart_preserves_all_coefficients():
+    initial = torch.arange(24., dtype=torch.float64).reshape(3, 8).T
+    _, output, meta = solve_advection(8, 2, 4., initial=initial, start_time=4., limiter="tvb")
+    assert meta["steps"] == 0
+    assert torch.equal(output, initial)
+    assert output.data_ptr() != initial.data_ptr()

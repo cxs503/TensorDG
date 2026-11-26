@@ -25,6 +25,21 @@ At final time \(T=1\), the exact solution returns to its initial profile.
 
 For smooth solutions, the expected spatial L2 convergence rate is approximately \(p+1\), provided temporal error is sufficiently smaller than spatial error. The benchmark reports observed order of convergence (EOC) from successive mesh refinements.
 
+## Resume from modal coefficients
+
+Pass the coefficient tensor as `initial` on the same mesh and degree. Set
+`start_time` to the checkpoint time and `final_time` to the absolute end
+time. For a comparison with the original analytic profile, pass the total
+elapsed time to `l2_error`. A split run reproduces a continuous run when
+both use the same sequence of time steps and limiter settings.
+
+```python
+from tensordg import solve_advection
+
+_, checkpoint, meta = solve_advection(32, 2, 0.125)
+x, coeff, meta = solve_advection(32, 2, 0.25, start_time=meta["final_time"], initial=checkpoint)
+```
+
 ## Run
 
 From the repository root:
