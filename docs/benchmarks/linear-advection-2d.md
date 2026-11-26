@@ -31,6 +31,21 @@ x, y, coeff, meta = solve_advection_2d((24, 26), 2, 0.125, velocity, lengths=len
 metrics = error_2d(x, y, coeff, 0.125, velocity, lengths=meta["lengths"])
 ```
 
+To continue on the same mesh, pass the returned modal coefficients and end
+time into the next solve. The solver copies the coefficients. Splitting a run
+can change the time step because each call lands on its requested end time.
+
+```python
+x, y, continued, next_meta = solve_advection_2d(
+    meta["ncells"], meta["degree"], 0.25, velocity, lengths=meta["lengths"],
+    start_time=meta["final_time"], initial=coeff,
+)
+metrics = error_2d(x, y, continued, 0.25, velocity, lengths=lengths)
+```
+
+For an exact translation check, pass the elapsed time since the analytic
+initial profile was prescribed to `error_2d`.
+
 ## Run
 
 ```bash

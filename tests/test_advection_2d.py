@@ -99,3 +99,35 @@ def test_rectangular_exact_translation_crosses_both_seams():
     rolled = coeff.roll((1, -2), dims=(0, 1))
     metrics = error_2d(x, y, rolled, 2**40+.25, (1., -.5), lengths=lengths, initial=profile)
     assert metrics["absolute_l2"] < 1e-14
+
+
+def test_modal_restart_matches_uninterrupted_translation(record_property):
+    opts = dict(ncells=(8, 12), lengths=(2., 3.), degree=2, velocity=(-.75, .25), cfl=.15625)
+    t0 = 2.**30
+    x, y, full, info = solve_advection_2d(start_time=t0, final_time=t0+.125, **opts)
+    _, _, first, early = solve_advection_2d(start_time=t0, final_time=t0+.0625, **opts)
+    saved = first.clone()
+    _, _, restarted, late = solve_advection_2d(start_time=early["final_time"], final_time=t0+.125,
+                                                initial=first, **opts)
+    assert info["steps"] == early["steps"] + late["steps"] == 16
+    assert late["dt"] == info["dt"] == 1/128
+    assert torch.equal(first, saved)
+    mismatch = float((restarted-full).abs().max())
+    mass_error = abs(float(restarted[..., 0, 0].mean())*6.-6.)
+    l2 = error_2d(x, y, restarted, .125, opts["velocity"], lengths=opts["lengths"])["relative_l2"]
+    record_property("max_modal_difference", mismatch)
+    record_property("mass_error", mass_error)
+    record_property("relative_l2_vs_translation", l2)
+    assert mismatch == 0.
+    assert mass_error < 1e-13
+    assert l2 < .005
+
+
+def test_zero_duration_restart_copies_and_converts_modes():
+    initial = torch.arange(24., dtype=torch.float32).reshape(3, 2, 2, 2).transpose(0, 1)
+    _, _, result, info = solve_advection_2d((2, 3), 1, 4., start_time=4., initial=initial)
+    assert info["steps"] == 0
+    assert result.dtype == torch.float64
+    assert torch.equal(result, initial.double())
+    _, _, copied, _ = solve_advection_2d((2, 3), 1, 4., start_time=4., initial=result)
+    assert copied.data_ptr() != result.data_ptr()

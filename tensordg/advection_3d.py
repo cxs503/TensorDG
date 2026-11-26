@@ -41,7 +41,7 @@ import math
 import numpy as np
 import torch
 
-from .advection_1d import MAX_DEGREE, _departure_coordinate
+from .advection_1d import MAX_DEGREE, _copy_modal_state, _departure_coordinate
 from .runge_kutta import get_tableau, rk_step
 
 Velocity3 = tuple[float, float, float]
@@ -289,13 +289,7 @@ def solve_advection_3d(
 
     if isinstance(initial, torch.Tensor):
         shape = (nx, ny, nz) + (degree + 1,) * 3
-        if tuple(initial.shape) != shape:
-            raise ValueError(f"initial modal coefficients must have shape {shape}")
-        if not initial.is_floating_point():
-            raise ValueError("initial modal coefficients must be real floating-point values")
-        coeff = initial.to(device=dev, dtype=dtype, copy=True)
-        if not torch.isfinite(coeff).all():
-            raise ValueError("initial modal coefficients must be finite")
+        coeff = _copy_modal_state(initial, shape, dev, dtype)
     else:
         xq, yq, zq = (centers[:, None] + .5*h*nodes
                       for centers, h in ((x, hx), (y, hy), (z, hz)))

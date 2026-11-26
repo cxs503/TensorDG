@@ -12,7 +12,7 @@ import math
 import numpy as np
 import torch
 
-from .advection_1d import _departure_coordinate
+from .advection_1d import _copy_modal_state, _departure_coordinate
 
 # The tensor-product operators are built from Legendre values/derivatives at
 # Gauss nodes, so they are degree-generic; the bound only keeps the Python-side
@@ -138,13 +138,17 @@ def solve_advection_2d(
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     *,
-    initial: Callable | None = None,
+    initial: Callable | torch.Tensor | None = None,
+    start_time: float = 0.0,
     lengths: tuple[float, float] = (1.0, 1.0),
 ):
     """Solve ``u_t + ax*u_x + ay*u_y = 0`` on a periodic rectangle with side lengths (Lx, Ly).
 
     The initial/exact profile is ``1 + sin(2*pi*x/Lx) * sin(2*pi*y/Ly)`` translated
-    by ``velocity * final_time``. Supply ``initial(x, y)`` to project another periodic profile. ``ncells`` can be one integer or ``(nx,ny)``.
+    by ``velocity * (final_time - start_time)``. Supply ``initial(x, y)`` to project another periodic profile. ``ncells`` can be one integer or ``(nx,ny)``.
+
+    A tensor passed as initial contains modal coefficients on the same mesh and
+    physical rectangle at start_time. final_time is the absolute end time.
 
     Returns ``(x_centers, y_centers, modal_coefficients, metadata)``. The
     coefficient array has shape ``(nx,ny,degree+1,degree+1)``; its ``[0,0]``
@@ -155,8 +159,11 @@ def solve_advection_2d(
         raise ValueError(
             f"ncells must be >= 2 and degree must be in [0, {MAX_DEGREE}]"
         )
-    if final_time < 0.0 or cfl <= 0.0:
-        raise ValueError("final_time must be >= 0 and cfl must be > 0")
+    duration = final_time - start_time
+    if not math.isfinite(duration) or duration < 0.:
+        raise ValueError("start_time and final_time must define a finite forward interval")
+    if not math.isfinite(cfl) or cfl <= 0.:
+        raise ValueError("cfl must be positive and finite")
     if len(velocity) != 2:
         raise ValueError("velocity must contain exactly two components")
 
@@ -169,28 +176,31 @@ def solve_advection_2d(
         degree, dev, dtype,
     )
 
-    xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
-    yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
-    samples = _sample_profile(initial, xq, yq, lengths)
-    coeff = torch.einsum(
-        "xyqr,q,r,qk,rl->xykl", samples, weights, weights, phi, phi,
-    )
-    norm = torch.tensor(
-        [(2 * k + 1) * (2 * l + 1) / 4.0
-         for k in range(degree + 1) for l in range(degree + 1)],
-        device=dev, dtype=dtype,
-    ).reshape(degree + 1, degree + 1)
-    coeff = coeff * norm[None, None, :, :]
+    if isinstance(initial, torch.Tensor):
+        coeff = _copy_modal_state(initial, (nx, ny, degree+1, degree+1), dev, dtype)
+    else:
+        xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
+        yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
+        samples = _sample_profile(initial, xq, yq, lengths)
+        coeff = torch.einsum(
+            "xyqr,q,r,qk,rl->xykl", samples, weights, weights, phi, phi,
+        )
+        norm = torch.tensor(
+            [(2 * k + 1) * (2 * l + 1) / 4.0
+             for k in range(degree + 1) for l in range(degree + 1)],
+            device=dev, dtype=dtype,
+        ).reshape(degree + 1, degree + 1)
+        coeff = coeff * norm[None, None, :, :]
 
     ax, ay = float(velocity[0]), float(velocity[1])
     wave_rate = abs(ax) / hx + abs(ay) / hy
-    if final_time == 0.0 or wave_rate == 0.0:
+    if duration == 0.0 or wave_rate == 0.0:
         steps = 0
         dt_nominal = float("inf")
     else:
         dt_nominal = cfl / ((2 * degree + 1) * wave_rate)
-        steps = math.ceil(final_time / dt_nominal)
-    dt = final_time / steps if steps else 0.0
+        steps = math.ceil(duration / dt_nominal)
+    dt = duration / steps if steps else 0.0
 
     for _ in range(steps):
         k1 = _rhs(coeff, hx, hy, (ax, ay), volume, phi_left, phi_right)
@@ -210,7 +220,7 @@ def solve_advection_2d(
 
     metadata = {
         "ncells": (nx, ny), "lengths": lengths, "degree": degree, "final_time": final_time,
-        "velocity": (ax, ay), "dt": dt,
+        "velocity": (ax, ay), "start_time": start_time, "dt": dt,
         "steps": steps, "device": str(dev), "cfl": cfl,
     }
     return x, y, coeff, metadata

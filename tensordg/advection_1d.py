@@ -230,6 +230,17 @@ def _basis(degree: int, nodes, device, dtype):
     return torch.stack(basis, dim=1)
 
 
+def _copy_modal_state(initial, shape, device, dtype):
+    if tuple(initial.shape) != shape:
+        raise ValueError(f"initial modal coefficients must have shape {shape}")
+    if not initial.is_floating_point():
+        raise ValueError("initial modal coefficients must be real floating-point values")
+    coeff = initial.to(device=device, dtype=dtype, copy=True)
+    if not torch.isfinite(coeff).all():
+        raise ValueError("initial modal coefficients must be finite")
+    return coeff
+
+
 def _departure_coordinate(x, final_time, speed, period=1.0):
     """Periodic characteristic foot in [0, period)."""
     # Reduce the product of the *represented* scalar inputs before rounding:
