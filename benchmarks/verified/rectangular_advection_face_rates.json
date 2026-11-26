@@ -1,0 +1,20 @@
+{
+  "source_commit": "f7ff9c2e10af95a18dbb7947ec930078410c9f43",
+  "reference": "Each P3 upstream polynomial is independently evaluated and integrated with a five-point Gauss-Legendre rule on its physical face. Compare the signed divergence with the change of mass from a single Euler step on every cell of a 5 by 8 mesh on [0,2.5] x [0,2], including periodic seams and a zero velocity component.",
+  "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python -m pytest -q tests/test_advection_2d.py tests/test_advection_2d_var.py tests/test_runge_kutta_orders.py -o junit_family=legacy --junitxml=/tmp/dg2-face.xml",
+  "passed": 70,
+  "measurements": {
+    "test_modal_face_rates_close_each_cell[velocity0]": {
+      "max_face_quadrature_error": 3.3306690738754696e-16,
+      "max_cell_mass_balance_error": 1.214306433183765e-17
+    },
+    "test_modal_face_rates_close_each_cell[velocity1]": {
+      "max_face_quadrature_error": 4.440892098500626e-16,
+      "max_cell_mass_balance_error": 2.3418766925686896e-17
+    },
+    "test_modal_face_rates_close_each_cell[velocity2]": {
+      "max_face_quadrature_error": 3.3306690738754696e-16,
+      "max_cell_mass_balance_error": 2.7538735181131813e-17
+    }
+  }
+}
