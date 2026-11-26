@@ -1,0 +1,21 @@
+{
+  "source_commit": "65bcddc752530e967a1fd86ced4e3b47807005ed",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 107,
+  "failures": 0,
+  "reference": "Off-grid constant heater switched on in an initially cold unit slab with zero Dirichlet temperatures. Compare cumulative outward heat and stored energy at 0.07 s with the 20000-mode Fourier sine solution. Additional affine profile comparisons cover all three Crank-Nicolson backends.",
+  "measurements": {
+    "n8_wall_error_J_m2": 9.280595314811735e-07,
+    "n8_storage_error_J_m2": 1.8054528614849796e-06,
+    "n8_balance_J_m2": 1.6930901125533637e-15,
+    "n16_wall_error_J_m2": 8.027945544702292e-08,
+    "n16_storage_error_J_m2": 1.578096720800115e-07,
+    "n16_balance_J_m2": 4.718447854656915e-15,
+    "n32_wall_error_J_m2": 1.3418446163232511e-09,
+    "n32_storage_error_J_m2": 1.864850322774725e-09,
+    "n32_balance_J_m2": 6.3976601794024646e-15,
+    "n64_wall_error_J_m2": 2.9170538380640654e-10,
+    "n64_storage_error_J_m2": 5.028751998148451e-10,
+    "n64_balance_J_m2": 2.045585922871851e-14
+  }
+}
