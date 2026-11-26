@@ -206,3 +206,20 @@ residual was 4.45e-16 or less (CPU float64). On a 21-cell mesh a P2 stationary
 contact with the diaphragm at the middle of the central cell also preserved
 the analytic cell averages and zero higher modes through t=0.02 within
 3e-13. Reproduce with `OMP_NUM_THREADS=1 python -m pytest -q tests/test_euler_dg_diaphragm.py`.
+
+#### Sod velocity at the shock
+
+Run `OMP_NUM_THREADS=1 python -m benchmarks.sod_mc_refinement --cells 400 --reconstruction minmod mc`.
+The solver reports velocity as cell-average momentum divided by cell-average density.
+The historical reference averages the pointwise velocity. These averages differ in
+the cell cut by the shock. The matched comparison integrates density, momentum
+and energy over each analytic wave segment before computing velocity and pressure.
+
+| P2 reconstruction | Velocity error vs average velocity | Velocity error vs momentum/density averages | Share of matched squared velocity error within 3 cell widths of shock |
+|---|---:|---:|---:|
+| minmod | 3.770% | 2.964% | 95.03% |
+| MC | 2.858% | 1.924% | 94.32% |
+
+Both columns use the same wave-split quadrature and numerical solution.
+The historical minmod velocity criterion of 3% remains open. The matched
+comparison passes for both reconstructions at this resolution.

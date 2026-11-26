@@ -108,8 +108,12 @@ def breakpoints(left, right, final_time: float, gamma: float = GAMMA,
 
 def cell_averages(ncells: int, final_time: float, left, right,
                   diaphragm: float = 0.5, domain=(0.0, 1.0),
-                  gamma: float = GAMMA, quadrature_order: int = DEFAULT_ORDER):
+                  gamma: float = GAMMA, quadrature_order: int = DEFAULT_ORDER,
+                  *, conserved: bool = False):
     """Exact cell averages of the Riemann solution (breakpoint-split quadrature).
+
+    With conserved=True the integrals are of density, momentum and total
+    energy density, evaluated before averaging.
 
     Each cell is cut at the analytic breakpoints it contains; every resulting
     sub-interval is smooth, so a single Gauss-Legendre rule of order
@@ -126,7 +130,8 @@ def cell_averages(ncells: int, final_time: float, left, right,
     centers = lower + (np.arange(ncells) + 0.5) * dx
     cuts = breakpoints(left, right, final_time, gamma, diaphragm, domain)
     nodes, weights = np.polynomial.legendre.leggauss(quadrature_order)
-    out = {key: np.zeros(ncells, dtype=np.float64) for key in FIELDS}
+    fields = ("density", "momentum", "energy") if conserved else FIELDS
+    out = {key: np.zeros(ncells, dtype=np.float64) for key in fields}
     for i, center in enumerate(centers):
         x_left, x_right = center - 0.5 * dx, center + 0.5 * dx
         inner = cuts[(cuts > x_left) & (cuts < x_right)]
@@ -137,9 +142,13 @@ def cell_averages(ncells: int, final_time: float, left, right,
                 continue
             points = a + 0.5 * width * (nodes + 1.0)
             values = sample(points, final_time, left, right, diaphragm, gamma)
-            for key in FIELDS:
+            if conserved:
+                rho, u, p = (values[key] for key in FIELDS)
+                values = dict(density=rho, momentum=rho*u,
+                              energy=p/(gamma-1.0) + 0.5*rho*u**2)
+            for key in fields:
                 out[key][i] += 0.5 * width * float(np.dot(values[key], weights))
-    for key in FIELDS:
+    for key in fields:
         out[key] /= dx
     return centers, out
 

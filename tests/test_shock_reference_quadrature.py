@@ -189,3 +189,22 @@ def test_committed_bias_ladder_matches_a_fresh_computation():
     for key in srq.FIELDS:
         assert math.isclose(fresh["fields"][key]["rms_rel"],
                             committed["fields"][key]["rms_rel"], rel_tol=1e-12, abs_tol=1e-15)
+
+def test_sod_conserved_cell_averages_match_analytic_integrals():
+    # Waves are still interior. The boundary momentum flux is the pressure,
+    # and both the mass and energy fluxes vanish at the two ends.
+    _, ref = srq.cell_averages(40, SOD_TIME, *SOD, conserved=True)
+    totals = [ref[field].mean() for field in ("density", "momentum", "energy")]
+    np.testing.assert_allclose(totals, [0.5625, 0.18, 1.375], rtol=0., atol=2e-14)
+
+    # The cell cut by the right shock contains exactly two constant states.
+    n = 40
+    front = srq.wave_positions(*SOD, SOD_TIME)["front"]
+    index = int(n * front)
+    fraction = n * front - index
+    sides = sample(np.array([index / n, (index + 1) / n]), SOD_TIME, *SOD)
+    rho, u, p = (sides[key] for key in srq.FIELDS)
+    for key, pair in (("density", rho), ("momentum", rho*u),
+                      ("energy", p/(srq.GAMMA-1) + 0.5*rho*u**2)):
+        expected = fraction*pair[0] + (1-fraction)*pair[1]
+        assert ref[key][index] == pytest.approx(expected, abs=2e-14, rel=0.)
