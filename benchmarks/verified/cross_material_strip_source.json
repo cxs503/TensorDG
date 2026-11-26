@@ -1,0 +1,31 @@
+{
+  "source_commit": "10fc112058d7cc4be23a42e94108c88db22ec879",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 100,
+  "failures": 0,
+  "reference": "Exact transfer through four heated/unheated segments and a resistive temperature jump. Compare both exterior fluxes, interface jump, continuity, and integral of the source in each material.",
+  "measurements": {
+    "n8_layer_generation_error_W_m2": 0.0,
+    "n8_flux_continuity_W_m2": 0.0,
+    "n8_wall_W_m2": 1.6173278962926243e-07,
+    "n8_jump_K": 3.5128115720147148e-09,
+    "n16_layer_generation_error_W_m2": 0.0,
+    "n16_flux_continuity_W_m2": 0.0,
+    "n16_wall_W_m2": 1.4857073841985523e-08,
+    "n16_wall_W_m2_order": 3.4443902951628336,
+    "n16_jump_K": 1.0106072946539121e-09,
+    "n16_jump_K_order": 1.7974036935484161,
+    "n32_layer_generation_error_W_m2": 2.7755575615628914e-17,
+    "n32_flux_continuity_W_m2": 0.0,
+    "n32_wall_W_m2": 1.8836570262826548e-09,
+    "n32_wall_W_m2_order": 2.9795417894819485,
+    "n32_jump_K": 1.8742822221016694e-10,
+    "n32_jump_K_order": 2.4308123887530093,
+    "n64_layer_generation_error_W_m2": 0.0,
+    "n64_flux_continuity_W_m2": 1.3877787807814457e-17,
+    "n64_wall_W_m2": 2.0397365216579386e-10,
+    "n64_wall_W_m2_order": 3.2070815924229406,
+    "n64_jump_K": 2.3540126824911112e-11,
+    "n64_jump_K_order": 2.993144206561056
+  }
+}
