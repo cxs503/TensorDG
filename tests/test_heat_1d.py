@@ -1815,31 +1815,41 @@ def test_modal_volume_load_combines_with_profile_and_truncates_orthogonal_modes(
         solve_harmonic_heat_1d(2., source_modes=modal[:-1], **opts)
 
 
-def test_strip_heater_across_resistive_contact(record_property):
+@pytest.mark.parametrize("ramp", [False, True])
+def test_strip_heater_across_resistive_contact(record_property, ramp):
     import numpy as np
     from scipy.linalg import expm
     from tensordg import project_stack_strip_source, harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
 
     lengths, ks, capacities = [.47, .76], [1.7, .8], [2.2, 1.3]
     west, east, resistance, omega = .163, .939, .21, 2.9
-    heaters = [.47-.82j, -.3+.6j]
-    transfer = np.eye(3)
-    for i, pieces in enumerate((((west, 0.), (lengths[0]-west, heaters[0])),
-                                ((east-lengths[0], heaters[1]), (sum(lengths)-east, 0.)))):
-        for width, power in pieces:
-            generator = [[0., -1/ks[i], 0.], [-1j*omega*capacities[i], 0., power], [0., 0., 0.]]
+    heaters = [.47-.82j, .47-.82j if ramp else -.3+.6j]
+    end_amplitude = -.3+.6j if ramp else None
+    slope = (end_amplitude-heaters[0])/(east-west) if ramp else 0.
+    transfer = np.eye(4)
+    # Fourth state carries global position unchanged through the contact.
+    for i, pieces in enumerate((((west, False), (lengths[0]-west, True)),
+                                ((east-lengths[0], True), (sum(lengths)-east, False)))):
+        for width, heated in pieces:
+            offset = heaters[i]-west*slope if heated else 0.
+            generator = [[0., -1/ks[i], 0., 0.], [-1j*omega*capacities[i], 0., offset, slope if heated else 0.],
+                         [0., 0., 0., 0.], [0., 0., 1., 0.]]
             transfer = expm(width*np.array(generator)) @ transfer
         if i == 0:
             contact = transfer.copy()
-            transfer = np.array([[1., -resistance, 0.], [0., 1., 0.], [0., 0., 1.]]) @ transfer
+            interface = np.eye(4)
+            interface[0, 1] = -resistance
+            transfer = interface @ transfer
     left_flux = -transfer[0, 2]/transfer[0, 1]
-    initial = [0., left_flux, 1.]
+    initial = [0., left_flux, 1., 0.]
     wall_flux = np.array([left_flux, -(transfer@initial)[1]])
     contact_flux = (contact@initial)[1]
-    generation = np.array(heaters)*[lengths[0]-west, east-lengths[0]]
+    cuts = np.array([west, lengths[0], east])
+    generation = np.diff(cuts)*(np.array(heaters)+slope*((cuts[:-1]+cuts[1:])/2-west))
     previous = {}
     for n in (8, 16, 32, 64):
-        loads = project_stack_strip_source(heaters, lengths, west, east, ncells=n, degree=2)
+        loads = project_stack_strip_source(heaters, lengths, west, east, ncells=n, degree=2,
+                                           end_amplitude=end_amplitude)
         observed = loads[:, :, 0].sum(dim=1).numpy()*np.array(lengths)/n
         source_error = np.max(abs(observed-generation))
         record_property(f"n{n}_layer_generation_error_W_m2", float(source_error))
@@ -1914,3 +1924,16 @@ def test_linear_strip_projection_and_wall_response(record_property):
             record_property(f"n{n}_order", math.log2(previous/error))
             assert error < previous/4
         previous = error
+
+
+def test_stack_ramp_with_material_specific_endpoint_amplitudes():
+    from tensordg import project_stack_strip_source
+
+    # Over the full unit stack each material samples its own global line.
+    source = project_stack_strip_source([1., 2.], [.25, .75], 0., 1., ncells=1, degree=2,
+                                        end_amplitude=[3j, -.5j])
+    for i, (lo, hi, a, b) in enumerate(((0., .25, 1., 3j), (.25, 1., 2., -.5j))):
+        expected = source.new_tensor([a+(b-a)*(lo+hi)/2, (b-a)*(hi-lo)/2, 0.])
+        torch.testing.assert_close(source[i, 0], expected, rtol=0, atol=1e-14)
+    empty = project_stack_strip_source(1., [.25, .75], .25, .25, ncells=1, degree=0, end_amplitude=2j)
+    assert empty.is_complex() and not empty.count_nonzero()
