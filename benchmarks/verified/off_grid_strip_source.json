@@ -1,0 +1,20 @@
+{
+  "source_commit": "c157a3eac46d8616a2c47f43871dca364102c16f",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 97,
+  "failures": 0,
+  "reference": "Propagate the exact harmonic state [T,q,1] through three segments with a constant complex source only between 0.213 and 0.786 m. Compare grounded wall fluxes from the reciprocal fields and check integrated generation.",
+  "measurements": {
+    "n8_wall_error_W_m2": 8.476416627566993e-06,
+    "n8_generation_error_W_m2": 0.0,
+    "n16_wall_error_W_m2": 4.519894324453596e-07,
+    "n16_generation_error_W_m2": 5.551115123125783e-17,
+    "n16_order": 4.229093552099465,
+    "n32_wall_error_W_m2": 3.089514144966267e-08,
+    "n32_generation_error_W_m2": 0.0,
+    "n32_order": 3.870837158918419,
+    "n64_wall_error_W_m2": 2.090720128342687e-09,
+    "n64_generation_error_W_m2": 5.551115123125783e-17,
+    "n64_order": 3.885308123277939
+  }
+}
