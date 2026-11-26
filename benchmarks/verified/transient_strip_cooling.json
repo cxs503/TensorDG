@@ -1,0 +1,21 @@
+{
+  "source_commit": "6f69961eed0c54eff51e56f04688f36071a0c7be",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 107,
+  "failures": 0,
+  "reference": "Apply the off-grid strip load for 0.07 s and switch it off for 0.045 s. Propagate the 20000 continuum sine modes through both intervals and compare the cooling-only wall integrals and remaining energy.",
+  "measurements": {
+    "n8_cooling_wall_error_J_m2": 9.335807708062832e-07,
+    "n8_cooling_storage_error_J_m2": 4.151061668011824e-09,
+    "n8_cooling_balance_J_m2": 1.6757428777935957e-15,
+    "n16_cooling_wall_error_J_m2": 9.304143103704143e-08,
+    "n16_cooling_storage_error_J_m2": 2.5476540349567145e-08,
+    "n16_cooling_balance_J_m2": 4.394054564649252e-15,
+    "n32_cooling_wall_error_J_m2": 1.1884020122143735e-09,
+    "n32_cooling_storage_error_J_m2": 3.3484786124415855e-09,
+    "n32_cooling_balance_J_m2": 6.50347831143705e-15,
+    "n64_cooling_wall_error_J_m2": 3.1078176490617615e-10,
+    "n64_cooling_storage_error_J_m2": 3.190912811756874e-11,
+    "n64_cooling_balance_J_m2": 1.9425433483988286e-14
+  }
+}
