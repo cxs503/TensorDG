@@ -1,0 +1,27 @@
+{
+  "source_commit": "e6b5e1f9d3d0f78daa876db3242043eb430c76cb",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q tests/test_transient_diffusion_2d.py tests/test_poisson_2d_bc.py -o junit_family=legacy --junitxml=/tmp/dg_linear_contact_tip.xml",
+  "reference": "P1 unit contact resistance, face length 1/4, unit depth. First temperature trace (1 +/- s)/2, opposite trace eps=1e-20 K. The small reverse triangle has power eps^2/8 W. Check both edge tips and axes.",
+  "tests": 101,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "cases": {
+    "test_subulp_contact_counterflow_at_linear_face_tip[-1.0-x]": {
+      "reverse_power_reference_W": 1.25e-41,
+      "reverse_relative_error": 0.0
+    },
+    "test_subulp_contact_counterflow_at_linear_face_tip[-1.0-y]": {
+      "reverse_power_reference_W": 1.25e-41,
+      "reverse_relative_error": 0.0
+    },
+    "test_subulp_contact_counterflow_at_linear_face_tip[1.0-x]": {
+      "reverse_power_reference_W": 1.25e-41,
+      "reverse_relative_error": 0.0
+    },
+    "test_subulp_contact_counterflow_at_linear_face_tip[1.0-y]": {
+      "reverse_power_reference_W": 1.25e-41,
+      "reverse_relative_error": 0.0
+    }
+  }
+}
