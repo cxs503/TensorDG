@@ -503,3 +503,58 @@ def test_velocity_jumps_resolve_short_pulse_and_reversal(record_property):
 def test_invalid_velocity_jump_times(events):
     with pytest.raises(ValueError, match="distinct interior"):
         solve_advection_3d(2,0,1.,lambda t: (1.,0.,0.),velocity_jump_times=events)
+
+
+@pytest.mark.parametrize("velocity", [(.75, -.5, 1.), (-.75, .5, -1.), (.75, 0., -1.)])
+def test_3d_face_rates_match_surface_quadrature(velocity, record_property):
+    import numpy as np
+    from numpy.polynomial.legendre import leggauss, legval3d
+    from tensordg import advection_face_fluxes_3d
+
+    cells, lengths = (3, 4, 5), (1.5, 1., 5.)
+    h = np.array(lengths)/cells
+    modes = torch.randn(*cells, 3, 3, 3, dtype=torch.float64, generator=torch.Generator().manual_seed(6))
+    rates = advection_face_fluxes_3d(modes, velocity, lengths=lengths)
+    nodes, weights = leggauss(4)
+    u, v = np.meshgrid(nodes, nodes, indexing="ij")
+    errors = []
+    for axis, speed in enumerate(velocity):
+        end = np.full_like(u, 1. if speed >= 0 else -1.)
+        coords = [u, v]
+        coords.insert(axis, end)
+        for index in np.ndindex(cells):
+            donor = list(index)
+            donor[axis] = (donor[axis] + (speed < 0)) % cells[axis]
+            values = legval3d(*coords, modes[tuple(donor)].numpy())
+            exact = speed*np.prod(np.delete(h, axis))*(weights @ values @ weights)/4
+            errors.append(abs(float(rates[axis][index])-exact))
+    record_property("max_surface_quadrature_error", max(errors))
+    assert max(errors) < 3e-15
+
+
+@pytest.mark.parametrize("method", ["euler", "rk2", "rk3", "ssp_rk3", "rk4", "ssp_rk54", "rk5"])
+def test_3d_interval_face_transport_at_velocity_switch(method, record_property):
+    cells, lengths = (3, 4, 5), (1.5, 1., 5.)
+    switch, end = .017, .04
+    first, second = (.5, -.25, 1.), (-1., .75, -.5)
+    opts = dict(ncells=cells, degree=2, lengths=lengths, final_time=end, time_integrator=method,
+                velocity=lambda t: first if t < switch else second, velocity_jump_times=(switch,),
+                return_integrated_fluxes=True)
+    initial = torch.randn(*cells, 3, 3, 3, dtype=torch.float64, generator=torch.Generator().manual_seed(7))
+    _, _, _, final, _, fluxes = solve_advection_3d(initial=initial, **opts)
+    cell_volume = math.prod(lengths)/math.prod(cells)
+    change = cell_volume*(final[...,0,0,0]-initial[...,0,0,0])
+    net_in = sum(q.roll(1, axis)-q for axis, q in enumerate(fluxes))
+    residual = float((change-net_in).abs().max())
+    uniform = torch.zeros_like(initial)
+    uniform[...,0,0,0] = 2.
+    *_, transports = solve_advection_3d(initial=uniform, **opts)
+    errors = []
+    for axis, q in enumerate(transports):
+        area = cell_volume*cells[axis]/lengths[axis]
+        exact = 2*area*(first[axis]*switch+second[axis]*(end-switch))
+        errors.append(float((q-exact).abs().max()))
+    record_property("max_cell_mass_residual", residual)
+    record_property("max_uniform_transport_error", max(errors))
+    assert residual < 2e-15
+    assert max(errors) < 2e-15

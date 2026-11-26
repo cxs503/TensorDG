@@ -98,3 +98,19 @@ $t^* = 1$。
 TensorDG 的 3D 线性对流求解器在 P1/P2 下达到设计收敛阶（p+1），质量守恒在浮点舍入级别。
 P0 的预渐近行为与理论预期一致。本研究与 1D/2D 结果形成完整的维度覆盖，
 验证了 TensorDG 在 1D/2D/3D 周期线性对流问题上的收敛性。
+
+## 三维标量面输运量
+
+从 `tensordg` 导入 `advection_face_fluxes_3d`，传入输出时刻的模态系数、速度分量和物理边长，即可得到三个方向的瞬时面积分通量。每个数组的形状均为 `(nx, ny, nz)`，下标对应单元在各轴正方向的面，通量沿坐标增大方向为正。
+
+```python
+from tensordg import solve_advection_3d
+
+x, y, z, coeff, meta, (Fx, Fy, Fz) = solve_advection_3d(
+    ncells=(3, 4, 5), lengths=(1.5, 1., 5.), degree=2,
+    velocity=(.5, -.25, 1.), final_time=.04, return_integrated_fluxes=True,
+)
+mass_gain = Fx.roll(1, 0) - Fx + Fy.roll(1, 1) - Fy + Fz.roll(1, 2) - Fz
+```
+
+这里的三个数组已在整个求解时间区间上积分。对任一轴固定下标并沿另两轴求和，可得到穿过该截面的标量净输运量。

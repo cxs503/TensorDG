@@ -13,7 +13,7 @@ import numpy as np
 import torch
 
 from .runge_kutta import get_tableau
-from ._advection_time import advance_transport, velocity_components
+from ._advection_time import advance_transport, velocity_components, upwind_face_rate
 from .advection_1d import _copy_modal_state, _departure_coordinate
 
 # The tensor-product operators are built from Legendre values/derivatives at
@@ -249,17 +249,8 @@ def advection_face_fluxes_2d(coeff: torch.Tensor, velocity: tuple[float, float],
     ax, ay = velocity_components(velocity, 2)
     # Tangential Legendre modes of order > 0 integrate to zero. At an
     # upper normal endpoint every basis value is 1; at a lower one they alternate.
-    fluxes = []
-    faces = ((coeff[:, :, :, 0], ly/coeff.shape[1], ax),
-             (coeff[:, :, 0, :], lx/coeff.shape[0], ay))
-    for axis, (modes, width, speed) in enumerate(faces):
-        if speed >= 0:
-            upwind = modes.sum(dim=-1)
-        else:
-            lower = modes[..., ::2].sum(dim=-1) - modes[..., 1::2].sum(dim=-1)
-            upwind = lower.roll(-1, dims=axis)
-        fluxes.append(speed*width*upwind)
-    return fluxes[0], fluxes[1]
+    return (upwind_face_rate(coeff[:, :, :, 0], 0, ly/coeff.shape[1], ax),
+            upwind_face_rate(coeff[:, :, 0, :], 1, lx/coeff.shape[0], ay))
 
 
 def error_2d(

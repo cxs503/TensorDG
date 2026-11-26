@@ -11,6 +11,16 @@ def velocity_components(values, dimension):
     return components
 
 
+def upwind_face_rate(normal_modes, axis, face_measure, speed):
+    """Integrate the upwind trace given its tangentially averaged normal modes."""
+    if speed >= 0:
+        upwind = normal_modes.sum(dim=-1)
+    else:
+        lower = normal_modes[..., ::2].sum(dim=-1) - normal_modes[..., 1::2].sum(dim=-1)
+        upwind = lower.roll(-1, dims=axis)
+    return speed*face_measure*upwind
+
+
 def advance_transport(coeff, spatial_rhs, spacing, degree, tableau, velocity, start_time,
                       final_time, cfl, max_speed, max_dt, velocity_jump_times, accumulate_stage=None):
     if max_dt is not None and (not math.isfinite(max_dt) or max_dt <= 0.0):

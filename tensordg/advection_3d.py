@@ -43,7 +43,7 @@ import torch
 
 from .advection_1d import MAX_DEGREE, _copy_modal_state, _departure_coordinate
 from .runge_kutta import get_tableau
-from ._advection_time import advance_transport, velocity_components
+from ._advection_time import advance_transport, velocity_components, upwind_face_rate
 
 Velocity3 = tuple[float, float, float]
 
@@ -235,6 +235,7 @@ def solve_advection_3d(
     max_speed: Velocity3 | None = None,
     max_dt: float | None = None,
     velocity_jump_times: tuple[float, ...] = (),
+    return_integrated_fluxes: bool = False,
     lengths: tuple[float, float, float] = (1.0, 1.0, 1.0),
 ):
     """Solve ``u_t + a . grad u = 0`` on a periodic box with the given physical side lengths.
@@ -255,7 +256,9 @@ def solve_advection_3d(
     right-continuous callback. Steps end at every jump, with endpoint stages
     using the velocity on their own side. Each smooth interval contributes
     five speed samples. Metadata dt is the largest step taken.
-    The time integrator can be any registered explicit RK tableau.
+    The time integrator can be any registered explicit RK tableau. With
+    return_integrated_fluxes=True append a tuple of three signed face transports
+    integrated over this solve, oriented as in advection_face_fluxes_3d.
     """
     tableau = get_tableau(time_integrator)
     nx, ny, nz = (
@@ -291,9 +294,18 @@ def solve_advection_3d(
     def spatial_rhs(state, components):
         return _rhs(state, spacing, components, volume, phi_left, phi_right)
 
+    accumulate_stage = None
+    if return_integrated_fluxes:
+        totals = tuple(coeff.new_zeros((nx, ny, nz)) for _ in range(3))
+
+        def accumulate_stage(state, components, weighted_dt):
+            rates = advection_face_fluxes_3d(state, components, lengths=lengths)
+            for total, rate in zip(totals, rates):
+                total.add_(rate, alpha=weighted_dt)
+
     coeff, velocity_info, bounds, steps, largest_dt = advance_transport(
         coeff, spatial_rhs, spacing, degree, tableau, velocity, start_time, final_time,
-        cfl, max_speed, max_dt, velocity_jump_times)
+        cfl, max_speed, max_dt, velocity_jump_times, accumulate_stage)
     metadata = {
         "ncells": (nx, ny, nz), "lengths": lengths, "degree": degree, "final_time": final_time,
         "velocity": velocity_info, "max_speed": bounds,
@@ -301,7 +313,28 @@ def solve_advection_3d(
         "device": str(dev), "cfl": cfl, "dtype": str(dtype),
         "time_integrator": tableau.name, "rk_order": tableau.order, "rk_stages": tableau.stages,
     }
-    return x, y, z, coeff, metadata
+    result = (x, y, z, coeff, metadata)
+    if return_integrated_fluxes:
+        return (*result, totals)
+    return result
+
+
+def advection_face_fluxes_3d(coeff: torch.Tensor, velocity: Velocity3, *,
+                             lengths=(1.0, 1.0, 1.0)):
+    """Return instantaneous signed scalar transport rates through Cartesian faces.
+
+    Each array has shape (nx, ny, nz). At (i,j,k), the entries correspond to
+    the cell's upper x, y and z faces, positive in the increasing coordinate
+    direction. Each rate includes the physical face area. Pass instantaneous
+    velocity components for time-dependent advection.
+    """
+    if coeff.ndim != 6 or min(coeff.shape) < 1 or not coeff.is_floating_point():
+        raise ValueError("provide a nonempty six-dimensional real modal field")
+    hx, hy, hz = (L/n for L, n in zip(_domain_lengths(lengths), coeff.shape[:3]))
+    ax, ay, az = velocity_components(velocity, 3)
+    return (upwind_face_rate(coeff[:, :, :, :, 0, 0], 0, hy*hz, ax),
+            upwind_face_rate(coeff[:, :, :, 0, :, 0], 1, hx*hz, ay),
+            upwind_face_rate(coeff[:, :, :, 0, 0, :], 2, hx*hy, az))
 
 
 def mass_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:

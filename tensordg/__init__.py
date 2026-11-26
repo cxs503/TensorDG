@@ -81,6 +81,7 @@ from .advection_2d_var import (
 from .advection_3d import (
     exact_solution_3d,
     solve_advection_3d,
+    advection_face_fluxes_3d,
     mass_3d,
     energy_3d,
     upwind_dissipation_3d,
@@ -982,6 +983,7 @@ __all__ = [
     "linf_error",
     "manning_friction_slope",
     "manning_normal_depth",
+    "advection_face_fluxes_3d",
     "mass_3d",
     "energy_3d",
     "upwind_dissipation_3d",
