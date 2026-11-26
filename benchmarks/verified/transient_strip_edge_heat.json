@@ -1,0 +1,33 @@
+{
+  "source_commit": "04d3096317f30d9ccc67e97520dc4bf9c984b9a5",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 107,
+  "failures": 0,
+  "reference": "At both off-grid heater edges reconstruct interval-integrated rightward heat from the adjacent face, partial-cell generation and modal storage change. Use independent continuum sine series for both flux and strip energy during heating and cooling.",
+  "measurements": {
+    "n8_heating_heater_edge_error_J_m2": 8.207060835938376e-06,
+    "n8_heating_heater_storage_error_J_m2": 1.6024858382868157e-05,
+    "n8_heating_heater_balance_J_m2": 5.273559366969494e-16,
+    "n8_cooling_heater_edge_error_J_m2": 7.523247657367435e-06,
+    "n8_cooling_heater_storage_error_J_m2": 1.4679096519733259e-05,
+    "n8_cooling_heater_balance_J_m2": 7.008282842946301e-16,
+    "n16_heating_heater_edge_error_J_m2": 1.8566544822285619e-06,
+    "n16_heating_heater_storage_error_J_m2": 3.651979256516502e-06,
+    "n16_heating_heater_balance_J_m2": 3.689756833402669e-15,
+    "n16_cooling_heater_edge_error_J_m2": 1.7903838588871623e-06,
+    "n16_cooling_heater_storage_error_J_m2": 3.5205040510924435e-06,
+    "n16_cooling_heater_balance_J_m2": 3.9118014383277e-15,
+    "n32_heating_heater_edge_error_J_m2": 5.436092781127555e-08,
+    "n32_heating_heater_storage_error_J_m2": 8.876136980973115e-08,
+    "n32_heating_heater_balance_J_m2": 2.4511642715552284e-15,
+    "n32_cooling_heater_edge_error_J_m2": 5.418436026076445e-08,
+    "n32_cooling_heater_storage_error_J_m2": 8.874196224736841e-08,
+    "n32_cooling_heater_balance_J_m2": 1.97758476261356e-15,
+    "n64_heating_heater_edge_error_J_m2": 2.6415512039898448e-08,
+    "n64_heating_heater_storage_error_J_m2": 4.626731928830674e-08,
+    "n64_heating_heater_balance_J_m2": 1.7829487886089623e-14,
+    "n64_cooling_heater_edge_error_J_m2": 2.6200311184498837e-08,
+    "n64_cooling_heater_storage_error_J_m2": 4.586976267567655e-08,
+    "n64_cooling_heater_balance_J_m2": 1.6943044189865475e-14
+  }
+}
