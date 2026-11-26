@@ -65,3 +65,37 @@ def test_scalar_zero_profile_and_relative_norm():
     assert error_2d(x, y, coeff, .1, initial=zero)["relative_l2"] == 0.
     coeff[:, :, 0, 0] = 1.
     assert math.isinf(error_2d(x, y, coeff, .1, initial=zero)["relative_l2"])
+
+
+def test_translation_on_physical_rectangle(record_property):
+    lengths, velocity, t = (3., .5), (-.75, .25), .125
+
+    def profile(x, y):
+        return 1 + torch.sin(2*math.pi*x/3)*torch.sin(4*math.pi*y)
+
+    errors = []
+    for n in (6, 12, 24):
+        x, y, coeff, meta = solve_advection_2d((n, n+2), 2, t, velocity, lengths=lengths)
+        assert meta["lengths"] == lengths
+        assert abs(x[-1].item() - (3.-1.5/n)) < 1e-14
+        assert abs(y[0].item() - .25/(n+2)) < 1e-14
+        mass_error = abs(coeff[..., 0, 0].mean().item()*1.5 - 1.5)
+        assert mass_error < 1e-13
+        metrics = error_2d(x, y, coeff, t, velocity, initial=profile, lengths=lengths)
+        assert abs(metrics["exact_l2"] - math.sqrt(1.5*1.25)) < 1e-13
+        errors.append(metrics["absolute_l2"])
+        record_property(f"n{n}_absolute_l2", errors[-1])
+        record_property(f"n{n}_mass_error", mass_error)
+    assert all(math.log2(a/b) > 2.5 for a,b in zip(errors, errors[1:]))
+
+
+def test_rectangular_exact_translation_crosses_both_seams():
+    def profile(x, y):
+        assert torch.all((x >= 0) & (x < 2) & (y >= 0) & (y < .5))
+        return x*y
+
+    lengths = (2., .5)
+    x, y, coeff, _ = solve_advection_2d((8, 8), 1, 0., lengths=lengths, initial=profile)
+    rolled = coeff.roll((1, -2), dims=(0, 1))
+    metrics = error_2d(x, y, rolled, 2**40+.25, (1., -.5), lengths=lengths, initial=profile)
+    assert metrics["absolute_l2"] < 1e-14

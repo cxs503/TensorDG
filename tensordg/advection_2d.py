@@ -20,9 +20,16 @@ from .advection_1d import _departure_coordinate
 MAX_DEGREE = 8
 
 
-def _sample_profile(profile, x, y):
+def _domain_lengths(lengths):
+    sides = tuple(float(v) for v in lengths)
+    if len(sides) != 2 or any(not math.isfinite(v) or v <= 0 for v in sides):
+        raise ValueError("lengths must contain two finite positive box lengths")
+    return sides
+
+
+def _sample_profile(profile, x, y, lengths):
     if profile is None:
-        return 1.0 + torch.sin(2.0 * math.pi * x) * torch.sin(2.0 * math.pi * y)
+        return 1.0 + torch.sin(2.0 * math.pi * x / lengths[0]) * torch.sin(2.0 * math.pi * y / lengths[1])
     x, y = torch.broadcast_tensors(x, y)
     values = torch.as_tensor(profile(x, y), device=x.device, dtype=x.dtype)
     return torch.broadcast_to(values, x.shape)
@@ -132,10 +139,11 @@ def solve_advection_2d(
     dtype: torch.dtype = torch.float64,
     *,
     initial: Callable | None = None,
+    lengths: tuple[float, float] = (1.0, 1.0),
 ):
-    """Solve ``u_t + ax*u_x + ay*u_y = 0`` on the periodic unit square.
+    """Solve ``u_t + ax*u_x + ay*u_y = 0`` on a periodic rectangle with side lengths (Lx, Ly).
 
-    The initial/exact profile is ``1 + sin(2*pi*x) * sin(2*pi*y)`` translated
+    The initial/exact profile is ``1 + sin(2*pi*x/Lx) * sin(2*pi*y/Ly)`` translated
     by ``velocity * final_time``. Supply ``initial(x, y)`` to project another periodic profile. ``ncells`` can be one integer or ``(nx,ny)``.
 
     Returns ``(x_centers, y_centers, modal_coefficients, metadata)``. The
@@ -153,7 +161,8 @@ def solve_advection_2d(
         raise ValueError("velocity must contain exactly two components")
 
     dev = torch.device(device)
-    hx, hy = 1.0 / nx, 1.0 / ny
+    lengths = _domain_lengths(lengths)
+    hx, hy = lengths[0] / nx, lengths[1] / ny
     x = (torch.arange(nx, device=dev, dtype=dtype) + 0.5) * hx
     y = (torch.arange(ny, device=dev, dtype=dtype) + 0.5) * hy
     nodes, weights, phi, volume, phi_left, phi_right = _operators(
@@ -162,7 +171,7 @@ def solve_advection_2d(
 
     xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
-    samples = _sample_profile(initial, xq, yq)
+    samples = _sample_profile(initial, xq, yq, lengths)
     coeff = torch.einsum(
         "xyqr,q,r,qk,rl->xykl", samples, weights, weights, phi, phi,
     )
@@ -200,7 +209,7 @@ def solve_advection_2d(
         coeff = coeff + (dt / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
 
     metadata = {
-        "ncells": (nx, ny), "degree": degree, "final_time": final_time,
+        "ncells": (nx, ny), "lengths": lengths, "degree": degree, "final_time": final_time,
         "velocity": (ax, ay), "dt": dt,
         "steps": steps, "device": str(dev), "cfl": cfl,
     }
@@ -215,14 +224,17 @@ def error_2d(
     velocity: tuple[float, float] = (1.0, 0.5),
     *,
     initial: Callable | None = None,
+    lengths: tuple[float, float] = (1.0, 1.0),
 ) -> dict[str, float]:
     """Compare against initial(x, y) translated along both periodic characteristics.
 
+    Use the same physical lengths as the solver. Absolute L2 integrates over the rectangle.
     For a zero reference norm, relative L2 is zero for exact agreement and infinity otherwise.
     """
     degree = coeff.shape[-1] - 1
     nx, ny = coeff.shape[:2]
-    hx, hy = 1.0 / nx, 1.0 / ny
+    lengths = _domain_lengths(lengths)
+    hx, hy = lengths[0] / nx, lengths[1] / ny
     nodes_np, weights_np = np.polynomial.legendre.leggauss(
         max(2 * degree + 4, 6),
     )
@@ -241,8 +253,8 @@ def error_2d(
     xq = x[:, None, None, None] + 0.5 * hx * nodes[None, None, :, None]
     yq = y[None, :, None, None] + 0.5 * hy * nodes[None, None, None, :]
     ax, ay = velocity
-    exact = _sample_profile(initial, _departure_coordinate(xq, final_time, ax),
-                            _departure_coordinate(yq, final_time, ay))
+    exact = _sample_profile(initial, _departure_coordinate(xq, final_time, ax, lengths[0]),
+                            _departure_coordinate(yq, final_time, ay, lengths[1]), lengths)
     error2 = 0.25 * hx * hy * torch.sum(
         weights[None, None, :, None] * weights[None, None, None, :]
         * (numerical - exact) ** 2,
