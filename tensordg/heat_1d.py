@@ -727,7 +727,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
 
 def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_flux, *,
                                  source=0., contact_resistance=0., area=1., ncells=16, degree=2,
-                                 shoulder_areal_heat_capacity=0.,
+                                 shoulder_areal_heat_capacity=0., end_areal_heat_capacity=0.,
                                  interface_left_areal_heat_capacity=0., interface_areal_heat_capacity=0.,
                                  interface_left_heat_sources=0., interface_heat_sources=0.):
     """Stationary relative temperature of a stepped stack under constant loads.
@@ -745,7 +745,9 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
     returned face fluxes are inside the material on each side of the contact.
     interface_left_heat_sources and interface_heat_sources inject heat on the
     left and right traces respectively (W/m², negative for extraction).
-    Flux at both external walls is positive inward. Scalars for material,
+    end_areal_heat_capacity (J/m²/K, scalar or left/right pair) stores heat
+    at the external wall traces. Applied wall flux is positive inward and
+    includes both end storage and the material flux. Scalars for material,
     source or contact data apply throughout. ncells is the count per layer.
     Return physical centers, Legendre coefficients, rightward face fluxes
     and both end traces per layer (layer index first), then the common heating
@@ -783,6 +785,10 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
     if np.any(left < 0) or np.any(right < 0):
         raise ValueError("contact capacities must be nonnegative")
     wall_mass = np.column_stack((np.r_[0., right*overlap], np.r_[left*overlap, 0.]))
+    end_capacity = profile(end_areal_heat_capacity, 2, "end capacity")
+    if np.any(end_capacity < 0):
+        raise ValueError("end capacity must be nonnegative")
+    wall_mass[0, 0], wall_mass[-1, 1] = end_capacity*area[[0, -1]]
     shoulder = profile(shoulder_areal_heat_capacity, layers-1, "shoulder capacity")
     if np.any(shoulder < 0):
         raise ValueError("shoulder capacity must be nonnegative")

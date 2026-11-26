@@ -948,3 +948,15 @@ def test_drifting_stack_shoulder_storage_follows_large_section(reverse):
     torch.testing.assert_close(crossing, q.new_tensor(-5. if reverse else 5.))
     stored = area[0]*q[0, -1]-area[1]*q[1, 0]
     torch.testing.assert_close(stored, q.new_tensor(2.))
+
+
+def test_drifting_stack_storing_ends_share_the_bulk_heating_rate():
+    from tensordg import solve_drifting_heat_stack_1d
+
+    # An 8 W input across 2 m² heats the bulk and both external end masses.
+    _, u, q, t, rate = solve_drifting_heat_stack_1d(
+        [1.], 2., 1., (4., 0.), area=2., end_areal_heat_capacity=(1., 2.), ncells=4)
+    assert rate == 1.
+    torch.testing.assert_close(q[0, [0, -1]], q.new_tensor([3., 2.]))
+    energy = 2*u[0, :, 0].mean()+2*t[0, 0]+4*t[0, 1]
+    assert energy.abs() < 1e-12
