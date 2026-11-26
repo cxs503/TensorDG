@@ -1,0 +1,12 @@
+{
+  "source_commit": "cb5ea1b2360a8010b4e84e27fb47f7af024955ba",
+  "reference": "Continuous 16-step RK4 run versus two 8-step runs using the complete modal checkpoint. Start time 2^30, dt=1/128, final elapsed time 1/8, constant velocity (-0.75,0.25) and 8x12 P2 elements on [0,2] x [0,3]. Compare against the exact translation of 1+sin(pi*x)*sin(2*pi*y/3) and its total mass 6.",
+  "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python -m pytest -q tests/test_advection_1d.py tests/test_advection_2d.py tests/test_advection_3d.py tests/test_advection_2d_var.py -o junit_family=legacy --junitxml=/tmp/dg2-restart-all.xml",
+  "passed": 95,
+  "skipped": 0,
+  "measurements": {
+    "max_modal_difference": 0.0,
+    "mass_error": 0.0,
+    "relative_l2_vs_translation": 0.0011921606539438301
+  }
+}
