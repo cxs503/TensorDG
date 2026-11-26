@@ -1233,9 +1233,13 @@ def test_loaded_wall_admittance_recovers_direct_polynomial_solution(record_prope
 
 
 def test_admittance_stack_with_independent_bulk_reservoir_profiles(record_property):
+    import numpy as np
     from numpy.polynomial import Polynomial
     from tensordg import harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
 
+    from tensordg import solve_harmonic_heat_layer_1d
+
+    layer_cases = []
     omega, resistance = 2.3, .24
     left, flowing = .75+.3j, -.4+.2j
     matrices, offsets, walls, powers = [], [], [], []
@@ -1245,10 +1249,13 @@ def test_admittance_stack_with_independent_bulk_reservoir_profiles(record_proper
         # Continue T with a finite contact jump and q with continuous flux.
         field = Polynomial([left, -flowing/k, curvature])
         ambient = field + (1j*omega*c*field-k*field.deriv(2)-(heater or 0.))/loss
-        def reservoir(x):
+        def reservoir(x, ambient=ambient):
             return sum(a*x**i for i, a in enumerate(ambient.coef))
         options = dict(ncells=7, degree=2, thickness=length, conductivity=k,
                        capacity=c, heat_loss_coefficient=loss)
+        layer_cases.append((dict(**options, source=heater, bulk_ambient_temperature=reservoir),
+                            {"source": Polynomial([heater or 0.]), "bulk": loss*(ambient-field),
+                             "storage": 1j*omega*c*field}))
         y, b = harmonic_heat_wall_admittance_1d(
             omega, **options, source=heater, bulk_ambient_temperature=reservoir)
         torch.testing.assert_close(y, harmonic_heat_wall_admittance_1d(omega, **options), rtol=0, atol=0)
@@ -1264,6 +1271,25 @@ def test_admittance_stack_with_independent_bulk_reservoir_profiles(record_proper
         error = (result-result.new_tensor(reference)).abs().max().item()
         record_property("max_"+name, error)
         assert error < 1e-11
+    net_volume_power = 0j
+    for i, (params, polynomials) in enumerate(layer_cases):
+        _, _, face_flux, cell = solve_harmonic_heat_layer_1d(
+            omega, temperature[i], **params, return_cell_power=True)
+        faces = np.linspace(0., params["thickness"], params["ncells"]+1)
+        for channel, poly in polynomials.items():
+            exact = np.diff(poly.integ()(faces))
+            error = np.max(abs(cell[channel].numpy()-exact))
+            record_property(f"layer{i+1}_{channel}_error_W_m2", float(error))
+            assert error < 1e-12
+        net = cell["storage"]-cell["source"]-cell["bulk"]
+        residual = (net+face_flux.diff()).abs().max().item()
+        record_property(f"layer{i+1}_cell_balance_W_m2", residual)
+        assert residual < 1e-11
+        net_volume_power += net.sum().item()
+    # Internal contact powers cancel, so only the two exterior faces remain.
+    residual = abs(net_volume_power - flux[0, 0].item() - flux[-1, 1].item())
+    record_property("stack_balance_W_m2", residual)
+    assert residual < 1e-11
 
 
 def test_affine_bulk_reservoir_stack_contact_refinement(record_property):

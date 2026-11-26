@@ -1003,7 +1003,7 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
 
 def solve_harmonic_heat_layer_1d(angular_frequency, wall_temperatures, *, ncells=16, degree=2,
                                  conductivity=1., capacity=1., penalty=20., heat_loss_coefficient=None,
-                                 thickness=1., source=None, bulk_ambient_temperature=None):
+                                 thickness=1., source=None, bulk_ambient_temperature=None, return_cell_power=False):
     """Recover a physical layer from two prescribed wall phasors, including stack contact traces.
 
     Return layer-local cell centers in m, complex Legendre temperature modes in K,
@@ -1011,6 +1011,8 @@ def solve_harmonic_heat_layer_1d(angular_frequency, wall_temperatures, *, ncells
     measured from the left face. Pass the same material, loads and mesh used for
     harmonic_heat_wall_admittance_1d. sample_heat_stack_fields accepts a layer
     dimension on the coefficients and evaluates temperature and Fourier flux.
+    return_cell_power appends a dict of source, bulk exchange and storage
+    powers integrated over each physical cell per unit cross section (W/m²).
     """
     if not math.isfinite(thickness) or thickness <= 0:
         raise ValueError("thickness must be positive and finite")
@@ -1024,13 +1026,14 @@ def solve_harmonic_heat_layer_1d(angular_frequency, wall_temperatures, *, ncells
     def ambient_profile(xi):
         return _bulk_profile(bulk_ambient_temperature, thickness*xi, torch.complex128)
 
-    centers, modes, flux = solve_harmonic_heat_1d(
+    centers, *fields = solve_harmonic_heat_1d(
         angular_frequency, ncells=ncells, degree=degree, conductivity=conductivity/thickness,
         capacity=capacity*thickness, penalty=penalty, wall_values=wall_temperatures,
+        return_cell_power=return_cell_power,
         heat_loss_coefficient=scaled_loss if heat_loss_coefficient is not None else None,
         source=scaled_source if source is not None else None,
         bulk_ambient_temperature=ambient_profile if bulk_ambient_temperature is not None else 0.)
-    return thickness*centers, modes, flux
+    return (thickness*centers, *fields)
 
 
 def harmonic_heat_wall_admittance_1d(angular_frequency, *, ncells=16, degree=2,
