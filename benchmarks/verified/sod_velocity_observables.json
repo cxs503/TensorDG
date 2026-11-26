@@ -1,0 +1,50 @@
+{
+  "source_commit": "489d8365696d4a9a1b99d5f0d4e72eba72294222",
+  "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python -m benchmarks.sod_mc_refinement --cells 400 --reconstruction minmod mc",
+  "precision": "CPU float64",
+  "measurements": [
+    {
+      "cells": 400,
+      "steps": 7281,
+      "relative_l2": {
+        "density": 0.011656994064325327,
+        "velocity": 0.03770215117579455,
+        "pressure": 0.008433408204670695
+      },
+      "reconstruction": "minmod",
+      "matched_relative_l2": {
+        "density": 0.011656994064325327,
+        "velocity": 0.02964055275007041,
+        "pressure": 0.008183706440245155
+      },
+      "shock_velocity_squared_error_fraction": 0.9503268457116066,
+      "balance_residual": {
+        "mass": 1.4066525722000733e-13,
+        "momentum": 2.1094237467877974e-15,
+        "energy": 3.459454944731988e-13
+      }
+    },
+    {
+      "cells": 400,
+      "steps": 7330,
+      "relative_l2": {
+        "density": 0.008509444818448151,
+        "velocity": 0.02857996059201426,
+        "pressure": 0.005828917686162558
+      },
+      "reconstruction": "mc",
+      "matched_relative_l2": {
+        "density": 0.008509444818448151,
+        "velocity": 0.019237061858546727,
+        "pressure": 0.005545641946882688
+      },
+      "shock_velocity_squared_error_fraction": 0.9431640339229223,
+      "balance_residual": {
+        "mass": 1.396660564978447e-13,
+        "momentum": 6.189493362285248e-15,
+        "energy": 3.423927807943983e-13
+      }
+    }
+  ],
+  "historical_gate": "minmod velocity versus cell-averaged exact primitive velocity exceeds 3 percent with fixed and wave-split quadrature."
+}
