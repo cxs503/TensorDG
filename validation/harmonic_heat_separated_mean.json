@@ -1,0 +1,35 @@
+{
+  "commit": "a645c5d21111788b2cdbf0f126b6b4eeb706bd2d",
+  "reproduction": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat-results.xml",
+  "tests_passed": 54,
+  "reference": "Manufactured quadratic on a unit slab with two storing flux walls, 12 cells, degree 2.",
+  "runs": [
+    {
+      "omega_rad_s": 1e-14,
+      "max_absolute_errors": {
+        "cell_mean_K": 2.5615870200804942e-14,
+        "wall_trace_K": 2.6316750204944564e-14,
+        "face_flux_W_m2": 4.603906941844695e-13,
+        "mean_rate_K_s": 1.1102230246251565e-16
+      }
+    },
+    {
+      "omega_rad_s": 1e-08,
+      "max_absolute_errors": {
+        "cell_mean_K": 3.725145693164083e-15,
+        "wall_trace_K": 3.833084183753514e-15,
+        "face_flux_W_m2": 2.518010295547138e-13,
+        "mean_rate_K_s": 3.1401849173675503e-16
+      }
+    },
+    {
+      "omega_rad_s": 1.0,
+      "max_absolute_errors": {
+        "cell_mean_K": 3.157434317265502e-14,
+        "wall_trace_K": 9.105351846358368e-15,
+        "face_flux_W_m2": 7.282847091710663e-13,
+        "mean_rate_K_s": 3.3306690738754696e-16
+      }
+    }
+  ]
+}
