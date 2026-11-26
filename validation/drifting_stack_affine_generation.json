@@ -1,5 +1,5 @@
 {
-  "commit": "d704a1c306a719da2fc3c9da7cd25f66ffb75d67",
+  "commit": "fc99c0b3a945a4dbffc68f1fee87ded20bd4f9ea",
   "reproduction": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat-results.xml",
   "reference": "Piecewise cubic temperature and quadratic Fourier flux, two layers with unequal lengths and areas, finite contact resistance. Case parameters are gradient sign, DG degree and cells per layer.",
   "tests_passed": 74,
@@ -7,6 +7,7 @@
     {
       "case": "test_drifting_stack_affine_generation[-1.0-2-4]",
       "max_absolute_errors": {
+        "conservative_interior_flux_W_m2": 2.9753977059954195e-14,
         "interior_temperature_K": 0.0004190323403068241,
         "interior_flux_W_m2": 0.01054948768188313,
         "cell_mean_K": 6.161737786669619e-15,
@@ -18,6 +19,7 @@
     {
       "case": "test_drifting_stack_affine_generation[-1.0-2-8]",
       "max_absolute_errors": {
+        "conservative_interior_flux_W_m2": 6.183942247162122e-14,
         "interior_temperature_K": 5.237904253968528e-05,
         "interior_flux_W_m2": 0.0026373719206411184,
         "cell_mean_K": 8.548717289613705e-15,
@@ -29,6 +31,7 @@
     {
       "case": "test_drifting_stack_affine_generation[-1.0-2-16]",
       "max_absolute_errors": {
+        "conservative_interior_flux_W_m2": 1.8118839761882555e-13,
         "interior_temperature_K": 6.547380361487942e-06,
         "interior_flux_W_m2": 0.0006593429801658446,
         "cell_mean_K": 4.6074255521943996e-14,
@@ -40,6 +43,7 @@
     {
       "case": "test_drifting_stack_affine_generation[-1.0-3-6]",
       "max_absolute_errors": {
+        "conservative_interior_flux_W_m2": 7.682743330406083e-14,
         "interior_temperature_K": 3.7192471324942744e-15,
         "interior_flux_W_m2": 1.865174681370263e-14,
         "cell_mean_K": 3.552713678800501e-15,
@@ -51,6 +55,7 @@
     {
       "case": "test_drifting_stack_affine_generation[1.0-2-4]",
       "max_absolute_errors": {
+        "conservative_interior_flux_W_m2": 9.992007221626409e-15,
         "interior_temperature_K": 0.0004190323403109042,
         "interior_flux_W_m2": 0.010549487681877467,
         "cell_mean_K": 1.9845236565174673e-15,
@@ -62,6 +67,7 @@
     {
       "case": "test_drifting_stack_affine_generation[1.0-2-8]",
       "max_absolute_errors": {
+        "conservative_interior_flux_W_m2": 2.1399548799649892e-14,
         "interior_temperature_K": 5.2379042546520094e-05,
         "interior_flux_W_m2": 0.0026373719206352897,
         "cell_mean_K": 2.345346139520643e-15,
@@ -73,6 +79,7 @@
     {
       "case": "test_drifting_stack_affine_generation[1.0-2-16]",
       "max_absolute_errors": {
+        "conservative_interior_flux_W_m2": 6.181166689600559e-14,
         "interior_temperature_K": 6.54738031984764e-06,
         "interior_flux_W_m2": 0.0006593429801536599,
         "cell_mean_K": 5.898059818321144e-15,
@@ -84,6 +91,7 @@
     {
       "case": "test_drifting_stack_affine_generation[1.0-3-6]",
       "max_absolute_errors": {
+        "conservative_interior_flux_W_m2": 2.8976820942716586e-14,
         "interior_temperature_K": 1.734723475976807e-15,
         "interior_flux_W_m2": 1.071365218763276e-14,
         "cell_mean_K": 1.7208456881689926e-15,
