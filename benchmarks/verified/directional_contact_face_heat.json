@@ -1,0 +1,33 @@
+{
+  "source_commit": "682cdd9aaff0365ea02e3d3ab49566cbd6b858ab",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q tests/test_transient_diffusion_2d.py tests/test_poisson_2d_bc.py -o junit_family=legacy --junitxml=/tmp/dg_directional_contact.xml",
+  "reference": "Unit contact resistance and piecewise constant temperature 1-t on the low side and zero on the high side. Each of three transverse faces carries power (1-t)/3 W. Verify positive and negative integrals separately and their difference against SIPG face power integrated from the interval modal field. Run x and y cuts with theta=0.5 and SDIRK2.",
+  "times_s": [
+    0,
+    0.5,
+    1.5,
+    2
+  ],
+  "tests": 90,
+  "errors": 0,
+  "failures": 0,
+  "skipped": 0,
+  "cases": {
+    "test_directional_resistive_contact_heat_reversal[theta-x]": {
+      "forward_max_error_J": 7.618905506490137e-15,
+      "reverse_max_error_J": 9.7907792984131e-15
+    },
+    "test_directional_resistive_contact_heat_reversal[theta-y]": {
+      "forward_max_error_J": 6.404599073306372e-15,
+      "reverse_max_error_J": 7.299716386910404e-15
+    },
+    "test_directional_resistive_contact_heat_reversal[sdirk2-x]": {
+      "forward_max_error_J": 5.995204332975845e-15,
+      "reverse_max_error_J": 9.658940314238862e-15
+    },
+    "test_directional_resistive_contact_heat_reversal[sdirk2-y]": {
+      "forward_max_error_J": 5.384581669432009e-15,
+      "reverse_max_error_J": 8.548717289613705e-15
+    }
+  }
+}
