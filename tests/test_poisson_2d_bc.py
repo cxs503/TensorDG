@@ -474,3 +474,29 @@ def test_contact_face_counterflow_uniform_jump_and_empty_axis():
     torch.testing.assert_close(parts["x"]["reverse"], field.new_tensor([0., 1/3, 0.]))
     assert parts["y"]["indices"].shape == (0, 2)
     assert parts["y"]["forward"].numel() == parts["y"]["reverse"].numel() == 0
+
+
+@pytest.mark.parametrize("axis", ["x", "y"])
+@pytest.mark.parametrize("orientation", [-1., 1.])
+def test_subulp_contact_counterflow_at_linear_face_tip(axis, orientation, record_property):
+    from tensordg import directional_contact_face_powers_2d
+
+    eps = 1e-20
+    coeff = torch.zeros((2, 4, 2, 2), dtype=torch.float64)
+    # The first trace is (1 +/- s)/2 on s in [-1,1]. The opposite
+    # trace is a separate physical temperature eps, representable exactly
+    # to working precision even when the modal jump's constant rounds to .5.
+    coeff[0, 2, 0, :] = coeff.new_tensor([.5, orientation*.5])
+    coeff[1, 2, 0, 0] = eps
+    r = coeff.new_zeros((1, 4))
+    r[0, 2] = 1.
+    if axis == "y":
+        coeff, r = coeff.permute(1, 0, 3, 2), r.T
+    parts = directional_contact_face_powers_2d(coeff, {axis: r})[axis]
+    # Reverse triangle: height eps, base eps times the physical face length.
+    reference = .125*eps**2
+    error = abs(parts["reverse"].item()/reference-1.)
+    record_property("reverse_power_reference_W", reference)
+    record_property("reverse_relative_error", error)
+    assert error < 1e-14
+    assert parts["forward"].item() == pytest.approx(.125*(1-eps)**2, rel=1e-14)

@@ -587,6 +587,36 @@ def poisson_interface_traces_2d(coeff, axis, face, *, conductivity=1., points=(0
     return torch.stack(temperatures, -3), torch.stack(gradients, -3), torch.stack(fluxes, -3)
 
 
+def _linear_contact_powers(low, high, resistance, length):
+    # Axes are (faces, normal mode, tangential mode). At each face tip
+    # sum both traces with compensation: forming the modal jump first can
+    # round away a tiny temperature offset before the larger modes cancel.
+    tangent_signs = low.new_tensor([-1., 1.])
+    total = low.new_zeros((len(low), 2))
+    correction = torch.zeros_like(total)
+    for field, normal_signs in ((low, (1., 1.)), (high, (-1., 1.))):
+        for m, sign in enumerate(normal_signs):
+            for j in range(2):
+                term = sign*field[:, m, j, None]
+                if j:
+                    term = term*tangent_signs
+                updated = total+term
+                correction += torch.where(total.abs() >= term.abs(),
+                                          (total-updated)+term, (term-updated)+total)
+                total = updated
+    left, right = ((total+correction)/resistance[:, None]).unbind(dim=1)
+    crossing = ((left > 0) & (right < 0)) | ((left < 0) & (right > 0))
+    scale = torch.maximum(left.abs(), right.abs())
+    scale = torch.where(crossing, scale, 1.)
+    a = torch.where(crossing, left.abs()/scale, 0.)
+    b = torch.where(crossing, right.abs()/scale, 0.)
+    denominator = torch.where(crossing, a+b, 1.)
+    # Each triangle gets its own base fraction, including sub-ulp lobes.
+    wl = (.5*length)*torch.where(crossing, a/denominator, 1.)
+    wr = (.5*length)*torch.where(crossing, b/denominator, 1.)
+    return wl*left.clamp_min(0)+wr*right.clamp_min(0), wl*(-left).clamp_min(0)+wr*(-right).clamp_min(0)
+
+
 def directional_contact_face_powers_2d(coeff, contact_resistance):
     """Resolve instantaneous counterflow along each finite-resistance face.
 
@@ -611,11 +641,16 @@ def directional_contact_face_powers_2d(coeff, contact_resistance):
         indices = torch.nonzero(resistance > 0)
         i, j = indices.unbind(dim=1)
         if axis == "x":
-            jump = coeff[i,j].sum(dim=1)-(coeff[i+1,j]*signs[:, None]).sum(dim=1)
+            low, high = coeff[i,j], coeff[i+1,j]
             length = 1/ny
         else:
-            jump = coeff[i,j].sum(dim=2)-(coeff[i,j+1]*signs).sum(dim=2)
+            low, high = coeff[i,j].transpose(1, 2), coeff[i,j+1].transpose(1, 2)
             length = 1/nx
+        if modes == 2:
+            forward, reverse = _linear_contact_powers(low, high, resistance[i,j], length)
+            result[axis] = dict(indices=indices, forward=forward, reverse=reverse)
+            continue
+        jump = low.sum(dim=1)-(high*signs[:, None]).sum(dim=1)
         flux = jump/resistance[i,j,None]
         forward, reverse = [], []
         for row in flux:
