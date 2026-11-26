@@ -1230,3 +1230,37 @@ def test_loaded_wall_admittance_recovers_direct_polynomial_solution(record_prope
             error = (reduced-target).abs().max().item()
             record_property(comparison+"_"+name,error)
             assert error < 1e-11
+
+
+def test_admittance_stack_with_independent_bulk_reservoir_profiles(record_property):
+    from numpy.polynomial import Polynomial
+    from tensordg import harmonic_heat_wall_admittance_1d, compose_heat_wall_admittances_1d
+
+    omega, resistance = 2.3, .24
+    left, flowing = .75+.3j, -.4+.2j
+    matrices, offsets, walls, powers = [], [], [], []
+    for length, k, c, loss, curvature, heater in (
+            (.43, 1.3, .9, 2., .32+.16j, None), (1.25, 2., 1.6, .7, -.41j, .45-.23j)):
+        # In local physical coordinates k*T'' + S + H*(Ta-T) = i*omega*C*T.
+        # Continue T with a finite contact jump and q with continuous flux.
+        field = Polynomial([left, -flowing/k, curvature])
+        ambient = field + (1j*omega*c*field-k*field.deriv(2)-(heater or 0.))/loss
+        def reservoir(x):
+            return sum(a*x**i for i, a in enumerate(ambient.coef))
+        options = dict(ncells=7, degree=2, thickness=length, conductivity=k,
+                       capacity=c, heat_loss_coefficient=loss)
+        y, b = harmonic_heat_wall_admittance_1d(
+            omega, **options, source=heater, bulk_ambient_temperature=reservoir)
+        torch.testing.assert_close(y, harmonic_heat_wall_admittance_1d(omega, **options), rtol=0, atol=0)
+        matrices.append(y)
+        offsets.append(b)
+        right, leaving = field(length), -k*field.deriv()(length)
+        walls.append([left, right])
+        powers.append([flowing, -leaving])
+        left, flowing = right-resistance*leaving, leaving
+    _, temperature, flux = compose_heat_wall_admittances_1d(
+        matrices, resistance, layer_flux_offsets=offsets, wall_temperatures=(walls[0][0], walls[-1][1]))
+    for name, result, reference in (("temperature_K",temperature,walls), ("inward_flux_W_m2",flux,powers)):
+        error = (result-result.new_tensor(reference)).abs().max().item()
+        record_property("max_"+name, error)
+        assert error < 1e-11
