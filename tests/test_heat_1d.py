@@ -1731,3 +1731,36 @@ def test_affine_bulk_source_to_wall_reciprocity(record_property):
             record_property(f"n{n}_order", order)
             assert order > 3.5
         previous = error
+
+
+def test_off_grid_strip_wall_flux_against_piecewise_transfer(record_property):
+    import numpy as np
+    from scipy.linalg import expm
+    from tensordg import project_uniform_strip_source, reciprocal_bulk_wall_flux, solve_harmonic_heat_layer_1d
+
+    length, k, capacity, omega = 1.2, 1.3, 2.1, 3.4
+    west, east, heater = .213, .786, .47-.82j
+    # Propagate [T,q,1] with generation confined to the middle segment.
+    transfer = np.eye(3)
+    for width, power in ((west, 0.), (east-west, heater), (length-east, 0.)):
+        generator = np.array([[0., -1/k, 0.], [-1j*omega*capacity, 0., power], [0., 0., 0.]])
+        transfer = expm(width*generator) @ transfer
+    left = -transfer[0, 2]/transfer[0, 1]
+    exact = np.array([left, -(transfer @ [0., left, 1.])[1]])
+    previous = None
+    for n in (8, 16, 32, 64):
+        source = project_uniform_strip_source(heater, length, west, east, ncells=n, degree=2)
+        total_error = abs(source[:, 0].sum().item()*length/n - heater*(east-west))
+        assert total_error < 1e-14
+        predicted = []
+        for drive in ((1., 0.), (0., 1.)):
+            _, modes, _ = solve_harmonic_heat_layer_1d(
+                omega, drive, ncells=n, degree=2, thickness=length, conductivity=k, capacity=capacity)
+            predicted.append(reciprocal_bulk_wall_flux(modes, source, length/n).item())
+        error = np.max(abs(predicted-exact))
+        record_property(f"n{n}_wall_error_W_m2", float(error))
+        record_property(f"n{n}_generation_error_W_m2", total_error)
+        if previous is not None:
+            record_property(f"n{n}_order", math.log2(previous/error))
+            assert error < previous/2
+        previous = error

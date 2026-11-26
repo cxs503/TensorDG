@@ -842,6 +842,11 @@ def integrate_heat_stack_energy(coefficients, lengths, capacity, start, end):
     if not (0 <= start <= end <= boundaries[-1]):
         raise ValueError("interval must be ordered and inside the stack")
     edges = np.linspace(boundaries[:-1], boundaries[1:], cells+1, axis=1)
+    integrals = _clipped_legendre_integrals(edges, modes, start, end)
+    return ((u*u.new_tensor(integrals)).sum(dim=(1, 2))*cap).sum()
+
+
+def _clipped_legendre_integrals(edges, modes, start, end):
     west, east = edges[:, :-1], edges[:, 1:]
     left = np.clip(start, west, east)
     width = np.clip(end, west, east) - left
@@ -850,8 +855,8 @@ def integrate_heat_stack_energy(coefficients, lengths, capacity, start, end):
     nodes, weights = np.polynomial.legendre.leggauss((modes+1)//2)
     local = (2*(left-west)[..., None] + width[..., None]*(1+nodes))/(east-west)[..., None] - 1
     basis = np.polynomial.legendre.legvander(local, modes-1)
-    integrals = np.einsum("lcqm,q->lcm", basis, weights) * (width/2)[..., None]
-    return ((u*u.new_tensor(integrals)).sum(dim=(1, 2))*cap).sum()
+    return np.einsum("lcqm,q->lcm", basis, weights) * (width/2)[..., None]
+
 
 
 def _stack_flux_polynomial(face_flux, lengths, fractions, source_gradient, source_curvature):
@@ -986,6 +991,28 @@ def harmonic_cell_pairing(test_modes, load_modes, cell_width):
     product = test[:, :count].conj()*load[:, :count]
     degree = torch.arange(count, device=product.device, dtype=product.real.dtype)
     return (product/(2*degree+1)).sum(dim=1)*(cell_width/2)
+
+
+def project_uniform_strip_source(amplitude, thickness, start, end, *, ncells, degree):
+    """Project a uniform volume heater on [start, end] onto layer Legendre modes.
+
+    Positions are measured in metres from the layer's left boundary. The
+    scalar real or complex amplitude and returned (cells, degree+1) modal
+    coefficients are in W/m³. Cut cells use the actual heater overlap.
+    """
+    if not math.isfinite(thickness) or thickness <= 0 or not 0 <= start <= end <= thickness:
+        raise ValueError("provide an ordered heater interval inside a finite positive layer")
+    if not isinstance(ncells, int) or ncells < 1 or not isinstance(degree, int) or degree < 0:
+        raise ValueError("provide a positive cell count and a nonnegative polynomial degree")
+    raw = torch.as_tensor(amplitude)
+    value = torch.as_tensor(amplitude, dtype=torch.complex128 if raw.is_complex() else torch.float64,
+                            device=raw.device)
+    if value.ndim != 0 or not torch.isfinite(value):
+        raise ValueError("provide a finite scalar heater amplitude")
+    edges = np.linspace(0., thickness, ncells+1)[None, :]
+    integrals = _clipped_legendre_integrals(edges, degree+1, start, end)[0]
+    inverse_mass = (2*np.arange(degree+1)+1)/(thickness/ncells)
+    return value*value.new_tensor(integrals*inverse_mass)
 
 
 def reciprocal_bulk_wall_flux(unit_wall_modes, source_modes, cell_width):
