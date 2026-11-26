@@ -1,0 +1,20 @@
+{
+  "source_commit": "b8ac0d45c5ebbc283c8a4a8d735edb1b46ddcc29",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 94,
+  "failures": 0,
+  "reference": "Harmonic integration by parts over two coupled layers. Compare temperature-weighted exterior inward flux and bulk reservoir input with conservative conductive forms, contact resistance and quadrature storage. An independent Gauss integral verifies unequal-degree complex field pairing.",
+  "measurements": {
+    "n4_form_balance_imag_W_K_m2": 8.615330671091215e-14,
+    "n4_form_balance_real_W_K_m2": 0.00019893804299375706,
+    "n8_form_balance_imag_W_K_m2": 3.108624468950438e-14,
+    "n8_form_balance_real_W_K_m2": 1.2570296582081752e-05,
+    "n8_form_balance_real_W_K_m2_order": 3.9842285955996033,
+    "n16_form_balance_imag_W_K_m2": 6.750155989720952e-14,
+    "n16_form_balance_real_W_K_m2": 7.888272604006374e-07,
+    "n16_form_balance_real_W_K_m2_order": 3.994165469279441,
+    "n32_form_balance_imag_W_K_m2": 4.796163466380676e-14,
+    "n32_form_balance_real_W_K_m2": 4.938742148574704e-08,
+    "n32_form_balance_real_W_K_m2_order": 3.9974938566549367
+  }
+}
