@@ -726,13 +726,17 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
 
 
 def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_flux, *,
-                                 source=0., contact_resistance=0., ncells=16, degree=2,
+                                 source=0., contact_resistance=0., area=1., ncells=16, degree=2,
                                  interface_left_areal_heat_capacity=0., interface_areal_heat_capacity=0.,
                                  interface_left_heat_sources=0., interface_heat_sources=0.):
-    """Stationary relative temperature of a unit-area stack under constant loads.
+    """Stationary relative temperature of a stepped stack under constant loads.
 
     lengths (m), conductivity (W/m/K) and volumetric capacity (J/m³/K)
     describe homogeneous layers. Source (W/m³) is constant per layer.
+    area (m²) is constant per layer. Contacts cover the smaller adjoining
+    section; exposed shoulders are insulated and have zero heat capacity.
+    Contact data use the overlap area, external wall fluxes use the local
+    end areas, and returned flux densities use their layer areas.
     Each contact obeys T_left-T_right=R*q for the crossing flux, R in m² K/W.
     interface_left_areal_heat_capacity and interface_areal_heat_capacity
     store heat on its left and right traces respectively (J/m²/K). The
@@ -767,37 +771,41 @@ def solve_drifting_heat_stack_1d(lengths, conductivity, capacity, wall_inward_fl
     if np.shape(wall_inward_flux) != (2,):
         raise ValueError("provide two inward wall fluxes")
     west, east = profile(wall_inward_flux, 2, "wall fluxes")
-    mass = lengths*c
+    area = profile(area, layers, "section area", positive=True)
+    overlap = np.minimum(area[:-1], area[1:])
+    west, east = west*area[0], east*area[-1]
+    volume = lengths*area
+    mass = volume*c
     left = profile(interface_left_areal_heat_capacity, layers-1, "left contact capacity")
     right = profile(interface_areal_heat_capacity, layers-1, "right contact capacity")
     if np.any(left < 0) or np.any(right < 0):
         raise ValueError("contact capacities must be nonnegative")
-    wall_mass = np.column_stack((np.r_[0., right], np.r_[left, 0.]))
+    wall_mass = np.column_stack((np.r_[0., right*overlap], np.r_[left*overlap, 0.]))
     layer_mass = mass+wall_mass.sum(axis=1)
     left_load = profile(interface_left_heat_sources, layers-1, "left contact source")
     right_load = profile(interface_heat_sources, layers-1, "right contact source")
-    wall_load = np.column_stack((np.r_[0., right_load], np.r_[left_load, 0.]))
-    layer_input = lengths*generation + wall_load.sum(axis=1)
+    wall_load = np.column_stack((np.r_[0., right_load*overlap], np.r_[left_load*overlap, 0.]))
+    layer_input = volume*generation + wall_load.sum(axis=1)
     rate = (west+east+layer_input.sum())/layer_mass.sum()
-    # Layer energy balance fixes every interface flux before choosing a gauge.
+    # Layer energy balance fixes every crossing power before choosing a gauge.
     cuts = np.r_[west, west+np.cumsum(layer_input-layer_mass*rate)]
     cuts[-1] = -east
     centers, modes, fluxes, traces = [], [], [], []
     origin = 0.
     for i, length in enumerate(lengths):
         x, u, q, walls, _ = solve_harmonic_heat_1d(
-            0., ncells=ncells, degree=degree, conductivity=k[i]/length, capacity=mass[i],
-            source=length*generation[i], wall_types=("neumann", "neumann"),
+            0., ncells=ncells, degree=degree, conductivity=k[i]*area[i]/length, capacity=mass[i],
+            source=volume[i]*generation[i], wall_types=("neumann", "neumann"),
             wall_values=(cuts[i]+wall_load[i, 0], -cuts[i+1]+wall_load[i, 1]),
             wall_areal_heat_capacity=wall_mass[i],
             return_mean_rate=True, return_wall_temperatures=True)
         if i:
-            offset = traces[-1][1]-resistance[i-1]*cuts[i]-walls[0]
+            offset = traces[-1][1]-resistance[i-1]*cuts[i]/overlap[i-1]-walls[0]
             u[:, 0] += offset
             walls += offset
         centers.append(origin+length*x)
         modes.append(u.real)
-        fluxes.append(q.real)
+        fluxes.append(q.real/area[i])
         traces.append(walls.real)
         origin += length
     u = torch.stack(modes)

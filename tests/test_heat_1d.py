@@ -920,3 +920,13 @@ def test_balanced_contact_heater_and_sink_drive_an_internal_temperature_jump():
     expected = walls.new_tensor([.3, -.3])[:, None]
     torch.testing.assert_close(walls, expected.expand_as(walls), atol=1e-12, rtol=0.)
     torch.testing.assert_close(u[:, :, 0], expected.expand_as(u[:, :, 0]), atol=1e-12, rtol=0.)
+
+
+def test_stepped_drifting_stack_conserves_power_across_an_insulated_shoulder():
+    from tensordg import solve_drifting_heat_stack_1d
+
+    _, _, flux, trace, rate = solve_drifting_heat_stack_1d(
+        [1., 2.], 3., 2., (1., -.25), area=[2., 8.], contact_resistance=.6)
+    assert rate == 0.
+    torch.testing.assert_close(flux, flux.new_tensor([[1.], [.25]]).expand_as(flux))
+    torch.testing.assert_close(trace[0, 1]-trace[1, 0], flux.new_tensor(.6))
