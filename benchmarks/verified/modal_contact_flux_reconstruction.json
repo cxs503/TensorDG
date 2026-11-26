@@ -1,0 +1,31 @@
+{
+  "source_commit": "561be596ef440578c5b9855cad286b0a76ca42d8",
+  "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 PYTHONPATH=. python -m pytest -q -o junit_family=legacy tests/test_heat_1d.py --junitxml=heat.xml",
+  "tests": 91,
+  "failures": 0,
+  "reference": "Independent continuum transfer matrix for two harmonic layers with thermal resistance and affine ambient temperatures. Compare reconstructed fluxes at both off-grid cuts and evaluate net power balance over the interval.",
+  "measurements": {
+    "n4_reconstructed_balance_W_m2": 2.599255937769752e-13,
+    "n4_interval_power_residual_W_m2": 0.017982767002266378,
+    "n4_layer0_reconstructed_flux_W_m2": 3.504891691113282e-05,
+    "n4_layer1_reconstructed_flux_W_m2": 9.528273841953263e-05,
+    "n8_reconstructed_balance_W_m2": 3.335190533782227e-13,
+    "n8_interval_power_residual_W_m2": 0.004621462511404483,
+    "n8_layer0_reconstructed_flux_W_m2": 2.230055435416479e-06,
+    "n8_layer0_reconstructed_flux_W_m2_order": 3.974218383795538,
+    "n8_layer1_reconstructed_flux_W_m2": 6.5615239918711896e-06,
+    "n8_layer1_reconstructed_flux_W_m2_order": 3.8601120348247946,
+    "n16_reconstructed_balance_W_m2": 1.6753894225094059e-12,
+    "n16_interval_power_residual_W_m2": 0.001137832171447028,
+    "n16_layer0_reconstructed_flux_W_m2": 1.387701628197869e-07,
+    "n16_layer0_reconstructed_flux_W_m2_order": 4.00631026320266,
+    "n16_layer1_reconstructed_flux_W_m2": 3.887346217323479e-07,
+    "n16_layer1_reconstructed_flux_W_m2_order": 4.077173428075964,
+    "n32_reconstructed_balance_W_m2": 2.5418442483425486e-12,
+    "n32_interval_power_residual_W_m2": 0.0002865354606541484,
+    "n32_layer0_reconstructed_flux_W_m2": 8.710750688535298e-09,
+    "n32_layer0_reconstructed_flux_W_m2_order": 3.993756540031196,
+    "n32_layer1_reconstructed_flux_W_m2": 2.490621854534506e-08,
+    "n32_layer1_reconstructed_flux_W_m2_order": 3.964207701427793
+  }
+}
