@@ -290,3 +290,45 @@ def test_fixed_velocity_rk4_face_transports_add_across_restart(record_property):
     record_property("max_restart_transport_difference", error)
     assert torch.equal(full, final)
     assert error < 2e-15
+
+
+@pytest.mark.parametrize("velocity", [(-.75, .5), (.75, 0.), (0., -.5)])
+def test_modal_energy_and_upwind_power(velocity, record_property):
+    import numpy as np
+    from numpy.polynomial.legendre import leggauss, legval2d
+    from tensordg import energy_2d, upwind_dissipation_2d
+    from tensordg.advection_2d import _operators, _rhs
+
+    nx, ny, degree = 5, 6, 3
+    lengths = (2.5, 1.5)
+    hx, hy = lengths[0]/nx, lengths[1]/ny
+    field = torch.randn(nx, ny, 4, 4, dtype=torch.float64, generator=torch.Generator().manual_seed(29))
+    _, _, _, volume, left, right = _operators(degree, field.device, field.dtype)
+    rhs = _rhs(field, hx, hy, velocity, volume, left, right)
+    nodes, weights = leggauss(5)
+    x, y = np.meshgrid(nodes, nodes, indexing="ij")
+    energy = power = 0.
+    for i, j in np.ndindex(nx, ny):
+        u = legval2d(x, y, field[i,j].numpy())
+        ut = legval2d(x, y, rhs[i,j].numpy())
+        energy += hx*hy/8*(weights @ (u*u) @ weights)
+        power += hx*hy/4*(weights @ (u*ut) @ weights)
+    computed = energy_2d(field, lengths=lengths)
+    rates = upwind_dissipation_2d(field, velocity, lengths=lengths)
+    energy_error = abs(computed/energy-1)
+    balance_error = abs(1+sum(rates)/power)
+    record_property("relative_energy_error", energy_error)
+    record_property("relative_power_balance_error", balance_error)
+    assert energy_error < 4e-15
+    assert balance_error < 1e-14
+    assert all(rate == 0. if speed == 0. else rate > 0. for rate, speed in zip(rates, velocity))
+
+
+def test_upwind_loss_resolves_modes_on_large_uniform_background():
+    from tensordg import upwind_dissipation_2d
+
+    field = torch.zeros(3, 4, 2, 2, dtype=torch.float64)
+    field[..., 1, 0] = 1.
+    field[..., 0, 1] = 2.
+    field[..., 0, 0] = 2.**60
+    assert upwind_dissipation_2d(field, (1., -1.)) == (6., 32.)

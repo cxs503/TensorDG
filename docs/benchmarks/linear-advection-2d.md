@@ -72,6 +72,14 @@ the same stage velocities, upwind states and Runge–Kutta weights as the cell
 update. The cell mass gain equals
 `Fx.roll(1, 0) - Fx + Fy.roll(1, 1) - Fy`, including across periodic seams.
 
+For the quadratic scalar energy, call `energy_2d(coeff, lengths=lengths)`.
+It integrates half the squared field including all Legendre modes.
+`upwind_dissipation_2d(coeff, velocity, lengths=lengths)` returns the
+nonnegative x and y contributions to the instantaneous energy loss.
+Their sum equals the negative semidiscrete energy derivative for periodic
+transport with a spatially uniform velocity. For a velocity callback pass its
+value at the sample time.
+
 ## Run
 
 ```bash

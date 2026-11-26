@@ -12,6 +12,7 @@ import math
 import numpy as np
 import torch
 
+from ._modal_energy import modal_energy, upwind_losses
 from .runge_kutta import get_tableau
 from ._advection_time import advance_transport, velocity_components, upwind_face_rate
 from .advection_1d import _copy_modal_state, _departure_coordinate
@@ -251,6 +252,21 @@ def advection_face_fluxes_2d(coeff: torch.Tensor, velocity: tuple[float, float],
     # upper normal endpoint every basis value is 1; at a lower one they alternate.
     return (upwind_face_rate(coeff[:, :, :, 0], 0, ly/coeff.shape[1], ax),
             upwind_face_rate(coeff[:, :, 0, :], 1, lx/coeff.shape[0], ay))
+
+
+def energy_2d(coeff: torch.Tensor, *, lengths=(1.0, 1.0)) -> float:
+    """Integrate half the squared real DG field over the periodic rectangle."""
+    return modal_energy(coeff, _domain_lengths(lengths))
+
+
+def upwind_dissipation_2d(coeff: torch.Tensor, velocity: tuple[float, float], *,
+                          lengths=(1.0, 1.0)) -> tuple[float, float]:
+    """Instantaneous x and y rates of scalar energy loss from upwind face jumps.
+
+    Each shared face contributes half its absolute normal speed times the
+    integrated squared jump. The sum equals minus the semidiscrete energy rate.
+    """
+    return upwind_losses(coeff, _domain_lengths(lengths), velocity_components(velocity, 2))
 
 
 def error_2d(

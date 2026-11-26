@@ -42,6 +42,7 @@ import numpy as np
 import torch
 
 from .advection_1d import MAX_DEGREE, _copy_modal_state, _departure_coordinate
+from ._modal_energy import modal_energy, upwind_losses
 from .runge_kutta import get_tableau
 from ._advection_time import advance_transport, velocity_components, upwind_face_rate
 
@@ -342,13 +343,6 @@ def mass_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
     return float(coeff[:, :, :, 0, 0, 0].mean().item()) * math.prod(_domain_lengths(lengths))
 
 
-def _modal_mean_weights(coeff):
-    if coeff.ndim != 6 or min(coeff.shape) < 1 or not coeff.is_floating_point():
-        raise ValueError("provide a nonempty six-dimensional real modal field")
-    return [(2*torch.arange(n, dtype=torch.float64, device=coeff.device)+1).reciprocal()
-            for n in coeff.shape[3:]]
-
-
 def energy_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
     """Integrate half the squared real DG field on a uniform periodic box.
 
@@ -356,10 +350,7 @@ def energy_3d(coeff: torch.Tensor, *, lengths=(1.0, 1.0, 1.0)) -> float:
     by solve_advection_3d. Each squared mode has cell-average weight
     1 / ((2k+1)(2l+1)(2m+1)) by Legendre orthogonality.
     """
-    weights = _modal_mean_weights(coeff)
-    volume = math.prod(_domain_lengths(lengths))
-    mean_square = coeff.double().square().mean(dim=(0, 1, 2))
-    return 0.5 * volume * torch.einsum("klm,k,l,m->", mean_square, *weights).item()
+    return modal_energy(coeff, _domain_lengths(lengths))
 
 
 def upwind_dissipation_3d(coeff: torch.Tensor, velocity: Velocity3, *,
@@ -370,24 +361,7 @@ def upwind_dissipation_3d(coeff: torch.Tensor, velocity: Velocity3, *,
     trace jump over that axis's faces, each counted once. Their sum equals
     minus the semidiscrete time derivative of energy_3d.
     """
-    weights = _modal_mean_weights(coeff)
-    lengths = _domain_lengths(lengths)
-    speeds = velocity_components(velocity, 3)
-    modes = coeff.double()
-    rates = []
-    for axis, speed in enumerate(speeds):
-        # P_k(1)=1; P_k(-1)=(-1)^k on the neighbor's lower face.
-        normal_modes = modes.movedim(3+axis, -1)
-        signs = torch.ones_like(weights[axis])
-        signs[1::2] = -1.
-        lower = normal_modes @ signs
-        jump = normal_modes.sum(dim=-1) - lower.roll(-1, dims=axis)
-        mean_square = jump.square().mean(dim=(0, 1, 2))
-        tangential = weights[:axis] + weights[axis+1:]
-        face_mean = torch.einsum("ij,i,j->", mean_square, *tangential)
-        area = math.prod(lengths) * coeff.shape[axis] / lengths[axis]
-        rates.append(.5 * abs(speed) * area * face_mean.item())
-    return tuple(rates)
+    return upwind_losses(coeff, _domain_lengths(lengths), velocity_components(velocity, 3))
 
 
 def error_3d(
