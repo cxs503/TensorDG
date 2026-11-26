@@ -988,6 +988,20 @@ def harmonic_cell_pairing(test_modes, load_modes, cell_width):
     return (product/(2*degree+1)).sum(dim=1)*(cell_width/2)
 
 
+def reciprocal_bulk_wall_flux(unit_wall_modes, source_modes, cell_width):
+    """Inward wall flux phasor (W/m²) contributed by a layer's volume source.
+
+    Supply the dimensionless temperature response to a unit Dirichlet drive at
+    the observed wall with all other drives zero, and the volumetric source
+    (W/m³) in the same cellwise Legendre basis. Both are at the same frequency.
+    Sum contributions over layers for the source-induced flux at grounded walls.
+    """
+    response = torch.as_tensor(unit_wall_modes)
+    # Reciprocity uses the transpose at fixed frequency. Cancel the conjugation
+    # and peak-to-cycle-average factor of the Hermitian field pairing.
+    return -2*harmonic_cell_pairing(response.conj(), source_modes, cell_width).sum()
+
+
 def harmonic_cell_conduction_form(face_flux, net_power_modes, cell_width, conductivity):
     """Cycle mean of the conductive quadratic form per cell (W K/m²).
 

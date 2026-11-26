@@ -1678,3 +1678,56 @@ def test_wall_and_contact_heater_reciprocity(record_property):
             record_property(f"n{n}_cross_order", order)
             assert order > 3.5
         previous = error
+
+
+def test_affine_bulk_source_to_wall_reciprocity(record_property):
+    import numpy as np
+    from scipy.linalg import expm
+    from tensordg import (compose_heat_wall_admittances_1d, harmonic_heat_wall_admittance_1d,
+                          reciprocal_bulk_wall_flux, solve_harmonic_heat_layer_1d)
+
+    omega, resistance = 2.7, .23
+    layers = [(.41, 1.3, 2.1, .8, .45+.2j, -.3+.7j),
+              (.67, 2.2, 1.1, .3, -.16+.5j, .8-.2j)]
+    # Propagate [T,q,1,x] in each layer. Reset local x after the resistive jump.
+    transfer = np.eye(4)
+    for i, (length, k, c, h, a, b) in enumerate(layers):
+        generator = np.array([[0, -1/k, 0, 0], [-h-1j*omega*c, 0, a, b],
+                              [0, 0, 0, 0], [0, 0, 1, 0]])
+        transfer = expm(length*generator) @ transfer
+        if i == 0:
+            interface = np.eye(4)
+            interface[0, 1] = -resistance
+            interface[3] = 0
+            transfer = interface @ transfer
+    left = -transfer[0, 2]/transfer[0, 1]
+    exact = np.array([left, -(transfer @ [0, left, 1, 0])[1]])
+    previous = None
+    for n in (4, 8, 16, 32):
+        options = [dict(ncells=n, degree=2, thickness=length, conductivity=k, capacity=c,
+                        heat_loss_coefficient=h) for length, k, c, h, _, _ in layers]
+        matrices, offsets = zip(*(harmonic_heat_wall_admittance_1d(
+            omega, source=lambda x, a=a, b=b: a+b*x, **opt)
+            for opt, (_, _, _, _, a, b) in zip(options, layers)))
+        _, _, direct = compose_heat_wall_admittances_1d(
+            matrices, resistance, layer_flux_offsets=offsets, wall_temperatures=(0., 0.))
+        predicted = []
+        for drive in ((1., 0.), (0., 1.)):
+            _, traces, _ = compose_heat_wall_admittances_1d(matrices, resistance, wall_temperatures=drive)
+            flux = 0j
+            for opt, walls, (length, _, _, _, a, b) in zip(options, traces, layers):
+                centers, modes, _ = solve_harmonic_heat_layer_1d(omega, walls, **opt)
+                width = length/n
+                source = torch.stack((a+b*centers, b*torch.ones_like(centers)*width/2), dim=1)
+                flux += reciprocal_bulk_wall_flux(modes, source, width).item()
+            predicted.append(flux)
+        mismatch = np.max(abs(predicted-direct.diagonal().numpy()))
+        error = np.max(abs(predicted-exact))
+        record_property(f"n{n}_direct_mismatch_W_m2", float(mismatch))
+        record_property(f"n{n}_reference_error_W_m2", float(error))
+        assert mismatch < 1e-11
+        if previous is not None:
+            order = math.log2(previous/error)
+            record_property(f"n{n}_order", order)
+            assert order > 3.5
+        previous = error
