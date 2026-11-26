@@ -109,9 +109,24 @@ def _wall_penalty(penalty, wall_penalty):
     return value
 
 
-def _stationary_load(centers, h, operators, source, penalty, wall_temperatures):
+def _add_modal_source(load, source_modes, h):
+    if not load.is_complex() and torch.as_tensor(source_modes).is_complex():
+        raise ValueError("real transient solves require real source_modes")
+    modal = torch.as_tensor(source_modes, dtype=load.dtype, device=load.device)
+    if modal.ndim != 2 or modal.shape[0] != load.shape[0] or modal.shape[1] < 1 or not torch.isfinite(modal).all():
+        raise ValueError("source_modes requires finite Legendre coefficients for each cell")
+    count = min(load.shape[1], modal.shape[1])
+    orders = torch.arange(count, dtype=load.real.dtype, device=load.device)
+    load[:, :count] += modal[:, :count]*(h/(2*orders+1))
+
+
+def _stationary_load(centers, h, operators, source, penalty, wall_temperatures, source_modes=None):
     nodes, weights, phi, _, _, left, right, dleft, dright = operators
     load = None if source is None else _source_load(centers,h,nodes,weights,phi,source)
+    if source_modes is not None:
+        if load is None:
+            load = centers.new_zeros((centers.numel(), phi.shape[1]))
+        _add_modal_source(load, source_modes, h)
     if wall_temperatures is not None:
         walls = _wall_pair(wall_temperatures, centers)
         if load is None:
@@ -138,7 +153,7 @@ def assemble_sipg_1d(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, wall_penalty=None, initial_temperature=None, source=None, wall_temperatures=None,
+    *, wall_penalty=None, initial_temperature=None, source=None, source_modes=None, wall_temperatures=None,
 ):
     """Assemble the SIPG mass/diffusion matrices for ``u_t = u_xx`` on (0,1).
 
@@ -207,7 +222,7 @@ def assemble_sipg_1d(
         "mass_matrix": mass_matrix,
         "diffusion": diffusion,
         "initial_coefficients": coeff,
-        "source_load": _stationary_load(centers,h,operators,source,wall_penalty,wall_temperatures),
+        "source_load": _stationary_load(centers,h,operators,source,wall_penalty,wall_temperatures,source_modes),
         "penalty": penalty, "wall_penalty": wall_penalty,
     }
 
@@ -230,7 +245,7 @@ def solve_heat_1d(
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
     backend: str = "dense",
-    *, wall_penalty=None, integrate_temperature: bool = False, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
+    *, wall_penalty=None, integrate_temperature: bool = False, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, source_modes=None, wall_temperatures=None,
 ):
     """Solve the forced heat equation with fixed Dirichlet data and a projected initial profile.
 
@@ -245,6 +260,8 @@ def solve_heat_1d(
         Constant left and right temperatures, default (0, 0).
     source : optional scalar or callable of x
         Stationary volumetric source for u_t = u_xx + source on the unit slab.
+    source_modes : optional real matrix
+        Additional stationary cellwise Legendre source coefficients.
     initial_temperature : optional callable or modal coefficient tensor
         Evaluated on cell quadrature points and projected onto the modal basis.
         The default profile is sin(pi*x).
@@ -265,13 +282,13 @@ def solve_heat_1d(
         from tensordg.sipg_sparse import solve_heat_1d_sparse
         return solve_heat_1d_sparse(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_temperature=integrate_temperature, integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
+            integrate_temperature=integrate_temperature, integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, source_modes=source_modes, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
         )
     elif backend == "matrix-free":
         from tensordg.sipg_matrixfree import solve_heat_1d_matrixfree
         return solve_heat_1d_matrixfree(
             ncells, degree, final_time, time_steps, penalty, device, dtype,
-            integrate_temperature=integrate_temperature, integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
+            integrate_temperature=integrate_temperature, integrate_face_fluxes=integrate_face_fluxes, initial_temperature=initial_temperature, source=source, source_modes=source_modes, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
         )
 
     # backend == "dense": original implementation
@@ -281,7 +298,7 @@ def solve_heat_1d(
         raise ValueError("final_time must be >= 0 and time_steps must be positive")
     dev = torch.device(device)
     assembly = assemble_sipg_1d(
-        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source, source_modes=source_modes, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
     )
     h = assembly["h"]
     modes = degree + 1
@@ -330,11 +347,12 @@ def solve_heat_1d_exact_time(
     penalty: float = 20.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float64,
-    *, wall_penalty=None, initial_temperature=None, source=None, wall_temperatures=None, integrate_face_fluxes: bool = False, integrate_temperature: bool = False,
+    *, wall_penalty=None, initial_temperature=None, source=None, source_modes=None, wall_temperatures=None, integrate_face_fluxes: bool = False, integrate_temperature: bool = False,
 ):
     """SIPG heat solution with the semi-discrete system integrated *exactly* in time.
 
     A stationary source is integrated by augmenting the state with a constant.
+    source_modes adds real cellwise Legendre source coefficients to that load.
     For zero source the semi-discrete system is linear and autonomous, ``M du/dt = -K u``, so the
     solution is ``u(t) = exp(-t M^{-1} K) u(0)``.  Evaluating the matrix
     exponential (SciPy's Pade implementation) removes the temporal error of
@@ -352,7 +370,7 @@ def solve_heat_1d_exact_time(
     from scipy.linalg import expm
 
     system = assemble_sipg_1d(
-        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
+        ncells=ncells, degree=degree, penalty=penalty, device=device, dtype=dtype, initial_temperature=initial_temperature, source=source, source_modes=source_modes, wall_temperatures=wall_temperatures, wall_penalty=wall_penalty,
     )
     mass = system["mass_matrix"].detach().cpu().numpy()
     diffusion = system["diffusion"].detach().cpu().numpy()
@@ -678,12 +696,7 @@ def solve_harmonic_heat_1d(angular_frequency, *, ncells=16, degree=2, conductivi
     load = torch.zeros((ncells,degree+1),dtype=torch.complex128) if source is None else _source_load(
         centers,h,nodes,weights,phi,source,dtype=torch.complex128)
     if source_modes is not None:
-        modal = torch.as_tensor(source_modes, dtype=load.dtype, device=load.device)
-        if modal.ndim != 2 or modal.shape[0] != ncells or modal.shape[1] < 1 or not torch.isfinite(modal).all():
-            raise ValueError("source_modes requires finite Legendre coefficients for each cell")
-        count = min(degree+1, modal.shape[1])
-        orders = torch.arange(count, dtype=centers.dtype, device=centers.device)
-        load[:, :count] += modal[:, :count]*(h/(2*orders+1))
+        _add_modal_source(load, source_modes, h)
     if return_cell_power:
         source_power = load[:, 0].clone()
     exchange = None

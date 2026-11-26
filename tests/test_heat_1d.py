@@ -1937,3 +1937,53 @@ def test_stack_ramp_with_material_specific_endpoint_amplitudes():
         torch.testing.assert_close(source[i, 0], expected, rtol=0, atol=1e-14)
     empty = project_stack_strip_source(1., [.25, .75], .25, .25, ncells=1, degree=0, end_amplitude=2j)
     assert empty.is_complex() and not empty.count_nonzero()
+
+
+def test_switched_strip_cumulative_heat_against_sine_series(record_property):
+    import numpy as np
+    from tensordg import project_uniform_strip_source, solve_heat_1d_exact_time
+
+    west, east, power, duration = .213, .786, 1.7, .07
+    # Zero initial and wall temperatures, unit k and volumetric capacity.
+    modes = np.arange(1, 20001)
+    wave = np.pi*modes
+    forcing = 2*power*(np.cos(wave*west)-np.cos(wave*east))/wave
+    temperature = forcing*(-np.expm1(-wave**2*duration))/wave**2
+    parity = (-1.)**modes
+    stored = np.sum(temperature*(1-parity)/wave)
+    generated = power*(east-west)*duration
+    # Integrate the steady wall flux minus its exponentially decaying correction.
+    west_heat = generated*(1-(west+east)/2) - np.sum(temperature/wave)
+    east_heat = generated*(west+east)/2 + np.sum(parity*temperature/wave)
+    previous = None
+    for n in (8, 16, 32, 64):
+        load = project_uniform_strip_source(power, 1., west, east, ncells=n, degree=2)
+        _, fields, meta = solve_heat_1d_exact_time(
+            n, 2, duration, source_modes=load, initial_temperature=torch.zeros_like,
+            integrate_face_fluxes=True)
+        flux = meta["integrated_face_fluxes"]
+        energy = fields[:, 0].mean().item()
+        error = max(abs(-flux[0]-west_heat), abs(flux[-1]-east_heat))
+        balance = abs(energy-flux[0]+flux[-1]-generated)
+        record_property(f"n{n}_wall_error_J_m2", error)
+        record_property(f"n{n}_storage_error_J_m2", abs(energy-stored))
+        record_property(f"n{n}_balance_J_m2", balance)
+        assert balance < 1e-10
+        if previous is not None:
+            assert error < previous/2
+        previous = error
+    assert error < 1e-8 and abs(energy-stored) < 1e-8
+
+
+@pytest.mark.parametrize("backend", ["dense", "sparse", "matrix-free"])
+def test_transient_modal_source_matches_affine_profile(backend):
+    n = 5
+    width = 1/n
+    centers = (torch.arange(n, dtype=torch.float64)+.5)*width
+    load = torch.stack((.7-centers, torch.full_like(centers, -width/2)), dim=1)
+    opts = dict(ncells=n, degree=2, time_steps=4, final_time=.01, backend=backend,
+                integrate_face_fluxes=True, initial_temperature=torch.zeros_like)
+    _, modal, meta = solve_heat_1d(source_modes=load, **opts)
+    _, direct, reference = solve_heat_1d(source=lambda x: .7-x, **opts)
+    torch.testing.assert_close(modal, direct, rtol=0, atol=1e-12)
+    assert meta["integrated_face_fluxes"] == pytest.approx(reference["integrated_face_fluxes"], abs=1e-12)

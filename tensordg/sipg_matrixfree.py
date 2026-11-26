@@ -524,7 +524,7 @@ def solve_heat_1d_matrixfree(
     dtype: torch.dtype = torch.float64,
     rtol: float = 1e-12,
     maxiter: int = 5_000,
-    *, wall_penalty=None, integrate_temperature: bool = False, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, wall_temperatures=None,
+    *, wall_penalty=None, integrate_temperature: bool = False, integrate_face_fluxes: bool = False, initial_temperature=None, source=None, source_modes=None, wall_temperatures=None,
 ) -> tuple:
     """Matrix-free CN heat solve: each time step uses PCG."""
     from tensordg.heat_1d import _wall_penalty, _integrated_face_heat, _operators, _project_initial, _stationary_load
@@ -549,7 +549,7 @@ def solve_heat_1d_matrixfree(
     dt = final_time / steps if steps else 0.0
 
     increment = 0.
-    load = _stationary_load(centers,h,operators,source,wall_penalty,wall_temperatures)
+    load = _stationary_load(centers,h,operators,source,wall_penalty,wall_temperatures,source_modes)
     if load is not None:
         increment = dt*load.reshape(-1)
     state = coeff.reshape(-1)
