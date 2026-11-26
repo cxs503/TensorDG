@@ -1,0 +1,46 @@
+{
+  "source_commit": "73eb3520f6b1da7bafdc76468fbd72c8c9aba407",
+  "reference": "Exact periodic translation of 1 + sin(2*pi*x) at speed -1 over elapsed time 1/32 starting at absolute time 2^34.",
+  "command": "OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 python -m pytest -q tests/test_advection_1d.py tests/test_advection_1d_highorder.py tests/test_runge_kutta_orders.py tests/test_advection_porder_convergence.py -o junit_family=legacy --junitxml=/tmp/dg1-restart-final.xml",
+  "gates": {
+    "max_modal_difference_equal_to": 0,
+    "absolute_l2_below": 0.005,
+    "mass_error_below": 1e-14
+  },
+  "coarse_32_cells": {
+    "rk4-None": {
+      "max_modal_difference": 0.0,
+      "absolute_l2_vs_translation": 2.5366212395622053e-05,
+      "mass_error": 0.0
+    },
+    "ssp_rk3-tvb": {
+      "max_modal_difference": 0.0,
+      "absolute_l2_vs_translation": 0.005871625948847305,
+      "mass_error": 1.9984014443252818e-15
+    },
+    "rk5-None": {
+      "max_modal_difference": 0.0,
+      "absolute_l2_vs_translation": 2.5366346633011344e-05,
+      "mass_error": 0.0
+    }
+  },
+  "verified_64_cells": {
+    "rk4-None": {
+      "max_modal_difference": 0.0,
+      "absolute_l2_vs_translation": 3.2632807788391468e-06,
+      "mass_error": 1.1102230246251565e-16
+    },
+    "ssp_rk3-tvb": {
+      "max_modal_difference": 0.0,
+      "absolute_l2_vs_translation": 0.0016566175542784237,
+      "mass_error": 3.885780586188048e-15
+    },
+    "rk5-None": {
+      "max_modal_difference": 0.0,
+      "absolute_l2_vs_translation": 3.263280935546542e-06,
+      "mass_error": 2.220446049250313e-16
+    }
+  },
+  "notes": "Coarse TVB run exceeded the absolute L2 gate. With 64 cells all configurations pass and both integrations use the same 64 steps.",
+  "suite": "60 passed, 1 expected failure (existing L1 panel quadrature sensitivity, m3320)"
+}
